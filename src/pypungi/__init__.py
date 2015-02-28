@@ -1556,7 +1556,7 @@ class Pungi(pypungi.PungiBase):
         self.logger.info("Generating checksum of %s" % path)
         checksum = pypungi.util._doCheckSum(path, 'sha256', self.logger)
         if checksum:
-            checkfile.write("%s *%s\n" % (checksum.replace('sha256:', ''), os.path.basename(path)))
+            checkfile.write("SHA256 (%s) = %s\n" % (os.path.basename(path), checksum.replace('sha256:', '')))
         else:
             self.logger.error('Failed to generate checksum for %s' % checkfile)
             sys.exit(1)
