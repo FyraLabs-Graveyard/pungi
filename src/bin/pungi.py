@@ -185,7 +185,7 @@ def main():
         # we already have all the content gathered
         mypungi.topdir = os.path.join(config.get('pungi', 'destdir'),
                                       config.get('pungi', 'version'),
-                                      config.get('pungi', 'flavor'),
+                                      config.get('pungi', 'variant'),
                                       'source', 'SRPMS')
         mypungi.doCreaterepo(comps=False)
         if opts.do_all or opts.do_createiso:
@@ -205,20 +205,23 @@ if __name__ == '__main__':
 
         def set_config(option, opt_str, value, parser, config):
             config.set('pungi', option.dest, value)
-            # When setting name, also set the iso_basename.
-            if option.dest == 'name':
-                config.set('pungi', 'iso_basename', value)
 
         # Pulled in from config file to be cli options as part of pykickstart conversion
-        parser.add_option("--name", dest="name", type="string",
+        parser.add_option("--name", dest="family", type="string",
           action="callback", callback=set_config, callback_args=(config, ),
-          help='the name for your distribution (defaults to "Fedora")')
+          help='the name for your distribution (defaults to "Fedora"), DEPRECATED')
+        parser.add_option("--family", dest="family", type="string",
+          action="callback", callback=set_config, callback_args=(config, ),
+          help='the family name for your distribution (defaults to "Fedora")')
         parser.add_option("--ver", dest="version", type="string",
           action="callback", callback=set_config, callback_args=(config, ),
           help='the version of your distribution (defaults to datestamp)')
-        parser.add_option("--flavor", dest="flavor", type="string",
+        parser.add_option("--flavor", dest="variant", type="string",
           action="callback", callback=set_config, callback_args=(config, ),
-          help='the flavor of your distribution spin (optional)')
+          help='the flavor of your distribution spin (optional), DEPRECATED')
+        parser.add_option("--variant", dest="variant", type="string",
+          action="callback", callback=set_config, callback_args=(config, ),
+          help='the variant of your distribution spin (optional)')
         parser.add_option("--destdir", dest="destdir", type="string",
           action="callback", callback=set_config, callback_args=(config, ),
           help='destination directory (defaults to current directory)')
@@ -299,14 +302,20 @@ if __name__ == '__main__':
         if not opts.config:
             parser.error("Please specify a config file")
 
-        if not config.get('pungi', 'flavor').isalnum() and not config.get('pungi', 'flavor') == '':
-            parser.error("Flavor must be alphanumeric")
+        if not config.get('pungi', 'variant').isalnum() and not config.get('pungi', 'variant') == '':
+            parser.error("Variant must be alphanumeric")
 
         if opts.do_gather or opts.do_createrepo or opts.do_buildinstall or opts.do_createiso:
             opts.do_all = False
 
         if opts.arch and (opts.do_all or opts.do_buildinstall):
             parser.error("Cannot override arch while the BuildInstall stage is enabled")
+
+        # set the iso_basename.
+        if not config.get('pungi', 'variant') == '':
+            config.set('pungi', 'iso_basename', '%s-%s' % (config.get('pungi', 'family'), config.get('pungi', 'variant')))
+        else:
+            config.set('pungi', 'iso_basename', config.get('pungi', 'family'))
 
         return (opts, args)
 

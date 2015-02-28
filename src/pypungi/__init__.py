@@ -125,7 +125,7 @@ class PungiBase(object):
 
         self.doLoggerSetup()
         self.workdir = os.path.join(self.config.get('pungi', 'workdirbase'),
-                                    self.config.get('pungi', 'flavor'),
+                                    self.config.get('pungi', 'variant'),
                                     self.tree_arch)
 
 
@@ -137,8 +137,8 @@ class PungiBase(object):
 
         pypungi.util._ensuredir(logdir, None, force=True) # Always allow logs to be written out
 
-        if self.config.get('pungi', 'flavor'):
-            logfile = os.path.join(logdir, '%s.%s.log' % (self.config.get('pungi', 'flavor'),
+        if self.config.get('pungi', 'variant'):
+            logfile = os.path.join(logdir, '%s.%s.log' % (self.config.get('pungi', 'variant'),
                                                           self.tree_arch))
         else:
             logfile = os.path.join(logdir, '%s.log' % (self.tree_arch))
@@ -169,8 +169,8 @@ class PungiYum(yum.YumBase):
         logdir = os.path.join(self.pungiconfig.get('pungi', 'destdir'), 'logs')
         if not os.path.exists(logdir):
             os.makedirs(logdir)
-        if self.pungiconfig.get('pungi', 'flavor'):
-            logfile = os.path.join(logdir, '%s.%s.log' % (self.pungiconfig.get('pungi', 'flavor'),
+        if self.pungiconfig.get('pungi', 'variant'):
+            logfile = os.path.join(logdir, '%s.%s.log' % (self.pungiconfig.get('pungi', 'variant'),
                                                           self.pungiconfig.get('pungi', 'arch')))
         else:
             logfile = os.path.join(logdir, '%s.log' % (self.pungiconfig.get('pungi', 'arch')))
@@ -216,7 +216,7 @@ class Pungi(pypungi.PungiBase):
         self.destdir = self.config.get('pungi', 'destdir')
         self.archdir = os.path.join(self.destdir,
                                    self.config.get('pungi', 'version'),
-                                   self.config.get('pungi', 'flavor'),
+                                   self.config.get('pungi', 'variant'),
                                    self.tree_arch)
 
         self.topdir = os.path.join(self.archdir, 'os')
@@ -1068,7 +1068,7 @@ class Pungi(pypungi.PungiBase):
 
         pkgdir = os.path.join(self.config.get('pungi', 'destdir'),
                               self.config.get('pungi', 'version'),
-                              self.config.get('pungi', 'flavor'),
+                              self.config.get('pungi', 'variant'),
                               relpkgdir)
 
         # Ensure the pkgdir exists, force if requested, and make sure we clean it out
@@ -1122,7 +1122,7 @@ class Pungi(pypungi.PungiBase):
     def makeCompsFile(self):
         """Gather any comps files we can from repos and merge them into one."""
 
-        ourcompspath = os.path.join(self.workdir, '%s-%s-comps.xml' % (self.config.get('pungi', 'name'), self.config.get('pungi', 'version')))
+        ourcompspath = os.path.join(self.workdir, '%s-%s-comps.xml' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'version')))
 
         # Filter out things we don't include
         ourgroups = []
@@ -1314,7 +1314,7 @@ class Pungi(pypungi.PungiBase):
 
         compsfile = None
         if comps:
-            compsfile = os.path.join(self.workdir, '%s-%s-comps.xml' % (self.config.get('pungi', 'name'), self.config.get('pungi', 'version')))
+            compsfile = os.path.join(self.workdir, '%s-%s-comps.xml' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'version')))
         
         # setup the cache dirs
         for target in ['createrepocache', 'repoviewcache']:
@@ -1323,7 +1323,7 @@ class Pungi(pypungi.PungiBase):
                                self.logger, 
                                force=True)
             
-        repoviewtitle = '%s %s - %s' % (self.config.get('pungi', 'name'), 
+        repoviewtitle = '%s %s - %s' % (self.config.get('pungi', 'family'),
                                         self.config.get('pungi', 'version'),
                                         self.tree_arch)
 
@@ -1353,7 +1353,7 @@ class Pungi(pypungi.PungiBase):
                         'Alpha': 'A',
                         'Beta': 'B',
                         'TC': 'T'}
-        name = self.config.get('pungi', 'name')
+        name = self.config.get('pungi', 'family')
         version = self.config.get('pungi', 'version')
         arch = self.tree_arch
 
@@ -1379,11 +1379,11 @@ class Pungi(pypungi.PungiBase):
                            'file://%s' % self.topdir,
                            cost=10)
 
-        product = self.config.get('pungi', 'name')
+        product = self.config.get('pungi', 'family')
         version = self.config.get('pungi', 'version')
-        release = '%s %s' % (self.config.get('pungi', 'name'), self.config.get('pungi', 'version'))
+        release = '%s %s' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'version'))
 
-        variant = self.config.get('pungi', 'flavor')
+        variant = self.config.get('pungi', 'variant')
         bugurl = self.config.get('pungi', 'bugurl')
         isfinal = self.config.get('pungi', 'isfinal')
 
@@ -1606,7 +1606,7 @@ class Pungi(pypungi.PungiBase):
             treesize = int(subprocess.Popen(mkisofs + ['-print-size', '-quiet', self.topdir], stdout=subprocess.PIPE).communicate()[0])
         else:
             srcdir = os.path.join(self.config.get('pungi', 'destdir'), self.config.get('pungi', 'version'), 
-                                  self.config.get('pungi', 'flavor'), 'source', 'SRPMS')
+                                  self.config.get('pungi', 'variant'), 'source', 'SRPMS')
 
             treesize = int(subprocess.Popen(mkisofs + ['-print-size', '-quiet', srcdir], stdout=subprocess.PIPE).communicate()[0])
         # Size returned is 2KiB clusters or some such.  This translates that to MiB.
