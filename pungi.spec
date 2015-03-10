@@ -1,7 +1,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           pungi
-Version:        3.13
+Version:        3.14
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -56,6 +56,11 @@ rm -rf $RPM_BUILD_ROOT
 /var/cache/pungi
 
 %changelog
+* Tue Mar 10 2015 Dennis Gilmore <dennis@ausil.us> - 3.14-1
+- switch to BSD style hashes for the iso checksums (dennis)
+- refactor to get better data into .treeinfo (dennis)
+- Add --nomacboot option (csieh)
+
 * Fri Dec 12 2014 Dennis Gilmore <dennis@ausil.us> - 3.13-1
 - Add support for --installpkgs (bcl)
 - Add a cmdline option to set the lorax config file (bcl)
