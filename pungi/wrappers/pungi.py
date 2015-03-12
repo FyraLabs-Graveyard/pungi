@@ -112,7 +112,7 @@ class PungiWrapper(object):
         kickstart.close()
 
     def get_pungi_cmd(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None):
-        cmd = ["pungi-gather"]
+        cmd = ["pungi"]
 
         # Gather stage
         cmd.append("-G")
