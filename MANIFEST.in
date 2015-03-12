@@ -2,5 +2,6 @@ include AUTHORS
 include COPYING
 include GPL
 include pungi.spec
-recursive-include share/*
-recursive-include doc/*
+include share/*
+include share/multilib/*
+include doc/*

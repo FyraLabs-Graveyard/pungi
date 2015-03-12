@@ -35,6 +35,7 @@ setup(
     packages        = packages,
     scripts         = [
         'bin/pungi-gather',
+        'bin/pungi',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),
