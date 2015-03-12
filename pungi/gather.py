@@ -1372,7 +1372,7 @@ class Pungi(PungiBase):
 
         cmd = ["lorax"]
         cmd.extend(["--workdir", self.workdir])
-        cmd.extend(["--logfile", os.path.join(self.config.get('pungi', 'destdir'), 'logs/lorax.log')])
+        cmd.extend(["--logfile", os.path.join(self.config.get('pungi', 'destdir'), 'logs/lorax-%s.log' % (self.pungiconfig.get('pungi', 'arch')))])
 
         try:
             # Convert url method to a repo
