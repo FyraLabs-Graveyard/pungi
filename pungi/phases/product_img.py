@@ -45,11 +45,11 @@ import pipes
 
 from kobo.shortcuts import run
 
-from pypungi.arch import split_name_arch
-from pypungi.util import makedirs, pkg_is_rpm
-from pypungi.phases.base import PhaseBase
-from pypungi.wrappers.iso import IsoWrapper
-from pypungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
+from pungi.arch import split_name_arch
+from pungi.util import makedirs, pkg_is_rpm
+from pungi.phases.base import PhaseBase
+from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 
 
 class ProductimgPhase(PhaseBase):

@@ -20,20 +20,20 @@ import cPickle as pickle
 
 from kobo.shortcuts import run
 
-import pypungi.phases.pkgset.pkgsets
-from pypungi.arch import get_valid_arches
-from pypungi.util import makedirs
-from pypungi.wrappers.pungi import PungiWrapper
+import pungi.phases.pkgset.pkgsets
+from pungi.arch import get_valid_arches
+from pungi.util import makedirs
+from pungi.wrappers.pungi import PungiWrapper
 
-from pypungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
-from pypungi.phases.gather import get_prepopulate_packages
-from pypungi.linker import LinkerThread, LinkerPool
-
-
-import pypungi.phases.pkgset.source
+from pungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
+from pungi.phases.gather import get_prepopulate_packages
+from pungi.linker import LinkerThread, LinkerPool
 
 
-class PkgsetSourceRepos(pypungi.phases.pkgset.source.PkgsetSourceBase):
+import pungi.phases.pkgset.source
+
+
+class PkgsetSourceRepos(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
     config_options = (
         {
@@ -136,7 +136,7 @@ def populate_global_pkgset(compose, file_list, path_prefix):
         pkgset = pickle.load(open(global_pkgset_path, "r"))
     else:
         compose.log_info(msg)
-        pkgset = pypungi.phases.pkgset.pkgsets.FilelistPackageSet(compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
+        pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
         pkgset.populate(file_list)
         f = open(global_pkgset_path, "w")
         data = pickle.dumps(pkgset)
@@ -162,9 +162,9 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
 
     # TODO move to a function
     gather_source = "GatherSource%s" % compose.conf["gather_source"]
-    from pypungi.phases.gather.source import GatherSourceContainer
-    import pypungi.phases.gather.sources
-    GatherSourceContainer.register_module(pypungi.phases.gather.sources)
+    from pungi.phases.gather.source import GatherSourceContainer
+    import pungi.phases.gather.sources
+    GatherSourceContainer.register_module(pungi.phases.gather.sources)
     container = GatherSourceContainer()
     SourceClass = container[gather_source]
     src = SourceClass(compose)

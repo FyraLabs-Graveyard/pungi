@@ -28,12 +28,12 @@ from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
 from productmd.imagemanifest import Image
 
-from pypungi.util import get_buildroot_rpms, get_volid
-from pypungi.wrappers.lorax import LoraxWrapper
-from pypungi.wrappers.kojiwrapper import KojiWrapper
-from pypungi.wrappers.iso import IsoWrapper
-from pypungi.wrappers.scm import get_file_from_scm
-from pypungi.phases.base import PhaseBase
+from pungi.util import get_buildroot_rpms, get_volid
+from pungi.wrappers.lorax import LoraxWrapper
+from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers.scm import get_file_from_scm
+from pungi.phases.base import PhaseBase
 
 
 class BuildinstallPhase(PhaseBase):

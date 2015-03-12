@@ -29,8 +29,8 @@ import kobo.rpmlib
 
 from kobo.threads import WorkerThread, ThreadPool
 
-from pypungi.util import pkg_is_srpm
-from pypungi.arch import get_valid_arches
+from pungi.util import pkg_is_srpm
+from pungi.arch import get_valid_arches
 
 
 class ReaderPool(ThreadPool):

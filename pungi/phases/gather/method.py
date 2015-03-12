@@ -17,7 +17,7 @@
 
 import kobo.plugins
 
-from pypungi.checks import validate_options
+from pungi.checks import validate_options
 
 
 class GatherMethodBase(kobo.plugins.Plugin):

@@ -26,10 +26,10 @@ set()
 """
 
 
-import pypungi.phases.gather.source
+import pungi.phases.gather.source
 
 
-class GatherSourceNone(pypungi.phases.gather.source.GatherSourceBase):
+class GatherSourceNone(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
     config_options = (

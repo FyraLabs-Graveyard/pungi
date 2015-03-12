@@ -23,7 +23,7 @@ import kobo.log
 from kobo.shortcuts import relative_path
 from kobo.threads import WorkerThread, ThreadPool
 
-from pypungi.util import makedirs
+from pungi.util import makedirs
 
 
 class LinkerPool(ThreadPool):

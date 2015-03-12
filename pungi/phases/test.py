@@ -19,11 +19,11 @@ import tempfile
 
 from kobo.shortcuts import run
 
-from pypungi.wrappers.repoclosure import RepoclosureWrapper
-from pypungi.arch import get_valid_arches
-from pypungi.phases.base import PhaseBase
-from pypungi.phases.gather import get_lookaside_repos
-from pypungi.util import rmtree
+from pungi.wrappers.repoclosure import RepoclosureWrapper
+from pungi.arch import get_valid_arches
+from pungi.phases.base import PhaseBase
+from pungi.phases.gather import get_lookaside_repos
+from pungi.util import rmtree
 
 
 class TestPhase(PhaseBase):

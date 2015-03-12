@@ -22,10 +22,10 @@ import pipes
 
 from kobo.shortcuts import run
 
-from pypungi.util import get_arch_variant_data, pkg_is_rpm
-from pypungi.arch import split_name_arch
-from pypungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
-from pypungi.phases.base import PhaseBase
+from pungi.util import get_arch_variant_data, pkg_is_rpm
+from pungi.arch import split_name_arch
+from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
+from pungi.phases.base import PhaseBase
 
 
 class ExtraFilesPhase(PhaseBase):

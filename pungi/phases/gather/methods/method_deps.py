@@ -20,17 +20,17 @@ import tempfile
 
 from kobo.shortcuts import run
 
-from pypungi.util import rmtree
-from pypungi.wrappers.pungi import PungiWrapper
+from pungi.util import rmtree
+from pungi.wrappers.pungi import PungiWrapper
 
-from pypungi.arch import tree_arch_to_yum_arch
-import pypungi.phases.gather
-
-
-import pypungi.phases.gather.method
+from pungi.arch import tree_arch_to_yum_arch
+import pungi.phases.gather
 
 
-class GatherMethodDeps(pypungi.phases.gather.method.GatherMethodBase):
+import pungi.phases.gather.method
+
+
+class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
     config_options = (
         {
@@ -84,7 +84,7 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         repos = {"pungi-repo": repo_path}
 
     lookaside_repos = {}
-    for i, repo_url in enumerate(pypungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
+    for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
         lookaside_repos["lookaside-repo-%s" % i] = repo_url
 
     packages_str = []
@@ -140,7 +140,7 @@ def resolve_deps(compose, arch, variant):
         selfhosting = False
 
     lookaside_repos = {}
-    for i, repo_url in enumerate(pypungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
+    for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
         lookaside_repos["lookaside-repo-%s" % i] = repo_url
 
     yum_arch = tree_arch_to_yum_arch(arch)

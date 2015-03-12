@@ -1430,7 +1430,7 @@ class Pungi(PungiBase):
         cmd.append(self.topdir)
 
         self.logger.info(" ".join(cmd))
-        pypungi.util._doRunCommand(cmd, self.logger)
+        pungi.util._doRunCommand(cmd, self.logger)
 
         # write out the tree data for snake
         self.writeinfo('tree: %s' % self.mkrelative(self.topdir))

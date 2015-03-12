@@ -26,11 +26,11 @@ set([(rpm_name, rpm_arch or None)])
 """
 
 
-from pypungi.wrappers.comps import CompsWrapper
-import pypungi.phases.gather.source
+from pungi.wrappers.comps import CompsWrapper
+import pungi.phases.gather.source
 
 
-class GatherSourceComps(pypungi.phases.gather.source.GatherSourceBase):
+class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
     config_options = (
         {

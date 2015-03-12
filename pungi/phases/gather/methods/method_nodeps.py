@@ -15,13 +15,13 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 
-import pypungi.arch
-from pypungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
+import pungi.arch
+from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
 
-import pypungi.phases.gather.method
+import pungi.phases.gather.method
 
 
-class GatherMethodNodeps(pypungi.phases.gather.method.GatherMethodBase):
+class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
     config_options = (
         {
@@ -42,10 +42,10 @@ class GatherMethodNodeps(pypungi.phases.gather.method.GatherMethodBase):
         seen_rpms = {}
         seen_srpms = {}
 
-        valid_arches = pypungi.arch.get_valid_arches(arch, multilib=True)
+        valid_arches = pungi.arch.get_valid_arches(arch, multilib=True)
         compatible_arches = {}
         for i in valid_arches:
-            compatible_arches[i] = pypungi.arch.get_compatible_arches(i)
+            compatible_arches[i] = pungi.arch.get_compatible_arches(i)
 
         for i in global_pkgset:
             pkg = global_pkgset[i]

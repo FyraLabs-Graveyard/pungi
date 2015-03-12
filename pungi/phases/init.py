@@ -21,11 +21,11 @@ import shutil
 
 from kobo.shortcuts import run
 
-from pypungi.phases.base import PhaseBase
-from pypungi.phases.gather import write_prepopulate_file
-from pypungi.wrappers.createrepo import CreaterepoWrapper
-from pypungi.wrappers.comps import CompsWrapper
-from pypungi.wrappers.scm import get_file_from_scm
+from pungi.phases.base import PhaseBase
+from pungi.phases.gather import write_prepopulate_file
+from pungi.wrappers.createrepo import CreaterepoWrapper
+from pungi.wrappers.comps import CompsWrapper
+from pungi.wrappers.scm import get_file_from_scm
 
 
 class InitPhase(PhaseBase):

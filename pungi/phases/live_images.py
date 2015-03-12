@@ -27,11 +27,11 @@ import tempfile
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run
 
-from pypungi.wrappers.kojiwrapper import KojiWrapper
-from pypungi.wrappers.iso import IsoWrapper
-from pypungi.wrappers.scm import get_file_from_scm
-from pypungi.phases.base import PhaseBase
-from pypungi.util import get_arch_variant_data
+from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers.scm import get_file_from_scm
+from pungi.phases.base import PhaseBase
+from pungi.util import get_arch_variant_data
 
 
 # HACK: define cmp in python3

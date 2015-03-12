@@ -34,10 +34,10 @@ set([(rpm_name, rpm_arch or None)])
 
 import json
 
-import pypungi.phases.gather.source
+import pungi.phases.gather.source
 
 
-class GatherSourceJson(pypungi.phases.gather.source.GatherSourceBase):
+class GatherSourceJson(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
     config_options = (
         {

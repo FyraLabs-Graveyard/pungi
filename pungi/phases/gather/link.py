@@ -20,7 +20,7 @@ import os
 
 import kobo.rpmlib
 
-from pypungi.linker import LinkerThread, LinkerPool
+from pungi.linker import LinkerThread, LinkerPool
 
 
 # TODO: global Linker instance - to keep hardlinks on dest?

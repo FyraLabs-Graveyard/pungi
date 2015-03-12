@@ -19,9 +19,9 @@ import os
 
 from kobo.shortcuts import run, force_list, relative_path
 
-import pypungi.phases.pkgset.pkgsets
-from pypungi.arch import get_valid_arches
-from pypungi.wrappers.createrepo import CreaterepoWrapper
+import pungi.phases.pkgset.pkgsets
+from pungi.arch import get_valid_arches
+from pungi.wrappers.createrepo import CreaterepoWrapper
 
 
 # TODO: per arch?
@@ -31,7 +31,7 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
         compose.log_info("Populating package set for arch: %s" % arch)
         is_multilib = arch in compose.conf["multilib_arches"]
         arches = get_valid_arches(arch, is_multilib, add_src=True)
-        pkgset = pypungi.phases.pkgset.pkgsets.PackageSetBase(compose.conf["sigkeys"], logger=compose._logger, arches=arches)
+        pkgset = pungi.phases.pkgset.pkgsets.PackageSetBase(compose.conf["sigkeys"], logger=compose._logger, arches=arches)
         pkgset.merge(global_pkgset, arch, arches)
         pkgset.save_file_list(compose.paths.work.package_list(arch=arch), remove_path_prefix=path_prefix)
         result[arch] = pkgset

@@ -24,8 +24,8 @@ import productmd.treeinfo.product
 from productmd import get_major_version
 from kobo.shortcuts import relative_path
 
-from pypungi.compose_metadata.discinfo import write_discinfo as create_discinfo
-from pypungi.compose_metadata.discinfo import write_media_repo as create_media_repo
+from pungi.compose_metadata.discinfo import write_discinfo as create_discinfo
+from pungi.compose_metadata.discinfo import write_media_repo as create_media_repo
 
 
 def get_description(compose, variant, arch):

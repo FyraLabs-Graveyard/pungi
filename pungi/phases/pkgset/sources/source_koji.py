@@ -21,16 +21,16 @@ import json
 
 import koji
 
-import pypungi.phases.pkgset.pkgsets
-from pypungi.arch import get_valid_arches
+import pungi.phases.pkgset.pkgsets
+from pungi.arch import get_valid_arches
 
-from pypungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
-
-
-import pypungi.phases.pkgset.source
+from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
 
 
-class PkgsetSourceKoji(pypungi.phases.pkgset.source.PkgsetSourceBase):
+import pungi.phases.pkgset.source
+
+
+class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
     config_options = (
         {
@@ -121,7 +121,7 @@ def populate_global_pkgset(compose, koji_proxy, path_prefix, compose_tag, event_
         pkgset = pickle.load(open(global_pkgset_path, "r"))
     else:
         compose.log_info(msg)
-        pkgset = pypungi.phases.pkgset.pkgsets.KojiPackageSet(koji_proxy, compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
+        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_proxy, compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
         pkgset.populate(compose_tag, event_id, inherit=inherit)
         f = open(global_pkgset_path, "w")
         data = pickle.dumps(pkgset)

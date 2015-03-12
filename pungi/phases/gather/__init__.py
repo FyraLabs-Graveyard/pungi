@@ -23,26 +23,26 @@ import json
 from kobo.rpmlib import parse_nvra
 from productmd import RpmManifest
 
-from pypungi.wrappers.scm import get_file_from_scm
+from pungi.wrappers.scm import get_file_from_scm
 from link import link_files
 
-from pypungi.util import get_arch_variant_data, get_arch_data
-from pypungi.phases.base import PhaseBase
-from pypungi.arch import split_name_arch, get_compatible_arches
+from pungi.util import get_arch_variant_data, get_arch_data
+from pungi.phases.base import PhaseBase
+from pungi.arch import split_name_arch, get_compatible_arches
 
 
 def get_gather_source(name):
-    import pypungi.phases.gather.sources
+    import pungi.phases.gather.sources
     from source import GatherSourceContainer
-    GatherSourceContainer.register_module(pypungi.phases.gather.sources)
+    GatherSourceContainer.register_module(pungi.phases.gather.sources)
     container = GatherSourceContainer()
     return container["GatherSource%s" % name]
 
 
 def get_gather_method(name):
-    import pypungi.phases.gather.methods
+    import pungi.phases.gather.methods
     from method import GatherMethodContainer
-    GatherMethodContainer.register_module(pypungi.phases.gather.methods)
+    GatherMethodContainer.register_module(pungi.phases.gather.methods)
     container = GatherMethodContainer()
     return container["GatherMethod%s" % name]
 

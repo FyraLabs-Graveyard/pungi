@@ -29,11 +29,11 @@ import shutil
 import kobo.log
 from productmd import ComposeInfo, ImageManifest
 
-from pypungi.wrappers.variants import VariantsXmlParser
-from pypungi.paths import Paths
-from pypungi.wrappers.scm import get_file_from_scm
-from pypungi.util import makedirs
-from pypungi.metadata import compose_to_composeinfo
+from pungi.wrappers.variants import VariantsXmlParser
+from pungi.paths import Paths
+from pungi.wrappers.scm import get_file_from_scm
+from pungi.util import makedirs
+from pungi.metadata import compose_to_composeinfo
 
 
 def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):

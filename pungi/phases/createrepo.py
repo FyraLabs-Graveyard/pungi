@@ -29,9 +29,9 @@ import threading
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
 
-from pypungi.wrappers.scm import get_dir_from_scm
-from pypungi.wrappers.createrepo import CreaterepoWrapper
-from pypungi.phases.base import PhaseBase
+from pungi.wrappers.scm import get_dir_from_scm
+from pungi.wrappers.createrepo import CreaterepoWrapper
+from pungi.phases.base import PhaseBase
 
 
 createrepo_lock = threading.Lock()

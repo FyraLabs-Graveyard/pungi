@@ -27,14 +27,14 @@ from productmd.imagemanifest import Image
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
 
-from pypungi.wrappers.iso import IsoWrapper
-from pypungi.wrappers.createrepo import CreaterepoWrapper
-from pypungi.wrappers.kojiwrapper import KojiWrapper
-from pypungi.wrappers.jigdo import JigdoWrapper
-from pypungi.phases.base import PhaseBase
-from pypungi.util import makedirs, get_volid
-from pypungi.media_split import MediaSplitter
-from pypungi.compose_metadata.discinfo import read_discinfo, write_discinfo
+from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers.createrepo import CreaterepoWrapper
+from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers.jigdo import JigdoWrapper
+from pungi.phases.base import PhaseBase
+from pungi.util import makedirs, get_volid
+from pungi.media_split import MediaSplitter
+from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 
 
 class CreateisoPhase(PhaseBase):

@@ -23,7 +23,7 @@ __all__ = (
 import errno
 import os
 
-from pypungi.util import makedirs
+from pungi.util import makedirs
 
 
 class Paths(object):
