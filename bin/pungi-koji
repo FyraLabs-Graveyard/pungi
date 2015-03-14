@@ -294,7 +294,7 @@ def run_compose(compose):
                     fo.write(data)
 
     pungi.metadata.write_compose_info(compose)
-    compose.im.dump(compose.paths.compose.metadata("images.json")
+    compose.im.dump(compose.paths.compose.metadata("images.json"))
 
     # TEST phase
     test_phase.start()
