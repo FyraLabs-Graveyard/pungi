@@ -40,6 +40,7 @@ setup(
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),
         ('/usr/share/pungi', glob.glob('share/*.ks')),
+        ('/usr/share/pungi', glob.glob('share/*.dtd')),
         ('/usr/share/pungi/multilib', glob.glob('share/multilib/*')),
     ]
 )
