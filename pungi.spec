@@ -13,7 +13,7 @@ Requires:       lorax >= 22.1
 Requires:       repoview
 Requires:       python-lockfile
 Requires:       kobo
-Requires:       productmd
+Requires:       python-productmd
 
 BuildArch:      noarch
 
