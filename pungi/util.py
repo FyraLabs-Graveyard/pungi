@@ -25,7 +25,7 @@ import pipes
 import re
 
 from kobo.shortcuts import run
-from productmd import get_major_version
+from productmd.common import get_major_version
 
 
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
