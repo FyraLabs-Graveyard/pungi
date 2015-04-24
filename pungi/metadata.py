@@ -20,7 +20,6 @@ import time
 
 import productmd.composeinfo
 import productmd.treeinfo
-import productmd.treeinfo.product
 from productmd.common import get_major_version
 from kobo.shortcuts import relative_path
 

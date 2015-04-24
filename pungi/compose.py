@@ -27,7 +27,8 @@ import tempfile
 import shutil
 
 import kobo.log
-from productmd import ComposeInfo, ImageManifest
+from productmd.composeinfo import Compose
+from productmd.images import Images
 
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
@@ -40,8 +41,8 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
     topdir = os.path.abspath(topdir)
     already_exists_callbacks = already_exists_callbacks or []
 
-    # create an incomplete ComposeInfo to generate compose ID
-    ci = ComposeInfo()
+    # create an incomplete composeinfo to generate compose ID
+    ci = Compose()
     ci.product.name = conf["product_name"]
     ci.product.short = conf["product_short"]
     ci.product.version = conf["product_version"]
@@ -112,7 +113,7 @@ class Compose(kobo.log.LoggingBase):
         self.paths = Paths(self)
 
         # to provide compose_id, compose_date and compose_respin
-        self.ci_base = ComposeInfo()
+        self.ci_base = Compose()
         self.ci_base.load(os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json"))
 
         self.supported = supported
