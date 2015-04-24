@@ -152,7 +152,7 @@ def main():
 
     import kobo.conf
     import kobo.log
-    import productmd.composeinfo.compose
+    import productmd.composeinfo
 
     if opts.label:
         try:
