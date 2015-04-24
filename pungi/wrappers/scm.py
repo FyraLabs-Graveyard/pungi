@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # -*- coding: utf-8 -*-
 
 
@@ -25,7 +26,6 @@ import time
 import kobo.log
 from kobo.shortcuts import run, force_list
 from pungi.util import explode_rpm_package, makedirs
-
 
 class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None):
