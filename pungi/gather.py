@@ -1400,7 +1400,7 @@ class Pungi(PungiBase):
         if self.config.get('pungi', 'variant'):
             cmd.extend(["--variant", self.config.get('pungi', 'variant')])
         cmd.extend(["--bugurl", self.config.get('pungi', 'bugurl')])
-        if self.config.get('pungi', 'isfinal'):
+        if self.config.getboolean('pungi', 'isfinal'):
             cmd.append("--isfinal")
         cmd.extend(["--volid", self._shortenVolID()])
 
