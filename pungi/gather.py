@@ -1352,7 +1352,10 @@ class Pungi(PungiBase):
                         'Alpha': 'A',
                         'Beta': 'B',
                         'TC': 'T'}
-        name = self.config.get('pungi', 'family')
+        if self.config.get('pungi', 'variant'):
+            name += '%s-%s' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'variant'))
+        else:
+            name = self.config.get('pungi', 'family')
         version = self.config.get('pungi', 'version')
         arch = self.tree_arch
 
