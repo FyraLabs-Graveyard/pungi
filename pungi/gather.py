@@ -1353,7 +1353,7 @@ class Pungi(PungiBase):
                         'Beta': 'B',
                         'TC': 'T'}
         if self.config.get('pungi', 'variant'):
-            name += '%s-%s' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'variant'))
+            name = '%s-%s' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'variant'))
         else:
             name = self.config.get('pungi', 'family')
         version = self.config.get('pungi', 'version')
