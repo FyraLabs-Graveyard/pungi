@@ -1,6 +1,6 @@
 Name:           pungi
 Version:        4.0
-Release:        1%{?dist}
+Release:        0.7%{?dist}
 Summary:        Distribution compose tool
 
 Group:          Development/Tools
@@ -14,6 +14,7 @@ Requires:       repoview
 Requires:       python-lockfile
 Requires:       kobo
 Requires:       python-productmd
+Requires:       python-kickstart
 
 BuildArch:      noarch
 
@@ -45,6 +46,31 @@ rm -rf $RPM_BUILD_ROOT
 /var/cache/pungi
 
 %changelog
+* Wed May 20 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.7
+- make sure we treat the isfinal option as a boolean when fetching it (dennis)
+- if there is a variant use it in the volume id and shorten it. this will make
+  each producst install tree have different volume ids for their isos (dennis)
+- fix up productmd import in the executable (dennis)
+- fixup productmd imports for changes with open sourcing (dennis)
+- tell the scm wrapper to do an absolute import otherwise we hit a circular dep
+  issue and things go wonky (dennis)
+- include the dtd files in /usr/share/pungi (dennis)
+- add missing ) causing a syntax error (dennis)
+- fix up the productmd imports to import the function from the common module
+  (dennis)
+- fix up typo in getting arch for the lorax log file (dennis)
+
+* Sat Mar 14 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.6.20150314.gitd337c34
+- update the git snapshot to pick up some fixes
+
+* Fri Mar 13 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.5.git18d4d2e
+- update Requires for rename of python-productmd
+
+* Thu Mar 12 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.4.git18d4d2e
+- fix up the pungi logging by putting the arch in the log file name (dennis)
+- change pypungi imports to pungi (dennis)
+- spec file cleanups (dennis)
+
 * Thu Mar 12 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.3.gita3158ec
 - rename binaries (dennis)
 - Add the option to pass a custom path for the multilib config files (bcl)
@@ -56,3 +82,10 @@ rm -rf $RPM_BUILD_ROOT
 - Initial code merge for Pungi 4.0. (dmach)
 - Initial changes for Pungi 4.0. (dmach)
 - Add --nomacboot option (csieh)
+
+* Thu Mar 12 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.2.git320724e
+- update git snapshot to switch to executing lorax since it is using dnf
+
+* Thu Mar 12 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.1.git64b6c80
+- update to the pungi 4.0 dev branch
+
