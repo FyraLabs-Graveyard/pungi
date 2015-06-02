@@ -23,7 +23,7 @@ import shutil
 
 import koji
 import productmd.treeinfo
-from productmd.imagemanifest import Image
+from productmd.images import Image
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
 

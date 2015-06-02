@@ -21,7 +21,7 @@ import shutil
 import json
 
 from kobo.rpmlib import parse_nvra
-from productmd import RpmManifest
+from productmd.rpms import Rpms
 
 from pungi.wrappers.scm import get_file_from_scm
 from link import link_files
@@ -112,7 +112,7 @@ class GatherPhase(PhaseBase):
         pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets, self.pkgset_phase.path_prefix)
 
         manifest_file = self.compose.paths.compose.metadata("rpms.json")
-        manifest = RpmManifest()
+        manifest = Rpms()
         manifest.compose.id = self.compose.compose_id
         manifest.compose.type = self.compose.compose_type
         manifest.compose.date = self.compose.compose_date

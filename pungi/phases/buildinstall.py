@@ -26,7 +26,7 @@ import errno
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
-from productmd.imagemanifest import Image
+from productmd.images import Image
 
 from pungi.util import get_buildroot_rpms, get_volid
 from pungi.wrappers.lorax import LoraxWrapper

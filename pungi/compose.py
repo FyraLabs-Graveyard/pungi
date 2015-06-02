@@ -27,27 +27,28 @@ import tempfile
 import shutil
 
 import kobo.log
-from productmd.composeinfo import Compose
+from productmd.composeinfo import ComposeInfo
 from productmd.images import Images
 
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.util import makedirs
-from pungi.metadata import compose_to_composeinfo
 
 
 def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):
-    topdir = os.path.abspath(topdir)
     already_exists_callbacks = already_exists_callbacks or []
 
     # create an incomplete composeinfo to generate compose ID
-    ci = Compose()
-    ci.product.name = conf["product_name"]
-    ci.product.short = conf["product_short"]
-    ci.product.version = conf["product_version"]
-    ci.product.is_layered = bool(conf.get("product_is_layered", False))
-    if ci.product.is_layered:
+    ci = ComposeInfo()
+    ci.compose.name = conf["product_name"]
+    ci.release.name = conf["product_name"]
+    ci.compose.short = conf["product_short"]
+    ci.release.short = conf["product_short"]
+    ci.compose.version = conf["product_version"]
+    ci.release.version = conf["product_version"]
+    ci.compose.is_layered = bool(conf.get("product_is_layered", False))
+    if ci.compose.is_layered:
         ci.base_product.name = conf["base_product_name"]
         ci.base_product.short = conf["base_product_short"]
         ci.base_product.version = conf["base_product_version"]
@@ -56,9 +57,6 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
     ci.compose.type = compose_type
     ci.compose.date = compose_date or time.strftime("%Y%m%d", time.localtime())
     ci.compose.respin = compose_respin or 0
-
-    # HACK - add topdir for callbacks
-    ci.topdir = topdir
 
     while 1:
         ci.compose.id = ci.create_compose_id()
@@ -113,7 +111,7 @@ class Compose(kobo.log.LoggingBase):
         self.paths = Paths(self)
 
         # to provide compose_id, compose_date and compose_respin
-        self.ci_base = Compose()
+        self.ci_base = ComposeInfo()
         self.ci_base.load(os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json"))
 
         self.supported = supported
@@ -121,7 +119,7 @@ class Compose(kobo.log.LoggingBase):
             self.log_info("Automatically setting 'supported' flag for a Release Candidate (%s) compose." % self.compose_label)
             self.supported = True
 
-        self.im = ImageManifest()
+        self.im = Images()
         if self.DEBUG:
             try:
                 self.im.load(self.paths.compose.metadata("images.json"))
@@ -198,7 +196,10 @@ class Compose(kobo.log.LoggingBase):
         self.variants = VariantsXmlParser(file_obj, tree_arches).parse()
 
         # populate ci_base with variants - needed for layered-products (compose_id)
-        self.ci_base = compose_to_composeinfo(self)
+        ####FIXME - compose_to_composeinfo is no longer needed and has been
+        ####        removed, but I'm not entirely sure what this is needed for
+        ####        or if it is at all
+        #self.ci_base = compose_to_composeinfo(self)
 
     def get_variants(self, types=None, arch=None, recursive=False):
         result = []
