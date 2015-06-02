@@ -14,7 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-
 import os
 import time
 
@@ -61,102 +60,8 @@ def write_media_repo(compose, arch, variant, timestamp=None):
     description = get_description(compose, variant, arch)
     return create_media_repo(path, description, timestamp)
 
-
-def compose_to_composeinfo(compose):
-    ci = productmd.composeinfo.ComposeInfo()
-
-    # compose
-    ci.compose.id = compose.compose_id
-    ci.compose.type = compose.compose_type
-    ci.compose.date = compose.compose_date
-    ci.compose.respin = compose.compose_respin
-    ci.compose.label = compose.compose_label
-
-    # product
-    ci.product.name = compose.conf["product_name"]
-    ci.product.version = compose.conf["product_version"]
-    ci.product.short = compose.conf["product_short"]
-    ci.product.is_layered = compose.conf.get("product_is_layered", False)
-
-    # base product
-    if ci.product.is_layered:
-        ci.base_product.name = compose.conf["base_product_name"]
-        ci.base_product.version = compose.conf["base_product_version"]
-        ci.base_product.short = compose.conf["base_product_short"]
-
-    def dump_variant(variant, parent=None):
-        var = productmd.composeinfo.Variant(ci)
-
-        tree_arches = compose.conf.get("tree_arches", None)
-        if tree_arches and not (set(variant.arches) & set(tree_arches)):
-            return None
-
-        # variant details
-        var.id = variant.id
-        var.uid = variant.uid
-        var.name = variant.name
-        var.type = variant.type
-        var.arches = set(variant.arches)
-
-        if var.type == "layered-product":
-            var.product.name = variant.product_name
-            var.product.short = variant.product_short
-            var.product.version = variant.product_version
-            var.product.is_layered = True
-
-        for arch in variant.arches:
-            # paths: binaries
-            var.os_tree[arch] = relative_path(compose.paths.compose.os_tree(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.repository[arch] = relative_path(compose.paths.compose.repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.packages[arch] = relative_path(compose.paths.compose.packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            iso_dir = compose.paths.compose.iso_dir(arch=arch, variant=variant, create_dir=False) or ""
-            if iso_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), iso_dir)):
-                var.isos[arch] = relative_path(iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            jigdo_dir = compose.paths.compose.jigdo_dir(arch=arch, variant=variant, create_dir=False) or ""
-            if jigdo_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), jigdo_dir)):
-                var.jigdos[arch] = relative_path(jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-
-            # paths: sources
-            var.source_tree[arch] = relative_path(compose.paths.compose.os_tree(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.source_repository[arch] = relative_path(compose.paths.compose.repository(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.source_packages[arch] = relative_path(compose.paths.compose.packages(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            source_iso_dir = compose.paths.compose.iso_dir(arch="source", variant=variant, create_dir=False) or ""
-            if source_iso_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), source_iso_dir)):
-                var.source_isos[arch] = relative_path(source_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            source_jigdo_dir = compose.paths.compose.jigdo_dir(arch="source", variant=variant, create_dir=False) or ""
-            if source_jigdo_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), source_jigdo_dir)):
-                var.source_jigdos[arch] = relative_path(source_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-
-            # paths: debug
-            var.debug_tree[arch] = relative_path(compose.paths.compose.debug_tree(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.debug_repository[arch] = relative_path(compose.paths.compose.debug_repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.debug_packages[arch] = relative_path(compose.paths.compose.debug_packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            '''
-            # XXX: not suported (yet?)
-            debug_iso_dir = compose.paths.compose.debug_iso_dir(arch=arch, variant=variant) or ""
-            if debug_iso_dir:
-                var.debug_iso_dir[arch] = relative_path(debug_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            debug_jigdo_dir = compose.paths.compose.debug_jigdo_dir(arch=arch, variant=variant) or ""
-            if debug_jigdo_dir:
-                var.debug_jigdo_dir[arch] = relative_path(debug_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            '''
-
-        for v in variant.get_variants(recursive=False):
-            x = dump_variant(v, parent=variant)
-            if x is not None:
-                var.add(x)
-        return var
-
-    for variant_id in sorted(compose.variants):
-        variant = compose.variants[variant_id]
-        v = dump_variant(variant)
-        if v is not None:
-            ci.variants.add(v)
-    return ci
-
-
 def write_compose_info(compose):
-    ci = compose_to_composeinfo(compose)
+    ci = compose.dumps()
 
     msg = "Writing composeinfo"
     compose.log_info("[BEGIN] %s" % msg)
