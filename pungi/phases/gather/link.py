@@ -62,7 +62,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         # update rpm manifest
         pkg_obj = pkg_set[pkg["path"]]
         nevra = pkg_obj.nevra
-        manifest.add("src", variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, rpm_type="source")
+        manifest.add("src", variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="source")
 
         # update srpm_map
         srpm_map.setdefault(pkg_obj.file_name, nevra)
@@ -80,7 +80,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pkg_obj = pkg_set[pkg["path"]]
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
-        manifest.add(arch, variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, rpm_type="package", srpm_nevra=src_nevra)
+        manifest.add(arch, variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="binary", srpm_nevra=src_nevra)
 
     packages_dir = compose.paths.compose.debug_packages(arch, variant)
     packages_dir_relpath = compose.paths.compose.debug_packages(arch, variant, relative=True)
@@ -95,7 +95,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pkg_obj = pkg_set[pkg["path"]]
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
-        manifest.add(arch, variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, rpm_type="debug", srpm_nevra=src_nevra)
+        manifest.add(arch, variant.uid, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="debug", srpm_nevra=src_nevra)
 
     pool.start()
     pool.stop()
