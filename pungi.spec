@@ -15,6 +15,7 @@ Requires:       python-lockfile
 Requires:       kobo
 Requires:       python-productmd
 Requires:       python-kickstart
+Requires:       libselinux-python
 
 BuildArch:      noarch
 
