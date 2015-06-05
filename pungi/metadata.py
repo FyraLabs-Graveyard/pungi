@@ -91,10 +91,10 @@ def write_tree_info(compose, arch, variant, timestamp=None):
 
         # product
         # TODO: read from variants.xml
-        ti.product.name = variant.product_name
-        ti.product.version = variant.product_version
-        ti.product.short = variant.product_short
-        ti.product.is_layered = True
+        ti.release.name = variant.product_name
+        ti.release.version = variant.product_version
+        ti.release.short = variant.product_short
+        ti.release.is_layered = True
 
         # base product
         ti.base_product.name = compose.conf["product_name"]
@@ -106,13 +106,13 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         ti.base_product.short = compose.conf["product_short"]
     else:
         # product
-        ti.product.name = compose.conf["product_name"]
-        ti.product.version = compose.conf["product_version"]
-        ti.product.short = compose.conf["product_short"]
-        ti.product.is_layered = compose.conf.get("product_is_layered", False)
+        ti.release.name = compose.conf["product_name"]
+        ti.release.version = compose.conf["product_version"]
+        ti.release.short = compose.conf["product_short"]
+        ti.release.is_layered = compose.conf.get("product_is_layered", False)
 
         # base product
-        if ti.product.is_layered:
+        if ti.release.is_layered:
             ti.base_product.name = compose.conf["base_product_name"]
             ti.base_product.version = compose.conf["base_product_version"]
             ti.base_product.short = compose.conf["base_product_short"]
@@ -158,7 +158,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         repomd_path = os.path.join(addon.repository, "repodata", "repomd.xml")
         ti.checksums.add(os_tree, repomd_path)
 
-    class LoraxProduct(productmd.treeinfo.product.Product):
+    class LoraxProduct(productmd.treeinfo.Release):
         def _check_short(self):
             # HACK: set self.short so .treeinfo produced by lorax can be read
             if not self.short:
