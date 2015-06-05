@@ -36,6 +36,7 @@ setup(
     scripts         = [
         'bin/pungi',
         'bin/pungi-koji',
+        'bin/comps_filter',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),

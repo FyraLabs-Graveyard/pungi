@@ -1,0 +1,209 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import sys
+import fnmatch
+import optparse
+import lxml.etree
+import re
+from io import StringIO
+
+
+class CompsFilter(object):
+    def __init__(self, file_obj, reindent=False):
+        self.reindent = reindent
+        parser = None
+        if self.reindent:
+            parser = lxml.etree.XMLParser(remove_blank_text=True)
+        self.tree = lxml.etree.parse(file_obj, parser=parser)
+        self.encoding = "utf-8"
+
+    def _filter_elements_by_arch(self, xpath, arch, only_arch=False):
+        if only_arch:
+            # remove all elements without the 'arch' attribute
+            for i in self.tree.xpath(xpath + "[not(@arch)]"):
+                i.getparent().remove(i)
+
+        for i in self.tree.xpath(xpath + "[@arch]"):
+            arches = i.attrib.get("arch")
+            arches = re.split(r"[, ]+", arches)
+            arches = [j for j in arches if j]
+            if arch not in arches:
+                # remove elements not matching the arch
+                i.getparent().remove(i)
+            else:
+                # remove the 'arch' attribute
+                del i.attrib["arch"]
+
+    def filter_packages(self, arch, only_arch=False):
+        """
+        Filter packages according to arch.
+        If only_arch is set, then only packages for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/group/packagelist/packagereq", arch, only_arch)
+
+    def filter_groups(self, arch, only_arch=False):
+        """
+        Filter groups according to arch.
+        If only_arch is set, then only groups for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/group", arch, only_arch)
+
+    def filter_category_groups(self):
+        """
+        Remove undefined groups from categories.
+        """
+        all_groups = self.tree.xpath("/comps/group/id/text()")
+        for category in self.tree.xpath("/comps/category"):
+            for group in category.xpath("grouplist/groupid"):
+                if group.text not in all_groups:
+                    group.getparent().remove(group)
+
+    def remove_empty_groups(self, keep_empty=None):
+        """
+        Remove all groups without packages.
+        """
+        keep_empty = keep_empty or []
+        for group in self.tree.xpath("/comps/group"):
+            if not group.xpath("packagelist/packagereq"):
+                group_id = group.xpath("id/text()")[0]
+                found = False
+                for pattern in keep_empty:
+                    if fnmatch.fnmatch(group_id, pattern):
+                        found = True
+                        break
+                if found:
+                    continue
+                group.getparent().remove(group)
+
+    def remove_empty_categories(self):
+        """
+        Remove all categories without groups.
+        """
+        for category in self.tree.xpath("/comps/category"):
+            if not category.xpath("grouplist/groupid"):
+                category.getparent().remove(category)
+
+    def remove_categories(self):
+        """
+        Remove all categories.
+        """
+        categories = self.tree.xpath("/comps/category")
+        for i in categories:
+            i.getparent().remove(i)
+
+    def remove_langpacks(self):
+        """
+        Remove all langpacks.
+        """
+        langpacks = self.tree.xpath("/comps/langpacks")
+        for i in langpacks:
+            i.getparent().remove(i)
+
+    def remove_translations(self):
+        """
+        Remove all translations.
+        """
+        for i in self.tree.xpath("//*[@xml:lang]"):
+            i.getparent().remove(i)
+
+    def filter_environment_groups(self):
+        """
+        Remove undefined groups from environments.
+        """
+        all_groups = self.tree.xpath("/comps/group/id/text()")
+        for environment in self.tree.xpath("/comps/environment"):
+            for group in environment.xpath("grouplist/groupid"):
+                if group.text not in all_groups:
+                    group.getparent().remove(group)
+
+    def remove_empty_environments(self):
+        """
+        Remove all environments without groups.
+        """
+        for environment in self.tree.xpath("/comps/environment"):
+            if not environment.xpath("grouplist/groupid"):
+                environment.getparent().remove(environment)
+
+    def remove_environments(self):
+        """
+        Remove all langpacks.
+        """
+        environments = self.tree.xpath("/comps/environment")
+        for i in environments:
+            i.getparent().remove(i)
+
+    def write(self, file_obj):
+        self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
+        file_obj.write("\n")
+
+    def pprint(self):
+        self.write(sys.stdout)
+
+    def xml(self):
+        io = StringIO()
+        self.write(io)
+        io.seek(0)
+        return io.read()
+
+
+def main():
+    parser = optparse.OptionParser("%prog [options] <comps.xml>")
+    parser.add_option("--output", help="redirect output to a file")
+    parser.add_option("--arch", help="filter groups and packagews according to an arch")
+    parser.add_option("--arch-only-groups", default=False, action="store_true", help="keep only arch groups, remove the rest")
+    parser.add_option("--arch-only-packages", default=False, action="store_true", help="keep only arch packages, remove the rest")
+    parser.add_option("--remove-categories", default=False, action="store_true", help="remove all categories")
+    parser.add_option("--remove-langpacks", default=False, action="store_true", help="remove the langpacks section")
+    parser.add_option("--remove-translations", default=False, action="store_true", help="remove all translations")
+    parser.add_option("--remove-environments", default=False, action="store_true", help="remove all environment sections")
+    parser.add_option("--keep-empty-group", default=[], action="append", metavar="[GROUPID]", help="keep groups even if they are empty")
+    parser.add_option("--no-cleanup", default=False, action="store_true", help="don't remove empty groups and categories")
+    parser.add_option("--no-reindent", default=False, action="store_true", help="don't re-indent the output")
+
+    opts, args = parser.parse_args()
+
+    if len(args) != 1:
+        parser.error("please specify exactly one comps file")
+
+    comps_file = args[0]
+
+    if opts.arch is None:
+        parser.error("please specify arch")
+
+    file_obj = open(comps_file, "r")
+    f = CompsFilter(file_obj, reindent=not opts.no_reindent)
+    f.filter_packages(opts.arch, opts.arch_only_packages)
+    f.filter_groups(opts.arch, opts.arch_only_groups)
+
+    if not opts.no_cleanup:
+        f.remove_empty_groups(keep_empty=opts.keep_empty_group)
+        f.filter_category_groups()
+        f.remove_empty_categories()
+        f.filter_environment_groups()
+        f.remove_empty_environments()
+
+    if opts.remove_categories:
+        f.remove_categories()
+
+    if opts.remove_langpacks:
+        f.remove_langpacks()
+
+    if opts.remove_translations:
+        f.remove_translations()
+
+    if opts.remove_environments:
+        f.remove_environments()
+
+    if opts.output:
+        out = open(opts.output, "w")
+        f.write(out)
+    else:
+        f.pprint()
+
+
+if __name__ == "__main__":
+    main()
