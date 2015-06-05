@@ -16,6 +16,7 @@ Requires:       kobo
 Requires:       python-productmd
 Requires:       python-kickstart
 Requires:       libselinux-python
+Requires:       createrepo_c
 
 BuildArch:      noarch
 
