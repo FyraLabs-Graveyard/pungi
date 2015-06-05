@@ -69,7 +69,7 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
 
 def write_pungi_config(compose, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, repos=None, comps_repo=None, package_set=None, fulltree_excludes=None, prepopulate=None):
     """write pungi config (kickstart) for arch/variant"""
-    pungi = PungiWrapper()
+    pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
     msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
@@ -101,17 +101,17 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         else:
             filter_packages_str.append(pkg_name)
 
-    pungi.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str, exclude_packages=filter_packages_str, comps_repo=comps_repo, lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes, multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist, prepopulate=prepopulate)
+    pungi_wrapper.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str, exclude_packages=filter_packages_str, comps_repo=comps_repo, lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes, multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist, prepopulate=prepopulate)
 
 
 def resolve_deps(compose, arch, variant):
-    pungi = PungiWrapper()
+    pungi_wrapper = PungiWrapper()
     pungi_log = compose.paths.work.pungi_log(arch, variant)
 
     msg = "Running pungi (arch: %s, variant: %s)" % (arch, variant)
     if compose.DEBUG and os.path.exists(pungi_log):
         compose.log_warning("[SKIP ] %s" % msg)
-        return pungi.get_packages(open(pungi_log, "r").read())
+        return pungi_wrapper.get_packages(open(pungi_log, "r").read())
 
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant)
@@ -146,7 +146,7 @@ def resolve_deps(compose, arch, variant):
     yum_arch = tree_arch_to_yum_arch(arch)
     tmp_dir = compose.paths.work.tmp_dir(arch, variant)
     cache_dir = compose.paths.work.pungi_cache_dir(arch, variant)
-    cmd = pungi.get_pungi_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid, selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch, full_archlist=True, greedy=greedy_method, cache_dir=cache_dir, lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
+    cmd = pungi_wrapper.get_pungi_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid, selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch, full_archlist=True, greedy=greedy_method, cache_dir=cache_dir, lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     tmp_dir = tempfile.mkdtemp(prefix="pungi_")
@@ -154,7 +154,7 @@ def resolve_deps(compose, arch, variant):
         run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir)
     finally:
         rmtree(tmp_dir)
-    result = pungi.get_packages(open(pungi_log, "r").read())
+    result = pungi_wrapper.get_packages(open(pungi_log, "r").read())
 
     compose.log_info("[DONE ] %s" % msg)
     return result
@@ -165,9 +165,9 @@ def check_deps(compose, arch, variant):
     if not check_deps:
         return
 
-    pungi = PungiWrapper()
+    pungi_wrapper = PungiWrapper()
     pungi_log = compose.paths.work.pungi_log(arch, variant)
-    missing_deps = pungi.get_missing_deps(open(pungi_log, "r").read())
+    missing_deps = pungi_wrapper.get_missing_deps(open(pungi_log, "r").read())
     if missing_deps:
         for pkg in sorted(missing_deps):
             compose.log_error("Unresolved dependencies in package %s: %s" % (pkg, sorted(missing_deps[pkg])))
