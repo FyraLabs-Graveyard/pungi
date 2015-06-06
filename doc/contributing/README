@@ -1,9 +1,10 @@
 ##############################################################################
 # Developing
 
-Currently the development workflow for pungi4 (devel-4-pungi) branch is:
+Currently the development workflow for pungi 4 is on master:
 
-    - Make your own for at https://pagure.io/pungi
+    - Make your own fork at https://pagure.io/pungi
+
     - Clone your fork locally (replacing $USERNAME with your own):
         git clone git@pagure.io:forks/$USERNAME/pungi.git
 
@@ -12,15 +13,15 @@ Currently the development workflow for pungi4 (devel-4-pungi) branch is:
         git remote add upstream git@pagure.io:pungi.git
 
         #NOTE: This workflow assumes that you never 'git commit' directly to
-        #      the devel-4-pungi branch of your fork. This will make more sense
+        #      the master branch of your fork. This will make more sense
         #      when we cover rebasing below.
 
-    - create a topic branch based on devel-4-pungi
-        git branch my_topic_branch devel-4-pungi
+    - create a topic branch based on master
+        git branch my_topic_branch master
         git checkout my_topic_branch
 
     - Make edits, changes, add new features, etc. and then make sure to pull
-      from upstream and rebase before submitting a pull request.
+      from upstream master and rebase before submitting a pull request.
         ## lets just say you edited setup.py for sake of argument
         git checkout my_topic_branch
         # make changes to setup.py
@@ -28,19 +29,20 @@ Currently the development workflow for pungi4 (devel-4-pungi) branch is:
         git commit -m "added awesome feature to setup.py"
 
         ## Now we rebase
-        git checkout devel-4-pungi
+        git checkout master
         git fetch upstream
         git fetch upstream --tags
-        git merge upstream/devel-4-pungi
-        git push origin devel-4-pungi
+        git merge upstream/master
+        git push origin master
         git push origin --tags
         git checkout my_topic_branch
-        git rebase devel-4-pungi
+        git rebase master
         # Resolve merge conflicts if any as a result of your development in
         # your topic branch
         git push origin my_topic_branch
 
     - Create pull request in the pagure.io web UI
+
     - For convenience, here is a bash shell function that can be placed in your
       ~/.bashrc and called such as 'pullupstream pungi-4-devel' that will
       automate a large portion of the rebase steps from above.
@@ -71,7 +73,7 @@ Running pungi locally for testing
     - Running pungi locally for testing, you should build the rpm, install it,
       and run ''pungi-koji' as follows:
 
-        pungi-koji --target-dir=/path/to/store/compose/ --nightly \
+      pungi-koji --target-dir=/path/to/store/compose/ --nightly \
                     --config=/path/to/pungi-fedora/fedora.conf
 
       The fedora.conf file and other files it references can be found here:
