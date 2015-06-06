@@ -34,6 +34,7 @@ from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.util import makedirs
+from pungi.metadata import compose_to_composeinfo
 
 
 def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):
@@ -199,7 +200,7 @@ class Compose(kobo.log.LoggingBase):
         ####FIXME - compose_to_composeinfo is no longer needed and has been
         ####        removed, but I'm not entirely sure what this is needed for
         ####        or if it is at all
-        #self.ci_base = compose_to_composeinfo(self)
+        self.ci_base = compose_to_composeinfo(self)
 
     def get_variants(self, types=None, arch=None, recursive=False):
         result = []

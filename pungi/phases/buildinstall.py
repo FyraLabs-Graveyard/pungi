@@ -299,7 +299,7 @@ def symlink_boot_iso(compose, arch, variant):
         img.volume_id = iso.get_volume_id(new_boot_iso_path)
     except RuntimeError:
         pass
-    compose.im.add(arch, variant.uid, img)
+    compose.im.add(variant.uid, arch, img)
     compose.log_info("[DONE ] %s" % msg)
 
 
