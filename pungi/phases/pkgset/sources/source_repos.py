@@ -150,7 +150,7 @@ def populate_global_pkgset(compose, file_list, path_prefix):
 
 def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, package_set=None):
     """write pungi config (kickstart) for arch/variant"""
-    pungi = PungiWrapper()
+    pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
     msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
@@ -182,4 +182,4 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
         packages.append("system-release")
 
     prepopulate = get_prepopulate_packages(compose, arch, None)
-    pungi.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=grps, packages=packages, exclude_packages=[], comps_repo=None, prepopulate=prepopulate)
+    pungi_wrapper.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=grps, packages=packages, exclude_packages=[], comps_repo=None, prepopulate=prepopulate)
