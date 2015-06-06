@@ -164,9 +164,9 @@ def write_tree_info(compose, arch, variant, timestamp=None):
             if not self.short:
                 self.short = compose.conf["product_short"]
 
-    class LoraxTreeInfo(productmd.TreeInfo):
+    class LoraxTreeInfo(productmd.treeinfo.TreeInfo):
         def clear(self):
-            productmd.TreeInfo.clear(self)
+            super(LoraxTreeInfo, self).clear()
             self.product = LoraxProduct(self)
 
     # images
