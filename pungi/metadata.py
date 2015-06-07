@@ -35,7 +35,7 @@ def get_description(compose, variant, arch):
         result = "%s %s for %s %s" % (variant.product_name, variant.product_version, compose.conf["product_name"], get_major_version(compose.conf["product_version"]))
     else:
         result = "%s %s" % (compose.conf["product_name"], compose.conf["product_version"])
-        if compose.conf.get("is_layered", False):
+        if compose.conf.get("product_is_layered", False):
             result += "for %s %s" % (compose.conf["base_product_name"], compose.conf["base_product_version"])
 
     result = result % {"variant_name": variant.name, "arch": arch}
