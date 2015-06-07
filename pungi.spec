@@ -13,10 +13,21 @@ Requires:       lorax >= 22.1
 Requires:       repoview
 Requires:       python-lockfile
 Requires:       kobo
+Requires:       kobo-rpmlib
 Requires:       python-productmd
 Requires:       python-kickstart
 Requires:       libselinux-python
 Requires:       createrepo_c
+Requires:       python-lxml
+Requires:       koji
+Requires:       jigdo
+Requires:       cvs
+Requires:       yum-utils
+Requires:       isomd5sum
+Requires:       genisoimage
+Requires:       gettext
+Requires:       syslinux
+Requires:       git
 
 BuildArch:      noarch
 
