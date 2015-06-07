@@ -315,7 +315,7 @@ def run_compose(compose):
     try:
         os.symlink(compose_dir, symlink)
     except Exception as ex:
-        print("ERROR: couldn't create latest symlink: %s" % ex)
+        compose.log_error("Couldn't create latest symlink: %s" % ex)
 
     compose.log_info("Compose finished: %s" % compose.topdir)
     compose.write_status("FINISHED")
