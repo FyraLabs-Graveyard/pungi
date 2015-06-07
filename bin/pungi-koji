@@ -156,7 +156,7 @@ def main():
 
     if opts.label:
         try:
-            productmd.composeinfo.compose.verify_label(opts.label)
+            productmd.composeinfo.verify_label(opts.label)
         except ValueError as ex:
             parser.error(str(ex))
 
