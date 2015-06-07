@@ -38,7 +38,7 @@ imports = [
     ("kobo-rpmlib", "kobo.rpmlib"),
     ("python-lxml", "lxml"),
     ("koji", "koji"),
-    ("productmd", "productmd"),
+    ("python-productmd", "productmd"),
 ]
 
 
