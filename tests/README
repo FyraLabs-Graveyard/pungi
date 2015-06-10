@@ -1,0 +1,44 @@
+Running pungi4 tests
+
+Pungi4 is an utility to perform composes of rpms, as such we will need some
+rpms to perform composes on.
+
+In this directory you will find a small utility called 'createtestdata.py' that
+takes two arguments, first is the package manifest JSON file that will contain
+the list of packages that are architecture specific, the list of architectures
+to build them for, and finally the packages that are noarch. (Don't worry about
+your dev machine being the wrong arch as needed to be produced, we're using an
+utility library called rpmfluff[0] that's faking a lot of this for us)
+
+Before we run any tests we will need to create a repo to work with using the
+'createtestdata.py' script. NOTE: This script requires both the 'python-click
+and 'python-rpmfluff' packages.
+
+    $ ./createtestdata.py --pkgfile pkgs.json --outdir .
+
+You will now find a directory called ./repo in the current directory, this is
+setup exactly as the pungi tests need it and you are now ready to run tests.
+
+Next you will find a hand full of scripts named test_* and these are to run the
+actual tests. There is also a small wrapper called 'run_all_tests.sh' that will
+run all scripts prefixed with test_* in the current directory.
+
+    $ ./run_all_tests.sh
+
+Or alternatively, select the tests you want to run and run them one by one:
+
+    $ ./test_arch.py
+    ......
+    ----------------------------------------------------------------------
+    Ran 6 tests in 0.001s
+
+    OK
+
+    $ ./test_pathmatch.py
+    ...
+    ----------------------------------------------------------------------
+    Ran 3 tests in 0.001s
+
+    OK
+
+[0] - https://fedorahosted.org/rpmfluff/
