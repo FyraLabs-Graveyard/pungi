@@ -922,7 +922,6 @@ class Pungi(PungiBase):
                 pprint.pformat(list(sorted(failed)))))
             self.logger.info("Couldn't find %i of %i srpms." % (
                 len(failed), len(self.src_by_bin)))
-            raise RuntimeError("Could not find all srpms.")
 
     def add_srpms(self, po_list=None):
         """Cycle through the list of package objects and
@@ -932,11 +931,14 @@ class Pungi(PungiBase):
         srpms = set()
         po_list = po_list or self.po_list
         for po in sorted(po_list):
-            srpm_po = self.sourcerpm_srpmpo_map[po.sourcerpm]
-            if srpm_po in self.completed_add_srpms:
+            try:
+                srpm_po = self.sourcerpm_srpmpo_map[po.sourcerpm]
+            except KeyError:
+                self.logger.error("Cannot get source RPM '%s' for %s" % (po.sourcerpm, po.nvra))
+                srpm_po = None
+
+            if srpm_po is None:
                 continue
-            msg = "Added source package %s.%s (repo: %s)" % (srpm_po.name, srpm_po.arch, srpm_po.repoid)
-            self.add_source(srpm_po, msg)
 
             # flags
             if po in self.input_packages:
@@ -947,6 +949,12 @@ class Pungi(PungiBase):
                 self.langpack_packages.add(srpm_po)
             if po in self.multilib_packages:
                 self.multilib_packages.add(srpm_po)
+
+            if srpm_po in self.completed_add_srpms:
+                continue
+
+            msg = "Added source package %s.%s (repo: %s)" % (srpm_po.name, srpm_po.arch, srpm_po.repoid)
+            self.add_source(srpm_po, msg)
 
             self.completed_add_srpms.add(srpm_po)
             srpms.add(srpm_po)
