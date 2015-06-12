@@ -1,6 +1,6 @@
 Name:           pungi
-Version:        4.0
-Release:        0.9%{?dist}
+Version:        4.0.1
+Release:        1%{?dist}
 Summary:        Distribution compose tool
 
 Group:          Development/Tools
@@ -59,6 +59,17 @@ rm -rf $RPM_BUILD_ROOT
 /var/cache/pungi
 
 %changelog
+* Thu Jun 11 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.1-1
+- wrap check for selinux enforcing in a try except (dennis)
+- pull in gather.py patches from dmach for test compose (admiller)
+- Add some basic testing, dummy rpm creation, and a testing README (admiller)
+- pungi-koji: use logger instead of print when it's available (lkocman)
+- fix incorrect reference to variable 'product_is_layered' (lkocman)
+- pungi-koji: fix bad module path to verify_label() (lkocman)
+- update the package Requires to ensure we have everything installed to run
+  pungi-koji (dennis)
+- update the package to be installed for productmd to python-productmd (dennis)
+
 * Sun Jun 07 2015 Dennis Gilmore <dennis@ausil.us> - 4.0-0.9
 - update docs now devel-4-pungi is merged to master, minor spelling fixes
   (pbrobinson)
