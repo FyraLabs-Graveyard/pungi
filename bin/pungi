@@ -30,7 +30,11 @@ def main():
         return 1
     
     if opts.do_all or opts.do_buildinstall:
-        enforcing = selinux.security_getenforce()
+        try:
+            enforcing = selinux.security_getenforce()
+        except:
+            print >> sys.stdout, "INFO: selinux disabled"
+            enforcing = False
         if enforcing:
             print >> sys.stdout, "WARNING: SELinux is enforcing.  This may lead to a compose with selinux disabled."
             print >> sys.stdout, "Consider running with setenforce 0."
