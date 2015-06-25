@@ -32,48 +32,16 @@ def convert_pkg_map(data):
     return result
 
 
-class TestPungi(unittest.TestCase):
+class DepsolvingBase(object):
 
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp(prefix="test_compose_")
         self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/repo")
         self.lookaside = os.path.join(os.path.dirname(__file__),
                                       "fixtures/repos/repo-krb5-lookaside")
-        self.ks = os.path.join(self.tmp_dir, "ks")
-        self.out = os.path.join(self.tmp_dir, "out")
-        logger = logging.getLogger('Pungi')
-        if not logger.handlers:
-            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
-            console = logging.StreamHandler(sys.stdout)
-            console.setFormatter(formatter)
-            console.setLevel(logging.INFO)
-            logger.addHandler(console)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
-
-    def go(self, packages, groups, repo=None, lookaside=None, prepopulate=None,
-           multilib_whitelist=None, **kwargs):
-        """
-        Write a kickstart with given packages and groups, then run the
-        depsolving and parse the output.
-        """
-        p = PungiWrapper()
-        repos = {"repo": repo or self.repo}
-        if lookaside:
-            repos['lookaside'] = lookaside
-        p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
-                          multilib_whitelist=multilib_whitelist)
-        kwargs.setdefault('cache_dir', self.tmp_dir)
-        # Unless the test specifies an arch, we need to default to x86_64.
-        # Otherwise the arch of current machine will be used, which will cause
-        # failure most of the time.
-        kwargs.setdefault('arch', 'x86_64')
-
-        p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
-        with open(self.out, "r") as f:
-            pkg_map = p.get_packages(f.read())
-        return convert_pkg_map(pkg_map)
 
     def test_kernel(self):
         packages = [
@@ -103,6 +71,23 @@ class TestPungi(unittest.TestCase):
             "dummy-kernel-3.1.0-1.x86_64.rpm",          # Important
             "dummy-kernel-headers-3.1.0-1.x86_64.rpm",
             "dummy-kernel-doc-3.1.0-1.noarch.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-kernel-3.1.0-1.src.rpm"
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [])
+
+    def test_kernel_fulltree_excludes(self):
+        packages = [
+            "dummy-kernel",
+        ]
+        pkg_map = self.go(packages, None, greedy="none", fulltree=True,
+                          fulltree_excludes=['dummy-kernel'])
+
+        self.assertNotIn("dummy-kernel-3.1.0-1.i686.rpm", pkg_map["rpm"])
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-kernel-3.1.0-1.x86_64.rpm",
         ])
         self.assertItemsEqual(pkg_map["srpm"], [
             "dummy-kernel-3.1.0-1.src.rpm"
@@ -408,7 +393,7 @@ class TestPungi(unittest.TestCase):
             "dummy-vacation-debuginfo-1.2.7.1-1.x86_64.rpm",
         ])
 
-    def test_smtpdaemon_greedy(self):
+    def test_smtpdaemon_greedy_all(self):
         packages = [
             "dummy-vacation",
         ]
@@ -426,6 +411,95 @@ class TestPungi(unittest.TestCase):
             "dummy-postfix-2.9.2-2.x86_64.rpm",             # Important
             "dummy-sendmail-8.14.5-12.i686.rpm",            # Important
             "dummy-sendmail-8.14.5-12.x86_64.rpm",          # Important
+            "dummy-vacation-1.2.7.1-1.i686.rpm",
+            "dummy-vacation-1.2.7.1-1.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+            "dummy-postfix-2.9.2-2.src.rpm",
+            "dummy-sendmail-8.14.5-12.src.rpm",
+            "dummy-vacation-1.2.7.1-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+            "dummy-postfix-debuginfo-2.9.2-2.i686.rpm",
+            "dummy-postfix-debuginfo-2.9.2-2.x86_64.rpm",
+            "dummy-sendmail-debuginfo-8.14.5-12.i686.rpm",
+            "dummy-sendmail-debuginfo-8.14.5-12.x86_64.rpm",
+            "dummy-vacation-debuginfo-1.2.7.1-1.i686.rpm",
+            "dummy-vacation-debuginfo-1.2.7.1-1.x86_64.rpm",
+        ])
+
+    def test_smtpdaemon_greedy_all_explicit_postfix(self):
+        # Postfix provides smtpdaemon, but we still want sendmail in because we
+        # are greedy.
+        packages = [
+            "dummy-postfix",
+            "dummy-vacation",
+        ]
+        pkg_map = self.go(packages, None, greedy="all")
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-filesystem-4.2.37-6.i686.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.i686.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+            "dummy-postfix-2.9.2-2.i686.rpm",
+            "dummy-postfix-2.9.2-2.x86_64.rpm",
+            "dummy-sendmail-8.14.5-12.i686.rpm",
+            "dummy-sendmail-8.14.5-12.x86_64.rpm",
+            "dummy-vacation-1.2.7.1-1.i686.rpm",
+            "dummy-vacation-1.2.7.1-1.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+            "dummy-postfix-2.9.2-2.src.rpm",
+            "dummy-sendmail-8.14.5-12.src.rpm",
+            "dummy-vacation-1.2.7.1-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+            "dummy-postfix-debuginfo-2.9.2-2.i686.rpm",
+            "dummy-postfix-debuginfo-2.9.2-2.x86_64.rpm",
+            "dummy-sendmail-debuginfo-8.14.5-12.i686.rpm",
+            "dummy-sendmail-debuginfo-8.14.5-12.x86_64.rpm",
+            "dummy-vacation-debuginfo-1.2.7.1-1.i686.rpm",
+            "dummy-vacation-debuginfo-1.2.7.1-1.x86_64.rpm",
+        ])
+
+    def test_smtpdaemon_greedy_all_explicit_sendmail(self):
+        # Same as above, but the other way around.
+        packages = [
+            "dummy-sendmail",
+            "dummy-vacation",
+        ]
+        pkg_map = self.go(packages, None, greedy="all")
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-filesystem-4.2.37-6.i686.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.i686.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+            "dummy-postfix-2.9.2-2.i686.rpm",
+            "dummy-postfix-2.9.2-2.x86_64.rpm",
+            "dummy-sendmail-8.14.5-12.i686.rpm",
+            "dummy-sendmail-8.14.5-12.x86_64.rpm",
             "dummy-vacation-1.2.7.1-1.i686.rpm",
             "dummy-vacation-1.2.7.1-1.x86_64.rpm",
         ])
@@ -529,9 +603,7 @@ class TestPungi(unittest.TestCase):
         packages = [
             "Dummy-firefox",
         ]
-        pkg_map = self.go(packages, None, lookaside=self.lookaside,
-                          greedy="none", selfhosting=True,
-                          lookaside_repos=["lookaside"])
+        pkg_map = self.go(packages, None, lookaside=self.lookaside, selfhosting=True)
 
         self.assertNotIn("Dummy-firefox-16.0.1-2.i686.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-krb5-1.10-5.x86_64.rpm", pkg_map["rpm"])
@@ -703,6 +775,28 @@ class TestPungi(unittest.TestCase):
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+        ])
+
+    def test_wildcard_with_multilib_blacklist(self):
+        packages = [
+            "dummy-glibc*",
+        ]
+        pkg_map = self.go(packages, None, multilib_blacklist=['dummy-glibc*'])
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
 
@@ -1017,7 +1111,7 @@ class TestPungi(unittest.TestCase):
         packages = [
             "dummy-AdobeReader_enu",
         ]
-        pkg_map = self.go(packages, None, greedy="none", fulltree=False, arch="x86_64")
+        pkg_map = self.go(packages, None)
 
         self.assertItemsEqual(pkg_map["rpm"], [
             "dummy-AdobeReader_enu-9.5.1-1.i486.rpm",       # Important
@@ -1143,7 +1237,7 @@ class TestPungi(unittest.TestCase):
         packages = [
             "dummy-bash",
         ]
-        pkg_map = self.go(packages, None, greedy="none", nodeps=True, fulltree=True)
+        pkg_map = self.go(packages, None, nodeps=True, fulltree=True)
 
         self.assertNotIn("dummy-bash-4.2.37-5.i686.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-bash-4.2.37-5.x86_64.rpm", pkg_map["rpm"])
@@ -1166,8 +1260,7 @@ class TestPungi(unittest.TestCase):
             "*",
         ]
         pkg_map = self.go(packages, None, lookaside=self.repo,
-                          greedy="none", nodeps=True, fulltree=True,
-                          lookaside_repos=["lookaside"])
+                          nodeps=True, fulltree=True)
 
         self.assertItemsEqual(pkg_map["rpm"], [])
         self.assertItemsEqual(pkg_map["srpm"], [])
@@ -1179,7 +1272,7 @@ class TestPungi(unittest.TestCase):
             "-dummy-bas*",
             "dummy-glibc",
         ]
-        pkg_map = self.go(packages, None, lookaside=self.repo,
+        pkg_map = self.go(packages, None,
                           greedy="none", nodeps=True, fulltree=True)
 
         # neither dummy-bash or dummy-basesystem is pulled in
@@ -1409,6 +1502,101 @@ class TestPungi(unittest.TestCase):
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-mingw32-qt5-qtbase-debuginfo-5.6.0-1.noarch.rpm",
         ])
+
+    def test_input_by_wildcard(self):
+        packages = [
+            "dummy-release-notes-*",
+            # Yum matches globs against NVR, DNF against names; let's exclude
+            # the extra package to unify the behaviour.
+            "-dummy-release-notes",
+        ]
+        pkg_map = self.go(packages, None)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-release-notes-cs-CZ-1.2-1.noarch.rpm",
+            "dummy-release-notes-en-US-1.2-1.noarch.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-release-notes-cs-CZ-1.2-1.src.rpm",
+            "dummy-release-notes-en-US-1.2-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [])
+
+    def test_requires_pre_post(self):
+        packages = [
+            "dummy-perl"
+        ]
+        pkg_map = self.go(packages, None)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-perl-1.0.0-1.x86_64.rpm",
+            "dummy-perl-macros-1.0.0-1.x86_64.rpm",     # Requires(pre)
+            "dummy-perl-utils-1.0.0-1.x86_64.rpm",      # Requires(post)
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-perl-1.0.0-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [])
+
+    def test_multilib_exclude_pattern_does_not_match_noarch(self):
+        packages = [
+            'dummy-release-notes-en-US',
+            '-dummy-release-notes-en*.+',
+        ]
+
+        pkg_map = self.go(packages, None)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-release-notes-en-US-1.2-1.noarch.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-release-notes-en-US-1.2-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+        ])
+
+
+class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
+
+    def setUp(self):
+        super(PungiYumDepsolvingTestCase, self).setUp()
+        self.ks = os.path.join(self.tmp_dir, "ks")
+        self.out = os.path.join(self.tmp_dir, "out")
+
+        logger = logging.getLogger('Pungi')
+        if not logger.handlers:
+            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            console = logging.StreamHandler(sys.stdout)
+            console.setFormatter(formatter)
+            console.setLevel(logging.INFO)
+            logger.addHandler(console)
+
+    def go(self, packages, groups, lookaside=None, prepopulate=None,
+           fulltree_excludes=None, multilib_blacklist=None,
+           multilib_whitelist=None, **kwargs):
+        """
+        Write a kickstart with given packages and groups, then run the
+        depsolving and parse the output.
+        """
+        p = PungiWrapper()
+        repos = {"repo": self.repo}
+        if lookaside:
+            repos['lookaside'] = lookaside
+            kwargs['lookaside_repos'] = ['lookaside']
+        p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
+                          multilib_whitelist=multilib_whitelist,
+                          multilib_blacklist=multilib_blacklist,
+                          fulltree_excludes=fulltree_excludes)
+        kwargs.setdefault('cache_dir', self.tmp_dir)
+        # Unless the test specifies an arch, we need to default to x86_64.
+        # Otherwise the arch of current machine will be used, which will cause
+        # failure most of the time.
+        kwargs.setdefault('arch', 'x86_64')
+
+        p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
+        with open(self.out, "r") as f:
+            pkg_map = p.get_packages(f.read())
+        return convert_pkg_map(pkg_map)
 
 
 if __name__ == "__main__":
