@@ -43,5 +43,6 @@ setup(
         ('/usr/share/pungi', glob.glob('share/*.ks')),
         ('/usr/share/pungi', glob.glob('share/*.dtd')),
         ('/usr/share/pungi/multilib', glob.glob('share/multilib/*')),
-    ]
+    ],
+    test_suite      = "tests",
 )

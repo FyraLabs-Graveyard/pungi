@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export PYTHONPATH=$(pwd)/pmd:$(pwd)/../
+export PYTHONPATH=$(pwd)/../
 export PATH=$(pwd)/../bin:$PATH
 
 mkdir -p _composes
@@ -8,5 +8,5 @@ mkdir -p _composes
 pungi-koji \
 --target-dir=_composes \
 --old-composes=_composes \
---config=dummy-pungi.conf \
+--config=data/dummy-pungi.conf \
 --test

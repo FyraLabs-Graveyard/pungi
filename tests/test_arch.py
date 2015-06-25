@@ -9,10 +9,7 @@ import sys
 import tempfile
 import shutil
 
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.arch import *
 

@@ -6,10 +6,7 @@ import unittest
 import os
 import sys
 
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.pathmatch import PathMatch, head_tail_split
 
@@ -44,7 +41,7 @@ class TestPathMatch(unittest.TestCase):
 
     def test_1(self):
         self.pm["/*"] = "/star1"
-        self.assertEqual(self.pm._final_patterns.keys(), ["*"])
+        self.assertEqual(list(self.pm._final_patterns.keys()), ["*"])
         self.assertEqual(self.pm._values, [])
         self.assertEqual(self.pm._final_patterns["*"]._values, ["/star1"])
         self.assertEqual(sorted(self.pm["/lib"]), ["/star1"])
@@ -60,8 +57,8 @@ class TestPathMatch(unittest.TestCase):
 
     def test_2(self):
         self.pm["/*/*"] = "/star/star1"
-        self.assertEqual(self.pm._patterns.keys(), ["*"])
-        self.assertEqual(self.pm._patterns["*"]._final_patterns.keys(), ["*"])
+        self.assertEqual(list(self.pm._patterns.keys()), ["*"])
+        self.assertEqual(list(self.pm._patterns["*"]._final_patterns.keys()), ["*"])
         self.assertEqual(self.pm._patterns["*"]._final_patterns["*"]._values, ["/star/star1"])
         self.assertEqual(sorted(self.pm["/lib/asd"]), ["/star/star1"])
 
