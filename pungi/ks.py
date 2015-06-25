@@ -134,8 +134,57 @@ class KickstartParser(pykickstart.parser.KickstartParser):
         self.registerSection(MultilibWhitelistSection(self.handler))
         self.registerSection(PrepopulateSection(self.handler))
 
+    def get_packages(self, dnf_obj):
+        packages = set()
+        conditional_packages = []
+
+        packages.update(self.handler.packages.packageList)
+
+        for ks_group in self.handler.packages.groupList:
+            group_id = ks_group.name
+            include_default = False
+            include_optional = False
+
+            if ks_group.include == 1:
+                include_default = True
+
+            if ks_group.include == 2:
+                include_default = True
+                include_optional = True
+
+            group_packages, group_conditional_packages = dnf_obj.comps_wrapper.get_packages_from_group(group_id, include_default=include_default, include_optional=include_optional, include_conditional=True)
+            packages.update(group_packages)
+            for i in group_conditional_packages:
+                if i not in conditional_packages:
+                    conditional_packages.append(i)
+
+        return packages, conditional_packages
+
+    def get_excluded_packages(self, dnf_obj):
+        excluded = set()
+        excluded.update(self.handler.packages.excludedList)
+
+        for ks_group in self.handler.packages.excludedGroupList:
+            group_id = ks_group.name
+            include_default = False
+            include_optional = False
+
+            if ks_group.include == 1:
+                include_default = True
+
+            if ks_group.include == 2:
+                include_default = True
+                include_optional = True
+
+            group_packages, group_conditional_packages = dnf_obj.comps_wrapper.get_packages_from_group(group_id, include_default=include_default, include_optional=include_optional, include_conditional=False)
+            excluded.update(group_packages)
+
+        return excluded
+
 
 HandlerClass = pykickstart.version.returnClassForVersion()
+
+
 class PungiHandler(HandlerClass):
     def __init__(self, *args, **kwargs):
         HandlerClass.__init__(self, *args, **kwargs)
