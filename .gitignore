@@ -3,6 +3,7 @@
 MANIFEST
 build/*
 dist/*
+doc/_build
 noarch/*
 tests/data/repo
 tests/data/repo-krb5-lookaside

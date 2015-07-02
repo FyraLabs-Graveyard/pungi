@@ -1,3 +1,5 @@
+.PHONY: all clean doc log test
+
 PKGNAME=pungi
 VERSION=$(shell rpm -q --qf "%{VERSION}\n" --specfile ${PKGNAME}.spec)
 RELEASE=$(shell rpm -q --qf "%{RELEASE}\n" --specfile ${PKGNAME}.spec)
@@ -17,6 +19,7 @@ help:
 	@echo "Available targets are:"
 	@echo " help                    show this text"
 	@echo " clean                   remove python bytecode and temp files"
+	@echo " doc                     build documentation"
 	@echo " install                 install program on current system"
 	@echo " test-data               build test data (requirement for running tests)"
 	@echo " test                    run tests"
@@ -94,3 +97,7 @@ test:
 
 test-data:
 	./tests/data/specs/build.sh
+
+
+doc:
+	cd doc; make html
