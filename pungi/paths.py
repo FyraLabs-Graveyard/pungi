@@ -436,7 +436,7 @@ class ComposePaths(object):
         if variant.type == "addon":
             return None
         if variant.type == "optional":
-            if not self.compose.conf["create_optional_isos"]:
+            if not self.compose.conf.get("create_optional_isos", False):
                 return None
         if arch == "src":
             arch = "source"
@@ -502,7 +502,7 @@ class ComposePaths(object):
         if variant.type == "addon":
             return None
         if variant.type == "optional":
-            if not self.compose.conf["create_optional_isos"]:
+            if not self.compose.conf.get("create_optional_isos", False):
                 return None
         if arch == "src":
             arch = "source"

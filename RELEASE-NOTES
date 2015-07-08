@@ -1,4 +1,8 @@
 DATE:   2015-08-08
+CHANGE: create_optional_isos config option now defaults to False.
+ACTION: You can safely remove 'create_optional_isos = False' from config files.
+
+DATE:   2015-08-08
 CHANGE: createrepo_c is config option now defaults to True.
 ACTION: You can safely remove 'createrepo_c = True' from config files.
         Set 'createrepo_c = False' if you need legacy createrepo.
