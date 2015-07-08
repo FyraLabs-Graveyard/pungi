@@ -41,27 +41,6 @@ def run_repoclosure(compose):
     msg = "Running repoclosure"
     compose.log_info("[BEGIN] %s" % msg)
 
-    # Arch repos
-    for arch in compose.get_arches():
-        is_multilib = arch in compose.conf["multilib_arches"]
-        arches = get_valid_arches(arch, is_multilib)
-        repo_id = "repoclosure-%s" % arch
-        repo_dir = compose.paths.work.arch_repo(arch=arch)
-
-        lookaside = {}
-        if compose.conf.get("product_is_layered", False):
-            for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, None)):
-                lookaside["lookaside-%s-%s" % (arch, i)] = lookaside_url
-
-        cmd = repoclosure.get_repoclosure_cmd(repos={repo_id: repo_dir}, lookaside=lookaside, arch=arches)
-        # Use temp working directory directory as workaround for
-        # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-        tmp_dir = tempfile.mkdtemp(prefix="repoclosure_")
-        try:
-            run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure"), show_cmd=True, can_fail=True, workdir=tmp_dir)
-        finally:
-            rmtree(tmp_dir)
-
     # Variant repos
     all_repos = {}  # to be used as lookaside for the self-hosting check
     all_arches = set()
