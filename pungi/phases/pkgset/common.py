@@ -39,8 +39,8 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
 
 
 def create_global_repo(compose, path_prefix):
-    createrepo_c = compose.conf.get("createrepo_c", False)
-    createrepo_checksum = compose.conf.get("createrepo_checksum", None)
+    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
     msg = "Running createrepo for the global package set"
@@ -73,8 +73,8 @@ def create_global_repo(compose, path_prefix):
 
 
 def create_arch_repos(compose, arch, path_prefix):
-    createrepo_c = compose.conf.get("createrepo_c", False)
-    createrepo_checksum = compose.conf.get("createrepo_checksum", None)
+    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
     repo_dir = compose.paths.work.arch_repo(arch=arch)

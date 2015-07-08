@@ -125,7 +125,6 @@ class InitPhase(PhaseBase):
             "name": "createrepo_checksum",
             "expected_types": [str],
             "expected_values": ["sha256", "sha"],
-            "optional": True,
         },
 
         # RUNROOT SETTINGS
@@ -252,8 +251,8 @@ def create_comps_repo(compose, arch):
     if not compose.has_comps:
         return
 
-    createrepo_c = compose.conf.get("createrepo_c", False)
-    createrepo_checksum = compose.conf.get("createrepo_checksum", None)
+    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     comps_repo = compose.paths.work.comps_repo(arch=arch)
     comps_path = compose.paths.work.comps(arch=arch)

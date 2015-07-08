@@ -1,0 +1,8 @@
+DATE:   2015-08-08
+CHANGE: createrepo_c is config option now defaults to True.
+ACTION: You can safely remove 'createrepo_c = True' from config files.
+        Set 'createrepo_c = False' if you need legacy createrepo.
+
+DATE:   2015-08-08
+CHANGE: createrepo_checksum config option is now mandatory.
+ACTION: Add 'createrepo_checksum = "sha256"' (or "sha") to config files.

@@ -151,7 +151,7 @@ def resolve_deps(compose, arch, variant):
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     tmp_dir = tempfile.mkdtemp(prefix="pungi_")
     try:
-        run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir)
+        run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
     finally:
         rmtree(tmp_dir)
     result = pungi_wrapper.get_packages(open(pungi_log, "r").read())

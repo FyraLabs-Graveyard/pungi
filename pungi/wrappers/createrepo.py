@@ -19,7 +19,7 @@ from kobo.shortcuts import force_list
 
 
 class CreaterepoWrapper(object):
-    def __init__(self, createrepo_c=False):
+    def __init__(self, createrepo_c=True):
         if createrepo_c:
             self.createrepo = "createrepo_c"
             self.mergerepo = "mergerepo_c"

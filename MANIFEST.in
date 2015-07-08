@@ -1,6 +1,7 @@
 include AUTHORS
 include COPYING
 include GPL
+include RELEASE-NOTES
 include pungi.spec
 include share/*
 include share/multilib/*

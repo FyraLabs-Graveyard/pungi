@@ -375,8 +375,8 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             del ti.checksums.checksums["repodata/repomd.xml"]
 
         # rebuild repodata
-        createrepo_c = compose.conf.get("createrepo_c", False)
-        createrepo_checksum = compose.conf.get("createrepo_checksum", None)
+        createrepo_c = compose.conf.get("createrepo_c", True)
+        createrepo_checksum = compose.conf["createrepo_checksum"]
         repo = CreaterepoWrapper(createrepo_c=createrepo_c)
 
         file_list = "%s-file-list" % iso_dir

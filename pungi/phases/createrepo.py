@@ -50,7 +50,7 @@ class CreaterepoPhase(PhaseBase):
         {
             "name": "createrepo_checksum",
             "expected_types": [bool],
-            "optional": True,
+            "expected_values": ["sha256", "sha"],
         },
         {
             "name": "product_id",
@@ -85,8 +85,8 @@ class CreaterepoPhase(PhaseBase):
 
 
 def create_variant_repo(compose, arch, variant, pkg_type):
-    createrepo_c = compose.conf.get("createrepo_c", False)
-    createrepo_checksum = compose.conf.get("createrepo_checksum", None)
+    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     if pkg_type == "srpm":
         repo_dir_arch = compose.paths.work.arch_repo(arch="global")
