@@ -298,6 +298,7 @@ class Gather(GatherBase):
 
             deps = self.q_binary_packages.filter(provides=req).apply()
             deps = self._get_best_package(deps, req=req)
+            self.finished_get_package_deps_reqs[str(req)].update(deps)
             result.update(deps)
 
         return result
@@ -396,6 +397,7 @@ class Gather(GatherBase):
                     if i not in self.result_binary_packages:
                         self._add_packages([i], pulled_by=pkg)
                         added.add(i)
+                self.finished_add_binary_package_deps[pkg] = deps
 
         return added
 
@@ -422,6 +424,7 @@ class Gather(GatherBase):
                     pkgs = self.q_binary_packages.filter(name=cond["install"]).apply()
                     pkgs = self._get_best_package(pkgs)  # TODO: multilib?
                     deps.update(pkgs)
+                self.finished_add_conditional_packages[pkg] = deps
 
             for i in deps:
                 if i not in self.result_binary_packages:
@@ -444,6 +447,7 @@ class Gather(GatherBase):
                 deps = self.finished_add_source_package_deps[pkg]
             except KeyError:
                 deps = self._get_package_deps(pkg)
+                self.finished_add_source_package_deps[pkg] = deps
                 for i in deps:
                     if i not in self.result_binary_packages:
                         self._add_packages([i], pulled_by=pkg)
@@ -471,8 +475,8 @@ class Gather(GatherBase):
                     source_pkgs = self.q_source_packages.filter(name=nvra["name"], version=nvra["version"], release=nvra["release"]).apply()
                     if source_pkgs:
                         source_pkg = list(source_pkgs)[0]
+                self.finished_add_source_packages[pkg] = source_pkg
 
-            self.finished_add_source_packages[pkg] = source_pkg
             if source_pkg:
                 lookaside = self._has_flag(pkg, "lookaside")
                 if lookaside:
