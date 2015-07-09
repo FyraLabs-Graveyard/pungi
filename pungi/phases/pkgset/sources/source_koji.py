@@ -21,6 +21,7 @@ import json
 
 import koji
 
+import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
 
@@ -34,13 +35,13 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
     config_options = (
         {
+            "name": "koji_profile",
+            "expected_types": [str],
+        },
+        {
             "name": "pkgset_source",
             "expected_types": [str],
             "expected_values": "koji",
-        },
-        {
-            "name": "pkgset_koji_url",
-            "expected_types": [str],
         },
         {
             "name": "pkgset_koji_tag",
@@ -51,48 +52,23 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
             "expected_types": [bool],
             "optional": True,
         },
-        {
-            "name": "pkgset_koji_path_prefix",
-            "expected_types": [str],
-        },
     )
 
     def __call__(self):
         compose = self.compose
-        koji_url = compose.conf["pkgset_koji_url"]
-        # koji_tag = compose.conf["pkgset_koji_tag"]
-        path_prefix = compose.conf["pkgset_koji_path_prefix"].rstrip("/") + "/"  # must contain trailing '/'
-
-        koji_proxy = koji.ClientSession(koji_url)
-        package_sets = get_pkgset_from_koji(self.compose, koji_proxy, path_prefix)
+        koji_profile = compose.conf["koji_profile"]
+        self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
+        path_prefix = self.koji_wrapper.koji_module.config.topdir.rstrip("/") + "/"  # must contain trailing '/'
+        package_sets = get_pkgset_from_koji(self.compose, self.koji_wrapper, path_prefix)
         return (package_sets, path_prefix)
 
 
-'''
-class PkgsetKojiPhase(PhaseBase):
-    """PKGSET"""
-    name = "pkgset"
+def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
+    koji_proxy = koji_wrapper.koji_proxy
+    event_info = get_koji_event_info(compose, koji_wrapper)
+    tag_info = get_koji_tag_info(compose, koji_wrapper)
 
-    def __init__(self, compose):
-        PhaseBase.__init__(self, compose)
-        self.package_sets = None
-        self.path_prefix = None
-
-    def run(self):
-        path_prefix = self.compose.conf["koji_path_prefix"]
-        path_prefix = path_prefix.rstrip("/") + "/" # must contain trailing '/'
-        koji_url = self.compose.conf["koji_url"]
-        koji_proxy = koji.ClientSession(koji_url)
-        self.package_sets = get_pkgset_from_koji(self.compose, koji_proxy, path_prefix)
-        self.path_prefix = path_prefix
-'''
-
-
-def get_pkgset_from_koji(compose, koji_proxy, path_prefix):
-    event_info = get_koji_event_info(compose, koji_proxy)
-    tag_info = get_koji_tag_info(compose, koji_proxy)
-
-    pkgset_global = populate_global_pkgset(compose, koji_proxy, path_prefix, tag_info, event_info)
+    pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, tag_info, event_info)
 #    get_extra_packages(compose, pkgset_global)
     package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
     package_sets["global"] = pkgset_global
@@ -105,7 +81,8 @@ def get_pkgset_from_koji(compose, koji_proxy, path_prefix):
     return package_sets
 
 
-def populate_global_pkgset(compose, koji_proxy, path_prefix, compose_tag, event_id):
+def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, event_id):
+    koji_proxy = koji_wrapper.koji_proxy
     ALL_ARCHES = set(["src"])
     for arch in compose.get_arches():
         is_multilib = arch in compose.conf["multilib_arches"]
@@ -121,7 +98,7 @@ def populate_global_pkgset(compose, koji_proxy, path_prefix, compose_tag, event_
         pkgset = pickle.load(open(global_pkgset_path, "r"))
     else:
         compose.log_info(msg)
-        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_proxy, compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
+        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_wrapper, compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
         pkgset.populate(compose_tag, event_id, inherit=inherit)
         f = open(global_pkgset_path, "w")
         data = pickle.dumps(pkgset)
@@ -133,7 +110,8 @@ def populate_global_pkgset(compose, koji_proxy, path_prefix, compose_tag, event_
     return pkgset
 
 
-def get_koji_event_info(compose, koji_proxy):
+def get_koji_event_info(compose, koji_wrapper):
+    koji_proxy = koji_wrapper.koji_proxy
     event_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-event")
 
     if compose.koji_event:
@@ -153,7 +131,8 @@ def get_koji_event_info(compose, koji_proxy):
     return result
 
 
-def get_koji_tag_info(compose, koji_proxy):
+def get_koji_tag_info(compose, koji_wrapper):
+    koji_proxy = koji_wrapper.koji_proxy
     tag_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-tag")
     msg = "Getting a koji tag info"
     if compose.DEBUG and os.path.exists(tag_file):

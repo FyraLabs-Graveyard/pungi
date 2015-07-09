@@ -29,6 +29,7 @@ import kobo.rpmlib
 
 from kobo.threads import WorkerThread, ThreadPool
 
+import pungi.wrappers.kojiwrapper
 from pungi.util import pkg_is_srpm
 from pungi.arch import get_valid_arches
 
@@ -195,30 +196,26 @@ class FilelistPackageSet(PackageSetBase):
 
 
 class KojiPackageSet(PackageSetBase):
-    def __init__(self, koji_proxy, sigkey_ordering, arches=None, logger=None):
+    def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None):
         PackageSetBase.__init__(self, sigkey_ordering=sigkey_ordering, arches=arches, logger=logger)
-        self.koji_proxy = koji_proxy
-        self.koji_pathinfo = getattr(__import__(koji_proxy.__module__, {}, {}, []), "pathinfo")
+        self.koji_wrapper = koji_wrapper
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        result["koji_class"] = self.koji_proxy.__class__.__name__
-        result["koji_module"] = self.koji_proxy.__class__.__module__
-        result["koji_baseurl"] = self.koji_proxy.baseurl
-        result["koji_opts"] = self.koji_proxy.opts
-        del result["koji_proxy"]
-        del result["koji_pathinfo"]
+        result["koji_profile"] = self.koji_wrapper.koji_module.config.profile
+        del result["koji_wrapper"]
         del result["_logger"]
         return result
 
     def __setstate__(self, data):
-        class_name = data.pop("koji_class")
-        module_name = data.pop("koji_module")
-        module = __import__(module_name, {}, {}, [class_name])
-        cls = getattr(module, class_name)
-        self.koji_proxy = cls(data.pop("koji_baseurl"), data.pop("koji_opts"))
+        koji_profile = data.pop("koji_profile")
+        self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
         self._logger = None
         self.__dict__.update(data)
+
+    @property
+    def koji_proxy(self):
+        return self.koji_wrapper.koji_proxy
 
     def get_latest_rpms(self, tag, event, inherit=True):
         return self.koji_proxy.listTaggedRPMS(tag, event=event, inherit=inherit, latest=True)
@@ -227,7 +224,7 @@ class KojiPackageSet(PackageSetBase):
         rpm_info, build_info = queue_item
         rpm_path = None
         found = False
-        pathinfo = self.koji_pathinfo
+        pathinfo = self.koji_wrapper.koji_module.pathinfo
         for sigkey in self.sigkey_ordering:
             if sigkey is None:
                 # we're looking for *signed* copies here

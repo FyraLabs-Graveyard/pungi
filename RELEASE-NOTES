@@ -1,3 +1,8 @@
+DATE:   2015-08-09
+CHANGE: pkgset_koji_url and pkgset_koji_path_prefix config options replaced with koji_profile.
+ACTION: Add 'koji_profile = "<profile_name>"' (use "koji" for Fedora) to config files.
+        You can safely remove and pkgset_koji_url and pkgset_koji_path_prefix from config files.
+
 DATE:   2015-08-08
 CHANGE: create_optional_isos config option now defaults to False.
 ACTION: You can safely remove 'create_optional_isos = False' from config files.

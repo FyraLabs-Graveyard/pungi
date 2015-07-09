@@ -29,7 +29,8 @@ class KojiWrapper(object):
         self.profile = profile
         # assumption: profile name equals executable name (it's a symlink -> koji)
         self.executable = self.profile.replace("_", "-")
-        self.koji_module = __import__(self.profile)
+        self.koji_module = koji.get_profile_module(profile)
+        self.koji_proxy = koji.ClientSession(self.koji_module.config.server)
 
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True):
         cmd = [self.executable, "runroot"]
