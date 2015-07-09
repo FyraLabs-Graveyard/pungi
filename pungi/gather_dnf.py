@@ -184,6 +184,7 @@ class Gather(GatherBase):
 
         self.finished_add_conditional_packages = {}     # {pkg: [pkgs]}
         self.finished_add_source_packages = {}          # {pkg: src-pkg|None}
+        self.sourcerpm_cache = {}                       # {src_nvra: src-pkg|None}
         self.finished_add_debug_packages = {}           # {pkg: [debug-pkgs]}
         self.finished_add_fulltree_packages = {}        # {pkg: [pkgs]}
         self.finished_add_langpack_packages = {}        # {pkg: [pkgs]}
@@ -471,10 +472,13 @@ class Gather(GatherBase):
             except KeyError:
                 source_pkg = None
                 if pkg.sourcerpm:
-                    nvra = parse_nvra(pkg.sourcerpm)
-                    source_pkgs = self.q_source_packages.filter(name=nvra["name"], version=nvra["version"], release=nvra["release"]).apply()
-                    if source_pkgs:
-                        source_pkg = list(source_pkgs)[0]
+                    source_pkg = self.sourcerpm_cache.get(pkg.sourcerpm, None)
+                    if source_pkg is None:
+                        nvra = parse_nvra(pkg.sourcerpm)
+                        source_pkgs = self.q_source_packages.filter(name=nvra["name"], version=nvra["version"], release=nvra["release"]).apply()
+                        if source_pkgs:
+                            source_pkg = list(source_pkgs)[0]
+                            self.sourcerpm_cache[pkg.sourcerpm] = source_pkg
                 self.finished_add_source_packages[pkg] = source_pkg
 
             if source_pkg:
