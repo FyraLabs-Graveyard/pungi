@@ -42,14 +42,11 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
 
     # create an incomplete composeinfo to generate compose ID
     ci = ComposeInfo()
-    ci.compose.name = conf["product_name"]
-    ci.release.name = conf["product_name"]
-    ci.compose.short = conf["product_short"]
-    ci.release.short = conf["product_short"]
-    ci.compose.version = conf["product_version"]
-    ci.release.version = conf["product_version"]
-    ci.compose.is_layered = bool(conf.get("product_is_layered", False))
-    if ci.compose.is_layered:
+    ci.release.name = conf["release_name"]
+    ci.release.short = conf["release_short"]
+    ci.release.version = conf["release_version"]
+    ci.release.is_layered = bool(conf.get("release_is_layered", False))
+    if ci.release.is_layered:
         ci.base_product.name = conf["base_product_name"]
         ci.base_product.short = conf["base_product_short"]
         ci.base_product.version = conf["base_product_version"]

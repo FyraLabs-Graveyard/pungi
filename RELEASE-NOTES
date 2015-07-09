@@ -1,4 +1,9 @@
 DATE:   2015-08-09
+CHANGE: Rename product_* config options to release_* for consistency with productmd.
+ACTION: Rename product_name, product_short, product_version, product_is_layered to release_* in config files.
+        Rename //variant/product to //variant/release in variants XML.
+
+DATE:   2015-08-09
 CHANGE: pkgset_koji_url and pkgset_koji_path_prefix config options replaced with koji_profile.
 ACTION: Add 'koji_profile = "<profile_name>"' (use "koji" for Fedora) to config files.
         You can safely remove and pkgset_koji_url and pkgset_koji_path_prefix from config files.

@@ -80,9 +80,9 @@ class BuildinstallPhase(PhaseBase):
 
     def run(self):
         lorax = LoraxWrapper()
-        product = self.compose.conf["product_name"]
-        version = self.compose.conf["product_version"]
-        release = self.compose.conf["product_version"]
+        product = self.compose.conf["release_name"]
+        version = self.compose.conf["release_version"]
+        release = self.compose.conf["release_version"]
         noupgrade = not self.compose.conf.get("buildinstall_upgrade_image", False)
         buildinstall_method = self.compose.conf["buildinstall_method"]
 

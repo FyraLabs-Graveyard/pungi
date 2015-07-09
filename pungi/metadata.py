@@ -28,14 +28,14 @@ from pungi.compose_metadata.discinfo import write_media_repo as create_media_rep
 
 
 def get_description(compose, variant, arch):
-    if "product_discinfo_description" in compose.conf:
-        result = compose.conf["product_discinfo_description"]
+    if "release_discinfo_description" in compose.conf:
+        result = compose.conf["release_discinfo_description"]
     elif variant.type == "layered-product":
         # we need to make sure the layered product behaves as it was composed separately
-        result = "%s %s for %s %s" % (variant.product_name, variant.product_version, compose.conf["product_name"], get_major_version(compose.conf["product_version"]))
+        result = "%s %s for %s %s" % (variant.release_name, variant.release_version, compose.conf["release_name"], get_major_version(compose.conf["release_version"]))
     else:
-        result = "%s %s" % (compose.conf["product_name"], compose.conf["product_version"])
-        if compose.conf.get("product_is_layered", False):
+        result = "%s %s" % (compose.conf["release_name"], compose.conf["release_version"])
+        if compose.conf.get("release_is_layered", False):
             result += "for %s %s" % (compose.conf["base_product_name"], compose.conf["base_product_version"])
 
     result = result % {"variant_name": variant.name, "arch": arch}
@@ -73,10 +73,10 @@ def compose_to_composeinfo(compose):
     ci.compose.label = compose.compose_label
 
     # product
-    ci.release.name = compose.conf["product_name"]
-    ci.release.version = compose.conf["product_version"]
-    ci.release.short = compose.conf["product_short"]
-    ci.release.is_layered = compose.conf.get("product_is_layered", False)
+    ci.release.name = compose.conf["release_name"]
+    ci.release.version = compose.conf["release_version"]
+    ci.release.short = compose.conf["release_short"]
+    ci.release.is_layered = compose.conf.get("release_is_layered", False)
 
     # base product
     if ci.release.is_layered:
@@ -99,9 +99,9 @@ def compose_to_composeinfo(compose):
         var.arches = set(variant.arches)
 
         if var.type == "layered-product":
-            var.release.name = variant.product_name
-            var.release.short = variant.product_short
-            var.release.version = variant.product_version
+            var.release.name = variant.release_name
+            var.release.short = variant.release_short
+            var.release.version = variant.release_version
             var.release.is_layered = True
 
         for arch in variant.arches:
@@ -184,27 +184,27 @@ def write_tree_info(compose, arch, variant, timestamp=None):
     if variant.type == "layered-product":
         # we need to make sure the layered product behaves as it was composed separately
 
-        # product
+        # release
         # TODO: read from variants.xml
-        ti.release.name = variant.product_name
-        ti.release.version = variant.product_version
-        ti.release.short = variant.product_short
+        ti.release.name = variant.release_name
+        ti.release.version = variant.release_version
+        ti.release.short = variant.release_short
         ti.release.is_layered = True
 
         # base product
-        ti.base_product.name = compose.conf["product_name"]
-        if "." in compose.conf["product_version"]:
+        ti.base_product.name = compose.conf["release_name"]
+        if "." in compose.conf["release_version"]:
             # remove minor version if present
-            ti.base_product.version = get_major_version(compose.conf["product_version"])
+            ti.base_product.version = get_major_version(compose.conf["release_version"])
         else:
-            ti.base_product.version = compose.conf["product_version"]
-        ti.base_product.short = compose.conf["product_short"]
+            ti.base_product.version = compose.conf["release_version"]
+        ti.base_product.short = compose.conf["release_short"]
     else:
-        # product
-        ti.release.name = compose.conf["product_name"]
-        ti.release.version = compose.conf["product_version"]
-        ti.release.short = compose.conf["product_short"]
-        ti.release.is_layered = compose.conf.get("product_is_layered", False)
+        # release
+        ti.release.name = compose.conf["release_name"]
+        ti.release.version = compose.conf["release_version"]
+        ti.release.short = compose.conf["release_short"]
+        ti.release.is_layered = compose.conf.get("release_is_layered", False)
 
         # base product
         if ti.release.is_layered:
@@ -257,7 +257,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         def _check_short(self):
             # HACK: set self.short so .treeinfo produced by lorax can be read
             if not self.short:
-                self.short = compose.conf["product_short"]
+                self.short = compose.conf["release_short"]
 
     class LoraxTreeInfo(productmd.treeinfo.TreeInfo):
         def clear(self):

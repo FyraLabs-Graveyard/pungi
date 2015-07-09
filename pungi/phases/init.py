@@ -35,25 +35,25 @@ class InitPhase(PhaseBase):
     config_options = (
         # PRODUCT INFO
         {
-            "name": "product_name",
+            "name": "release_name",
             "expected_types": [str],
         },
         {
-            "name": "product_short",
+            "name": "release_short",
             "expected_types": [str],
         },
         {
-            "name": "product_version",
+            "name": "release_version",
             "expected_types": [str],
         },
         {
             # override description in .discinfo; accepts %(variant_name)s and %(arch)s variables
-            "name": "product_discinfo_description",
+            "name": "release_discinfo_description",
             "expected_types": [str],
             "optional": True,
         },
         {
-            "name": "product_is_layered",
+            "name": "release_is_layered",
             "expected_types": [bool],
             "requires": (
                 (lambda x: bool(x), ["base_product_name", "base_product_short", "base_product_version"]),

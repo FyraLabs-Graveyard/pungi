@@ -60,7 +60,7 @@ def run_repoclosure(compose):
             repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
             repos[repo_id] = repo_dir
 
-            if compose.conf.get("product_is_layered", False):
+            if compose.conf.get("release_is_layered", False):
                 for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
                     lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
 

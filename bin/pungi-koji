@@ -302,8 +302,8 @@ def run_compose(compose):
 
     # create a latest symlink
     compose_dir = os.path.basename(compose.topdir)
-    symlink_name = "latest-%s-%s" % (compose.conf["product_short"], ".".join(compose.conf["product_version"].split(".")[:-1]))
-    if compose.conf["product_is_layered"]:
+    symlink_name = "latest-%s-%s" % (compose.conf["release_short"], ".".join(compose.conf["release_version"].split(".")[:-1]))
+    if compose.conf["release_is_layered"]:
         symlink_name += "-%s-%s" % (compose.conf["base_product_short"], compose.conf["base_product_version"])
     symlink = os.path.join(compose.topdir, "..", symlink_name)
 

@@ -109,10 +109,10 @@ class VariantsXmlParser(object):
 
         variant = Variant(**variant_dict)
         if variant.type == "layered-product":
-            product_node = variant_node.xpath("product")[0]
-            variant.product_name = str(product_node.attrib["name"])
-            variant.product_version = str(product_node.attrib["version"])
-            variant.product_short = str(product_node.attrib["short"])
+            release_node = variant_node.xpath("release")[0]
+            variant.release_name = str(release_node.attrib["name"])
+            variant.release_version = str(release_node.attrib["version"])
+            variant.release_short = str(release_node.attrib["short"])
 
         contains_optional = False
         for child_node in variant_node.xpath("variants/variant"):

@@ -105,7 +105,7 @@ class GatherPhase(PhaseBase):
 
     def check_config(self):
         errors = []
-        for i in ["product_name", "product_short", "product_version"]:
+        for i in ["release_name", "release_short", "release_version"]:
             errors.append(self.conf_assert_str(i))
 
     def run(self):

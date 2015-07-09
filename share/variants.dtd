@@ -1,6 +1,6 @@
 <!ELEMENT variants (ref*,variant*)>
 
-<!ELEMENT variant (product?,arches,groups,environments*,variants*)?>
+<!ELEMENT variant (release?,arches,groups,environments*,variants*)?>
 <!ATTLIST variant
     id ID #REQUIRED
     name CDATA #REQUIRED
@@ -8,8 +8,8 @@
     has_optional (true|false) #IMPLIED
 >
 
-<!ELEMENT product (#PCDATA)>
-<!ATTLIST product
+<!ELEMENT release (#PCDATA)>
+<!ATTLIST release
     name CDATA #IMPLIED
     short CDATA #IMPLIED
     version CDATA #IMPLIED

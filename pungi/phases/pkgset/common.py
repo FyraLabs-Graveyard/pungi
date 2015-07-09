@@ -55,7 +55,7 @@ def create_global_repo(compose, path_prefix):
     old_compose_path = None
     update_md_path = None
     if compose.old_composes:
-        old_compose_path = find_old_compose(compose.old_composes, compose.conf["product_short"], compose.conf["product_version"], compose.conf.get("base_product_short", None), compose.conf.get("base_product_version", None))
+        old_compose_path = find_old_compose(compose.old_composes, compose.conf["release_short"], compose.conf["release_version"], compose.conf.get("base_product_short", None), compose.conf.get("base_product_version", None))
         if old_compose_path is None:
             compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
         else:
@@ -93,7 +93,7 @@ def create_arch_repos(compose, arch, path_prefix):
     compose.log_info("[DONE ] %s" % msg)
 
 
-def find_old_compose(old_compose_dirs, product_short, product_version, base_product_short=None, base_product_version=None):
+def find_old_compose(old_compose_dirs, release_short, release_version, base_product_short=None, base_product_version=None):
     composes = []
 
     for compose_dir in force_list(old_compose_dirs):
@@ -104,7 +104,7 @@ def find_old_compose(old_compose_dirs, product_short, product_version, base_prod
         for i in os.listdir(compose_dir):
             # TODO: read .composeinfo
 
-            pattern = "%s-%s" % (product_short, product_version)
+            pattern = "%s-%s" % (release_short, release_version)
             if base_product_short:
                 pattern += "-%s" % base_product_short
             if base_product_version:

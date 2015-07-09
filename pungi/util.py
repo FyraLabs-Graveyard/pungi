@@ -262,31 +262,31 @@ def get_volid(compose, arch, variant=None, escape_spaces=False):
         return None
 
     if variant and variant.type == "layered-product":
-        product_short = variant.product_short
-        product_version = variant.product_version
-        product_is_layered = True
-        base_product_short = compose.conf["product_short"]
-        base_product_version = get_major_version(compose.conf["product_version"])
+        release_short = variant.release_short
+        release_version = variant.release_version
+        release_is_layered = True
+        base_product_short = compose.conf["release_short"]
+        base_product_version = get_major_version(compose.conf["release_version"])
         variant_uid = variant.parent.uid
     else:
-        product_short = compose.conf["product_short"]
-        product_version = compose.conf["product_version"]
-        product_is_layered = compose.conf["product_is_layered"]
+        release_short = compose.conf["release_short"]
+        release_version = compose.conf["release_version"]
+        release_is_layered = compose.conf["release_is_layered"]
         base_product_short = compose.conf.get("base_product_short", "")
         base_product_version = compose.conf.get("base_product_version", "")
         variant_uid = variant and variant.uid or None
 
     products = [
-        "%(product_short)s-%(product_version)s %(variant_uid)s.%(arch)s",
-        "%(product_short)s-%(product_version)s %(arch)s",
+        "%(release_short)s-%(release_version)s %(variant_uid)s.%(arch)s",
+        "%(release_short)s-%(release_version)s %(arch)s",
     ]
     layered_products = [
-        "%(product_short)s-%(product_version)s %(base_product_short)s-%(base_product_version)s %(variant_uid)s.%(arch)s",
-        "%(product_short)s-%(product_version)s %(base_product_short)s-%(base_product_version)s %(arch)s",
+        "%(release_short)s-%(release_version)s %(base_product_short)s-%(base_product_version)s %(variant_uid)s.%(arch)s",
+        "%(release_short)s-%(release_version)s %(base_product_short)s-%(base_product_version)s %(arch)s",
     ]
 
     volid = None
-    if product_is_layered:
+    if release_is_layered:
         all_products = layered_products + products
     else:
         all_products = products
