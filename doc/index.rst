@@ -14,6 +14,7 @@ Contents:
     about
     contributing
     testing
+    configuration
 
 
 Indices and tables
