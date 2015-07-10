@@ -69,15 +69,6 @@ def main():
     dnf_conf = Conf(ns.arch)
     dnf_obj = DnfWrapper(dnf_conf)
 
-    ksparser = pungi.ks.get_ksparser(ns.config)
-
-    # read repos from ks
-    for ks_repo in ksparser.handler.repo.repoList:
-        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
-
-    dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
-    dnf_obj.read_comps()
-
     gather_opts = GatherOptions()
 
     if ns.greedy:
@@ -88,6 +79,23 @@ def main():
 
     if ns.lookaside:
         gather_opts.lookaside_repos = ns.lookaside
+
+    ksparser = pungi.ks.get_ksparser(ns.config)
+
+    # read repos from ks
+    for ks_repo in ksparser.handler.repo.repoList:
+        # HACK: lookaside repos first; this is workaround for no repo priority handling in hawkey
+        if ks_repo.name not in gather_opts.lookaside_repos:
+            continue
+        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
+
+    for ks_repo in ksparser.handler.repo.repoList:
+        if ks_repo.name in gather_opts.lookaside_repos:
+            continue
+        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
+
+    dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
+    dnf_obj.read_comps()
 
     gather_opts.multilib_blacklist = ksparser.handler.multilib_blacklist
     gather_opts.multilib_whitelist = ksparser.handler.multilib_whitelist
@@ -113,15 +121,23 @@ def _get_flags(gather_obj, pkg):
     return flags
 
 
+def _get_url(pkg):
+    if pkg.baseurl:
+        result = os.path.join(pkg.baseurl, pkg.location)
+    else:
+        result = os.path.join(pkg.repo.baseurl[0], pkg.location)
+    return result
+
+
 def print_rpms(gather_obj):
     for pkg in sorted(gather_obj.result_binary_packages):
-        print "RPM%s: %s-%s-%s.%s" % (_get_flags(gather_obj, pkg), pkg.name, pkg.version, pkg.release, pkg.arch)
+        print "RPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
 
     for pkg in sorted(gather_obj.result_debug_packages):
-        print "DEBUGINFO%s: %s-%s-%s.%s" % (_get_flags(gather_obj, pkg), pkg.name, pkg.version, pkg.release, pkg.arch)
+        print "DEBUGINFO%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
 
     for pkg in sorted(gather_obj.result_source_packages):
-        print "SRPM%s: %s-%s-%s.%s" % (_get_flags(gather_obj, pkg), pkg.name, pkg.version, pkg.release, pkg.arch)
+        print "SRPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
 
 
 if __name__ == "__main__":

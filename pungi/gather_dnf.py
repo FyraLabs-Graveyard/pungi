@@ -267,7 +267,7 @@ class Gather(GatherBase):
                 added.add(i)
                 pb = ""
                 if pulled_by:
-                    pb = " (pulled by %s)" % pulled_by
+                    pb = " (pulled by %s, repo: %s)" % (pulled_by, pulled_by.repo.id)
                 print "Added package %s%s" % (i, pb)
                 self.result_binary_packages.add(i)
                 # lookaside

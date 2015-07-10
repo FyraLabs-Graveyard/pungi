@@ -21,9 +21,9 @@ from .. import util
 
 
 PACKAGES_RE = {
-    "rpm": re.compile(r"^RPM(\((?P<flags>[^\)]+)\))?: (?:file://)?(?P<path>/?[^ ]+)$"),
-    "srpm": re.compile(r"^SRPM(\((?P<flags>[^\)]+)\))?: (?:file://)?(?P<path>/?[^ ]+)$"),
-    "debuginfo": re.compile(r"^DEBUGINFO(\((?P<flags>[^\)]+)\))?: (?:file://)?(?P<path>/?[^ ]+)$"),
+    "rpm": re.compile(r"^RPM(\((?P<flags>[^\)]*)\))?: (?P<path>.+)$"),
+    "srpm": re.compile(r"^SRPM(\((?P<flags>[^\)]*)\))?: (?P<path>.+)$"),
+    "debuginfo": re.compile(r"^DEBUGINFO(\((?P<flags>[^\)]*)\))?: (?P<path>.+)$"),
 }
 
 
@@ -167,6 +167,40 @@ class PungiWrapper(object):
 
         return cmd
 
+    def get_pungi_cmd_dnf(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None):
+        cmd = ["pungi-gather"]
+
+        # path to a kickstart file
+        cmd.append("--config=%s" % config)
+
+        # turn selfhosting on
+        if selfhosting:
+            cmd.append("--selfhosting")
+
+        # NPLB
+        if fulltree:
+            cmd.append("--fulltree")
+
+        greedy = greedy or "none"
+        cmd.append("--greedy=%s" % greedy)
+
+        if nodeps:
+            cmd.append("--nodeps")
+
+        if arch:
+            cmd.append("--arch=%s" % arch)
+
+        if multilib_methods:
+            for i in multilib_methods:
+                cmd.append("--multilib=%s" % i)
+
+        if lookaside_repos:
+            for i in lookaside_repos:
+                cmd.append("--lookaside=%s" % i)
+
+        return cmd
+
+
     def get_packages(self, output):
         global PACKAGES_RE
         result = dict(((i, []) for i in PACKAGES_RE))
@@ -176,7 +210,9 @@ class PungiWrapper(object):
                 match = pattern.match(line)
                 if match:
                     item = {}
-                    item["path"] = match.groupdict()["path"]
+                    item["path"] = match.groupdict()["path"].strip()
+                    if item["path"].startswith("file://"):
+                        item["path"] = item["path"][7:]
                     flags = match.groupdict()["flags"] or ""
                     flags = sorted([i.strip() for i in flags.split(",") if i.strip()])
                     item["flags"] = flags

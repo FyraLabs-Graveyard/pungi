@@ -70,6 +70,8 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     packages_dir = compose.paths.compose.packages("src", variant)
     packages_dir_relpath = compose.paths.compose.packages("src", variant, relative=True)
     for pkg in pkg_map["srpm"]:
+        if "lookaside" in pkg["flags"]:
+            continue
         dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
         dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
@@ -87,6 +89,8 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     packages_dir = compose.paths.compose.packages(arch, variant)
     packages_dir_relpath = compose.paths.compose.packages(arch, variant, relative=True)
     for pkg in pkg_map["rpm"]:
+        if "lookaside" in pkg["flags"]:
+            continue
         dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
         dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
@@ -102,6 +106,8 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     packages_dir = compose.paths.compose.debug_packages(arch, variant)
     packages_dir_relpath = compose.paths.compose.debug_packages(arch, variant, relative=True)
     for pkg in pkg_map["debuginfo"]:
+        if "lookaside" in pkg["flags"]:
+            continue
         dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
         dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
