@@ -132,7 +132,7 @@ class InitPhase(PhaseBase):
             "name": "runroot",
             "expected_types": [bool],
             "requires": (
-                (lambda x: bool(x), ["runroot_tag", "runroot_channel"]),
+                (lambda x: bool(x), ["koji_profile", "runroot_tag", "runroot_channel"]),
             ),
             "conflicts": (
                 (lambda x: not bool(x), ["runroot_tag", "runroot_channel"]),
