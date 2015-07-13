@@ -80,6 +80,15 @@ def main():
     if ns.lookaside:
         gather_opts.lookaside_repos = ns.lookaside
 
+    if ns.fulltree:
+        gather_opts.fulltree = True
+
+    if ns.selfhosting:
+        gather_opts.selfhosting = True
+
+    if ns.nodeps:
+        gather_opts.resolve_deps = False
+
     ksparser = pungi.ks.get_ksparser(ns.config)
 
     # read repos from ks
