@@ -135,6 +135,12 @@ class CompsWrapper(object):
                     conditional.append(i)
         return list(packages), conditional
 
+    def get_langpacks(self):
+        result = []
+        for name, install in self.comps._i.langpacks.items():
+            result.append({"name": name, "install": install})
+        return result
+
 
 class ArchWrapper(object):
     def __init__(self, arch):

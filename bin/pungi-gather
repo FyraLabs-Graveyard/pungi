@@ -97,6 +97,7 @@ def main():
     dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
     dnf_obj.read_comps()
 
+    gather_opts.langpacks = dnf_obj.comps_wrapper.get_langpacks()
     gather_opts.multilib_blacklist = ksparser.handler.multilib_blacklist
     gather_opts.multilib_whitelist = ksparser.handler.multilib_whitelist
     gather_opts.prepopulate = ksparser.handler.prepopulate
