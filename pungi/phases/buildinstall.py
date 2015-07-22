@@ -28,6 +28,7 @@ from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
 from productmd.images import Image
 
+from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -90,11 +91,12 @@ class BuildinstallPhase(PhaseBase):
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
             volid = get_volid(self.compose, arch)
+            buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
-                cmd = lorax.get_lorax_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=arch, volid=volid, nomacboot=True, noupgrade=noupgrade)
+                cmd = lorax.get_lorax_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid, nomacboot=True, noupgrade=noupgrade)
             elif buildinstall_method == "buildinstall":
-                cmd = lorax.get_buildinstall_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=arch, volid=volid)
+                cmd = lorax.get_buildinstall_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid)
             else:
                 raise ValueError("Unsupported buildinstall method: %s" % buildinstall_method)
             self.pool.add(BuildinstallThread(self.pool))
