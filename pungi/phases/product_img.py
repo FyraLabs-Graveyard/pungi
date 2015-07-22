@@ -58,9 +58,22 @@ class ProductimgPhase(PhaseBase):
 
     config_options = (
         {
-            "name": "bootable",
+            "name": "productimg",
             "expected_types": [bool],
-            "expected_values": [True],
+            "requires": (
+                (lambda x: bool(x) is True, ["productimg_install_class"]),
+                (lambda x: bool(x) is True, ["productimg_po_files"]),
+            ),
+        },
+        {
+            "name": "productimg_install_class",
+            "expected_types": [dict],
+            "optional": True,
+        },
+        {
+            "name": "productimg_po_files",
+            "expected_types": [dict],
+            "optional": True,
         },
     )
 
@@ -72,7 +85,11 @@ class ProductimgPhase(PhaseBase):
     def skip(self):
         if PhaseBase.skip(self):
             return True
-        if not self.compose.conf.get("bootable"):
+        if not self.compose.conf.get("productimg", False):
+            msg = "Config option 'productimg' not set. Skipping creating product images."
+            self.compose.log_debug(msg)
+            return True
+        if not self.compose.conf.get("bootable", False):
             msg = "Not a bootable product. Skipping creating product images."
             self.compose.log_debug(msg)
             return True
@@ -118,13 +135,13 @@ def create_product_img(compose, arch, variant):
     compose.log_info("[BEGIN] %s" % msg)
 
     product_tmp = tempfile.mkdtemp(prefix="product_img_")
-    install_class = compose.conf["install_class"].copy()
+    install_class = compose.conf["productimg_install_class"].copy()
     install_class["file"] = install_class["file"] % {"variant_id": variant.id.lower()}
     install_dir = os.path.join(product_tmp, "installclasses")
     makedirs(install_dir)
     get_file_from_scm(install_class, target_path=install_dir, logger=None)
 
-    po_files = compose.conf["po_files"]
+    po_files = compose.conf["productimg_po_files"]
     po_tmp = tempfile.mkdtemp(prefix="pofiles_")
     get_dir_from_scm(po_files, po_tmp, logger=compose._logger)
     for po_file in os.listdir(po_tmp):
