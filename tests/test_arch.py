@@ -36,12 +36,23 @@ class TestArch(unittest.TestCase):
         arches = get_valid_arches("x86_64", add_src=True)
         self.assertEqual(arches, ['x86_64', 'athlon', 'i686', 'i586', 'i486', 'i386', 'noarch', 'src'])
 
+    def test_armhfp(self):
+        arches = get_valid_arches("armhfp")
+        self.assertEqual(arches, ['armv7hnl', 'armv7hl', 'armv6hl', 'noarch'])
+
+        arches = get_valid_arches("armhfp", multilib=False)
+        self.assertEqual(arches, ['armv7hnl', 'armv7hl', 'armv6hl', 'noarch'])
+
+        arches = get_valid_arches("armhfp", add_src=True)
+        self.assertEqual(arches, ['armv7hnl', 'armv7hl', 'armv6hl', 'noarch', 'src'])
+
     def test_get_compatible_arches(self):
         self.assertEqual(get_compatible_arches("noarch"), ["noarch"])
         self.assertEqual(get_compatible_arches("i386"), get_valid_arches("i386"))
         self.assertEqual(get_compatible_arches("i586"), get_valid_arches("i386"))
         self.assertEqual(get_compatible_arches("x86_64"), get_valid_arches("x86_64", multilib=False))
         self.assertEqual(get_compatible_arches("ppc64p7"), get_valid_arches("ppc64", multilib=False))
+        self.assertEqual(get_compatible_arches("armhfp"), get_valid_arches("armv7hnl", multilib=False))
 
     def test_is_valid_arch(self):
         self.assertEqual(is_valid_arch("i386"), True)
@@ -50,6 +61,7 @@ class TestArch(unittest.TestCase):
         self.assertEqual(is_valid_arch("src"), True)
         self.assertEqual(is_valid_arch("nosrc"), True)
         self.assertEqual(is_valid_arch("foo"), False)
+        self.assertEqual(is_valid_arch("armhfp"), False)
 
     def test_split_name_arch(self):
         self.assertEqual(split_name_arch("package"), ("package", None))
