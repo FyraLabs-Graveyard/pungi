@@ -436,3 +436,30 @@ Example
         "branch": None,
         "dir": "po",
     }
+
+
+CreateISO Settings
+==================
+
+Options
+-------
+
+**createiso_skip** = False
+    (*list*) -- mapping that defines which variants and arches to skip during createiso; format: [(variant_uid_regex, {arch|*: True})]
+
+.. note::
+
+    Source architecture needs to be listed explicitly.
+    Excluding '*' applies only on binary arches.
+
+
+Example
+-------
+::
+
+    createiso_skip = [
+        ('^Workstation$', {
+            '*': True,
+            'src': True
+        }),
+    ]

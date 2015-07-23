@@ -32,13 +32,21 @@ from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.jigdo import JigdoWrapper
 from pungi.phases.base import PhaseBase
-from pungi.util import makedirs, get_volid
+from pungi.util import makedirs, get_volid, get_arch_variant_data
 from pungi.media_split import MediaSplitter
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 
 
 class CreateisoPhase(PhaseBase):
     name = "createiso"
+
+    config_options = (
+        {
+            "name": "createiso_skip",
+            "expected_types": [list],
+            "optional": True,
+        },
+    )
 
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
@@ -51,6 +59,11 @@ class CreateisoPhase(PhaseBase):
         commands = []
         for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"], recursive=True):
             for arch in variant.arches + ["src"]:
+                skip_iso = get_arch_variant_data(self.compose.conf, "createiso_skip", arch, variant)
+                if skip_iso == [True]:
+                    self.compose.log_info("Skipping createiso for %s.%s due to config option" % (variant, arch))
+                    continue
+
                 volid = get_volid(self.compose, arch, variant)
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
 
