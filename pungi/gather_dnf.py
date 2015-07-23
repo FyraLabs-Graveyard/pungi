@@ -578,6 +578,9 @@ class Gather(GatherBase):
                     self._set_flag(i, "fulltree")
                     added.add(i)
 
+                # don't run fulltree on added packages
+                self.finished_add_fulltree_packages[i] = []
+
             self.finished_add_fulltree_packages[pkg] = fulltree_pkgs
 
         return added
