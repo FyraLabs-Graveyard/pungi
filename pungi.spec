@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.1
+Version:        4.0.2
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -59,6 +59,28 @@ rm -rf $RPM_BUILD_ROOT
 /var/cache/pungi
 
 %changelog
+* Fri Jul 24 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.2-1
+- Merge #23 `fix treeinfo checksums` (dmach)
+- Fix treeinfo checksums. (dmach)
+- add basic setup for making arm iso's (dennis)
+- gather: Implement hashed directories. (dmach)
+- createiso: Add createiso_skip options to skip createiso on any variant/arch.
+  (dmach)
+- Fix buildinstall for armhfp. (dmach)
+- Fix and document productimg phase. (dmach)
+- Add armhfp arch tests. (dmach)
+- Document configuration options. (dmach)
+- Add dependency of 'runroot' config option on 'koji_profile'. (dmach)
+- Rename product_* to release_*. (dmach)
+- Implement koji profiles. (dmach)
+- Drop repoclosure-%arch tests. (dmach)
+- Config option create_optional_isos now defaults to False. (dmach)
+- Change createrepo config options defaults. (dmach)
+- Rewrite documentation to Sphinx. (dmach)
+- Fix test data, improve Makefile. (dmach)
+- Update GPL to latest version from https://www.gnu.org/licenses/gpl-2.0.txt
+  (dmach)
+
 * Thu Jun 11 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.1-1
 - wrap check for selinux enforcing in a try except (dennis)
 - pull in gather.py patches from dmach for test compose (admiller)
