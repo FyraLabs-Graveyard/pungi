@@ -268,6 +268,9 @@ Options
 **gather_lookaside_repos** = []
     (*list*) -- lookaside repositories used for package gathering; format: [(variant_uid_regex, {arch|*: [repo_urls]})]
 
+**hashed_directories** = False
+    (*bool*) -- put packages into "hashed" directories, for example Packages/k/kernel-4.0.4-301.fc22.x86_64.rpm
+
 
 Example
 -------
@@ -279,6 +282,7 @@ Example
     multilib_methods = ["devel", "runtime"]
     multilib_arches = ["ppc64", "s390x", "x86_64"]
     check_deps = False
+    hashed_directories = True
 
     additional_packages = [
         # bz#123456

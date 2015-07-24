@@ -40,6 +40,8 @@ class LinkerThread(WorkerThread):
         if (num % 100 == 0) or (num == self.pool.queue_total):
             self.pool.log_debug("Linked %s out of %s packages" % (num, self.pool.queue_total))
 
+        directory = os.path.dirname(dst)
+        makedirs(directory)
         self.pool.linker.link(src, dst, link_type=self.pool.link_type)
 
 

@@ -81,6 +81,11 @@ class GatherPhase(PhaseBase):
             "expected_types": [str, dict],
             "optional": True,
         },
+        {
+            "name": "hashed_directories",
+            "expected_types": [bool],
+            "optional": True,
+        },
         # DEPRECATED OPTIONS
         {
             "name": "additional_packages_multiarch",

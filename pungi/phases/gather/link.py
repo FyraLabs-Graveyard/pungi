@@ -38,6 +38,13 @@ def _get_src_nevra(compose, pkg_obj, srpm_map):
     return result
 
 
+def get_package_path(filename, hashed_directory=False):
+    if hashed_directory:
+        prefix = filename[0]
+        return os.path.join(prefix, filename)
+    return filename
+
+
 def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={}):
     # srpm_map instance is shared between link_files() runs
     pkg_set = pkg_sets[arch]
@@ -50,11 +57,13 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     for i in range(10):
         pool.add(LinkerThread(pool))
 
+    hashed_directories = compose.conf.get("hashed_directories", False)
+
     packages_dir = compose.paths.compose.packages("src", variant)
     packages_dir_relpath = compose.paths.compose.packages("src", variant, relative=True)
     for pkg in pkg_map["srpm"]:
-        dst = os.path.join(packages_dir, os.path.basename(pkg["path"]))
-        dst_relpath = os.path.join(packages_dir_relpath, os.path.basename(pkg["path"]))
+        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
         # link file
         pool.queue_put((pkg["path"], dst))
@@ -70,8 +79,8 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     packages_dir = compose.paths.compose.packages(arch, variant)
     packages_dir_relpath = compose.paths.compose.packages(arch, variant, relative=True)
     for pkg in pkg_map["rpm"]:
-        dst = os.path.join(packages_dir, os.path.basename(pkg["path"]))
-        dst_relpath = os.path.join(packages_dir_relpath, os.path.basename(pkg["path"]))
+        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
         # link file
         pool.queue_put((pkg["path"], dst))
@@ -85,8 +94,8 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     packages_dir = compose.paths.compose.debug_packages(arch, variant)
     packages_dir_relpath = compose.paths.compose.debug_packages(arch, variant, relative=True)
     for pkg in pkg_map["debuginfo"]:
-        dst = os.path.join(packages_dir, os.path.basename(pkg["path"]))
-        dst_relpath = os.path.join(packages_dir_relpath, os.path.basename(pkg["path"]))
+        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
 
         # link file
         pool.queue_put((pkg["path"], dst))
