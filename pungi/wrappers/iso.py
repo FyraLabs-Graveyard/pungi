@@ -35,6 +35,10 @@ class IsoWrapper(kobo.log.LoggingBase):
     def get_boot_options(self, arch, createfrom, efi=True):
         """Checks to see what we need as the -b option for mkisofs"""
 
+        if arch in ("arm", "armhfp"):
+            result = []
+            return result
+
         if arch in ("aarch64", ):
             result = [
                 '-eltorito-alt-boot',
