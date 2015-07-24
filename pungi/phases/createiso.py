@@ -410,7 +410,7 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             cmd = repo.get_createrepo_cmd(tree_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=iso_dir, workers=3, checksum=createrepo_checksum)
             run(cmd)
             # add repodata/repomd.xml back to checksums
-            ti.checksums.add(iso_dir, "repodata/repomd.xml")
+            ti.checksums.add("repodata/repomd.xml", "sha256", root_dir=iso_dir)
 
     new_ti_path = os.path.join(iso_dir, ".treeinfo")
     ti.dump(new_ti_path)
