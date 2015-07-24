@@ -33,6 +33,8 @@ from pungi.wrappers.scm import get_dir_from_scm
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.phases.base import PhaseBase
 
+import productmd.rpms
+
 
 createrepo_lock = threading.Lock()
 createrepo_dirs = set()
@@ -125,21 +127,40 @@ def create_variant_repo(compose, arch, variant, pkg_type):
 
     compose.log_info("[BEGIN] %s" % msg)
 
-    file_list = None
-    if repo_dir != package_dir:
-        rel_dir = relative_path(package_dir.rstrip("/") + "/", repo_dir.rstrip("/") + "/")
-        file_list = compose.paths.work.repo_package_list(arch, variant, pkg_type)
-        f = open(file_list, "w")
-        for i in os.listdir(package_dir):
-            if i.endswith(".rpm"):
-                f.write("%s\n" % os.path.join(rel_dir, i))
-        f.close()
+    rpms = set()
+
+    # read rpms from metadata rather than guessing it by scanning filesystem
+    manifest_file = compose.paths.compose.metadata("rpms.json")
+    manifest = productmd.rpms.Rpms()
+    manifest.load(manifest_file)
+
+    for rpms_arch, data in manifest.rpms[variant.uid].items():
+        if arch is None and pkg_type != "srpm":
+            continue
+        if arch is not None and arch != rpms_arch:
+            continue
+        for srpm_nevra, srpm_data in data.items():
+            for rpm_nevra, rpm_data in srpm_data.items():
+                if pkg_type == "rpm" and rpm_data["category"] != "binary":
+                    continue
+                if pkg_type == "srpm" and rpm_data["category"] != "source":
+                    continue
+                if pkg_type == "debuginfo" and rpm_data["category"] != "debug":
+                    continue
+                path = os.path.join(compose.topdir, "compose", rpm_data["path"])
+                rel_path = relative_path(path, repo_dir.rstrip("/") + "/")
+                rpms.add(rel_path)
+
+    file_list = compose.paths.work.repo_package_list(arch, variant, pkg_type)
+    f = open(file_list, "w")
+    for rel_path in sorted(rpms):
+        f.write("%s\n" % rel_path)
+    f.close()
 
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
     cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=repo_dir, workers=3, groupfile=comps_path, update_md_path=repo_dir_arch, checksum=createrepo_checksum)
-#    cmd.append("-vvv")
     log_file = compose.paths.log.log_file(arch, "createrepo-%s" % variant)
     run(cmd, logfile=log_file, show_cmd=True)
 
