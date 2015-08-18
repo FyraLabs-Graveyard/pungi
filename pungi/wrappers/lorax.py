@@ -21,7 +21,40 @@ from kobo.shortcuts import force_list
 
 
 class LoraxWrapper(object):
-    def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir, variant=None, bugurl=None, nomacboot=False, noupgrade=False, is_final=False, buildarch=None, volid=None):
+    def _handle_optional_arg_type(self, f_arg, c_arg):
+        """
+        _handle_optional_arg_type
+            private function to handle arguments to LoraxWrapper get_*_cmd
+            functions that can optionally be different types (such as string
+            or list). This effectively allows to repeat args to the commands
+            wrapped by LoraxWrapper.
+
+        @param      uknown type : f_arg
+        - Function argument that is passed to the get_*_cmd function.
+
+        @param      string: c_arg
+        - Command line argument to append to cmd
+
+        @return     list
+        - returns a list of strings to join with the cmd list in the get_*_cmd
+          functions
+        """
+
+        cmd_args = []
+
+        if type(f_arg) is list:
+            for item in f_arg:
+                cmd_args.append("%s=%s" % (c_arg, item))
+        elif type(f_arg) is str:
+            cmd_args.append("%s=%s" % (c_arg, item))
+        else:
+            raise Exception(
+                f_arg,
+                "Incorrect type passed to LoraxWrapper for " % c_arg
+            )
+        return cmd_args
+
+    def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir, variant=None, bugurl=None, nomacboot=False, noupgrade=False, is_final=False, buildarch=None, volid=None, add_template=None, add_template_var=None, add_arch_template=None, add_arch_template_var=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -52,6 +85,32 @@ class LoraxWrapper(object):
 
         if volid:
             cmd.append("--volid=%s" % volid)
+
+        if add_template:
+            cmd.extend(
+                self._handle_optional_arg_type(add_template, "--add-template")
+            )
+
+        if add_template_var:
+            cmd.extend(
+                self._handle_optional_arg_type(
+                    add_template_var, "--add-template-var"
+                )
+            )
+
+        if add_arch_template:
+            cmd.extend(
+                self._handle_optional_arg_type(
+                    add_arch_template, "--add-arch-template"
+                )
+            )
+
+        if add_arch_template_var:
+            cmd.extend(
+                self._handle_optional_arg_type(
+                    add_arch_template_var, "--add-arch-template-var"
+                )
+            )
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
