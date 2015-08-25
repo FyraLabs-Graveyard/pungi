@@ -88,11 +88,15 @@ class LiveImagesPhase(PhaseBase):
                 iso_name = os.path.basename(iso_path)
 
                 cmd = {
+                    "name": None,
+                    "version": None,
                     "arch": arch,
                     "variant": variant,
                     "iso_path": iso_path,
                     "build_arch": arch,
                     "ks_file": ks_file,
+                    "specfile": None,
+                    "scratch": False,
                     "cmd": [],
                     "label": "",  # currently not used
                 }
@@ -104,6 +108,18 @@ class LiveImagesPhase(PhaseBase):
                 # additional repos
                 data = get_arch_variant_data(self.compose.conf, "live_images", arch, variant)
                 cmd["repos"].extend(data[0].get("additional_repos", []))
+
+                # Explicit name and version
+                cmd["name"] = data[0].get("name", None)
+                cmd["version"] = data[0].get("version", None)
+
+                # Specfile (for images wrapped in rpm)
+                cmd["specfile"] = data[0].get("specfile", None)
+
+                # Scratch (only taken in consideration if specfile specified)
+                # For images wrapped in rpm is scratch disabled by default
+                # For other images is scratch always on
+                cmd["scratch"] = data[0].get("scratch", False)
 
                 chdir_cmd = "cd %s" % pipes.quote(iso_dir)
                 cmd["cmd"].append(chdir_cmd)
@@ -153,8 +169,14 @@ class CreateLiveImageThread(WorkerThread):
 
             koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
             name, version = compose.compose_id.rsplit("-", 1)
+            name = cmd["name"] or name
+            version = cmd["version"] or version
+            archive = False
+            if cmd["specfile"] and not cmd["scratch"]:
+                # Non scratch build are allowed only for rpm wrapped images
+                archive = True
             target = compose.conf["live_target"]
-            koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target, cmd["build_arch"], cmd["ks_file"], cmd["repos"], image_type="live", wait=True, archive=False)
+            koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target, cmd["build_arch"], cmd["ks_file"], cmd["repos"], image_type="live", wait=True, archive=archive, specfile=cmd["specfile"])
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
@@ -187,8 +209,8 @@ def get_ks_in(compose, arch, variant):
     scm_dict = data[0]["kickstart"]
 
     if isinstance(scm_dict, dict):
+        file_name = os.path.basename(os.path.basename(scm_dict["file"]))
         if scm_dict["scm"] == "file":
-            file_name = os.path.basename(os.path.basename(scm_dict["file"]))
             scm_dict["file"] = os.path.join(compose.config_dir, os.path.basename(scm_dict["file"]))
     else:
         file_name = os.path.basename(os.path.basename(scm_dict))
