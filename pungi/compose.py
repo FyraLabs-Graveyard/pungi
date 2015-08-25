@@ -160,6 +160,10 @@ class Compose(kobo.log.LoggingBase):
         return self.ci_base.compose.label
 
     @property
+    def compose_label_major_version(self):
+        return self.ci_base.compose.label_major_version
+
+    @property
     def has_comps(self):
         return bool(self.conf.get("comps_file", False))
 
