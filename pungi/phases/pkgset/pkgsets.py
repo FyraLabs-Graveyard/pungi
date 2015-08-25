@@ -243,7 +243,7 @@ class KojiPackageSet(PackageSetBase):
                     found = True
             else:
                 # or raise an exception
-                raise RuntimeError("RPM not found for sigs: %s" % self.sigkey_ordering)
+                raise RuntimeError("RPM %s not found for sigs: %s" % (rpm_info, self.sigkey_ordering))
 
         if not found:
             raise RuntimeError("Package not found: %s" % rpm_info)
