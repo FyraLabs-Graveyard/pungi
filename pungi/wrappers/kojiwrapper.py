@@ -247,3 +247,46 @@ class KojiWrapper(object):
             result.append(os.path.join(topdir, i))
 
         return result
+
+    def get_signed_wrapped_rpms_paths(self, task_id, level, srpm=False):
+        result = []
+        parent_task = self.koji_proxy.getTaskInfo(task_id, request=True)
+        task_info_list = []
+        task_info_list.extend(self.koji_proxy.getTaskChildren(task_id, request=True))
+
+        # scan parent and child tasks for certain methods
+        task_info = None
+        for i in task_info_list:
+            if i["method"] in ("wrapperRPM"):
+                task_info = i
+                break
+
+        # Check parent_task if it's scratch build
+        scratch = parent_task["request"][-1].get("scratch", False)
+        if scratch:
+            raise RuntimeError("Scratch builds cannot be signed!")
+
+        # Get results of wrapperRPM task
+        # {'buildroot_id': 2479520,
+        #  'logs': ['checkout.log', 'root.log', 'state.log', 'build.log'],
+        #  'rpms': ['foreman-discovery-image-2.1.0-2.el7sat.noarch.rpm'],
+        #  'srpm': 'foreman-discovery-image-2.1.0-2.el7sat.src.rpm'}
+        task_result = self.koji_proxy.getTaskResult(task_info["id"])
+
+        # Get list of filenames that should be returned
+        result_files = task_result["rpms"]
+        if srpm:
+            result_files += [task_result["srpm"]]
+
+        # Prepare list with paths to the required files
+        for i in result_files:
+            rpminfo = self.koji_proxy.getRPM(i)
+            build = self.koji_proxy.getBuild(rpminfo["build_id"])
+            path = os.path.join(self.koji_module.pathinfo.build(build), self.koji_module.pathinfo.signed(rpminfo, level))
+            result.append(path)
+
+        return result
+
+    def get_build_nvrs(self, task_id):
+        builds = self.koji_proxy.listBuilds(taskID=task_id)
+        return [build.get("nvr") for build in builds if build.get("nvr")]
