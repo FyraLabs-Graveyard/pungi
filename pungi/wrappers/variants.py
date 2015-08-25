@@ -66,7 +66,6 @@ class VariantsXmlParser(object):
         variant_dict = {
             "id": str(variant_node.attrib["id"]),
             "name": str(variant_node.attrib["name"]),
-            "name": str(variant_node.attrib["name"]),
             "type": str(variant_node.attrib["type"]),
             "arches": [str(i) for i in variant_node.xpath("arches/arch/text()")],
             "groups": [],
