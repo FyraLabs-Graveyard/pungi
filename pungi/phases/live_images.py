@@ -158,46 +158,39 @@ class CreateLiveImageThread(WorkerThread):
     def process(self, item, num):
         compose, cmd = item
 
-        runroot = compose.conf.get("runroot", False)
         log_file = compose.paths.log.log_file(cmd["arch"], "createiso-%s" % os.path.basename(cmd["iso_path"]))
 
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        if runroot:
-            # run in a koji build root
+        koji_wrapper = KojiWrapper()
+        name, version = compose.compose_id.rsplit("-", 1)
+        name = cmd["name"] or name
+        version = cmd["version"] or version
+        archive = False
+        if cmd["specfile"] and not cmd["scratch"]:
+            # Non scratch build are allowed only for rpm wrapped images
+            archive = True
+        target = compose.conf.get("live_target", "rhel-7.0-candidate")  # compatability for hardcoded target
+        koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target, cmd["build_arch"], cmd["ks_file"], cmd["repos"], image_type="live", wait=True, archive=archive, specfile=cmd["specfile"])
 
-            koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-            name, version = compose.compose_id.rsplit("-", 1)
-            name = cmd["name"] or name
-            version = cmd["version"] or version
-            archive = False
-            if cmd["specfile"] and not cmd["scratch"]:
-                # Non scratch build are allowed only for rpm wrapped images
-                archive = True
-            target = compose.conf["live_target"]
-            koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target, cmd["build_arch"], cmd["ks_file"], cmd["repos"], image_type="live", wait=True, archive=archive, specfile=cmd["specfile"])
+        # avoid race conditions?
+        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        time.sleep(num * 3)
 
-            # avoid race conditions?
-            # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
-            time.sleep(num * 3)
+        output = koji_wrapper.run_create_image_cmd(koji_cmd, log_file=log_file)
+        if output["retcode"] != 0:
+            self.fail(compose, cmd)
+            raise RuntimeError("LiveImage task failed: %s. See %s for more details." % (output["task_id"], log_file))
 
-            output = koji_wrapper.run_create_image_cmd(koji_cmd, log_file=log_file)
-            if output["retcode"] != 0:
-                self.fail(compose, cmd)
-                raise RuntimeError("LiveImage task failed: %s. See %s for more details." % (output["task_id"], log_file))
+        # copy finished image to isos/
+        image_path = koji_wrapper.get_image_path(output["task_id"])
+        # TODO: assert len == 1
+        image_path = image_path[0]
+        shutil.copy2(image_path, cmd["iso_path"])
 
-            # copy finished image to isos/
-            image_path = koji_wrapper.get_image_path(output["task_id"])
-            # TODO: assert len == 1
-            image_path = image_path[0]
-            shutil.copy2(image_path, cmd["iso_path"])
-
-            # write checksum and manifest
-            run(cmd["cmd"])
-
-        else:
-            raise RuntimeError("NOT IMPLEMENTED")
+        # write checksum and manifest
+        run(cmd["cmd"])
 
         self.pool.log_info("[DONE ] %s" % msg)
 
