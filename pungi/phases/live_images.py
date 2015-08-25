@@ -79,20 +79,12 @@ class LiveImagesPhase(PhaseBase):
                 if not iso_dir:
                     continue
 
-                # XXX: hardcoded disc_type and disc_num
-                iso_path = self.compose.paths.compose.iso_path(arch, variant, disc_type="live", disc_num=None, symlink_to=symlink_isos_to)
-                if os.path.isfile(iso_path):
-                    self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
-                    continue
-
-                iso_name = os.path.basename(iso_path)
-
                 cmd = {
                     "name": None,
                     "version": None,
                     "arch": arch,
                     "variant": variant,
-                    "iso_path": iso_path,
+                    "iso_path": None,
                     "build_arch": arch,
                     "ks_file": ks_file,
                     "specfile": None,
@@ -120,6 +112,23 @@ class LiveImagesPhase(PhaseBase):
                 # For images wrapped in rpm is scratch disabled by default
                 # For other images is scratch always on
                 cmd["scratch"] = data[0].get("scratch", False)
+
+                # Custom name (prefix)
+                custom_iso_name = None
+                if cmd["name"]:
+                    custom_iso_name = cmd["name"]
+                    if cmd["version"]:
+                        custom_iso_name += "-%s" % cmd["version"]
+
+                # XXX: hardcoded disc_type and disc_num
+                iso_path = self.compose.paths.compose.iso_path(arch, variant, disc_type="live", disc_num=None, symlink_to=symlink_isos_to, name=custom_iso_name)
+                if os.path.isfile(iso_path):
+                    self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
+                    continue
+                cmd["iso_path"] = iso_path
+                iso_name = os.path.basename(iso_path)
+
+                # Additional commands
 
                 chdir_cmd = "cd %s" % pipes.quote(iso_dir)
                 cmd["cmd"].append(chdir_cmd)

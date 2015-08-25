@@ -464,7 +464,7 @@ class ComposePaths(object):
                 makedirs(path)
         return path
 
-    def iso_path(self, arch, variant, disc_type="dvd", disc_num=1, suffix=".iso", symlink_to=None, create_dir=True, relative=False):
+    def iso_path(self, arch, variant, disc_type="dvd", disc_num=1, suffix=".iso", symlink_to=None, create_dir=True, relative=False, name=None):
         """
         Examples:
             compose/Server/x86_64/iso/rhel-7.0-20120127.0-Server-x86_64-dvd1.iso
@@ -489,7 +489,10 @@ class ComposePaths(object):
             variant_uid = variant.parent.uid
         else:
             variant_uid = variant.uid
-        file_name = "%s-%s-%s-%s%s%s" % (compose_id, variant_uid, arch, disc_type, disc_num, suffix)
+        if not name:
+            file_name = "%s-%s-%s-%s%s%s" % (compose_id, variant_uid, arch, disc_type, disc_num, suffix)
+        else:
+            file_name = "%s-%s-%s-%s%s%s" % (name, variant_uid, arch, disc_type, disc_num, suffix)
         result = os.path.join(path, file_name)
         return result
 
