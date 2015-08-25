@@ -85,6 +85,7 @@ class LiveImagesPhase(PhaseBase):
                     "arch": arch,
                     "variant": variant,
                     "iso_path": None,
+                    "wrapped_rpms_path": iso_dir,
                     "build_arch": arch,
                     "ks_file": ks_file,
                     "specfile": None,
@@ -197,6 +198,12 @@ class CreateLiveImageThread(WorkerThread):
         # TODO: assert len == 1
         image_path = image_path[0]
         shutil.copy2(image_path, cmd["iso_path"])
+
+        # copy finished rpm to isos/ (if rpm wrapped ISO was built)
+        if cmd["specfile"]:
+            rpm_paths = koji.get_wrapped_rpm_path(output["task_id"])
+            for rpm_path in rpm_paths:
+                shutil.copy2(rpm_path, cmd["wrapped_rpms_path"])
 
         # write checksum and manifest
         run(cmd["cmd"])
