@@ -208,3 +208,42 @@ class KojiWrapper(object):
         for i in task_result["files"]:
             result.append(os.path.join(topdir, i))
         return result
+
+    def get_wrapped_rpm_path(self, task_id, srpm=False):
+        result = []
+        parent_task = self.koji_proxy.getTaskInfo(task_id, request=True)
+        task_info_list = []
+        task_info_list.extend(self.koji_proxy.getTaskChildren(task_id, request=True))
+
+        # scan parent and child tasks for certain methods
+        task_info = None
+        for i in task_info_list:
+            if i["method"] in ("wrapperRPM"):
+                task_info = i
+                break
+
+        # Check parent_task if it's scratch build
+        scratch = parent_task["request"][-1].get("scratch", False)
+
+        # Get results of wrapperRPM task
+        # {'buildroot_id': 2479520,
+        #  'logs': ['checkout.log', 'root.log', 'state.log', 'build.log'],
+        #  'rpms': ['foreman-discovery-image-2.1.0-2.el7sat.noarch.rpm'],
+        #  'srpm': 'foreman-discovery-image-2.1.0-2.el7sat.src.rpm'}
+        task_result = self.koji_proxy.getTaskResult(task_info["id"])
+
+        # Get koji dir with results (rpms, srpms, logs, ...)
+        topdir = os.path.join(self.koji_module.pathinfo.work(), self.koji_module.pathinfo.taskrelpath(task_info["id"]))
+
+        # TODO: Maybe use different approach for non-scratch builds - see get_image_path()
+
+        # Get list of filenames that should be returned
+        result_files = task_result["rpms"]
+        if srpm:
+            result_files += [task_result["srpm"]]
+
+        # Prepare list with paths to the required files
+        for i in result_files:
+            result.append(os.path.join(topdir, i))
+
+        return result
