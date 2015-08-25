@@ -177,7 +177,11 @@ def main():
                       old_composes=opts.old_composes, koji_event=opts.koji_event, supported=opts.supported, logger=logger)
     kobo.log.add_file_logger(logger, compose.paths.log.log_file("global", "pungi.log"))
     COMPOSE = compose
-    run_compose(compose)
+    try:
+        run_compose(compose)
+    except Exception, ex:
+        compose.log_error("Compose run failed: %s" % ex)
+        raise
 
 
 def run_compose(compose):
@@ -335,6 +339,7 @@ if __name__ == "__main__":
             open(tb_path, "w").write(kobo.tback.Traceback().get_traceback())
         else:
             print("Exception: %s" % ex)
+            raise
         sys.stdout.flush()
         sys.stderr.flush()
-        raise
+        sys.exit(1)
