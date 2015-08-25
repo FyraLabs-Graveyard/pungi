@@ -77,6 +77,7 @@ def compose_to_composeinfo(compose):
     ci.release.version = compose.conf["release_version"]
     ci.release.short = compose.conf["release_short"]
     ci.release.is_layered = compose.conf.get("release_is_layered", False)
+    ci.release.type = compose.conf.get("release_type", "ga").lower()
 
     # base product
     if ci.release.is_layered:
@@ -103,6 +104,7 @@ def compose_to_composeinfo(compose):
             var.release.short = variant.release_short
             var.release.version = variant.release_version
             var.release.is_layered = True
+            var.release.type = ci.release.type
 
         for arch in variant.arches:
             # paths: binaries
@@ -190,6 +192,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         ti.release.version = variant.release_version
         ti.release.short = variant.release_short
         ti.release.is_layered = True
+        ti.release.type = compose.conf.get("release_type", "ga").lower()
 
         # base product
         ti.base_product.name = compose.conf["release_name"]
@@ -205,6 +208,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         ti.release.version = compose.conf["release_version"]
         ti.release.short = compose.conf["release_short"]
         ti.release.is_layered = compose.conf.get("release_is_layered", False)
+        ti.release.type = compose.conf.get("release_type", "ga").lower()
 
         # base product
         if ti.release.is_layered:
