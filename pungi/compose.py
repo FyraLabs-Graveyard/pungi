@@ -124,6 +124,8 @@ class Compose(kobo.log.LoggingBase):
                 self.im.load(self.paths.compose.metadata("images.json"))
             except RuntimeError:
                 pass
+            except IOError:
+                pass
         self.im.compose.id = self.compose_id
         self.im.compose.type = self.compose_type
         self.im.compose.date = self.compose_date
