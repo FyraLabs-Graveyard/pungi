@@ -22,7 +22,6 @@ import pipes
 import tempfile
 import shutil
 import re
-import errno
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, read_checksum_file, relative_path
