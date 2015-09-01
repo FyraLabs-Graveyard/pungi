@@ -307,6 +307,34 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
+    def image_build_dir(self, arch, variant, create_dir=True):
+        """
+        @param arch
+        @param variant
+        @param create_dir=True
+
+        Examples:
+            work/x86_64/Server/image-build
+        """
+        path = os.path.join(self.topdir(arch, create_dir=create_dir), variant.uid, "image-build")
+        if create_dir:
+            makedirs(path)
+        return path
+
+    def image_build_conf(self, arch, variant, image_name, image_type, create_dir=True):
+        """
+        @param arch
+        @param variant
+        @param image-name
+        @param image-type (e.g docker)
+        @param create_dir=True
+
+        Examples:
+            work/x86_64/Server/image-build/docker_rhel-server-docker.cfg
+        """
+        path = os.path.join(self.image_build_dir(arch, variant), "%s_%s.cfg" % (image_type, image_name))
+        return path
+
 
 class ComposePaths(object):
     def __init__(self, compose):
@@ -510,6 +538,45 @@ class ComposePaths(object):
             file_name = "%s-%s-%s-%s%s%s" % (name, variant_uid, arch, disc_type, disc_num, suffix)
         result = os.path.join(path, file_name)
         return result
+
+    def image_dir(self, arch, variant, symlink_to=None, create_dir=True, relative=False):
+        """
+        Examples:
+            compose/Server/x86_64/images
+            None
+        @param arch
+        @param variant
+        @param symlink_to=None
+        @param create_dir=True
+        @param relative=False
+        """
+        # skip optional, addons and src architecture
+        if variant.type != "variant":
+            return None
+        if arch == "src":
+            return None
+
+        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), "images")
+        if symlink_to:
+            topdir = self.compose.topdir.rstrip("/") + "/"
+            relative_dir = path[len(topdir):]
+            target_dir = os.path.join(symlink_to, self.compose.compose_id, relative_dir)
+            if create_dir and not relative:
+                makedirs(target_dir)
+            try:
+                os.symlink(target_dir, path)
+            except OSError as ex:
+                if ex.errno != errno.EEXIST:
+                    raise
+                msg = "Symlink pointing to '%s' expected: %s" % (target_dir, path)
+                if not os.path.islink(path):
+                    raise RuntimeError(msg)
+                if os.path.abspath(os.readlink(path)) != target_dir:
+                    raise RuntimeError(msg)
+        else:
+            if create_dir and not relative:
+                makedirs(path)
+        return path
 
     def jigdo_dir(self, arch, variant, create_dir=True, relative=False):
         """

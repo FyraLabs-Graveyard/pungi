@@ -467,3 +467,80 @@ Example
             'src': True
         }),
     ]
+
+Image Build Settings
+====================
+
+**image_build**
+    (*list*) -- config for koji image-build; format: [(variant_uid_regex, {arch|*: [{opt: value}])]
+
+.. note::
+    Config can contain anything what is accepted by
+    koji image-build --config configfile.ini
+    Repo is currently the only option which is being automatically transformed
+    into a string.
+
+    Please don't set install_tree as it would get overriden by pungi.
+    The 'format' attr is [('image_type', 'image_suffix'), ...].
+    productmd should ideally contain all of image types and suffixes.
+
+Example
+-------
+::
+
+    image_build = [
+        ('^Server$', {
+            'x86_64': [
+                {
+                    'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
+                    'name': 'fedora-qcow-and-docker-base',
+                    'target': 'koji-target-name',
+                    'ksversion': 'F23', # value from pykickstart
+                    'version': '23',
+                    'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
+                    'kickstart': "fedora-docker-base.ks",
+                    'repo': ["http://someextrarepos.org/repo", "ftp://rekcod.oi/repo].
+    #               'install_tree': 'http://sometpath',  # this is set automatically by pungi to os_dir for given variant/$arch 
+                    'distro': 'Fedora-20',
+                    'disk_size': 3
+                },
+                {
+                    'format': [('qcow2','qcow2')]
+                    'name': 'fedora-qcow-base',
+                    'target': 'koji-target-name',
+                    'ksversion': 'F23', # value from pykickstart
+                    'version': '23',
+                    'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
+                    'kickstart': "fedora-docker-base.ks",
+                    'distro': 'Fedora-23'
+                }
+            ]
+       }),
+    ]
+
+Translate Paths Settings
+========================
+
+**translate_paths**
+    (*list*) -- list of paths to translate; format: [(path,translated_path)]
+
+.. note::
+    This feature becomes useful when you need to transform compose location
+    into e.g. a http repo which is can be passed to koji image-build.
+    Translation needs to be invoked by a function call in pungi.
+    os.path.normpath() is applied on both path and translated_path
+    
+
+Example config
+--------------
+::
+    translate_paths = [
+        ("/mnt/a", "http://b/dir"),
+    ]
+
+Example usage
+-------------
+::
+    >>> from pungi.paths import translate_paths
+    >>> print translate_paths(compose_object_with_mapping, "/mnt/a/c/somefile")
+    http://b/dir/c/somefile

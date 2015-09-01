@@ -22,6 +22,7 @@ import re
 import koji
 import rpmUtils.arch
 from kobo.shortcuts import run
+from ConfigParser import ConfigParser
 
 
 class KojiWrapper(object):
@@ -97,6 +98,35 @@ class KojiWrapper(object):
         }
         return result
 
+    def get_image_build_cmd(self, config_options, conf_file_dest, wait=True, scratch=False):
+        """
+        @param config_options
+        @param conf_file_dest -  a destination in compose workdir for the conf file to be written
+        @param wait=True
+        @param scratch=False
+        """
+        # Usage: koji image-build [options] <name> <version> <target> <install-tree-url> <arch> [<arch>...]
+        sub_command = "image-build"
+        # The minimum set of options
+        min_options = ("name", "version", "target", "install_tree", "arches", "format", "kickstart", "ksurl", "distro")
+        assert set(min_options).issubset(set(config_options.keys())), "image-build requires at least %s got '%s'" % (", ".join(min_options), config_options)
+        cfg_parser = ConfigParser()
+        cfg_parser.add_section(sub_command)
+        for option, value in config_options.iteritems():
+            cfg_parser.set(sub_command, option, value)
+
+        fd = open(conf_file_dest, "w")
+        cfg_parser.write(fd)
+        fd.close()
+
+        cmd = [self.executable, sub_command, "--config=%s" % conf_file_dest]
+        if wait:
+            cmd.append("--wait")
+        if scratch:
+            cmd.append("--scratch")
+
+        return cmd
+
     def get_create_image_cmd(self, name, version, target, arch, ks_file, repos, image_type="live", image_format=None, release=None, wait=True, archive=False, specfile=None):
         # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
         # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>
@@ -163,12 +193,14 @@ class KojiWrapper(object):
 
     def run_create_image_cmd(self, command, log_file=None):
         # spin-{livecd,appliance} is blocking by default -> you probably want to run it in a thread
-
-        retcode, output = run(command, can_fail=True, logfile=log_file)
+        try:
+            retcode, output = run(command, can_fail=True, logfile=log_file)
+        except RuntimeError, e:
+            raise RuntimeError("%s. %s failed with '%s'" % (e, command, output))
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
-            raise RuntimeError("Could not find task ID in output")
+            raise RuntimeError("Could not find task ID in output. Command '%s' returned '%s'." % (" ".join(command), output))
 
         result = {
             "retcode": retcode,
@@ -179,7 +211,6 @@ class KojiWrapper(object):
 
     def get_image_path(self, task_id):
         result = []
-        # XXX: hardcoded URL
         koji_proxy = self.koji_module.ClientSession(self.koji_module.config.server)
         task_info_list = []
         task_info_list.append(koji_proxy.getTaskInfo(task_id, request=True))
@@ -188,7 +219,7 @@ class KojiWrapper(object):
         # scan parent and child tasks for certain methods
         task_info = None
         for i in task_info_list:
-            if i["method"] in ("createAppliance", "createLiveCD"):
+            if i["method"] in ("createAppliance", "createLiveCD", 'createImage'):
                 task_info = i
                 break
 
