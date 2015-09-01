@@ -21,7 +21,6 @@ import copy
 import time
 import pipes
 import shutil
-import re
 import tempfile
 
 from kobo.threads import ThreadPool, WorkerThread
@@ -32,6 +31,7 @@ from pungi.wrappers.iso import IsoWrapper
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.phases.base import PhaseBase
 from pungi.util import get_arch_variant_data
+from pungi.paths import translate_path
 
 
 # HACK: define cmp in python3
@@ -93,10 +93,7 @@ class LiveImagesPhase(PhaseBase):
                     "cmd": [],
                     "label": "",  # currently not used
                 }
-                repo = self.compose.paths.compose.repository(arch, variant)
-                # HACK:
-                repo = re.sub(r"^/mnt/koji/", "https://kojipkgs.fedoraproject.org/", repo)
-                cmd["repos"] = [repo]
+                cmd["repos"] = [translate_path(self.compose, self.compose.paths.compose.repository(arch, variant))]
 
                 # additional repos
                 data = get_arch_variant_data(self.compose.conf, "live_images", arch, variant)
