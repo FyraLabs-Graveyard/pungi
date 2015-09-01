@@ -201,7 +201,7 @@ class CreateLiveImageThread(WorkerThread):
 
         # copy finished rpm to isos/ (if rpm wrapped ISO was built)
         if cmd["specfile"]:
-            rpm_paths = koji.get_wrapped_rpm_path(output["task_id"])
+            rpm_paths = koji_wrapper.get_wrapped_rpm_path(output["task_id"])
             for rpm_path in rpm_paths:
                 shutil.copy2(rpm_path, cmd["wrapped_rpms_path"])
 
