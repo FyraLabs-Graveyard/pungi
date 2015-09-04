@@ -86,12 +86,6 @@ class BuildinstallPhase(PhaseBase):
         noupgrade = not self.compose.conf.get("buildinstall_upgrade_image", False)
         buildinstall_method = self.compose.conf["buildinstall_method"]
 
-        # These were added for the Atomic ISO Lorax compose
-        add_template = self.compose.conf.get("add_template", None)
-        add_template_var = self.compose.conf.get("add_template_var", None)
-        add_arch_template = self.compose.conf.get("add_arch_template", None)
-        add_arch_template_var = self.compose.conf.get("add_arch_template_var", None)
-
         for arch in self.compose.get_arches():
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
@@ -99,7 +93,7 @@ class BuildinstallPhase(PhaseBase):
             buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
-                cmd = lorax.get_lorax_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid, nomacboot=True, noupgrade=noupgrade, add_template=add_template, add_template_var=add_template_var, add_arch_template=add_arch_template, add_template_var=add_template_var)
+                cmd = lorax.get_lorax_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid, nomacboot=True, noupgrade=noupgrade)
             elif buildinstall_method == "buildinstall":
                 cmd = lorax.get_buildinstall_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid)
             else:
