@@ -45,7 +45,7 @@ class LoraxWrapper(object):
         if type(f_arg) is list:
             for item in f_arg:
                 cmd_args.append("%s=%s" % (c_arg, item))
-        elif type(f_arg) is str:
+        if type(f_arg) is str:
             cmd_args.append("%s=%s" % (c_arg, item))
         else:
             raise Exception(
