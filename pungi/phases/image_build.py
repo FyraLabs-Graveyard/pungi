@@ -27,7 +27,7 @@ class ImageBuildPhase(PhaseBase):
         if PhaseBase.skip(self):
             return True
         if not self.compose.conf.get(self.name):
-            self.log_info("Section '%s' was not found. Skipping" % self.name)
+            self.compose.log_info("Config section '%s' was not found. Skipping" % self.name)
             return True
         return False
 
