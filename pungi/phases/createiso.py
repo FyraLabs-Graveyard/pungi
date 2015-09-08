@@ -228,8 +228,8 @@ class CreateIsoThread(WorkerThread):
             runroot_tag = compose.conf["runroot_tag"]
 
             # get info about build arches in buildroot_tag
-            koji_url = compose.conf["pkgset_koji_url"]
-            koji_proxy = koji.ClientSession(koji_url)
+            koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+            koji_proxy = koji_wrapper.koji_proxy
             tag_info = koji_proxy.getTag(runroot_tag)
             tag_arches = tag_info["arches"].split(" ")
 
@@ -241,7 +241,6 @@ class CreateIsoThread(WorkerThread):
                     # pick random arch from available runroot tag arches
                     cmd["build_arch"] = random.choice(tag_arches)
 
-            koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
             koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, cmd["build_arch"], cmd["cmd"], channel=runroot_channel, use_shell=True, task_id=True, packages=packages, mounts=mounts)
 
             # avoid race conditions?
