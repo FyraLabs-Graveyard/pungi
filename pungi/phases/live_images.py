@@ -170,7 +170,7 @@ class CreateLiveImageThread(WorkerThread):
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        koji_wrapper = KojiWrapper()
+        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
         name, version = compose.compose_id.rsplit("-", 1)
         name = cmd["name"] or name
         version = cmd["version"] or version
