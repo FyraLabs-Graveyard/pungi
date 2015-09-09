@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.2
+Version:        4.0.3
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -59,6 +59,39 @@ rm -rf $RPM_BUILD_ROOT
 /var/cache/pungi
 
 %changelog
+* Tue Sep 08 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.3-1
+- Merge #54 `fix log_info for image_build (fails if image_build is skipped)`
+  (lkocman)
+- image_build: self.log_info -> self.compose.log_info (lkocman)
+- Revert "Added params needed for Atomic compose to LoraxWrapper" (dennis)
+- Revert "fix up if/elif in _handle_optional_arg_type" (dennis)
+- Add image-build support (lkocman)
+- Add translate path support. Useful for passing pungi repos to image-build
+  (lkocman)
+- import duplicate import of errno from buildinstall (lkocman)
+- handle openning missing images.json (image-less compose re-run) (lkocman)
+- compose: Add compose_label_major_version(). (lkocman)
+- pungi-koji: Don't print traceback if error occurred. (pbabinca)
+- More detailed message for unsigned rpms. (tkopecek)
+- New config option: product_type (default is 'ga'); Set to 'updates' for
+  updates composes. (dmach)
+- kojiwrapper: Add get_signed_wrapped_rpms_paths() and get_build_nvrs()
+  methods. (tmlcoch)
+- live_images: Copy built wrapped rpms from koji into compose. (tmlcoch)
+- kojiwrapper: Add get_wrapped_rpm_path() function. (tmlcoch)
+- live_images: Allow custom name prefix for live ISOs. (tmlcoch)
+- Do not require enabled runroot option for live_images phase. (tmlcoch)
+- Support for rpm wrapped live images. (tmlcoch)
+- Remove redundant line in variants wrapper. (tmlcoch)
+- Merge #36 `Add params needed for Atomic compose to LoraxWrapper` (admiller)
+- live_images: replace hardcoded path substition with translate_path() call
+  (lkocman)
+- live_images fix reference from koji to koji_wrapper (lkocman)
+- fix up if/elif in _handle_optional_arg_type (admiller)
+- Added params needed for Atomic compose to LoraxWrapper (admiller)
+- Merge #24 `Fix empty repodata when hash directories were enabled. ` (dmach)
+- createrepo: Fix empty repodata when hash directories were enabled. (dmach)
+
 * Fri Jul 24 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.2-1
 - Merge #23 `fix treeinfo checksums` (dmach)
 - Fix treeinfo checksums. (dmach)
