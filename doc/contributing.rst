@@ -40,9 +40,7 @@ Currently the development workflow for Pungi is on master branch:
 
     # now we rebase
     git checkout master
-    git fetch upstream
-    git fetch upstream --tags
-    git merge upstream/master
+    git pull --rebase upstream master
     git push origin master
     git push origin --tags
     git checkout my_topic_branch
@@ -64,9 +62,7 @@ Currently the development workflow for Pungi is on master branch:
       else
         pullup_startbranch=$(git describe --contains --all HEAD)
         git checkout $1
-        git fetch upstream
-        git fetch upstream --tags
-        git merge upstream/$1
+        git pull --rebase upstream master
         git push origin $1
         git push origin --tags
         git checkout ${pullup_startbranch}
