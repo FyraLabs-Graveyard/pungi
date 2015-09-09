@@ -204,11 +204,11 @@ def run_compose(compose):
     # initialize all phases
     init_phase = pungi.phases.InitPhase(compose)
     pkgset_phase = pungi.phases.PkgsetPhase(compose)
-    createrepo_phase = pungi.phases.CreaterepoPhase(compose)
     buildinstall_phase = pungi.phases.BuildinstallPhase(compose)
-    productimg_phase = pungi.phases.ProductimgPhase(compose, pkgset_phase)
     gather_phase = pungi.phases.GatherPhase(compose, pkgset_phase)
     extrafiles_phase = pungi.phases.ExtraFilesPhase(compose, pkgset_phase)
+    createrepo_phase = pungi.phases.CreaterepoPhase(compose)
+    productimg_phase = pungi.phases.ProductimgPhase(compose, pkgset_phase)
     createiso_phase = pungi.phases.CreateisoPhase(compose)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose)
