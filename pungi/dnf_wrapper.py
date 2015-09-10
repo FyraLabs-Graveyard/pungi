@@ -70,6 +70,7 @@ class DnfWrapper(dnf.Base):
         repo.baseurl = baseurl
         repo.mirrorlist = mirrorlist
         repo.ignoregroups = ignoregroups
+        repo.enable()
         self.repos.add(repo)
         repo.priority = 10 if lookaside else 20
 
