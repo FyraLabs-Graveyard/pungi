@@ -833,6 +833,8 @@ class Pungi(PungiBase):
                         if not is_package(txmbr.po):
                             # we don't want sources which can be pulled in, because 'src' arch is part of self.valid_arches
                             continue
+                        if not txmbr.isDep:
+                            continue
                         self.add_package(txmbr.po)
 
             # resolve deps
