@@ -51,7 +51,7 @@ class CreaterepoPhase(PhaseBase):
         },
         {
             "name": "createrepo_checksum",
-            "expected_types": [bool],
+            "expected_types": [str],
             "expected_values": ["sha256", "sha"],
         },
         {
