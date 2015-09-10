@@ -85,6 +85,7 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}-config-validate
 %{_bindir}/%{name}-fedmsg-notification
 %{_bindir}/%{name}-patch-iso
+%{_bindir}/%{name}-compare-depsolving
 
 %check
 nosetests --exe

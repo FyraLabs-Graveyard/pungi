@@ -1,0 +1,19 @@
+This directory contains scripts to compare YUM and DNF based gathering code in
+Pungi.
+
+There are two scripts to help re-run the depsolving on existing code. As input
+they need .conf and .log file from an existing compose. They collect correct
+command line options from them and run the respective tool.
+
+Run:
+
+    $ run-dnf.sh Server.x86_64.conf
+    $ run-yum.sh Server.x86_64.conf
+
+The results are stored in a file with .log.dnf or .log.yum extensions. When
+--interactive is used as second argument of the scripts, the output is printed
+to terminal (useful for running in debugger).
+
+To compare the RPM package lists, run:
+
+    $ ./pungi-compare-depsolving Server.x86_64.log.yum Server.x86_64.log.dnf

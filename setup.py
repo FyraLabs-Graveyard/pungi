@@ -42,6 +42,8 @@ setup(
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
         'bin/pungi-patch-iso',
+
+        'contrib/yum-dnf-compare/pungi-compare-depsolving',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),
