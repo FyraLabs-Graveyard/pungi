@@ -49,6 +49,11 @@ class LiveImagesPhase(PhaseBase):
             "expected_types": [str],
             "optional": True,
         },
+        {
+            "name": "live_images",
+            "expected_types": [list],
+            "optional": True,
+        },
     )
 
     def __init__(self, compose):
