@@ -72,6 +72,7 @@ Syntax:
 
 import pykickstart.parser
 import pykickstart.sections
+from pykickstart.constants import GROUP_REQUIRED, GROUP_DEFAULT, GROUP_ALL
 
 
 class FulltreeExcludesSection(pykickstart.sections.Section):
@@ -142,13 +143,14 @@ class KickstartParser(pykickstart.parser.KickstartParser):
 
         for ks_group in self.handler.packages.groupList:
             group_id = ks_group.name
-            include_default = False
-            include_optional = False
 
-            if ks_group.include == 1:
+            if ks_group.include == GROUP_REQUIRED:
+                include_default = False
+                include_optional = False
+            elif ks_group.include == GROUP_DEFAULT:
                 include_default = True
-
-            if ks_group.include == 2:
+                include_optional = False
+            else:
                 include_default = True
                 include_optional = True
 
