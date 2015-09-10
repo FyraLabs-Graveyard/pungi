@@ -216,7 +216,10 @@ def run_compose(compose):
 
     # check if all config options are set
     errors = []
-    for phase in (init_phase, pkgset_phase, buildinstall_phase, productimg_phase, gather_phase, createiso_phase, test_phase):
+    for phase in (init_phase, pkgset_phase, createrepo_phase,
+                  buildinstall_phase, productimg_phase, gather_phase,
+                  extrafiles_phase, createiso_phase, liveimages_phase,
+                  image_build_phase, test_phase):
         if phase.skip():
             continue
         try:
