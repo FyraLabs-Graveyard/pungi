@@ -357,7 +357,7 @@ class KojiWrapper(object):
 
         return result
 
-    def get_signed_wrapped_rpms_paths(self, task_id, level, srpm=False):
+    def get_signed_wrapped_rpms_paths(self, task_id, sigkey, srpm=False):
         result = []
         parent_task = self.koji_proxy.getTaskInfo(task_id, request=True)
         task_info_list = []
@@ -391,7 +391,7 @@ class KojiWrapper(object):
         for i in result_files:
             rpminfo = self.koji_proxy.getRPM(i)
             build = self.koji_proxy.getBuild(rpminfo["build_id"])
-            path = os.path.join(self.koji_module.pathinfo.build(build), self.koji_module.pathinfo.signed(rpminfo, level))
+            path = os.path.join(self.koji_module.pathinfo.build(build), self.koji_module.pathinfo.signed(rpminfo, sigkey))
             result.append(path)
 
         return result
