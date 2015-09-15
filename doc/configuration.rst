@@ -451,7 +451,7 @@ Options
 **createiso_skip** = False
     (*list*) -- mapping that defines which variants and arches to skip during createiso; format: [(variant_uid_regex, {arch|*: True})]
 
-**create_jigdo** = False
+**create_jigdo** = True
     (*bool*) -- controls the creation of jigdo from ISO
 
 .. note::
