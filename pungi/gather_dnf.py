@@ -130,6 +130,19 @@ def filter_binary_noarch_packages(q):
     result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
     return result
 
+def cache_init(queue, *args, **kwargs):
+    cache = {}
+    if kwargs:
+        queue = queue.filter(**kwargs)
+    for pkg in queue:
+        key = tuple(getattr(pkg, arg) for arg in args)
+        cache.setdefault(key, set()).add(pkg)
+    return cache
+
+def cache_get(cache, *args):
+    key = tuple(args)
+    return cache.get(key, set())
+
 
 class GatherBase(object):
     def __init__(self, dnf_obj):
@@ -537,19 +550,22 @@ class Gather(GatherBase):
         if not self.opts.fulltree:
             return added
 
+        q_native_fulltree_pkgs_cache = cache_init(self.q_native_binary_packages,
+                                                  'sourcerpm', arch__neq="noarch")
+        q_multilib_fulltree_pkgs_cache = cache_init(self.q_multilib_binary_packages,
+                                                    'sourcerpm', arch__neq="noarch")
+        q_noarch_fulltree_pkgs_cache = cache_init(self.q_native_binary_packages,
+                                                  'sourcerpm', arch="noarch")
+
         for pkg in sorted(self.result_binary_packages):
             assert pkg is not None
 
             try:
                 fulltree_pkgs = self.finished_add_fulltree_packages[pkg]
             except KeyError:
-                q_native_fulltree_pkgs = self.q_native_binary_packages.filter(sourcerpm=pkg.sourcerpm, arch__neq="noarch").apply()
-                q_multilib_fulltree_pkgs = self.q_multilib_binary_packages.filter(sourcerpm=pkg.sourcerpm, arch__neq="noarch").apply()
-                q_noarch_fulltree_pkgs = self.q_native_binary_packages.filter(sourcerpm=pkg.sourcerpm, arch="noarch").apply()
-
-                native_fulltree_pkgs = set(q_native_fulltree_pkgs)
-                multilib_fulltree_pkgs = set(q_multilib_fulltree_pkgs)
-                noarch_fulltree_pkgs = set(q_noarch_fulltree_pkgs)
+                native_fulltree_pkgs = cache_get(q_native_fulltree_pkgs_cache, pkg.sourcerpm)
+                multilib_fulltree_pkgs = cache_get(q_multilib_fulltree_pkgs_cache, pkg.sourcerpm)
+                noarch_fulltree_pkgs = cache_get(q_noarch_fulltree_pkgs_cache, pkg.sourcerpm)
 
                 if not native_fulltree_pkgs:
                     # no existing native pkgs -> pull multilib
