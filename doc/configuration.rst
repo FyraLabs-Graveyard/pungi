@@ -451,10 +451,14 @@ Options
 **createiso_skip** = False
     (*list*) -- mapping that defines which variants and arches to skip during createiso; format: [(variant_uid_regex, {arch|*: True})]
 
+**create_jigdo** = True
+    (*bool*) -- controls the creation of jigdo from ISO
+
 .. note::
 
     Source architecture needs to be listed explicitly.
     Excluding '*' applies only on binary arches.
+    Jigdo causes significant increase of time to ISO creation.
 
 
 Example

@@ -162,21 +162,23 @@ class CreateisoPhase(PhaseBase):
                     cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
 
                     # create jigdo
-                    jigdo = JigdoWrapper(logger=self.compose._logger)
-                    jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
-                    files = [
-                        {
-                            "path": os_tree,
-                            "label": None,
-                            "uri": None,
-                        }
-                    ]
-                    jigdo_cmd = jigdo.get_jigdo_cmd(iso_path, files, output_dir=jigdo_dir, no_servers=True, report="noprogress")
-                    jigdo_cmd = " ".join([pipes.quote(i) for i in jigdo_cmd])
-                    cmd["cmd"].append(jigdo_cmd)
-
-                    cmd["cmd"] = " && ".join(cmd["cmd"])
-                    commands.append(cmd)
+                    create_jigdo = compose.conf.get("create_jigdo", True)
+                    if create_jigdo:
+                        jigdo = JigdoWrapper(logger=self.compose._logger)
+                        jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
+                        files = [
+                            {
+                                "path": os_tree,
+                                "label": None,
+                                "uri": None,
+                            }
+                        ]
+                        jigdo_cmd = jigdo.get_jigdo_cmd(iso_path, files, output_dir=jigdo_dir, no_servers=True, report="noprogress")
+                        jigdo_cmd = " ".join([pipes.quote(i) for i in jigdo_cmd])
+                        cmd["cmd"].append(jigdo_cmd)
+    
+                        cmd["cmd"] = " && ".join(cmd["cmd"])
+                        commands.append(cmd)
 
         for cmd in commands:
             self.pool.add(CreateIsoThread(self.pool))
