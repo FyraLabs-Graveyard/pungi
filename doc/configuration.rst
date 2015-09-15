@@ -472,8 +472,6 @@ Example
         }),
     ]
 
-
-
 Image Build Settings
 ====================
 
