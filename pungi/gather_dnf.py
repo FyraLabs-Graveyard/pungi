@@ -477,6 +477,8 @@ class Gather(GatherBase):
         """
         added = set()
 
+        source_pkgs_cache = cache_init(self.q_source_packages,
+                                       'name', 'version', 'release')
         for pkg in self.result_binary_packages:
             assert pkg is not None
 
@@ -488,7 +490,8 @@ class Gather(GatherBase):
                     source_pkg = self.sourcerpm_cache.get(pkg.sourcerpm, None)
                     if source_pkg is None:
                         nvra = parse_nvra(pkg.sourcerpm)
-                        source_pkgs = self.q_source_packages.filter(name=nvra["name"], version=nvra["version"], release=nvra["release"]).apply()
+                        source_pkgs = cache_get(source_pkgs_cache,
+                                                nvra["name"], nvra["version"], nvra["release"])
                         if source_pkgs:
                             source_pkg = list(source_pkgs)[0]
                             self.sourcerpm_cache[pkg.sourcerpm] = source_pkg
