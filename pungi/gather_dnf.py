@@ -229,7 +229,7 @@ class Gather(GatherBase):
 
         all_pkgs = list(package_list)
         native_pkgs = self.q_native_binary_packages.filter(pkg=all_pkgs).apply()
-        multilib_pkgs = self.q_multilib_binary_packages.filter(pkg=all_pkgs).filter(arch__neq="noarch").apply()
+        multilib_pkgs = [pkg for pkg in all_pkgs if pkg.arch != "noarch"]
 
         result = set()
 
