@@ -653,6 +653,9 @@ class Gather(GatherBase):
         if not self.opts.multilib_methods or self.opts.multilib_methods == ["none"]:
             return added
 
+        q_multilib_binary_packages_cache = cache_init(self.q_multilib_binary_packages,
+                                'name', 'version', 'release', arch__neq="noarch")
+
         for pkg in sorted(self.result_binary_packages):
             try:
                 self.finished_add_multilib_packages[pkg]
@@ -666,7 +669,8 @@ class Gather(GatherBase):
                     self.finished_add_multilib_packages[pkg] = None
                     continue
 
-                pkgs = self.q_multilib_binary_packages.filter(name=pkg.name, version=pkg.version, release=pkg.release, arch__neq="noarch").apply()
+                pkgs = cache_get(q_multilib_binary_packages_cache,
+                                 pkg.name, pkg.version, pkg.release)
                 pkgs = self._get_best_package(pkgs)
                 multilib_pkgs = []
                 for i in pkgs:
