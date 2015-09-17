@@ -514,6 +514,9 @@ class Gather(GatherBase):
         """
         added = set()
 
+        native_debug_packages_cache = cache_init(self.q_native_debug_packages, 'sourcerpm')
+        multilib_debug_packages_cache = cache_init(self.q_multilib_debug_packages, 'sourcerpm')
+
         for pkg in self.result_binary_packages:
             assert pkg is not None
 
@@ -527,9 +530,9 @@ class Gather(GatherBase):
                 debug_pkgs = []
                 if pkg.sourcerpm:
                     if self.is_native_package(pkg):
-                        debug_pkgs = list(self.q_native_debug_packages.filter(sourcerpm=pkg.sourcerpm))
+                        debug_pkgs = cache_get(native_debug_packages_cache, pkg.sourcerpm)
                     else:
-                        debug_pkgs = list(self.q_multilib_debug_packages.filter(sourcerpm=pkg.sourcerpm))
+                        debug_pkgs = cache_get(multilib_debug_packages_cache, pkg.sourcerpm)
 
             lookaside = self._has_flag(pkg, "lookaside")
             for i in debug_pkgs:
