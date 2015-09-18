@@ -209,11 +209,6 @@ class Gather(GatherBase):
         self.result_source_packages = set()
         self.result_package_flags = {}
 
-        self.provides_cache = {}
-        for i in self.q_binary_packages:
-            for prov in i.provides:
-                self.provides_cache.setdefault(str(prov), set()).add(i)
-
     def _set_flag(self, pkg, *flags):
         self.result_package_flags.setdefault(pkg, set()).update(flags)
 
@@ -302,6 +297,7 @@ class Gather(GatherBase):
         assert pkg is not None
         result = set()
 
+        q = self.q_binary_packages.filter(provides=pkg.requires).apply()
         for req in pkg.requires:
             deps = self.finished_get_package_deps_reqs.setdefault(str(req), set())
             if deps:
@@ -309,11 +305,11 @@ class Gather(GatherBase):
                 continue
 
             # TODO: need query also debuginfo
-
-            deps = self.q_binary_packages.filter(provides=req).apply()
-            deps = self._get_best_package(deps, req=req)
-            self.finished_get_package_deps_reqs[str(req)].update(deps)
-            result.update(deps)
+            deps = q.filter(provides=req)
+            if deps:
+                deps = self._get_best_package(deps, req=req)
+                self.finished_get_package_deps_reqs[str(req)].update(deps)
+                result.update(deps)
 
         return result
 
@@ -629,6 +625,11 @@ class Gather(GatherBase):
             except KeyError:
                 patterns = [i["install"] for i in langpack_patterns if i["name"] == pkg.name]
                 patterns = [i.replace("%s", "*") for i in patterns]
+
+                if not patterns:
+                    self.finished_add_langpack_packages[pkg] = []
+                    continue
+
                 langpack_pkgs = self.q_binary_packages.filter(name__glob=patterns).apply()
                 langpack_pkgs = langpack_pkgs.filter(name__glob__not=["*-devel", "*-static"])
                 langpack_pkgs = langpack_pkgs.filter(name__neq=exceptions)
