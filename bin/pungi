@@ -21,14 +21,18 @@ import selinux
 def main():
 
     config = pungi.config.Config()
+    (opts, args) = get_arguments(config)
 
+    # Read the config to create "new" defaults
+    # reparse command line options so they take precedence
+    config = pungi.config.Config(pungirc=opts.pungirc)
     (opts, args) = get_arguments(config)
 
     # You must be this high to ride if you're going to do root tasks
     if os.geteuid () != 0 and (opts.do_all or opts.do_buildinstall):
         print >> sys.stderr, "You must run pungi as root"
         return 1
-    
+
     if opts.do_all or opts.do_buildinstall:
         try:
             enforcing = selinux.security_getenforce()
@@ -297,7 +301,9 @@ if __name__ == '__main__':
           action="callback", callback=set_config, callback_args=(config, ),
           help='Which files are the release notes -- GPL EULA')
         parser.add_option("--nomacboot", action="store_true", dest="nomacboot",           help='disable setting up macboot as no hfs support ')
-
+        parser.add_option("--pungirc", dest="pungirc", default='~/.pungirc',
+          action="callback", callback=set_config, callback_args=(config, ),
+          help='Read pungi options from config file ')
 
         (opts, args) = parser.parse_args()
 

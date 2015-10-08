@@ -31,7 +31,7 @@ MULTILIBCONF = (os.path.join(os.path.dirname(here), 'share', 'multilib')
 
 
 class Config(SafeConfigParser):
-    def __init__(self):
+    def __init__(self, pungirc=None):
         SafeConfigParser.__init__(self)
 
         self.add_section('pungi')
@@ -67,3 +67,7 @@ class Config(SafeConfigParser):
         self.set('pungi', 'resolve_deps', "True")
         self.set('pungi', 'no_dvd', "False")
         self.set('pungi', 'nomacboot', "False")
+
+        # if missing, self.read() is a noop, else change 'defaults'
+        if pungirc:
+            self.read(os.path.expanduser(pungirc))
