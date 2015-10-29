@@ -162,7 +162,7 @@ class CreateisoPhase(PhaseBase):
                     cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
 
                     # create jigdo
-                    create_jigdo = compose.conf.get("create_jigdo", True)
+                    create_jigdo = self.compose.conf.get("create_jigdo", True)
                     if create_jigdo:
                         jigdo = JigdoWrapper(logger=self.compose._logger)
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
