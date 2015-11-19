@@ -16,3 +16,4 @@ Contents:
     testing
     configuration
     messaging
+    phases
