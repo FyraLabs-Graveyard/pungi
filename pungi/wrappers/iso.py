@@ -206,14 +206,6 @@ class IsoWrapper(kobo.log.LoggingBase):
         result = line.rsplit(":")[-1].strip()
         return result
 
-    def get_checksum_cmds(self, iso_name, checksum_types=None):
-        checksum_types = checksum_types or ["md5", "sha1", "sha256"]
-        result = []
-        for checksum_type in checksum_types:
-            cmd = "%ssum -b %s > %s.%sSUM" % (checksum_type.lower(), pipes.quote(iso_name), pipes.quote(iso_name), checksum_type.upper())
-            result.append(cmd)
-        return result
-
     def get_manifest_cmd(self, iso_name):
         return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (pipes.quote(iso_name), pipes.quote(iso_name))
 

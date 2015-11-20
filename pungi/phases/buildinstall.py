@@ -24,7 +24,7 @@ import shutil
 import re
 
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run, read_checksum_file, relative_path
+from kobo.shortcuts import run, relative_path
 from productmd.images import Image
 
 from pungi.arch import get_valid_arches
@@ -266,11 +266,8 @@ def symlink_boot_iso(compose, arch, variant):
 
     iso = IsoWrapper()
     implant_md5 = iso.get_implanted_md5(new_boot_iso_path)
-    # compute md5sum, sha1sum, sha256sum
     iso_name = os.path.basename(new_boot_iso_path)
     iso_dir = os.path.dirname(new_boot_iso_path)
-    for cmd in iso.get_checksum_cmds(iso_name):
-        run(cmd, workdir=iso_dir)
 
     # create iso manifest
     run(iso.get_manifest_cmd(iso_name), workdir=iso_dir)
@@ -285,15 +282,6 @@ def symlink_boot_iso(compose, arch, variant):
     img.format = "iso"
     img.disc_number = 1
     img.disc_count = 1
-    for checksum_type in ("md5", "sha1", "sha256"):
-        checksum_path = new_boot_iso_path + ".%sSUM" % checksum_type.upper()
-        checksum_value = None
-        if os.path.isfile(checksum_path):
-            checksum_value, iso_name = read_checksum_file(checksum_path)[0]
-            if iso_name != os.path.basename(img.path):
-                # a bit paranoind check - this should never happen
-                raise ValueError("Image name doesn't match checksum: %s" % checksum_path)
-        img.add_checksum(compose.paths.compose.topdir(), checksum_type=checksum_type, checksum_value=checksum_value)
     img.bootable = True
     img.implant_md5 = implant_md5
     try:

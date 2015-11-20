@@ -3,17 +3,15 @@
 
 import os
 import time
-import pipes
 
 from pungi.util import get_arch_variant_data
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
-from pungi.wrappers.iso import IsoWrapper
-from kobo.shortcuts import run, read_checksum_file
 from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
+
 
 class ImageBuildPhase(PhaseBase):
     """class for wrapping up koji image-build"""
@@ -69,7 +67,6 @@ class CreateImageBuildThread(WorkerThread):
         mounts = [compose.topdir]
         if "mount" in cmd:
             mounts.append(cmd["mount"])
-        runroot = compose.conf.get("runroot", False)
         log_file = compose.paths.log.log_file(cmd["image_conf"]["arches"], "imagebuild-%s-%s-%s" % (cmd["image_conf"]["arches"], cmd["image_conf"]["variant"], cmd['image_conf']['format'].replace(",","-")))
         msg = "Creating %s image (arch: %s, variant: %s)" % (cmd["image_conf"]["format"].replace(",","-"), cmd["image_conf"]["arches"], cmd["image_conf"]["variant"])
         self.pool.log_info("[BEGIN] %s" % msg)
@@ -113,34 +110,6 @@ class CreateImageBuildThread(WorkerThread):
             image_dest = os.path.join(cmd["image_dir"], os.path.basename(image_info['filename']))
             linker.link(image_info['filename'], image_dest, link_type=cmd["link_type"])
 
-            iso = IsoWrapper(logger=compose._logger) # required for checksums only
-            checksum_cmd = ["cd %s" % pipes.quote(os.path.dirname(image_dest))]
-            checksum_cmd.extend(iso.get_checksum_cmds(os.path.basename(image_dest)))
-            checksum_cmd = " && ".join(checksum_cmd)
-
-            if runroot:
-                packages = ["coreutils", "genisoimage", "isomd5sum", "jigdo", "strace", "lsof"]
-                runroot_channel = compose.conf.get("runroot_channel", None)
-                runroot_tag = compose.conf["runroot_tag"]
-                koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, cmd["image_conf"]["arches"], checksum_cmd, channel=runroot_channel, use_shell=True, task_id=True, packages=packages, mounts=mounts)
-
-                # avoid race conditions?
-                # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
-                time.sleep(num * 3)
-
-                output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-                if output["retcode"] != 0:
-                    self.fail(compose, cmd)
-                    raise RuntimeError("Runroot task failed: %s. See %s for more details." % (output["task_id"], log_file))
-
-            else:
-                # run locally
-                try:
-                    run(checksum_cmd, show_cmd=True, logfile=log_file)
-                except:
-                    self.fail(compose, cmd)
-                    raise
-
             # Update image manifest
             img = Image(compose.im)
             img.type = image_info['type']
@@ -151,14 +120,6 @@ class CreateImageBuildThread(WorkerThread):
             img.arch = cmd["image_conf"]["arches"] # arches should be always single arch
             img.disc_number = 1 # We don't expect multiple disks
             img.disc_count = 1
-            for checksum_type in ("md5", "sha1", "sha256"):
-                checksum_path = image_dest + ".%sSUM" % checksum_type.upper()
-                checksum_value = None
-                if os.path.isfile(checksum_path):
-                    checksum_value, image_name = read_checksum_file(checksum_path)[0]
-                    if image_name != os.path.basename(img.path):
-                        raise ValueError("Image name doesn't match checksum: %s" % checksum_path)
-                img.add_checksum(compose.paths.compose.topdir(), checksum_type=checksum_type, checksum_value=checksum_value)
             img.bootable = False
             # named keywords due portability (old productmd used arch, variant ... while new one uses variant, arch
             compose.im.add(variant=cmd["image_conf"]["variant"].uid, arch=cmd["image_conf"]["arches"], image=img)

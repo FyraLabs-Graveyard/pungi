@@ -21,11 +21,10 @@ import pipes
 import random
 import shutil
 
-import koji
 import productmd.treeinfo
 from productmd.images import Image
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run, read_checksum_file, relative_path
+from kobo.shortcuts import run, relative_path
 
 from pungi.wrappers.iso import IsoWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
@@ -198,7 +197,7 @@ class CreateIsoThread(WorkerThread):
         try:
             # remove incomplete ISO
             os.unlink(cmd["iso_path"])
-            # TODO: remove jigdo & template & checksums
+            # TODO: remove jigdo & template
         except OSError:
             pass
 
@@ -274,15 +273,6 @@ class CreateIsoThread(WorkerThread):
         img.format = "iso"
         img.disc_number = cmd["disc_num"]
         img.disc_count = cmd["disc_count"]
-        for checksum_type in ("md5", "sha1", "sha256"):
-            checksum_path = cmd["iso_path"] + ".%sSUM" % checksum_type.upper()
-            checksum_value = None
-            if os.path.isfile(checksum_path):
-                checksum_value, iso_name = read_checksum_file(checksum_path)[0]
-                if iso_name != os.path.basename(img.path):
-                    # a bit paranoind check - this should never happen
-                    raise ValueError("Image name doesn't match checksum: %s" % checksum_path)
-            img.add_checksum(compose.paths.compose.topdir(), checksum_type=checksum_type, checksum_value=checksum_value)
         img.bootable = cmd["bootable"]
         img.implant_md5 = iso.get_implanted_md5(cmd["iso_path"])
         try:

@@ -262,9 +262,6 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
     shutil.rmtree(tmp_dir)
     shutil.rmtree(mount_dir)
 
-    # .treeinfo is written after productimg phase
-    # -> checksums should match
-    # -> no need to write/modify it here
     compose.log_info("[DONE ] %s" % msg)
 
 

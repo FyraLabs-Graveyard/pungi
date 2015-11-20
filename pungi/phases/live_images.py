@@ -136,9 +136,6 @@ class LiveImagesPhase(PhaseBase):
                 chdir_cmd = "cd %s" % pipes.quote(iso_dir)
                 cmd["cmd"].append(chdir_cmd)
 
-                # compute md5sum, sha1sum, sha256sum
-                cmd["cmd"].extend(iso.get_checksum_cmds(iso_name))
-
                 # create iso manifest
                 cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
 
@@ -163,7 +160,6 @@ class CreateLiveImageThread(WorkerThread):
         try:
             # remove (possibly?) incomplete ISO
             os.unlink(cmd["iso_path"])
-            # TODO: remove checksums
         except OSError:
             pass
 
@@ -207,7 +203,7 @@ class CreateLiveImageThread(WorkerThread):
             for rpm_path in rpm_paths:
                 shutil.copy2(rpm_path, cmd["wrapped_rpms_path"])
 
-        # write checksum and manifest
+        # write manifest
         run(cmd["cmd"])
 
         self.pool.log_info("[DONE ] %s" % msg)
