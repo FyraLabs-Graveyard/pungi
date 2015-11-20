@@ -212,6 +212,7 @@ def run_compose(compose):
     createiso_phase = pungi.phases.CreateisoPhase(compose)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose)
+    image_checksum_phase = pungi.phases.ImageChecksumPhase(compose)
     test_phase = pungi.phases.TestPhase(compose)
 
     # check if all config options are set
@@ -219,7 +220,7 @@ def run_compose(compose):
     for phase in (init_phase, pkgset_phase, createrepo_phase,
                   buildinstall_phase, productimg_phase, gather_phase,
                   extrafiles_phase, createiso_phase, liveimages_phase,
-                  image_build_phase, test_phase):
+                  image_build_phase, image_checksum_phase, test_phase):
         if phase.skip():
             continue
         try:
@@ -289,19 +290,8 @@ def run_compose(compose):
     liveimages_phase.stop()
     image_build_phase.stop()
 
-    # merge checksum files
-    for variant in compose.get_variants(types=["variant", "layered-product"]):
-        for arch in variant.arches + ["src"]:
-            iso_dir = compose.paths.compose.iso_dir(arch, variant, create_dir=False)
-            if not iso_dir or not os.path.exists(iso_dir):
-                continue
-            for checksum_type in ("md5", "sha1", "sha256"):
-                checksum_upper = "%sSUM" % checksum_type.upper()
-                checksums = sorted([i for i in os.listdir(iso_dir) if i.endswith(".%s" % checksum_upper)])
-                fo = open(os.path.join(iso_dir, checksum_upper), "w")
-                for i in checksums:
-                    data = open(os.path.join(iso_dir, i), "r").read()
-                    fo.write(data)
+    image_checksum_phase.start()
+    image_checksum_phase.stop()
 
     pungi.metadata.write_compose_info(compose)
     compose.im.dump(compose.paths.compose.metadata("images.json"))
