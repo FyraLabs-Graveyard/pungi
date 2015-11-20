@@ -154,9 +154,6 @@ class CreateisoPhase(PhaseBase):
                     isomd5sum_cmd = " ".join([pipes.quote(i) for i in isomd5sum_cmd])
                     cmd["cmd"].append(isomd5sum_cmd)
 
-                    # compute md5sum, sha1sum, sha256sum
-                    cmd["cmd"].extend(iso.get_checksum_cmds(iso_name))
-
                     # create iso manifest
                     cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
 

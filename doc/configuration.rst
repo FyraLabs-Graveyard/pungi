@@ -522,6 +522,19 @@ Example
        }),
     ]
 
+
+Media Checksums Settings
+========================
+
+**media_checksums**
+    (*list*) -- list of checksum types to compute, allowed values are ``md5``,
+    ``sha1`` and ``sha256``
+
+**media_checksum_one_file**
+    (*bool*) -- when ``True``, only one ``CHECKSUM`` file will be created per
+    directory; this option requires ``media_checksums`` to only specify one
+    type
+
 Translate Paths Settings
 ========================
 
