@@ -548,3 +548,39 @@ Example usage
     >>> from pungi.paths import translate_paths
     >>> print translate_paths(compose_object_with_mapping, "/mnt/a/c/somefile")
     http://b/dir/c/somefile
+
+
+Progress notification
+=====================
+
+*Pungi* has the ability to emit notification messages about progress and
+status. These can be used to e.g. send messages to *fedmsg*. This is
+implemented by actually calling a separate script.
+
+The script will be called with one argument describing action that just
+happened. A JSON-encoded object will be passed to standard input to provide
+more information about the event. At least, the object will contain a
+``compose_id`` key.
+
+Currently these messages are sent:
+
+ * ``start`` -- when composing starts
+ * ``abort`` -- when compose is aborted due to incorrect configuration
+ * ``finish`` -- on successful finish of compose
+ * ``doomed`` -- when an error happens
+ * ``phase-start`` -- on start of a phase
+ * ``phase-stop`` -- when phase is finished
+
+For phase related messages ``phase_name`` key is provided as well.
+
+The script is invoked in compose directory and can read other information
+there.
+
+A ``pungi-fedmsg-notification`` script is provided and understands this
+interface.
+
+Config options
+--------------
+
+**notification_script**
+    (*str*) -- executable to be invoked to send the message

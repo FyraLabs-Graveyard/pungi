@@ -26,6 +26,7 @@ locale.setlocale(locale.LC_ALL, "C")
 
 
 COMPOSE = None
+NOTIFIER = None
 
 
 def main():
@@ -187,8 +188,19 @@ def main():
 def run_compose(compose):
     import pungi.phases
     import pungi.metadata
+    import pungi.notifier
+
+    errors = []
+
+    # initializer notifier
+    compose.notifier = pungi.notifier.PungiNotifier(compose)
+    try:
+        compose.notifier.validate()
+    except ValueError as ex:
+        errors.extend(["NOTIFIER: %s" % m for m in ex.message.split('\n')])
 
     compose.write_status("STARTED")
+    compose.notifier.send('start')
     compose.log_info("Host: %s" % socket.gethostname())
     compose.log_info("User name: %s" % getpass.getuser())
     compose.log_info("Working directory: %s" % os.getcwd())
@@ -215,7 +227,6 @@ def run_compose(compose):
     test_phase = pungi.phases.TestPhase(compose)
 
     # check if all config options are set
-    errors = []
     for phase in (init_phase, pkgset_phase, createrepo_phase,
                   buildinstall_phase, productimg_phase, gather_phase,
                   extrafiles_phase, createiso_phase, liveimages_phase,
@@ -229,6 +240,7 @@ def run_compose(compose):
                 errors.append("%s: %s" % (phase.name.upper(), i))
     if errors:
         for i in errors:
+            compose.notifier.send('abort')
             compose.log_error(i)
             print(i)
         sys.exit(1)
@@ -329,6 +341,7 @@ def run_compose(compose):
 
     compose.log_info("Compose finished: %s" % compose.topdir)
     compose.write_status("FINISHED")
+    compose.notifier.send('finish')
 
 
 if __name__ == "__main__":
@@ -343,6 +356,8 @@ if __name__ == "__main__":
             COMPOSE.write_status("DOOMED")
             import kobo.tback
             open(tb_path, "w").write(kobo.tback.Traceback().get_traceback())
+            if COMPOSE.notifier:
+                COMPOSE.notifier.send('doomed')
         else:
             print("Exception: %s" % ex)
             raise

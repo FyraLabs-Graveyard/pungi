@@ -14,7 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-
 from pungi.checks import validate_options
 
 
@@ -59,6 +58,7 @@ class PhaseBase(object):
             self.finished = True
             return
         self.compose.log_info("[BEGIN] %s" % self.msg)
+        self.compose.notifier.send('phase-start', phase_name=self.name)
         self.run()
 
     def stop(self):
@@ -68,6 +68,7 @@ class PhaseBase(object):
             self.pool.stop()
         self.finished = True
         self.compose.log_info("[DONE ] %s" % self.msg)
+        self.compose.notifier.send('phase-stop', phase_name=self.name)
 
     def run(self):
         raise NotImplementedError
