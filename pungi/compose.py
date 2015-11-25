@@ -102,6 +102,7 @@ class Compose(kobo.log.LoggingBase):
         self.just_phases = just_phases or []
         self.old_composes = old_composes or []
         self.koji_event = koji_event
+        self.notifier = None
 
         # intentionally upper-case (visible in the code)
         self.DEBUG = debug

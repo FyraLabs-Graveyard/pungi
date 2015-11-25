@@ -54,6 +54,7 @@ class CreateisoPhase(PhaseBase):
     def run(self):
         iso = IsoWrapper(logger=self.compose._logger)
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
+        deliverables = []
 
         commands = []
         for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"], recursive=True):
@@ -96,6 +97,7 @@ class CreateisoPhase(PhaseBase):
                         self.compose.log_warning("Skipping mkisofs, image already exists: %s" % iso_path)
                         continue
                     iso_name = os.path.basename(iso_path)
+                    deliverables.append(iso_path)
 
                     graft_points = prepare_iso(self.compose, arch, variant, disc_num=disc_num, disc_count=disc_count, split_iso_data=iso_data)
 
@@ -176,6 +178,8 @@ class CreateisoPhase(PhaseBase):
                         cmd["cmd"] = " && ".join(cmd["cmd"])
                         commands.append(cmd)
 
+        self.compose.notifier.send('createiso-targets', deliverables=deliverables)
+
         for cmd in commands:
             self.pool.add(CreateIsoThread(self.pool))
             self.pool.queue_put((self.compose, cmd))
@@ -197,6 +201,10 @@ class CreateIsoThread(WorkerThread):
             # TODO: remove jigdo & template
         except OSError:
             pass
+        compose.notifier.send('createiso-imagefail',
+                              file=cmd['iso_path'],
+                              arch=cmd['arch'],
+                              variant=str(cmd['variant']))
 
     def process(self, item, num):
         compose, cmd = item
@@ -281,6 +289,10 @@ class CreateIsoThread(WorkerThread):
         # add: boot.iso
 
         self.pool.log_info("[DONE ] %s" % msg)
+        compose.notifier.send('createiso-imagedone',
+                              file=cmd['iso_path'],
+                              arch=cmd['arch'],
+                              variant=str(cmd['variant']))
 
 
 def split_iso(compose, arch, variant):
