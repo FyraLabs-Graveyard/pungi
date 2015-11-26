@@ -26,7 +26,6 @@ locale.setlocale(locale.LC_ALL, "C")
 
 
 COMPOSE = None
-NOTIFIER = None
 
 
 def main():
@@ -116,6 +115,10 @@ def main():
         action="store_true",
         help="output version information and exit",
     )
+    parser.add_option(
+        "--notification-script",
+        help="script for sending progress notification messages"
+    )
 
     opts, args = parser.parse_args()
 
@@ -162,6 +165,7 @@ def main():
             parser.error(str(ex))
 
     from pungi.compose import Compose
+    import pungi.notifier
 
     logger = logging.Logger("Pungi")
     kobo.log.add_stderr_logger(logger)
@@ -174,8 +178,19 @@ def main():
     else:
         compose_dir = opts.compose_dir
 
-    compose = Compose(conf, topdir=compose_dir, debug=opts.debug_mode, skip_phases=opts.skip_phase, just_phases=opts.just_phase,
-                      old_composes=opts.old_composes, koji_event=opts.koji_event, supported=opts.supported, logger=logger)
+    notifier = pungi.notifier.PungiNotifier(opts.notification_script)
+
+    compose = Compose(conf,
+                      topdir=compose_dir,
+                      debug=opts.debug_mode,
+                      skip_phases=opts.skip_phase,
+                      just_phases=opts.just_phase,
+                      old_composes=opts.old_composes,
+                      koji_event=opts.koji_event,
+                      supported=opts.supported,
+                      logger=logger,
+                      notifier=notifier)
+    notifier.compose = compose
     kobo.log.add_file_logger(logger, compose.paths.log.log_file("global", "pungi.log"))
     COMPOSE = compose
     try:
@@ -188,19 +203,10 @@ def main():
 def run_compose(compose):
     import pungi.phases
     import pungi.metadata
-    import pungi.notifier
 
     errors = []
 
-    # initializer notifier
-    compose.notifier = pungi.notifier.PungiNotifier(compose)
-    try:
-        compose.notifier.validate()
-    except ValueError as ex:
-        errors.extend(["NOTIFIER: %s" % m for m in ex.message.split('\n')])
-
     compose.write_status("STARTED")
-    compose.notifier.send('start')
     compose.log_info("Host: %s" % socket.gethostname())
     compose.log_info("User name: %s" % getpass.getuser())
     compose.log_info("Working directory: %s" % os.getcwd())
@@ -241,7 +247,6 @@ def run_compose(compose):
                 errors.append("%s: %s" % (phase.name.upper(), i))
     if errors:
         for i in errors:
-            compose.notifier.send('abort')
             compose.log_error(i)
             print(i)
         sys.exit(1)
@@ -331,7 +336,6 @@ def run_compose(compose):
 
     compose.log_info("Compose finished: %s" % compose.topdir)
     compose.write_status("FINISHED")
-    compose.notifier.send('finish')
 
 
 if __name__ == "__main__":
@@ -346,8 +350,6 @@ if __name__ == "__main__":
             COMPOSE.write_status("DOOMED")
             import kobo.tback
             open(tb_path, "w").write(kobo.tback.Traceback().get_traceback())
-            if COMPOSE.notifier:
-                COMPOSE.notifier.send('doomed')
         else:
             print("Exception: %s" % ex)
             raise

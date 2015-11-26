@@ -17,7 +17,6 @@ import json
 import threading
 
 from kobo import shortcuts
-from pungi.checks import validate_options
 
 
 class PungiNotifier(object):
@@ -27,22 +26,9 @@ class PungiNotifier(object):
     script fails, a warning will be logged, but the compose process will not be
     interrupted.
     """
-    config_options = (
-        {
-            "name": "notification_script",
-            "expected_types": [str],
-            "optional": True
-        },
-    )
-
-    def __init__(self, compose):
-        self.compose = compose
+    def __init__(self, cmd):
+        self.cmd = cmd
         self.lock = threading.Lock()
-
-    def validate(self):
-        errors = validate_options(self.compose.conf, self.config_options)
-        if errors:
-            raise ValueError("\n".join(errors))
 
     def _update_args(self, data):
         """Add compose related information to the data."""
@@ -58,14 +44,13 @@ class PungiNotifier(object):
         Unless you specify it manually, a ``compose_id`` key with appropriate
         value will be automatically added.
         """
-        script = self.compose.conf.get('notification_script', None)
-        if not script:
+        if not self.cmd:
             return
 
         self._update_args(kwargs)
 
         with self.lock:
-            ret, _ = shortcuts.run((script, msg),
+            ret, _ = shortcuts.run((self.cmd, msg),
                                    stdin_data=json.dumps(kwargs),
                                    can_fail=True,
                                    workdir=self.compose.paths.compose.topdir(),

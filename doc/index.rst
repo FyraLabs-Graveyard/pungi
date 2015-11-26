@@ -15,6 +15,7 @@ Contents:
     contributing
     testing
     configuration
+    messaging
 
 
 Indices and tables

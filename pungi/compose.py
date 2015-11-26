@@ -92,7 +92,7 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
 
 
 class Compose(kobo.log.LoggingBase):
-    def __init__(self, conf, topdir, debug=False, skip_phases=None, just_phases=None, old_composes=None, koji_event=None, supported=False, logger=None):
+    def __init__(self, conf, topdir, debug=False, skip_phases=None, just_phases=None, old_composes=None, koji_event=None, supported=False, logger=None, notifier=None):
         kobo.log.LoggingBase.__init__(self, logger)
         # TODO: check if minimal conf values are set
         self.conf = conf
@@ -102,7 +102,7 @@ class Compose(kobo.log.LoggingBase):
         self.just_phases = just_phases or []
         self.old_composes = old_composes or []
         self.koji_event = koji_event
-        self.notifier = None
+        self.notifier = notifier
 
         # intentionally upper-case (visible in the code)
         self.DEBUG = debug
@@ -241,6 +241,7 @@ class Compose(kobo.log.LoggingBase):
             self.log_error(msg)
             raise RuntimeError(msg)
         open(os.path.join(self.topdir, "STATUS"), "w").write(stat_msg + "\n")
+        self.notifier.send('status-change', status=stat_msg)
 
     def get_status(self):
         path = os.path.join(self.topdir, "STATUS")
