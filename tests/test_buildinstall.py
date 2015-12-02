@@ -32,6 +32,14 @@ class _DummyCompose(object):
     def get_arches(self):
         return ['x86_64', 'amd64']
 
+    def get_variants(self, arch, types):
+        variants = {
+            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
+            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[]),
+                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
+        }
+        return variants.get(arch, [])
+
 
 class TestImageChecksumPhase(unittest.TestCase):
 
@@ -72,17 +80,23 @@ class TestImageChecksumPhase(unittest.TestCase):
 
         phase.run()
 
-        # Two items added for processing in total.
+        # Three items added for processing in total.
+        # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
-        self.assertEqual(2, len(pool.queue_put.mock_calls))
+        self.assertEqual(3, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
         lorax = loraxCls.return_value
         lorax.get_lorax_cmd.assert_has_calls(
             [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64',
-                       buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True, volid='vol_id'),
+                       buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
              mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
-                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True, volid='vol_id')],
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Client', buildinstallpackages=[])],
             any_order=True)
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')

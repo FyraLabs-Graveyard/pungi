@@ -86,6 +86,8 @@ class BuildinstallPhase(PhaseBase):
         noupgrade = not self.compose.conf.get("buildinstall_upgrade_image", False)
         buildinstall_method = self.compose.conf["buildinstall_method"]
 
+        commands = []
+
         for arch in self.compose.get_arches():
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
@@ -93,11 +95,33 @@ class BuildinstallPhase(PhaseBase):
             buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
-                cmd = lorax.get_lorax_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid, nomacboot=True, noupgrade=noupgrade)
+                for variant in self.compose.get_variants(arch=arch, types=['variant']):
+                    commands.append(
+                        lorax.get_lorax_cmd(product,
+                                            version,
+                                            release,
+                                            repo_baseurl,
+                                            output_dir,
+                                            variant=variant.uid,
+                                            buildinstallpackages=variant.buildinstallpackages,
+                                            is_final=self.compose.supported,
+                                            buildarch=buildarch,
+                                            volid=volid,
+                                            nomacboot=True,
+                                            noupgrade=noupgrade))
             elif buildinstall_method == "buildinstall":
-                cmd = lorax.get_buildinstall_cmd(product, version, release, repo_baseurl, output_dir, is_final=self.compose.supported, buildarch=buildarch, volid=volid)
+                commands.append(lorax.get_buildinstall_cmd(product,
+                                                           version,
+                                                           release,
+                                                           repo_baseurl,
+                                                           output_dir,
+                                                           is_final=self.compose.supported,
+                                                           buildarch=buildarch,
+                                                           volid=volid))
             else:
                 raise ValueError("Unsupported buildinstall method: %s" % buildinstall_method)
+
+        for cmd in commands:
             self.pool.add(BuildinstallThread(self.pool))
             self.pool.queue_put((self.compose, arch, cmd))
 
