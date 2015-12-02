@@ -317,8 +317,7 @@ class BuildinstallThread(WorkerThread):
         task_id = None
         if runroot:
             # run in a koji build root
-            # glibc32 is needed by yaboot on ppc64
-            packages = ["glibc32", "strace"]
+            packages = ["strace"]
             if buildinstall_method == "lorax":
                 packages += ["lorax"]
             elif buildinstall_method == "buildinstall":
