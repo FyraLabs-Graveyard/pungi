@@ -37,7 +37,7 @@ setup(
         'bin/pungi',
         'bin/pungi-koji',
         'bin/comps_filter',
-        'bin/pungi-fedmsg-notifier',
+        'bin/pungi-fedmsg-notification',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),

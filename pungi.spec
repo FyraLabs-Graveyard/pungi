@@ -45,17 +45,15 @@ rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
 %{__install} -d $RPM_BUILD_ROOT/var/cache/pungi
 %{__install} -d $RPM_BUILD_ROOT/%{_mandir}/man8
-%{__install} doc/pungi.8 $RPM_BUILD_ROOT/%{_mandir}/man8/
 
 %files
 %defattr(-,root,root,-)
 %license COPYING GPL
-%doc AUTHORS doc/README
+%doc AUTHORS
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}-%{version}-py?.?.egg-info
 %{_bindir}/*
 %{_datadir}/pungi
-%{_mandir}/man8/pungi.8.gz
 /var/cache/pungi
 
 %changelog
