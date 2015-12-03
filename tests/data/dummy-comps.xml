@@ -45,7 +45,7 @@
     <default>false</default>
     <uservisible>false</uservisible>
     <packagelist>
-      <packagereq>dummy-firefox</packagereq>
+      <packagereq>Dummy-firefox</packagereq>
       <packagereq>dummy-icedtea-web</packagereq>
     </packagelist>
   </group>

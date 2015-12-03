@@ -39,8 +39,18 @@ def _get_src_nevra(compose, pkg_obj, srpm_map):
 
 
 def get_package_path(filename, hashed_directory=False):
+    """Get path for filename. If ``hashed_directory`` is ``True``, the path
+    will include a prefix based on the initial letter.
+
+    >>> get_package_path('my-package.rpm')
+    'my-package.rpm'
+    >>> get_package_path('my-package.rpm', True)
+    'm/my-package.rpm'
+    >>> get_package_path('My-Package.rpm', True)
+    'm/My-Package.rpm'
+    """
     if hashed_directory:
-        prefix = filename[0]
+        prefix = filename[0].lower()
         return os.path.join(prefix, filename)
     return filename
 

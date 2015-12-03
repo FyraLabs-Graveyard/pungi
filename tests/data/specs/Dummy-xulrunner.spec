@@ -1,21 +1,19 @@
-Name:           dummy-firefox
+Name:           Dummy-xulrunner
 Version:        16.0.1
 Release:        1
 License:        LGPLv2
-Summary:        A dummy firefox package
-BuildRequires:  dummy-krb5-devel
-BuildRequires:  dummy-xulrunner
-Requires:       dummy-xulrunner
+Summary:        A dummy xulrunner package
+Requires:       dummy-glibc
 
 %description
-A dummy firefox package
+A dummy xulrunner package
 
 %package debuginfo
-Summary:        A dummy firefox-debuginfo package
+Summary:        A dummy xulrunner-debuginfo package
 Group:          Development/Debug
 
 %description debuginfo
-A dummy firefox-debuginfo package
+A dummy xulrunner-debuginfo package
 
 
 #%prep
