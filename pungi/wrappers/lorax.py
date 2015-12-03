@@ -21,7 +21,9 @@ from kobo.shortcuts import force_list
 
 
 class LoraxWrapper(object):
-    def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir, variant=None, bugurl=None, nomacboot=False, noupgrade=False, is_final=False, buildarch=None, volid=None):
+    def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir,
+                      variant=None, bugurl=None, nomacboot=False, noupgrade=False,
+                      is_final=False, buildarch=None, volid=None, buildinstallpackages=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -36,7 +38,7 @@ class LoraxWrapper(object):
             cmd.append("--variant=%s" % variant)
 
         if bugurl is not None:
-            cmd.append("--bugurl=%s" % variant)
+            cmd.append("--bugurl=%s" % bugurl)
 
         if nomacboot:
             cmd.append("--nomacboot")
@@ -52,6 +54,9 @@ class LoraxWrapper(object):
 
         if volid:
             cmd.append("--volid=%s" % volid)
+
+        if buildinstallpackages:
+            cmd.extend(["--installpkgs=%s" % package for package in buildinstallpackages])
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
