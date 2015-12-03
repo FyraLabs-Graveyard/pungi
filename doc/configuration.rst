@@ -535,6 +535,20 @@ Media Checksums Settings
     directory; this option requires ``media_checksums`` to only specify one
     type
 
+**media_checksum_base_filename**
+    (*str*) -- when not set, all checksums will be save to a file named either
+    ``CHECKSUM`` or based on the digest type; this option allows adding any
+    prefix to that name
+
+    It is possible to use format strings that will be replace by actual values.
+    The allowed keys are ``%(release_showrt)s``, ``%(release_short)s``,
+    ``%(release_id)s``, ``%(variant)s``, ``%(version)s``, ``%(date)s``,
+    ``%(type_suffix)s`` and ``%(respin)s``
+
+    For example, for Fedora the prefix should be
+    ``%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s``.
+
+
 Translate Paths Settings
 ========================
 
