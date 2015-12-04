@@ -13,12 +13,21 @@ import shutil
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_checksum import (ImageChecksumPhase,
-                                         dump_checksums,
-                                         dump_individual)
+                                         dump_checksums)
 
 
 class _DummyCompose(object):
     def __init__(self, config):
+        self.compose_date = '20151203'
+        self.compose_type_suffix = '.t'
+        self.compose_respin = 0
+        self.ci_base = mock.Mock(
+            release_id='Test-1.0',
+            release=mock.Mock(
+                short='test',
+                version='1.0',
+            ),
+        )
         self.conf = config
         self.paths = mock.Mock(
             compose=mock.Mock(
@@ -59,15 +68,14 @@ class TestImageChecksumPhase(unittest.TestCase):
 
         phase.run()
 
-        dump.assert_called_once_with('/a/b/Client/i386/iso', {'image.iso': 'cafebabe'})
+        dump.assert_called_once_with('/a/b/Client/i386/iso', 'sha256', {'image.iso': 'cafebabe'}, 'CHECKSUM')
         cc.assert_called_once_with('/a/b/Client/i386/iso/image.iso', ['sha256'])
         compose.image.add_checksum.assert_called_once_with(None, 'sha256', 'cafebabe')
 
     @mock.patch('os.path.exists')
     @mock.patch('kobo.shortcuts.compute_file_checksums')
     @mock.patch('pungi.phases.image_checksum.dump_checksums')
-    @mock.patch('pungi.phases.image_checksum.dump_individual')
-    def test_checksum_save_individuals(self, indiv_dump, dump, cc, exists):
+    def test_checksum_save_individuals(self, dump, cc, exists):
         compose = _DummyCompose({
             'media_checksums': ['md5', 'sha256'],
         })
@@ -79,14 +87,64 @@ class TestImageChecksumPhase(unittest.TestCase):
 
         phase.run()
 
-        indiv_dump.assert_has_calls(
-            [mock.call('/a/b/Client/i386/iso/image.iso', 'cafebabe', 'md5'),
-             mock.call('/a/b/Client/i386/iso/image.iso', 'deadbeef', 'sha256')],
+        dump.assert_has_calls(
+            [mock.call('/a/b/Client/i386/iso', 'md5', {'image.iso': 'cafebabe'}, 'image.iso.MD5SUM'),
+             mock.call('/a/b/Client/i386/iso', 'sha256', {'image.iso': 'deadbeef'}, 'image.iso.SHA256SUM'),
+             mock.call('/a/b/Client/i386/iso', 'md5', {'image.iso': 'cafebabe'}, 'MD5SUM'),
+             mock.call('/a/b/Client/i386/iso', 'sha256', {'image.iso': 'deadbeef'}, 'SHA256SUM')],
             any_order=True
         )
+        cc.assert_called_once_with('/a/b/Client/i386/iso/image.iso', ['md5', 'sha256'])
+        compose.image.add_checksum.assert_has_calls([mock.call(None, 'sha256', 'deadbeef'),
+                                                     mock.call(None, 'md5', 'cafebabe')],
+                                                    any_order=True)
+
+    @mock.patch('os.path.exists')
+    @mock.patch('kobo.shortcuts.compute_file_checksums')
+    @mock.patch('pungi.phases.image_checksum.dump_checksums')
+    def test_checksum_one_file_custom_name(self, dump, cc, exists):
+        compose = _DummyCompose({
+            'media_checksums': ['sha256'],
+            'media_checksum_one_file': True,
+            'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s'
+        })
+
+        phase = ImageChecksumPhase(compose)
+
+        exists.return_value = True
+        cc.return_value = {'sha256': 'cafebabe'}
+
+        phase.run()
+
+        dump.assert_called_once_with('/a/b/Client/i386/iso', 'sha256',
+                                     {'image.iso': 'cafebabe'},
+                                     'test-Client-1.0-20151203.t.0-CHECKSUM')
+        cc.assert_called_once_with('/a/b/Client/i386/iso/image.iso', ['sha256'])
+        compose.image.add_checksum.assert_called_once_with(None, 'sha256', 'cafebabe')
+
+    @mock.patch('os.path.exists')
+    @mock.patch('kobo.shortcuts.compute_file_checksums')
+    @mock.patch('pungi.phases.image_checksum.dump_checksums')
+    def test_checksum_save_individuals_custom_name(self, dump, cc, exists):
+        compose = _DummyCompose({
+            'media_checksums': ['md5', 'sha256'],
+            'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s'
+        })
+
+        phase = ImageChecksumPhase(compose)
+
+        exists.return_value = True
+        cc.return_value = {'md5': 'cafebabe', 'sha256': 'deadbeef'}
+
+        phase.run()
+
         dump.assert_has_calls(
-            [mock.call('/a/b/Client/i386/iso', {'image.iso': 'cafebabe'}, 'MD5SUM'),
-             mock.call('/a/b/Client/i386/iso', {'image.iso': 'deadbeef'}, 'SHA256SUM')],
+            [mock.call('/a/b/Client/i386/iso', 'md5', {'image.iso': 'cafebabe'}, 'image.iso.MD5SUM'),
+             mock.call('/a/b/Client/i386/iso', 'sha256', {'image.iso': 'deadbeef'}, 'image.iso.SHA256SUM'),
+             mock.call('/a/b/Client/i386/iso', 'md5', {'image.iso': 'cafebabe'},
+                       'test-Client-1.0-20151203.t.0-MD5SUM'),
+             mock.call('/a/b/Client/i386/iso', 'sha256', {'image.iso': 'deadbeef'},
+                       'test-Client-1.0-20151203.t.0-SHA256SUM')],
             any_order=True
         )
         cc.assert_called_once_with('/a/b/Client/i386/iso/image.iso', ['md5', 'sha256'])
@@ -104,23 +162,18 @@ class TestChecksums(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
 
     def test_dump_checksums(self):
-        dump_checksums(self.tmp_dir, {'file1.iso': 'abcdef', 'file2.iso': 'cafebabe'})
+        dump_checksums(self.tmp_dir,
+                       'md5',
+                       {'file1.iso': 'abcdef', 'file2.iso': 'cafebabe'},
+                       'CHECKSUM')
 
         with open(os.path.join(self.tmp_dir, 'CHECKSUM'), 'r') as f:
             data = f.read().rstrip().split('\n')
             expected = [
-                'abcdef *file1.iso',
-                'cafebabe *file2.iso',
+                'MD5 (file1.iso) = abcdef',
+                'MD5 (file2.iso) = cafebabe',
             ]
             self.assertItemsEqual(expected, data)
-
-    def test_dump_individual(self):
-        base_path = os.path.join(self.tmp_dir, 'file.iso')
-        dump_individual(base_path, 'cafebabe', 'md5')
-
-        with open(base_path + '.MD5SUM', 'r') as f:
-            data = f.read()
-            self.assertEqual('cafebabe *file.iso\n', data)
 
 if __name__ == "__main__":
     unittest.main()

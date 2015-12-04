@@ -29,6 +29,11 @@ class ImageChecksumPhase(PhaseBase):
             "name": "media_checksum_one_file",
             "expected_types": [bool],
             "optional": True,
+        },
+        {
+            "name": "media_checksum_base_filename",
+            "expected_types": [str],
+            "optional": True,
         }
     )
 
@@ -61,12 +66,28 @@ class ImageChecksumPhase(PhaseBase):
             for arch in self.compose.im.images[variant]:
                 for image in self.compose.im.images[variant][arch]:
                     path = os.path.dirname(os.path.join(top_dir, image.path))
-                    images.setdefault(path, set()).add(image)
+                    images.setdefault((variant, path), set()).add(image)
         return images
 
+    def _get_base_filename(self, variant):
+        base_checksum_name = self.compose.conf.get('media_checksum_base_filename', '')
+        if base_checksum_name:
+            base_checksum_name = base_checksum_name % {
+                'release_short': self.compose.ci_base.release.short,
+                'release_id': self.compose.ci_base.release_id,
+                'variant': variant,
+                'version': self.compose.ci_base.release.version,
+                'date': self.compose.compose_date,
+                'type_suffix': self.compose.compose_type_suffix,
+                'respin': self.compose.compose_respin,
+            }
+            base_checksum_name += '-'
+        return base_checksum_name
+
     def run(self):
-        for path, images in self._get_images().iteritems():
+        for (variant, path), images in self._get_images().iteritems():
             checksums = {}
+            base_checksum_name = self._get_base_filename(variant)
             for image in images:
                 filename = os.path.basename(image.path)
                 full_path = os.path.join(path, filename)
@@ -78,37 +99,32 @@ class ImageChecksumPhase(PhaseBase):
                     checksums.setdefault(checksum, {})[filename] = digest
                     image.add_checksum(None, checksum, digest)
                     if not self.one_file:
-                        dump_individual(full_path, digest, checksum)
+                        dump_checksums(path, checksum,
+                                       {filename: digest},
+                                       '%s.%sSUM' % (filename, checksum.upper()))
 
             if not checksums:
                 continue
 
             if self.one_file:
-                dump_checksums(path, checksums[self.checksums[0]])
+                dump_checksums(path, self.checksums[0],
+                               checksums[self.checksums[0]],
+                               base_checksum_name + 'CHECKSUM')
             else:
                 for checksum in self.checksums:
-                    dump_checksums(path, checksums[checksum], '%sSUM' % checksum.upper())
+                    dump_checksums(path, checksum,
+                                   checksums[checksum],
+                                   '%s%sSUM' % (base_checksum_name, checksum.upper()))
 
 
-def dump_checksums(dir, checksums, filename='CHECKSUM'):
+def dump_checksums(dir, alg, checksums, filename):
     """Create file with checksums.
 
     :param dir: where to put the file
+    :param alg: which method was used
     :param checksums: mapping from filenames to checksums
     :param filename: what to call the file
     """
     with open(os.path.join(dir, filename), 'w') as f:
         for file, checksum in checksums.iteritems():
-            f.write('{} *{}\n'.format(checksum, file))
-
-
-def dump_individual(path, checksum, ext):
-    """Create a file with a single checksum, saved into a file with an extra
-    extension.
-
-    :param path: path to the checksummed file
-    :param checksum: the actual digest value
-    :param ext: what extension to add to the checksum file
-    """
-    with open('%s.%sSUM' % (path, ext.upper()), 'w') as f:
-        f.write('{} *{}\n'.format(checksum, os.path.basename(path)))
+            f.write('%s (%s) = %s\n' % (alg.upper(), file, checksum))
