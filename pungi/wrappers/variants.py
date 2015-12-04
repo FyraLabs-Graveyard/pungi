@@ -70,6 +70,7 @@ class VariantsXmlParser(object):
             "arches": [str(i) for i in variant_node.xpath("arches/arch/text()")],
             "groups": [],
             "environments": [],
+            "buildinstallpackages": [],
         }
         if self.tree_arches:
             variant_dict["arches"] = [i for i in variant_dict["arches"] if i in self.tree_arches]
@@ -105,6 +106,10 @@ class VariantsXmlParser(object):
                     environment["display_order"] = int(display_order)
 
                 variant_dict["environments"].append(environment)
+
+        for buildinstallpackages_node in variant_node.xpath("buildinstallpackages"):
+            for package_node in buildinstallpackages_node.xpath("package"):
+                variant_dict["buildinstallpackages"].append(package_node.text)
 
         variant = Variant(**variant_dict)
         if variant.type == "layered-product":
@@ -157,11 +162,12 @@ class VariantsXmlParser(object):
 
 
 class Variant(object):
-    def __init__(self, id, name, type, arches, groups, environments=None):
+    def __init__(self, id, name, type, arches, groups, environments=None, buildinstallpackages=None):
         if not id.isalnum():
             raise ValueError("Variant ID must contain only alphanumeric characters: %s" % id)
 
         environments = environments or []
+        buildinstallpackages = buildinstallpackages or []
 
         self.id = id
         self.name = name
@@ -169,6 +175,7 @@ class Variant(object):
         self.arches = sorted(copy.deepcopy(arches))
         self.groups = sorted(copy.deepcopy(groups), lambda x, y: cmp(x["name"], y["name"]))
         self.environments = sorted(copy.deepcopy(environments), lambda x, y: cmp(x["name"], y["name"]))
+        self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = None
 
