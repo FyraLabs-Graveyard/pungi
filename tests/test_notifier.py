@@ -13,21 +13,10 @@ from pungi.notifier import PungiNotifier
 
 
 class TestNotifier(unittest.TestCase):
-    def test_incorrect_config(self):
-        compose = mock.Mock(
-            conf={'notification_script': [1, 2]}
-        )
-
-        n = PungiNotifier(compose)
-        with self.assertRaises(ValueError) as err:
-            n.validate()
-            self.assertIn('notification_script', err.message)
-
     @mock.patch('kobo.shortcuts.run')
     def test_invokes_script(self, run):
         compose = mock.Mock(
             compose_id='COMPOSE_ID',
-            conf={'notification_script': 'run-notify'},
             paths=mock.Mock(
                 compose=mock.Mock(
                     topdir=mock.Mock(return_value='/a/b')
@@ -37,7 +26,8 @@ class TestNotifier(unittest.TestCase):
 
         run.return_value = (0, None)
 
-        n = PungiNotifier(compose)
+        n = PungiNotifier('run-notify')
+        n.compose = compose
         data = {'foo': 'bar', 'baz': 'quux'}
         n.send('cmd', **data)
 
@@ -48,9 +38,7 @@ class TestNotifier(unittest.TestCase):
 
     @mock.patch('kobo.shortcuts.run')
     def test_does_not_run_without_config(self, run):
-        compose = mock.Mock(conf={})
-
-        n = PungiNotifier(compose)
+        n = PungiNotifier(None)
         n.send('cmd', foo='bar', baz='quux')
         self.assertFalse(run.called)
 
@@ -59,7 +47,6 @@ class TestNotifier(unittest.TestCase):
         compose = mock.Mock(
             compose_id='COMPOSE_ID',
             log_warning=mock.Mock(),
-            conf={'notification_script': 'run-notify'},
             paths=mock.Mock(
                 compose=mock.Mock(
                     topdir=mock.Mock(return_value='/a/b')
@@ -69,7 +56,8 @@ class TestNotifier(unittest.TestCase):
 
         run.return_value = (1, None)
 
-        n = PungiNotifier(compose)
+        n = PungiNotifier('run-notify')
+        n.compose = compose
         n.send('cmd')
 
         run.assert_called_once_with(('run-notify', 'cmd'),

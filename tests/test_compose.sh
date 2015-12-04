@@ -9,4 +9,4 @@ pungi-koji \
 --target-dir=_composes \
 --old-composes=_composes \
 --config=data/dummy-pungi.conf \
---test
+--test "$@"
