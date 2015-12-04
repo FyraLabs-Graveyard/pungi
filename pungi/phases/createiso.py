@@ -175,8 +175,8 @@ class CreateisoPhase(PhaseBase):
                         jigdo_cmd = " ".join([pipes.quote(i) for i in jigdo_cmd])
                         cmd["cmd"].append(jigdo_cmd)
     
-                        cmd["cmd"] = " && ".join(cmd["cmd"])
-                        commands.append(cmd)
+                    cmd["cmd"] = " && ".join(cmd["cmd"])
+                    commands.append(cmd)
 
         self.compose.notifier.send('createiso-targets', deliverables=deliverables)
 
