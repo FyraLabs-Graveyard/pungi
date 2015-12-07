@@ -18,7 +18,8 @@ class _DummyCompose(object):
         self.conf = config
         self.paths = mock.Mock(
             compose=mock.Mock(
-                topdir=mock.Mock(return_value='/a/b')
+                topdir=mock.Mock(return_value='/a/b'),
+                os_tree=mock.Mock(side_effect=lambda arch, variant: os.path.join('/ostree', arch, variant.uid))
             ),
             work=mock.Mock(
                 arch_repo=mock.Mock(return_value='file:///a/b/'),
@@ -28,17 +29,17 @@ class _DummyCompose(object):
         self._logger = mock.Mock()
         self.log_debug = mock.Mock()
         self.supported = True
+        self.variants = {
+            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
+            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[]),
+                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
+        }
 
     def get_arches(self):
         return ['x86_64', 'amd64']
 
     def get_variants(self, arch, types):
-        variants = {
-            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
-            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[]),
-                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
-        }
-        return variants.get(arch, [])
+        return self.variants.get(arch, [])
 
 
 class TestImageChecksumPhase(unittest.TestCase):
@@ -88,13 +89,13 @@ class TestImageChecksumPhase(unittest.TestCase):
         # Obtained correct lorax commands.
         lorax = loraxCls.return_value
         lorax.get_lorax_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64',
+            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[])],
             any_order=True)
@@ -131,6 +132,88 @@ class TestImageChecksumPhase(unittest.TestCase):
                        buildarch='amd64', is_final=True, volid='vol_id')],
             any_order=True)
 
+
+class TestCopyFiles(unittest.TestCase):
+
+    @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    @mock.patch('os.listdir')
+    @mock.patch('os.path.isdir')
+    @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
+    def test_copy_files_buildinstall(self, get_kickstart_file, isdir, listdir,
+                                     get_volid, tweak_buildinstall, symlink_boot_iso):
+        compose = _DummyCompose({
+            'buildinstall_method': 'buildinstall'
+        })
+
+        get_volid.side_effect = lambda compose, arch, variant, escape_spaces: "%s.%s" % (variant.uid, arch)
+        get_kickstart_file.return_value = 'kickstart'
+
+        phase = BuildinstallPhase(compose)
+        phase.copy_files()
+
+        get_volid.assert_has_calls(
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False)],
+            any_order=True
+        )
+        tweak_buildinstall.assert_has_calls(
+            [mock.call('/buildinstall_dir/x86_64', '/ostree/x86_64/Server', 'x86_64', 'Server', '',
+                       'Server.x86_64', 'kickstart'),
+             mock.call('/buildinstall_dir/amd64', '/ostree/amd64/Server', 'amd64', 'Server', '',
+                       'Server.amd64', 'kickstart'),
+             mock.call('/buildinstall_dir/amd64', '/ostree/amd64/Client', 'amd64', 'Client', '',
+                       'Client.amd64', 'kickstart')],
+            any_order=True
+        )
+        symlink_boot_iso.assert_has_calls(
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0]),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0]),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1])],
+            any_order=True
+        )
+
+    @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    @mock.patch('os.listdir')
+    @mock.patch('os.path.isdir')
+    @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
+    def test_copy_files_lorax(self, get_kickstart_file, isdir, listdir,
+                              get_volid, tweak_buildinstall, symlink_boot_iso):
+        compose = _DummyCompose({
+            'buildinstall_method': 'lorax'
+        })
+
+        get_volid.side_effect = lambda compose, arch, variant, escape_spaces: "%s.%s" % (variant.uid, arch)
+        get_kickstart_file.return_value = 'kickstart'
+
+        phase = BuildinstallPhase(compose)
+        phase.copy_files()
+
+        get_volid.assert_has_calls(
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False)],
+            any_order=True
+        )
+        tweak_buildinstall.assert_has_calls(
+            [mock.call('/buildinstall_dir/x86_64/Server', '/ostree/x86_64/Server', 'x86_64', 'Server', '',
+                       'Server.x86_64', 'kickstart'),
+             mock.call('/buildinstall_dir/amd64/Server', '/ostree/amd64/Server', 'amd64', 'Server', '',
+                       'Server.amd64', 'kickstart'),
+             mock.call('/buildinstall_dir/amd64/Client', '/ostree/amd64/Client', 'amd64', 'Client', '',
+                       'Client.amd64', 'kickstart')],
+            any_order=True
+        )
+        symlink_boot_iso.assert_has_calls(
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0]),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0]),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1])],
+            any_order=True
+        )
 
 if __name__ == "__main__":
     unittest.main()
