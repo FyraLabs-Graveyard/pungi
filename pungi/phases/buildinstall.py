@@ -86,9 +86,9 @@ class BuildinstallPhase(PhaseBase):
         noupgrade = not self.compose.conf.get("buildinstall_upgrade_image", False)
         buildinstall_method = self.compose.conf["buildinstall_method"]
 
-        commands = []
-
         for arch in self.compose.get_arches():
+            commands = []
+
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
             volid = get_volid(self.compose, arch)
@@ -121,9 +121,9 @@ class BuildinstallPhase(PhaseBase):
             else:
                 raise ValueError("Unsupported buildinstall method: %s" % buildinstall_method)
 
-        for cmd in commands:
-            self.pool.add(BuildinstallThread(self.pool))
-            self.pool.queue_put((self.compose, arch, cmd))
+            for cmd in commands:
+                self.pool.add(BuildinstallThread(self.pool))
+                self.pool.queue_put((self.compose, arch, cmd))
 
         self.pool.start()
 
