@@ -23,6 +23,7 @@ import hashlib
 import errno
 import pipes
 import re
+import urlparse
 
 from kobo.shortcuts import run
 from productmd.common import get_major_version
@@ -212,6 +213,32 @@ def get_arch_variant_data(conf, var_name, arch, variant):
             else:
                 result.append(conf_data[conf_arch])
     return result
+
+
+def resolve_git_url(url):
+    """Given a url to a Git repo specifying HEAD as a ref, replace that
+    specifier with actual SHA1 of the commit.
+
+    Otherwise, the original URL will be returned.
+
+    Raises RuntimeError if there was an error. Most likely cause is failure to
+    run git command.
+    """
+    r = urlparse.urlsplit(url)
+    if r.fragment != 'HEAD':
+        return url
+
+    baseurl = urlparse.urlunsplit((r.scheme, r.netloc, r.path, '', ''))
+    _, output = run(['git', 'ls-remote', baseurl, r.fragment])
+
+    lines = [line for line in output.split('\n') if line]
+    if len(lines) != 1:
+        # This should never happen. HEAD can not match multiple commits in a
+        # single repo, and there can not be a repo without a HEAD.
+        raise RuntimeError('Failed to resolve %s', url)
+
+    fragment = lines[0].split()[0]
+    return urlparse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
 
 
 # fomat: {arch|*: [data]}

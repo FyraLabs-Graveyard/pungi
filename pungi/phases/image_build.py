@@ -4,7 +4,7 @@
 import os
 import time
 
-from pungi.util import get_arch_variant_data
+from pungi.util import get_arch_variant_data, resolve_git_url
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -34,6 +34,9 @@ class ImageBuildPhase(PhaseBase):
             for variant in self.compose.get_variants(arch=arch):
                 image_build_data = get_arch_variant_data(self.compose.conf, self.name, arch, variant)
                 for image_conf in image_build_data:
+                    # Replace possible ambiguous ref name with explicit hash.
+                    if 'ksurl' in image_conf:
+                        image_conf['ksurl'] = resolve_git_url(image_conf['ksurl'])
                     image_conf["arches"] = arch # passed to get_image_build_cmd as dict
                     image_conf["variant"] = variant # ^
                     image_conf["install_tree"] = translate_path(self.compose, self.compose.paths.compose.os_tree(arch, variant)) # ^

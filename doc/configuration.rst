@@ -507,13 +507,18 @@ Image Build Settings
 
 .. note::
     Config can contain anything what is accepted by
-    koji image-build --config configfile.ini
+    ``koji image-build --config configfile.ini``
+
     Repo is currently the only option which is being automatically transformed
     into a string.
 
     Please don't set install_tree as it would get overriden by pungi.
     The 'format' attr is [('image_type', 'image_suffix'), ...].
     productmd should ideally contain all of image types and suffixes.
+
+    If ``ksurl`` ends with ``#HEAD``, Pungi will figure out the SHA1 hash of
+    current HEAD and use that instead.
+
 
 Example
 -------
@@ -528,6 +533,7 @@ Example
                     'target': 'koji-target-name',
                     'ksversion': 'F23', # value from pykickstart
                     'version': '23',
+                    # correct SHA1 hash will be put into the URL below automatically
                     'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
                     'kickstart': "fedora-docker-base.ks",
                     'repo': ["http://someextrarepos.org/repo", "ftp://rekcod.oi/repo].
