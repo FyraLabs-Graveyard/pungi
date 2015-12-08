@@ -28,7 +28,7 @@ from kobo.shortcuts import run, relative_path
 from productmd.images import Image
 
 from pungi.arch import get_valid_arches
-from pungi.util import get_buildroot_rpms, get_volid
+from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
@@ -52,10 +52,19 @@ class BuildinstallPhase(PhaseBase):
             "requires": (
                 (lambda x: bool(x) is True, ["bootable"]),
             ),
+            "conflicts": (
+                (lambda val: val == "buildinstall", ["lorax_options"]),
+            ),
         },
         {
             "name": "buildinstall_upgrade_image",
             "expected_types": [bool],
+            "optional": True,
+            "deprecated": True,
+            "comment": "use lorax_options instead",
+        },
+        {
+            "name": "lorax_options",
             "optional": True,
         },
         {
@@ -78,12 +87,37 @@ class BuildinstallPhase(PhaseBase):
             return True
         return False
 
+    def _get_lorax_cmd(self, repo_baseurl, output_dir, variant, arch, buildarch, volid):
+        noupgrade = True
+        bugurl = None
+        nomacboot = True
+        for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
+            if not data.get('noupgrade', True):
+                noupgrade = False
+            if data.get('bugurl'):
+                bugurl = data.get('bugurl')
+            if not data.get('nomacboot', True):
+                nomacboot = False
+        lorax = LoraxWrapper()
+        return lorax.get_lorax_cmd(self.compose.conf["release_name"],
+                                   self.compose.conf["release_version"],
+                                   self.compose.conf["release_version"],
+                                   repo_baseurl,
+                                   os.path.join(output_dir, variant.uid),
+                                   variant=variant.uid,
+                                   buildinstallpackages=variant.buildinstallpackages,
+                                   is_final=self.compose.supported,
+                                   buildarch=buildarch,
+                                   volid=volid,
+                                   nomacboot=nomacboot,
+                                   bugurl=bugurl,
+                                   noupgrade=noupgrade)
+
     def run(self):
         lorax = LoraxWrapper()
         product = self.compose.conf["release_name"]
         version = self.compose.conf["release_version"]
         release = self.compose.conf["release_version"]
-        noupgrade = not self.compose.conf.get("buildinstall_upgrade_image", False)
         buildinstall_method = self.compose.conf["buildinstall_method"]
 
         for arch in self.compose.get_arches():
@@ -97,18 +131,8 @@ class BuildinstallPhase(PhaseBase):
             if buildinstall_method == "lorax":
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     commands.append(
-                        lorax.get_lorax_cmd(product,
-                                            version,
-                                            release,
-                                            repo_baseurl,
-                                            os.path.join(output_dir, variant.uid),
-                                            variant=variant.uid,
-                                            buildinstallpackages=variant.buildinstallpackages,
-                                            is_final=self.compose.supported,
-                                            buildarch=buildarch,
-                                            volid=volid,
-                                            nomacboot=True,
-                                            noupgrade=noupgrade))
+                        self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid)
+                    )
             elif buildinstall_method == "buildinstall":
                 commands.append(lorax.get_buildinstall_cmd(product,
                                                            version,

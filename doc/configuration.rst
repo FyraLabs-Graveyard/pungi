@@ -44,7 +44,6 @@ Minimal Config Example
     # BUILDINSTALL
     bootable = True
     buildinstall_method = "lorax"
-    buildinstall_upgrade_image = True
 
 
 Release
@@ -208,15 +207,43 @@ Anaconda installer is historically called
 `buildinstall <https://git.fedorahosted.org/cgit/anaconda.git/tree/scripts/buildinstall?h=f15-branch>`_.
 
 Options:
+--------
 
-* bootable (*bool*) -- 
-* buildinstall_method (*str*) -- "lorax" (f16+, rhel7+) or "buildinstall" (older releases)
-* buildinstall_upgrade_image (*bool*) -- build upgrade images, applicable on "lorax" buildinstall method
+**bootable**
+    (*bool*) -- whether to run the buildinstall phase
+**buildinstall_method**
+    (*str*) -- "lorax" (f16+, rhel7+) or "buildinstall" (older releases)
+**buildinstall_upgrade_image** [deprecated]
+    (*bool*) -- use ``noupgrade`` with ``lorax_options`` instead
+**lorax_options**
+    (*list*) -- special options passed on to *lorax*.
 
-Example::
+    Format: ``[(variant_uid_regex, {arch|*: {option: name}})]``.
+
+    Recognized options are:
+      * ``bugurl`` -- *str* (default ``None``)
+      * ``nomacboot`` -- *bool* (default ``True``)
+      * ``noupgrade`` -- *bool* (default ``True``)
+
+Example
+-------
+::
 
     bootable = True
     buildinstall_method = "lorax"
+
+    # Enables macboot on x86_64 for all variants and builds upgrade images
+    # everywhere.
+    lorax_options = [
+        ("^.*$", {
+            "x86_64": {
+                "nomacboot": False
+            }
+            "*": {
+                "noupgrade": False
+            }
+        })
+    ]
 
 
 .. note::

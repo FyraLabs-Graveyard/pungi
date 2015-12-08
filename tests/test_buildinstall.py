@@ -42,7 +42,7 @@ class _DummyCompose(object):
         return self.variants.get(arch, [])
 
 
-class TestImageChecksumPhase(unittest.TestCase):
+class TestBuildinstallPhase(unittest.TestCase):
 
     def test_config_skip_unless_bootable(self):
         compose = _DummyCompose({})
@@ -91,13 +91,16 @@ class TestImageChecksumPhase(unittest.TestCase):
         lorax.get_lorax_cmd.assert_has_calls(
             [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
-                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl=None),
              mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
-                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim']),
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl=None),
              mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
-                       volid='vol_id', variant='Client', buildinstallpackages=[])],
+                       volid='vol_id', variant='Client', buildinstallpackages=[],
+                       bugurl=None)],
             any_order=True)
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
@@ -130,6 +133,133 @@ class TestImageChecksumPhase(unittest.TestCase):
                        buildarch='x86_64', is_final=True, volid='vol_id'),
              mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
                        buildarch='amd64', is_final=True, volid='vol_id')],
+            any_order=True)
+
+    def test_global_upgrade_with_lorax(self):
+        compose = _DummyCompose({
+            'bootable': True,
+            'buildinstall_method': 'lorax',
+            'buildinstall_upgrade_image': True,
+        })
+
+        phase = BuildinstallPhase(compose)
+
+        with self.assertRaises(ValueError) as ctx:
+            phase.validate()
+
+        self.assertIn('Deprecated config option: buildinstall_upgrade_image',
+                      ctx.exception.message)
+
+    def test_lorax_options_with_buildinstall(self):
+        compose = _DummyCompose({
+            'bootable': True,
+            'buildinstall_method': 'buildinstall',
+            'lorax_options': [],
+        })
+
+        phase = BuildinstallPhase(compose)
+
+        with self.assertRaises(ValueError) as ctx:
+            phase.validate()
+
+        self.assertIn('buildinstall', ctx.exception.message)
+        self.assertIn('lorax_options', ctx.exception.message)
+
+    @mock.patch('pungi.phases.buildinstall.ThreadPool')
+    @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_uses_lorax_options(self, get_volid, loraxCls, poolCls):
+        compose = _DummyCompose({
+            'bootable': True,
+            'release_name': 'Test',
+            'release_short': 't',
+            'release_version': '1',
+            'release_is_layered': False,
+            'buildinstall_method': 'lorax',
+            'lorax_options': [
+                ('^Server$', {
+                    'x86_64': {'bugurl': 'http://example.com'},
+                    'amd64': {'noupgrade': False}
+                }),
+                ('^Client$', {
+                    '*': {'nomacboot': False}
+                }),
+            ]
+        })
+
+        get_volid.return_value = 'vol_id'
+
+        phase = BuildinstallPhase(compose)
+
+        phase.run()
+
+        # Three items added for processing in total.
+        # Server.x86_64, Client.amd64, Server.x86_64
+        pool = poolCls.return_value
+        self.assertEqual(3, len(pool.queue_put.mock_calls))
+
+        # Obtained correct lorax commands.
+        lorax = loraxCls.return_value
+        lorax.get_lorax_cmd.assert_has_calls(
+            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+                       buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl='http://example.com'),
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl=None),
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
+                       buildarch='amd64', is_final=True, nomacboot=False, noupgrade=True,
+                       volid='vol_id', variant='Client', buildinstallpackages=[],
+                       bugurl=None)],
+            any_order=True)
+
+    @mock.patch('pungi.phases.buildinstall.ThreadPool')
+    @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_multiple_lorax_options(self, get_volid, loraxCls, poolCls):
+        compose = _DummyCompose({
+            'bootable': True,
+            'release_name': 'Test',
+            'release_short': 't',
+            'release_version': '1',
+            'release_is_layered': False,
+            'buildinstall_method': 'lorax',
+            'lorax_options': [
+                ('^.*$', {
+                    'x86_64': {'nomacboot': False},
+                    '*': {'noupgrade': False}
+                }),
+            ]
+        })
+
+        get_volid.return_value = 'vol_id'
+
+        phase = BuildinstallPhase(compose)
+
+        phase.run()
+
+        # Three items added for processing in total.
+        # Server.x86_64, Client.amd64, Server.x86_64
+        pool = poolCls.return_value
+        self.assertEqual(3, len(pool.queue_put.mock_calls))
+
+        # Obtained correct lorax commands.
+        lorax = loraxCls.return_value
+        lorax.get_lorax_cmd.assert_has_calls(
+            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+                       buildarch='x86_64', is_final=True, nomacboot=False, noupgrade=False,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl=None),
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+                       bugurl=None),
+             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
+                       volid='vol_id', variant='Client', buildinstallpackages=[],
+                       bugurl=None)],
             any_order=True)
 
 
