@@ -16,10 +16,18 @@
 
 
 import os
+import sys
 import time
 import yum
 
 from ConfigParser import SafeConfigParser
+
+
+# In development, `here` will point to the bin/ directory with scripts.
+here = sys.path[0]
+MULTILIBCONF = (os.path.join(os.path.dirname(here), 'share', 'multilib')
+                if here != '/usr/bin'
+                else '/usr/share/pungi/multilib')
 
 
 class Config(SafeConfigParser):
@@ -33,7 +41,7 @@ class Config(SafeConfigParser):
         self.set('pungi', 'sourcedir', 'source')
         self.set('pungi', 'debugdir', 'debug')
         self.set('pungi', 'isodir', 'iso')
-        self.set('pungi', 'multilibconf', '/usr/share/pungi/multilib/')
+        self.set('pungi', 'multilibconf', MULTILIBCONF)
         self.set('pungi', 'relnotefilere', 'LICENSE README-BURNING-ISOS-en_US.txt ^RPM-GPG')
         self.set('pungi', 'relnotedirre', '')
         self.set('pungi', 'relnotepkgs', 'fedora-repos fedora-release fedora-release-notes')
