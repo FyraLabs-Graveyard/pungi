@@ -16,6 +16,8 @@
 import json
 import threading
 
+import pungi.paths
+
 from kobo import shortcuts
 
 
@@ -33,7 +35,11 @@ class PungiNotifier(object):
     def _update_args(self, data):
         """Add compose related information to the data."""
         data.setdefault('compose_id', self.compose.compose_id)
-        data.setdefault('topdir', self.compose.paths.compose.topdir())
+
+        # Publish where in the world this compose will end up living
+        location = pungi.paths.translate_path(
+            self.compose, self.compose.paths.compose.topdir())
+        data.setdefault('location', location)
 
     def send(self, msg, **kwargs):
         """Send a message.
