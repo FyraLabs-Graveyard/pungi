@@ -33,6 +33,7 @@ class PungiNotifier(object):
     def _update_args(self, data):
         """Add compose related information to the data."""
         data.setdefault('compose_id', self.compose.compose_id)
+        data.setdefault('topdir', self.compose.paths.compose.topdir())
 
     def send(self, msg, **kwargs):
         """Send a message.
