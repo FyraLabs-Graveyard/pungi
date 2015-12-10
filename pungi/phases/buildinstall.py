@@ -357,6 +357,16 @@ def symlink_boot_iso(compose, arch, variant):
 class BuildinstallThread(WorkerThread):
     def process(self, item, num):
         compose, arch, cmd = item
+        try:
+            self.worker(compose, arch, cmd, num)
+        except Exception:
+            if not compose.can_fail(None, arch, 'buildinstall'):
+                raise
+            else:
+                self.pool.log_info(
+                    '[FAIL] Buildinstall for arch %s failed, but going on anyway.' % arch)
+
+    def worker(self, compose, arch, cmd, num):
         runroot = compose.conf.get("runroot", False)
         buildinstall_method = compose.conf["buildinstall_method"]
         log_file = compose.paths.log.log_file(arch, "buildinstall")

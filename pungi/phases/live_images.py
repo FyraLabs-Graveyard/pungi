@@ -144,11 +144,11 @@ class LiveImagesPhase(PhaseBase):
                 cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
 
                 cmd["cmd"] = " && ".join(cmd["cmd"])
-                commands.append(cmd)
+                commands.append((cmd, variant, arch))
 
-        for cmd in commands:
+        for (cmd, variant, arch) in commands:
             self.pool.add(CreateLiveImageThread(self.pool))
-            self.pool.queue_put((self.compose, cmd))
+            self.pool.queue_put((self.compose, cmd, variant, arch))
 
         self.pool.start()
 
@@ -168,8 +168,18 @@ class CreateLiveImageThread(WorkerThread):
             pass
 
     def process(self, item, num):
-        compose, cmd = item
+        compose, cmd, variant, arch = item
+        try:
+            self.worker(compose, cmd, num)
+        except:
+            if not compose.can_fail(variant, arch, 'live'):
+                raise
+            else:
+                msg = ('[FAIL] Creating live image for variant %s, arch %s failed, but going on anyway.'
+                       % (variant.uid, arch))
+                self.pool.log_info(msg)
 
+    def worker(self, compose, cmd, num):
         log_file = compose.paths.log.log_file(cmd["arch"], "createiso-%s" % os.path.basename(cmd["iso_path"]))
 
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
