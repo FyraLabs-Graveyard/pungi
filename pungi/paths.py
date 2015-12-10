@@ -267,14 +267,12 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
-    def iso_dir(self, arch, variant, disc_type="dvd", disc_num=1, create_dir=True):
+    def iso_dir(self, arch, filename, create_dir=True):
         """
         Examples:
-            work/x86_64/iso/rhel-7.0-20120127.0-Server-x86_64-dvd1.iso
+            work/x86_64/iso/Project-1.0-20151203.0-Client-x86_64-dvd1.iso
         """
-        dir_name = self.compose.paths.compose.iso_path(arch, variant, disc_type, disc_num, create_dir=False)
-        dir_name = os.path.basename(dir_name)
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), "iso", dir_name)
+        path = os.path.join(self.topdir(arch, create_dir=create_dir), "iso", filename)
         if create_dir:
             makedirs(path)
         return path
@@ -507,37 +505,17 @@ class ComposePaths(object):
                 makedirs(path)
         return path
 
-    def iso_path(self, arch, variant, disc_type="dvd", disc_num=1, suffix=".iso", symlink_to=None, create_dir=True, relative=False, name=None):
+    def iso_path(self, arch, variant, filename, symlink_to=None, create_dir=True, relative=False):
         """
         Examples:
             compose/Server/x86_64/iso/rhel-7.0-20120127.0-Server-x86_64-dvd1.iso
             None
         """
-        if arch == "src":
-            arch = "source"
-
-        if disc_type not in ("cd", "dvd", "ec2", "live", "boot"):
-            raise RuntimeError("Unsupported disc type: %s" % disc_type)
-        if disc_num:
-            disc_num = int(disc_num)
-        else:
-            disc_num = ""
-
         path = self.iso_dir(arch, variant, symlink_to=symlink_to, create_dir=create_dir, relative=relative)
         if path is None:
             return None
 
-        compose_id = self.compose.ci_base[variant.uid].compose_id
-        if variant.type == "layered-product":
-            variant_uid = variant.parent.uid
-        else:
-            variant_uid = variant.uid
-        if not name:
-            file_name = "%s-%s-%s-%s%s%s" % (compose_id, variant_uid, arch, disc_type, disc_num, suffix)
-        else:
-            file_name = "%s-%s-%s-%s%s%s" % (name, variant_uid, arch, disc_type, disc_num, suffix)
-        result = os.path.join(path, file_name)
-        return result
+        return os.path.join(path, filename)
 
     def image_dir(self, arch, variant, symlink_to=None, create_dir=True, relative=False):
         """

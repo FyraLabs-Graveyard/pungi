@@ -125,7 +125,7 @@ class BuildinstallPhase(PhaseBase):
 
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
-            volid = get_volid(self.compose, arch)
+            volid = get_volid(self.compose, arch, disc_type="boot")
             buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
@@ -171,7 +171,7 @@ class BuildinstallPhase(PhaseBase):
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
                 # TODO: label is not used
                 label = ""
-                volid = get_volid(self.compose, arch, variant, escape_spaces=False)
+                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type="boot")
                 tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
                 symlink_boot_iso(self.compose, arch, variant)
 
@@ -308,8 +308,14 @@ def symlink_boot_iso(compose, arch, variant):
         return
 
     msg = "Symlinking boot.iso (arch: %s, variant: %s)" % (arch, variant)
-    new_boot_iso_path = compose.paths.compose.iso_path(arch, variant, disc_type="boot", disc_num=None, suffix=".iso", symlink_to=symlink_isos_to)
-    new_boot_iso_relative_path = compose.paths.compose.iso_path(arch, variant, disc_type="boot", disc_num=None, suffix=".iso", relative=True)
+    filename = compose.get_image_name(arch, variant, disc_type="boot",
+                                      disc_num=None, suffix=".iso")
+    new_boot_iso_path = compose.paths.compose.iso_path(arch, variant, filename,
+                                                       symlink_to=symlink_isos_to)
+    new_boot_iso_relative_path = compose.paths.compose.iso_path(arch,
+                                                                variant,
+                                                                filename,
+                                                                relative=True)
     if os.path.exists(new_boot_iso_path):
         # TODO: log
         compose.log_warning("[SKIP ] %s" % msg)

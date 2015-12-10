@@ -277,16 +277,18 @@ class TestCopyFiles(unittest.TestCase):
             'buildinstall_method': 'buildinstall'
         })
 
-        get_volid.side_effect = lambda compose, arch, variant, escape_spaces: "%s.%s" % (variant.uid, arch)
+        get_volid.side_effect = (
+            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+        )
         get_kickstart_file.return_value = 'kickstart'
 
         phase = BuildinstallPhase(compose)
         phase.copy_files()
 
         get_volid.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False)],
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False, disc_type='boot')],
             any_order=True
         )
         tweak_buildinstall.assert_has_calls(
@@ -317,16 +319,18 @@ class TestCopyFiles(unittest.TestCase):
             'buildinstall_method': 'lorax'
         })
 
-        get_volid.side_effect = lambda compose, arch, variant, escape_spaces: "%s.%s" % (variant.uid, arch)
+        get_volid.side_effect = (
+            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+        )
         get_kickstart_file.return_value = 'kickstart'
 
         phase = BuildinstallPhase(compose)
         phase.copy_files()
 
         get_volid.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False)],
+            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False, disc_type='boot')],
             any_order=True
         )
         tweak_buildinstall.assert_has_calls(

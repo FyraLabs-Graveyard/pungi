@@ -127,7 +127,6 @@ Options
 **variants_file** [mandatory]
     (*scm_dict* or *str*) -- reference to variants XML file that defines release variants and architectures
 
-
 Example
 -------
 ::
@@ -147,6 +146,80 @@ Example
     }
 
 
+Image Naming
+============
+
+Both image name and volume id are generated based on the configuration. Since
+the volume id is limited to 32 characters, there are more settings available.
+The process for generating volume id is to get a list of possible formats and
+try them sequentially until one fits in the length limit. If substitutions are
+configured, each attempted volume id will be modified by it.
+
+For layered products, the candidate formats are first
+``image_volid_layered_product_formats`` followed by ``image_volid_formats``.
+Otherwise, only ``image_volid_formats`` are tried.
+
+If no format matches the length limit, an error will be reported and compose
+aborted.
+
+Options
+-------
+
+**image_name_format** [optional]
+    (*str*) -- Python's format string to serve as template for image names
+
+    This format will be used for all phases generating images. Currently that
+    means ``createiso``, ``live_images`` and ``buildinstall``.
+
+    Available keys are:
+     * compose_id
+     * variant
+     * arch
+     * disc_type
+     * disc_num
+     * suffix
+     * release_short
+     * version
+
+**image_volid_formats** [optional]
+    (*list*) -- A list of format strings for generating volume id.
+
+    The available keys are:
+     * compose_id
+     * variant
+     * arch
+     * disc_type
+     * release_short
+     * version
+     * base_product_short
+     * base_product_version
+
+**image_volid_layered_product_formats** [optional]
+    (*list*) -- A listof format strings for generating volume id for layered
+    products. The keys available are the same as for ``image_volid_formats``.
+
+**volume_id_substitutions** [optional]
+    (*dict*) -- A mapping of string replacements to shorten the volume id.
+
+Example
+-------
+::
+
+    # Image name respecting Fedora's image naming policy
+    image_name_format = "%(release_short)s-%(variant)s-%(disc_type)s-%(arch)s-%(version)s%(suffix)s"
+    # Use the same format for volume id
+    image_volid_formats = [
+        "%(release_short)s-%(variant)s-%(disc_type)s-%(arch)s-%(version)s"
+    ]
+    # No special handling for layered products, use same format as for regular images
+    image_volid_layered_product_formats = []
+    # Replace "Cloud" with "C" in volume id etc.
+    volume_id_substitutions = {
+        'Cloud': 'C',
+        'Alpha': 'A',
+        'Beta': 'B',
+        'TC': 'T',
+    }
 
 
 Createrepo Settings

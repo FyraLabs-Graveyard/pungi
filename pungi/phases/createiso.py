@@ -64,7 +64,7 @@ class CreateisoPhase(PhaseBase):
                     self.compose.log_info("Skipping createiso for %s.%s due to config option" % (variant, arch))
                     continue
 
-                volid = get_volid(self.compose, arch, variant)
+                volid = get_volid(self.compose, arch, variant, disc_type='dvd')
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
 
                 iso_dir = self.compose.paths.compose.iso_dir(arch, variant, symlink_to=symlink_isos_to)
@@ -91,8 +91,18 @@ class CreateisoPhase(PhaseBase):
                     disc_num += 1
 
                     # XXX: hardcoded disc_type
-                    iso_path = self.compose.paths.compose.iso_path(arch, variant, disc_type="dvd", disc_num=disc_num, symlink_to=symlink_isos_to)
-                    relative_iso_path = self.compose.paths.compose.iso_path(arch, variant, disc_type="dvd", disc_num=disc_num, create_dir=False, relative=True)
+                    filename = self.compose.get_image_name(arch, variant,
+                                                           disc_type="dvd",
+                                                           disc_num=disc_num)
+                    iso_path = self.compose.paths.compose.iso_path(arch,
+                                                                   variant,
+                                                                   filename,
+                                                                   symlink_to=symlink_isos_to)
+                    relative_iso_path = self.compose.paths.compose.iso_path(arch,
+                                                                            variant,
+                                                                            filename,
+                                                                            create_dir=False,
+                                                                            relative=True)
                     if os.path.isfile(iso_path):
                         self.compose.log_warning("Skipping mkisofs, image already exists: %s" % iso_path)
                         continue
@@ -354,7 +364,8 @@ def split_iso(compose, arch, variant):
 
 def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_data=None):
     tree_dir = compose.paths.compose.os_tree(arch, variant)
-    iso_dir = compose.paths.work.iso_dir(arch, variant, disc_num=disc_num)
+    filename = compose.get_image_name(arch, variant, disc_num=disc_num)
+    iso_dir = compose.paths.work.iso_dir(arch, filename)
 
     # modify treeinfo
     ti_path = os.path.join(tree_dir, ".treeinfo")

@@ -248,3 +248,39 @@ class Compose(kobo.log.LoggingBase):
         if not os.path.isfile(path):
             return
         return open(path, "r").read().strip()
+
+    def get_image_name(self, arch, variant, disc_type='dvd',
+                       disc_num=1, suffix='.iso', format=None):
+        """Create a filename for image with given parameters.
+
+        :raises RuntimeError: when unknown ``disc_type`` is given
+        """
+        default_format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
+        format = format or self.conf.get('image_name_format', default_format)
+
+        if arch == "src":
+            arch = "source"
+
+        if disc_type not in ("cd", "dvd", "ec2", "live", "boot"):
+            raise RuntimeError("Unsupported disc type: %s" % disc_type)
+        if disc_num:
+            disc_num = int(disc_num)
+        else:
+            disc_num = ""
+
+        compose_id = self.ci_base[variant.uid].compose_id
+        if variant.type == "layered-product":
+            variant_uid = variant.parent.uid
+        else:
+            variant_uid = variant.uid
+        args = {
+            'compose_id': compose_id,
+            'variant': variant_uid,
+            'arch': arch,
+            'disc_type': disc_type,
+            'disc_num': disc_num,
+            'suffix': suffix,
+            'release_short': self.ci_base.release.short,
+            'version': self.ci_base.release.version,
+        }
+        return format % args

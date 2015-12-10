@@ -116,15 +116,19 @@ class LiveImagesPhase(PhaseBase):
                 # For other images is scratch always on
                 cmd["scratch"] = data[0].get("scratch", False)
 
+                format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
                 # Custom name (prefix)
-                custom_iso_name = None
                 if cmd["name"]:
                     custom_iso_name = cmd["name"]
                     if cmd["version"]:
                         custom_iso_name += "-%s" % cmd["version"]
+                    format = custom_iso_name + "-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
 
                 # XXX: hardcoded disc_type and disc_num
-                iso_path = self.compose.paths.compose.iso_path(arch, variant, disc_type="live", disc_num=None, symlink_to=symlink_isos_to, name=custom_iso_name)
+                filename = self.compose.get_image_name(arch, variant, disc_type="live",
+                                                       disc_num=None, format=format)
+                iso_path = self.compose.paths.compose.iso_path(arch, variant, filename,
+                                                               symlink_to=symlink_isos_to)
                 if os.path.isfile(iso_path):
                     self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
                     continue

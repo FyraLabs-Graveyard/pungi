@@ -282,7 +282,13 @@ def get_buildroot_rpms(compose, task_id):
     return result
 
 
-def get_volid(compose, arch, variant=None, escape_spaces=False):
+def _apply_substitutions(compose, volid):
+    for k, v in compose.conf.get('volume_id_substitutions', {}).iteritems():
+        volid = volid.replace(k, v)
+    return volid
+
+
+def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False):
     """Get ISO volume ID for arch and variant"""
     if variant and variant.type == "addon":
         # addons are part of parent variant media
@@ -304,13 +310,15 @@ def get_volid(compose, arch, variant=None, escape_spaces=False):
         variant_uid = variant and variant.uid or None
 
     products = [
-        "%(release_short)s-%(release_version)s %(variant_uid)s.%(arch)s",
-        "%(release_short)s-%(release_version)s %(arch)s",
+        "%(release_short)s-%(version)s %(variant)s.%(arch)s",
+        "%(release_short)s-%(version)s %(arch)s",
     ]
+    products = compose.conf.get('image_volid_formats', products)
     layered_products = [
-        "%(release_short)s-%(release_version)s %(base_product_short)s-%(base_product_version)s %(variant_uid)s.%(arch)s",
-        "%(release_short)s-%(release_version)s %(base_product_short)s-%(base_product_version)s %(arch)s",
+        "%(release_short)s-%(version)s %(base_product_short)s-%(base_product_version)s %(variant)s.%(arch)s",
+        "%(release_short)s-%(version)s %(base_product_short)s-%(base_product_version)s %(arch)s",
     ]
+    layered_products = compose.conf.get('image_volid_layered_product_formats', layered_products)
 
     volid = None
     if release_is_layered:
@@ -319,9 +327,19 @@ def get_volid(compose, arch, variant=None, escape_spaces=False):
         all_products = products
 
     for i in all_products:
-        if not variant_uid and "%(variant_uid)s" in i:
+        if not variant_uid and "%(variant)s" in i:
             continue
-        volid = i % locals()
+        volid = i % {
+            'compose_id': compose.compose_id,
+            'variant': variant_uid,
+            'arch': arch,
+            'disc_type': disc_type or '',
+            'release_short': release_short,
+            'version': release_version,
+            'base_product_short': base_product_short,
+            'base_product_version': base_product_version,
+        }
+        volid = _apply_substitutions(compose, volid)
         if len(volid) <= 32:
             break
 
