@@ -13,8 +13,9 @@ from pungi.notifier import PungiNotifier
 
 
 class TestNotifier(unittest.TestCase):
+    @mock.patch('pungi.paths.translate_path')
     @mock.patch('kobo.shortcuts.run')
-    def test_invokes_script(self, run):
+    def test_invokes_script(self, run, translate_path):
         compose = mock.Mock(
             compose_id='COMPOSE_ID',
             paths=mock.Mock(
@@ -25,6 +26,7 @@ class TestNotifier(unittest.TestCase):
         )
 
         run.return_value = (0, None)
+        translate_path.side_effect = lambda compose, x: x
 
         n = PungiNotifier('run-notify')
         n.compose = compose
@@ -32,6 +34,7 @@ class TestNotifier(unittest.TestCase):
         n.send('cmd', **data)
 
         data['compose_id'] = 'COMPOSE_ID'
+        data['location'] = '/a/b'
         run.assert_called_once_with(('run-notify', 'cmd'),
                                     stdin_data=json.dumps(data),
                                     can_fail=True, return_stdout=False, workdir='/a/b')
@@ -42,8 +45,9 @@ class TestNotifier(unittest.TestCase):
         n.send('cmd', foo='bar', baz='quux')
         self.assertFalse(run.called)
 
+    @mock.patch('pungi.paths.translate_path')
     @mock.patch('kobo.shortcuts.run')
-    def test_logs_warning_on_failure(self, run):
+    def test_logs_warning_on_failure(self, run, translate_path):
         compose = mock.Mock(
             compose_id='COMPOSE_ID',
             log_warning=mock.Mock(),
@@ -54,6 +58,7 @@ class TestNotifier(unittest.TestCase):
             )
         )
 
+        translate_path.side_effect = lambda compose, x: x
         run.return_value = (1, None)
 
         n = PungiNotifier('run-notify')
@@ -61,7 +66,7 @@ class TestNotifier(unittest.TestCase):
         n.send('cmd')
 
         run.assert_called_once_with(('run-notify', 'cmd'),
-                                    stdin_data=json.dumps({'compose_id': 'COMPOSE_ID'}),
+                                    stdin_data=json.dumps({'compose_id': 'COMPOSE_ID', 'location': '/a/b'}),
                                     can_fail=True, return_stdout=False, workdir='/a/b')
         self.assertTrue(compose.log_warning.called)
 
