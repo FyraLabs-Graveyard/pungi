@@ -127,6 +127,18 @@ Options
 **variants_file** [mandatory]
     (*scm_dict* or *str*) -- reference to variants XML file that defines release variants and architectures
 
+**failable_deliverables** [optional]
+    (*list*) -- list which deliverables on which variant and architecture can
+    fail and not abort the whole compose
+
+    Currently handled deliverables are:
+     * buildinstall
+     * iso
+     * live
+
+    Please note that ``*`` as a wildcard matches all architectures but ``src``.
+
+
 Example
 -------
 ::
@@ -144,6 +156,16 @@ Example
         "branch": None,
         "file": "variants-fedora.xml",
     }
+
+    failable_deliverables = [
+        ('^.*$', {
+            # Buildinstall can fail on any variant and any arch
+            '*': ['buildinstall'],
+            'src': ['buildinstall'],
+            # Nothing on i386 blocks the compose
+            'i386': ['buildinstall', 'iso', 'live'],
+        })
+    ]
 
 
 Image Naming

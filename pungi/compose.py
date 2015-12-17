@@ -33,7 +33,7 @@ from productmd.images import Images
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
-from pungi.util import makedirs
+from pungi.util import makedirs, get_arch_variant_data
 from pungi.metadata import compose_to_composeinfo
 
 
@@ -284,3 +284,11 @@ class Compose(kobo.log.LoggingBase):
             'version': self.ci_base.release.version,
         }
         return format % args
+
+    def can_fail(self, variant, arch, deliverable):
+        """Figure out if deliverable can fail on variant.arch.
+
+        Variant can be None.
+        """
+        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
+        return deliverable in failable

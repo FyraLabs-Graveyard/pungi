@@ -184,15 +184,15 @@ class CreateisoPhase(PhaseBase):
                         jigdo_cmd = jigdo.get_jigdo_cmd(iso_path, files, output_dir=jigdo_dir, no_servers=True, report="noprogress")
                         jigdo_cmd = " ".join([pipes.quote(i) for i in jigdo_cmd])
                         cmd["cmd"].append(jigdo_cmd)
-    
+
                     cmd["cmd"] = " && ".join(cmd["cmd"])
-                    commands.append(cmd)
+                    commands.append((cmd, variant, arch))
 
         self.compose.notifier.send('createiso-targets', deliverables=deliverables)
 
-        for cmd in commands:
+        for (cmd, variant, arch) in commands:
             self.pool.add(CreateIsoThread(self.pool))
-            self.pool.queue_put((self.compose, cmd))
+            self.pool.queue_put((self.compose, cmd, variant, arch))
 
         self.pool.start()
 
@@ -217,8 +217,18 @@ class CreateIsoThread(WorkerThread):
                               variant=str(cmd['variant']))
 
     def process(self, item, num):
-        compose, cmd = item
+        compose, cmd, variant, arch = item
+        try:
+            self.worker(compose, cmd, num)
+        except Exception:
+            if not compose.can_fail(variant, arch, 'iso'):
+                raise
+            else:
+                msg = ('[FAIL] Creating iso for variant %s, arch %s failed, but going on anyway.'
+                       % (variant.uid, arch))
+                self.pool.log_info(msg)
 
+    def worker(self, compose, cmd, num):
         mounts = [compose.topdir]
         if "mount" in cmd:
             mounts.append(cmd["mount"])
