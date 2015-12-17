@@ -42,8 +42,13 @@ class ImageBuildPhase(PhaseBase):
                     image_conf["install_tree"] = translate_path(self.compose, self.compose.paths.compose.os_tree(arch, variant)) # ^
                     format = image_conf["format"] # transform format into right 'format' for image-build
                     image_conf["format"] = ",".join([x[0] for x in image_conf["format"]]) # 'docker,qcow2'
-                    if image_conf.has_key("repos") and not isinstance(image_conf["repos"], str):
-                        image_conf["repos"] = ",".join(image_conf["repos"]) # supply repos as str separated by , instead of list
+
+                    repos = image_conf.get('repos', [])
+                    if isinstance(repos, str):
+                        repos = [repos]
+                    repos.append(translate_path(self.compose, self.compose.paths.compose.os_tree(arch, variant)))
+                    image_conf['repos'] = ",".join(repos)  # supply repos as str separated by , instead of list
+
                     cmd = {
                         "format": format,
                         "image_conf": image_conf,
