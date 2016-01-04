@@ -130,6 +130,7 @@ class BuildinstallPhase(PhaseBase):
 
             if buildinstall_method == "lorax":
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
+                    volid = get_volid(self.compose, arch, variant=variant, disc_type="boot")
                     commands.append(
                         self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid)
                     )

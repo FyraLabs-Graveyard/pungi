@@ -347,9 +347,9 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
     # iso = IsoWrapper(logger=compose._logger)
     # volid = iso._truncate_volid(volid)
 
-    if len(volid) > 32:
+    if volid and len(volid) > 32:
         raise ValueError("Could not create volume ID <= 32 characters")
 
-    if escape_spaces:
+    if volid and escape_spaces:
         volid = volid.replace(" ", r"\x20")
     return volid
