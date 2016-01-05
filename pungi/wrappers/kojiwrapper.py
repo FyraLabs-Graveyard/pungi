@@ -209,6 +209,41 @@ class KojiWrapper(object):
         }
         return result
 
+    def get_image_build_paths(self, task_id):
+        """
+        Given an image task in Koji, get a mapping from arches to a list of
+        paths to results of the task.
+        """
+        result = {}
+
+        # task = self.koji_proxy.getTaskInfo(task_id, request=True)
+        children_tasks = self.koji_proxy.getTaskChildren(task_id, request=True)
+
+        for child_task in children_tasks:
+            if child_task['method'] != 'createImage':
+                continue
+
+            is_scratch = child_task['request'][-1].get('scratch', False)
+            task_result = self.koji_proxy.getTaskResult(child_task['id'])
+
+            if is_scratch:
+                topdir = os.path.join(
+                    self.koji_module.pathinfo.work(),
+                    self.koji_module.pathinfo.taskrelpath(child_task['id'])
+                )
+            else:
+                build = self.koji_proxy.getImageBuild("%(name)s-%(version)s-%(release)s" % task_result)
+                build["name"] = task_result["name"]
+                build["version"] = task_result["version"]
+                build["release"] = task_result["release"]
+                build["arch"] = task_result["arch"]
+                topdir = self.koji_module.pathinfo.imagebuild(build)
+
+            for i in task_result["files"]:
+                result.setdefault(task_result['arch'], []).append(os.path.join(topdir, i))
+
+        return result
+
     def get_image_path(self, task_id):
         result = []
         koji_proxy = self.koji_module.ClientSession(self.koji_module.config.server)

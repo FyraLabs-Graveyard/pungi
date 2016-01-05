@@ -46,5 +46,39 @@ class TestGitRefResolver(unittest.TestCase):
         run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
 
 
+class TestGetVariantData(unittest.TestCase):
+    def test_get_simple(self):
+        conf = {
+            'foo': {
+                '^Client$': 1
+            }
+        }
+        result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Client'))
+        self.assertEqual(result, [1])
+
+    def test_get_make_list(self):
+        conf = {
+            'foo': {
+                '^Client$': [1, 2],
+                '^.*$': 3,
+            }
+        }
+        result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Client'))
+        self.assertItemsEqual(result, [1, 2, 3])
+
+    def test_not_matching_arch(self):
+        conf = {
+            'foo': {
+                '^Client$': [1, 2],
+            }
+        }
+        result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Server'))
+        self.assertItemsEqual(result, [])
+
+    def test_handle_missing_config(self):
+        result = util.get_variant_data({}, 'foo', mock.Mock(uid='Client'))
+        self.assertItemsEqual(result, [])
+
+
 if __name__ == "__main__":
     unittest.main()

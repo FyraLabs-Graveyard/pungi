@@ -305,32 +305,30 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
-    def image_build_dir(self, arch, variant, create_dir=True):
+    def image_build_dir(self, variant, create_dir=True):
         """
-        @param arch
         @param variant
         @param create_dir=True
 
         Examples:
-            work/x86_64/Server/image-build
+            work/image-build/Server
         """
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), variant.uid, "image-build")
+        path = os.path.join(self.topdir('image-build', create_dir=create_dir), variant.uid)
         if create_dir:
             makedirs(path)
         return path
 
-    def image_build_conf(self, arch, variant, image_name, image_type, create_dir=True):
+    def image_build_conf(self, variant, image_name, image_type, create_dir=True):
         """
-        @param arch
         @param variant
         @param image-name
         @param image-type (e.g docker)
         @param create_dir=True
 
         Examples:
-            work/x86_64/Server/image-build/docker_rhel-server-docker.cfg
+            work/image-build/Server/docker_rhel-server-docker.cfg
         """
-        path = os.path.join(self.image_build_dir(arch, variant), "%s_%s.cfg" % (image_type, image_name))
+        path = os.path.join(self.image_build_dir(variant), "%s_%s.cfg" % (image_type, image_name))
         return path
 
 
@@ -517,24 +515,23 @@ class ComposePaths(object):
 
         return os.path.join(path, filename)
 
-    def image_dir(self, arch, variant, symlink_to=None, create_dir=True, relative=False):
+    def image_dir(self, variant, symlink_to=None, create_dir=True, relative=False):
         """
+        The arch is listed as literal '%(arch)s'
         Examples:
-            compose/Server/x86_64/images
+            compose/Server/%(arch)s/images
             None
-        @param arch
         @param variant
         @param symlink_to=None
         @param create_dir=True
         @param relative=False
         """
-        # skip optional, addons and src architecture
+        # skip optional and addons
         if variant.type != "variant":
             return None
-        if arch == "src":
-            return None
 
-        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), "images")
+        path = os.path.join(self.topdir('%(arch)s', variant, create_dir=create_dir, relative=relative),
+                            "images")
         if symlink_to:
             topdir = self.compose.topdir.rstrip("/") + "/"
             relative_dir = path[len(topdir):]

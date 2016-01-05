@@ -257,6 +257,27 @@ def get_arch_data(conf, var_name, arch):
     return result
 
 
+def get_variant_data(conf, var_name, variant):
+    """Get configuration for variant.
+
+    Expected config format is a mapping from variant_uid regexes to lists of
+    values.
+
+    :param var_name: name of configuration key with which to work
+    :param variant: Variant object for which to get configuration
+    :rtype: a list of values
+    """
+    result = []
+    for conf_variant, conf_data in conf.get(var_name, {}).iteritems():
+        if not re.match(conf_variant, variant.uid):
+            continue
+        if isinstance(conf_data, list):
+            result.extend(conf_data)
+        else:
+            result.append(conf_data)
+    return result
+
+
 def get_buildroot_rpms(compose, task_id):
     """Get build root RPMs - either from runroot or local"""
     result = []
