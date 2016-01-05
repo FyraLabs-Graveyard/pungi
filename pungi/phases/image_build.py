@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import copy
 import os
 import time
 
@@ -34,6 +34,11 @@ class ImageBuildPhase(PhaseBase):
             for variant in self.compose.get_variants(arch=arch):
                 image_build_data = get_arch_variant_data(self.compose.conf, self.name, arch, variant)
                 for image_conf in image_build_data:
+                    # We will modify the data, so we need to make a copy to
+                    # prevent problems in next iteration where the original
+                    # value is needed.
+                    image_conf = copy.deepcopy(image_conf)
+
                     # Replace possible ambiguous ref name with explicit hash.
                     if 'ksurl' in image_conf:
                         image_conf['ksurl'] = resolve_git_url(image_conf['ksurl'])
