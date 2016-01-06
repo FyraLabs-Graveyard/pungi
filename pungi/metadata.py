@@ -273,7 +273,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         os_tree = compose.paths.compose.os_tree(arch, variant)
 
         # clone all but 'general' sections from buildinstall .treeinfo
-        bi_treeinfo = os.path.join(compose.paths.work.buildinstall_dir(arch), ".treeinfo")
+        bi_treeinfo = os.path.join(compose.paths.work.buildinstall_dir(arch), variant.uid, ".treeinfo")
         if os.path.exists(bi_treeinfo):
             bi_ti = LoraxTreeInfo()
             bi_ti.load(bi_treeinfo)
