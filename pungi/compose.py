@@ -249,6 +249,25 @@ class Compose(kobo.log.LoggingBase):
             return
         return open(path, "r").read().strip()
 
+    def get_format_substs(self, **kwargs):
+        """Return a dict of basic format substitutions.
+
+        Any kwargs will be added as well.
+        """
+        substs = {
+            'compose_id': self.compose_id,
+            'release_short': self.ci_base.release.short,
+            'version': self.ci_base.release.version,
+            'date': self.compose_date,
+            'respin': self.compose_respin,
+            'type': self.compose_type,
+            'type_suffix': self.compose_type_suffix,
+            'label': self.compose_label,
+            'label_major_version': self.compose_label_major_version,
+        }
+        substs.update(kwargs)
+        return substs
+
     def get_image_name(self, arch, variant, disc_type='dvd',
                        disc_num=1, suffix='.iso', format=None):
         """Create a filename for image with given parameters.
@@ -268,22 +287,19 @@ class Compose(kobo.log.LoggingBase):
         else:
             disc_num = ""
 
-        compose_id = self.ci_base[variant.uid].compose_id
         if variant.type == "layered-product":
             variant_uid = variant.parent.uid
         else:
             variant_uid = variant.uid
-        args = {
-            'compose_id': compose_id,
-            'variant': variant_uid,
-            'arch': arch,
-            'disc_type': disc_type,
-            'disc_num': disc_num,
-            'suffix': suffix,
-            'release_short': self.ci_base.release.short,
-            'version': self.ci_base.release.version,
-        }
-        return format % args
+        args = self.get_format_substs(variant=variant_uid,
+                                      arch=arch,
+                                      disc_type=disc_type,
+                                      disc_num=disc_num,
+                                      suffix=suffix)
+        try:
+            return format % args
+        except KeyError as err:
+            raise RuntimeError('Failed to create image name: unknown format element: %s' % err.message)
 
     def can_fail(self, variant, arch, deliverable):
         """Figure out if deliverable can fail on variant.arch.

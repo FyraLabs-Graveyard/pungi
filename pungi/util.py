@@ -350,16 +350,16 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
     for i in all_products:
         if not variant_uid and "%(variant)s" in i:
             continue
-        volid = i % {
-            'compose_id': compose.compose_id,
-            'variant': variant_uid,
-            'arch': arch,
-            'disc_type': disc_type or '',
-            'release_short': release_short,
-            'version': release_version,
-            'base_product_short': base_product_short,
-            'base_product_version': base_product_version,
-        }
+        try:
+            volid = i % compose.get_format_substs(variant=variant_uid,
+                                                  release_short=release_short,
+                                                  version=release_version,
+                                                  arch=arch,
+                                                  disc_type=disc_type or '',
+                                                  base_product_short=base_product_short,
+                                                  base_product_version=base_product_version)
+        except KeyError as err:
+            raise RuntimeError('Failed to create volume id: unknown format element: %s' % err.message)
         volid = _apply_substitutions(compose, volid)
         if len(volid) <= 32:
             break

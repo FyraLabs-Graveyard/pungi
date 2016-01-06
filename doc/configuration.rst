@@ -187,32 +187,34 @@ aborted.
 Options
 -------
 
+There a couple common format specifiers available for both the options:
+ * compose_id
+ * release_short
+ * version
+ * date
+ * respin
+ * type
+ * type_suffix
+ * label
+ * label_major_version
+ * variant
+ * arch
+ * disc_type
+
 **image_name_format** [optional]
     (*str*) -- Python's format string to serve as template for image names
 
     This format will be used for all phases generating images. Currently that
     means ``createiso``, ``live_images`` and ``buildinstall``.
 
-    Available keys are:
-     * compose_id
-     * variant
-     * arch
-     * disc_type
+    Available extra keys are:
      * disc_num
      * suffix
-     * release_short
-     * version
 
 **image_volid_formats** [optional]
     (*list*) -- A list of format strings for generating volume id.
 
-    The available keys are:
-     * compose_id
-     * variant
-     * arch
-     * disc_type
-     * release_short
-     * version
+    The extra available keys are:
      * base_product_short
      * base_product_version
 
