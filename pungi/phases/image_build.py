@@ -29,6 +29,23 @@ class ImageBuildPhase(PhaseBase):
             return True
         return False
 
+    def _get_install_tree(self, image_conf, variant):
+        """
+        Get a path to os tree for a variant specified in `install_tree_from` or
+        current variant. If the config is set, it will be removed from the
+        dict.
+        """
+        install_tree_from = image_conf.pop('install_tree_from', variant.uid)
+        install_tree_source = self.compose.variants.get(install_tree_from)
+        if not install_tree_source:
+            raise RuntimeError(
+                'There is no variant %s to get install tree from when building image for %s.'
+                % (install_tree_from, variant.uid))
+        return translate_path(
+            self.compose,
+            self.compose.paths.compose.os_tree('$arch', install_tree_source)
+        )
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -54,10 +71,9 @@ class ImageBuildPhase(PhaseBase):
                     continue
 
                 image_conf["variant"] = variant
-                image_conf["install_tree"] = translate_path(
-                    self.compose,
-                    self.compose.paths.compose.os_tree('$arch', variant)
-                )
+
+                image_conf["install_tree"] = self._get_install_tree(image_conf, variant)
+
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'
                 format = image_conf["format"]

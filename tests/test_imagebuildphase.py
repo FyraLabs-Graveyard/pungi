@@ -49,17 +49,18 @@ class _DummyCompose(object):
             )
         )
         self._logger = mock.Mock()
-        self.variants = [
-            mock.Mock(uid='Server', arches=['x86_64', 'amd64']),
-            mock.Mock(uid='Client', arches=['amd64']),
-        ]
+        self.variants = {
+            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64']),
+            'Client': mock.Mock(uid='Client', arches=['amd64']),
+            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64']),
+        }
         self.im = mock.Mock()
 
     def get_arches(self):
         return ['x86_64', 'amd64']
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in self.variants if not arch or arch in v.arches]
+        return [v for v in self.variants.values() if not arch or arch in v.arches]
 
 
 class TestImageBuildPhase(unittest.TestCase):
@@ -97,7 +98,7 @@ class TestImageBuildPhase(unittest.TestCase):
                 'kickstart': 'fedora-docker-base.ks',
                 'format': 'docker',
                 'repo': '/ostree/$arch/Client',
-                'variant': compose.variants[1],
+                'variant': compose.variants['Client'],
                 'target': 'f24',
                 'disk_size': 3,
                 'name': 'Fedora-Docker-Base',
@@ -118,7 +119,7 @@ class TestImageBuildPhase(unittest.TestCase):
                 'kickstart': 'fedora-docker-base.ks',
                 'format': 'docker',
                 'repo': '/ostree/$arch/Server',
-                'variant': compose.variants[0],
+                'variant': compose.variants['Server'],
                 'target': 'f24',
                 'disk_size': 3,
                 'name': 'Fedora-Docker-Base',
@@ -165,6 +166,61 @@ class TestImageBuildPhase(unittest.TestCase):
         self.assertFalse(phase.pool.add.called)
         self.assertFalse(phase.pool.queue_put.called)
 
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_set_install_tree(self, ThreadPool):
+        compose = _DummyCompose({
+            'image_build': {
+                '^Server$': [
+                    {
+                        'format': [('docker', 'tar.xz')],
+                        'name': 'Fedora-Docker-Base',
+                        'target': 'f24',
+                        'version': 'Rawhide',
+                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                        'kickstart': "fedora-docker-base.ks",
+                        'distro': 'Fedora-20',
+                        'disk_size': 3,
+                        'arches': ['x86_64'],
+                        'install_tree_from': 'Everything',
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][0], compose)
+        self.maxDiff = None
+        self.assertDictEqual(args[0][1], {
+            "format": [('docker', 'tar.xz')],
+            "image_conf": {
+                'install_tree': '/ostree/$arch/Everything',
+                'kickstart': 'fedora-docker-base.ks',
+                'format': 'docker',
+                'repo': '/ostree/$arch/Server',
+                'variant': compose.variants['Server'],
+                'target': 'f24',
+                'disk_size': 3,
+                'name': 'Fedora-Docker-Base',
+                'arches': 'x86_64',
+                'version': 'Rawhide',
+                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                'distro': 'Fedora-20',
+            },
+            "conf_file": 'Server-Fedora-Docker-Base-docker',
+            "image_dir": '/image_dir/Server/%(arch)s',
+            "relative_image_dir": 'image_dir/Server/%(arch)s',
+            "link_type": 'hardlink-or-copy',
+        })
+
 
 class TestCreateImageBuildThread(unittest.TestCase):
 
@@ -182,7 +238,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
                 'kickstart': 'fedora-docker-base.ks',
                 'format': 'docker',
                 'repo': '/ostree/$arch/Client',
-                'variant': compose.variants[1],
+                'variant': compose.variants['Client'],
                 'target': 'f24',
                 'disk_size': 3,
                 'name': 'Fedora-Docker-Base',
