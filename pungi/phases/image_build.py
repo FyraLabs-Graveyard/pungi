@@ -133,6 +133,17 @@ class CreateImageBuildThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd = item
+        try:
+            self.worker(num, compose, cmd)
+        except:
+            if not compose.can_fail(cmd['image_conf']['variant'], '*', 'image-build'):
+                raise
+            else:
+                msg = ('[FAIL] image-build for variant %s failed, but going on anyway.'
+                       % cmd['image_conf']['variant'])
+                self.pool.log_info(msg)
+
+    def worker(self, num, compose, cmd):
         arches = cmd['image_conf']['arches'].split(',')
 
         mounts = [compose.paths.compose.topdir()]

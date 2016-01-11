@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
+from pungi.util import get_arch_variant_data
 
 
 class _DummyCompose(object):
@@ -55,12 +56,17 @@ class _DummyCompose(object):
             'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64']),
         }
         self.im = mock.Mock()
+        self.log_error = mock.Mock()
 
     def get_arches(self):
         return ['x86_64', 'amd64']
 
     def get_variants(self, arch=None, types=None):
         return [v for v in self.variants.values() if not arch or arch in v.arches]
+
+    def can_fail(self, variant, arch, deliverable):
+        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
+        return deliverable in failable
 
 
 class TestImageBuildPhase(unittest.TestCase):
@@ -386,6 +392,102 @@ class TestCreateImageBuildThread(unittest.TestCase):
             data = image_relative_paths.pop(image.path)
             self.assertEqual(data['format'], image.format)
             self.assertEqual(data['type'], image.type)
+
+    @mock.patch('pungi.phases.image_build.KojiWrapper')
+    @mock.patch('pungi.phases.image_build.Linker')
+    def test_process_handle_fail(self, Linker, KojiWrapper):
+        compose = _DummyCompose({
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.*$', {
+                    '*': ['image-build']
+                })
+            ]
+        })
+        pool = mock.Mock()
+        cmd = {
+            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
+            "image_conf": {
+                'install_tree': '/ostree/$arch/Client',
+                'kickstart': 'fedora-docker-base.ks',
+                'format': 'docker',
+                'repo': '/ostree/$arch/Client',
+                'variant': compose.variants['Client'],
+                'target': 'f24',
+                'disk_size': 3,
+                'name': 'Fedora-Docker-Base',
+                'arches': 'amd64,x86_64',
+                'version': 'Rawhide',
+                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                'distro': 'Fedora-20',
+            },
+            "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
+            "image_dir": '/image_dir/Client/%(arch)s',
+            "relative_image_dir": 'image_dir/Client/%(arch)s',
+            "link_type": 'hardlink-or-copy',
+        }
+        koji_wrapper = KojiWrapper.return_value
+        koji_wrapper.run_create_image_cmd.return_value = {
+            "retcode": 1,
+            "output": None,
+            "task_id": 1234,
+        }
+
+        t = CreateImageBuildThread(pool)
+        with mock.patch('os.stat') as stat:
+            with mock.patch('os.path.getsize') as getsize:
+                with mock.patch('time.sleep'):
+                    getsize.return_value = 1024
+                    stat.return_value.st_mtime = 13579
+                    t.process((compose, cmd), 1)
+
+    @mock.patch('pungi.phases.image_build.KojiWrapper')
+    @mock.patch('pungi.phases.image_build.Linker')
+    def test_process_handle_exception(self, Linker, KojiWrapper):
+        compose = _DummyCompose({
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.*$', {
+                    '*': ['image-build']
+                })
+            ]
+        })
+        pool = mock.Mock()
+        cmd = {
+            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
+            "image_conf": {
+                'install_tree': '/ostree/$arch/Client',
+                'kickstart': 'fedora-docker-base.ks',
+                'format': 'docker',
+                'repo': '/ostree/$arch/Client',
+                'variant': compose.variants['Client'],
+                'target': 'f24',
+                'disk_size': 3,
+                'name': 'Fedora-Docker-Base',
+                'arches': 'amd64,x86_64',
+                'version': 'Rawhide',
+                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                'distro': 'Fedora-20',
+            },
+            "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
+            "image_dir": '/image_dir/Client/%(arch)s',
+            "relative_image_dir": 'image_dir/Client/%(arch)s',
+            "link_type": 'hardlink-or-copy',
+        }
+
+        def boom(*args, **kwargs):
+            raise RuntimeError('BOOM')
+
+        koji_wrapper = KojiWrapper.return_value
+        koji_wrapper.run_create_image_cmd.side_effect = boom
+
+        t = CreateImageBuildThread(pool)
+        with mock.patch('os.stat') as stat:
+            with mock.patch('os.path.getsize') as getsize:
+                with mock.patch('time.sleep'):
+                    getsize.return_value = 1024
+                    stat.return_value.st_mtime = 13579
+                    t.process((compose, cmd), 1)
 
 
 if __name__ == "__main__":

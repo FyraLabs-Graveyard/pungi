@@ -135,6 +135,12 @@ Options
      * buildinstall
      * iso
      * live
+     * image-build
+
+       .. note::
+
+           Image building is not run per-architecture. If you want to mark it
+           as failable, specify it in a block with arch set as ``*``.
 
     Please note that ``*`` as a wildcard matches all architectures but ``src``.
 
