@@ -25,9 +25,9 @@ packages = sorted(packages)
 
 setup(
     name            = "pungi",
-    version         = "4.0.3",  # make sure it matches with pungi.__version__
+    version         = "4.0.4",  # make sure it matches with pungi.__version__
     description     = "Distribution compose tool",
-    url             = "http://fedorahosted.org/pungi",
+    url             = "https://pagure.io/pungi",
     author          = "Dennis Gilmore",
     author_email    = "dgilmore@fedoraproject.org",
     license         = "GPLv2",

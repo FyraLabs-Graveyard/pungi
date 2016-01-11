@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.3
+Version:        4.0.4
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
