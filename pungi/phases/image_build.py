@@ -71,6 +71,11 @@ class ImageBuildPhase(PhaseBase):
 
         return ",".join(repo)
 
+    def _get_arches(self, image_conf, arches):
+        if 'arches' in image_conf:
+            arches = set(image_conf.get('arches', [])) & arches
+        return ','.join(sorted(arches))
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -81,19 +86,15 @@ class ImageBuildPhase(PhaseBase):
                 # value is needed.
                 image_conf = copy.deepcopy(image_conf)
 
+                # image_conf is passed to get_image_build_cmd as dict
+
+                image_conf['arches'] = self._get_arches(image_conf, arches)
+                if not image_conf['arches']:
+                    continue
+
                 # Replace possible ambiguous ref name with explicit hash.
                 if 'ksurl' in image_conf:
                     image_conf['ksurl'] = resolve_git_url(image_conf['ksurl'])
-
-                # image_conf is passed to get_image_build_cmd as dict
-
-                if 'arches' in image_conf:
-                    image_conf["arches"] = ','.join(sorted(set(image_conf.get('arches', [])) & arches))
-                else:
-                    image_conf['arches'] = ','.join(sorted(arches))
-
-                if not image_conf['arches']:
-                    continue
 
                 image_conf["variant"] = variant
 
