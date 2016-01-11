@@ -221,6 +221,61 @@ class TestImageBuildPhase(unittest.TestCase):
             "link_type": 'hardlink-or-copy',
         })
 
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_set_extra_repos(self, ThreadPool):
+        compose = _DummyCompose({
+            'image_build': {
+                '^Server$': [
+                    {
+                        'format': [('docker', 'tar.xz')],
+                        'name': 'Fedora-Docker-Base',
+                        'target': 'f24',
+                        'version': 'Rawhide',
+                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                        'kickstart': "fedora-docker-base.ks",
+                        'distro': 'Fedora-20',
+                        'disk_size': 3,
+                        'arches': ['x86_64'],
+                        'repo_from': 'Everything',
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][0], compose)
+        self.maxDiff = None
+        self.assertDictEqual(args[0][1], {
+            "format": [('docker', 'tar.xz')],
+            "image_conf": {
+                'install_tree': '/ostree/$arch/Server',
+                'kickstart': 'fedora-docker-base.ks',
+                'format': 'docker',
+                'repo': '/ostree/$arch/Everything,/ostree/$arch/Server',
+                'variant': compose.variants['Server'],
+                'target': 'f24',
+                'disk_size': 3,
+                'name': 'Fedora-Docker-Base',
+                'arches': 'x86_64',
+                'version': 'Rawhide',
+                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                'distro': 'Fedora-20',
+            },
+            "conf_file": 'Server-Fedora-Docker-Base-docker',
+            "image_dir": '/image_dir/Server/%(arch)s',
+            "relative_image_dir": 'image_dir/Server/%(arch)s',
+            "link_type": 'hardlink-or-copy',
+        })
+
 
 class TestCreateImageBuildThread(unittest.TestCase):
 

@@ -613,6 +613,9 @@ Image Build Settings
     automatically transformed into format suitable for ``koji``. A repo for the
     currently built variant will be added as well.
 
+    You can also add extra variants to get repos from with key ``repo_from``.
+    The value should be a list of variant names.
+
     Please don't set ``install_tree``. This gets automatically set by *pungi*
     based on current variant. You can use ``install_tree_from`` key to use
     install tree from another variant.
@@ -659,8 +662,9 @@ Example
                 # only build this type of image on x86_64
                 'arches': ['x86_64']
 
-                # Use install tree from Everything variant.
+                # Use install tree and repo from Everything variant.
                 'install_tree_from': 'Everything',
+                'repo_from': ['Everything'],
             }
         ]
     }

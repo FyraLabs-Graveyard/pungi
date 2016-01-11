@@ -3,6 +3,7 @@
 import copy
 import os
 import time
+from kobo import shortcuts
 
 from pungi.util import get_variant_data, resolve_git_url
 from pungi.phases.base import PhaseBase
@@ -46,6 +47,30 @@ class ImageBuildPhase(PhaseBase):
             self.compose.paths.compose.os_tree('$arch', install_tree_source)
         )
 
+    def _get_repo(self, image_conf, variant):
+        """
+        Get a comma separated list of repos. First included are those
+        explicitly listed in config, followed by repos from other variants,
+        finally followed by repo for current variant.
+
+        The `repo_from` key is removed from the dict (if present).
+        """
+        repo = shortcuts.force_list(image_conf.get('repo', []))
+
+        extras = shortcuts.force_list(image_conf.pop('repo_from', []))
+        extras.append(variant.uid)
+
+        for extra in extras:
+            v = self.compose.variants.get(extra)
+            if not v:
+                raise RuntimeError(
+                    'There is no variant %s to get repo from when building image for %s.'
+                    % (extra, variant.uid))
+            repo.append(translate_path(self.compose,
+                                       self.compose.paths.compose.os_tree('$arch', v)))
+
+        return ",".join(repo)
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -79,12 +104,7 @@ class ImageBuildPhase(PhaseBase):
                 format = image_conf["format"]
                 image_conf["format"] = ",".join([x[0] for x in image_conf["format"]])
 
-                repo = image_conf.get('repo', [])
-                if isinstance(repo, str):
-                    repo = [repo]
-                repo.append(translate_path(self.compose, self.compose.paths.compose.os_tree('$arch', variant)))
-                # supply repo as str separated by , instead of list
-                image_conf['repo'] = ",".join(repo)
+                image_conf['repo'] = self._get_repo(image_conf, variant)
 
                 cmd = {
                     "format": format,
