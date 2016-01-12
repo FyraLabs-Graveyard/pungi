@@ -185,6 +185,9 @@ class Variant(object):
     def __str__(self):
         return self.uid
 
+    def __repr__(self):
+        return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(self)
+
     def __cmp__(self, other):
         # variant < addon, layered-product < optional
         if self.type == other.type:
