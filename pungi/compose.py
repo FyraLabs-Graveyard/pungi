@@ -133,6 +133,11 @@ class Compose(kobo.log.LoggingBase):
         self.im.compose.respin = self.compose_respin
         self.im.metadata_path = self.paths.compose.metadata()
 
+        # Stores list of deliverables that failed, but did not abort the
+        # compose.
+        # {Variant.uid: {Arch: [deliverable]}}
+        self.failed_deliverables = {}
+
     get_compose_dir = staticmethod(get_compose_dir)
 
     def __getitem__(self, name):
@@ -230,6 +235,20 @@ class Compose(kobo.log.LoggingBase):
                     result.add(arch)
         return sorted(result)
 
+    @property
+    def status_file(self):
+        """Path to file where the compose status will be stored."""
+        if not hasattr(self, '_status_file'):
+            self._status_file = os.path.join(self.topdir, 'STATUS')
+        return self._status_file
+
+    def _log_failed_deliverables(self):
+        for variant, variant_data in self.failed_deliverables.iteritems():
+            for arch, deliverables in variant_data.iteritems():
+                for deliverable in deliverables:
+                    self.log_info('Failed %s on variant <%s>, arch <%s>.'
+                                  % (deliverable, variant, arch))
+
     def write_status(self, stat_msg):
         if stat_msg not in ("STARTED", "FINISHED", "DOOMED"):
             self.log_warning("Writing nonstandard compose status: %s" % stat_msg)
@@ -240,14 +259,21 @@ class Compose(kobo.log.LoggingBase):
             msg = "Could not modify a FINISHED compose: %s" % self.topdir
             self.log_error(msg)
             raise RuntimeError(msg)
-        open(os.path.join(self.topdir, "STATUS"), "w").write(stat_msg + "\n")
-        self.notifier.send('status-change', status=stat_msg)
+
+        if stat_msg == 'FINISHED' and self.failed_deliverables:
+            stat_msg = 'FINISHED_INCOMPLETE'
+            self._log_failed_deliverables()
+
+        with open(self.status_file, "w") as f:
+            f.write(stat_msg + "\n")
+
+        if self.notifier:
+            self.notifier.send('status-change', status=stat_msg)
 
     def get_status(self):
-        path = os.path.join(self.topdir, "STATUS")
-        if not os.path.isfile(path):
+        if not os.path.isfile(self.status_file):
             return
-        return open(path, "r").read().strip()
+        return open(self.status_file, "r").read().strip()
 
     def get_format_substs(self, **kwargs):
         """Return a dict of basic format substitutions.
@@ -307,4 +333,9 @@ class Compose(kobo.log.LoggingBase):
         Variant can be None.
         """
         failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        return deliverable in failable
+        if deliverable in failable:
+            # Store failed deliverable for later logging.
+            variant_uid = variant.uid if variant else ''
+            self.failed_deliverables.setdefault(variant_uid, {}).setdefault(arch, []).append(deliverable)
+            return True
+        return False

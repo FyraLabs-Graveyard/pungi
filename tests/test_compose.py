@@ -72,5 +72,79 @@ class ComposeTestCase(unittest.TestCase):
                                          '.n', 'Server', '3.0']))
 
 
+class StatusTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.logger = mock.Mock()
+        with mock.patch('pungi.compose.ComposeInfo'):
+            self.compose = Compose({}, self.tmp_dir, logger=self.logger)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_get_status_non_existing(self):
+        status = self.compose.get_status()
+        self.assertIsNone(status)
+
+    def test_get_status_existing(self):
+        with open(os.path.join(self.tmp_dir, 'STATUS'), 'w') as f:
+            f.write('FOOBAR')
+
+        self.assertEqual(self.compose.get_status(), 'FOOBAR')
+
+    def test_get_status_is_dir(self):
+        os.mkdir(os.path.join(self.tmp_dir, 'STATUS'))
+
+        self.assertIsNone(self.compose.get_status())
+
+    def test_write_status(self):
+        self.compose.write_status('DOOMED')
+
+        with open(os.path.join(self.tmp_dir, 'STATUS'), 'r') as f:
+            self.assertEqual(f.read(), 'DOOMED\n')
+
+    def test_write_non_standard_status(self):
+        self.compose.write_status('FOOBAR')
+
+        self.assertEqual(self.logger.log.call_count, 1)
+        with open(os.path.join(self.tmp_dir, 'STATUS'), 'r') as f:
+            self.assertEqual(f.read(), 'FOOBAR\n')
+
+    def test_write_status_on_finished(self):
+        self.compose.write_status('FINISHED')
+
+        with self.assertRaises(RuntimeError):
+            self.compose.write_status('NOT REALLY')
+
+    def test_write_status_with_failed_deliverables(self):
+        self.compose.conf = {
+            'failable_deliverables': [
+                ('^.+$', {
+                    '*': ['live', 'build-image'],
+                })
+            ]
+        }
+
+        variant = mock.Mock(uid='Server')
+        self.compose.can_fail(variant, 'x86_64', 'live')
+        self.compose.can_fail(None, '*', 'build-image')
+
+        self.compose.write_status('FINISHED')
+
+        self.logger.log.assert_has_calls(
+            [mock.call(20, 'Failed build-image on variant <>, arch <*>.'),
+             mock.call(20, 'Failed live on variant <Server>, arch <x86_64>.')],
+            any_order=True)
+
+        with open(os.path.join(self.tmp_dir, 'STATUS'), 'r') as f:
+            self.assertEqual(f.read(), 'FINISHED_INCOMPLETE\n')
+
+    def test_calls_notifier(self):
+        self.compose.notifier = mock.Mock()
+        self.compose.write_status('FINISHED')
+
+        self.assertTrue(self.compose.notifier.send.call_count, 1)
+
+
 if __name__ == "__main__":
     unittest.main()
