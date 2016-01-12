@@ -40,6 +40,9 @@ class ComposeTestCase(unittest.TestCase):
         self.assertFalse(compose.can_fail(None, 'x86_64', 'live'))
         self.assertTrue(compose.can_fail(None, 'i386', 'live'))
 
+        self.assertTrue(compose.can_fail(variant, '*', 'buildinstall'))
+        self.assertFalse(compose.can_fail(variant, '*', 'live'))
+
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_image_name(self, ci):
         conf = {}

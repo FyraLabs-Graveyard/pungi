@@ -3,6 +3,7 @@
 import copy
 import os
 import time
+from kobo import shortcuts
 
 from pungi.util import get_variant_data, resolve_git_url
 from pungi.phases.base import PhaseBase
@@ -29,6 +30,52 @@ class ImageBuildPhase(PhaseBase):
             return True
         return False
 
+    def _get_install_tree(self, image_conf, variant):
+        """
+        Get a path to os tree for a variant specified in `install_tree_from` or
+        current variant. If the config is set, it will be removed from the
+        dict.
+        """
+        install_tree_from = image_conf.pop('install_tree_from', variant.uid)
+        install_tree_source = self.compose.variants.get(install_tree_from)
+        if not install_tree_source:
+            raise RuntimeError(
+                'There is no variant %s to get install tree from when building image for %s.'
+                % (install_tree_from, variant.uid))
+        return translate_path(
+            self.compose,
+            self.compose.paths.compose.os_tree('$arch', install_tree_source)
+        )
+
+    def _get_repo(self, image_conf, variant):
+        """
+        Get a comma separated list of repos. First included are those
+        explicitly listed in config, followed by repos from other variants,
+        finally followed by repo for current variant.
+
+        The `repo_from` key is removed from the dict (if present).
+        """
+        repo = shortcuts.force_list(image_conf.get('repo', []))
+
+        extras = shortcuts.force_list(image_conf.pop('repo_from', []))
+        extras.append(variant.uid)
+
+        for extra in extras:
+            v = self.compose.variants.get(extra)
+            if not v:
+                raise RuntimeError(
+                    'There is no variant %s to get repo from when building image for %s.'
+                    % (extra, variant.uid))
+            repo.append(translate_path(self.compose,
+                                       self.compose.paths.compose.os_tree('$arch', v)))
+
+        return ",".join(repo)
+
+    def _get_arches(self, image_conf, arches):
+        if 'arches' in image_conf:
+            arches = set(image_conf.get('arches', [])) & arches
+        return ','.join(sorted(arches))
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -39,36 +86,26 @@ class ImageBuildPhase(PhaseBase):
                 # value is needed.
                 image_conf = copy.deepcopy(image_conf)
 
+                # image_conf is passed to get_image_build_cmd as dict
+
+                image_conf['arches'] = self._get_arches(image_conf, arches)
+                if not image_conf['arches']:
+                    continue
+
                 # Replace possible ambiguous ref name with explicit hash.
                 if 'ksurl' in image_conf:
                     image_conf['ksurl'] = resolve_git_url(image_conf['ksurl'])
 
-                # image_conf is passed to get_image_build_cmd as dict
-
-                if 'arches' in image_conf:
-                    image_conf["arches"] = ','.join(sorted(set(image_conf.get('arches', [])) & arches))
-                else:
-                    image_conf['arches'] = ','.join(sorted(arches))
-
-                if not image_conf['arches']:
-                    continue
-
                 image_conf["variant"] = variant
-                image_conf["install_tree"] = translate_path(
-                    self.compose,
-                    self.compose.paths.compose.os_tree('$arch', variant)
-                )
+
+                image_conf["install_tree"] = self._get_install_tree(image_conf, variant)
+
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'
                 format = image_conf["format"]
                 image_conf["format"] = ",".join([x[0] for x in image_conf["format"]])
 
-                repo = image_conf.get('repo', [])
-                if isinstance(repo, str):
-                    repo = [repo]
-                repo.append(translate_path(self.compose, self.compose.paths.compose.os_tree('$arch', variant)))
-                # supply repo as str separated by , instead of list
-                image_conf['repo'] = ",".join(repo)
+                image_conf['repo'] = self._get_repo(image_conf, variant)
 
                 cmd = {
                     "format": format,
@@ -96,6 +133,17 @@ class CreateImageBuildThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd = item
+        try:
+            self.worker(num, compose, cmd)
+        except:
+            if not compose.can_fail(cmd['image_conf']['variant'], '*', 'image-build'):
+                raise
+            else:
+                msg = ('[FAIL] image-build for variant %s failed, but going on anyway.'
+                       % cmd['image_conf']['variant'])
+                self.pool.log_info(msg)
+
+    def worker(self, num, compose, cmd):
         arches = cmd['image_conf']['arches'].split(',')
 
         mounts = [compose.paths.compose.topdir()]

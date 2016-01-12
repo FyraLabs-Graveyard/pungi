@@ -135,6 +135,12 @@ Options
      * buildinstall
      * iso
      * live
+     * image-build
+
+       .. note::
+
+           Image building is not run per-architecture. If you want to mark it
+           as failable, specify it in a block with arch set as ``*``.
 
     Please note that ``*`` as a wildcard matches all architectures but ``src``.
 
@@ -618,7 +624,13 @@ Image Build Settings
     automatically transformed into format suitable for ``koji``. A repo for the
     currently built variant will be added as well.
 
-    Please don't set ``install_tree`` as it would get overriden by pungi.
+    You can also add extra variants to get repos from with key ``repo_from``.
+    The value should be a list of variant names.
+
+    Please don't set ``install_tree``. This gets automatically set by *pungi*
+    based on current variant. You can use ``install_tree_from`` key to use
+    install tree from another variant.
+
     The ``format`` attr is [('image_type', 'image_suffix'), ...].
     See productmd documentation for list of supported types and suffixes.
 
@@ -660,6 +672,10 @@ Example
 
                 # only build this type of image on x86_64
                 'arches': ['x86_64']
+
+                # Use install tree and repo from Everything variant.
+                'install_tree_from': 'Everything',
+                'repo_from': ['Everything'],
             }
         ]
     }
