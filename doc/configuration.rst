@@ -383,6 +383,11 @@ Options
 **filter_packages**
     (*list*) -- packages to be excluded from a variant and architecture; format: [(variant_uid_regex, {arch|*: [package_globs]})]
 
+**filter_system_release_packages**
+    (*bool*) -- for each variant, figure out the best system release package
+    and filter out all others. This will not work if a variant needs more than
+    one system release package. In such case, set this option to ``False``.
+
 **multilib_blacklist**
     (*dict*) -- multilib blacklist; format: {arch|*: [package_globs]}
 

@@ -86,6 +86,11 @@ class GatherPhase(PhaseBase):
             "expected_types": [bool],
             "optional": True,
         },
+        {
+            "name": "filter_system_release_packages",
+            "expected_types": [bool],
+            "optional": True,
+        },
         # DEPRECATED OPTIONS
         {
             "name": "additional_packages_multiarch",
@@ -446,9 +451,11 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
     packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
-    system_release_packages, system_release_filter_packages = get_system_release_packages(compose, arch, variant, package_sets)
-    packages |= system_release_packages
-    filter_packages |= system_release_filter_packages
+    if not compose.conf.get('filter_system_release_packages', False):
+        system_release_packages, system_release_filter_packages = get_system_release_packages(
+            compose, arch, variant, package_sets)
+        packages |= system_release_packages
+        filter_packages |= system_release_filter_packages
 
     # if the variant is "optional", include all groups and packages
     # from the main "variant" and all "addons"
