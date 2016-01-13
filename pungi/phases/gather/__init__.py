@@ -451,7 +451,7 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
     packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
-    if not compose.conf.get('filter_system_release_packages', False):
+    if compose.conf.get('filter_system_release_packages', True):
         system_release_packages, system_release_filter_packages = get_system_release_packages(
             compose, arch, variant, package_sets)
         packages |= system_release_packages
