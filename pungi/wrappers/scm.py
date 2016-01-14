@@ -121,6 +121,10 @@ class GitWrapper(ScmBase):
 
         self.log_debug("Exporting directory %s from git %s (branch %s)..." % (scm_dir, scm_root, scm_branch))
         cmd = "/usr/bin/git archive --remote=%s %s %s | tar xf -" % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_dir))
+        # git archive is not supported by http/https
+        # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
+        if scm_root.startswith("http"):
+            cmd = "/usr/bin/git clone --depth 1 --branch=%s %s %s" % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir))
         self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
         run("cp -a %s/* %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)), pipes.quote(target_dir)))
@@ -138,6 +142,10 @@ class GitWrapper(ScmBase):
 
         self.log_debug("Exporting file %s from git %s (branch %s)..." % (scm_file, scm_root, scm_branch))
         cmd = "/usr/bin/git archive --remote=%s %s %s | tar xf -" % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_file))
+        # git archive is not supported by http/https
+        # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
+        if scm_root.startswith("http"):
+            cmd = "/usr/bin/git clone --depth 1 --branch=%s %s %s" % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir))
         self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
         makedirs(target_dir)
