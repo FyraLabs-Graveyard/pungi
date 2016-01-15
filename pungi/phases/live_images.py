@@ -67,6 +67,19 @@ class LiveImagesPhase(PhaseBase):
             return True
         return False
 
+    def _get_extra_repos(self, arch, variant, extras):
+        repo = []
+        for extra in extras:
+            v = self.compose.variants.get(extra)
+            if not v:
+                raise RuntimeError(
+                    'There is no variant %s to get repo from when building live image for %s.'
+                    % (extra, variant.uid))
+            repo.append(translate_path(
+                self.compose, self.compose.paths.compose.repository(arch, v, create_dir=False)))
+
+        return repo
+
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
         iso = IsoWrapper()
@@ -98,11 +111,13 @@ class LiveImagesPhase(PhaseBase):
                     "cmd": [],
                     "label": "",  # currently not used
                 }
-                cmd["repos"] = [translate_path(self.compose, self.compose.paths.compose.repository(arch, variant))]
+                cmd["repos"] = [translate_path(
+                    self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False))]
 
                 # additional repos
                 data = get_arch_variant_data(self.compose.conf, "live_images", arch, variant)
                 cmd["repos"].extend(data[0].get("additional_repos", []))
+                cmd['repos'].extend(self._get_extra_repos(arch, variant, data[0].get('repos_from', [])))
 
                 # Explicit name and version
                 cmd["name"] = data[0].get("name", None)
