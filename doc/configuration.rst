@@ -607,6 +607,29 @@ Example
         }),
     ]
 
+
+Live Images Settings
+====================
+
+**live_target**
+    (*str*) -- Koji build target for which to build the images. This gets
+    passed to ``koji spin-livecd``.
+
+**live_images**
+    (*list*) -- Configuration for the particular image. The elements of the
+    list should be tuples ``(variant_uid_regex, {arch|*: config})``. The config
+    should be a dict with these keys:
+
+      * ``kickstart`` (*str|dict*)
+      * ``name`` (*str*)
+      * ``version`` (*str*)
+      * ``additional_repos`` (*list*) -- external repos specified by URL
+      * ``repos_from`` (*list*) -- repos from other variants
+      * ``specfile`` (*str*) -- for images wrapped in RPM
+      * ``scratch`` (*bool*) -- only RPM-wrapped images can use scratch builds,
+        but by default this is turned off
+
+
 Image Build Settings
 ====================
 
