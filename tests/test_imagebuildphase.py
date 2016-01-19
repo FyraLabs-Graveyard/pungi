@@ -31,10 +31,10 @@ class _DummyCompose(object):
             compose=mock.Mock(
                 topdir=mock.Mock(return_value='/a/b'),
                 os_tree=mock.Mock(
-                    side_effect=lambda arch, variant: os.path.join('/ostree', arch, variant.uid)
+                    side_effect=lambda arch, variant, create_dir=False: os.path.join('/ostree', arch, variant.uid)
                 ),
                 image_dir=mock.Mock(
-                    side_effect=lambda variant, create_dir=False, relative=False: os.path.join(
+                    side_effect=lambda variant, relative=False: os.path.join(
                         '' if relative else '/', 'image_dir', variant.uid, '%(arch)s'
                     )
                 )
@@ -287,7 +287,8 @@ class TestCreateImageBuildThread(unittest.TestCase):
 
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
-    def test_process(self, Linker, KojiWrapper):
+    @mock.patch('pungi.phases.image_build.makedirs')
+    def test_process(self, makedirs, Linker, KojiWrapper):
         compose = _DummyCompose({
             'koji_profile': 'koji'
         })
@@ -392,6 +393,12 @@ class TestCreateImageBuildThread(unittest.TestCase):
             data = image_relative_paths.pop(image.path)
             self.assertEqual(data['format'], image.format)
             self.assertEqual(data['type'], image.type)
+
+        self.assertItemsEqual(makedirs.mock_calls,
+                              [mock.call('/image_dir/Client/amd64'),
+                               mock.call('/image_dir/Client/amd64'),
+                               mock.call('/image_dir/Client/x86_64'),
+                               mock.call('/image_dir/Client/x86_64')])
 
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
