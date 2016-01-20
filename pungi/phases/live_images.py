@@ -67,9 +67,21 @@ class LiveImagesPhase(PhaseBase):
             return True
         return False
 
+    def _get_extra_repos(self, arch, variant, extras):
+        repo = []
+        for extra in extras:
+            v = self.compose.variants.get(extra)
+            if not v:
+                raise RuntimeError(
+                    'There is no variant %s to get repo from when building live image for %s.'
+                    % (extra, variant.uid))
+            repo.append(translate_path(
+                self.compose, self.compose.paths.compose.repository(arch, v, create_dir=False)))
+
+        return repo
+
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
-        iso = IsoWrapper()
         commands = []
 
         for variant in self.compose.variants.values():
@@ -87,22 +99,21 @@ class LiveImagesPhase(PhaseBase):
                 cmd = {
                     "name": None,
                     "version": None,
-                    "arch": arch,
-                    "variant": variant,
                     "iso_path": None,
                     "wrapped_rpms_path": iso_dir,
                     "build_arch": arch,
                     "ks_file": ks_file,
                     "specfile": None,
                     "scratch": False,
-                    "cmd": [],
                     "label": "",  # currently not used
                 }
-                cmd["repos"] = [translate_path(self.compose, self.compose.paths.compose.repository(arch, variant))]
+                cmd["repos"] = [translate_path(
+                    self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False))]
 
                 # additional repos
                 data = get_arch_variant_data(self.compose.conf, "live_images", arch, variant)
                 cmd["repos"].extend(data[0].get("additional_repos", []))
+                cmd['repos'].extend(self._get_extra_repos(arch, variant, data[0].get('repos_from', [])))
 
                 # Explicit name and version
                 cmd["name"] = data[0].get("name", None)
@@ -133,17 +144,7 @@ class LiveImagesPhase(PhaseBase):
                     self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
                     continue
                 cmd["iso_path"] = iso_path
-                iso_name = os.path.basename(iso_path)
 
-                # Additional commands
-
-                chdir_cmd = "cd %s" % pipes.quote(iso_dir)
-                cmd["cmd"].append(chdir_cmd)
-
-                # create iso manifest
-                cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
-
-                cmd["cmd"] = " && ".join(cmd["cmd"])
                 commands.append((cmd, variant, arch))
 
         for (cmd, variant, arch) in commands:
@@ -170,7 +171,7 @@ class CreateLiveImageThread(WorkerThread):
     def process(self, item, num):
         compose, cmd, variant, arch = item
         try:
-            self.worker(compose, cmd, num)
+            self.worker(compose, cmd, variant, arch, num)
         except:
             if not compose.can_fail(variant, arch, 'live'):
                 raise
@@ -179,10 +180,10 @@ class CreateLiveImageThread(WorkerThread):
                        % (variant.uid, arch))
                 self.pool.log_info(msg)
 
-    def worker(self, compose, cmd, num):
-        log_file = compose.paths.log.log_file(cmd["arch"], "createiso-%s" % os.path.basename(cmd["iso_path"]))
+    def worker(self, compose, cmd, variant, arch, num):
+        log_file = compose.paths.log.log_file(arch, "createiso-%s" % os.path.basename(cmd["iso_path"]))
 
-        msg = "Creating ISO (arch: %s, variant: %s): %s" % (cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
+        msg = "Creating ISO (arch: %s, variant: %s): %s" % (arch, variant, os.path.basename(cmd["iso_path"]))
         self.pool.log_info("[BEGIN] %s" % msg)
 
         koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
@@ -217,10 +218,18 @@ class CreateLiveImageThread(WorkerThread):
             for rpm_path in rpm_paths:
                 shutil.copy2(rpm_path, cmd["wrapped_rpms_path"])
 
-        # write manifest
-        run(cmd["cmd"])
+        self._write_manifest(cmd['iso_path'])
 
         self.pool.log_info("[DONE ] %s" % msg)
+
+    def _write_manifest(self, iso_path):
+        """Generate manifest for ISO at given path.
+
+        :param iso_path: (str) absolute path to the ISO
+        """
+        dir, filename = os.path.split(iso_path)
+        iso = IsoWrapper()
+        run("cd %s && %s" % (pipes.quote(dir), iso.get_manifest_cmd(filename)))
 
 
 def get_ks_in(compose, arch, variant):
