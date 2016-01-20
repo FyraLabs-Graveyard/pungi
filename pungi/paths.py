@@ -515,7 +515,7 @@ class ComposePaths(object):
 
         return os.path.join(path, filename)
 
-    def image_dir(self, variant, symlink_to=None, create_dir=True, relative=False):
+    def image_dir(self, variant, symlink_to=None, relative=False):
         """
         The arch is listed as literal '%(arch)s'
         Examples:
@@ -523,21 +523,18 @@ class ComposePaths(object):
             None
         @param variant
         @param symlink_to=None
-        @param create_dir=True
         @param relative=False
         """
         # skip optional and addons
         if variant.type != "variant":
             return None
 
-        path = os.path.join(self.topdir('%(arch)s', variant, create_dir=create_dir, relative=relative),
+        path = os.path.join(self.topdir('%(arch)s', variant, create_dir=False, relative=relative),
                             "images")
         if symlink_to:
             topdir = self.compose.topdir.rstrip("/") + "/"
             relative_dir = path[len(topdir):]
             target_dir = os.path.join(symlink_to, self.compose.compose_id, relative_dir)
-            if create_dir and not relative:
-                makedirs(target_dir)
             try:
                 os.symlink(target_dir, path)
             except OSError as ex:
@@ -548,9 +545,6 @@ class ComposePaths(object):
                     raise RuntimeError(msg)
                 if os.path.abspath(os.readlink(path)) != target_dir:
                     raise RuntimeError(msg)
-        else:
-            if create_dir and not relative:
-                makedirs(path)
         return path
 
     def jigdo_dir(self, arch, variant, create_dir=True, relative=False):

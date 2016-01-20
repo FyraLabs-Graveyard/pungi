@@ -5,7 +5,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import get_variant_data, resolve_git_url
+from pungi.util import get_variant_data, resolve_git_url, makedirs
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -44,7 +44,7 @@ class ImageBuildPhase(PhaseBase):
                 % (install_tree_from, variant.uid))
         return translate_path(
             self.compose,
-            self.compose.paths.compose.os_tree('$arch', install_tree_source)
+            self.compose.paths.compose.os_tree('$arch', install_tree_source, create_dir=False)
         )
 
     def _get_repo(self, image_conf, variant):
@@ -66,8 +66,9 @@ class ImageBuildPhase(PhaseBase):
                 raise RuntimeError(
                     'There is no variant %s to get repo from when building image for %s.'
                     % (extra, variant.uid))
-            repo.append(translate_path(self.compose,
-                                       self.compose.paths.compose.os_tree('$arch', v)))
+            repo.append(translate_path(
+                self.compose,
+                self.compose.paths.compose.os_tree('$arch', v, create_dir=False)))
 
         return ",".join(repo)
 
@@ -117,7 +118,7 @@ class ImageBuildPhase(PhaseBase):
                     ),
                     "image_dir": self.compose.paths.compose.image_dir(variant),
                     "relative_image_dir": self.compose.paths.compose.image_dir(
-                        variant, create_dir=False, relative=True
+                        variant, relative=True
                     ),
                     "link_type": self.compose.conf.get("link_type", "hardlink-or-copy")
                 }
@@ -204,6 +205,7 @@ class CreateImageBuildThread(WorkerThread):
         linker = Linker(logger=compose._logger)
         for image_info in image_infos:
             image_dir = cmd["image_dir"] % {"arch": image_info['arch']}
+            makedirs(image_dir)
             relative_image_dir = cmd["relative_image_dir"] % {"arch": image_info['arch']}
 
             # let's not change filename of koji outputs
