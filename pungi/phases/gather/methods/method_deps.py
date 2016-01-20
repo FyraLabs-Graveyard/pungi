@@ -20,12 +20,11 @@ import tempfile
 
 from kobo.shortcuts import run
 
-from pungi.util import rmtree
+from pungi.util import rmtree, get_arch_variant_data
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.arch import tree_arch_to_yum_arch
 import pungi.phases.gather
-
 
 import pungi.phases.gather.method
 
@@ -116,11 +115,7 @@ def resolve_deps(compose, arch, variant):
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant)
 
-    multilib_methods = compose.conf.get("multilib_methods", None)
-    multilib_methods = compose.conf.get("multilib_methods", None)
-    is_multilib = arch in compose.conf["multilib_arches"]
-    if not is_multilib:
-        multilib_methods = None
+    multilib_methods = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
 
     greedy_method = compose.conf.get("greedy_method", "none")
 

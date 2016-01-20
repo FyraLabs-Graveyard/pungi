@@ -24,6 +24,7 @@ import koji
 import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
+from pungi.util import is_arch_multilib
 
 from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
 
@@ -85,7 +86,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, even
     koji_proxy = koji_wrapper.koji_proxy
     ALL_ARCHES = set(["src"])
     for arch in compose.get_arches():
-        is_multilib = arch in compose.conf["multilib_arches"]
+        is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
         ALL_ARCHES.update(arches)
 

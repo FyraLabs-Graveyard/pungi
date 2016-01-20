@@ -215,6 +215,11 @@ def get_arch_variant_data(conf, var_name, arch, variant):
     return result
 
 
+def is_arch_multilib(conf, arch):
+    """Check if at least one variant has multilib enabled on this variant."""
+    return bool(get_arch_variant_data(conf, 'multilib', arch, None))
+
+
 def resolve_git_url(url):
     """Given a url to a Git repo specifying HEAD as a ref, replace that
     specifier with actual SHA1 of the commit.

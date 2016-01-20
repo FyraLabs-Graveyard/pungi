@@ -38,7 +38,6 @@ Minimal Config Example
     gather_source = "comps"
     gather_method = "deps"
     greedy_method = "build"
-    multilib_methods = []
     check_deps = False
 
     # BUILDINSTALL
@@ -377,11 +376,25 @@ Options
 **greedy_method**
     (*str*) -- see :doc:`gather`, recommended value: "build"
 
-**multilib_methods** = []
-    ([*str*]) -- see :doc:`gather`, recommended value: ["devel", "runtime"]
+**multilib_methods** [deprecated]
+    ([*str*]) -- use ``multilib`` instead to configure this per-variant
 
-**multilib_arches**
-    ([*str*] or None) -- list of compose architectures entitled for multilib; set to None to apply multilib on all compose arches
+**multilib_arches** [deprecated]
+    ([*str*] or None) -- use ``multilib`` to implicitly configure this: if a
+    variant on any arch has non-empty multilib methods, it is automatically
+    eligible
+
+**multilib**
+    (*list*) -- mapping of variant regexes and arches to list of multilib
+    methods
+
+    Available methods are:
+     * ``none``
+     * ``all``
+     * ``runtime``
+     * ``file``
+     * ``kernel``
+     * ``yaboot``
 
 **additional_packages**
     (*list*) -- additional packages to be included in a variant and architecture; format: [(variant_uid_regex, {arch|*: [package_globs]})]
@@ -414,8 +427,6 @@ Example
     gather_source = "comps"
     gather_method = "deps"
     greedy_method = "build"
-    multilib_methods = ["devel", "runtime"]
-    multilib_arches = ["ppc64", "s390x", "x86_64"]
     check_deps = False
     hashed_directories = True
 
@@ -436,6 +447,12 @@ Example
                 'kernel-doc',
             ],
         }),
+    ]
+
+    multilib = [
+        ('^Server$', {
+            'x86_64': ['devel', 'runtime']
+        })
     ]
 
     multilib_blacklist = {

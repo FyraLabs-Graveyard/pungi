@@ -22,6 +22,7 @@ from kobo.shortcuts import force_list
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
+from pungi.util import is_arch_multilib
 
 
 class PkgsetPhase(PhaseBase):
@@ -32,10 +33,6 @@ class PkgsetPhase(PhaseBase):
         {
             "name": "pkgset_source",
             "expected_types": [str],
-        },
-        {
-            "name": "multilib_arches",
-            "expected_types": [list],
         },
     )
 
@@ -54,7 +51,7 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
     result = {}
     for arch in compose.get_arches():
         compose.log_info("Populating package set for arch: %s" % arch)
-        is_multilib = arch in compose.conf["multilib_arches"]
+        is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib, add_src=True)
         pkgset = pungi.phases.pkgset.pkgsets.PackageSetBase(compose.conf["sigkeys"], logger=compose._logger, arches=arches)
         pkgset.merge(global_pkgset, arch, arches)

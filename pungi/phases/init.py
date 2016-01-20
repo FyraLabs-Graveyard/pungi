@@ -109,11 +109,6 @@ class InitPhase(PhaseBase):
             "expected_types": [list],
             "optional": True,
         },
-        {
-            "name": "multilib_arches",
-            "expected_types": [list],
-            "optional": True,
-        },
 
         # CREATEREPO SETTINGS
         {

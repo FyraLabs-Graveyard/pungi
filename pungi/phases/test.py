@@ -23,7 +23,7 @@ from pungi.wrappers.repoclosure import RepoclosureWrapper
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import get_lookaside_repos
-from pungi.util import rmtree
+from pungi.util import rmtree, is_arch_multilib
 
 
 class TestPhase(PhaseBase):
@@ -45,7 +45,7 @@ def run_repoclosure(compose):
     all_repos = {}  # to be used as lookaside for the self-hosting check
     all_arches = set()
     for arch in compose.get_arches():
-        is_multilib = arch in compose.conf["multilib_arches"]
+        is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
         all_arches.update(arches)
         for variant in compose.get_variants(arch=arch):

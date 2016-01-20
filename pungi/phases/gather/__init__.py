@@ -53,18 +53,9 @@ class GatherPhase(PhaseBase):
 
     config_options = (
         {
-            "name": "multilib_arches",
-            "expected_types": [list],
-            "optional": True,
-        },
-        {
             "name": "gather_lookaside_repos",
             "expected_types": [list],
             "optional": True,
-        },
-        {
-            "name": "multilib_methods",
-            "expected_types": [list],
         },
         {
             "name": "greedy_method",
@@ -91,7 +82,22 @@ class GatherPhase(PhaseBase):
             "expected_types": [bool],
             "optional": True,
         },
+        {
+            "name": "multilib",
+            "expected_types": [list],
+            "optional": True,
+        },
         # DEPRECATED OPTIONS
+        {
+            "name": "multilib_arches",
+            "deprecated": True,
+            "comment": "Use multilib instead",
+        },
+        {
+            "name": "multilib_methods",
+            "deprecated": True,
+            "comment": "Use multilib instead",
+        },
         {
             "name": "additional_packages_multiarch",
             "deprecated": True,

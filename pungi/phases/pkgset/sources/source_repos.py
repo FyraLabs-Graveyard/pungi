@@ -22,7 +22,7 @@ from kobo.shortcuts import run
 
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
-from pungi.util import makedirs
+from pungi.util import makedirs, is_arch_multilib
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
@@ -125,7 +125,7 @@ def get_pkgset_from_repos(compose):
 def populate_global_pkgset(compose, file_list, path_prefix):
     ALL_ARCHES = set(["src"])
     for arch in compose.get_arches():
-        is_multilib = arch in compose.conf["multilib_arches"]
+        is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
         ALL_ARCHES.update(arches)
 
