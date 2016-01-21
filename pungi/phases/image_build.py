@@ -77,6 +77,11 @@ class ImageBuildPhase(PhaseBase):
             arches = set(image_conf.get('arches', [])) & arches
         return ','.join(sorted(arches))
 
+    def _set_release(self, image_conf):
+        """If release is set explicitly to None, replace it with date and respin."""
+        if 'release' in image_conf and image_conf['release'] is None:
+            image_conf['release'] = '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -100,6 +105,8 @@ class ImageBuildPhase(PhaseBase):
                 image_conf["variant"] = variant
 
                 image_conf["install_tree"] = self._get_install_tree(image_conf, variant)
+
+                self._set_release(image_conf)
 
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'

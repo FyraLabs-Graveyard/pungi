@@ -660,9 +660,12 @@ Image Build Settings
     Config can contain anything what is accepted by
     ``koji image-build --config configfile.ini``
 
-    Repo can be specified either as a string or a list of strings. It will
+    Repo can be specified either as a string or a list of strings. It will be
     automatically transformed into format suitable for ``koji``. A repo for the
     currently built variant will be added as well.
+
+    If you explicitly set ``release`` to ``None``, it will be replaced with
+    ``DATE.RESPIN`` of the current compose.
 
     You can also add extra variants to get repos from with key ``repo_from``.
     The value should be a list of variant names.
@@ -698,7 +701,7 @@ Example
                 'disk_size': 3,
 
                 # this is set automatically by pungi to os_dir for given variant
-                # 'install_tree': 'http://sometpath',
+                # 'install_tree': 'http://somepath',
             },
             {
                 'format': [('qcow2','qcow2')]
@@ -716,6 +719,9 @@ Example
                 # Use install tree and repo from Everything variant.
                 'install_tree_from': 'Everything',
                 'repo_from': ['Everything'],
+
+                # Set release based on date and respin.
+                'release': None,
             }
         ]
     }

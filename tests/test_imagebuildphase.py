@@ -282,6 +282,40 @@ class TestImageBuildPhase(unittest.TestCase):
             "link_type": 'hardlink-or-copy',
         })
 
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_create_release(self, ThreadPool):
+        compose = _DummyCompose({
+            'image_build': {
+                '^Server$': [
+                    {
+                        'format': [('docker', 'tar.xz')],
+                        'name': 'Fedora-Docker-Base',
+                        'target': 'f24',
+                        'version': 'Rawhide',
+                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                        'kickstart': "fedora-docker-base.ks",
+                        'distro': 'Fedora-20',
+                        'disk_size': 3,
+                        'arches': ['x86_64'],
+                        'release': None,
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][1].get('image_conf', {}).get('release'),
+                         '20151203.0')
+
 
 class TestCreateImageBuildThread(unittest.TestCase):
 
