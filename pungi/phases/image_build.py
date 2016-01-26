@@ -127,7 +127,8 @@ class ImageBuildPhase(PhaseBase):
                     "relative_image_dir": self.compose.paths.compose.image_dir(
                         variant, relative=True
                     ),
-                    "link_type": self.compose.conf.get("link_type", "hardlink-or-copy")
+                    "link_type": self.compose.conf.get("link_type", "hardlink-or-copy"),
+                    "scratch": image_conf.pop('scratch', False),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
                 self.pool.queue_put((self.compose, cmd))
@@ -174,7 +175,8 @@ class CreateImageBuildThread(WorkerThread):
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
             cmd["image_conf"]["variant"], '-'.join(arches), cmd["conf_file"]))
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd['image_conf'],
-                                                    conf_file_dest=cmd["conf_file"])
+                                                    conf_file_dest=cmd["conf_file"],
+                                                    scratch=cmd['scratch'])
 
         # avoid race conditions?
         # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)

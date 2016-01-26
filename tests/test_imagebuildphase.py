@@ -117,6 +117,7 @@ class TestImageBuildPhase(unittest.TestCase):
             "image_dir": '/image_dir/Client/%(arch)s',
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            "scratch": False,
         }
         server_args = {
             "format": [('docker', 'tar.xz')],
@@ -138,6 +139,7 @@ class TestImageBuildPhase(unittest.TestCase):
             "image_dir": '/image_dir/Server/%(arch)s',
             "relative_image_dir": 'image_dir/Server/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            "scratch": False,
         }
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, client_args)),
@@ -225,6 +227,7 @@ class TestImageBuildPhase(unittest.TestCase):
             "image_dir": '/image_dir/Server/%(arch)s',
             "relative_image_dir": 'image_dir/Server/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            "scratch": False,
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -280,6 +283,7 @@ class TestImageBuildPhase(unittest.TestCase):
             "image_dir": '/image_dir/Server/%(arch)s',
             "relative_image_dir": 'image_dir/Server/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            "scratch": False,
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -316,6 +320,39 @@ class TestImageBuildPhase(unittest.TestCase):
         self.assertEqual(args[0][1].get('image_conf', {}).get('release'),
                          '20151203.0')
 
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_scratch_build(self, ThreadPool):
+        compose = _DummyCompose({
+            'image_build': {
+                '^Server$': [
+                    {
+                        'format': [('docker', 'tar.xz')],
+                        'name': 'Fedora-Docker-Base',
+                        'target': 'f24',
+                        'version': 'Rawhide',
+                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                        'kickstart': "fedora-docker-base.ks",
+                        'distro': 'Fedora-20',
+                        'disk_size': 3,
+                        'arches': ['x86_64'],
+                        'scratch': True,
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertTrue(args[0][1].get('scratch'))
+
 
 class TestCreateImageBuildThread(unittest.TestCase):
 
@@ -347,6 +384,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             "image_dir": '/image_dir/Client/%(arch)s',
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            "scratch": False,
         }
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.run_create_image_cmd.return_value = {

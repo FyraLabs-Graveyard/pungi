@@ -680,6 +680,8 @@ Image Build Settings
     If ``ksurl`` ends with ``#HEAD``, Pungi will figure out the SHA1 hash of
     current HEAD and use that instead.
 
+    Setting ``scratch`` to ``True`` will run the koji tasks as scratch builds.
+
 
 Example
 -------
