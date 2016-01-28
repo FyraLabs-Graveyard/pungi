@@ -349,12 +349,12 @@ class TestCreateImageBuildThread(unittest.TestCase):
             "link_type": 'hardlink-or-copy',
         }
         koji_wrapper = KojiWrapper.return_value
-        koji_wrapper.run_create_image_cmd.return_value = {
+        koji_wrapper.run_blocking_cmd.return_value = {
             "retcode": 0,
             "output": None,
             "task_id": 1234,
         }
-        koji_wrapper.get_image_build_paths.return_value = {
+        koji_wrapper.get_image_paths.return_value = {
             'amd64': [
                 '/koji/task/1235/tdl-amd64.xml',
                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',
@@ -468,7 +468,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             "link_type": 'hardlink-or-copy',
         }
         koji_wrapper = KojiWrapper.return_value
-        koji_wrapper.run_create_image_cmd.return_value = {
+        koji_wrapper.run_blocking_cmd.return_value = {
             "retcode": 1,
             "output": None,
             "task_id": 1234,
@@ -520,7 +520,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             raise RuntimeError('BOOM')
 
         koji_wrapper = KojiWrapper.return_value
-        koji_wrapper.run_create_image_cmd.side_effect = boom
+        koji_wrapper.run_blocking_cmd.side_effect = boom
 
         t = CreateImageBuildThread(pool)
         with mock.patch('os.stat') as stat:

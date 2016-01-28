@@ -176,7 +176,7 @@ class CreateImageBuildThread(WorkerThread):
         # avoid race conditions?
         # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
         time.sleep(num * 3)
-        output = koji_wrapper.run_create_image_cmd(koji_cmd, log_file=log_file)
+        output = koji_wrapper.run_blocking_cmd(koji_cmd, log_file=log_file)
         self.pool.log_debug("build-image outputs: %s" % (output))
         if output["retcode"] != 0:
             self.fail(compose, cmd)
@@ -185,7 +185,7 @@ class CreateImageBuildThread(WorkerThread):
         # copy image to images/
         image_infos = []
 
-        paths = koji_wrapper.get_image_build_paths(output["task_id"])
+        paths = koji_wrapper.get_image_paths(output["task_id"])
 
         for arch, paths in paths.iteritems():
             for path in paths:

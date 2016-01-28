@@ -191,8 +191,12 @@ class KojiWrapper(object):
 
         return cmd
 
-    def run_create_image_cmd(self, command, log_file=None):
-        # spin-{livecd,appliance} is blocking by default -> you probably want to run it in a thread
+    def run_blocking_cmd(self, command, log_file=None):
+        """
+        Run a blocking koji command. Returns a dict with output of the command,
+        its exit code and parsed task id. This method will block until the
+        command finishes.
+        """
         try:
             retcode, output = run(command, can_fail=True, logfile=log_file)
         except RuntimeError, e:
@@ -209,7 +213,7 @@ class KojiWrapper(object):
         }
         return result
 
-    def get_image_build_paths(self, task_id):
+    def get_image_paths(self, task_id):
         """
         Given an image task in Koji, get a mapping from arches to a list of
         paths to results of the task.

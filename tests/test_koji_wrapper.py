@@ -75,7 +75,7 @@ class KojiWrapperTest(unittest.TestCase):
                                mock.call('distro = test-distro\n'),
                                mock.call('\n')])
 
-    def test_get_image_build_paths(self):
+    def test_get_image_paths(self):
 
         # The data for this tests is obtained from the actual Koji build. It
         # includes lots of fields that are not used, but for the sake of
@@ -233,7 +233,7 @@ class KojiWrapperTest(unittest.TestCase):
             getTaskChildren=mock.Mock(side_effect=lambda task_id, request: getTaskChildren_data.get(task_id)),
             getTaskResult=mock.Mock(side_effect=lambda task_id: getTaskResult_data.get(task_id))
         )
-        result = self.koji.get_image_build_paths(12387273)
+        result = self.koji.get_image_paths(12387273)
         self.assertItemsEqual(result.keys(), ['i386', 'x86_64'])
         self.maxDiff = None
         self.assertItemsEqual(result['i386'],
