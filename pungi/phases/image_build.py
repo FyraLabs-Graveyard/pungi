@@ -154,9 +154,6 @@ class CreateImageBuildThread(WorkerThread):
     def worker(self, num, compose, cmd):
         arches = cmd['image_conf']['arches'].split(',')
 
-        mounts = [compose.paths.compose.topdir()]
-        if "mount" in cmd:
-            mounts.append(cmd["mount"])
         log_file = compose.paths.log.log_file(
             cmd["image_conf"]["arches"],
             "imagebuild-%s-%s-%s" % ('-'.join(arches),
