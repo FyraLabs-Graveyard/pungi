@@ -11,55 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread
-from pungi.util import get_arch_variant_data
-
-
-class _DummyCompose(object):
-    def __init__(self, config):
-        self.compose_id = 'Test-20151203.0.t'
-        self.compose_date = '20151203'
-        self.compose_respin = '0'
-        self.conf = config
-        self.paths = mock.Mock(
-            compose=mock.Mock(
-                topdir=mock.Mock(return_value='/top'),
-                repository=mock.Mock(
-                    side_effect=lambda arch, variant, create_dir=False: os.path.join('/repo', arch, variant.uid)
-                ),
-                iso_dir=mock.Mock(
-                    side_effect=lambda arch, variant, symlink_to: os.path.join(
-                        '/top/iso_dir', arch, variant.uid
-                    )
-                ),
-                image_dir=mock.Mock(
-                    side_effect=lambda variant, symlink_to: os.path.join(
-                        '/top/image_dir/%(arch)s', variant.uid
-                    )
-                ),
-            ),
-            log=mock.Mock(
-                log_file=mock.Mock(return_value='/a/b/log/log_file')
-            )
-        )
-        self._logger = mock.Mock()
-        self.variants = {
-            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'], is_empty=False),
-            'Client': mock.Mock(uid='Client', arches=['amd64'], is_empty=False),
-            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'], is_empty=False),
-        }
-        self.log_error = mock.Mock()
-        self.get_image_name = mock.Mock(return_value='image-name')
-        self.im = mock.Mock()
-
-    def get_arches(self):
-        return ['x86_64', 'amd64']
-
-    def get_variants(self, arch=None, types=None):
-        return [v for v in self.variants.values() if not arch or arch in v.arches]
-
-    def can_fail(self, variant, arch, deliverable):
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        return deliverable in failable
+from tests.helpers import _DummyCompose
 
 
 class TestLiveImagesPhase(unittest.TestCase):
@@ -90,7 +42,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/top/iso_dir/amd64/Client',
+                                           'dest_dir': '/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -134,7 +86,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/top/iso_dir/amd64/Client',
+                                           'dest_dir': '/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -180,7 +132,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/top/iso_dir/amd64/Client',
+                                           'dest_dir': '/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -199,7 +151,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                mock.call((compose,
                                           {'ks_file': 'another.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/top/iso_dir/amd64/Client',
+                                           'dest_dir': '/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -246,7 +198,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/top/image_dir/amd64/Client',
+                                           'dest_dir': '/image_dir/Client/amd64',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -335,7 +287,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     ksurl='https://git.example.com/kickstarts.git?#CAFEBABE')])
         self.assertEqual(Image.return_value.type, 'live')
         self.assertEqual(Image.return_value.format, 'iso')
-        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image-name')
+        self.assertEqual(Image.return_value.path, '../../top/iso_dir/amd64/Client/image-name')
         self.assertEqual(Image.return_value.size, 1024)
         self.assertEqual(Image.return_value.mtime, 13579)
         self.assertEqual(Image.return_value.arch, 'amd64')
@@ -417,7 +369,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
 
         self.assertEqual(Image.return_value.type, 'live')
         self.assertEqual(Image.return_value.format, 'iso')
-        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image.iso')
+        self.assertEqual(Image.return_value.path, '../../top/iso_dir/amd64/Client/image.iso')
         self.assertEqual(Image.return_value.size, 1024)
         self.assertEqual(Image.return_value.mtime, 13579)
         self.assertEqual(Image.return_value.arch, 'amd64')
@@ -495,7 +447,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
 
         self.assertEqual(Image.return_value.type, 'appliance')
         self.assertEqual(Image.return_value.format, 'raw.xz')
-        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image-name')
+        self.assertEqual(Image.return_value.path, '../../top/iso_dir/amd64/Client/image-name')
         self.assertEqual(Image.return_value.size, 1024)
         self.assertEqual(Image.return_value.mtime, 13579)
         self.assertEqual(Image.return_value.arch, 'amd64')

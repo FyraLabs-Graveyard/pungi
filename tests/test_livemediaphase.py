@@ -10,56 +10,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
-from pungi.util import get_arch_variant_data
-
-
-class _DummyCompose(object):
-    def __init__(self, config):
-        self.compose_date = '20151203'
-        self.compose_type_suffix = '.t'
-        self.compose_respin = 0
-        self.ci_base = mock.Mock(
-            release_id='Test-1.0',
-            release=mock.Mock(
-                short='test',
-                version='1.0',
-            ),
-        )
-        self.conf = config
-        self.paths = mock.Mock(
-            compose=mock.Mock(
-                topdir=mock.Mock(return_value='/a/b'),
-                os_tree=mock.Mock(
-                    side_effect=lambda arch, variant, create_dir=False: os.path.join('/ostree', arch, variant.uid)
-                ),
-                repository=mock.Mock(
-                    side_effect=lambda arch, variant, create_dir=False: os.path.join('/repo', arch, variant.uid)
-                ),
-                iso_dir=mock.Mock(
-                    side_effect=lambda arch, variant, relative=False: os.path.join(
-                        '' if relative else '/', 'iso_dir', variant.uid, arch
-                    )
-                )
-            ),
-            log=mock.Mock(
-                log_file=mock.Mock(return_value='/a/b/log/log_file')
-            )
-        )
-        self._logger = mock.Mock()
-        self.variants = {
-            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'], is_empty=False),
-            'Client': mock.Mock(uid='Client', arches=['amd64'], is_empty=False),
-            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'], is_empty=False),
-        }
-        self.im = mock.Mock()
-        self.log_error = mock.Mock()
-
-    def get_variants(self, arch=None, types=None):
-        return [v for v in self.variants.values() if not arch or arch in v.arches]
-
-    def can_fail(self, variant, arch, deliverable):
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        return deliverable in failable
+from tests.helpers import _DummyCompose
 
 
 class TestLiveMediaPhase(unittest.TestCase):
@@ -278,20 +229,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
         self.assertEqual(get_image_paths.mock_calls,
                          [mock.call(1234)])
         self.assertItemsEqual(makedirs.mock_calls,
-                              [mock.call('/iso_dir/Server/x86_64'),
-                               mock.call('/iso_dir/Server/amd64')])
+                              [mock.call('/iso_dir/x86_64/Server'),
+                               mock.call('/iso_dir/amd64/Server')])
         link = Linker.return_value.link
         self.assertItemsEqual(link.mock_calls,
                               [mock.call('/koji/task/1235/Live-20160103.amd64.iso',
-                                         '/iso_dir/Server/amd64/Live-20160103.amd64.iso',
+                                         '/iso_dir/amd64/Server/Live-20160103.amd64.iso',
                                          link_type='hardlink-or-copy'),
                                mock.call('/koji/task/1235/Live-20160103.x86_64.iso',
-                                         '/iso_dir/Server/x86_64/Live-20160103.x86_64.iso',
+                                         '/iso_dir/x86_64/Server/Live-20160103.x86_64.iso',
                                          link_type='hardlink-or-copy')])
 
         image_relative_paths = [
-            'iso_dir/Server/amd64/Live-20160103.amd64.iso',
-            'iso_dir/Server/x86_64/Live-20160103.x86_64.iso'
+            'iso_dir/amd64/Server/Live-20160103.amd64.iso',
+            'iso_dir/x86_64/Server/Live-20160103.x86_64.iso'
         ]
 
         self.assertEqual(len(compose.im.add.call_args_list), 2)

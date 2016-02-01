@@ -11,62 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
-from pungi.util import get_arch_variant_data
-
-
-class _DummyCompose(object):
-    def __init__(self, config):
-        self.compose_date = '20151203'
-        self.compose_type_suffix = '.t'
-        self.compose_respin = 0
-        self.ci_base = mock.Mock(
-            release_id='Test-1.0',
-            release=mock.Mock(
-                short='test',
-                version='1.0',
-            ),
-        )
-        self.conf = config
-        self.paths = mock.Mock(
-            compose=mock.Mock(
-                topdir=mock.Mock(return_value='/a/b'),
-                os_tree=mock.Mock(
-                    side_effect=lambda arch, variant, create_dir=False: os.path.join('/ostree', arch, variant.uid)
-                ),
-                image_dir=mock.Mock(
-                    side_effect=lambda variant, relative=False: os.path.join(
-                        '' if relative else '/', 'image_dir', variant.uid, '%(arch)s'
-                    )
-                )
-            ),
-            work=mock.Mock(
-                image_build_conf=mock.Mock(
-                    side_effect=lambda variant, image_name, image_type:
-                        '-'.join([variant.uid, image_name, image_type])
-                )
-            ),
-            log=mock.Mock(
-                log_file=mock.Mock(return_value='/a/b/log/log_file')
-            )
-        )
-        self._logger = mock.Mock()
-        self.variants = {
-            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'], is_empty=False),
-            'Client': mock.Mock(uid='Client', arches=['amd64'], is_empty=False),
-            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'], is_empty=False),
-        }
-        self.im = mock.Mock()
-        self.log_error = mock.Mock()
-
-    def get_arches(self):
-        return ['x86_64', 'amd64']
-
-    def get_variants(self, arch=None, types=None):
-        return [v for v in self.variants.values() if not arch or arch in v.arches]
-
-    def can_fail(self, variant, arch, deliverable):
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        return deliverable in failable
+from tests.helpers import _DummyCompose
 
 
 class TestImageBuildPhase(unittest.TestCase):

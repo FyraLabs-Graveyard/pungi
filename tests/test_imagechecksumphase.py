@@ -12,32 +12,8 @@ import shutil
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.image_checksum import (ImageChecksumPhase,
-                                         dump_checksums)
-
-
-class _DummyCompose(object):
-    def __init__(self, config):
-        self.compose_date = '20151203'
-        self.compose_type_suffix = '.t'
-        self.compose_respin = 0
-        self.ci_base = mock.Mock(
-            release_id='Test-1.0',
-            release=mock.Mock(
-                short='test',
-                version='1.0',
-            ),
-        )
-        self.conf = config
-        self.paths = mock.Mock(
-            compose=mock.Mock(
-                topdir=mock.Mock(return_value='/a/b')
-            )
-        )
-        self.image = mock.Mock(
-            path='Client/i386/iso/image.iso',
-        )
-        self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
+from pungi.phases.image_checksum import ImageChecksumPhase, dump_checksums
+from tests.helpers import _DummyCompose
 
 
 class TestImageChecksumPhase(unittest.TestCase):
