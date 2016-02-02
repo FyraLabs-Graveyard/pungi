@@ -127,6 +127,33 @@ class KojiWrapper(object):
 
         return cmd
 
+    def get_live_media_cmd(self, options, wait=True):
+        # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
+        cmd = ['koji', 'spin-livemedia']
+
+        for key in ('name', 'version', 'target', 'arch', 'ksfile'):
+            if key not in options:
+                raise ValueError('Expected options to have key "%s"' % key)
+            cmd.append(pipes.quote(options[key]))
+
+        if 'install_tree' not in options:
+            raise ValueError('Expected options to have key "install_tree"')
+        cmd.append('--install-tree=%s' % pipes.quote(options['install_tree']))
+
+        for repo in options.get('repo', []):
+            cmd.append('--repo=%s' % pipes.quote(repo))
+
+        if options.get('scratch'):
+            cmd.append('--scratch')
+
+        if options.get('skip_tag'):
+            cmd.append('--skip-tag')
+
+        if wait:
+            cmd.append('--wait')
+
+        return cmd
+
     def get_create_image_cmd(self, name, version, target, arch, ks_file, repos, image_type="live", image_format=None, release=None, wait=True, archive=False, specfile=None):
         # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
         # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>
@@ -191,8 +218,12 @@ class KojiWrapper(object):
 
         return cmd
 
-    def run_create_image_cmd(self, command, log_file=None):
-        # spin-{livecd,appliance} is blocking by default -> you probably want to run it in a thread
+    def run_blocking_cmd(self, command, log_file=None):
+        """
+        Run a blocking koji command. Returns a dict with output of the command,
+        its exit code and parsed task id. This method will block until the
+        command finishes.
+        """
         try:
             retcode, output = run(command, can_fail=True, logfile=log_file)
         except RuntimeError, e:
@@ -200,7 +231,8 @@ class KojiWrapper(object):
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
-            raise RuntimeError("Could not find task ID in output. Command '%s' returned '%s'." % (" ".join(command), output))
+            raise RuntimeError("Could not find task ID in output. Command '%s' returned '%s'."
+                               % (" ".join(command), output))
 
         result = {
             "retcode": retcode,
@@ -209,7 +241,7 @@ class KojiWrapper(object):
         }
         return result
 
-    def get_image_build_paths(self, task_id):
+    def get_image_paths(self, task_id):
         """
         Given an image task in Koji, get a mapping from arches to a list of
         paths to results of the task.
@@ -220,7 +252,7 @@ class KojiWrapper(object):
         children_tasks = self.koji_proxy.getTaskChildren(task_id, request=True)
 
         for child_task in children_tasks:
-            if child_task['method'] != 'createImage':
+            if child_task['method'] not in ['createImage', 'createLiveMedia']:
                 continue
 
             is_scratch = child_task['request'][-1].get('scratch', False)

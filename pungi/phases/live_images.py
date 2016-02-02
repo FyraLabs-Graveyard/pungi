@@ -201,7 +201,7 @@ class CreateLiveImageThread(WorkerThread):
         # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
         time.sleep(num * 3)
 
-        output = koji_wrapper.run_create_image_cmd(koji_cmd, log_file=log_file)
+        output = koji_wrapper.run_blocking_cmd(koji_cmd, log_file=log_file)
         if output["retcode"] != 0:
             self.fail(compose, cmd)
             raise RuntimeError("LiveImage task failed: %s. See %s for more details." % (output["task_id"], log_file))

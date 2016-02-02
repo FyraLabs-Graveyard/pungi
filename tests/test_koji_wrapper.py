@@ -75,7 +75,7 @@ class KojiWrapperTest(unittest.TestCase):
                                mock.call('distro = test-distro\n'),
                                mock.call('\n')])
 
-    def test_get_image_build_paths(self):
+    def test_get_image_paths(self):
 
         # The data for this tests is obtained from the actual Koji build. It
         # includes lots of fields that are not used, but for the sake of
@@ -233,7 +233,7 @@ class KojiWrapperTest(unittest.TestCase):
             getTaskChildren=mock.Mock(side_effect=lambda task_id, request: getTaskChildren_data.get(task_id)),
             getTaskResult=mock.Mock(side_effect=lambda task_id: getTaskResult_data.get(task_id))
         )
-        result = self.koji.get_image_build_paths(12387273)
+        result = self.koji.get_image_paths(12387273)
         self.assertItemsEqual(result.keys(), ['i386', 'x86_64'])
         self.maxDiff = None
         self.assertItemsEqual(result['i386'],
@@ -252,6 +252,46 @@ class KojiWrapperTest(unittest.TestCase):
                                '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.qcow2',
                                '/koji/task/12387277/libvirt-raw-xz-x86_64.xml',
                                '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.raw.xz'])
+
+
+class LiveMediaTestCase(unittest.TestCase):
+    def setUp(self):
+        self.koji_profile = mock.Mock()
+        with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
+            koji.get_profile_module = mock.Mock(
+                return_value=mock.Mock(
+                    pathinfo=mock.Mock(
+                        work=mock.Mock(return_value='/koji'),
+                        taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
+                        imagebuild=mock.Mock(side_effect=lambda id: '/koji/imagebuild/' + str(id)),
+                    )
+                )
+            )
+            self.koji_profile = koji.get_profile_module.return_value
+            self.koji = KojiWrapper('koji')
+
+    def test_get_live_media_cmd_minimal(self):
+        opts = {
+            'name': 'name', 'version': '1', 'target': 'tgt', 'arch': 'x,y,z',
+            'ksfile': 'kickstart', 'install_tree': '/mnt/os'
+        }
+        cmd = self.koji.get_live_media_cmd(opts)
+        self.assertEqual(cmd,
+                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+                          '--install-tree=/mnt/os', '--wait'])
+
+    def test_get_live_media_cmd_full(self):
+        opts = {
+            'name': 'name', 'version': '1', 'target': 'tgt', 'arch': 'x,y,z',
+            'ksfile': 'kickstart', 'install_tree': '/mnt/os', 'scratch': True,
+            'repo': ['repo-1', 'repo-2'], 'skip_tag': True,
+        }
+        cmd = self.koji.get_live_media_cmd(opts)
+        self.assertEqual(cmd[:8],
+                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+                          '--install-tree=/mnt/os'])
+        self.assertItemsEqual(cmd[8:],
+                              ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait'])
 
 
 if __name__ == "__main__":

@@ -135,6 +135,7 @@ Options
      * iso
      * live
      * image-build
+     * live-media
 
        .. note::
 
@@ -645,6 +646,30 @@ Live Images Settings
       * ``specfile`` (*str*) -- for images wrapped in RPM
       * ``scratch`` (*bool*) -- only RPM-wrapped images can use scratch builds,
         but by default this is turned off
+
+Live Media Settings
+===================
+
+**live_media**
+    (*dict*) -- configuration for ``koji spin-livemedia``; format:
+    ``{variant_uid_regex: [{opt:value}]}``
+
+    Available options:
+
+      * ``target`` (*str*)
+      * ``arches`` (*[str]*) -- what architectures to build the media for; by default uses
+        all arches for the variant.
+      * ``kickstart`` (*str*) -- name of the kickstart file
+      * ``ksurl`` (*str*)
+      * ``ksversion`` (*str*)
+      * ``scratch`` (*bool*)
+      * ``release`` (*str*) -- a string with the release, or explicit ``None``
+        for using compose date and respin.
+      * ``skip_tag`` (*bool*)
+      * ``name`` (*str*)
+      * ``repo`` (*[str]*) -- external repo
+      * ``repo_from`` (*[str]*) -- list of variants to take extra repos from
+      * ``title`` (*str*)
 
 
 Image Build Settings

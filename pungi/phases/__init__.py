@@ -28,3 +28,4 @@ from live_images import LiveImagesPhase  # noqa
 from image_build import ImageBuildPhase  # noqa
 from test import TestPhase  # noqa
 from image_checksum import ImageChecksumPhase    # noqa
+from livemedia_phase import LiveMediaPhase  # noqa

@@ -129,7 +129,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
 
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.get_create_image_cmd.return_value = 'koji spin-livecd ...'
-        koji_wrapper.run_create_image_cmd.return_value = {
+        koji_wrapper.run_blocking_cmd.return_value = {
             'retcode': 0,
             'output': 'some output',
             'task_id': 123
@@ -140,7 +140,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
-        self.assertEqual(koji_wrapper.run_create_image_cmd.mock_calls,
+        self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
@@ -178,7 +178,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
 
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.get_create_image_cmd.return_value = 'koji spin-livecd ...'
-        koji_wrapper.run_create_image_cmd.return_value = {
+        koji_wrapper.run_blocking_cmd.return_value = {
             'retcode': 1,
             'output': 'some output',
             'task_id': 123
