@@ -53,11 +53,12 @@ def convert_file_size(size, block_size=2048):
 
 
 class MediaSplitter(object):
-    def __init__(self, media_size):
+    def __init__(self, media_size, compose=None):
         self.media_size = convert_media_size(media_size)
         self.files = []  # to preserve order
         self.file_sizes = {}
         self.sticky_files = set()
+        self.compose = compose
 
     def add_file(self, name, size, sticky=False):
         name = os.path.normpath(name)
@@ -117,6 +118,7 @@ class MediaSplitter(object):
 
         disks = []
         disk = {}
+        total_size_single = sticky_files_size # as it would be on single medium (sticky_files just once)
         while all_files:
             name = all_files.pop(0)
             size = convert_file_size(self.file_sizes[name])
@@ -128,6 +130,8 @@ class MediaSplitter(object):
                 disk["size"] += sticky_files_size
 
             disk["files"].append(name)
-            disk["size"] += convert_file_size(self.file_sizes[name])
-
+            disk["size"] += size
+            total_size_single += size
+        if self.compose:
+            self.compose.log_debug("MediaSplitter: free space on single media would be %s. Total size of single medium: %s." % (self.media_size - total_size_single, total_size_single))
         return disks

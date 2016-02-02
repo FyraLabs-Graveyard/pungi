@@ -320,7 +320,7 @@ def split_iso(compose, arch, variant):
     media_size = 4700000000
     media_reserve = 10 * 1024 * 1024
 
-    ms = MediaSplitter(str(media_size - media_reserve))
+    ms = MediaSplitter(str(media_size - media_reserve), compose)
 
     os_tree = compose.paths.compose.os_tree(arch, variant)
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
