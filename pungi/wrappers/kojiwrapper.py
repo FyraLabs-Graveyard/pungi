@@ -53,14 +53,12 @@ class KojiWrapper(object):
         if weight:
             cmd.append("--weight=%s" % int(weight))
 
-        if packages:
-            for package in packages:
-                cmd.append("--package=%s" % package)
+        for package in packages or []:
+            cmd.append("--package=%s" % package)
 
-        if mounts:
-            for mount in mounts:
-                # directories are *not* created here
-                cmd.append("--mount=%s" % mount)
+        for mount in mounts or []:
+            # directories are *not* created here
+            cmd.append("--mount=%s" % mount)
 
         # IMPORTANT: all --opts have to be provided *before* args
 
@@ -91,12 +89,11 @@ class KojiWrapper(object):
             if output_ends_with_eol:
                 output += "\n"
 
-        result = {
+        return {
             "retcode": retcode,
             "output": output,
             "task_id": task_id,
         }
-        return result
 
     def get_image_build_cmd(self, config_options, conf_file_dest, wait=True, scratch=False):
         """
