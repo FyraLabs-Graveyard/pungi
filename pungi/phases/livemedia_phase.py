@@ -85,7 +85,8 @@ class LiveMediaPhase(PhaseBase):
                     'install_tree': translate_path(
                         self.compose,
                         self.compose.paths.compose.os_tree('$arch', variant, create_dir=False)
-                    )
+                    ),
+                    'version': image_conf['version'],
                 }
                 self.pool.add(LiveMediaThread(self.pool))
                 self.pool.queue_put((self.compose, variant, config))

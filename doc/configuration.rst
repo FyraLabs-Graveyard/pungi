@@ -654,19 +654,23 @@ Live Media Settings
     (*dict*) -- configuration for ``koji spin-livemedia``; format:
     ``{variant_uid_regex: [{opt:value}]}``
 
-    Available options:
+    Required options:
 
+      * ``name`` (*str*)
+      * ``version`` (*str*)
       * ``target`` (*str*)
       * ``arches`` (*[str]*) -- what architectures to build the media for; by default uses
         all arches for the variant.
       * ``kickstart`` (*str*) -- name of the kickstart file
+
+    Available options:
+
       * ``ksurl`` (*str*)
       * ``ksversion`` (*str*)
       * ``scratch`` (*bool*)
       * ``release`` (*str*) -- a string with the release, or explicit ``None``
         for using compose date and respin.
       * ``skip_tag`` (*bool*)
-      * ``name`` (*str*)
       * ``repo`` (*[str]*) -- external repo
       * ``repo_from`` (*[str]*) -- list of variants to take extra repos from
       * ``title`` (*str*)

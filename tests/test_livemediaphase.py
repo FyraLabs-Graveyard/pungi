@@ -79,6 +79,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                         'kickstart': 'file.ks',
                         'ksurl': 'git://example.com/repo.git',
                         'name': 'Fedora Server Live',
+                        'version': 'Rawhide',
                     }
                 ]
             },
@@ -105,6 +106,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'target': 'f24',
                                          'title': None,
                                          'install_tree': '/ostree/$arch/Server',
+                                         'version': 'Rawhide',
                                      }))])
 
     @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
@@ -125,7 +127,8 @@ class TestLiveMediaPhase(unittest.TestCase):
                         'repo': ['http://example.com/extra_repo'],
                         'arches': ['x86_64'],
                         'ksversion': '24',
-                        'release': None
+                        'release': None,
+                        'version': 'Rawhide',
                     }
                 ]
             }
@@ -155,6 +158,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'target': 'f24',
                                          'title': 'Custom Title',
                                          'install_tree': '/ostree/$arch/Server',
+                                         'version': 'Rawhide',
                                      }))])
 
 
@@ -179,6 +183,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             'skip_tag': None,
             'target': 'f24',
             'title': None,
+            'version': 'Rawhide',
         }
         pool = mock.Mock()
 
@@ -268,6 +273,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             'skip_tag': None,
             'target': 'f24',
             'title': None,
+            'version': 'Rawhide',
         }
         pool = mock.Mock()
 
@@ -306,6 +312,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             'skip_tag': None,
             'target': 'f24',
             'title': None,
+            'version': 'Rawhide',
         }
         pool = mock.Mock()
 
