@@ -144,12 +144,12 @@ class CreateImageBuildThread(WorkerThread):
         compose, cmd = item
         try:
             self.worker(num, compose, cmd)
-        except:
+        except Exception as exc:
             if not compose.can_fail(cmd['image_conf']['variant'], '*', 'image-build'):
                 raise
             else:
-                msg = ('[FAIL] image-build for variant %s failed, but going on anyway.'
-                       % cmd['image_conf']['variant'])
+                msg = ('[FAIL] image-build for variant %s failed, but going on anyway.\n%s'
+                       % (cmd['image_conf']['variant'], exc))
                 self.pool.log_info(msg)
 
     def worker(self, num, compose, cmd):

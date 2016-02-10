@@ -294,5 +294,77 @@ class LiveMediaTestCase(unittest.TestCase):
                               ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait'])
 
 
+class RunrootKojiWrapperTest(unittest.TestCase):
+
+    def setUp(self):
+        self.koji_profile = mock.Mock()
+        with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
+            koji.get_profile_module = mock.Mock(
+                return_value=mock.Mock(
+                    pathinfo=mock.Mock(
+                        work=mock.Mock(return_value='/koji'),
+                        taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
+                        imagebuild=mock.Mock(side_effect=lambda id: '/koji/imagebuild/' + str(id)),
+                    )
+                )
+            )
+            self.koji_profile = koji.get_profile_module.return_value
+            self.koji = KojiWrapper('koji')
+
+    def test_get_cmd_minimal(self):
+        cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False, task_id=False)
+        self.assertEqual(len(cmd), 6)
+        self.assertEqual(cmd[0], 'koji')
+        self.assertEqual(cmd[1], 'runroot')
+        self.assertEqual(cmd[-3], 'tgt')
+        self.assertEqual(cmd[-2], 's390x')
+        self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; date')
+        self.assertItemsEqual(cmd[2:-3],
+                              ['--channel-override=runroot-local'])
+
+    def test_get_cmd_full(self):
+        cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
+                                        quiet=True, channel='chan',
+                                        packages=['strace', 'lorax'],
+                                        mounts=['/tmp'], weight=1000)
+        self.assertEqual(len(cmd), 13)
+        self.assertEqual(cmd[0], 'koji')
+        self.assertEqual(cmd[1], 'runroot')
+        self.assertEqual(cmd[-3], 'tgt')
+        self.assertEqual(cmd[-2], 's390x')
+        self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo \'&\'')
+        self.assertItemsEqual(cmd[2:-3],
+                              ['--channel-override=chan', '--quiet', '--use-shell',
+                               '--task-id', '--weight=1000', '--package=strace',
+                               '--package=lorax', '--mount=/tmp'])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_no_task_id(self, run):
+        cmd = ['koji', 'runroot']
+        output = 'Output ...'
+        run.return_value = (0, output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_with_task_id(self, run):
+        cmd = ['koji', 'runroot', '--task-id']
+        output = 'Output ...\n'
+        run.return_value = (0, '1234\n' + output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_with_task_id_and_fail(self, run):
+        cmd = ['koji', 'runroot', '--task-id']
+        output = 'You are not authorized to run this\n'
+        run.return_value = (1, output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': None})
+
+
 if __name__ == "__main__":
     unittest.main()

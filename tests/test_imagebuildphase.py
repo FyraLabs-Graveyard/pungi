@@ -504,6 +504,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             "image_dir": '/image_dir/Client/%(arch)s',
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            'scratch': False,
         }
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.run_blocking_cmd.return_value = {
@@ -552,6 +553,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
             "image_dir": '/image_dir/Client/%(arch)s',
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
+            'scratch': False,
         }
 
         def boom(*args, **kwargs):

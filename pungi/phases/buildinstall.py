@@ -132,23 +132,27 @@ class BuildinstallPhase(PhaseBase):
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     volid = get_volid(self.compose, arch, variant=variant, disc_type="boot")
                     commands.append(
-                        self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid)
+                        (variant,
+                         self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid))
                     )
             elif buildinstall_method == "buildinstall":
-                commands.append(lorax.get_buildinstall_cmd(product,
-                                                           version,
-                                                           release,
-                                                           repo_baseurl,
-                                                           output_dir,
-                                                           is_final=self.compose.supported,
-                                                           buildarch=buildarch,
-                                                           volid=volid))
+                commands.append(
+                    (None,
+                     lorax.get_buildinstall_cmd(product,
+                                                version,
+                                                release,
+                                                repo_baseurl,
+                                                output_dir,
+                                                is_final=self.compose.supported,
+                                                buildarch=buildarch,
+                                                volid=volid))
+                )
             else:
                 raise ValueError("Unsupported buildinstall method: %s" % buildinstall_method)
 
-            for cmd in commands:
+            for (variant, cmd) in commands:
                 self.pool.add(BuildinstallThread(self.pool))
-                self.pool.queue_put((self.compose, arch, cmd))
+                self.pool.queue_put((self.compose, arch, variant, cmd))
 
         self.pool.start()
 
@@ -357,22 +361,25 @@ def symlink_boot_iso(compose, arch, variant):
 
 class BuildinstallThread(WorkerThread):
     def process(self, item, num):
-        compose, arch, cmd = item
+        # The variant is None unless lorax is used as buildinstall method.
+        compose, arch, variant, cmd = item
         try:
-            self.worker(compose, arch, cmd, num)
-        except Exception:
-            if not compose.can_fail(None, arch, 'buildinstall'):
+            self.worker(compose, arch, variant, cmd, num)
+        except Exception as exc:
+            if not compose.can_fail(variant, arch, 'buildinstall'):
                 raise
             else:
                 self.pool.log_info(
-                    '[FAIL] Buildinstall for arch %s failed, but going on anyway.' % arch)
+                    '[FAIL] Buildinstall for variant %s arch %s failed, but going on anyway.\n%s'
+                    % (variant.uid if variant else 'None', arch, exc))
 
-    def worker(self, compose, arch, cmd, num):
+    def worker(self, compose, arch, variant, cmd, num):
         runroot = compose.conf.get("runroot", False)
         buildinstall_method = compose.conf["buildinstall_method"]
-        log_file = compose.paths.log.log_file(arch, "buildinstall")
+        log_filename = ('buildinstall-%s' % variant.uid) if variant else 'buildinstall'
+        log_file = compose.paths.log.log_file(arch, log_filename)
 
-        msg = "Runnging buildinstall for arch %s" % arch
+        msg = "Running buildinstall for arch %s" % arch
 
         output_dir = compose.paths.work.buildinstall_dir(arch)
         if os.path.isdir(output_dir):
@@ -399,7 +406,10 @@ class BuildinstallThread(WorkerThread):
             runroot_tag = compose.conf["runroot_tag"]
 
             koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-            koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, arch, cmd, channel=runroot_channel, use_shell=True, task_id=True, packages=packages, mounts=[compose.topdir])
+            koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, arch, cmd,
+                                                    channel=runroot_channel,
+                                                    use_shell=True, task_id=True,
+                                                    packages=packages, mounts=[compose.topdir])
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
@@ -408,13 +418,14 @@ class BuildinstallThread(WorkerThread):
             output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
             task_id = int(output["task_id"])
             if output["retcode"] != 0:
-                raise RuntimeError("Runroot task failed: %s. See %s for more details." % (output["task_id"], log_file))
+                raise RuntimeError("Runroot task failed: %s. See %s for more details."
+                                   % (output["task_id"], log_file))
 
         else:
             # run locally
             run(cmd, show_cmd=True, logfile=log_file)
 
-        log_file = compose.paths.log.log_file(arch, "buildinstall-RPMs")
+        log_file = compose.paths.log.log_file(arch, log_filename + '-RPMs')
         rpms = get_buildroot_rpms(compose, task_id)
         open(log_file, "w").write("\n".join(rpms))
 

@@ -220,12 +220,12 @@ class CreateIsoThread(WorkerThread):
         compose, cmd, variant, arch = item
         try:
             self.worker(compose, cmd, num)
-        except Exception:
+        except Exception as exc:
             if not compose.can_fail(variant, arch, 'iso'):
                 raise
             else:
-                msg = ('[FAIL] Creating iso for variant %s, arch %s failed, but going on anyway.'
-                       % (variant.uid, arch))
+                msg = ('[FAIL] Creating iso for variant %s, arch %s failed, but going on anyway.\n%s'
+                       % (variant.uid, arch, exc))
                 self.pool.log_info(msg)
 
     def worker(self, compose, cmd, num):

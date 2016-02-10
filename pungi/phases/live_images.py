@@ -172,12 +172,12 @@ class CreateLiveImageThread(WorkerThread):
         compose, cmd, variant, arch = item
         try:
             self.worker(compose, cmd, variant, arch, num)
-        except:
+        except Exception as exc:
             if not compose.can_fail(variant, arch, 'live'):
                 raise
             else:
-                msg = ('[FAIL] Creating live image for variant %s, arch %s failed, but going on anyway.'
-                       % (variant.uid, arch))
+                msg = ('[FAIL] Creating live image for variant %s, arch %s failed, but going on anyway.\n%s'
+                       % (variant.uid, arch, exc))
                 self.pool.log_info(msg)
 
     def worker(self, compose, cmd, variant, arch, num):

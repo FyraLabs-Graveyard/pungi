@@ -10,12 +10,14 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.buildinstall import BuildinstallPhase
+from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread
+from pungi.util import get_arch_variant_data
 
 
 class _DummyCompose(object):
     def __init__(self, config):
         self.conf = config
+        self.topdir = '/topdir'
         self.paths = mock.Mock(
             compose=mock.Mock(
                 topdir=mock.Mock(return_value='/a/b'),
@@ -24,6 +26,9 @@ class _DummyCompose(object):
             work=mock.Mock(
                 arch_repo=mock.Mock(return_value='file:///a/b/'),
                 buildinstall_dir=mock.Mock(side_effect=lambda x: '/buildinstall_dir/' + x),
+            ),
+            log=mock.Mock(
+                log_file=mock.Mock(side_effect=lambda arch, filename: '/log/%s.%s.log' % (filename, arch)),
             )
         )
         self._logger = mock.Mock()
@@ -40,6 +45,10 @@ class _DummyCompose(object):
 
     def get_variants(self, arch, types):
         return self.variants.get(arch, [])
+
+    def can_fail(self, variant, arch, deliverable):
+        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
+        return deliverable in failable
 
 
 class TestBuildinstallPhase(unittest.TestCase):
@@ -348,6 +357,166 @@ class TestCopyFiles(unittest.TestCase):
              mock.call(compose, 'amd64', compose.variants['amd64'][1])],
             any_order=True
         )
+
+
+class BuildinstallThreadTestCase(unittest.TestCase):
+
+    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.open')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_buildinstall_thread_with_lorax_in_runroot(self, run, mock_open,
+                                                       get_buildroot_rpms, KojiWrapperMock):
+        compose = _DummyCompose({
+            'buildinstall_method': 'lorax',
+            'runroot': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+        pool = mock.Mock()
+        cmd = mock.Mock()
+
+        get_runroot_cmd = KojiWrapperMock.return_value.get_runroot_cmd
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            'output': 'Foo bar baz',
+            'retcode': 0,
+            'task_id': 1234,
+        }
+
+        t = BuildinstallThread(pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', compose.variants['x86_64'][0], cmd), 0)
+
+        get_runroot_cmd.assert_has_calls([
+            mock.call('rrt', 'x86_64', cmd, channel=None,
+                      use_shell=True, task_id=True,
+                      packages=['strace', 'lorax'], mounts=['/topdir'])
+        ])
+        run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall-Server.x86_64.log')
+        mock_open.return_value.write.assert_has_calls([
+            mock.call('bash\nzsh')
+        ])
+
+    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.open')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_buildinstall_thread_with_buildinstall_in_runroot(self, run, mock_open,
+                                                              get_buildroot_rpms, KojiWrapperMock):
+        compose = _DummyCompose({
+            'buildinstall_method': 'buildinstall',
+            'runroot': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+        pool = mock.Mock()
+        cmd = mock.Mock()
+
+        get_runroot_cmd = KojiWrapperMock.return_value.get_runroot_cmd
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            'output': 'Foo bar baz',
+            'retcode': 0,
+            'task_id': 1234,
+        }
+
+        t = BuildinstallThread(pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', None, cmd), 0)
+
+        get_runroot_cmd.assert_has_calls([
+            mock.call('rrt', 'x86_64', cmd, channel=None,
+                      use_shell=True, task_id=True,
+                      packages=['strace', 'anaconda'], mounts=['/topdir'])
+        ])
+        run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall.x86_64.log')
+        mock_open.return_value.write.assert_has_calls([
+            mock.call('bash\nzsh')
+        ])
+
+    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.open')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_buildinstall_fail_exit_code(self, run, mock_open,
+                                         get_buildroot_rpms, KojiWrapperMock):
+        compose = _DummyCompose({
+            'buildinstall_method': 'buildinstall',
+            'runroot': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['buildinstall']})
+            ],
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+        pool = mock.Mock()
+        cmd = mock.Mock()
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            'output': 'Foo bar baz',
+            'retcode': 1,
+            'task_id': 1234,
+        }
+
+        t = BuildinstallThread(pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', None, cmd), 0)
+
+        pool.log_info.assert_has_calls([
+            mock.call('[BEGIN] Running buildinstall for arch x86_64'),
+            mock.call('[FAIL] Buildinstall for variant None arch x86_64 failed, but going on anyway.\nRunroot task failed: 1234. See /log/buildinstall.x86_64.log for more details.')
+        ])
+
+    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.open')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_lorax_fail_exit_code(self, run, mock_open,
+                                  get_buildroot_rpms, KojiWrapperMock):
+        compose = _DummyCompose({
+            'buildinstall_method': 'lorax',
+            'runroot': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['buildinstall']})
+            ],
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+        pool = mock.Mock()
+        cmd = mock.Mock()
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            'output': 'Foo bar baz',
+            'retcode': 1,
+            'task_id': 1234,
+        }
+
+        t = BuildinstallThread(pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', compose.variants['x86_64'][0], cmd), 0)
+
+        pool.log_info.assert_has_calls([
+            mock.call('[BEGIN] Running buildinstall for arch x86_64'),
+            mock.call('[FAIL] Buildinstall for variant Server arch x86_64 failed, but going on anyway.\nRunroot task failed: 1234. See /log/buildinstall-Server.x86_64.log for more details.')
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

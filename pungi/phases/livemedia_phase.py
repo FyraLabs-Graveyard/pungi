@@ -100,12 +100,12 @@ class LiveMediaThread(WorkerThread):
         self.num = num
         try:
             self.worker(compose, variant, config)
-        except:
+        except Exception as exc:
             if not compose.can_fail(variant, '*', 'live-media'):
                 raise
             else:
-                msg = ('[FAIL] live-media for variant %s failed, but going on anyway.'
-                       % variant.uid)
+                msg = ('[FAIL] live-media for variant %s failed, but going on anyway.\n%s'
+                       % (variant.uid, exc))
                 self.pool.log_info(msg)
 
     def _get_log_file(self, compose, variant, config):
