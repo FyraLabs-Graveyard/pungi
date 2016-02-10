@@ -108,9 +108,10 @@ class KojiWrapper(object):
         min_options = ("name", "version", "target", "install_tree", "arches", "format", "kickstart", "ksurl", "distro")
         assert set(min_options).issubset(set(config_options.keys())), "image-build requires at least %s got '%s'" % (", ".join(min_options), config_options)
         cfg_parser = ConfigParser()
-        cfg_parser.add_section(sub_command)
-        for option, value in config_options.iteritems():
-            cfg_parser.set(sub_command, option, value)
+        for section, opts in config_options.iteritems():
+            cfg_parser.add_section(section)
+            for option, value in opts.iteritems():
+                cfg_parser.set(section, option, value)
 
         fd = open(conf_file_dest, "w")
         cfg_parser.write(fd)

@@ -723,40 +723,67 @@ Example
     image_build = {
         '^Server$': [
             {
-                'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
-                'name': 'fedora-qcow-and-docker-base',
-                'target': 'koji-target-name',
-                'ksversion': 'F23',     # value from pykickstart
-                'version': '23',
-                # correct SHA1 hash will be put into the URL below automatically
-                'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
-                'kickstart': "fedora-docker-base.ks",
-                'repo': ["http://someextrarepos.org/repo", "ftp://rekcod.oi/repo].
-                'distro': 'Fedora-20',
-                'disk_size': 3,
+                'image-build': {
+                    'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
+                    'name': 'fedora-qcow-and-docker-base',
+                    'target': 'koji-target-name',
+                    'ksversion': 'F23',     # value from pykickstart
+                    'version': '23',
+                    # correct SHA1 hash will be put into the URL below automatically
+                    'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
+                    'kickstart': "fedora-docker-base.ks",
+                    'repo': ["http://someextrarepos.org/repo", "ftp://rekcod.oi/repo].
+                    'distro': 'Fedora-20',
+                    'disk_size': 3,
 
-                # this is set automatically by pungi to os_dir for given variant
-                # 'install_tree': 'http://somepath',
+                    # this is set automatically by pungi to os_dir for given variant
+                    # 'install_tree': 'http://somepath',
+                },
+                'factory-parameters': {
+                    'docker_cmd':  "[ '/bin/bash' ]",
+                    'docker_env': "[ 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' ]",
+                    'docker_labels': "{ 'Name': 'fedora-docker-base', 'License': u'GPLv2', 'RUN': 'docker run -it --rm ${OPT1} --privileged -v \`pwd\`:/atomicapp -v /run:/run -v /:/host --net=host --name ${NAME} -e NAME=${NAME} -e IMAGE=${IMAGE} ${IMAGE} -v ${OPT2} run ${OPT3} /atomicapp', 'Vendor': 'Fedora Project', 'Version': '23', 'Architecture': 'x86_64' }",
+                }
             },
             {
-                'format': [('qcow2','qcow2')]
-                'name': 'fedora-qcow-base',
-                'target': 'koji-target-name',
-                'ksversion': 'F23',     # value from pykickstart
-                'version': '23',
-                'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
-                'kickstart': "fedora-docker-base.ks",
-                'distro': 'Fedora-23',
+                'image-build': {
+                    'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
+                    'name': 'fedora-qcow-and-docker-base',
+                    'target': 'koji-target-name',
+                    'ksversion': 'F23',     # value from pykickstart
+                    'version': '23',
+                    # correct SHA1 hash will be put into the URL below automatically
+                    'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
+                    'kickstart': "fedora-docker-base.ks",
+                    'repo': ["http://someextrarepos.org/repo", "ftp://rekcod.oi/repo].
+                    'distro': 'Fedora-20',
+                    'disk_size': 3,
 
-                # only build this type of image on x86_64
-                'arches': ['x86_64']
+                    # this is set automatically by pungi to os_dir for given variant
+                    # 'install_tree': 'http://somepath',
+                }
+            },
+            {
+                'image-build': {
+                    'format': [('qcow2','qcow2')]
+                    'name': 'fedora-qcow-base',
+                    'target': 'koji-target-name',
+                    'ksversion': 'F23',     # value from pykickstart
+                    'version': '23',
+                    'ksurl': 'https://git.fedorahosted.org/git/spin-kickstarts.git?somedirectoryifany#HEAD',
+                    'kickstart': "fedora-docker-base.ks",
+                    'distro': 'Fedora-23',
 
-                # Use install tree and repo from Everything variant.
-                'install_tree_from': 'Everything',
-                'repo_from': ['Everything'],
+                    # only build this type of image on x86_64
+                    'arches': ['x86_64']
 
-                # Set release based on date and respin.
-                'release': None,
+                    # Use install tree and repo from Everything variant.
+                    'install_tree_from': 'Everything',
+                    'repo_from': ['Everything'],
+
+                    # Set release based on date and respin.
+                    'release': None,
+                }
             }
         ]
     }

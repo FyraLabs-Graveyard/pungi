@@ -73,8 +73,8 @@ class ImageBuildPhase(PhaseBase):
         return ",".join(repo)
 
     def _get_arches(self, image_conf, arches):
-        if 'arches' in image_conf:
-            arches = set(image_conf.get('arches', [])) & arches
+        if 'arches' in image_conf['image-build']:
+            arches = set(image_conf['image-build'].get('arches', [])) & arches
         return ','.join(sorted(arches))
 
     def _set_release(self, image_conf):
@@ -94,34 +94,33 @@ class ImageBuildPhase(PhaseBase):
 
                 # image_conf is passed to get_image_build_cmd as dict
 
-                image_conf['arches'] = self._get_arches(image_conf, arches)
-                if not image_conf['arches']:
+                image_conf["image-build"]['arches'] = self._get_arches(image_conf, arches)
+                if not image_conf["image-build"]['arches']:
                     continue
 
                 # Replace possible ambiguous ref name with explicit hash.
                 if 'ksurl' in image_conf:
-                    image_conf['ksurl'] = resolve_git_url(image_conf['ksurl'])
+                    image_conf["image-build"]['ksurl'] = resolve_git_url(image_conf["image-build"]['ksurl'])
 
-                image_conf["variant"] = variant
+                image_conf["image-build"]["variant"] = variant
 
-                image_conf["install_tree"] = self._get_install_tree(image_conf, variant)
+                image_conf["image-build"]["install_tree"] = self._get_install_tree(image_conf, variant)
 
                 self._set_release(image_conf)
 
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'
-                format = image_conf["format"]
-                image_conf["format"] = ",".join([x[0] for x in image_conf["format"]])
-
-                image_conf['repo'] = self._get_repo(image_conf, variant)
+                format = image_conf["image-build"]["format"]
+                image_conf["image-build"]["format"] = ",".join([x[0] for x in image_conf["image-build"]["format"]])
+                image_conf["image-build"]['repo'] = self._get_repo(image_conf, variant)
 
                 cmd = {
                     "format": format,
                     "image_conf": image_conf,
                     "conf_file": self.compose.paths.work.image_build_conf(
-                        image_conf['variant'],
-                        image_name=image_conf['name'],
-                        image_type=image_conf['format'].replace(",", "-")
+                        image_conf["image-build"]['variant'],
+                        image_name=image_conf["image-build"]['name'],
+                        image_type=image_conf["image-build"]['format'].replace(",", "-")
                     ),
                     "image_dir": self.compose.paths.compose.image_dir(variant),
                     "relative_image_dir": self.compose.paths.compose.image_dir(
@@ -145,33 +144,32 @@ class CreateImageBuildThread(WorkerThread):
         try:
             self.worker(num, compose, cmd)
         except Exception as exc:
-            if not compose.can_fail(cmd['image_conf']['variant'], '*', 'image-build'):
+            if not compose.can_fail(cmd["image_conf"]["image-build"]['variant'], '*', 'image-build'):
                 raise
             else:
                 msg = ('[FAIL] image-build for variant %s failed, but going on anyway.\n%s'
-                       % (cmd['image_conf']['variant'], exc))
+                       % (cmd['image_conf']['image-build']['variant'], exc))
                 self.pool.log_info(msg)
 
     def worker(self, num, compose, cmd):
-        arches = cmd['image_conf']['arches'].split(',')
-
+        arches = cmd["image_conf"]["image-build"]['arches'].split(',')
         log_file = compose.paths.log.log_file(
-            cmd["image_conf"]["arches"],
+            cmd["image_conf"]["image-build"]["arches"],
             "imagebuild-%s-%s-%s" % ('-'.join(arches),
-                                     cmd["image_conf"]["variant"],
-                                     cmd['image_conf']['format'].replace(",", "-"))
+                                     cmd["image_conf"]["image-build"]["variant"],
+                                     cmd["image_conf"]["image-build"]['format'].replace(",", "-"))
         )
-        msg = "Creating %s image (arches: %s, variant: %s)" % (cmd["image_conf"]["format"].replace(",", "-"),
+        msg = "Creating %s image (arches: %s, variant: %s)" % (cmd["image_conf"]["image-build"]["format"].replace(",", "-"),
                                                                '-'.join(arches),
-                                                               cmd["image_conf"]["variant"])
+                                                               cmd["image_conf"]["image-build"]["variant"])
         self.pool.log_info("[BEGIN] %s" % msg)
 
         koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
 
         # writes conf file for koji image-build
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
-            cmd["image_conf"]["variant"], '-'.join(arches), cmd["conf_file"]))
-        koji_cmd = koji_wrapper.get_image_build_cmd(cmd['image_conf'],
+            cmd["image_conf"]["image-build"]["variant"], '-'.join(arches), cmd["conf_file"]))
+        koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
                                                     scratch=cmd['scratch'])
 
@@ -229,7 +227,7 @@ class CreateImageBuildThread(WorkerThread):
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1
             img.bootable = False
-            compose.im.add(variant=cmd["image_conf"]["variant"].uid,
+            compose.im.add(variant=cmd["image_conf"]["image-build"]["variant"].uid,
                            arch=image_info['arch'],
                            image=img)
 
