@@ -82,7 +82,7 @@ class KojiWrapper(object):
 
         task_id = None
         retcode, output = run(command, can_fail=True, logfile=log_file)
-        if "--task-id" in command:
+        if retcode == 0 and "--task-id" in command:
             task_id = int(output.splitlines()[0])
             output_ends_with_eol = output.endswith("\n")
             output = "\n".join(output.splitlines()[1:])

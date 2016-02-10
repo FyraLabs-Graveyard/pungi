@@ -345,8 +345,7 @@ class RunrootKojiWrapperTest(unittest.TestCase):
         run.return_value = (0, output)
 
         result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result,
-                             {'retcode': 0, 'output': output, 'task_id': None})
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_with_task_id(self, run):
@@ -355,8 +354,16 @@ class RunrootKojiWrapperTest(unittest.TestCase):
         run.return_value = (0, '1234\n' + output)
 
         result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result,
-                             {'retcode': 0, 'output': output, 'task_id': 1234})
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_with_task_id_and_fail(self, run):
+        cmd = ['koji', 'runroot', '--task-id']
+        output = 'You are not authorized to run this\n'
+        run.return_value = (1, output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': None})
 
 
 if __name__ == "__main__":
