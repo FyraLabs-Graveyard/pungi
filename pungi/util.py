@@ -383,3 +383,11 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
     if volid and escape_spaces:
         volid = volid.replace(" ", r"\x20")
     return volid
+
+
+def get_mtime(path):
+    return int(os.stat(path).st_mtime)
+
+
+def get_file_size(path):
+    return os.path.getsize(path)

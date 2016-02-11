@@ -4,7 +4,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import get_variant_data, resolve_git_url, makedirs
+from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -122,7 +122,7 @@ class LiveMediaThread(WorkerThread):
 
     def _get_log_file(self, compose, variant, config):
         arches = '-'.join(config['arches'])
-        return compose.paths.log.log_file(arches, 'livemedia-%s' % variant)
+        return compose.paths.log.log_file(arches, 'livemedia-%s' % variant.uid)
 
     def _run_command(self, koji_wrapper, cmd, compose, log_file):
         time.sleep(self.num * 3)
@@ -186,8 +186,8 @@ class LiveMediaThread(WorkerThread):
             img.type = 'live'
             img.format = 'iso'
             img.path = os.path.join(relative_image_dir, os.path.basename(image_dest))
-            img.mtime = int(os.stat(image_dest).st_mtime)
-            img.size = os.path.getsize(image_dest)
+            img.mtime = get_mtime(image_dest)
+            img.size = get_file_size(image_dest)
             img.arch = image_info['arch']
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1

@@ -5,7 +5,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import get_variant_data, resolve_git_url, makedirs
+from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -223,8 +223,8 @@ class CreateImageBuildThread(WorkerThread):
             img.type = image_info['type']
             img.format = image_info['suffix']
             img.path = os.path.join(relative_image_dir, os.path.basename(image_dest))
-            img.mtime = int(os.stat(image_dest).st_mtime)
-            img.size = os.path.getsize(image_dest)
+            img.mtime = get_mtime(image_dest)
+            img.size = get_file_size(image_dest)
             img.arch = image_info['arch']
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1

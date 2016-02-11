@@ -10,13 +10,13 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
-from tests.helpers import _DummyCompose
+from tests.helpers import _DummyCompose, PungiTestCase
 
 
-class TestLiveMediaPhase(unittest.TestCase):
+class TestLiveMediaPhase(PungiTestCase):
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_minimal(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -45,18 +45,18 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'ksversion': None,
                                          'name': 'Fedora Server Live',
                                          'release': None,
-                                         'repo': ['/repo/$basearch/Server'],
+                                         'repo': [self.topdir + '/compose/Server/$basearch/os'],
                                          'scratch': False,
                                          'skip_tag': None,
                                          'target': 'f24',
                                          'title': None,
-                                         'install_tree': '/ostree/$basearch/Server',
+                                         'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                      }))])
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_non_existing_install_tree(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -79,7 +79,7 @@ class TestLiveMediaPhase(unittest.TestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_non_existing_repo(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -103,7 +103,7 @@ class TestLiveMediaPhase(unittest.TestCase):
     @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_full(self, ThreadPool, resolve_git_url):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -143,24 +143,25 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'name': 'Fedora Server Live',
                                          'release': '20151203.0',
                                          'repo': ['http://example.com/extra_repo',
-                                                  '/repo/$basearch/Everything',
-                                                  '/repo/$basearch/Server'],
+                                                  self.topdir + '/compose/Everything/$basearch/os',
+                                                  self.topdir + '/compose/Server/$basearch/os'],
                                          'scratch': True,
                                          'skip_tag': True,
                                          'target': 'f24',
                                          'title': 'Custom Title',
-                                         'install_tree': '/ostree/$basearch/Everything',
+                                         'install_tree': self.topdir + '/compose/Everything/$basearch/os',
                                          'version': 'Rawhide',
                                      }))])
 
 
-class TestCreateImageBuildThread(unittest.TestCase):
+class TestCreateImageBuildThread(PungiTestCase):
 
+    @mock.patch('pungi.phases.livemedia_phase.get_mtime')
+    @mock.patch('pungi.phases.livemedia_phase.get_file_size')
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     @mock.patch('pungi.phases.livemedia_phase.Linker')
-    @mock.patch('pungi.phases.livemedia_phase.makedirs')
-    def test_process(self, makedirs, Linker, KojiWrapper):
-        compose = _DummyCompose({
+    def test_process(self, Linker, KojiWrapper, get_file_size, get_mtime):
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji'
         })
         config = {
@@ -204,15 +205,15 @@ class TestCreateImageBuildThread(unittest.TestCase):
         }
 
         t = LiveMediaThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, compose.variants['Server'], config), 1)
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        with mock.patch('time.sleep'):
+            t.process((compose, compose.variants['Server'], config), 1)
 
-        self.assertEqual(run_blocking_cmd.mock_calls,
-                         [mock.call('koji-spin-livemedia', log_file='/a/b/log/log_file')])
+        self.assertEqual(
+            run_blocking_cmd.mock_calls,
+            [mock.call('koji-spin-livemedia',
+                       log_file=self.topdir + '/logs/amd64-x86_64/livemedia-Server.amd64-x86_64.log')])
         self.assertEqual(get_live_media_cmd.mock_calls,
                          [mock.call({'arch': 'amd64,x86_64',
                                      'ksfile': 'file.ks',
@@ -228,21 +229,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
                                      'version': 'Rawhide'})])
         self.assertEqual(get_image_paths.mock_calls,
                          [mock.call(1234)])
-        self.assertItemsEqual(makedirs.mock_calls,
-                              [mock.call('/iso_dir/x86_64/Server'),
-                               mock.call('/iso_dir/amd64/Server')])
+        self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/x86_64/iso'))
+        self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/amd64/iso'))
         link = Linker.return_value.link
         self.assertItemsEqual(link.mock_calls,
                               [mock.call('/koji/task/1235/Live-20160103.amd64.iso',
-                                         '/iso_dir/amd64/Server/Live-20160103.amd64.iso',
+                                         self.topdir + '/compose/Server/amd64/iso/Live-20160103.amd64.iso',
                                          link_type='hardlink-or-copy'),
                                mock.call('/koji/task/1235/Live-20160103.x86_64.iso',
-                                         '/iso_dir/x86_64/Server/Live-20160103.x86_64.iso',
+                                         self.topdir + '/compose/Server/x86_64/iso/Live-20160103.x86_64.iso',
                                          link_type='hardlink-or-copy')])
 
         image_relative_paths = [
-            'iso_dir/amd64/Server/Live-20160103.amd64.iso',
-            'iso_dir/x86_64/Server/Live-20160103.x86_64.iso'
+            'Server/amd64/iso/Live-20160103.amd64.iso',
+            'Server/x86_64/iso/Live-20160103.x86_64.iso'
         ]
 
         self.assertEqual(len(compose.im.add.call_args_list), 2)
@@ -258,7 +258,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_koji_fail(self, KojiWrapper):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.+$', {'*': ['live-media']})
@@ -297,7 +297,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_exception(self, KojiWrapper):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.+$', {'*': ['live-media']})

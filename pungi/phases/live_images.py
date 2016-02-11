@@ -28,7 +28,7 @@ from productmd.images import Image
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
 from pungi.phases.base import PhaseBase
-from pungi.util import get_arch_variant_data, resolve_git_url, makedirs
+from pungi.util import get_arch_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
 from pungi.paths import translate_path
 
 
@@ -281,8 +281,8 @@ class CreateLiveImageThread(WorkerThread):
         img.type = type
         img.format = format
         img.path = os.path.relpath(path, compose.paths.compose.topdir())
-        img.mtime = int(os.stat(path).st_mtime)
-        img.size = os.path.getsize(path)
+        img.mtime = get_mtime(path)
+        img.size = get_file_size(path)
         img.arch = arch
         img.disc_number = 1     # We don't expect multiple disks
         img.disc_count = 1

@@ -11,14 +11,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
-from tests.helpers import _DummyCompose
+from tests.helpers import _DummyCompose, PungiTestCase
 
 
-class TestImageBuildPhase(unittest.TestCase):
+class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Client|Server$': [
                     {
@@ -49,10 +49,10 @@ class TestImageBuildPhase(unittest.TestCase):
             "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
-                    'install_tree': '/ostree/$arch/Client',
+                    'install_tree': self.topdir + '/compose/Client/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
-                    'repo': '/ostree/$arch/Client',
+                    'repo': self.topdir + '/compose/Client/$arch/os',
                     'variant': compose.variants['Client'],
                     'target': 'f24',
                     'disk_size': 3,
@@ -63,9 +63,9 @@ class TestImageBuildPhase(unittest.TestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": 'Client-Fedora-Docker-Base-docker',
-            "image_dir": '/image_dir/Client/%(arch)s',
-            "relative_image_dir": 'image_dir/Client/%(arch)s',
+            "conf_file": self.topdir + '/work/image-build/Client/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Client/%(arch)s/images',
+            "relative_image_dir": 'Client/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
@@ -73,10 +73,10 @@ class TestImageBuildPhase(unittest.TestCase):
             "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
-                    'install_tree': '/ostree/$arch/Server',
+                    'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
-                    'repo': '/ostree/$arch/Server',
+                    'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
                     'disk_size': 3,
@@ -87,19 +87,20 @@ class TestImageBuildPhase(unittest.TestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": 'Server-Fedora-Docker-Base-docker',
-            "image_dir": '/image_dir/Server/%(arch)s',
-            "relative_image_dir": 'image_dir/Server/%(arch)s',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
+        self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, client_args)),
                                mock.call((compose, server_args))])
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_filter_all_variants(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Client|Server$': [
                     {
@@ -130,7 +131,7 @@ class TestImageBuildPhase(unittest.TestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_set_install_tree(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -167,10 +168,10 @@ class TestImageBuildPhase(unittest.TestCase):
             "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
-                    'install_tree': '/ostree/$arch/Everything',
+                    'install_tree': self.topdir + '/compose/Everything/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
-                    'repo': '/ostree/$arch/Server',
+                    'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
                     'disk_size': 3,
@@ -181,16 +182,16 @@ class TestImageBuildPhase(unittest.TestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": 'Server-Fedora-Docker-Base-docker',
-            "image_dir": '/image_dir/Server/%(arch)s',
-            "relative_image_dir": 'image_dir/Server/%(arch)s',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_set_extra_repos(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -227,10 +228,11 @@ class TestImageBuildPhase(unittest.TestCase):
             "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
-                    'install_tree': '/ostree/$arch/Server',
+                    'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
-                    'repo': '/ostree/$arch/Everything,/ostree/$arch/Server',
+                    'repo': ','.join([self.topdir + '/compose/Everything/$arch/os',
+                                      self.topdir + '/compose/Server/$arch/os']),
                     'variant': compose.variants['Server'],
                     'target': 'f24',
                     'disk_size': 3,
@@ -241,16 +243,16 @@ class TestImageBuildPhase(unittest.TestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": 'Server-Fedora-Docker-Base-docker',
-            "image_dir": '/image_dir/Server/%(arch)s',
-            "relative_image_dir": 'image_dir/Server/%(arch)s',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_create_release(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -286,7 +288,7 @@ class TestImageBuildPhase(unittest.TestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_scratch_build(self, ThreadPool):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -320,13 +322,14 @@ class TestImageBuildPhase(unittest.TestCase):
         self.assertTrue(args[0][1].get('scratch'))
 
 
-class TestCreateImageBuildThread(unittest.TestCase):
+class TestCreateImageBuildThread(PungiTestCase):
 
+    @mock.patch('pungi.phases.image_build.get_mtime')
+    @mock.patch('pungi.phases.image_build.get_file_size')
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
-    @mock.patch('pungi.phases.image_build.makedirs')
-    def test_process(self, makedirs, Linker, KojiWrapper):
-        compose = _DummyCompose({
+    def test_process(self, Linker, KojiWrapper, get_file_size, get_mtime):
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji'
         })
         pool = mock.Mock()
@@ -349,7 +352,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
                 }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
-            "image_dir": '/image_dir/Client/%(arch)s',
+            "image_dir": self.topdir + '/compose/Client/%(arch)s/images',
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
@@ -374,28 +377,26 @@ class TestCreateImageBuildThread(unittest.TestCase):
         }
 
         linker = Linker.return_value
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
 
         t = CreateImageBuildThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, cmd), 1)
+        with mock.patch('time.sleep'):
+            t.process((compose, cmd), 1)
 
         self.assertItemsEqual(
             linker.mock_calls,
             [mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',
-                       '/image_dir/Client/amd64/Fedora-Docker-Base-20160103.amd64.qcow2',
+                       self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2',
                        link_type='hardlink-or-copy'),
              mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.xz',
-                       '/image_dir/Client/amd64/Fedora-Docker-Base-20160103.amd64.tar.xz',
+                       self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.xz',
                        link_type='hardlink-or-copy'),
              mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2',
-                       '/image_dir/Client/x86_64/Fedora-Docker-Base-20160103.x86_64.qcow2',
+                       self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2',
                        link_type='hardlink-or-copy'),
              mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.xz',
-                       '/image_dir/Client/x86_64/Fedora-Docker-Base-20160103.x86_64.tar.xz',
+                       self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.xz',
                        link_type='hardlink-or-copy')])
 
         image_relative_paths = {
@@ -434,16 +435,13 @@ class TestCreateImageBuildThread(unittest.TestCase):
             self.assertEqual(data['format'], image.format)
             self.assertEqual(data['type'], image.type)
 
-        self.assertItemsEqual(makedirs.mock_calls,
-                              [mock.call('/image_dir/Client/amd64'),
-                               mock.call('/image_dir/Client/amd64'),
-                               mock.call('/image_dir/Client/x86_64'),
-                               mock.call('/image_dir/Client/x86_64')])
+        self.assertTrue(os.path.isdir(self.topdir + '/compose/Client/amd64/images'))
+        self.assertTrue(os.path.isdir(self.topdir + '/compose/Client/x86_64/images'))
 
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_fail(self, Linker, KojiWrapper):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.*$', {
@@ -494,7 +492,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_exception(self, Linker, KojiWrapper):
-        compose = _DummyCompose({
+        compose = _DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.*$', {
