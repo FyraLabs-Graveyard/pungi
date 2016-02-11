@@ -147,6 +147,9 @@ class KojiWrapper(object):
         if options.get('skip_tag'):
             cmd.append('--skip-tag')
 
+        if 'ksurl' in options:
+            cmd.append('--ksurl=%s' % pipes.quote(options['ksurl']))
+
         if wait:
             cmd.append('--wait')
 

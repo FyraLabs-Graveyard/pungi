@@ -275,13 +275,15 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
             'name': 'name', 'version': '1', 'target': 'tgt', 'arch': 'x,y,z',
             'ksfile': 'kickstart', 'install_tree': '/mnt/os', 'scratch': True,
             'repo': ['repo-1', 'repo-2'], 'skip_tag': True,
+            'ksurl': 'git://example.com/ksurl.git',
         }
         cmd = self.koji.get_live_media_cmd(opts)
         self.assertEqual(cmd[:8],
                          ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os'])
         self.assertItemsEqual(cmd[8:],
-                              ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait'])
+                              ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait',
+                               '--ksurl=git://example.com/ksurl.git'])
 
 
 class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
