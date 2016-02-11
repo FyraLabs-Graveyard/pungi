@@ -11,50 +11,26 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread
-from pungi.util import get_arch_variant_data
+from tests.helpers import _DummyCompose, PungiTestCase
 
 
-class _DummyCompose(object):
-    def __init__(self, config):
-        self.conf = config
-        self.topdir = '/topdir'
-        self.paths = mock.Mock(
-            compose=mock.Mock(
-                topdir=mock.Mock(return_value='/a/b'),
-                os_tree=mock.Mock(side_effect=lambda arch, variant: os.path.join('/ostree', arch, variant.uid))
-            ),
-            work=mock.Mock(
-                arch_repo=mock.Mock(return_value='file:///a/b/'),
-                buildinstall_dir=mock.Mock(side_effect=lambda x: '/buildinstall_dir/' + x),
-            ),
-            log=mock.Mock(
-                log_file=mock.Mock(side_effect=lambda arch, filename: '/log/%s.%s.log' % (filename, arch)),
-            )
-        )
-        self._logger = mock.Mock()
-        self.log_debug = mock.Mock()
-        self.supported = True
+class BuildInstallCompose(_DummyCompose):
+    def __init__(self, *args, **kwargs):
+        super(BuildInstallCompose, self).__init__(*args, **kwargs)
         self.variants = {
-            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'], is_empty=False)],
-            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[], is_empty=False),
-                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'], is_empty=False)],
+            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'],
+                                type='variant', buildinstallpackages=['bash', 'vim'],
+                                is_empty=False),
+            'Client': mock.Mock(uid='Client', arches=['amd64'],
+                                type='variant', buildinstallpackages=[],
+                                is_empty=False),
         }
 
-    def get_arches(self):
-        return ['x86_64', 'amd64']
 
-    def get_variants(self, arch, types):
-        return self.variants.get(arch, [])
-
-    def can_fail(self, variant, arch, deliverable):
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        return deliverable in failable
-
-
-class TestBuildinstallPhase(unittest.TestCase):
+class TestBuildinstallPhase(PungiTestCase):
 
     def test_config_skip_unless_bootable(self):
-        compose = _DummyCompose({})
+        compose = BuildInstallCompose(self.topdir, {})
         compose.just_phases = None
         compose.skip_phases = []
 
@@ -63,7 +39,7 @@ class TestBuildinstallPhase(unittest.TestCase):
         self.assertTrue(phase.skip())
 
     def test_does_not_skip_on_bootable(self):
-        compose = _DummyCompose({'bootable': True})
+        compose = BuildInstallCompose(self.topdir, {'bootable': True})
         compose.just_phases = None
         compose.skip_phases = []
 
@@ -75,7 +51,7 @@ class TestBuildinstallPhase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_starts_threads_for_each_cmd_with_lorax(self, get_volid, loraxCls, poolCls):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'release_name': 'Test',
             'release_short': 't',
@@ -96,27 +72,29 @@ class TestBuildinstallPhase(unittest.TestCase):
         self.assertEqual(3, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
-        lorax = loraxCls.return_value
-        lorax.get_lorax_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+        self.assertItemsEqual(
+            loraxCls.return_value.get_lorax_cmd.mock_calls,
+            [mock.call('Test', '1', '1', self.topdir + '/work/x86_64/repo',
+                       self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
-                       bugurl=None)],
-            any_order=True)
+                       bugurl=None)])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_lorax_skips_empty_variants(self, get_volid, loraxCls, poolCls):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'release_name': 'Test',
             'release_short': 't',
@@ -124,10 +102,9 @@ class TestBuildinstallPhase(unittest.TestCase):
             'release_is_layered': False,
             'buildinstall_method': 'lorax'
         })
-        compose.variants['amd64'][0].is_empty = True
-        compose.variants['amd64'][1].is_empty = True
 
         get_volid.return_value = 'vol_id'
+        compose.variants['Server'].is_empty = True
 
         phase = BuildinstallPhase(compose)
 
@@ -139,9 +116,10 @@ class TestBuildinstallPhase(unittest.TestCase):
         # Obtained correct lorax command.
         lorax = loraxCls.return_value
         lorax.get_lorax_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
-                       buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
-                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
+            [mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Client',
+                       buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Client', buildinstallpackages=[],
                        bugurl=None)],
             any_order=True)
 
@@ -149,7 +127,7 @@ class TestBuildinstallPhase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_starts_threads_for_each_cmd_with_buildinstall(self, get_volid, loraxCls, poolCls):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'release_name': 'Test',
             'release_short': 't',
@@ -169,16 +147,17 @@ class TestBuildinstallPhase(unittest.TestCase):
         self.assertEqual(2, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
-        lorax = loraxCls.return_value
-        lorax.get_buildinstall_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64',
+        self.assertItemsEqual(
+            loraxCls.return_value.get_buildinstall_cmd.mock_calls,
+            [mock.call('Test', '1', '1', self.topdir + '/work/x86_64/repo',
+                       self.topdir + '/work/x86_64/buildinstall',
                        buildarch='x86_64', is_final=True, volid='vol_id'),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64',
-                       buildarch='amd64', is_final=True, volid='vol_id')],
-            any_order=True)
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall',
+                       buildarch='amd64', is_final=True, volid='vol_id')])
 
     def test_global_upgrade_with_lorax(self):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'buildinstall_method': 'lorax',
             'buildinstall_upgrade_image': True,
@@ -193,7 +172,7 @@ class TestBuildinstallPhase(unittest.TestCase):
                       ctx.exception.message)
 
     def test_lorax_options_with_buildinstall(self):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'buildinstall_method': 'buildinstall',
             'lorax_options': [],
@@ -211,7 +190,7 @@ class TestBuildinstallPhase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_uses_lorax_options(self, get_volid, loraxCls, poolCls):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'release_name': 'Test',
             'release_short': 't',
@@ -241,27 +220,29 @@ class TestBuildinstallPhase(unittest.TestCase):
         self.assertEqual(3, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
-        lorax = loraxCls.return_value
-        lorax.get_lorax_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+        self.assertItemsEqual(
+            loraxCls.return_value.get_lorax_cmd.mock_calls,
+            [mock.call('Test', '1', '1', self.topdir + '/work/x86_64/repo',
+                       self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl='http://example.com'),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=False, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
-                       bugurl=None)],
-            any_order=True)
+                       bugurl=None)])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_multiple_lorax_options(self, get_volid, loraxCls, poolCls):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'bootable': True,
             'release_name': 'Test',
             'release_short': 't',
@@ -288,24 +269,26 @@ class TestBuildinstallPhase(unittest.TestCase):
         self.assertEqual(3, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
-        lorax = loraxCls.return_value
-        lorax.get_lorax_cmd.assert_has_calls(
-            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+        self.assertItemsEqual(
+            loraxCls.return_value.get_lorax_cmd.mock_calls,
+            [mock.call('Test', '1', '1', self.topdir + '/work/x86_64/repo',
+                       self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=False, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Server',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None),
-             mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
+             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+                       self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
-                       bugurl=None)],
-            any_order=True)
+                       bugurl=None)])
 
 
-class TestCopyFiles(unittest.TestCase):
+class TestCopyFiles(PungiTestCase):
 
     @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
@@ -315,7 +298,7 @@ class TestCopyFiles(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
     def test_copy_files_buildinstall(self, get_kickstart_file, isdir, listdir,
                                      get_volid, tweak_buildinstall, symlink_boot_iso):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall'
         })
 
@@ -327,27 +310,27 @@ class TestCopyFiles(unittest.TestCase):
         phase = BuildinstallPhase(compose)
         phase.copy_files()
 
-        get_volid.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False, disc_type='boot')],
-            any_order=True
-        )
-        tweak_buildinstall.assert_has_calls(
-            [mock.call('/buildinstall_dir/x86_64', '/ostree/x86_64/Server', 'x86_64', 'Server', '',
-                       'Server.x86_64', 'kickstart'),
-             mock.call('/buildinstall_dir/amd64', '/ostree/amd64/Server', 'amd64', 'Server', '',
-                       'Server.amd64', 'kickstart'),
-             mock.call('/buildinstall_dir/amd64', '/ostree/amd64/Client', 'amd64', 'Client', '',
-                       'Client.amd64', 'kickstart')],
-            any_order=True
-        )
-        symlink_boot_iso.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0]),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0]),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1])],
-            any_order=True
-        )
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='boot')])
+        self.assertItemsEqual(
+            tweak_buildinstall.mock_calls,
+            [mock.call(self.topdir + '/work/x86_64/buildinstall',
+                       self.topdir + '/compose/Server/x86_64/os',
+                       'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall',
+                       self.topdir + '/compose/Server/amd64/os',
+                       'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall',
+                       self.topdir + '/compose/Client/amd64/os',
+                       'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
+        self.assertItemsEqual(
+            symlink_boot_iso.mock_calls,
+            [mock.call(compose, 'x86_64', compose.variants['Server']),
+             mock.call(compose, 'amd64', compose.variants['Client']),
+             mock.call(compose, 'amd64', compose.variants['Server'])])
 
     @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
@@ -357,7 +340,7 @@ class TestCopyFiles(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
     def test_copy_files_lorax(self, get_kickstart_file, isdir, listdir,
                               get_volid, tweak_buildinstall, symlink_boot_iso):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax'
         })
 
@@ -369,30 +352,30 @@ class TestCopyFiles(unittest.TestCase):
         phase = BuildinstallPhase(compose)
         phase.copy_files()
 
-        get_volid.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1], escape_spaces=False, disc_type='boot')],
-            any_order=True
-        )
-        tweak_buildinstall.assert_has_calls(
-            [mock.call('/buildinstall_dir/x86_64/Server', '/ostree/x86_64/Server', 'x86_64', 'Server', '',
-                       'Server.x86_64', 'kickstart'),
-             mock.call('/buildinstall_dir/amd64/Server', '/ostree/amd64/Server', 'amd64', 'Server', '',
-                       'Server.amd64', 'kickstart'),
-             mock.call('/buildinstall_dir/amd64/Client', '/ostree/amd64/Client', 'amd64', 'Client', '',
-                       'Client.amd64', 'kickstart')],
-            any_order=True
-        )
-        symlink_boot_iso.assert_has_calls(
-            [mock.call(compose, 'x86_64', compose.variants['x86_64'][0]),
-             mock.call(compose, 'amd64', compose.variants['amd64'][0]),
-             mock.call(compose, 'amd64', compose.variants['amd64'][1])],
-            any_order=True
-        )
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='boot'),
+             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='boot')])
+        self.assertItemsEqual(
+            tweak_buildinstall.mock_calls,
+            [mock.call(self.topdir + '/work/x86_64/buildinstall/Server',
+                       self.topdir + '/compose/Server/x86_64/os',
+                       'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall/Server',
+                       self.topdir + '/compose/Server/amd64/os',
+                       'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall/Client',
+                       self.topdir + '/compose/Client/amd64/os',
+                       'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
+        self.assertItemsEqual(
+            symlink_boot_iso.mock_calls,
+            [mock.call(compose, 'x86_64', compose.variants['Server']),
+             mock.call(compose, 'amd64', compose.variants['Client']),
+             mock.call(compose, 'amd64', compose.variants['Server'])])
 
 
-class BuildinstallThreadTestCase(unittest.TestCase):
+class BuildinstallThreadTestCase(PungiTestCase):
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -400,7 +383,7 @@ class BuildinstallThreadTestCase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_thread_with_lorax_in_runroot(self, run, mock_open,
                                                        get_buildroot_rpms, KojiWrapperMock):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
             'runroot': True,
             'runroot_tag': 'rrt',
@@ -423,17 +406,17 @@ class BuildinstallThreadTestCase(unittest.TestCase):
         t = BuildinstallThread(pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', compose.variants['x86_64'][0], cmd), 0)
+            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
 
-        get_runroot_cmd.assert_has_calls([
-            mock.call('rrt', 'x86_64', cmd, channel=None,
-                      use_shell=True, task_id=True,
-                      packages=['strace', 'lorax'], mounts=['/topdir'])
-        ])
+        self.assertItemsEqual(
+            get_runroot_cmd.mock_calls,
+            [mock.call('rrt', 'x86_64', cmd, channel=None,
+                       use_shell=True, task_id=True,
+                       packages=['strace', 'lorax'], mounts=[self.topdir])])
         run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall-Server.x86_64.log')
-        mock_open.return_value.write.assert_has_calls([
-            mock.call('bash\nzsh')
-        ])
+        self.assertItemsEqual(
+            mock_open.return_value.write.mock_calls,
+            [mock.call('bash\nzsh')])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -441,7 +424,7 @@ class BuildinstallThreadTestCase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_thread_with_buildinstall_in_runroot(self, run, mock_open,
                                                               get_buildroot_rpms, KojiWrapperMock):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
             'runroot': True,
             'runroot_tag': 'rrt',
@@ -466,15 +449,16 @@ class BuildinstallThreadTestCase(unittest.TestCase):
         with mock.patch('time.sleep'):
             t.process((compose, 'x86_64', None, cmd), 0)
 
-        get_runroot_cmd.assert_has_calls([
-            mock.call('rrt', 'x86_64', cmd, channel=None,
-                      use_shell=True, task_id=True,
-                      packages=['strace', 'anaconda'], mounts=['/topdir'])
-        ])
-        run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall.x86_64.log')
-        mock_open.return_value.write.assert_has_calls([
-            mock.call('bash\nzsh')
-        ])
+        self.assertItemsEqual(
+            get_runroot_cmd.mock_calls,
+            [mock.call('rrt', 'x86_64', cmd, channel=None,
+                       use_shell=True, task_id=True,
+                       packages=['strace', 'anaconda'], mounts=[self.topdir])])
+        run_runroot_cmd(get_runroot_cmd.return_value,
+                        log_file=self.topdir + '/logs/buildinstall.x86_64.log')
+        self.assertItemsEqual(
+            mock_open.return_value.write.mock_calls,
+            [mock.call('bash\nzsh')])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -482,7 +466,7 @@ class BuildinstallThreadTestCase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_fail_exit_code(self, run, mock_open,
                                          get_buildroot_rpms, KojiWrapperMock):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
             'runroot': True,
             'runroot_tag': 'rrt',
@@ -510,7 +494,8 @@ class BuildinstallThreadTestCase(unittest.TestCase):
 
         pool.log_info.assert_has_calls([
             mock.call('[BEGIN] Running buildinstall for arch x86_64'),
-            mock.call('[FAIL] Buildinstall for variant None arch x86_64 failed, but going on anyway.\nRunroot task failed: 1234. See /log/buildinstall.x86_64.log for more details.')
+            mock.call('[FAIL] Buildinstall for variant None arch x86_64 failed, but going on anyway.\n'
+                      'Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details.' % self.topdir)
         ])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
@@ -519,7 +504,7 @@ class BuildinstallThreadTestCase(unittest.TestCase):
     @mock.patch('pungi.phases.buildinstall.run')
     def test_lorax_fail_exit_code(self, run, mock_open,
                                   get_buildroot_rpms, KojiWrapperMock):
-        compose = _DummyCompose({
+        compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
             'runroot': True,
             'runroot_tag': 'rrt',
@@ -543,11 +528,12 @@ class BuildinstallThreadTestCase(unittest.TestCase):
         t = BuildinstallThread(pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', compose.variants['x86_64'][0], cmd), 0)
+            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
 
         pool.log_info.assert_has_calls([
             mock.call('[BEGIN] Running buildinstall for arch x86_64'),
-            mock.call('[FAIL] Buildinstall for variant Server arch x86_64 failed, but going on anyway.\nRunroot task failed: 1234. See /log/buildinstall-Server.x86_64.log for more details.')
+            mock.call('[FAIL] Buildinstall for variant Server arch x86_64 failed, but going on anyway.\n'
+                      'Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])
 
 

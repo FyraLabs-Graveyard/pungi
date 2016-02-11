@@ -19,6 +19,7 @@ class PungiTestCase(unittest.TestCase):
 
 class _DummyCompose(object):
     def __init__(self, topdir, config):
+        self.supported = True
         self.compose_date = '20151203'
         self.compose_type_suffix = '.t'
         self.compose_respin = 0
@@ -43,6 +44,7 @@ class _DummyCompose(object):
                                     type='variant', is_empty=False),
         }
         self.log_error = mock.Mock()
+        self.log_debug = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
         self.image = mock.Mock(path='Client/i386/iso/image.iso')
         self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
@@ -53,3 +55,9 @@ class _DummyCompose(object):
     def can_fail(self, variant, arch, deliverable):
         failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
         return deliverable in failable
+
+    def get_arches(self):
+        result = set()
+        for variant in self.variants.itervalues():
+            result |= set(variant.arches)
+        return result
