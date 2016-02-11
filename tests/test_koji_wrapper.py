@@ -35,7 +35,9 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
         with self.assertRaises(AssertionError):
             self.koji.get_image_build_cmd(
                 {
-                    'name': 'test-name',
+                    'image-build': {
+                        'name': 'test-name',
+                    }
                 },
                 '/tmp/file'
             )
@@ -44,15 +46,17 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_image_build_cmd_correct(self, mock_open):
         cmd = self.koji.get_image_build_cmd(
             {
-                'name': 'test-name',
-                'version': '1',
-                'target': 'test-target',
-                'install_tree': '/tmp/test/install_tree',
-                'arches': 'x86_64',
-                'format': 'docker,qcow2',
-                'kickstart': 'test-kickstart',
-                'ksurl': 'git://example.com/ks.git',
-                'distro': 'test-distro',
+                'image-build': {
+                    'name': 'test-name',
+                    'version': '1',
+                    'target': 'test-target',
+                    'install_tree': '/tmp/test/install_tree',
+                    'arches': 'x86_64',
+                    'format': 'docker,qcow2',
+                    'kickstart': 'test-kickstart',
+                    'ksurl': 'git://example.com/ks.git',
+                    'distro': 'test-distro',
+                }
             },
             '/tmp/file'
         )

@@ -77,14 +77,16 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Client|Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3
+                        }
                     }
                 ]
             },
@@ -94,24 +96,27 @@ class TestImageBuildPhase(unittest.TestCase):
         phase = ImageBuildPhase(compose)
 
         phase.run()
+        self.maxDiff = None
 
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         client_args = {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Client',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Client',
-                'variant': compose.variants['Client'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'amd64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Client',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Client',
+                    'variant': compose.variants['Client'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'Client-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Client/%(arch)s',
@@ -122,18 +127,20 @@ class TestImageBuildPhase(unittest.TestCase):
         server_args = {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Server',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Server',
-                'variant': compose.variants['Server'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'amd64,x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Server',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Server',
+                    'variant': compose.variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'Server-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Server/%(arch)s',
@@ -151,15 +158,17 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Client|Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3,
-                        'arches': ['non-existing'],
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['non-existing'],
+                        }
                     }
                 ]
             },
@@ -180,16 +189,18 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3,
-                        'arches': ['x86_64'],
-                        'install_tree_from': 'Everything',
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'install_tree_from': 'Everything',
+                        }
                     }
                 ]
             },
@@ -210,18 +221,20 @@ class TestImageBuildPhase(unittest.TestCase):
         self.assertDictEqual(args[0][1], {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Everything',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Server',
-                'variant': compose.variants['Server'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Everything',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Server',
+                    'variant': compose.variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'Server-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Server/%(arch)s',
@@ -236,16 +249,18 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3,
-                        'arches': ['x86_64'],
-                        'repo_from': 'Everything',
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'repo_from': 'Everything',
+                        }
                     }
                 ]
             },
@@ -266,18 +281,20 @@ class TestImageBuildPhase(unittest.TestCase):
         self.assertDictEqual(args[0][1], {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Server',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Everything,/ostree/$arch/Server',
-                'variant': compose.variants['Server'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Server',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Everything,/ostree/$arch/Server',
+                    'variant': compose.variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'Server-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Server/%(arch)s',
@@ -292,16 +309,18 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3,
-                        'arches': ['x86_64'],
-                        'release': None,
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'release': None,
+                        }
                     }
                 ]
             },
@@ -317,7 +336,7 @@ class TestImageBuildPhase(unittest.TestCase):
 
         self.assertTrue(phase.pool.queue_put.called_once)
         args, kwargs = phase.pool.queue_put.call_args
-        self.assertEqual(args[0][1].get('image_conf', {}).get('release'),
+        self.assertEqual(args[0][1].get('image_conf', {}).get('image-build', {}).get('release'),
                          '20151203.0')
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -326,16 +345,18 @@ class TestImageBuildPhase(unittest.TestCase):
             'image_build': {
                 '^Server$': [
                     {
-                        'format': [('docker', 'tar.xz')],
-                        'name': 'Fedora-Docker-Base',
-                        'target': 'f24',
-                        'version': 'Rawhide',
-                        'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                        'kickstart': "fedora-docker-base.ks",
-                        'distro': 'Fedora-20',
-                        'disk_size': 3,
-                        'arches': ['x86_64'],
-                        'scratch': True,
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'scratch': True,
+                        }
                     }
                 ]
             },
@@ -367,18 +388,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
         cmd = {
             "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Client',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Client',
-                'variant': compose.variants['Client'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'amd64,x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Client',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Client',
+                    'variant': compose.variants['Client'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Client/%(arch)s',
@@ -487,18 +510,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
         cmd = {
             "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Client',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Client',
-                'variant': compose.variants['Client'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'amd64,x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Client',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Client',
+                    'variant': compose.variants['Client'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Client/%(arch)s',
@@ -536,18 +561,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
         cmd = {
             "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
-                'install_tree': '/ostree/$arch/Client',
-                'kickstart': 'fedora-docker-base.ks',
-                'format': 'docker',
-                'repo': '/ostree/$arch/Client',
-                'variant': compose.variants['Client'],
-                'target': 'f24',
-                'disk_size': 3,
-                'name': 'Fedora-Docker-Base',
-                'arches': 'amd64,x86_64',
-                'version': 'Rawhide',
-                'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-                'distro': 'Fedora-20',
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Client',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Client',
+                    'variant': compose.variants['Client'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
             "image_dir": '/image_dir/Client/%(arch)s',

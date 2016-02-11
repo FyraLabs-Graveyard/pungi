@@ -742,7 +742,14 @@ Example
                 'factory-parameters': {
                     'docker_cmd':  "[ '/bin/bash' ]",
                     'docker_env': "[ 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' ]",
-                    'docker_labels': "{ 'Name': 'fedora-docker-base', 'License': u'GPLv2', 'RUN': 'docker run -it --rm ${OPT1} --privileged -v \`pwd\`:/atomicapp -v /run:/run -v /:/host --net=host --name ${NAME} -e NAME=${NAME} -e IMAGE=${IMAGE} ${IMAGE} -v ${OPT2} run ${OPT3} /atomicapp', 'Vendor': 'Fedora Project', 'Version': '23', 'Architecture': 'x86_64' }",
+                    'docker_labels': "{
+                        'Name': 'fedora-docker-base',
+                        'License': u'GPLv2',
+                        'RUN': 'docker run -it --rm ${OPT1} --privileged -v \`pwd\`:/atomicapp -v /run:/run -v /:/host --net=host --name ${NAME} -e NAME=${NAME} -e IMAGE=${IMAGE} ${IMAGE} -v ${OPT2} run ${OPT3} /atomicapp',
+                        'Vendor': 'Fedora Project',
+                        'Version': '23',
+                        'Architecture': 'x86_64'
+                    }",
                 }
             },
             {

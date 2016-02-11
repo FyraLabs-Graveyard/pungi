@@ -104,15 +104,15 @@ class ImageBuildPhase(PhaseBase):
 
                 image_conf["image-build"]["variant"] = variant
 
-                image_conf["image-build"]["install_tree"] = self._get_install_tree(image_conf, variant)
+                image_conf["image-build"]["install_tree"] = self._get_install_tree(image_conf['image-build'], variant)
 
-                self._set_release(image_conf)
+                self._set_release(image_conf['image-build'])
 
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'
                 format = image_conf["image-build"]["format"]
                 image_conf["image-build"]["format"] = ",".join([x[0] for x in image_conf["image-build"]["format"]])
-                image_conf["image-build"]['repo'] = self._get_repo(image_conf, variant)
+                image_conf["image-build"]['repo'] = self._get_repo(image_conf['image-build'], variant)
 
                 cmd = {
                     "format": format,
@@ -127,7 +127,7 @@ class ImageBuildPhase(PhaseBase):
                         variant, relative=True
                     ),
                     "link_type": self.compose.conf.get("link_type", "hardlink-or-copy"),
-                    "scratch": image_conf.pop('scratch', False),
+                    "scratch": image_conf['image-build'].pop('scratch', False),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
                 self.pool.queue_put((self.compose, cmd))
