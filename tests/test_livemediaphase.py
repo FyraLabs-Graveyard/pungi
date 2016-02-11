@@ -35,16 +35,10 @@ class _DummyCompose(object):
                 repository=mock.Mock(
                     side_effect=lambda arch, variant, create_dir=False: os.path.join('/repo', arch, variant.uid)
                 ),
-                image_dir=mock.Mock(
+                iso_dir=mock.Mock(
                     side_effect=lambda variant, relative=False: os.path.join(
-                        '' if relative else '/', 'image_dir', variant.uid, '%(arch)s'
+                        '' if relative else '/', 'iso_dir', variant.uid, '%(arch)s'
                     )
-                )
-            ),
-            work=mock.Mock(
-                image_build_conf=mock.Mock(
-                    side_effect=lambda variant, image_name, image_type:
-                        '-'.join([variant.uid, image_name, image_type])
                 )
             ),
             log=mock.Mock(
@@ -237,20 +231,20 @@ class TestCreateImageBuildThread(unittest.TestCase):
         self.assertEqual(get_image_paths.mock_calls,
                          [mock.call(1234)])
         self.assertItemsEqual(makedirs.mock_calls,
-                              [mock.call('/image_dir/Server/x86_64'),
-                               mock.call('/image_dir/Server/amd64')])
+                              [mock.call('/iso_dir/Server/x86_64'),
+                               mock.call('/iso_dir/Server/amd64')])
         link = Linker.return_value.link
         self.assertItemsEqual(link.mock_calls,
                               [mock.call('/koji/task/1235/Live-20160103.amd64.iso',
-                                         '/image_dir/Server/amd64/Live-20160103.amd64.iso',
+                                         '/iso_dir/Server/amd64/Live-20160103.amd64.iso',
                                          link_type='hardlink-or-copy'),
                                mock.call('/koji/task/1235/Live-20160103.x86_64.iso',
-                                         '/image_dir/Server/x86_64/Live-20160103.x86_64.iso',
+                                         '/iso_dir/Server/x86_64/Live-20160103.x86_64.iso',
                                          link_type='hardlink-or-copy')])
 
         image_relative_paths = [
-            'image_dir/Server/amd64/Live-20160103.amd64.iso',
-            'image_dir/Server/x86_64/Live-20160103.x86_64.iso'
+            'iso_dir/Server/amd64/Live-20160103.amd64.iso',
+            'iso_dir/Server/x86_64/Live-20160103.x86_64.iso'
         ]
 
         self.assertEqual(len(compose.im.add.call_args_list), 2)
