@@ -170,10 +170,10 @@ class LiveMediaThread(WorkerThread):
         linker = Linker(logger=compose._logger)
         link_type = compose.conf.get("link_type", "hardlink-or-copy")
         for image_info in image_infos:
-            image_dir = compose.paths.compose.iso_dir(variant) % {"arch": image_info['arch']}
+            image_dir = compose.paths.compose.iso_dir(image_info['arch'], variant)
             makedirs(image_dir)
             relative_image_dir = (
-                compose.paths.compose.iso_dir(variant, relative=True) % {"arch": image_info['arch']}
+                compose.paths.compose.iso_dir(image_info['arch'], variant, relative=True)
             )
 
             # let's not change filename of koji outputs
