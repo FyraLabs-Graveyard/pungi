@@ -122,6 +122,12 @@ class LiveMediaThread(WorkerThread):
                                % (output['task_id'], log_file))
         return output
 
+    def _get_cmd(self, koji_wrapper, config):
+        """Replace `arches` (as list) with `arch` as a comma-separated string."""
+        copy = dict(config)
+        copy['arch'] = ','.join(copy.pop('arches', []))
+        return koji_wrapper.get_live_media_cmd(copy)
+
     def worker(self, compose, variant, config):
         msg = 'Live media: %s (arches: %s, variant: %s)' % (config['name'],
                                                             ' '.join(config['arches']),
@@ -129,7 +135,7 @@ class LiveMediaThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
 
         koji_wrapper = KojiWrapper(compose.conf['koji_profile'])
-        cmd = koji_wrapper.get_live_media_cmd(config)
+        cmd = self._get_cmd(koji_wrapper, config)
 
         log_file = self._get_log_file(compose, variant, config)
         output = self._run_command(koji_wrapper, cmd, compose, log_file)

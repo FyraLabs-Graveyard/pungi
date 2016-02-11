@@ -222,7 +222,18 @@ class TestCreateImageBuildThread(unittest.TestCase):
         self.assertEqual(run_blocking_cmd.mock_calls,
                          [mock.call('koji-spin-livemedia', log_file='/a/b/log/log_file')])
         self.assertEqual(get_live_media_cmd.mock_calls,
-                         [mock.call(config)])
+                         [mock.call({'arch': 'amd64,x86_64',
+                                     'kickstart': 'file.ks',
+                                     'ksurl': 'git://example.com/repo.git',
+                                     'ksversion': None,
+                                     'name': 'Fedora Server Live',
+                                     'release': None,
+                                     'repo': ['/repo/$arch/Server'],
+                                     'scratch': False,
+                                     'skip_tag': None,
+                                     'target': 'f24',
+                                     'title': None,
+                                     'version': 'Rawhide'})])
         self.assertEqual(get_image_paths.mock_calls,
                          [mock.call(1234)])
         self.assertItemsEqual(makedirs.mock_calls,
