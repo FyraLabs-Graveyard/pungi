@@ -12,8 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi.wrappers.kojiwrapper import KojiWrapper
 
 
-class KojiWrapperTest(unittest.TestCase):
-
+class KojiWrapperBaseTestCase(unittest.TestCase):
     def setUp(self):
         self.koji_profile = mock.Mock()
         with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
@@ -29,6 +28,8 @@ class KojiWrapperTest(unittest.TestCase):
             self.koji_profile = koji.get_profile_module.return_value
             self.koji = KojiWrapper('koji')
 
+
+class KojiWrapperTest(KojiWrapperBaseTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.open')
     def test_get_image_build_cmd_without_required_data(self, mock_open):
         with self.assertRaises(AssertionError):
@@ -254,22 +255,7 @@ class KojiWrapperTest(unittest.TestCase):
                                '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.raw.xz'])
 
 
-class LiveMediaTestCase(unittest.TestCase):
-    def setUp(self):
-        self.koji_profile = mock.Mock()
-        with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
-            koji.get_profile_module = mock.Mock(
-                return_value=mock.Mock(
-                    pathinfo=mock.Mock(
-                        work=mock.Mock(return_value='/koji'),
-                        taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
-                        imagebuild=mock.Mock(side_effect=lambda id: '/koji/imagebuild/' + str(id)),
-                    )
-                )
-            )
-            self.koji_profile = koji.get_profile_module.return_value
-            self.koji = KojiWrapper('koji')
-
+class LiveMediaTestCase(KojiWrapperBaseTestCase):
     def test_get_live_media_cmd_minimal(self):
         opts = {
             'name': 'name', 'version': '1', 'target': 'tgt', 'arch': 'x,y,z',
@@ -294,23 +280,48 @@ class LiveMediaTestCase(unittest.TestCase):
                               ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait'])
 
 
-class RunrootKojiWrapperTest(unittest.TestCase):
+class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
+    def test_get_create_image_cmd_minimal(self):
+        cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
+                                             'x86_64', '/path/to/ks', ['/repo/1'])
+        self.assertEqual(cmd[0:2], ['koji', 'spin-livecd'])
+        self.assertItemsEqual(cmd[2:6], ['--noprogress', '--scratch', '--wait', '--repo=/repo/1'])
+        self.assertEqual(cmd[6:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
-    def setUp(self):
-        self.koji_profile = mock.Mock()
-        with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
-            koji.get_profile_module = mock.Mock(
-                return_value=mock.Mock(
-                    pathinfo=mock.Mock(
-                        work=mock.Mock(return_value='/koji'),
-                        taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
-                        imagebuild=mock.Mock(side_effect=lambda id: '/koji/imagebuild/' + str(id)),
-                    )
-                )
-            )
-            self.koji_profile = koji.get_profile_module.return_value
-            self.koji = KojiWrapper('koji')
+    def test_get_create_image_cmd_full(self):
+        cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
+                                             'x86_64', '/path/to/ks', ['/repo/1', '/repo/2'],
+                                             release='1', wait=False, archive=True, specfile='foo.spec')
+        self.assertEqual(cmd[0:2], ['koji', 'spin-livecd'])
+        self.assertItemsEqual(cmd[2:8],
+                              ['--noprogress', '--nowait', '--repo=/repo/1', '--repo=/repo/2',
+                               '--release=1', '--specfile=foo.spec'])
+        self.assertEqual(cmd[8:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
+    def test_spin_livecd_with_format(self):
+        with self.assertRaises(ValueError):
+            self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
+                                           'x86_64', '/path/to/ks', [],
+                                           image_format='qcow')
+
+    def test_spin_appliance_with_format(self):
+        cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
+                                             'x86_64', '/path/to/ks', [],
+                                             image_type='appliance',
+                                             image_format='qcow')
+        self.assertEqual(cmd[0:2], ['koji', 'spin-appliance'])
+        self.assertItemsEqual(cmd[2:6], ['--noprogress', '--scratch', '--wait', '--format=qcow'])
+        self.assertEqual(cmd[6:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
+
+    def test_spin_appliance_with_wrong_format(self):
+        with self.assertRaises(ValueError):
+            self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
+                                           'x86_64', '/path/to/ks', [],
+                                           image_type='appliance',
+                                           image_format='pretty')
+
+
+class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False, task_id=False)
         self.assertEqual(len(cmd), 6)
