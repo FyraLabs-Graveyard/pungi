@@ -89,7 +89,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                                      compose.variants['Server'],
                                      {
                                          'arches': ['amd64', 'x86_64'],
-                                         'kickstart': 'file.ks',
+                                         'ksfile': 'file.ks',
                                          'ksurl': 'git://example.com/repo.git',
                                          'ksversion': None,
                                          'name': 'Fedora Server Live',
@@ -186,7 +186,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                                      compose.variants['Server'],
                                      {
                                          'arches': ['x86_64'],
-                                         'kickstart': 'file.ks',
+                                         'ksfile': 'file.ks',
                                          'ksurl': 'resolved',
                                          'ksversion': '24',
                                          'name': 'Fedora Server Live',
@@ -214,7 +214,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
         })
         config = {
             'arches': ['amd64', 'x86_64'],
-            'kickstart': 'file.ks',
+            'ksfile': 'file.ks',
             'ksurl': 'git://example.com/repo.git',
             'ksversion': None,
             'name': 'Fedora Server Live',
@@ -264,7 +264,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
                          [mock.call('koji-spin-livemedia', log_file='/a/b/log/log_file')])
         self.assertEqual(get_live_media_cmd.mock_calls,
                          [mock.call({'arch': 'amd64,x86_64',
-                                     'kickstart': 'file.ks',
+                                     'ksfile': 'file.ks',
                                      'ksurl': 'git://example.com/repo.git',
                                      'ksversion': None,
                                      'name': 'Fedora Server Live',
@@ -315,7 +315,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
         })
         config = {
             'arches': ['amd64', 'x86_64'],
-            'kickstart': 'file.ks',
+            'ksfile': 'file.ks',
             'ksurl': 'git://example.com/repo.git',
             'ksversion': None,
             'name': 'Fedora Server Live',
@@ -354,7 +354,7 @@ class TestCreateImageBuildThread(unittest.TestCase):
         })
         config = {
             'arches': ['amd64', 'x86_64'],
-            'kickstart': 'file.ks',
+            'ksfile': 'file.ks',
             'ksurl': 'git://example.com/repo.git',
             'ksversion': None,
             'name': 'Fedora Server Live',

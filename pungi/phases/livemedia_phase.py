@@ -87,7 +87,7 @@ class LiveMediaPhase(PhaseBase):
                 config = {
                     'target': image_conf['target'],
                     'arches': self._get_arches(image_conf, arches),
-                    'kickstart': image_conf['kickstart'],
+                    'ksfile': image_conf['kickstart'],
                     'ksurl': resolve_git_url(image_conf['ksurl']),
                     'ksversion': image_conf.get('ksversion'),
                     'scratch': image_conf.get('scratch', False),
