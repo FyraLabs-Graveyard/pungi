@@ -119,6 +119,8 @@ class LiveImagesPhase(PhaseBase):
                 cmd["name"] = data[0].get("name", None)
                 cmd["version"] = data[0].get("version", None)
 
+                cmd['type'] = data[0].get('type', 'live')
+
                 # Specfile (for images wrapped in rpm)
                 cmd["specfile"] = data[0].get("specfile", None)
 
@@ -195,7 +197,14 @@ class CreateLiveImageThread(WorkerThread):
             # Non scratch build are allowed only for rpm wrapped images
             archive = True
         target = compose.conf.get("live_target", "rhel-7.0-candidate")  # compatability for hardcoded target
-        koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target, cmd["build_arch"], cmd["ks_file"], cmd["repos"], image_type="live", wait=True, archive=archive, specfile=cmd["specfile"])
+        koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target,
+                                                     cmd["build_arch"],
+                                                     cmd["ks_file"],
+                                                     cmd["repos"],
+                                                     image_type=cmd['type'],
+                                                     wait=True,
+                                                     archive=archive,
+                                                     specfile=cmd["specfile"])
 
         # avoid race conditions?
         # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)

@@ -646,6 +646,9 @@ Live Images Settings
       * ``specfile`` (*str*) -- for images wrapped in RPM
       * ``scratch`` (*bool*) -- only RPM-wrapped images can use scratch builds,
         but by default this is turned off
+      * ``type`` (*str*) -- what kind of task to start in Koji. Defaults to
+        ``live`` meaning ``koji spin-livecd`` will be used. Alternative option
+        is ``appliance`` corresponding to ``koji spin-appliance``.
 
 Live Media Settings
 ===================
