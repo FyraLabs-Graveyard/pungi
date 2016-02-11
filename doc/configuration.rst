@@ -674,6 +674,7 @@ Live Media Settings
       * ``repo`` (*[str]*) -- external repo
       * ``repo_from`` (*[str]*) -- list of variants to take extra repos from
       * ``title`` (*str*)
+      * ``install_tree_from`` (*str*) -- variant to take install tree from
 
 
 Image Build Settings

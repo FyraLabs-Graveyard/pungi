@@ -103,6 +103,52 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'version': 'Rawhide',
                                      }))])
 
+    @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
+    def test_live_media_non_existing_install_tree(self, ThreadPool):
+        compose = _DummyCompose({
+            'live_media': {
+                '^Server$': [
+                    {
+                        'target': 'f24',
+                        'kickstart': 'file.ks',
+                        'ksurl': 'git://example.com/repo.git',
+                        'name': 'Fedora Server Live',
+                        'version': 'Rawhide',
+                        'install_tree_from': 'Missing',
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = LiveMediaPhase(compose)
+
+        with self.assertRaisesRegexp(RuntimeError, r'no.+Missing.+when building.+Server'):
+            phase.run()
+
+    @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
+    def test_live_media_non_existing_repo(self, ThreadPool):
+        compose = _DummyCompose({
+            'live_media': {
+                '^Server$': [
+                    {
+                        'target': 'f24',
+                        'kickstart': 'file.ks',
+                        'ksurl': 'git://example.com/repo.git',
+                        'name': 'Fedora Server Live',
+                        'version': 'Rawhide',
+                        'repo_from': 'Missing',
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = LiveMediaPhase(compose)
+
+        with self.assertRaisesRegexp(RuntimeError, r'no.+Missing.+when building.+Server'):
+            phase.run()
+
     @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_full(self, ThreadPool, resolve_git_url):
@@ -123,6 +169,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                         'ksversion': '24',
                         'release': None,
                         'version': 'Rawhide',
+                        'install_tree_from': 'Everything',
                     }
                 ]
             }
@@ -151,7 +198,7 @@ class TestLiveMediaPhase(unittest.TestCase):
                                          'skip_tag': True,
                                          'target': 'f24',
                                          'title': 'Custom Title',
-                                         'install_tree': '/ostree/$arch/Server',
+                                         'install_tree': '/ostree/$arch/Everything',
                                          'version': 'Rawhide',
                                      }))])
 

@@ -65,6 +65,20 @@ class LiveMediaPhase(PhaseBase):
             return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
         return image_conf.get('release', None)
 
+    def _get_install_tree(self, image_conf, variant):
+        if 'install_tree_from' in image_conf:
+            variant_uid = image_conf['install_tree_from']
+            try:
+                variant = self.compose.variants[variant_uid]
+            except KeyError:
+                raise RuntimeError(
+                    'There is no variant %s to get repo from when building live media for %s.'
+                    % (variant_uid, variant.uid))
+        return translate_path(
+            self.compose,
+            self.compose.paths.compose.os_tree('$arch', variant)
+        )
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
@@ -82,10 +96,7 @@ class LiveMediaPhase(PhaseBase):
                     'name': image_conf['name'],
                     'title': image_conf.get('title'),
                     'repo': self._get_repos(image_conf, variant),
-                    'install_tree': translate_path(
-                        self.compose,
-                        self.compose.paths.compose.os_tree('$arch', variant, create_dir=False)
-                    ),
+                    'install_tree': self._get_install_tree(image_conf, variant),
                     'version': image_conf['version'],
                 }
                 self.pool.add(LiveMediaThread(self.pool))
