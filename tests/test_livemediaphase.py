@@ -36,8 +36,8 @@ class _DummyCompose(object):
                     side_effect=lambda arch, variant, create_dir=False: os.path.join('/repo', arch, variant.uid)
                 ),
                 iso_dir=mock.Mock(
-                    side_effect=lambda variant, relative=False: os.path.join(
-                        '' if relative else '/', 'iso_dir', variant.uid, '%(arch)s'
+                    side_effect=lambda arch, variant, relative=False: os.path.join(
+                        '' if relative else '/', 'iso_dir', variant.uid, arch
                     )
                 )
             ),
