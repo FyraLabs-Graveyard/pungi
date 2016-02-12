@@ -416,10 +416,10 @@ class BuildinstallThread(WorkerThread):
             time.sleep(num * 3)
 
             output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-            task_id = int(output["task_id"])
             if output["retcode"] != 0:
                 raise RuntimeError("Runroot task failed: %s. See %s for more details."
                                    % (output["task_id"], log_file))
+            task_id = output["task_id"]
 
         else:
             # run locally
