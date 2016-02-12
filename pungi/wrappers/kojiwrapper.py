@@ -78,16 +78,23 @@ class KojiWrapper(object):
         return cmd
 
     def run_runroot_cmd(self, command, log_file=None):
-        # runroot is blocking -> you probably want to run it in a thread
+        """
+        Run koji runroot command and wait for results.
 
+        If the command specified --task-id, and the first line of output
+        contains the id, it will be captured and returned.
+        """
         task_id = None
         retcode, output = run(command, can_fail=True, logfile=log_file)
-        if retcode == 0 and "--task-id" in command:
-            task_id = int(output.splitlines()[0])
-            output_ends_with_eol = output.endswith("\n")
-            output = "\n".join(output.splitlines()[1:])
-            if output_ends_with_eol:
-                output += "\n"
+        if "--task-id" in command:
+            first_line = output.splitlines()[0]
+            if re.match(r'^\d+$', first_line):
+                task_id = int(first_line)
+                # Remove first line from the output, preserving any trailing newlines.
+                output_ends_with_eol = output.endswith("\n")
+                output = "\n".join(output.splitlines()[1:])
+                if output_ends_with_eol:
+                    output += "\n"
 
         return {
             "retcode": retcode,

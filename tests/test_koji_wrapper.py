@@ -382,6 +382,15 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': None})
 
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_with_task_id_and_fail_but_emit_id(self, run):
+        cmd = ['koji', 'runroot', '--task-id']
+        output = 'Nope, does not work.\n'
+        run.return_value = (1, '12345\n' + output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 12345})
+
 
 if __name__ == "__main__":
     unittest.main()
