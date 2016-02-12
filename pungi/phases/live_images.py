@@ -22,7 +22,7 @@ import pipes
 import shutil
 
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run
+from kobo.shortcuts import run, save_to_file
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
@@ -49,6 +49,21 @@ class LiveImagesPhase(PhaseBase):
         {
             "name": "live_images",
             "expected_types": [list],
+            "optional": True,
+        },
+        {
+            "name": "signing_key_id",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "signing_key_password_file",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "signing_command",
+            "expected_types": [str],
             "optional": True,
         },
     )
@@ -102,6 +117,7 @@ class LiveImagesPhase(PhaseBase):
                     "ksurl": None,
                     "specfile": None,
                     "scratch": False,
+                    "sign": False,
                     "label": "",  # currently not used
                 }
 
@@ -128,6 +144,10 @@ class LiveImagesPhase(PhaseBase):
                 # For images wrapped in rpm is scratch disabled by default
                 # For other images is scratch always on
                 cmd["scratch"] = data.get("scratch", False)
+
+                # Signing of the rpm wrapped image
+                if not cmd["scratch"] and data.get("sign"):
+                    cmd["sign"] = True
 
                 format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
                 # Custom name (prefix)
@@ -225,6 +245,14 @@ class CreateLiveImageThread(WorkerThread):
         # copy finished rpm to isos/ (if rpm wrapped ISO was built)
         if cmd["specfile"]:
             rpm_paths = koji_wrapper.get_wrapped_rpm_path(output["task_id"])
+
+            if cmd["sign"]:
+                # Sign the rpm wrapped images and get their paths
+                compose.log_info("Signing rpm wrapped images in task_id: %s (expected key ID: %s)" % (output["task_id"], compose.conf.get("signing_key_id")))
+                signed_rpm_paths = self._sign_image(koji_wrapper, compose, cmd, output["task_id"])
+                if signed_rpm_paths:
+                    rpm_paths = signed_rpm_paths
+
             for rpm_path in rpm_paths:
                 shutil.copy2(rpm_path, cmd["wrapped_rpms_path"])
 
@@ -240,3 +268,78 @@ class CreateLiveImageThread(WorkerThread):
         dir, filename = os.path.split(iso_path)
         iso = IsoWrapper()
         run("cd %s && %s" % (pipes.quote(dir), iso.get_manifest_cmd(filename)))
+
+    def _sign_image(self, koji_wrapper, compose, cmd, koji_task_id):
+        signing_key_id = compose.conf.get("signing_key_id")
+        signing_command = compose.conf.get("signing_command")
+
+        if not signing_key_id:
+            compose.log_warning("Signing is enabled but signing_key_id is not specified")
+            compose.log_warning("Signing skipped")
+            return None
+        if not signing_command:
+            compose.log_warning("Signing is enabled but signing_command is not specified")
+            compose.log_warning("Signing skipped")
+            return None
+
+        # Prepare signing log file
+        signing_log_file = compose.paths.log.log_file(cmd["build_arch"], "live_images-signing-%s" % os.path.basename(cmd["iso_path"]))
+
+        # Sign the rpm wrapped images
+        try:
+            sign_builds_in_task(koji_wrapper, koji_task_id, signing_command, log_file=signing_log_file, signing_key_password=compose.conf.get("signing_key_password"))
+        except RuntimeError:
+            compose.log_error("Error while signing rpm wrapped images. See log: %s" % signing_log_file)
+            raise
+
+        # Get pats to the signed rpms
+        signing_key_id = signing_key_id.lower()  # Koji uses lowercase in paths
+        rpm_paths = koji_wrapper.get_signed_wrapped_rpms_paths(koji_task_id, signing_key_id)
+
+        # Wait untill files are available
+        if wait_paths(rpm_paths, 60*15):
+            # Files are ready
+            return rpm_paths
+
+        # Signed RPMs are not available
+        compose.log_warning("Signed files are not available: %s" % rpm_paths)
+        compose.log_warning("Unsigned files will be used")
+        return None
+
+
+def wait_paths(paths, timeout=60):
+    started = time.time()
+    remaining = paths[:]
+    while True:
+        for path in remaining[:]:
+            if os.path.exists(path):
+                remaining.remove(path)
+        if not remaining:
+            break
+        time.sleep(1)
+        if timeout >= 0 and (time.time() - started) > timeout:
+            return False
+    return True
+
+
+def sign_builds_in_task(koji_wrapper, task_id, signing_command, log_file=None, signing_key_password=None):
+    # Get list of nvrs that should be signed
+    nvrs = koji_wrapper.get_build_nvrs(task_id)
+    if not nvrs:
+        # No builds are available (scratch build, etc.?)
+        return
+
+    # Append builds to sign_cmd
+    for nvr in nvrs:
+        signing_command += " '%s'" % nvr
+
+    # Log signing command before password is filled in it
+    if log_file:
+        save_to_file(log_file, signing_command, append=True)
+
+    # Fill password into the signing command
+    if signing_key_password:
+        signing_command = signing_command % {"signing_key_password": signing_key_password}
+
+    # Sign the builds
+    run(signing_command, can_fail=False, show_cmd=False, logfile=log_file)
