@@ -153,14 +153,15 @@ class CreateImageBuildThread(WorkerThread):
 
     def worker(self, num, compose, cmd):
         arches = cmd["image_conf"]["image-build"]['arches'].split(',')
+        dash_arches = '-'.join(arches)
         log_file = compose.paths.log.log_file(
-            cmd["image_conf"]["image-build"]["arches"],
-            "imagebuild-%s-%s-%s" % ('-'.join(arches),
+            dash_arches,
+            "imagebuild-%s-%s-%s" % (dash_arches,
                                      cmd["image_conf"]["image-build"]["variant"],
                                      cmd["image_conf"]["image-build"]['format'].replace(",", "-"))
         )
         msg = "Creating %s image (arches: %s, variant: %s)" % (cmd["image_conf"]["image-build"]["format"].replace(",", "-"),
-                                                               '-'.join(arches),
+                                                               dash_arches,
                                                                cmd["image_conf"]["image-build"]["variant"])
         self.pool.log_info("[BEGIN] %s" % msg)
 
@@ -168,7 +169,7 @@ class CreateImageBuildThread(WorkerThread):
 
         # writes conf file for koji image-build
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
-            cmd["image_conf"]["image-build"]["variant"], '-'.join(arches), cmd["conf_file"]))
+            cmd["image_conf"]["image-build"]["variant"], dash_arches, cmd["conf_file"]))
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
                                                     scratch=cmd['scratch'])
