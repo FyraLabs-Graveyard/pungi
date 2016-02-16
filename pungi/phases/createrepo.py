@@ -97,13 +97,10 @@ def create_variant_repo(compose, arch, variant, pkg_type):
 
     if pkg_type == "rpm":
         repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
-        package_dir = compose.paths.compose.packages(arch, variant)
     elif pkg_type == "srpm":
         repo_dir = compose.paths.compose.repository(arch="src", variant=variant)
-        package_dir = compose.paths.compose.packages("src", variant)
     elif pkg_type == "debuginfo":
         repo_dir = compose.paths.compose.debug_repository(arch=arch, variant=variant)
-        package_dir = compose.paths.compose.debug_packages(arch, variant)
     else:
         raise ValueError("Unknown package type: %s" % pkg_type)
 
