@@ -170,7 +170,7 @@ def write_compose_info(compose):
 
 
 def write_tree_info(compose, arch, variant, timestamp=None):
-    if variant.type in ("addon", ):
+    if variant.type in ("addon", ) or variant.is_empty:
         return
 
     if not timestamp:

@@ -77,16 +77,24 @@ class CreaterepoPhase(PhaseBase):
 
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch):
+                if variant.is_empty:
+                    continue
                 self.pool.queue_put((self.compose, arch, variant, "rpm"))
                 self.pool.queue_put((self.compose, arch, variant, "debuginfo"))
 
         for variant in self.compose.get_variants():
+            if variant.is_empty:
+                continue
             self.pool.queue_put((self.compose, None, variant, "srpm"))
 
         self.pool.start()
 
 
 def create_variant_repo(compose, arch, variant, pkg_type):
+    if variant.is_empty:
+        compose.log_info("[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant))
+        return
+
     createrepo_c = compose.conf.get("createrepo_c", True)
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
@@ -131,7 +139,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     manifest = productmd.rpms.Rpms()
     manifest.load(manifest_file)
 
-    for rpms_arch, data in manifest.rpms[variant.uid].items():
+    for rpms_arch, data in manifest.rpms[variant.uid].iteritems():
         if arch is None and pkg_type != "srpm":
             continue
         if arch is not None and arch != rpms_arch:

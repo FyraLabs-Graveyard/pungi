@@ -11,6 +11,12 @@
     </groups>
   </variant>
 
+  <variant id="Live" name="Live" type="variant" is_empty="true">
+    <arches>
+      <arch>x86_64</arch>
+    </arches>
+  </variant>
+
   <variant id="Gluster" name="Gluster Layered Product" type="layered-product">
     <release name="Gluster" version="2.3" short="Gluster" />
     <arches>

@@ -98,14 +98,14 @@ class ProductimgPhase(PhaseBase):
     def run(self):
         # create PRODUCT.IMG
         for variant in self.compose.get_variants():
-            if variant.type != "variant":
+            if variant.type != "variant" or variant.is_empty:
                 continue
             create_product_img(self.compose, "global", variant)
 
         # copy PRODUCT.IMG
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch):
-                if variant.type != "variant":
+                if variant.type != "variant" or variant.is_empty:
                     continue
                 image = self.compose.paths.work.product_img(variant)
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
@@ -117,7 +117,7 @@ class ProductimgPhase(PhaseBase):
 
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch):
-                if variant.type != "variant":
+                if variant.type != "variant" or variant.is_empty:
                     continue
                 rebuild_boot_iso(self.compose, arch, variant, self.pkgset_phase.package_sets)
 

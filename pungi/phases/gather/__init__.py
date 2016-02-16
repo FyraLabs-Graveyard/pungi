@@ -164,6 +164,15 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     GatherMethod = get_gather_method(compose.conf["gather_method"])
 
     msg = "Gathering packages (arch: %s, variant: %s)" % (arch, variant)
+
+    if variant.is_empty:
+        compose.log_info("[SKIP ] %s" % msg)
+        return {
+            "rpm": [],
+            "srpm": [],
+            "debuginfo": [],
+        }
+
     compose.log_info("[BEGIN] %s" % msg)
 
     packages, groups, filter_packages = get_variant_packages(compose, arch, variant, package_sets)

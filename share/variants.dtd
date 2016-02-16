@@ -1,11 +1,12 @@
 <!ELEMENT variants (ref*,variant*)>
 
-<!ELEMENT variant (release?,arches,groups,environments*,variants*,buildinstallpackages?)?>
+<!ELEMENT variant (release?,arches,groups?,environments*,variants*,buildinstallpackages?)?>
 <!ATTLIST variant
     id ID #REQUIRED
     name CDATA #REQUIRED
     type (variant|addon|optional|layered-product) #REQUIRED
     has_optional (true|false) #IMPLIED
+    is_empty (true|false) "false"
 >
 
 <!ELEMENT release (#PCDATA)>

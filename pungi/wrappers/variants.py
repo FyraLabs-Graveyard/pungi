@@ -71,6 +71,7 @@ class VariantsXmlParser(object):
             "groups": [],
             "environments": [],
             "buildinstallpackages": [],
+            "is_empty": bool(variant_node.attrib.get("is_empty", False)),
         }
         if self.tree_arches:
             variant_dict["arches"] = [i for i in variant_dict["arches"] if i in self.tree_arches]
@@ -162,7 +163,7 @@ class VariantsXmlParser(object):
 
 
 class Variant(object):
-    def __init__(self, id, name, type, arches, groups, environments=None, buildinstallpackages=None):
+    def __init__(self, id, name, type, arches, groups, environments=None, buildinstallpackages=None, is_empty=False):
         if not id.isalnum():
             raise ValueError("Variant ID must contain only alphanumeric characters: %s" % id)
 
@@ -178,6 +179,7 @@ class Variant(object):
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = None
+        self.is_empty = is_empty
 
     def __getitem__(self, name):
         return self.variants[name]

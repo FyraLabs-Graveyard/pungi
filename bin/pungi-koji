@@ -294,7 +294,7 @@ def run_compose(compose):
 
     # write .discinfo and media.repo before ISOs are created
     for variant in compose.get_variants(recursive=True):
-        if variant.type == "addon":
+        if variant.type == "addon" or variant.is_empty:
             continue
         for arch in variant.arches + ["src"]:
             timestamp = pungi.metadata.write_discinfo(compose, arch, variant)
