@@ -243,7 +243,11 @@ def resolve_git_url(url):
         raise RuntimeError('Failed to resolve %s', url)
 
     fragment = lines[0].split()[0]
-    return urlparse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
+    result = urlparse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
+    if '?#' in url:
+        # The urlparse library drops empty query string. This hack puts it back in.
+        result = result.replace('#', '?#')
+    return result
 
 
 # fomat: {arch|*: [data]}

@@ -48,6 +48,15 @@ class TestGitRefResolver(unittest.TestCase):
 
         run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
 
+    @mock.patch('pungi.util.run')
+    def test_resolve_keep_empty_query_string(self, run):
+        run.return_value = (0, 'CAFEBABE\tHEAD\n')
+
+        url = util.resolve_git_url('https://git.example.com/repo.git?#HEAD')
+
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
+        self.assertEqual(url, 'https://git.example.com/repo.git?#CAFEBABE')
+
 
 class TestGetVariantData(unittest.TestCase):
     def test_get_simple(self):
