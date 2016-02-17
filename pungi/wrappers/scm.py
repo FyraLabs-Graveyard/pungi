@@ -27,6 +27,7 @@ import kobo.log
 from kobo.shortcuts import run, force_list
 from pungi.util import explode_rpm_package, makedirs
 
+
 class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
@@ -208,6 +209,19 @@ class RpmScmWrapper(ScmBase):
         self._delete_temp_dir(tmp_dir)
 
 
+def _get_wrapper(scm_type, *args, **kwargs):
+    SCM_WRAPPERS = {
+        "file": FileWrapper,
+        "cvs": CvsWrapper,
+        "git": GitWrapper,
+        "rpm": RpmScmWrapper,
+    }
+    try:
+        return SCM_WRAPPERS[scm_type](*args, **kwargs)
+    except KeyError:
+        raise ValueError("Unknown SCM type: %s" % scm_type)
+
+
 def get_file_from_scm(scm_dict, target_path, logger=None):
     if isinstance(scm_dict, str):
         scm_type = "file"
@@ -220,16 +234,7 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
         scm_file = scm_dict["file"]
         scm_branch = scm_dict.get("branch", None)
 
-    if scm_type == "file":
-        scm = FileWrapper(logger=logger)
-    elif scm_type == "cvs":
-        scm = CvsWrapper(logger=logger)
-    elif scm_type == "git":
-        scm = GitWrapper(logger=logger)
-    elif scm_type == "rpm":
-        scm = RpmScmWrapper(logger=logger)
-    else:
-        raise ValueError("Unknown SCM type: %s" % scm_type)
+    scm = _get_wrapper(scm_type, logger=logger)
 
     for i in force_list(scm_file):
         tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
@@ -251,16 +256,7 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
         scm_dir = scm_dict["dir"]
         scm_branch = scm_dict.get("branch", None)
 
-    if scm_type == "file":
-        scm = FileWrapper(logger=logger)
-    elif scm_type == "cvs":
-        scm = CvsWrapper(logger=logger)
-    elif scm_type == "git":
-        scm = GitWrapper(logger=logger)
-    elif scm_type == "rpm":
-        scm = RpmScmWrapper(logger=logger)
-    else:
-        raise ValueError("Unknown SCM type: %s" % scm_type)
+    scm = _get_wrapper(scm_type, logger=logger)
 
     tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
     scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
