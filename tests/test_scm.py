@@ -5,7 +5,6 @@ import mock
 import unittest
 import shutil
 import tempfile
-from kobo import shortcuts
 
 import os
 import sys
@@ -83,12 +82,9 @@ class GitSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-            else:
-                fname = cmd.split('|')[0].strip().split(' ')[-1]
-                touch(os.path.join(workdir, fname))
-                commands.append(cmd)
+            fname = cmd.split('|')[0].strip().split(' ')[-1]
+            touch(os.path.join(workdir, fname))
+            commands.append(cmd)
 
         run.side_effect = process
 
@@ -108,13 +104,10 @@ class GitSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-            else:
-                checkout = cmd.split(' ')[-1]
-                touch(os.path.join(checkout, 'some_file.txt'))
-                touch(os.path.join(checkout, 'other_file.txt'))
-                commands.append(cmd)
+            checkout = cmd.split(' ')[-1]
+            touch(os.path.join(checkout, 'some_file.txt'))
+            touch(os.path.join(checkout, 'other_file.txt'))
+            commands.append(cmd)
 
         run.side_effect = process
 
@@ -135,13 +128,10 @@ class GitSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-            else:
-                fname = cmd.split('|')[0].strip().split(' ')[-1]
-                touch(os.path.join(workdir, fname, 'first'))
-                touch(os.path.join(workdir, fname, 'second'))
-                commands.append(cmd)
+            fname = cmd.split('|')[0].strip().split(' ')[-1]
+            touch(os.path.join(workdir, fname, 'first'))
+            touch(os.path.join(workdir, fname, 'second'))
+            commands.append(cmd)
 
         run.side_effect = process
 
@@ -163,13 +153,10 @@ class GitSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-            else:
-                checkout = cmd.split(' ')[-1]
-                touch(os.path.join(checkout, 'subdir', 'first'))
-                touch(os.path.join(checkout, 'subdir', 'second'))
-                commands.append(cmd)
+            checkout = cmd.split(' ')[-1]
+            touch(os.path.join(checkout, 'subdir', 'first'))
+            touch(os.path.join(checkout, 'subdir', 'second'))
+            commands.append(cmd)
 
         run.side_effect = process
 
@@ -356,9 +343,6 @@ class CvsSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-                return
             fname = cmd[-1]
             touch(os.path.join(workdir, fname))
             commands.append(' '.join(cmd))
@@ -381,9 +365,6 @@ class CvsSCMTestCase(unittest.TestCase):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            if cmd[:3] == 'cp ':
-                shortcuts.run(cmd, workdir=workdir, **kwargs)
-                return
             fname = cmd[-1]
             touch(os.path.join(workdir, fname, 'first'))
             touch(os.path.join(workdir, fname, 'second'))
