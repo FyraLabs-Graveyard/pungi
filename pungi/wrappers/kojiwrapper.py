@@ -139,14 +139,14 @@ class KojiWrapper(object):
         for key in ('name', 'version', 'target', 'arch', 'ksfile'):
             if key not in options:
                 raise ValueError('Expected options to have key "%s"' % key)
-            cmd.append(pipes.quote(options[key]))
+            cmd.append(options[key])
 
         if 'install_tree' not in options:
             raise ValueError('Expected options to have key "install_tree"')
-        cmd.append('--install-tree=%s' % pipes.quote(options['install_tree']))
+        cmd.append('--install-tree=%s' % options['install_tree'])
 
         for repo in options.get('repo', []):
-            cmd.append('--repo=%s' % pipes.quote(repo))
+            cmd.append('--repo=%s' % repo)
 
         if options.get('scratch'):
             cmd.append('--scratch')
@@ -155,7 +155,7 @@ class KojiWrapper(object):
             cmd.append('--skip-tag')
 
         if 'ksurl' in options:
-            cmd.append('--ksurl=%s' % pipes.quote(options['ksurl']))
+            cmd.append('--ksurl=%s' % options['ksurl'])
 
         if wait:
             cmd.append('--wait')
