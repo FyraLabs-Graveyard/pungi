@@ -638,7 +638,8 @@ Live Images Settings
     list should be tuples ``(variant_uid_regex, {arch|*: config})``. The config
     should be a dict with these keys:
 
-      * ``kickstart`` (*str|dict*)
+      * ``kickstart`` (*str*)
+      * ``ksurl`` (*str*) [optional] -- where to get the kickstart from
       * ``name`` (*str*)
       * ``version`` (*str*)
       * ``additional_repos`` (*list*) -- external repos specified by URL

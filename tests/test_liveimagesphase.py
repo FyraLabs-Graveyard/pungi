@@ -61,23 +61,18 @@ class _DummyCompose(object):
 class TestLiveImagesPhase(unittest.TestCase):
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.phases.live_images.get_ks_in')
-    @mock.patch('pungi.phases.live_images.tweak_ks')
-    def test_live_image_build(self, tweak_ks, get_ks_in, ThreadPool):
+    def test_live_image_build(self, ThreadPool):
         compose = _DummyCompose({
             'live_images': [
                 ('^Client$', {
                     'amd64': {
+                        'kickstart': 'test.ks',
                         'additional_repos': ['http://example.com/repo/'],
                         'repos_from': ['Everything'],
                     }
                 })
             ],
         })
-
-        get_ks_in.side_effect = (lambda compose, arch, variant:
-                                 None if variant.uid != 'Client' or arch != 'amd64' else '/path/to/ks_in')
-        tweak_ks.return_value = '/path/to/ks_file'
 
         phase = LiveImagesPhase(compose)
 
@@ -88,7 +83,7 @@ class TestLiveImagesPhase(unittest.TestCase):
         self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose,
-                                          {'ks_file': '/path/to/ks_file',
+                                          {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
                                            'wrapped_rpms_path': '/iso_dir/amd64/Client',
                                            'scratch': False,
@@ -100,18 +95,20 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'iso_path': '/iso_dir/amd64/Client/image-name',
                                            'version': None,
                                            'specfile': None,
-                                           'type': 'live'},
+                                           'type': 'live',
+                                           'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.phases.live_images.get_ks_in')
-    @mock.patch('pungi.phases.live_images.tweak_ks')
-    def test_spin_appliance(self, tweak_ks, get_ks_in, ThreadPool):
+    @mock.patch('pungi.phases.live_images.resolve_git_url')
+    def test_spin_appliance(self, resolve_git_url, ThreadPool):
         compose = _DummyCompose({
             'live_images': [
                 ('^Client$', {
                     'amd64': {
+                        'kickstart': 'test.ks',
+                        'ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
                         'additional_repos': ['http://example.com/repo/'],
                         'repos_from': ['Everything'],
                         'type': 'appliance',
@@ -120,9 +117,7 @@ class TestLiveImagesPhase(unittest.TestCase):
             ],
         })
 
-        get_ks_in.side_effect = (lambda compose, arch, variant:
-                                 None if variant.uid != 'Client' or arch != 'amd64' else '/path/to/ks_in')
-        tweak_ks.return_value = '/path/to/ks_file'
+        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
 
         phase = LiveImagesPhase(compose)
 
@@ -133,7 +128,7 @@ class TestLiveImagesPhase(unittest.TestCase):
         self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose,
-                                          {'ks_file': '/path/to/ks_file',
+                                          {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
                                            'wrapped_rpms_path': '/iso_dir/amd64/Client',
                                            'scratch': False,
@@ -145,9 +140,12 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'iso_path': '/iso_dir/amd64/Client/image-name',
                                            'version': None,
                                            'specfile': None,
-                                           'type': 'appliance'},
+                                           'type': 'appliance',
+                                           'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
+        self.assertEqual(resolve_git_url.mock_calls,
+                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
 
 
 class TestCreateLiveImageThread(unittest.TestCase):
@@ -172,6 +170,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'version': None,
             'specfile': None,
             'type': 'live',
+            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -207,7 +206,8 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     image_type='live',
                                     archive=False,
                                     specfile=None,
-                                    wait=True)])
+                                    wait=True,
+                                    ksurl='https://git.example.com/kickstarts.git?#CAFEBABE')])
 
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
@@ -229,6 +229,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'version': None,
             'specfile': None,
             'type': 'appliance',
+            'ksurl': None,
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -264,7 +265,8 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     image_type='appliance',
                                     archive=False,
                                     specfile=None,
-                                    wait=True)])
+                                    wait=True,
+                                    ksurl=None)])
 
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
@@ -287,7 +289,8 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'name': None,
             'iso_path': '/iso_dir/amd64/Client/image-name',
             'version': None,
-            'specfile': None
+            'specfile': None,
+            'ksurl': None,
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -323,7 +326,8 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'name': None,
             'iso_path': '/iso_dir/amd64/Client/image-name',
             'version': None,
-            'specfile': None
+            'specfile': None,
+            'ksurl': None,
         }
 
         def boom(*args, **kwargs):

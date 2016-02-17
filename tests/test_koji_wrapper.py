@@ -297,12 +297,13 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_create_image_cmd_full(self):
         cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
                                              'x86_64', '/path/to/ks', ['/repo/1', '/repo/2'],
-                                             release='1', wait=False, archive=True, specfile='foo.spec')
+                                             release='1', wait=False, archive=True, specfile='foo.spec',
+                                             ksurl='https://git.example.com/')
         self.assertEqual(cmd[0:2], ['koji', 'spin-livecd'])
-        self.assertItemsEqual(cmd[2:8],
+        self.assertEqual(cmd[-5:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
+        self.assertItemsEqual(cmd[2:-5],
                               ['--noprogress', '--nowait', '--repo=/repo/1', '--repo=/repo/2',
-                               '--release=1', '--specfile=foo.spec'])
-        self.assertEqual(cmd[8:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
+                               '--release=1', '--specfile=foo.spec', '--ksurl=https://git.example.com/'])
 
     def test_spin_livecd_with_format(self):
         with self.assertRaises(ValueError):
