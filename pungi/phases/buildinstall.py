@@ -130,6 +130,8 @@ class BuildinstallPhase(PhaseBase):
 
             if buildinstall_method == "lorax":
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
+                    if variant.is_empty:
+                        continue
                     volid = get_volid(self.compose, arch, variant=variant, disc_type="boot")
                     commands.append(
                         (variant,

@@ -35,9 +35,9 @@ class _DummyCompose(object):
         self.log_debug = mock.Mock()
         self.supported = True
         self.variants = {
-            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
-            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[]),
-                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'])],
+            'x86_64': [mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'], is_empty=False)],
+            'amd64': [mock.Mock(uid='Client', buildinstallpackages=[], is_empty=False),
+                      mock.Mock(uid='Server', buildinstallpackages=['bash', 'vim'], is_empty=False)],
         }
 
     def get_arches(self):
@@ -109,6 +109,39 @@ class TestBuildinstallPhase(unittest.TestCase):
              mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/amd64/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
+                       bugurl=None)],
+            any_order=True)
+
+    @mock.patch('pungi.phases.buildinstall.ThreadPool')
+    @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_lorax_skips_empty_variants(self, get_volid, loraxCls, poolCls):
+        compose = _DummyCompose({
+            'bootable': True,
+            'release_name': 'Test',
+            'release_short': 't',
+            'release_version': '1',
+            'release_is_layered': False,
+            'buildinstall_method': 'lorax'
+        })
+        compose.variants['amd64'][0].is_empty = True
+        compose.variants['amd64'][1].is_empty = True
+
+        get_volid.return_value = 'vol_id'
+
+        phase = BuildinstallPhase(compose)
+
+        phase.run()
+
+        pool = poolCls.return_value
+        self.assertEqual(1, len(pool.queue_put.mock_calls))
+
+        # Obtained correct lorax command.
+        lorax = loraxCls.return_value
+        lorax.get_lorax_cmd.assert_has_calls(
+            [mock.call('Test', '1', '1', 'file:///a/b/', '/buildinstall_dir/x86_64/Server',
+                       buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
+                       volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
                        bugurl=None)],
             any_order=True)
 
