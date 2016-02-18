@@ -22,6 +22,7 @@ import shutil
 import pipes
 import glob
 import time
+import contextlib
 
 import kobo.log
 from kobo.shortcuts import run, force_list
@@ -32,17 +33,19 @@ class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
 
-    def _create_temp_dir(self, tmp_dir=None):
+    @contextlib.contextmanager
+    def _temp_dir(self, tmp_dir=None):
         if tmp_dir is not None:
             makedirs(tmp_dir)
-        return tempfile.mkdtemp(prefix="cvswrapper_", dir=tmp_dir)
+        path = tempfile.mkdtemp(prefix="cvswrapper_", dir=tmp_dir)
 
-    def _delete_temp_dir(self, tmp_dir):
-        self.log_debug("Removing %s" % tmp_dir)
+        yield path
+
+        self.log_debug("Removing %s" % path)
         try:
-            shutil.rmtree(tmp_dir)
+            shutil.rmtree(path)
         except OSError as ex:
-            self.log_warning("Error removing %s: %s" % (tmp_dir, ex))
+            self.log_warning("Error removing %s: %s" % (path, ex))
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         raise NotImplemented
@@ -89,68 +92,71 @@ class CvsWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
-
-        self.log_debug("Exporting directory %s from CVS %s (branch %s)..." % (scm_dir, scm_root, scm_branch))
-        self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir], workdir=tmp_dir, show_cmd=True, logfile=log_file)
-        _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
-        self._delete_temp_dir(tmp_dir)
+        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            self.log_debug("Exporting directory %s from CVS %s (branch %s)..."
+                           % (scm_dir, scm_root, scm_branch))
+            self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir],
+                           workdir=tmp_dir, show_cmd=True, logfile=log_file)
+            _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
+        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            target_path = os.path.join(target_dir, os.path.basename(scm_file))
+            self.log_debug("Exporting file %s from CVS %s (branch %s)..." % (scm_file, scm_root, scm_branch))
+            self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_file],
+                           workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
-        target_path = os.path.join(target_dir, os.path.basename(scm_file))
-        self.log_debug("Exporting file %s from CVS %s (branch %s)..." % (scm_file, scm_root, scm_branch))
-        self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_file], workdir=tmp_dir, show_cmd=True, logfile=log_file)
-
-        makedirs(target_dir)
-        shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
-        self._delete_temp_dir(tmp_dir)
+            makedirs(target_dir)
+            shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
 class GitWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "master"
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
 
-        if "://" not in scm_root:
-            scm_root = "file://%s" % scm_root
+        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            if "://" not in scm_root:
+                scm_root = "file://%s" % scm_root
 
-        self.log_debug("Exporting directory %s from git %s (branch %s)..." % (scm_dir, scm_root, scm_branch))
-        cmd = "/usr/bin/git archive --remote=%s %s %s | tar xf -" % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_dir))
-        # git archive is not supported by http/https
-        # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-        if scm_root.startswith("http"):
-            cmd = "/usr/bin/git clone --depth 1 --branch=%s %s %s" % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir))
-        self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
+            self.log_debug("Exporting directory %s from git %s (branch %s)..."
+                           % (scm_dir, scm_root, scm_branch))
+            cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
+                   % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_dir)))
+            # git archive is not supported by http/https
+            # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
+            if scm_root.startswith("http"):
+                cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
+                       % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
+            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
-        _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
-        self._delete_temp_dir(tmp_dir)
+            _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "master"
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
 
-        target_path = os.path.join(target_dir, os.path.basename(scm_file))
+        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            target_path = os.path.join(target_dir, os.path.basename(scm_file))
 
-        if "://" not in scm_root:
-            scm_root = "file://%s" % scm_root
+            if "://" not in scm_root:
+                scm_root = "file://%s" % scm_root
 
-        self.log_debug("Exporting file %s from git %s (branch %s)..." % (scm_file, scm_root, scm_branch))
-        cmd = "/usr/bin/git archive --remote=%s %s %s | tar xf -" % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_file))
-        # git archive is not supported by http/https
-        # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-        if scm_root.startswith("http"):
-            cmd = "/usr/bin/git clone --depth 1 --branch=%s %s %s" % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir))
-        self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
+            self.log_debug("Exporting file %s from git %s (branch %s)..."
+                           % (scm_file, scm_root, scm_branch))
+            cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
+                   % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_file)))
+            # git archive is not supported by http/https
+            # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
+            if scm_root.startswith("http"):
+                cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
+                       % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
+            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
-        makedirs(target_dir)
-        shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
-        self._delete_temp_dir(tmp_dir)
+            makedirs(target_dir)
+            shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
 class RpmScmWrapper(ScmBase):
@@ -162,31 +168,29 @@ class RpmScmWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         for rpm in self._list_rpms(scm_root):
             scm_dir = scm_dir.lstrip("/")
-            tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
-            self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
-            explode_rpm_package(rpm, tmp_dir)
+            with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+                self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
+                explode_rpm_package(rpm, tmp_dir)
 
-            makedirs(target_dir)
-            # "dir" includes the whole directory while "dir/" includes it's content
-            if scm_dir.endswith("/"):
-                _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
-            else:
-                run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)), pipes.quote(target_dir)))
-            self._delete_temp_dir(tmp_dir)
+                makedirs(target_dir)
+                # "dir" includes the whole directory while "dir/" includes it's content
+                if scm_dir.endswith("/"):
+                    _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
+                else:
+                    run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)),
+                                          pipes.quote(target_dir)))
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         for rpm in self._list_rpms(scm_root):
             scm_file = scm_file.lstrip("/")
-            tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
+            with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+                self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
+                explode_rpm_package(rpm, tmp_dir)
 
-            self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
-            explode_rpm_package(rpm, tmp_dir)
-
-            makedirs(target_dir)
-            for src in glob.glob(os.path.join(tmp_dir, scm_file)):
-                dst = os.path.join(target_dir, os.path.basename(src))
-                shutil.copy2(src, dst)
-            self._delete_temp_dir(tmp_dir)
+                makedirs(target_dir)
+                for src in glob.glob(os.path.join(tmp_dir, scm_file)):
+                    dst = os.path.join(target_dir, os.path.basename(src))
+                    shutil.copy2(src, dst)
 
 
 def _get_wrapper(scm_type, *args, **kwargs):
