@@ -40,9 +40,9 @@ class _DummyCompose(object):
         )
         self._logger = mock.Mock()
         self.variants = {
-            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64']),
-            'Client': mock.Mock(uid='Client', arches=['amd64']),
-            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64']),
+            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'], is_empty=False),
+            'Client': mock.Mock(uid='Client', arches=['amd64'], is_empty=False),
+            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'], is_empty=False),
         }
         self.log_error = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
