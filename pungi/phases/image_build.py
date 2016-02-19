@@ -58,7 +58,8 @@ class ImageBuildPhase(PhaseBase):
         repo = shortcuts.force_list(image_conf.get('repo', []))
 
         extras = shortcuts.force_list(image_conf.pop('repo_from', []))
-        extras.append(variant.uid)
+        if not variant.is_empty:
+            extras.append(variant.uid)
 
         for extra in extras:
             v = self.compose.variants.get(extra)

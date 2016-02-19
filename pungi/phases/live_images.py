@@ -124,8 +124,10 @@ class LiveImagesPhase(PhaseBase):
                 if 'ksurl' in data:
                     cmd['ksurl'] = resolve_git_url(data['ksurl'])
 
-                cmd["repos"] = [translate_path(
-                    self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False))]
+                cmd["repos"] = []
+                if not variant.is_empty:
+                    cmd["repos"].append(translate_path(
+                        self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
 
                 # additional repos
                 cmd["repos"].extend(data.get("additional_repos", []))
