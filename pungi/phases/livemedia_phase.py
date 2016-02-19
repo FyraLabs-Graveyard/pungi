@@ -77,7 +77,7 @@ class LiveMediaPhase(PhaseBase):
                     % (variant_uid, variant.uid))
         return translate_path(
             self.compose,
-            self.compose.paths.compose.os_tree('$basearch', variant)
+            self.compose.paths.compose.os_tree('$basearch', variant, create_dir=False)
         )
 
     def run(self):
