@@ -157,6 +157,9 @@ class KojiWrapper(object):
         if 'ksurl' in options:
             cmd.append('--ksurl=%s' % options['ksurl'])
 
+        if 'release' in options:
+            cmd.append('--release=%s' % options['release'])
+
         if wait:
             cmd.append('--wait')
 
