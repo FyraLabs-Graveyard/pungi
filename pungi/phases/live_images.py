@@ -92,6 +92,17 @@ class LiveImagesPhase(PhaseBase):
 
         return repo
 
+    def _get_repos(self, arch, variant, data):
+        repos = []
+        if not variant.is_empty:
+            repos.append(translate_path(
+                self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
+
+        # additional repos
+        repos.extend(data.get("additional_repos", []))
+        repos.extend(self._get_extra_repos(arch, variant, data.get('repo_from', [])))
+        return repos
+
     def _get_release(self, image_conf):
         """If release is set explicitly to None, replace it with date and respin."""
         if 'release' in image_conf and image_conf['release'] is None:
@@ -126,14 +137,7 @@ class LiveImagesPhase(PhaseBase):
                     if 'ksurl' in data:
                         cmd['ksurl'] = resolve_git_url(data['ksurl'])
 
-                    cmd["repos"] = []
-                    if not variant.is_empty:
-                        cmd["repos"].append(translate_path(
-                            self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
-
-                    # additional repos
-                    cmd["repos"].extend(data.get("additional_repos", []))
-                    cmd['repos'].extend(self._get_extra_repos(arch, variant, data.get('repo_from', [])))
+                    cmd["repos"] = self._get_repos(arch, variant, data)
 
                     # Explicit name and version
                     cmd["name"] = data.get("name", None)
