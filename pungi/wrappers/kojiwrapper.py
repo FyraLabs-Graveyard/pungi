@@ -268,7 +268,7 @@ class KojiWrapper(object):
         children_tasks = self.koji_proxy.getTaskChildren(task_id, request=True)
 
         for child_task in children_tasks:
-            if child_task['method'] not in ['createImage', 'createLiveMedia']:
+            if child_task['method'] not in ['createImage', 'createLiveMedia', 'createAppliance']:
                 continue
 
             is_scratch = child_task['request'][-1].get('scratch', False)
@@ -294,10 +294,9 @@ class KojiWrapper(object):
 
     def get_image_path(self, task_id):
         result = []
-        koji_proxy = self.koji_module.ClientSession(self.koji_module.config.server)
         task_info_list = []
-        task_info_list.append(koji_proxy.getTaskInfo(task_id, request=True))
-        task_info_list.extend(koji_proxy.getTaskChildren(task_id, request=True))
+        task_info_list.append(self.koji_proxy.getTaskInfo(task_id, request=True))
+        task_info_list.extend(self.koji_proxy.getTaskChildren(task_id, request=True))
 
         # scan parent and child tasks for certain methods
         task_info = None
@@ -307,13 +306,13 @@ class KojiWrapper(object):
                 break
 
         scratch = task_info["request"][-1].get("scratch", False)
-        task_result = koji_proxy.getTaskResult(task_info["id"])
+        task_result = self.koji_proxy.getTaskResult(task_info["id"])
         task_result.pop("rpmlist", None)
 
         if scratch:
             topdir = os.path.join(self.koji_module.pathinfo.work(), self.koji_module.pathinfo.taskrelpath(task_info["id"]))
         else:
-            build = koji_proxy.getImageBuild("%(name)s-%(version)s-%(release)s" % task_result)
+            build = self.koji_proxy.getImageBuild("%(name)s-%(version)s-%(release)s" % task_result)
             build["name"] = task_result["name"]
             build["version"] = task_result["version"]
             build["release"] = task_result["release"]
