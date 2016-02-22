@@ -253,7 +253,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'output': 'some output',
             'task_id': 123
         }
-        koji_wrapper.get_image_path.return_value = ['/path/to/image']
+        koji_wrapper.get_image_path.return_value = ['/path/to/image.iso']
 
         t = CreateLiveImageThread(pool)
         with mock.patch('time.sleep'):
@@ -263,7 +263,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image', '/iso_dir/amd64/Client/image-name')])
+                         [mock.call('/path/to/image.iso', '/iso_dir/amd64/Client/image-name')])
 
         write_manifest_cmd = ' && '.join([
             'cd /iso_dir/amd64/Client',
@@ -314,7 +314,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'output': 'some output',
             'task_id': 123
         }
-        koji_wrapper.get_image_path.return_value = ['/path/to/image']
+        koji_wrapper.get_image_path.return_value = ['/path/to/image.iso']
 
         t = CreateLiveImageThread(pool)
         with mock.patch('time.sleep'):
@@ -324,7 +324,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image', '/iso_dir/amd64/Client/image-name')])
+                         [mock.call('/path/to/image.iso', '/iso_dir/amd64/Client/image-name')])
 
         write_manifest_cmd = ' && '.join([
             'cd /iso_dir/amd64/Client',

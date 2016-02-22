@@ -243,8 +243,11 @@ class CreateLiveImageThread(WorkerThread):
             raise RuntimeError("LiveImage task failed: %s. See %s for more details." % (output["task_id"], log_file))
 
         # copy finished image to isos/
-        image_path = koji_wrapper.get_image_path(output["task_id"])
-        # TODO: assert len == 1
+        image_path = [path for path in koji_wrapper.get_image_path(output["task_id"])
+                      if self._is_image(path)]
+        if len(image_path) != 1:
+            raise RuntimeError('Got %d images from task %d, expected 1.'
+                               % (len(image_path), output['task_id']))
         image_path = image_path[0]
         shutil.copy2(image_path, cmd["iso_path"])
 
@@ -265,6 +268,12 @@ class CreateLiveImageThread(WorkerThread):
         self._write_manifest(cmd['iso_path'])
 
         self.pool.log_info("[DONE ] %s" % msg)
+
+    def _is_image(self, path):
+        for ext in ('.iso', '.raw.xz'):
+            if path.endswith(ext):
+                return True
+        return False
 
     def _write_manifest(self, iso_path):
         """Generate manifest for ISO at given path.
