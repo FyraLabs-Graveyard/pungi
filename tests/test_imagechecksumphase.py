@@ -13,13 +13,13 @@ import shutil
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_checksum import ImageChecksumPhase, dump_checksums
-from tests.helpers import _DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase
 
 
 class TestImageChecksumPhase(PungiTestCase):
 
     def test_config_skip_individual_with_multiple_algorithms(self):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'media_checksums': ['md5', 'sha1'],
             'media_checksum_one_file': True
         })
@@ -32,7 +32,7 @@ class TestImageChecksumPhase(PungiTestCase):
     @mock.patch('kobo.shortcuts.compute_file_checksums')
     @mock.patch('pungi.phases.image_checksum.dump_checksums')
     def test_checksum_one_file(self, dump, cc, exists):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'media_checksums': ['sha256'],
             'media_checksum_one_file': True,
         })
@@ -52,7 +52,7 @@ class TestImageChecksumPhase(PungiTestCase):
     @mock.patch('kobo.shortcuts.compute_file_checksums')
     @mock.patch('pungi.phases.image_checksum.dump_checksums')
     def test_checksum_save_individuals(self, dump, cc, exists):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'media_checksums': ['md5', 'sha256'],
         })
 
@@ -83,7 +83,7 @@ class TestImageChecksumPhase(PungiTestCase):
     @mock.patch('kobo.shortcuts.compute_file_checksums')
     @mock.patch('pungi.phases.image_checksum.dump_checksums')
     def test_checksum_one_file_custom_name(self, dump, cc, exists):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'media_checksums': ['sha256'],
             'media_checksum_one_file': True,
             'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s'
@@ -106,7 +106,7 @@ class TestImageChecksumPhase(PungiTestCase):
     @mock.patch('kobo.shortcuts.compute_file_checksums')
     @mock.patch('pungi.phases.image_checksum.dump_checksums')
     def test_checksum_save_individuals_custom_name(self, dump, cc, exists):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'media_checksums': ['md5', 'sha256'],
             'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s'
         })

@@ -11,14 +11,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
-from tests.helpers import _DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase
 
 
 class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Client|Server$': [
                     {
@@ -100,7 +100,7 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_filter_all_variants(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Client|Server$': [
                     {
@@ -131,7 +131,7 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_set_install_tree(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -191,7 +191,7 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_set_extra_repos(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -252,7 +252,7 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_create_release(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -288,7 +288,7 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_scratch_build(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'image_build': {
                 '^Server$': [
                     {
@@ -329,7 +329,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process(self, Linker, KojiWrapper, get_file_size, get_mtime):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji'
         })
         pool = mock.Mock()
@@ -441,7 +441,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_fail(self, Linker, KojiWrapper):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.*$', {
@@ -492,7 +492,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_exception(self, Linker, KojiWrapper):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.*$', {

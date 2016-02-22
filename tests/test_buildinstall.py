@@ -11,10 +11,10 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread
-from tests.helpers import _DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase
 
 
-class BuildInstallCompose(_DummyCompose):
+class BuildInstallCompose(DummyCompose):
     def __init__(self, *args, **kwargs):
         super(BuildInstallCompose, self).__init__(*args, **kwargs)
         self.variants = {

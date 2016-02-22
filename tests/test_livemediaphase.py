@@ -10,13 +10,13 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
-from tests.helpers import _DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase
 
 
 class TestLiveMediaPhase(PungiTestCase):
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_minimal(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -56,7 +56,7 @@ class TestLiveMediaPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_non_existing_install_tree(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -79,7 +79,7 @@ class TestLiveMediaPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_non_existing_repo(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -103,7 +103,7 @@ class TestLiveMediaPhase(PungiTestCase):
     @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_full(self, ThreadPool, resolve_git_url):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_media': {
                 '^Server$': [
                     {
@@ -161,7 +161,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     @mock.patch('pungi.phases.livemedia_phase.Linker')
     def test_process(self, Linker, KojiWrapper, get_file_size, get_mtime):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji'
         })
         config = {
@@ -258,7 +258,7 @@ class TestCreateImageBuildThread(PungiTestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_koji_fail(self, KojiWrapper):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.+$', {'*': ['live-media']})
@@ -297,7 +297,7 @@ class TestCreateImageBuildThread(PungiTestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_exception(self, KojiWrapper):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
                 ('^.+$', {'*': ['live-media']})

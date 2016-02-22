@@ -11,14 +11,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread
-from tests.helpers import _DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase
 
 
 class TestLiveImagesPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
     def test_live_image_build(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_images': [
                 ('^Client$', {
                     'amd64': {
@@ -61,7 +61,7 @@ class TestLiveImagesPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
     def test_live_image_build_without_rename(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_images_no_rename': True,
             'live_images': [
                 ('^Client$', {
@@ -105,7 +105,7 @@ class TestLiveImagesPhase(PungiTestCase):
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
     def test_live_image_build_two_images(self, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_images': [
                 ('^Client$', {
                     'amd64': [{
@@ -171,7 +171,7 @@ class TestLiveImagesPhase(PungiTestCase):
     @mock.patch('pungi.phases.live_images.ThreadPool')
     @mock.patch('pungi.phases.live_images.resolve_git_url')
     def test_spin_appliance(self, resolve_git_url, ThreadPool):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'live_images': [
                 ('^Client$', {
                     'amd64': {
@@ -225,7 +225,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process(self, KojiWrapper, run, copy2, Image):
-        compose = _DummyCompose(self.topdir, {'koji_profile': 'koji'})
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
@@ -303,7 +303,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_no_rename(self, KojiWrapper, run, copy2, Image):
-        compose = _DummyCompose(self.topdir, {'koji_profile': 'koji'})
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
@@ -382,7 +382,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_applicance(self, KojiWrapper, run, copy2, Image):
-        compose = _DummyCompose(self.topdir, {'koji_profile': 'koji'})
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
@@ -460,7 +460,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_handles_fail(self, KojiWrapper, run, copy2):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [('^.+$', {'*': ['live']})],
         })
@@ -497,7 +497,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_handles_exception(self, KojiWrapper, run, copy2):
-        compose = _DummyCompose(self.topdir, {
+        compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [('^.+$', {'*': ['live']})],
         })

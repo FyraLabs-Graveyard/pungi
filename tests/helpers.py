@@ -17,7 +17,7 @@ class PungiTestCase(unittest.TestCase):
         shutil.rmtree(self.topdir)
 
 
-class _DummyCompose(object):
+class DummyCompose(object):
     def __init__(self, topdir, config):
         self.supported = True
         self.compose_date = '20151203'
