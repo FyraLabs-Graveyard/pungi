@@ -92,6 +92,12 @@ class LiveImagesPhase(PhaseBase):
 
         return repo
 
+    def _get_release(self, image_conf):
+        """If release is set explicitly to None, replace it with date and respin."""
+        if 'release' in image_conf and image_conf['release'] is None:
+            return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+        return image_conf.get('release', None)
+
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
         commands = []
@@ -134,6 +140,7 @@ class LiveImagesPhase(PhaseBase):
                     cmd["version"] = data.get("version", None)
 
                     cmd['type'] = data.get('type', 'live')
+                    cmd['release'] = self._get_release(data)
 
                     # Specfile (for images wrapped in rpm)
                     cmd["specfile"] = data.get("specfile", None)
@@ -223,6 +230,7 @@ class CreateLiveImageThread(WorkerThread):
                                                      wait=True,
                                                      archive=archive,
                                                      specfile=cmd["specfile"],
+                                                     release=cmd['release'],
                                                      ksurl=cmd['ksurl'])
 
         # avoid race conditions?

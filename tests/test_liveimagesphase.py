@@ -17,6 +17,8 @@ from pungi.util import get_arch_variant_data
 class _DummyCompose(object):
     def __init__(self, config):
         self.compose_id = 'Test-20151203.0.t'
+        self.compose_date = '20151203'
+        self.compose_respin = '0'
         self.conf = config
         self.paths = mock.Mock(
             compose=mock.Mock(
@@ -69,6 +71,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                         'kickstart': 'test.ks',
                         'additional_repos': ['http://example.com/repo/'],
                         'repos_from': ['Everything'],
+                        'release': None,
                     }
                 })
             ],
@@ -97,6 +100,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'specfile': None,
                                            'sign': False,
                                            'type': 'live',
+                                           'release': '20151203.0',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -142,6 +146,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'specfile': None,
                                            'sign': False,
                                            'type': 'live',
+                                           'release': None,
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64')),
@@ -160,6 +165,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'specfile': None,
                                            'sign': False,
                                            'type': 'live',
+                                           'release': None,
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -206,6 +212,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                            'specfile': None,
                                            'sign': False,
                                            'type': 'appliance',
+                                           'release': None,
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -236,6 +243,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'specfile': None,
             'type': 'live',
             'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
+            'release': None,
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -272,6 +280,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     archive=False,
                                     specfile=None,
                                     wait=True,
+                                    release=None,
                                     ksurl='https://git.example.com/kickstarts.git?#CAFEBABE')])
 
     @mock.patch('shutil.copy2')
@@ -295,6 +304,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'specfile': None,
             'type': 'appliance',
             'ksurl': None,
+            'release': None,
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -331,6 +341,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     archive=False,
                                     specfile=None,
                                     wait=True,
+                                    release=None,
                                     ksurl=None)])
 
     @mock.patch('shutil.copy2')
