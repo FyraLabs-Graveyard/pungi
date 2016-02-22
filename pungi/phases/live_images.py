@@ -98,78 +98,74 @@ class LiveImagesPhase(PhaseBase):
 
         for variant in self.compose.variants.values():
             for arch in variant.arches + ["src"]:
-                data = get_arch_variant_data(self.compose.conf, "live_images", arch, variant)
-                if not data:
-                    continue
-                data = data[0]
+                for data in get_arch_variant_data(self.compose.conf, "live_images", arch, variant):
+                    iso_dir = self.compose.paths.compose.iso_dir(arch, variant, symlink_to=symlink_isos_to)
+                    if not iso_dir:
+                        continue
 
-                iso_dir = self.compose.paths.compose.iso_dir(arch, variant, symlink_to=symlink_isos_to)
-                if not iso_dir:
-                    continue
+                    cmd = {
+                        "name": None,
+                        "version": None,
+                        "iso_path": None,
+                        "wrapped_rpms_path": iso_dir,
+                        "build_arch": arch,
+                        "ks_file": data['kickstart'],
+                        "ksurl": None,
+                        "specfile": None,
+                        "scratch": False,
+                        "sign": False,
+                        "label": "",  # currently not used
+                    }
 
-                cmd = {
-                    "name": None,
-                    "version": None,
-                    "iso_path": None,
-                    "wrapped_rpms_path": iso_dir,
-                    "build_arch": arch,
-                    "ks_file": data['kickstart'],
-                    "ksurl": None,
-                    "specfile": None,
-                    "scratch": False,
-                    "sign": False,
-                    "label": "",  # currently not used
-                }
+                    if 'ksurl' in data:
+                        cmd['ksurl'] = resolve_git_url(data['ksurl'])
 
-                if 'ksurl' in data:
-                    cmd['ksurl'] = resolve_git_url(data['ksurl'])
+                    cmd["repos"] = []
+                    if not variant.is_empty:
+                        cmd["repos"].append(translate_path(
+                            self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
 
-                cmd["repos"] = []
-                if not variant.is_empty:
-                    cmd["repos"].append(translate_path(
-                        self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
+                    # additional repos
+                    cmd["repos"].extend(data.get("additional_repos", []))
+                    cmd['repos'].extend(self._get_extra_repos(arch, variant, data.get('repos_from', [])))
 
-                # additional repos
-                cmd["repos"].extend(data.get("additional_repos", []))
-                cmd['repos'].extend(self._get_extra_repos(arch, variant, data.get('repos_from', [])))
+                    # Explicit name and version
+                    cmd["name"] = data.get("name", None)
+                    cmd["version"] = data.get("version", None)
 
-                # Explicit name and version
-                cmd["name"] = data.get("name", None)
-                cmd["version"] = data.get("version", None)
+                    cmd['type'] = data.get('type', 'live')
 
-                cmd['type'] = data.get('type', 'live')
+                    # Specfile (for images wrapped in rpm)
+                    cmd["specfile"] = data.get("specfile", None)
 
-                # Specfile (for images wrapped in rpm)
-                cmd["specfile"] = data.get("specfile", None)
+                    # Scratch (only taken in consideration if specfile specified)
+                    # For images wrapped in rpm is scratch disabled by default
+                    # For other images is scratch always on
+                    cmd["scratch"] = data.get("scratch", False)
 
-                # Scratch (only taken in consideration if specfile specified)
-                # For images wrapped in rpm is scratch disabled by default
-                # For other images is scratch always on
-                cmd["scratch"] = data.get("scratch", False)
+                    # Signing of the rpm wrapped image
+                    if not cmd["scratch"] and data.get("sign"):
+                        cmd["sign"] = True
 
-                # Signing of the rpm wrapped image
-                if not cmd["scratch"] and data.get("sign"):
-                    cmd["sign"] = True
+                    format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
+                    # Custom name (prefix)
+                    if cmd["name"]:
+                        custom_iso_name = cmd["name"]
+                        if cmd["version"]:
+                            custom_iso_name += "-%s" % cmd["version"]
+                        format = custom_iso_name + "-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
 
-                format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
-                # Custom name (prefix)
-                if cmd["name"]:
-                    custom_iso_name = cmd["name"]
-                    if cmd["version"]:
-                        custom_iso_name += "-%s" % cmd["version"]
-                    format = custom_iso_name + "-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
+                    # XXX: hardcoded disc_type and disc_num
+                    filename = self.compose.get_image_name(arch, variant, disc_type="live",
+                                                           disc_num=None, format=format)
+                    iso_path = self.compose.paths.compose.iso_path(arch, variant, filename,
+                                                                   symlink_to=symlink_isos_to)
+                    if os.path.isfile(iso_path):
+                        self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
+                        continue
+                    cmd["iso_path"] = iso_path
 
-                # XXX: hardcoded disc_type and disc_num
-                filename = self.compose.get_image_name(arch, variant, disc_type="live",
-                                                       disc_num=None, format=format)
-                iso_path = self.compose.paths.compose.iso_path(arch, variant, filename,
-                                                               symlink_to=symlink_isos_to)
-                if os.path.isfile(iso_path):
-                    self.compose.log_warning("Skipping creating live image, it already exists: %s" % iso_path)
-                    continue
-                cmd["iso_path"] = iso_path
-
-                commands.append((cmd, variant, arch))
+                    commands.append((cmd, variant, arch))
 
         for (cmd, variant, arch) in commands:
             self.pool.add(CreateLiveImageThread(self.pool))

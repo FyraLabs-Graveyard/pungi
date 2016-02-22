@@ -102,6 +102,69 @@ class TestLiveImagesPhase(unittest.TestCase):
                                           'amd64'))])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
+    def test_live_image_build_two_images(self, ThreadPool):
+        compose = _DummyCompose({
+            'live_images': [
+                ('^Client$', {
+                    'amd64': [{
+                        'kickstart': 'test.ks',
+                        'additional_repos': ['http://example.com/repo/'],
+                        'repos_from': ['Everything'],
+                    }, {
+                        'kickstart': 'another.ks',
+                        'additional_repos': ['http://example.com/repo/'],
+                        'repos_from': ['Everything'],
+                    }]
+                })
+            ],
+        })
+
+        phase = LiveImagesPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        self.maxDiff = None
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose,
+                                          {'ks_file': 'test.ks',
+                                           'build_arch': 'amd64',
+                                           'wrapped_rpms_path': '/iso_dir/amd64/Client',
+                                           'scratch': False,
+                                           'repos': ['/repo/amd64/Client',
+                                                     'http://example.com/repo/',
+                                                     '/repo/amd64/Everything'],
+                                           'label': '',
+                                           'name': None,
+                                           'iso_path': '/iso_dir/amd64/Client/image-name',
+                                           'version': None,
+                                           'specfile': None,
+                                           'sign': False,
+                                           'type': 'live',
+                                           'ksurl': None},
+                                          compose.variants['Client'],
+                                          'amd64')),
+                               mock.call((compose,
+                                          {'ks_file': 'another.ks',
+                                           'build_arch': 'amd64',
+                                           'wrapped_rpms_path': '/iso_dir/amd64/Client',
+                                           'scratch': False,
+                                           'repos': ['/repo/amd64/Client',
+                                                     'http://example.com/repo/',
+                                                     '/repo/amd64/Everything'],
+                                           'label': '',
+                                           'name': None,
+                                           'iso_path': '/iso_dir/amd64/Client/image-name',
+                                           'version': None,
+                                           'specfile': None,
+                                           'sign': False,
+                                           'type': 'live',
+                                           'ksurl': None},
+                                          compose.variants['Client'],
+                                          'amd64'))])
+
+    @mock.patch('pungi.phases.live_images.ThreadPool')
     @mock.patch('pungi.phases.live_images.resolve_git_url')
     def test_spin_appliance(self, resolve_git_url, ThreadPool):
         compose = _DummyCompose({
