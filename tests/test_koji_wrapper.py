@@ -56,6 +56,7 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                     'kickstart': 'test-kickstart',
                     'ksurl': 'git://example.com/ks.git',
                     'distro': 'test-distro',
+                    'release': '20160222.0',
                 }
             },
             '/tmp/file'
@@ -78,6 +79,7 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                                mock.call('kickstart = test-kickstart\n'),
                                mock.call('ksurl = git://example.com/ks.git\n'),
                                mock.call('distro = test-distro\n'),
+                               mock.call('release = 20160222.0\n'),
                                mock.call('\n')])
 
     def test_get_image_paths(self):
