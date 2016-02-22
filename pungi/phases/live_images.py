@@ -28,7 +28,7 @@ from productmd.images import Image
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
 from pungi.phases.base import PhaseBase
-from pungi.util import get_arch_variant_data, resolve_git_url
+from pungi.util import get_arch_variant_data, resolve_git_url, makedirs
 from pungi.paths import translate_path
 
 
@@ -129,6 +129,7 @@ class LiveImagesPhase(PhaseBase):
                     elif type == 'appliance':
                         dest_dir = self.compose.paths.compose.image_dir(variant, symlink_to=symlink_isos_to)
                         dest_dir = dest_dir % {'arch': arch}
+                        makedirs(dest_dir)
                     else:
                         raise RuntimeError('Unknown live image type %s' % type)
                     if not dest_dir:
