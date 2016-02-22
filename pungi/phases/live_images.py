@@ -23,6 +23,7 @@ import shutil
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, save_to_file
+from productmd.images import Image
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
@@ -269,14 +270,39 @@ class CreateLiveImageThread(WorkerThread):
                 shutil.copy2(rpm_path, cmd["dest_dir"])
 
         self._write_manifest(destination)
+        self._add_to_images(compose, variant, arch, cmd['type'], self._get_format(image_path), destination)
 
         self.pool.log_info("[DONE ] %s" % msg)
+
+    def _add_to_images(self, compose, variant, arch, type, format, path):
+        """Adds the image to images.json"""
+        img = Image(compose.im)
+        img.type = type
+        img.format = format
+        img.path = os.path.relpath(path, compose.paths.compose.topdir())
+        img.mtime = int(os.stat(path).st_mtime)
+        img.size = os.path.getsize(path)
+        img.arch = arch
+        img.disc_number = 1     # We don't expect multiple disks
+        img.disc_count = 1
+        img.bootable = True
+        compose.im.add(variant=variant.uid, arch=arch, image=img)
 
     def _is_image(self, path):
         for ext in ('.iso', '.raw.xz'):
             if path.endswith(ext):
                 return True
         return False
+
+    def _get_format(self, path):
+        """Extract all extensions from the path."""
+        exts = []
+        while True:
+            path, ext = os.path.splitext(path)
+            if not ext:
+                break
+            exts.append(ext.lstrip('.'))
+        return '.'.join(reversed(exts))
 
     def _write_manifest(self, iso_path):
         """Generate manifest for ISO at given path.

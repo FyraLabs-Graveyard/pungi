@@ -22,24 +22,20 @@ class _DummyCompose(object):
         self.conf = config
         self.paths = mock.Mock(
             compose=mock.Mock(
+                topdir=mock.Mock(return_value='/top'),
                 repository=mock.Mock(
                     side_effect=lambda arch, variant, create_dir=False: os.path.join('/repo', arch, variant.uid)
                 ),
                 iso_dir=mock.Mock(
                     side_effect=lambda arch, variant, symlink_to: os.path.join(
-                        '/iso_dir', arch, variant.uid
+                        '/top/iso_dir', arch, variant.uid
                     )
                 ),
                 image_dir=mock.Mock(
                     side_effect=lambda variant, symlink_to: os.path.join(
-                        '/image_dir/%(arch)s', variant.uid
+                        '/top/image_dir/%(arch)s', variant.uid
                     )
                 ),
-                iso_path=mock.Mock(
-                    side_effect=lambda arch, variant, filename, symlink_to: os.path.join(
-                        '/iso_dir', arch, variant.uid, filename
-                    )
-                )
             ),
             log=mock.Mock(
                 log_file=mock.Mock(return_value='/a/b/log/log_file')
@@ -53,6 +49,7 @@ class _DummyCompose(object):
         }
         self.log_error = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
+        self.im = mock.Mock()
 
     def get_arches(self):
         return ['x86_64', 'amd64']
@@ -93,7 +90,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/iso_dir/amd64/Client',
+                                           'dest_dir': '/top/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -137,7 +134,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/iso_dir/amd64/Client',
+                                           'dest_dir': '/top/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -183,7 +180,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/iso_dir/amd64/Client',
+                                           'dest_dir': '/top/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -202,7 +199,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                                mock.call((compose,
                                           {'ks_file': 'another.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/iso_dir/amd64/Client',
+                                           'dest_dir': '/top/iso_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -249,7 +246,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                               [mock.call((compose,
                                           {'ks_file': 'test.ks',
                                            'build_arch': 'amd64',
-                                           'dest_dir': '/image_dir/amd64/Client',
+                                           'dest_dir': '/top/image_dir/amd64/Client',
                                            'scratch': False,
                                            'repos': ['/repo/amd64/Client',
                                                      'http://example.com/repo/',
@@ -271,16 +268,17 @@ class TestLiveImagesPhase(unittest.TestCase):
 
 class TestCreateLiveImageThread(unittest.TestCase):
 
+    @mock.patch('pungi.phases.live_images.Image')
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
-    def test_process(self, KojiWrapper, run, copy2):
+    def test_process(self, KojiWrapper, run, copy2, Image):
         compose = _DummyCompose({'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
             'build_arch': 'amd64',
-            'dest_dir': '/iso_dir/amd64/Client',
+            'dest_dir': '/top/iso_dir/amd64/Client',
             'scratch': False,
             'repos': ['/repo/amd64/Client',
                       'http://example.com/repo/',
@@ -305,17 +303,21 @@ class TestCreateLiveImageThread(unittest.TestCase):
         koji_wrapper.get_image_path.return_value = ['/path/to/image.iso']
 
         t = CreateLiveImageThread(pool)
-        with mock.patch('time.sleep'):
-            t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
+        with mock.patch('os.stat') as stat:
+            with mock.patch('os.path.getsize') as getsize:
+                with mock.patch('time.sleep'):
+                    getsize.return_value = 1024
+                    stat.return_value.st_mtime = 13579
+                    t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image.iso', '/iso_dir/amd64/Client/image-name')])
+                         [mock.call('/path/to/image.iso', '/top/iso_dir/amd64/Client/image-name')])
 
         write_manifest_cmd = ' && '.join([
-            'cd /iso_dir/amd64/Client',
+            'cd /top/iso_dir/amd64/Client',
             'isoinfo -R -f -i image-name | grep -v \'/TRANS.TBL$\' | sort >> image-name.manifest'
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
@@ -331,17 +333,29 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     wait=True,
                                     release=None,
                                     ksurl='https://git.example.com/kickstarts.git?#CAFEBABE')])
+        self.assertEqual(Image.return_value.type, 'live')
+        self.assertEqual(Image.return_value.format, 'iso')
+        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image-name')
+        self.assertEqual(Image.return_value.size, 1024)
+        self.assertEqual(Image.return_value.mtime, 13579)
+        self.assertEqual(Image.return_value.arch, 'amd64')
+        self.assertEqual(Image.return_value.disc_number, 1)
+        self.assertEqual(Image.return_value.disc_count, 1)
+        self.assertTrue(Image.return_value.bootable)
+        self.assertEqual(compose.im.add.mock_calls,
+                         [mock.call(variant='Client', arch='amd64', image=Image.return_value)])
 
+    @mock.patch('pungi.phases.live_images.Image')
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
-    def test_process_no_rename(self, KojiWrapper, run, copy2):
+    def test_process_no_rename(self, KojiWrapper, run, copy2, Image):
         compose = _DummyCompose({'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
             'build_arch': 'amd64',
-            'dest_dir': '/iso_dir/amd64/Client',
+            'dest_dir': '/top/iso_dir/amd64/Client',
             'scratch': False,
             'repos': ['/repo/amd64/Client',
                       'http://example.com/repo/',
@@ -366,17 +380,25 @@ class TestCreateLiveImageThread(unittest.TestCase):
         koji_wrapper.get_image_path.return_value = ['/path/to/image.iso']
 
         t = CreateLiveImageThread(pool)
-        with mock.patch('time.sleep'):
-            t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
+        with mock.patch('os.stat') as stat:
+            with mock.patch('os.path.getsize') as getsize:
+                getsize.return_value = 1024
+                getsize.return_value = 1024
+                getsize.return_value = 1024
+                getsize.return_value = 1024
+                with mock.patch('time.sleep'):
+                    getsize.return_value = 1024
+                    stat.return_value.st_mtime = 13579
+                    t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image.iso', '/iso_dir/amd64/Client/image.iso')])
+                         [mock.call('/path/to/image.iso', '/top/iso_dir/amd64/Client/image.iso')])
 
         write_manifest_cmd = ' && '.join([
-            'cd /iso_dir/amd64/Client',
+            'cd /top/iso_dir/amd64/Client',
             'isoinfo -R -f -i image.iso | grep -v \'/TRANS.TBL$\' | sort >> image.iso.manifest'
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
@@ -393,16 +415,29 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     release=None,
                                     ksurl='https://git.example.com/kickstarts.git?#CAFEBABE')])
 
+        self.assertEqual(Image.return_value.type, 'live')
+        self.assertEqual(Image.return_value.format, 'iso')
+        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image.iso')
+        self.assertEqual(Image.return_value.size, 1024)
+        self.assertEqual(Image.return_value.mtime, 13579)
+        self.assertEqual(Image.return_value.arch, 'amd64')
+        self.assertEqual(Image.return_value.disc_number, 1)
+        self.assertEqual(Image.return_value.disc_count, 1)
+        self.assertTrue(Image.return_value.bootable)
+        self.assertEqual(compose.im.add.mock_calls,
+                         [mock.call(variant='Client', arch='amd64', image=Image.return_value)])
+
+    @mock.patch('pungi.phases.live_images.Image')
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
-    def test_process_applicance(self, KojiWrapper, run, copy2):
+    def test_process_applicance(self, KojiWrapper, run, copy2, Image):
         compose = _DummyCompose({'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
             'build_arch': 'amd64',
-            'dest_dir': '/iso_dir/amd64/Client',
+            'dest_dir': '/top/iso_dir/amd64/Client',
             'scratch': False,
             'repos': ['/repo/amd64/Client',
                       'http://example.com/repo/',
@@ -424,20 +459,24 @@ class TestCreateLiveImageThread(unittest.TestCase):
             'output': 'some output',
             'task_id': 123
         }
-        koji_wrapper.get_image_path.return_value = ['/path/to/image.iso']
+        koji_wrapper.get_image_path.return_value = ['/path/to/image.raw.xz']
 
         t = CreateLiveImageThread(pool)
-        with mock.patch('time.sleep'):
-            t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
+        with mock.patch('os.stat') as stat:
+            with mock.patch('os.path.getsize') as getsize:
+                with mock.patch('time.sleep'):
+                    getsize.return_value = 1024
+                    stat.return_value.st_mtime = 13579
+                    t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...', log_file='/a/b/log/log_file')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image.iso', '/iso_dir/amd64/Client/image-name')])
+                         [mock.call('/path/to/image.raw.xz', '/top/iso_dir/amd64/Client/image-name')])
 
         write_manifest_cmd = ' && '.join([
-            'cd /iso_dir/amd64/Client',
+            'cd /top/iso_dir/amd64/Client',
             'isoinfo -R -f -i image-name | grep -v \'/TRANS.TBL$\' | sort >> image-name.manifest'
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
@@ -454,6 +493,18 @@ class TestCreateLiveImageThread(unittest.TestCase):
                                     release=None,
                                     ksurl=None)])
 
+        self.assertEqual(Image.return_value.type, 'appliance')
+        self.assertEqual(Image.return_value.format, 'raw.xz')
+        self.assertEqual(Image.return_value.path, 'iso_dir/amd64/Client/image-name')
+        self.assertEqual(Image.return_value.size, 1024)
+        self.assertEqual(Image.return_value.mtime, 13579)
+        self.assertEqual(Image.return_value.arch, 'amd64')
+        self.assertEqual(Image.return_value.disc_number, 1)
+        self.assertEqual(Image.return_value.disc_count, 1)
+        self.assertTrue(Image.return_value.bootable)
+        self.assertEqual(compose.im.add.mock_calls,
+                         [mock.call(variant='Client', arch='amd64', image=Image.return_value)])
+
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
@@ -466,7 +517,7 @@ class TestCreateLiveImageThread(unittest.TestCase):
         cmd = {
             'ks_file': '/path/to/ks_file',
             'build_arch': 'amd64',
-            'dest_dir': '/iso_dir/amd64/Client',
+            'dest_dir': '/top/iso_dir/amd64/Client',
             'scratch': False,
             'repos': ['/repo/amd64/Client',
                       'http://example.com/repo/',
@@ -503,14 +554,14 @@ class TestCreateLiveImageThread(unittest.TestCase):
         cmd = {
             'ks_file': '/path/to/ks_file',
             'build_arch': 'amd64',
-            'dest_dir': '/iso_dir/amd64/Client',
+            'dest_dir': '/top/iso_dir/amd64/Client',
             'scratch': False,
             'repos': ['/repo/amd64/Client',
                       'http://example.com/repo/',
                       '/repo/amd64/Everything'],
             'label': '',
             'name': None,
-            'iso_path': '/iso_dir/amd64/Client/image-name',
+            'filename': 'image-name',
             'version': None,
             'specfile': None,
             'ksurl': None,
