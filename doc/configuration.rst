@@ -680,7 +680,7 @@ Live Images Settings
       * ``name`` (*str*)
       * ``version`` (*str*)
       * ``additional_repos`` (*list*) -- external repos specified by URL
-      * ``repos_from`` (*list*) -- repos from other variants
+      * ``repo_from`` (*list*) -- repos from other variants
       * ``specfile`` (*str*) -- for images wrapped in RPM
       * ``scratch`` (*bool*) -- only RPM-wrapped images can use scratch builds,
         but by default this is turned off

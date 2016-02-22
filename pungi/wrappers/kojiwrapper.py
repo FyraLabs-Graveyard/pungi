@@ -165,7 +165,9 @@ class KojiWrapper(object):
 
         return cmd
 
-    def get_create_image_cmd(self, name, version, target, arch, ks_file, repos, image_type="live", image_format=None, release=None, wait=True, archive=False, specfile=None, ksurl=None):
+    def get_create_image_cmd(self, name, version, target, arch, ks_file, repos,
+                             image_type="live", image_format=None, release=None,
+                             wait=True, archive=False, specfile=None, ksurl=None):
         # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
         # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>
         # Examples:

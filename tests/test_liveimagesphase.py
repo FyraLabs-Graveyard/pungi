@@ -70,7 +70,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                     'amd64': {
                         'kickstart': 'test.ks',
                         'additional_repos': ['http://example.com/repo/'],
-                        'repos_from': ['Everything'],
+                        'repo_from': ['Everything'],
                         'release': None,
                     }
                 })
@@ -113,11 +113,11 @@ class TestLiveImagesPhase(unittest.TestCase):
                     'amd64': [{
                         'kickstart': 'test.ks',
                         'additional_repos': ['http://example.com/repo/'],
-                        'repos_from': ['Everything'],
+                        'repo_from': ['Everything'],
                     }, {
                         'kickstart': 'another.ks',
                         'additional_repos': ['http://example.com/repo/'],
-                        'repos_from': ['Everything'],
+                        'repo_from': ['Everything'],
                     }]
                 })
             ],
@@ -180,7 +180,7 @@ class TestLiveImagesPhase(unittest.TestCase):
                         'kickstart': 'test.ks',
                         'ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
                         'additional_repos': ['http://example.com/repo/'],
-                        'repos_from': ['Everything'],
+                        'repo_from': ['Everything'],
                         'type': 'appliance',
                     }
                 })

@@ -133,7 +133,7 @@ class LiveImagesPhase(PhaseBase):
 
                     # additional repos
                     cmd["repos"].extend(data.get("additional_repos", []))
-                    cmd['repos'].extend(self._get_extra_repos(arch, variant, data.get('repos_from', [])))
+                    cmd['repos'].extend(self._get_extra_repos(arch, variant, data.get('repo_from', [])))
 
                     # Explicit name and version
                     cmd["name"] = data.get("name", None)
