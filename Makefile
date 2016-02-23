@@ -21,8 +21,10 @@ help:
 	@echo " clean                   remove python bytecode and temp files"
 	@echo " doc                     build documentation"
 	@echo " install                 install program on current system"
-	@echo " test-data               build test data (requirement for running tests)"
 	@echo " test                    run tests"
+	@echo " test-coverage           run tests and generate a coverage report"
+	@echo " test-compose            run a small teest compose (requires test data)"
+	@echo " test-data               build test data (requirement for running tests)"
 	@echo
 	@echo "Available rel-eng targets are:"
 	@echo " archive                 create source tarball"
@@ -91,13 +93,16 @@ clean:
 
 
 test:
-	python2 setup.py test
-	python3 setup.py test
+	nosetests --exe
 
+test-coverage:
+	nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 
 test-data:
 	./tests/data/specs/build.sh
 
+test-compose:
+	cd tests && ./test_compose.sh
 
 doc:
 	cd doc; make html
