@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.5
+Version:        4.1.0
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -65,6 +65,9 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Tue Feb 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.0-1
+- repoint master at 4.1.x and new feature development
+
 * Tue Feb 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.5-1
 - [tests] Fix wrong checks in buildinstall tests (lsedlar)
 - [tests] Use temporary files for buildinstall (lsedlar)
