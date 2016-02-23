@@ -3,6 +3,7 @@
 
 import mock
 import unittest
+import tempfile
 
 import os
 import sys
@@ -14,6 +15,7 @@ from pungi.wrappers.kojiwrapper import KojiWrapper
 
 class KojiWrapperBaseTestCase(unittest.TestCase):
     def setUp(self):
+        _, self.tmpfile = tempfile.mkstemp()
         self.koji_profile = mock.Mock()
         with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
             koji.get_profile_module = mock.Mock(
@@ -28,10 +30,12 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
             self.koji_profile = koji.get_profile_module.return_value
             self.koji = KojiWrapper('koji')
 
+    def tearDown(self):
+        os.remove(self.tmpfile)
+
 
 class KojiWrapperTest(KojiWrapperBaseTestCase):
-    @mock.patch('pungi.wrappers.kojiwrapper.open')
-    def test_get_image_build_cmd_without_required_data(self, mock_open):
+    def test_get_image_build_cmd_without_required_data(self):
         with self.assertRaises(AssertionError):
             self.koji.get_image_build_cmd(
                 {
@@ -39,11 +43,10 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                         'name': 'test-name',
                     }
                 },
-                '/tmp/file'
+                self.tmpfile
             )
 
-    @mock.patch('pungi.wrappers.kojiwrapper.open')
-    def test_get_image_build_cmd_correct(self, mock_open):
+    def test_get_image_build_cmd_correct(self):
         cmd = self.koji.get_image_build_cmd(
             {
                 'image-build': {
@@ -59,28 +62,28 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                     'release': '20160222.0',
                 }
             },
-            '/tmp/file'
+            self.tmpfile
         )
 
         self.assertEqual(cmd[0], 'koji')
         self.assertEqual(cmd[1], 'image-build')
         self.assertItemsEqual(cmd[2:],
-                              ['--config=/tmp/file', '--wait'])
+                              ['--config=' + self.tmpfile, '--wait'])
 
-        output = mock_open.return_value
-        self.assertEqual(mock.call('[image-build]\n'), output.write.mock_calls[0])
-        self.assertItemsEqual(output.write.mock_calls[1:],
-                              [mock.call('name = test-name\n'),
-                               mock.call('version = 1\n'),
-                               mock.call('target = test-target\n'),
-                               mock.call('install_tree = /tmp/test/install_tree\n'),
-                               mock.call('arches = x86_64\n'),
-                               mock.call('format = docker,qcow2\n'),
-                               mock.call('kickstart = test-kickstart\n'),
-                               mock.call('ksurl = git://example.com/ks.git\n'),
-                               mock.call('distro = test-distro\n'),
-                               mock.call('release = 20160222.0\n'),
-                               mock.call('\n')])
+        with open(self.tmpfile, 'r') as f:
+            lines = f.read().strip().split('\n')
+        self.assertEqual(lines[0], '[image-build]')
+        self.assertItemsEqual(lines[1:],
+                              ['name = test-name',
+                               'version = 1',
+                               'target = test-target',
+                               'install_tree = /tmp/test/install_tree',
+                               'arches = x86_64',
+                               'format = docker,qcow2',
+                               'kickstart = test-kickstart',
+                               'ksurl = git://example.com/ks.git',
+                               'distro = test-distro',
+                               'release = 20160222.0'])
 
     def test_get_image_paths(self):
 
