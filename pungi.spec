@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.4
+Version:        4.0.5
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -7,6 +7,7 @@ Group:          Development/Tools
 License:        GPLv2
 URL:            https://fedorahosted.org/pungi
 Source0:        https://fedorahosted.org/pungi/attachment/wiki/%{version}/%{name}-%{version}.tar.bz2
+BuildRequires:  python-nose, python-nose-cov, python-mock
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
 Requires:       lorax >= 22.1
@@ -56,7 +57,149 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/pungi
 /var/cache/pungi
 
+%check
+./tests/data/specs/build.sh
+python2 setup.py test
+nosetests --exe --with-cov --cov-report html --cov-config tox.ini
+#TODO: enable compose test
+#cd tests && ./test_compose.sh
+
 %changelog
+* Tue Feb 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.5-1
+- [tests] Fix wrong checks in buildinstall tests (lsedlar)
+- [tests] Use temporary files for buildinstall (lsedlar)
+- [tests] Do not mock open for koji wrapper tests (lsedlar)
+- Merge #179 `Update makefile targets for testing` (ausil)
+- Update makefile targets for testing (lsedlar)
+- [live-images] Set type to raw-xz for appliances (lsedlar)
+- [live-images] Correctly create format (lsedlar)
+- [tests] Dummy compose is no longer private (lsedlar)
+- [tests] Move buildinstall tests to new infrastructure (lsedlar)
+- [tests] Use real paths module in testing (lsedlar)
+- [tests] Move dummy testing compose into separate module (lsedlar)
+- [live-images] Create image dir if needed (lsedlar)
+- [live-images] Add images to manifest (lsedlar)
+- [live-images] Fix path processing (lsedlar)
+- [live-images] Move repo calculation to separate method (lsedlar)
+- [koji-wrapper] Fix getting results from spin-appliance (lsedlar)
+- [live-images] Filter non-image results (lsedlar)
+- [live-images] Rename repos_from to repo_from (lsedlar)
+- [koji-wrapper] Add test for passing release to image-build (lsedlar)
+- [live-images] Automatically populate release with date and respin (lsedlar)
+- [live-media] Respect release set in configuration (lsedlar)
+- [live-images] Build all images specified in config (lsedlar)
+- [live-media] Don't create $basedir arch (lsedlar)
+- Update tests (lsedlar)
+- do not ad to image build and live tasks the variant if it is empty (dennis)
+- when a variant is empty do not add it to the repolist for livemedia (dennis)
+- [live-media] Update tests to use $basearch (lsedlar)
+- [buildinstall] Don't run lorax for empty variants (lsedlar)
+- Merge #159 `use $basearch not $arch in livemedia tasks` (lubomir.sedlar)
+- Merge #158 `do not uses pipes.quotes in livemedia tasks` (lubomir.sedlar)
+- Add documentation for signing support that was added by previous commit
+  (tmlcoch)
+- Support signing of rpm wrapped live images (tmlcoch)
+- Fix terminology - Koji uses sigkey not level (tmlcoch)
+- use $basearch not $arch in livemedia tasks (dennis)
+- do not uses pipes.quotes in livemedia tasks (dennis)
+- [live-images] Don't tweak kickstarts (lsedlar)
+- Allow specifying empty variants (lsedlar)
+- [createrepo] Remove dead assignments (lsedlar)
+- Keep empty query string in resolved git url (lsedlar)
+- [image-build] Use dashes as arch separator in log (lsedlar)
+- [buildinstall] Stop parsing task_id (lsedlar)
+- [koji-wrapper] Get task id from failed runroot (lsedlar)
+- [live-media] Pass ksurl to koji (lsedlar)
+- Merge #146 `[live-media] Properly calculate iso dir` (ausil)
+- [live-media] Properly calculate iso dir (lsedlar)
+- [image-build] Fix tests (lsedlar)
+- add image-build sections (lkocman)
+- [koji-wrapper] Add tests for get_create_image_cmd (lsedlar)
+- [live-images] Add support for spin-appliance (lsedlar)
+- [live-media] Koji option is ksfile, not kickstart (lsedlar)
+- [live-media] Use install tree from another variant (lsedlar)
+- [live-media] Put images into iso dir (lsedlar)
+- [image-build] Koji expects arches as a comma separated string (lsedlar)
+- Merge #139 `Log more details when any deliverable fails` (ausil)
+- [live-media] Version is required argument (lsedlar)
+- [koji-wrapper] Only parse output on success (lsedlar)
+- [koji-wrapper] Add tests for runroot wrapper (lsedlar)
+- [buildinstall] Improve logging (lsedlar)
+- Log more details about failed deliverable (lsedlar)
+- [image-build] Fix failable tests (lsedlar)
+- Merge #135 `Add live media support` (ausil)
+- Merge #133 `media_split: add logger support. Helps with debugging space
+  issues on dvd media` (ausil)
+- [live-media] Add live media phase (lsedlar)
+- [koji-wrapper] Add support for spin-livemedia (lsedlar)
+- [koji-wrapper] Use more descriptive method names (lsedlar)
+- [image-build] Remove dead code (lsedlar)
+- media_split: add logger support. Helps with debugging space issues on dvd
+  media (lkocman)
+- [image-build] Allow running image build scratch tasks (lsedlar)
+- [image-build] Allow dynamic release for images (lsedlar)
+
+* Wed Jan 20 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.4-1
+- 4.0.4 release (dennis)
+- Merge #123 `Live images: add repo from another variant` (ausil)
+- Merge #125 `[image-build] Stop creating wrong arch dirs` (ausil)
+- Toggle multilib per variant (lsedlar)
+- [live-images] Code cleanup (lsedlar)
+- [live-images] Add documentation (lsedlar)
+- [live-images] Add repos from other variants (lsedlar)
+- [image-build] Stop creating wrong arch dirs (lsedlar)
+- Enable identifying variants in exception traces (lsedlar)
+- Store which deliverables failed (lsedlar)
+- scm.py: use git clone instead git archive for http(s):// (lkocman)
+- Fix filtering of system release packages (lsedlar)
+- Merge #114 `Use install tree/repo from another variant for image build`
+  (ausil)
+- Make system release package filtering optional (lsedlar)
+- [image-build] Optionally do not break whole compose (lsedlar)
+- [image-build] Refactoring (lsedlar)
+- [image-build] Use repo from another variant (lsedlar)
+- [image-build] Take install tree from another variant (lsedlar)
+- Add missing formats to volumeid and image name (lsedlar)
+- [image-build] Use single koji task per variant (lsedlar)
+- Fix image-build modifying config (lsedlar)
+- Fix missing checksums in .treeinfo (lsedlar)
+- Don't crash on generating volid without variant (lsedlar)
+- Merge #99 `Add option to specify non-failing stuff` (ausil)
+- Add repo from current compose (lsedlar)
+- Fix getting compose topdir in CreateImage build thread (lsedlar)
+- Add option to specify non-failing stuff (lsedlar)
+- Allow customizing image name and volume id (lsedlar)
+- Fix notifier tests (lsedlar)
+- Publish a url instead of a file path. (rbean)
+- Add 'topdir' to all fedmsg/notifier messages. (rbean)
+- Merge #75 `Start of development guide` (ausil)
+- Merge #88 `Resolve HEAD in ksurl to actual hash` (ausil)
+- Merge #87 `Add support for customizing lorax options` (ausil)
+- Update fedmsg notification hook to use appropriate config. (rbean)
+- we need to ensure that we send all the tasks to koji on the correct arch
+  (dennis)
+- Resolve HEAD in ksurl to actual hash (lsedlar)
+- Add support for customizing lorax options (lsedlar)
+- Run lorax in separate dirs for each variant (lsedlar)
+- Merge #84 `Allow specifying --installpkgs for lorax` (ausil)
+- Merge #83 `Fix recently discovered bugs` (ausil)
+- Merge #82 `indentation fixs correcting dvd creation` (ausil)
+- Merge #69 `Move messaging into cli options and simplify it` (ausil)
+- Start lorax for each variant separately (lsedlar)
+- Update lorax wrapper to use --installpkgs (lsedlar)
+- Allow specifying which packages to install in variants xml (lsedlar)
+- Add basic tests for buildinstall phase (lsedlar)
+- Fix generating checksum files (lsedlar)
+- Use lowercase hashed directories (lsedlar)
+- indentation fixs correcting dvd creation (dennis)
+- remove glibc32 from the runroot tasks (dennis)
+- fix up the pungi-fedmesg-notification script name (dennis)
+- Add overview of Pungi to documentation (lsedlar)
+- Move messaging into cli options (lsedlar)
+- Extend contributing guide (lsedlar)
+- Load multilib configuration from local dir in development (lsedlar)
+- Allow running scripts with any python in PATH (lsedlar)
+
 * Tue Sep 08 2015 Dennis Gilmore <dennis@ausil.us> - 4.0.3-1
 - Merge #54 `fix log_info for image_build (fails if image_build is skipped)`
   (lkocman)
