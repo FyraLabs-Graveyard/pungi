@@ -135,22 +135,25 @@ Currently the development workflow for Pungi is on master branch:
 Testing
 =======
 
-You must write unit tests for any code but trivial changes. Any code without
-sufficient test coverage may not be merged.
+You must write unit tests for any new code (except for trivial changes). Any
+code without sufficient test coverage may not be merged.
 
 To run all existing tests, suggested method is to use *nosetests*. With
 additional options, it can generate code coverage. To make sure even tests from
 executable files are run, don't forget to use the ``--exe`` option. ::
 
-    $ nosetests --exe
-    $ nosetests --exe --with-cov --cov pungi --cov-report html
+    $ make test
+    $ make test-cover
 
     # Running single test file
-    $ nosetests --exe test_arch
+    $ python tests/test_arch.py [TestCase...]
 
 In the ``tests/`` directory there is a shell script ``test_compose.sh`` that
 you can use to try and create a miniature compose on dummy data. The actual
-data will be created by running ``make test-data`` in project root.
+data will be created by running ``make test-data`` in project root. ::
+
+    $ make test-data
+    $ make test-commpose
 
 This testing compose does not actually use all phases that are available, and
 there is no checking that the result is correct. It only tells you whether it
