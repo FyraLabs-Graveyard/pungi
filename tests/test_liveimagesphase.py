@@ -409,7 +409,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'output': 'some output',
             'task_id': 123
         }
-        koji_wrapper.get_image_path.return_value = ['/path/to/image.raw.xz']
+        koji_wrapper.get_image_path.return_value = ['/path/to/image-a.b-sda.raw.xz']
 
         t = CreateLiveImageThread(pool)
         with mock.patch('pungi.phases.live_images.get_file_size') as get_file_size:
@@ -424,7 +424,7 @@ class TestCreateLiveImageThread(PungiTestCase):
                                     log_file=self.topdir + '/logs/amd64/createiso-None-None-None.amd64.log')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
-                         [mock.call('/path/to/image.raw.xz', self.topdir + '/compose/Client/amd64/iso/image-name')])
+                         [mock.call('/path/to/image-a.b-sda.raw.xz', self.topdir + '/compose/Client/amd64/iso/image-name')])
 
         write_manifest_cmd = ' && '.join([
             'cd ' + self.topdir + '/compose/Client/amd64/iso',

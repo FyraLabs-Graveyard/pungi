@@ -197,6 +197,8 @@ class LiveImagesPhase(PhaseBase):
 
 
 class CreateLiveImageThread(WorkerThread):
+    EXTS = ('.iso', '.raw.xz')
+
     def process(self, item, num):
         compose, cmd, variant, arch = item
         try:
@@ -290,20 +292,17 @@ class CreateLiveImageThread(WorkerThread):
         compose.im.add(variant=variant.uid, arch=arch, image=img)
 
     def _is_image(self, path):
-        for ext in ('.iso', '.raw.xz'):
+        for ext in self.EXTS:
             if path.endswith(ext):
                 return True
         return False
 
     def _get_format(self, path):
-        """Extract all extensions from the path."""
-        exts = []
-        while True:
-            path, ext = os.path.splitext(path)
-            if not ext:
-                break
-            exts.append(ext.lstrip('.'))
-        return '.'.join(reversed(exts))
+        """Get format based on extension."""
+        for ext in self.EXTS:
+            if path.endswith(ext):
+                return ext[1:]
+        raise RuntimeError('Getting format for unknown image %s' % path)
 
     def _write_manifest(self, iso_path):
         """Generate manifest for ISO at given path.
