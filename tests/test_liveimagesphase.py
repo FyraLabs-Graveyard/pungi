@@ -444,7 +444,7 @@ class TestCreateLiveImageThread(PungiTestCase):
                                     release=None,
                                     ksurl=None)])
 
-        self.assertEqual(Image.return_value.type, 'appliance')
+        self.assertEqual(Image.return_value.type, 'raw-xz')
         self.assertEqual(Image.return_value.format, 'raw.xz')
         self.assertEqual(Image.return_value.path, 'Client/amd64/iso/image-name')
         self.assertEqual(Image.return_value.size, 1024)

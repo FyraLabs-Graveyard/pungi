@@ -280,7 +280,7 @@ class CreateLiveImageThread(WorkerThread):
     def _add_to_images(self, compose, variant, arch, type, format, path):
         """Adds the image to images.json"""
         img = Image(compose.im)
-        img.type = type
+        img.type = 'raw-xz' if type == 'appliance' else type
         img.format = format
         img.path = os.path.relpath(path, compose.paths.compose.topdir())
         img.mtime = get_mtime(path)
