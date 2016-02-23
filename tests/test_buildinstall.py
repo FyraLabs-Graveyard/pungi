@@ -379,10 +379,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
-    @mock.patch('pungi.phases.buildinstall.open')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_buildinstall_thread_with_lorax_in_runroot(self, run, mock_open,
-                                                       get_buildroot_rpms, KojiWrapperMock):
+    def test_buildinstall_thread_with_lorax_in_runroot(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
             'runroot': True,
@@ -414,16 +412,14 @@ class BuildinstallThreadTestCase(PungiTestCase):
                        use_shell=True, task_id=True,
                        packages=['strace', 'lorax'], mounts=[self.topdir])])
         run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall-Server.x86_64.log')
-        self.assertItemsEqual(
-            mock_open.return_value.write.mock_calls,
-            [mock.call('bash\nzsh')])
+        with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
+            rpms = f.read().strip().split('\n')
+        self.assertItemsEqual(rpms, ['bash', 'zsh'])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
-    @mock.patch('pungi.phases.buildinstall.open')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_buildinstall_thread_with_buildinstall_in_runroot(self, run, mock_open,
-                                                              get_buildroot_rpms, KojiWrapperMock):
+    def test_buildinstall_thread_with_buildinstall_in_runroot(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
             'runroot': True,
@@ -456,16 +452,14 @@ class BuildinstallThreadTestCase(PungiTestCase):
                        packages=['strace', 'anaconda'], mounts=[self.topdir])])
         run_runroot_cmd(get_runroot_cmd.return_value,
                         log_file=self.topdir + '/logs/buildinstall.x86_64.log')
-        self.assertItemsEqual(
-            mock_open.return_value.write.mock_calls,
-            [mock.call('bash\nzsh')])
+        with open(self.topdir + '/logs/x86_64/buildinstall-RPMs.x86_64.log') as f:
+            rpms = f.read().strip().split('\n')
+        self.assertItemsEqual(rpms, ['bash', 'zsh'])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
-    @mock.patch('pungi.phases.buildinstall.open')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_buildinstall_fail_exit_code(self, run, mock_open,
-                                         get_buildroot_rpms, KojiWrapperMock):
+    def test_buildinstall_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
             'runroot': True,
@@ -500,10 +494,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
-    @mock.patch('pungi.phases.buildinstall.open')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_lorax_fail_exit_code(self, run, mock_open,
-                                  get_buildroot_rpms, KojiWrapperMock):
+    def test_lorax_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
             'runroot': True,
