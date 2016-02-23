@@ -411,7 +411,10 @@ class BuildinstallThreadTestCase(PungiTestCase):
             [mock.call('rrt', 'x86_64', cmd, channel=None,
                        use_shell=True, task_id=True,
                        packages=['strace', 'lorax'], mounts=[self.topdir])])
-        run_runroot_cmd(get_runroot_cmd.return_value, log_file='/log/buildinstall-Server.x86_64.log')
+        self.assertItemsEqual(
+            run_runroot_cmd.mock_calls,
+            [mock.call(get_runroot_cmd.return_value,
+                       log_file=self.topdir + '/logs/x86_64/buildinstall-Server.x86_64.log')])
         with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
@@ -450,8 +453,10 @@ class BuildinstallThreadTestCase(PungiTestCase):
             [mock.call('rrt', 'x86_64', cmd, channel=None,
                        use_shell=True, task_id=True,
                        packages=['strace', 'anaconda'], mounts=[self.topdir])])
-        run_runroot_cmd(get_runroot_cmd.return_value,
-                        log_file=self.topdir + '/logs/buildinstall.x86_64.log')
+        self.assertItemsEqual(
+            run_runroot_cmd.mock_calls,
+            [mock.call(get_runroot_cmd.return_value,
+                       log_file=self.topdir + '/logs/x86_64/buildinstall.x86_64.log')])
         with open(self.topdir + '/logs/x86_64/buildinstall-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
