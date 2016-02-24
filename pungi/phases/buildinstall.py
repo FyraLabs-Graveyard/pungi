@@ -165,6 +165,9 @@ class BuildinstallPhase(PhaseBase):
         kickstart_file = get_kickstart_file(self.compose)
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch, types=["self", "variant"]):
+                if variant.is_empty:
+                    continue
+
                 buildinstall_dir = self.compose.paths.work.buildinstall_dir(arch)
 
                 # Lorax runs per-variant, so we need to tweak the source path
