@@ -154,7 +154,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                      }))])
 
 
-class TestCreateImageBuildThread(PungiTestCase):
+class TestLiveMediaThread(PungiTestCase):
 
     @mock.patch('pungi.phases.livemedia_phase.get_mtime')
     @mock.patch('pungi.phases.livemedia_phase.get_file_size')
