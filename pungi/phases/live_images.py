@@ -22,7 +22,7 @@ import pipes
 import shutil
 
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run, save_to_file
+from kobo.shortcuts import run, save_to_file, force_list
 from productmd.images import Image
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -106,7 +106,7 @@ class LiveImagesPhase(PhaseBase):
 
         # additional repos
         repos.extend(data.get("additional_repos", []))
-        repos.extend(self._get_extra_repos(arch, variant, data.get('repo_from', [])))
+        repos.extend(self._get_extra_repos(arch, variant, force_list(data.get('repo_from', []))))
         return repos
 
     def _get_release(self, image_conf):
