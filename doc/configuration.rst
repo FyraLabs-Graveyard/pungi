@@ -289,6 +289,32 @@ Example
         signing_key_password_file = '~/password_for_fedora-24_key'
 
 
+Git URLs
+========
+
+In multiple places the config requires URL of a Git repository to download
+kickstart file from. This URL is passed on to *Koji*. It is possible to which
+commit to use using this syntax: ::
+
+    git://git.example.com/git/repo-name.git?#<rev_spec>
+
+The ``<rev_spec>`` pattern can be replaced with actual commit SHA, a tag name,
+``HEAD`` to indicate that tip of default branch should be used or
+``origin/<branch_name>`` to use tip of arbitrary branch.
+
+If the URL specifies a branch or ``HEAD``, *Pungi* will replace it with the
+actual commit SHA. This will later show up in *Koji* tasks and help with
+tracing what particular inputs were used.
+
+.. note::
+
+    The ``origin`` must be specified because of the way *Koji* works with the
+    repository. It will clone the repository then switch to requested state
+    with ``git reset --hard REF``. Since no local branches are created, we need
+    to use full specification including the name of the remote.
+
+
+
 Createrepo Settings
 ===================
 
