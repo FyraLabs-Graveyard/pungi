@@ -220,9 +220,18 @@ def is_arch_multilib(conf, arch):
     return bool(get_arch_variant_data(conf, 'multilib', arch, None))
 
 
+def _get_git_ref(fragment):
+    if fragment == 'HEAD':
+        return fragment
+    if fragment.startswith('origin/'):
+        branch = fragment.split('/', 1)[1]
+        return 'refs/heads/' + branch
+    return None
+
+
 def resolve_git_url(url):
-    """Given a url to a Git repo specifying HEAD as a ref, replace that
-    specifier with actual SHA1 of the commit.
+    """Given a url to a Git repo specifying HEAD or origin/<branch> as a ref,
+    replace that specifier with actual SHA1 of the commit.
 
     Otherwise, the original URL will be returned.
 
@@ -230,11 +239,12 @@ def resolve_git_url(url):
     run git command.
     """
     r = urlparse.urlsplit(url)
-    if r.fragment != 'HEAD':
+    ref = _get_git_ref(r.fragment)
+    if not ref:
         return url
 
     baseurl = urlparse.urlunsplit((r.scheme, r.netloc, r.path, '', ''))
-    _, output = run(['git', 'ls-remote', baseurl, r.fragment])
+    _, output = run(['git', 'ls-remote', baseurl, ref])
 
     lines = [line for line in output.split('\n') if line]
     if len(lines) != 1:
