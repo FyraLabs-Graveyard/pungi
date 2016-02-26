@@ -307,7 +307,7 @@ class TestCreateLiveImageThread(PungiTestCase):
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...',
-                                    log_file=self.topdir + '/logs/amd64/createiso-None-None-None.amd64.log')])
+                                    log_file=self.topdir + '/logs/amd64/liveimage-None-None-None.amd64.log')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
                          [mock.call('/path/to/image.iso', self.topdir + '/compose/Client/amd64/iso/image-name')])
@@ -385,7 +385,7 @@ class TestCreateLiveImageThread(PungiTestCase):
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...',
-                                    log_file=self.topdir + '/logs/amd64/createiso-None-None-None.amd64.log')])
+                                    log_file=self.topdir + '/logs/amd64/liveimage-None-None-None.amd64.log')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
                          [mock.call('/path/to/image.iso', self.topdir + '/compose/Client/amd64/iso/image.iso')])
@@ -464,7 +464,7 @@ class TestCreateLiveImageThread(PungiTestCase):
 
         self.assertEqual(koji_wrapper.run_blocking_cmd.mock_calls,
                          [mock.call('koji spin-livecd ...',
-                                    log_file=self.topdir + '/logs/amd64/createiso-None-None-None.amd64.log')])
+                                    log_file=self.topdir + '/logs/amd64/liveimage-None-None-None.amd64.log')])
         self.assertEqual(koji_wrapper.get_image_path.mock_calls, [mock.call(123)])
         self.assertEqual(copy2.mock_calls,
                          [mock.call('/path/to/image-a.b-sda.raw.xz', self.topdir + '/compose/Client/amd64/iso/image-name')])
