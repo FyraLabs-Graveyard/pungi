@@ -272,7 +272,10 @@ class CreateLiveImageThread(WorkerThread):
             for rpm_path in rpm_paths:
                 shutil.copy2(rpm_path, cmd["dest_dir"])
 
-        self._write_manifest(destination)
+        if cmd['type'] == 'live':
+            # ISO manifest only makes sense for live images
+            self._write_manifest(destination)
+
         self._add_to_images(compose, variant, arch, cmd['type'], self._get_format(image_path), destination)
 
         self.pool.log_info("[DONE ] %s" % msg)
