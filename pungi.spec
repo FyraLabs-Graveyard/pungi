@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.5
+Version:        4.0.6
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -65,6 +65,16 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Fri Feb 26 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.6-1
+- push the 4.0 docs toa  4.0 branch (dennis)
+- [live-images] Rename log file (lsedlar)
+- [buildinstall] Use -dvd- in volume ids instead of -boot- (lsedlar)
+- [buildinstall] Hardlink boot isos (lsedlar)
+- [doc] Write documentation for kickstart Git URLs (lsedlar)
+- [util] Resolve branches in git urls (lsedlar)
+- [live-images] Fix crash when repo_from is not a list (lsedlar)
+- [buildinstall] Don't copy files for empty variants (lsedlar)
+
 * Tue Feb 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.5-1
 - [tests] Fix wrong checks in buildinstall tests (lsedlar)
 - [tests] Use temporary files for buildinstall (lsedlar)
