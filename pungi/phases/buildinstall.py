@@ -125,19 +125,19 @@ class BuildinstallPhase(PhaseBase):
 
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
-            volid = get_volid(self.compose, arch, disc_type="boot")
             buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     if variant.is_empty:
                         continue
-                    volid = get_volid(self.compose, arch, variant=variant, disc_type="boot")
+                    volid = get_volid(self.compose, arch, variant=variant, disc_type="dvd")
                     commands.append(
                         (variant,
                          self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid))
                     )
             elif buildinstall_method == "buildinstall":
+                volid = get_volid(self.compose, arch, disc_type="dvd")
                 commands.append(
                     (None,
                      lorax.get_buildinstall_cmd(product,
@@ -181,7 +181,7 @@ class BuildinstallPhase(PhaseBase):
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
                 # TODO: label is not used
                 label = ""
-                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type="boot")
+                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type="dvd")
                 tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
                 symlink_boot_iso(self.compose, arch, variant)
 

@@ -89,6 +89,11 @@ class TestBuildinstallPhase(PungiTestCase):
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
                        bugurl=None)])
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
@@ -122,6 +127,9 @@ class TestBuildinstallPhase(PungiTestCase):
                        volid='vol_id', variant='Client', buildinstallpackages=[],
                        bugurl=None)],
             any_order=True)
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd')])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
@@ -155,6 +163,10 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
                        self.topdir + '/work/amd64/buildinstall',
                        buildarch='amd64', is_final=True, volid='vol_id')])
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', disc_type='dvd'),
+             mock.call(compose, 'amd64', disc_type='dvd')])
 
     def test_global_upgrade_with_lorax(self):
         compose = BuildInstallCompose(self.topdir, {
@@ -237,6 +249,11 @@ class TestBuildinstallPhase(PungiTestCase):
                        buildarch='amd64', is_final=True, nomacboot=False, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
                        bugurl=None)])
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
@@ -286,6 +303,11 @@ class TestBuildinstallPhase(PungiTestCase):
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
                        bugurl=None)])
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
 
 
 class TestCopyFiles(PungiTestCase):
@@ -312,9 +334,9 @@ class TestCopyFiles(PungiTestCase):
 
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='boot')])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
             [mock.call(self.topdir + '/work/x86_64/buildinstall',
@@ -354,9 +376,9 @@ class TestCopyFiles(PungiTestCase):
 
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='boot'),
-             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='boot')])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
             [mock.call(self.topdir + '/work/x86_64/buildinstall/Server',
