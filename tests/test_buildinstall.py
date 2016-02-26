@@ -10,8 +10,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread
-from tests.helpers import DummyCompose, PungiTestCase
+from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread, symlink_boot_iso
+from tests.helpers import DummyCompose, PungiTestCase, touch
 
 
 class BuildInstallCompose(DummyCompose):
@@ -532,6 +532,62 @@ class BuildinstallThreadTestCase(PungiTestCase):
             mock.call('[FAIL] Buildinstall for variant Server arch x86_64 failed, but going on anyway.\n'
                       'Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])
+
+
+class TestSymlinkIso(PungiTestCase):
+
+    def setUp(self):
+        super(TestSymlinkIso, self).setUp()
+        self.compose = BuildInstallCompose(self.topdir, {})
+        os_tree = self.compose.paths.compose.os_tree('x86_64', self.compose.variants['Server'])
+        self.boot_iso_path = os.path.join(os_tree, "images", "boot.iso")
+        touch(self.boot_iso_path)
+
+    @mock.patch('pungi.phases.buildinstall.Image')
+    @mock.patch('pungi.phases.buildinstall.get_mtime')
+    @mock.patch('pungi.phases.buildinstall.get_file_size')
+    @mock.patch('pungi.phases.buildinstall.IsoWrapper')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_hardlink(self, run, IsoWrapperCls, get_file_size, get_mtime, ImageCls):
+        self.compose.conf = {'buildinstall_symlink': False}
+        IsoWrapper = IsoWrapperCls.return_value
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+
+        symlink_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
+
+        tgt = self.topdir + '/compose/Server/x86_64/iso/image-name'
+        self.assertTrue(os.path.isfile(tgt))
+        self.assertEqual(os.stat(tgt).st_ino,
+                         os.stat(self.topdir + '/compose/Server/x86_64/os/images/boot.iso').st_ino)
+
+        self.assertItemsEqual(
+            self.compose.get_image_name.mock_calls,
+            [mock.call('x86_64', self.compose.variants['Server'],
+                       disc_type='boot', disc_num=None, suffix='.iso')])
+        self.assertItemsEqual(IsoWrapper.get_implanted_md5.mock_calls,
+                              [mock.call(tgt)])
+        self.assertItemsEqual(IsoWrapper.get_manifest_cmd.mock_calls,
+                              [mock.call('image-name')])
+        self.assertItemsEqual(IsoWrapper.get_volume_id.mock_calls,
+                              [mock.call(tgt)])
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call(IsoWrapper.get_manifest_cmd.return_value,
+                                         workdir=self.topdir + '/compose/Server/x86_64/iso')])
+
+        image = ImageCls.return_value
+        self.assertEqual(image.path, 'Server/x86_64/iso/image-name')
+        self.assertEqual(image.mtime, 13579)
+        self.assertEqual(image.size, 1024)
+        self.assertEqual(image.arch, 'x86_64')
+        self.assertEqual(image.type, "boot")
+        self.assertEqual(image.format, "iso")
+        self.assertEqual(image.disc_number, 1)
+        self.assertEqual(image.disc_count, 1)
+        self.assertEqual(image.bootable, True)
+        self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(self.compose.im.add.mock_calls,
+                         [mock.call('Server', 'x86_64', image)])
 
 
 if __name__ == "__main__":

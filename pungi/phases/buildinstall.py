@@ -24,11 +24,12 @@ import shutil
 import re
 
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run, relative_path
+from kobo.shortcuts import run
 from productmd.images import Image
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
+from pungi.util import get_file_size, get_mtime
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
@@ -70,6 +71,11 @@ class BuildinstallPhase(PhaseBase):
         {
             "name": "buildinstall_kickstart",
             "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "buildinstall_symlink",
+            "expected_types": [bool],
             "optional": True,
         },
     )
@@ -332,9 +338,11 @@ def symlink_boot_iso(compose, arch, variant):
         return
 
     compose.log_info("[BEGIN] %s" % msg)
-    # can't make a hardlink - possible cross-device link due to 'symlink_to' argument
-    symlink_target = relative_path(boot_iso_path, new_boot_iso_path)
-    os.symlink(symlink_target, new_boot_iso_path)
+    # Try to hardlink, and copy if that fails
+    try:
+        os.link(boot_iso_path, new_boot_iso_path)
+    except OSError:
+        shutil.copy2(boot_iso_path, new_boot_iso_path)
 
     iso = IsoWrapper()
     implant_md5 = iso.get_implanted_md5(new_boot_iso_path)
@@ -345,10 +353,9 @@ def symlink_boot_iso(compose, arch, variant):
     run(iso.get_manifest_cmd(iso_name), workdir=iso_dir)
 
     img = Image(compose.im)
-    img.implant_md5 = iso.get_implanted_md5(new_boot_iso_path)
     img.path = new_boot_iso_relative_path
-    img.mtime = int(os.stat(new_boot_iso_path).st_mtime)
-    img.size = os.path.getsize(new_boot_iso_path)
+    img.mtime = get_mtime(new_boot_iso_path)
+    img.size = get_file_size(new_boot_iso_path)
     img.arch = arch
     img.type = "boot"
     img.format = "iso"

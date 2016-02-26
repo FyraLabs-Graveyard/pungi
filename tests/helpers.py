@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import mock
+import os
 import unittest
 import tempfile
 import shutil
@@ -43,6 +44,7 @@ class DummyCompose(object):
             'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'],
                                     type='variant', is_empty=False),
         }
+        self.log_info = mock.Mock()
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
@@ -61,3 +63,14 @@ class DummyCompose(object):
         for variant in self.variants.itervalues():
             result |= set(variant.arches)
         return result
+
+
+def touch(path):
+    """Helper utility that creates an dummy file in given location. Directories
+    will be created."""
+    try:
+        os.makedirs(os.path.dirname(path))
+    except OSError:
+        pass
+    with open(path, 'w') as f:
+        f.write(path + '\n')
