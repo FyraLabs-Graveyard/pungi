@@ -213,7 +213,7 @@ class CreateLiveImageThread(WorkerThread):
 
     def worker(self, compose, cmd, variant, arch, num):
         self.basename = '%(name)s-%(version)s-%(release)s' % cmd
-        log_file = compose.paths.log.log_file(arch, "createiso-%s" % self.basename)
+        log_file = compose.paths.log.log_file(arch, "liveimage-%s" % self.basename)
 
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (arch, variant, self.basename)
         self.pool.log_info("[BEGIN] %s" % msg)
