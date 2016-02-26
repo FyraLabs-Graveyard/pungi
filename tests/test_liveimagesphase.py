@@ -469,11 +469,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         self.assertEqual(copy2.mock_calls,
                          [mock.call('/path/to/image-a.b-sda.raw.xz', self.topdir + '/compose/Client/amd64/iso/image-name')])
 
-        write_manifest_cmd = ' && '.join([
-            'cd ' + self.topdir + '/compose/Client/amd64/iso',
-            'isoinfo -R -f -i image-name | grep -v \'/TRANS.TBL$\' | sort >> image-name.manifest'
-        ])
-        self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
+        self.assertEqual(run.mock_calls, [])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
                          [mock.call('Test', '20151203.0.t', 'rhel-7.0-candidate',
                                     'amd64', '/path/to/ks_file',
