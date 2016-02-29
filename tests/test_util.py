@@ -13,6 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi import compose
 from pungi import util
 
+from tests.helpers import touch
+
 
 class TestGitRefResolver(unittest.TestCase):
 
@@ -140,6 +142,55 @@ class TestVolumeIdGenerator(unittest.TestCase):
             volid = util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
 
             self.assertEqual(volid, expected)
+
+
+class TestFindOldCompose(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_finds_single(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.0')
+
+    def test_ignores_in_progress(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'STARTED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertIsNone(old)
+
+    def test_finds_latest(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS', 'DOOMED')
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.1/STATUS', 'FINISHED_INCOMPLETE')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.1')
+
+    def test_finds_ignores_other_files(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0', 'not a compose')
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS/file', 'also not a compose')
+        touch(self.tmp_dir + '/Fedora-24-20160229.0/STATUS', 'FINISHED')
+        touch(self.tmp_dir + '/Another-Rawhide-20160229.0/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertIsNone(old)
+
+    def test_search_in_file(self):
+        touch(self.tmp_dir + '/file')
+        old = util.find_old_compose(self.tmp_dir + '/file', 'Fedora', 'Rawhide')
+        self.assertIsNone(old)
+
+    def test_skips_symlink(self):
+        os.symlink(self.tmp_dir, self.tmp_dir + '/Fedora-Rawhide-20160229.0')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertIsNone(old)
+
+    def test_finds_layered_product(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-Base-1-20160229.0/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide',
+                                    base_product_short='Base', base_product_version='1')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-Base-1-20160229.0')
 
 
 if __name__ == "__main__":

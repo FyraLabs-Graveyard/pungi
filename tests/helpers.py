@@ -66,15 +66,16 @@ class DummyCompose(object):
         return result
 
 
-def touch(path):
+def touch(path, content=None):
     """Helper utility that creates an dummy file in given location. Directories
     will be created."""
+    content = content or (path + '\n')
     try:
         os.makedirs(os.path.dirname(path))
     except OSError:
         pass
     with open(path, 'w') as f:
-        f.write(path + '\n')
+        f.write(content)
 
 
 def copy_fixture(fixture_name, dest):
