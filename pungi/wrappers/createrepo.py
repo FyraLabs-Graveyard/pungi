@@ -107,7 +107,7 @@ class CreaterepoWrapper(object):
             cmd.append("--revision=%s" % revision)
 
         if deltas:
-            cmd.append("--deltas=%s" % deltas)
+            cmd.append("--deltas")
 
         if oldpackagedirs:
             for i in force_list(oldpackagedirs):
