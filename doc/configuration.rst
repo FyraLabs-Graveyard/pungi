@@ -336,6 +336,10 @@ Options
 **createrepo_c** = True
     (*bool*) -- use createrepo_c (True) or legacy createrepo (False)
 
+**createrepo_deltas** = False
+    (*bool*) -- generate delta RPMs against an older compose. This needs to be
+    used together with `--old-composes`` command line argument.
+
 
 
 Example

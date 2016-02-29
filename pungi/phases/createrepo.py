@@ -29,9 +29,10 @@ import threading
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
 
-from pungi.wrappers.scm import get_dir_from_scm
-from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.phases.base import PhaseBase
+from ..wrappers.scm import get_dir_from_scm
+from ..wrappers.createrepo import CreaterepoWrapper
+from .base import PhaseBase
+from ..util import find_old_compose
 
 import productmd.rpms
 
@@ -55,6 +56,11 @@ class CreaterepoPhase(PhaseBase):
             "expected_values": ["sha256", "sha"],
         },
         {
+            "name": "createrepo_deltas",
+            "expected_types": [bool],
+            "optional": True,
+        },
+        {
             "name": "product_id",
             "expected_types": [dict],
             "optional": True,
@@ -69,6 +75,19 @@ class CreaterepoPhase(PhaseBase):
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
+
+    def validate(self):
+        errors = []
+        try:
+            super(CreaterepoPhase, self).validate()
+        except ValueError as exc:
+            errors = exc.message.split('\n')
+
+        if not self.compose.old_composes and 'createrepo_deltas' in self.compose.conf:
+            errors.append('Can not generate deltas without old compose')
+
+        if errors:
+            raise ValueError('\n'.join(errors))
 
     def run(self):
         get_productids_from_scm(self.compose)
@@ -102,6 +121,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
 
     createrepo_c = compose.conf.get("createrepo_c", True)
     createrepo_checksum = compose.conf["createrepo_checksum"]
+    createrepo_deltas = compose.conf.get("createrepo_deltas", False)
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_arch = compose.paths.work.arch_repo(arch='global' if pkg_type == 'srpm' else arch)
 
@@ -151,13 +171,29 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         for rel_path in sorted(rpms):
             f.write("%s\n" % rel_path)
 
+    old_packages_dir = None
+    if createrepo_deltas:
+        old_compose_path = find_old_compose(
+            compose.old_composes,
+            compose.ci_base.release.short,
+            compose.ci_base.release.version,
+            compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
+            compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None
+        )
+        if not old_compose_path:
+            compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
+        else:
+            rel_dir = relative_path(repo_dir, compose.topdir.rstrip('/') + '/')
+            old_packages_dir = os.path.join(old_compose_path, rel_dir)
+
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
     cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True,
                                   pkglist=file_list, outputdir=repo_dir, workers=3,
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
-                                  checksum=createrepo_checksum)
+                                  checksum=createrepo_checksum, deltas=createrepo_deltas,
+                                  oldpackagedirs=old_packages_dir)
     log_file = compose.paths.log.log_file(arch, "createrepo-%s" % variant)
     run(cmd, logfile=log_file, show_cmd=True)
 

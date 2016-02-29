@@ -30,6 +30,7 @@ class DummyCompose(object):
             release=mock.Mock(
                 short='test',
                 version='1.0',
+                is_layered=False,
             ),
         )
         self.topdir = topdir
@@ -51,6 +52,7 @@ class DummyCompose(object):
         self.get_image_name = mock.Mock(return_value='image-name')
         self.image = mock.Mock(path='Client/i386/iso/image.iso')
         self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
+        self.old_composes = []
 
     def get_variants(self, arch=None, types=None):
         return [v for v in self.variants.values() if not arch or arch in v.arches]
