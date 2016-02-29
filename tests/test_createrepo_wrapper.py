@@ -39,7 +39,7 @@ class CreateRepoWrapperTest(unittest.TestCase):
                                '--skip-stat', '--update-md-path=/test/md_path', '--split', '--checkts',
                                '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
                                '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
-                               '--deltas=True', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
+                               '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
                                '--outputdir=/test/output'])
 
     def test_get_createrepo_cmd_minimal(self):
@@ -68,5 +68,5 @@ class CreateRepoWrapperTest(unittest.TestCase):
                                '--skip-stat', '--update-md-path=/test/md_path', '--split', '--checkts',
                                '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
                                '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
-                               '--deltas=True', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
+                               '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
                                '--outputdir=/test/output'])
