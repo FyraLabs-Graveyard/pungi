@@ -28,15 +28,15 @@ class CreaterepoWrapper(object):
             self.mergerepo = "mergerepo"
         self.modifyrepo = "modifyrepo"
 
-    def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, excludes=None, pkglist=None, groupfile=None, cachedir=None,
-                           update=True, update_md_path=None, skip_stat=False, checkts=False, split=False, pretty=True, database=True, checksum=None,
-                           unique_md_filenames=True, distro=None, content=None, repo=None, revision=None, deltas=False, oldpackagedirs=None,
-                           num_deltas=None, workers=None):
+    def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, excludes=None,
+                           pkglist=None, groupfile=None, cachedir=None, update=True,
+                           update_md_path=None, skip_stat=False, checkts=False, split=False,
+                           pretty=True, database=True, checksum=None, unique_md_filenames=True,
+                           distro=None, content=None, repo=None, revision=None, deltas=False,
+                           oldpackagedirs=None, num_deltas=None, workers=None):
         # groupfile = /path/to/comps.xml
 
-        cmd = [self.createrepo]
-
-        cmd.append(directory)
+        cmd = [self.createrepo, directory]
 
         if baseurl:
             cmd.append("--baseurl=%s" % baseurl)
@@ -44,9 +44,8 @@ class CreaterepoWrapper(object):
         if outputdir:
             cmd.append("--outputdir=%s" % outputdir)
 
-        if excludes:
-            for i in force_list(excludes):
-                cmd.append("--excludes=%s" % i)
+        for i in force_list(excludes or []):
+            cmd.append("--excludes=%s" % i)
 
         if pkglist:
             cmd.append("--pkglist=%s" % pkglist)
@@ -91,17 +90,14 @@ class CreaterepoWrapper(object):
         else:
             cmd.append("--simple-md-filenames")
 
-        if distro:
-            for i in force_list(distro):
-                cmd.append("--distro=%s" % i)
+        for i in force_list(distro or []):
+            cmd.append("--distro=%s" % i)
 
-        if content:
-            for i in force_list(content):
-                cmd.append("--content=%s" % i)
+        for i in force_list(content or []):
+            cmd.append("--content=%s" % i)
 
-        if repo:
-            for i in force_list(repo):
-                cmd.append("--repo=%s" % i)
+        for i in force_list(repo or []):
+            cmd.append("--repo=%s" % i)
 
         if revision:
             cmd.append("--revision=%s" % revision)
@@ -109,9 +105,8 @@ class CreaterepoWrapper(object):
         if deltas:
             cmd.append("--deltas=%s" % deltas)
 
-        if oldpackagedirs:
-            for i in force_list(oldpackagedirs):
-                cmd.append("--oldpackagedirs=%s" % i)
+        for i in force_list(oldpackagedirs or []):
+            cmd.append("--oldpackagedirs=%s" % i)
 
         if num_deltas:
             cmd.append("--num-deltas=%d" % int(num_deltas))
