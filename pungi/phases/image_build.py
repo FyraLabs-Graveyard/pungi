@@ -100,7 +100,7 @@ class ImageBuildPhase(PhaseBase):
                     continue
 
                 # Replace possible ambiguous ref name with explicit hash.
-                if 'ksurl' in image_conf:
+                if 'ksurl' in image_conf['image-build']:
                     image_conf["image-build"]['ksurl'] = resolve_git_url(image_conf["image-build"]['ksurl'])
 
                 image_conf["image-build"]["variant"] = variant

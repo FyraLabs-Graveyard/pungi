@@ -321,6 +321,45 @@ class TestImageBuildPhase(PungiTestCase):
         args, kwargs = phase.pool.queue_put.call_args
         self.assertTrue(args[0][1].get('scratch'))
 
+    @mock.patch('pungi.phases.image_build.resolve_git_url')
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_resolve_ksurl(self, ThreadPool, resolve_git_url):
+        compose = DummyCompose(self.topdir, {
+            'image_build': {
+                '^Server$': [
+                    {
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git?#HEAD',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'scratch': True,
+                        }
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        resolve_git_url.return_value = 'git://git.fedorahosted.org/git/spin-kickstarts.git?#BEEFCAFE'
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][1]['image_conf'].get('image-build', {}).get('ksurl'),
+                         resolve_git_url.return_value)
+
 
 class TestCreateImageBuildThread(PungiTestCase):
 
