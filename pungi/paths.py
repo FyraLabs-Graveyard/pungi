@@ -247,7 +247,7 @@ class WorkPaths(object):
         Examples:
             work/x86_64/repo_package_list/Server.x86_64.rpm.conf
         """
-        file_name = "%s.%s" % (variant, arch)
+        file_name = "%s.%s" % (variant.uid, arch)
         if pkg_type is not None:
             file_name += ".%s" % pkg_type
         file_name += ".conf"
