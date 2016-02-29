@@ -17,12 +17,12 @@
 
 import os
 
-from kobo.shortcuts import run, force_list, relative_path
+from kobo.shortcuts import run, relative_path
 
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib
+from pungi.util import is_arch_multilib, find_old_compose
 
 
 # TODO: per arch?
@@ -92,46 +92,3 @@ def create_arch_repos(compose, arch, path_prefix):
     cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True, pkglist=compose.paths.work.package_list(arch=arch), outputdir=repo_dir, baseurl="file://%s" % path_prefix, workers=5, groupfile=comps_path, update_md_path=repo_dir_global, checksum=createrepo_checksum)
     run(cmd, logfile=compose.paths.log.log_file(arch, "arch_repo"), show_cmd=True)
     compose.log_info("[DONE ] %s" % msg)
-
-
-def find_old_compose(old_compose_dirs, release_short, release_version, base_product_short=None, base_product_version=None):
-    composes = []
-
-    for compose_dir in force_list(old_compose_dirs):
-        if not os.path.isdir(compose_dir):
-            continue
-
-        # get all finished composes
-        for i in os.listdir(compose_dir):
-            # TODO: read .composeinfo
-
-            pattern = "%s-%s" % (release_short, release_version)
-            if base_product_short:
-                pattern += "-%s" % base_product_short
-            if base_product_version:
-                pattern += "-%s" % base_product_version
-
-            if not i.startswith(pattern):
-                continue
-
-            path = os.path.join(compose_dir, i)
-            if not os.path.isdir(path):
-                continue
-
-            if os.path.islink(path):
-                continue
-
-            status_path = os.path.join(path, "STATUS")
-            if not os.path.isfile(status_path):
-                continue
-
-            try:
-                if open(status_path, "r").read().strip() in ("FINISHED", "DOOMED"):
-                    composes.append((i, os.path.abspath(path)))
-            except:
-                continue
-
-    if not composes:
-        return None
-
-    return sorted(composes)[-1][1]

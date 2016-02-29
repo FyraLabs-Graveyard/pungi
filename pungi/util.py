@@ -25,7 +25,7 @@ import pipes
 import re
 import urlparse
 
-from kobo.shortcuts import run
+from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
 
 
@@ -401,3 +401,48 @@ def get_mtime(path):
 
 def get_file_size(path):
     return os.path.getsize(path)
+
+
+def find_old_compose(old_compose_dirs, release_short, release_version,
+                     base_product_short=None, base_product_version=None):
+    composes = []
+
+    for compose_dir in force_list(old_compose_dirs):
+        if not os.path.isdir(compose_dir):
+            continue
+
+        # get all finished composes
+        for i in os.listdir(compose_dir):
+            # TODO: read .composeinfo
+
+            pattern = "%s-%s" % (release_short, release_version)
+            if base_product_short:
+                pattern += "-%s" % base_product_short
+            if base_product_version:
+                pattern += "-%s" % base_product_version
+
+            if not i.startswith(pattern):
+                continue
+
+            path = os.path.join(compose_dir, i)
+            if not os.path.isdir(path):
+                continue
+
+            if os.path.islink(path):
+                continue
+
+            status_path = os.path.join(path, "STATUS")
+            if not os.path.isfile(status_path):
+                continue
+
+            try:
+                with open(status_path, 'r') as f:
+                    if f.read().strip() in ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED"):
+                        composes.append((i, os.path.abspath(path)))
+            except:
+                continue
+
+    if not composes:
+        return None
+
+    return sorted(composes)[-1][1]
