@@ -75,56 +75,52 @@ class CreaterepoPhase(PhaseBase):
         for i in range(3):
             self.pool.add(CreaterepoThread(self.pool))
 
-        for arch in self.compose.get_arches():
-            for variant in self.compose.get_variants(arch=arch):
-                if variant.is_empty:
-                    continue
-                self.pool.queue_put((self.compose, arch, variant, "rpm"))
-                self.pool.queue_put((self.compose, arch, variant, "debuginfo"))
-
         for variant in self.compose.get_variants():
             if variant.is_empty:
                 continue
             self.pool.queue_put((self.compose, None, variant, "srpm"))
+            for arch in variant.arches:
+                self.pool.queue_put((self.compose, arch, variant, "rpm"))
+                self.pool.queue_put((self.compose, arch, variant, "debuginfo"))
 
         self.pool.start()
 
 
 def create_variant_repo(compose, arch, variant, pkg_type):
-    if variant.is_empty:
+    types = {
+        'rpm': ('binary',
+                lambda: compose.paths.compose.repository(arch=arch, variant=variant)),
+        'srpm': ('source',
+                 lambda: compose.paths.compose.repository(arch='src', variant=variant)),
+        'debuginfo': ('debug',
+                      lambda: compose.paths.compose.debug_repository(arch=arch, variant=variant)),
+    }
+
+    if variant.is_empty or (arch is None and pkg_type != 'srpm'):
         compose.log_info("[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant))
         return
 
     createrepo_c = compose.conf.get("createrepo_c", True)
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-    if pkg_type == "srpm":
-        repo_dir_arch = compose.paths.work.arch_repo(arch="global")
-    else:
-        repo_dir_arch = compose.paths.work.arch_repo(arch=arch)
+    repo_dir_arch = compose.paths.work.arch_repo(arch='global' if pkg_type == 'srpm' else arch)
 
-    if pkg_type == "rpm":
-        repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
-    elif pkg_type == "srpm":
-        repo_dir = compose.paths.compose.repository(arch="src", variant=variant)
-    elif pkg_type == "debuginfo":
-        repo_dir = compose.paths.compose.debug_repository(arch=arch, variant=variant)
-    else:
+    try:
+        repo_dir = types[pkg_type][1]()
+    except KeyError:
         raise ValueError("Unknown package type: %s" % pkg_type)
-
-    if not repo_dir:
-        return
 
     msg = "Creating repo (arch: %s, variant: %s): %s" % (arch, variant, repo_dir)
 
     # HACK: using global lock
-    createrepo_lock.acquire()
-    if repo_dir in createrepo_dirs:
-        compose.log_warning("[SKIP ] Already in progress: %s" % msg)
-        createrepo_lock.release()
-        return
-    createrepo_dirs.add(repo_dir)
-    createrepo_lock.release()
+    # This is important when addons put packages into parent variant directory.
+    # There can't be multiple createrepo processes operating on the same
+    # directory.
+    with createrepo_lock:
+        if repo_dir in createrepo_dirs:
+            compose.log_warning("[SKIP ] Already in progress: %s" % msg)
+            return
+        createrepo_dirs.add(repo_dir)
 
     if compose.DEBUG and os.path.isdir(os.path.join(repo_dir, "repodata")):
         compose.log_warning("[SKIP ] %s" % msg)
@@ -140,32 +136,28 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     manifest.load(manifest_file)
 
     for rpms_arch, data in manifest.rpms[variant.uid].iteritems():
-        if arch is None and pkg_type != "srpm":
-            continue
         if arch is not None and arch != rpms_arch:
             continue
-        for srpm_nevra, srpm_data in data.items():
-            for rpm_nevra, rpm_data in srpm_data.items():
-                if pkg_type == "rpm" and rpm_data["category"] != "binary":
-                    continue
-                if pkg_type == "srpm" and rpm_data["category"] != "source":
-                    continue
-                if pkg_type == "debuginfo" and rpm_data["category"] != "debug":
+        for srpm_data in data.itervalues():
+            for rpm_data in srpm_data.itervalues():
+                if types[pkg_type][0] != rpm_data['category']:
                     continue
                 path = os.path.join(compose.topdir, "compose", rpm_data["path"])
                 rel_path = relative_path(path, repo_dir.rstrip("/") + "/")
                 rpms.add(rel_path)
 
     file_list = compose.paths.work.repo_package_list(arch, variant, pkg_type)
-    f = open(file_list, "w")
-    for rel_path in sorted(rpms):
-        f.write("%s\n" % rel_path)
-    f.close()
+    with open(file_list, 'w') as f:
+        for rel_path in sorted(rpms):
+            f.write("%s\n" % rel_path)
 
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
-    cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=repo_dir, workers=3, groupfile=comps_path, update_md_path=repo_dir_arch, checksum=createrepo_checksum)
+    cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True,
+                                  pkglist=file_list, outputdir=repo_dir, workers=3,
+                                  groupfile=comps_path, update_md_path=repo_dir_arch,
+                                  checksum=createrepo_checksum)
     log_file = compose.paths.log.log_file(arch, "createrepo-%s" % variant)
     run(cmd, logfile=log_file, show_cmd=True)
 
