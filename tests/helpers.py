@@ -47,6 +47,7 @@ class DummyCompose(object):
         self.log_info = mock.Mock()
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()
+        self.log_warning = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
         self.image = mock.Mock(path='Client/i386/iso/image.iso')
         self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
@@ -74,3 +75,9 @@ def touch(path):
         pass
     with open(path, 'w') as f:
         f.write(path + '\n')
+
+
+def copy_fixture(fixture_name, dest):
+    src = os.path.join(os.path.dirname(__file__), 'fixtures', fixture_name)
+    touch(dest)
+    shutil.copy2(src, dest)
