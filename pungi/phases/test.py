@@ -49,6 +49,8 @@ def run_repoclosure(compose):
         arches = get_valid_arches(arch, is_multilib)
         all_arches.update(arches)
         for variant in compose.get_variants(arch=arch):
+            if variant.is_empty:
+                continue
             lookaside = {}
             if variant.parent:
                 repo_id = "repoclosure-%s.%s" % (variant.parent.uid, arch)
