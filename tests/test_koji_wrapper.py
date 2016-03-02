@@ -398,5 +398,112 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 12345})
 
 
+class RunBlockingCmdTest(KojiWrapperBaseTestCase):
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_minimal(self, run):
+        output = 'Created task: 1234\nHello\n'
+        run.return_value = (0, output)
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call('cmd', can_fail=True, logfile=None)])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_with_log(self, run):
+        output = 'Created task: 1234\nHello\n'
+        run.return_value = (0, output)
+
+        result = self.koji.run_blocking_cmd('cmd', log_file='logfile')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call('cmd', can_fail=True, logfile='logfile')])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_fail_with_task_id(self, run):
+        output = 'Created task: 1234\nBoom\n'
+        run.return_value = (1, output)
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 1234})
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call('cmd', can_fail=True, logfile=None)])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_fail_without_task_id(self, run):
+        output = 'Not found\n'
+        run.return_value = (1, output)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self.koji.run_blocking_cmd('cmd')
+
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call('cmd', can_fail=True, logfile=None)])
+        self.assertIn('Could not find task ID', ctx.exception.message)
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_disconnect_and_retry(self, run):
+        output = 'Created task: 1234\nerror: failed to connect\n'
+        retry = 'Created task: 1234\nOook\n'
+        run.side_effect = [(1, output), (0, retry)]
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
+        self.assertEqual(run.mock_calls,
+                         [mock.call('cmd', can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_disconnect_and_retry_but_fail(self, run):
+        output = 'Created task: 1234\nerror: failed to connect\n'
+        retry = 'Created task: 1234\nNot working still\n'
+        run.side_effect = [(1, output), (1, retry)]
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 1, 'output': retry, 'task_id': 1234})
+        self.assertEqual(run.mock_calls,
+                         [mock.call('cmd', can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+
+    @mock.patch('time.sleep')
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_disconnect_and_retry_multiple_times(self, run, sleep):
+        output = 'Created task: 1234\nerror: failed to connect\n'
+        retry = 'Created task: 1234\nOK\n'
+        run.side_effect = [(1, output), (1, output), (1, output), (0, retry)]
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
+        self.assertEqual(run.mock_calls,
+                         [mock.call('cmd', can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+        self.assertEqual(sleep.mock_calls,
+                         [mock.call(i * 10) for i in range(1, 3)])
+
+    @mock.patch('time.sleep')
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_disconnect_and_never_reconnect(self, run, sleep):
+        output = 'Created task: 1234\nerror: failed to connect\n'
+        run.side_effect = [(1, output), (1, output), (1, output), (1, output)]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self.koji.run_blocking_cmd('cmd', max_retries=2)
+
+        self.assertIn('Failed to wait', ctx.exception.message)
+        self.assertEqual(run.mock_calls,
+                         [mock.call('cmd', can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+        self.assertEqual(sleep.mock_calls, [mock.call(i * 10) for i in range(1, 2)])
+
+
 if __name__ == "__main__":
     unittest.main()
