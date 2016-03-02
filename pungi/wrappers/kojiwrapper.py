@@ -18,6 +18,7 @@
 import os
 import pipes
 import re
+import time
 
 import koji
 import rpmUtils.arch
@@ -234,28 +235,53 @@ class KojiWrapper(object):
 
         return cmd
 
-    def run_blocking_cmd(self, command, log_file=None):
+    def _has_connection_error(self, output):
+        """Checks if output indicates connection error."""
+        return re.search('error: failed to connect\n$', output)
+
+    def _wait_for_task(self, task_id, logfile=None, max_retries=None):
+        """Tries to wait for a task to finish. On connection error it will
+        retry with `watch-task` command.
+        """
+        cmd = [self.executable, 'watch-task', str(task_id)]
+        attempt = 0
+
+        while True:
+            retcode, output = run(cmd, can_fail=True, logfile=logfile)
+
+            if retcode == 0 or not self._has_connection_error(output):
+                # Task finished for reason other than connection error.
+                return retcode, output
+
+            attempt += 1
+            if max_retries and attempt >= max_retries:
+                break
+            time.sleep(attempt * 10)
+
+        raise RuntimeError('Failed to wait for task %s. Too many connection errors.' % task_id)
+
+    def run_blocking_cmd(self, command, log_file=None, max_retries=None):
         """
         Run a blocking koji command. Returns a dict with output of the command,
         its exit code and parsed task id. This method will block until the
         command finishes.
         """
-        try:
-            retcode, output = run(command, can_fail=True, logfile=log_file)
-        except RuntimeError, e:
-            raise RuntimeError("%s. %s failed with '%s'" % (e, command, output))
+        retcode, output = run(command, can_fail=True, logfile=log_file)
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
             raise RuntimeError("Could not find task ID in output. Command '%s' returned '%s'."
                                % (" ".join(command), output))
+        task_id = int(match.groups()[0])
 
-        result = {
+        if retcode != 0 and self._has_connection_error(output):
+            retcode, output = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
+
+        return {
             "retcode": retcode,
             "output": output,
-            "task_id": int(match.groups()[0]),
+            "task_id": task_id,
         }
-        return result
 
     def get_image_paths(self, task_id):
         """
