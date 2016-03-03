@@ -10,3 +10,4 @@ include doc/*
 include tests/*
 include tests/data/*
 include tests/data/*/*
+include tests/fixtures/*
