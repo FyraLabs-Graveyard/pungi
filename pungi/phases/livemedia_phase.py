@@ -17,9 +17,33 @@ class LiveMediaPhase(PhaseBase):
     """class for wrapping up koji spin-livemedia"""
     name = 'live_media'
 
+    config_options = (
+        {
+            "name": "live_media",
+            "expected_types": [dict],
+            "optional": True,
+        },
+        {
+            "name": "live_media_ksurl",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "live_media_target",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "live_media_release",
+            "expected_types": [str],
+            "optional": True,
+        }
+    )
+
     def __init__(self, compose):
         super(LiveMediaPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
+        self._global_ksurl = None
 
     def skip(self):
         if super(LiveMediaPhase, self).skip():
@@ -61,10 +85,13 @@ class LiveMediaPhase(PhaseBase):
         return sorted(arches)
 
     def _get_release(self, image_conf):
-        """If release is set explicitly to None, replace it with date and respin."""
-        if 'release' in image_conf and image_conf['release'] is None:
-            return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
-        return image_conf.get('release', None)
+        """If release is set explicitly to None, replace it with date and respin.
+        Uses both image configuration and global config.
+        """
+        for key, conf in [('release', image_conf), ('live_media_release', self.compose.conf)]:
+            if key in conf and conf[key] is None:
+                return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+        return image_conf.get('release', self.compose.conf.get('live_media_release'))
 
     def _get_install_tree(self, image_conf, variant):
         if 'install_tree_from' in image_conf:
@@ -80,16 +107,33 @@ class LiveMediaPhase(PhaseBase):
             self.compose.paths.compose.os_tree('$basearch', variant, create_dir=False)
         )
 
+    @property
+    def global_ksurl(self):
+        """Get globally configure kickstart URL. It will only be resolved once."""
+        if not self._global_ksurl:
+            ksurl = self.compose.conf.get('live_media_ksurl')
+            self._global_ksurl = resolve_git_url(ksurl)
+        return self._global_ksurl
+
+    def _get_ksurl(self, image_conf):
+        """Get ksurl from `image_conf`. If not present, fall back to global one."""
+        if 'ksurl' in image_conf:
+            return resolve_git_url(image_conf['ksurl'])
+        return self.global_ksurl
+
+    def _get_config(self, image_conf, opt):
+        return image_conf.get(opt, self.compose.conf.get('live_media_' + opt))
+
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
 
             for image_conf in get_variant_data(self.compose.conf, self.name, variant):
                 config = {
-                    'target': image_conf['target'],
+                    'target': self._get_config(image_conf, 'target'),
                     'arches': self._get_arches(image_conf, arches),
                     'ksfile': image_conf['kickstart'],
-                    'ksurl': resolve_git_url(image_conf['ksurl']),
+                    'ksurl': self._get_ksurl(image_conf),
                     'ksversion': image_conf.get('ksversion'),
                     'scratch': image_conf.get('scratch', False),
                     'release': self._get_release(image_conf),
@@ -98,7 +142,7 @@ class LiveMediaPhase(PhaseBase):
                     'title': image_conf.get('title'),
                     'repo': self._get_repos(image_conf, variant),
                     'install_tree': self._get_install_tree(image_conf, variant),
-                    'version': image_conf['version'],
+                    'version': self._get_config(image_conf, 'version'),
                 }
                 self.pool.add(LiveMediaThread(self.pool))
                 self.pool.queue_put((self.compose, variant, config))
