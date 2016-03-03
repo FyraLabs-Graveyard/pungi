@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.6
+Version:        4.0.7
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -8,6 +8,11 @@ License:        GPLv2
 URL:            https://fedorahosted.org/pungi
 Source0:        https://fedorahosted.org/pungi/attachment/wiki/%{version}/%{name}-%{version}.tar.bz2
 BuildRequires:  python-nose, python-nose-cov, python-mock
+BuildRequires:  python-devel, python-setuptools, python2-productmd
+BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo_c
+BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
+BuildRequires:  yum => 3.4.3-28, createrepo >= 0.4.11
+
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
 Requires:       lorax >= 22.1
@@ -65,6 +70,19 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Thu Mar 03 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.7-1
+- Limit the variants with config option 'tree_variants' (dennis)
+- [createrepo-wrapper] Fix --deltas argument (lsedlar)
+- [createrepo-wrapper] Add tests (lsedlar)
+- [koji-wrapper] Retry watching on connection errors (lsedlar)
+- [createrepo-wrapper] Refactor code (lsedlar)
+- [paths] Use variant.uid explicitly (lsedlar)
+- [createrepo] Add tests (lsedlar)
+- [createrepo] Refactor code (lsedlar)
+- [image-build] Fix resolving git urls (lsedlar)
+- [testphase] Don't run repoclosure for empty variants (lsedlar)
+- [live-images] No manifest for appliances (lsedlar)
+
 * Fri Feb 26 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.6-1
 - push the 4.0 docs toa  4.0 branch (dennis)
 - [live-images] Rename log file (lsedlar)
