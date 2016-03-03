@@ -215,7 +215,10 @@ class Compose(kobo.log.LoggingBase):
     def get_variants(self, types=None, arch=None, recursive=False):
         result = []
         types = types or ["variant", "optional", "addon", "layered-product"]
+        tree_variants = self.conf.get("tree_variants", None)
         for i in self.variants.values():
+            if tree_variants and i.name not in tree_variants:
+                continue
             if i.type in types:
                 if arch and arch not in i.arches:
                     continue

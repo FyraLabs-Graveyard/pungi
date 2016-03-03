@@ -113,6 +113,12 @@ Example
     base_product_short = "Fedora"
     base_product_version = "23"
 
+**tree_arches**
+    ([*str*]) -- list of architectures which should be included; if undefined, all architectures from variants.xml will be included
+
+**tree_variants**
+    ([*str*]) -- list of variants which should be included; if undefined, all variants from variants.xml will be included
+
 
 General Settings
 ================
@@ -144,6 +150,8 @@ Options
 
     Please note that ``*`` as a wildcard matches all architectures but ``src``.
 
+    tree_arches = ["x86_64"]
+    tree_variants = ["Server"]
 
 Example
 -------
