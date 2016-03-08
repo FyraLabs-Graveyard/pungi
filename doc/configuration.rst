@@ -932,13 +932,12 @@ Translate Paths Settings
 ========================
 
 **translate_paths**
-    (*list*) -- list of paths to translate; format: [(path,translated_path)]
+    (*list*) -- list of paths to translate; format: ``[(path, translated_path)]``
 
 .. note::
     This feature becomes useful when you need to transform compose location
-    into e.g. a http repo which is can be passed to koji image-build.
-    Translation needs to be invoked by a function call in pungi.
-    os.path.normpath() is applied on both path and translated_path
+    into e.g. a HTTP repo which is can be passed to ``koji image-build``.
+    The ``path`` part is normalized via ``os.path.normpath()``.
     
 
 Example config
