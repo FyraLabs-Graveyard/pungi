@@ -245,6 +245,7 @@ There a couple common format specifiers available for both the options:
     Available keys are:
      * ``boot`` -- for ``boot.iso`` images created in  *buildinstall* phase
      * ``live`` -- for images created by *live_images* phase
+     * ``dvd`` -- for images created by *createiso* phase
 
     Default values are the same as the keys.
 
@@ -271,6 +272,7 @@ Example
     disc_types = {
         'boot': 'netinst',
         'live': 'Live',
+        'dvd': 'DVD',
     }
 
 
