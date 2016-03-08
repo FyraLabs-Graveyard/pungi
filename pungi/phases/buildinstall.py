@@ -189,7 +189,7 @@ class BuildinstallPhase(PhaseBase):
                 label = ""
                 volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type="dvd")
                 tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
-                symlink_boot_iso(self.compose, arch, variant)
+                link_boot_iso(self.compose, arch, variant)
 
 
 def get_kickstart_file(compose):
@@ -312,7 +312,7 @@ def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=Non
     shutil.rmtree(tmp_dir)
 
 
-def symlink_boot_iso(compose, arch, variant):
+def link_boot_iso(compose, arch, variant):
     if arch == "src":
         return
 
@@ -323,7 +323,7 @@ def symlink_boot_iso(compose, arch, variant):
     if not os.path.isfile(boot_iso_path):
         return
 
-    msg = "Symlinking boot.iso (arch: %s, variant: %s)" % (arch, variant)
+    msg = "Linking boot.iso (arch: %s, variant: %s)" % (arch, variant)
     filename = compose.get_image_name(arch, variant, disc_type="boot",
                                       disc_num=None, suffix=".iso")
     new_boot_iso_path = compose.paths.compose.iso_path(arch, variant, filename,

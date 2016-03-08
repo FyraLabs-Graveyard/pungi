@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread, symlink_boot_iso
+from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread, link_boot_iso
 from tests.helpers import DummyCompose, PungiTestCase, touch
 
 
@@ -312,14 +312,14 @@ class TestBuildinstallPhase(PungiTestCase):
 
 class TestCopyFiles(PungiTestCase):
 
-    @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     @mock.patch('os.listdir')
     @mock.patch('os.path.isdir')
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
     def test_copy_files_buildinstall(self, get_kickstart_file, isdir, listdir,
-                                     get_volid, tweak_buildinstall, symlink_boot_iso):
+                                     get_volid, tweak_buildinstall, link_boot_iso):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall'
         })
@@ -349,19 +349,19 @@ class TestCopyFiles(PungiTestCase):
                        self.topdir + '/compose/Client/amd64/os',
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
-            symlink_boot_iso.mock_calls,
+            link_boot_iso.mock_calls,
             [mock.call(compose, 'x86_64', compose.variants['Server']),
              mock.call(compose, 'amd64', compose.variants['Client']),
              mock.call(compose, 'amd64', compose.variants['Server'])])
 
-    @mock.patch('pungi.phases.buildinstall.symlink_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     @mock.patch('os.listdir')
     @mock.patch('os.path.isdir')
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
     def test_copy_files_lorax(self, get_kickstart_file, isdir, listdir,
-                              get_volid, tweak_buildinstall, symlink_boot_iso):
+                              get_volid, tweak_buildinstall, link_boot_iso):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax'
         })
@@ -391,7 +391,7 @@ class TestCopyFiles(PungiTestCase):
                        self.topdir + '/compose/Client/amd64/os',
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
-            symlink_boot_iso.mock_calls,
+            link_boot_iso.mock_calls,
             [mock.call(compose, 'x86_64', compose.variants['Server']),
              mock.call(compose, 'amd64', compose.variants['Client']),
              mock.call(compose, 'amd64', compose.variants['Server'])])
@@ -576,7 +576,7 @@ class TestSymlinkIso(PungiTestCase):
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
-        symlink_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
+        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
 
         tgt = self.topdir + '/compose/Server/x86_64/iso/image-name'
         self.assertTrue(os.path.isfile(tgt))
