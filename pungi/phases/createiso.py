@@ -54,6 +54,7 @@ class CreateisoPhase(PhaseBase):
     def run(self):
         iso = IsoWrapper(logger=self.compose._logger)
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
+        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
         deliverables = []
 
         commands = []
@@ -64,7 +65,7 @@ class CreateisoPhase(PhaseBase):
                     self.compose.log_info("Skipping createiso for %s.%s due to config option" % (variant, arch))
                     continue
 
-                volid = get_volid(self.compose, arch, variant, disc_type='dvd')
+                volid = get_volid(self.compose, arch, variant, disc_type=disc_type)
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
 
                 iso_dir = self.compose.paths.compose.iso_dir(arch, variant, symlink_to=symlink_isos_to)
@@ -90,9 +91,8 @@ class CreateisoPhase(PhaseBase):
                 for disc_num, iso_data in enumerate(split_iso_data):
                     disc_num += 1
 
-                    # XXX: hardcoded disc_type
                     filename = self.compose.get_image_name(arch, variant,
-                                                           disc_type="dvd",
+                                                           disc_type=disc_type,
                                                            disc_num=disc_num)
                     iso_path = self.compose.paths.compose.iso_path(arch,
                                                                    variant,
