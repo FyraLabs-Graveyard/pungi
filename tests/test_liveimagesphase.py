@@ -58,6 +58,10 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
+        self.assertItemsEqual(
+            compose.get_image_name.mock_calls,
+            [mock.call('amd64', compose.variants['Client'], disc_num=None, disc_type='live',
+                       format='%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s')])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
     def test_live_image_build_single_repo_from(self, ThreadPool):
@@ -259,6 +263,54 @@ class TestLiveImagesPhase(PungiTestCase):
                                           'amd64'))])
         self.assertEqual(resolve_git_url.mock_calls,
                          [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
+
+    @mock.patch('pungi.phases.live_images.ThreadPool')
+    def test_live_image_build_custom_type(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'disc_types': {'live': 'Live'},
+            'live_images': [
+                ('^Client$', {
+                    'amd64': {
+                        'kickstart': 'test.ks',
+                        'additional_repos': ['http://example.com/repo/'],
+                        'repo_from': ['Everything'],
+                        'release': None,
+                    }
+                })
+            ],
+        })
+
+        phase = LiveImagesPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        self.maxDiff = None
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose,
+                                          {'ks_file': 'test.ks',
+                                           'build_arch': 'amd64',
+                                           'dest_dir': self.topdir + '/compose/Client/amd64/iso',
+                                           'scratch': False,
+                                           'repos': [self.topdir + '/compose/Client/amd64/os',
+                                                     'http://example.com/repo/',
+                                                     self.topdir + '/compose/Everything/amd64/os'],
+                                           'label': '',
+                                           'name': None,
+                                           'filename': 'image-name',
+                                           'version': None,
+                                           'specfile': None,
+                                           'sign': False,
+                                           'type': 'live',
+                                           'release': '20151203.0',
+                                           'ksurl': None},
+                                          compose.variants['Client'],
+                                          'amd64'))])
+        self.assertItemsEqual(
+            compose.get_image_name.mock_calls,
+            [mock.call('amd64', compose.variants['Client'], disc_num=None, disc_type='Live',
+                       format='%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s')])
 
 
 class TestCreateLiveImageThread(PungiTestCase):
