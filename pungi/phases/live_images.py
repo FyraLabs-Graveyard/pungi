@@ -178,6 +178,8 @@ class LiveImagesPhase(PhaseBase):
         if self.compose.conf.get('live_images_no_rename', False):
             return None
 
+        disc_type = self.compose.conf.get('disc_types', {}).get('live', 'live')
+
         format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
         # Custom name (prefix)
         if name:
@@ -186,8 +188,8 @@ class LiveImagesPhase(PhaseBase):
                 custom_iso_name += "-%s" % version
             format = custom_iso_name + "-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
 
-        # XXX: hardcoded disc_type and disc_num
-        return self.compose.get_image_name(arch, variant, disc_type="live",
+        # XXX: hardcoded disc_num
+        return self.compose.get_image_name(arch, variant, disc_type=disc_type,
                                            disc_num=None, format=format)
 
     def stop(self, *args, **kwargs):
