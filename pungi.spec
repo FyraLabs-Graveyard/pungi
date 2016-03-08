@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.7
+Version:        4.0.8
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,20 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Tue Mar 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.8-1
+- Add README (lsedlar)
+- [doc] Fix formatting (lsedlar)
+- [createiso] Add customizing disc type (lsedlar)
+- [live-images] Add customizing disc type (lsedlar)
+- [buildinstall] Add customizing disc type (lsedlar)
+- [buildinstall] Rename method to not mention symlinks (lsedlar)
+- [gather] Fix documentation of multilib white- and blacklist (lsedlar)
+- [paths] Document and test translate_path (lsedlar)
+- [createrepo] Compute delta RPMS against old compose (lsedlar)
+- [util] Add function to search for old composes (lsedlar)
+- [live-media] Add global settings (lsedlar)
+- [live-media] Rename test case (lsedlar)
+
 * Thu Mar 03 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.7-1
 - Limit the variants with config option 'tree_variants' (dennis)
 - [createrepo-wrapper] Fix --deltas argument (lsedlar)
