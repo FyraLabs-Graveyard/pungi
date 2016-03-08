@@ -202,18 +202,18 @@ Options
 -------
 
 There a couple common format specifiers available for both the options:
- * compose_id
- * release_short
- * version
- * date
- * respin
- * type
- * type_suffix
- * label
- * label_major_version
- * variant
- * arch
- * disc_type
+ * ``compose_id``
+ * ``release_short``
+ * ``version``
+ * ``date``
+ * ``respin``
+ * ``type``
+ * ``type_suffix``
+ * ``label``
+ * ``label_major_version``
+ * ``variant``
+ * ``arch``
+ * ``disc_type``
 
 **image_name_format** [optional]
     (*str*) -- Python's format string to serve as template for image names
@@ -222,15 +222,15 @@ There a couple common format specifiers available for both the options:
     means ``createiso``, ``live_images`` and ``buildinstall``.
 
     Available extra keys are:
-     * disc_num
-     * suffix
+     * ``disc_num``
+     * ``suffix``
 
 **image_volid_formats** [optional]
     (*list*) -- A list of format strings for generating volume id.
 
     The extra available keys are:
-     * base_product_short
-     * base_product_version
+     * ``base_product_short``
+     * ``base_product_version``
 
 **image_volid_layered_product_formats** [optional]
     (*list*) -- A list of format strings for generating volume id for layered
