@@ -233,11 +233,17 @@ There a couple common format specifiers available for both the options:
      * base_product_version
 
 **image_volid_layered_product_formats** [optional]
-    (*list*) -- A listof format strings for generating volume id for layered
+    (*list*) -- A list of format strings for generating volume id for layered
     products. The keys available are the same as for ``image_volid_formats``.
 
 **volume_id_substitutions** [optional]
     (*dict*) -- A mapping of string replacements to shorten the volume id.
+
+**disc_types** [optional]
+    (*dict*) -- A mapping for customizing ``disc_type`` used in image names.
+
+    Available keys are:
+     * ``boot`` -- for ``boot.iso`` images created in  *buildinstall* phase
 
 Example
 -------
@@ -257,6 +263,10 @@ Example
         'Alpha': 'A',
         'Beta': 'B',
         'TC': 'T',
+    }
+
+    disc_types = {
+        'boot': 'netinst',
     }
 
 

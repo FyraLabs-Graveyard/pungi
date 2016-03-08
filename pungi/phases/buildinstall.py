@@ -316,6 +316,8 @@ def link_boot_iso(compose, arch, variant):
     if arch == "src":
         return
 
+    disc_type = compose.conf.get('disc_types', {}).get('boot', 'boot')
+
     symlink_isos_to = compose.conf.get("symlink_isos_to", None)
     os_tree = compose.paths.compose.os_tree(arch, variant)
     # TODO: find in treeinfo?
@@ -324,7 +326,7 @@ def link_boot_iso(compose, arch, variant):
         return
 
     msg = "Linking boot.iso (arch: %s, variant: %s)" % (arch, variant)
-    filename = compose.get_image_name(arch, variant, disc_type="boot",
+    filename = compose.get_image_name(arch, variant, disc_type=disc_type,
                                       disc_num=None, suffix=".iso")
     new_boot_iso_path = compose.paths.compose.iso_path(arch, variant, filename,
                                                        symlink_to=symlink_isos_to)
