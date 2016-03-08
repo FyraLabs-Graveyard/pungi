@@ -611,6 +611,55 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])
 
+    @mock.patch('pungi.phases.buildinstall.Image')
+    @mock.patch('pungi.phases.buildinstall.get_mtime')
+    @mock.patch('pungi.phases.buildinstall.get_file_size')
+    @mock.patch('pungi.phases.buildinstall.IsoWrapper')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_hardlink_with_custom_type(self, run, IsoWrapperCls, get_file_size, get_mtime, ImageCls):
+        self.compose.conf = {
+            'buildinstall_symlink': False,
+            'disc_types': {'boot': 'netinst'},
+        }
+        IsoWrapper = IsoWrapperCls.return_value
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+
+        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
+
+        tgt = self.topdir + '/compose/Server/x86_64/iso/image-name'
+        self.assertTrue(os.path.isfile(tgt))
+        self.assertEqual(os.stat(tgt).st_ino,
+                         os.stat(self.topdir + '/compose/Server/x86_64/os/images/boot.iso').st_ino)
+
+        self.assertItemsEqual(
+            self.compose.get_image_name.mock_calls,
+            [mock.call('x86_64', self.compose.variants['Server'],
+                       disc_type='netinst', disc_num=None, suffix='.iso')])
+        self.assertItemsEqual(IsoWrapper.get_implanted_md5.mock_calls,
+                              [mock.call(tgt)])
+        self.assertItemsEqual(IsoWrapper.get_manifest_cmd.mock_calls,
+                              [mock.call('image-name')])
+        self.assertItemsEqual(IsoWrapper.get_volume_id.mock_calls,
+                              [mock.call(tgt)])
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call(IsoWrapper.get_manifest_cmd.return_value,
+                                         workdir=self.topdir + '/compose/Server/x86_64/iso')])
+
+        image = ImageCls.return_value
+        self.assertEqual(image.path, 'Server/x86_64/iso/image-name')
+        self.assertEqual(image.mtime, 13579)
+        self.assertEqual(image.size, 1024)
+        self.assertEqual(image.arch, 'x86_64')
+        self.assertEqual(image.type, "boot")
+        self.assertEqual(image.format, "iso")
+        self.assertEqual(image.disc_number, 1)
+        self.assertEqual(image.disc_count, 1)
+        self.assertEqual(image.bootable, True)
+        self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(self.compose.im.add.mock_calls,
+                         [mock.call('Server', 'x86_64', image)])
+
 
 if __name__ == "__main__":
     unittest.main()
