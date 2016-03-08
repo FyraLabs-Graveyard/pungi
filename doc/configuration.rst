@@ -473,10 +473,12 @@ Options
      * ``yaboot``
 
 **additional_packages**
-    (*list*) -- additional packages to be included in a variant and architecture; format: [(variant_uid_regex, {arch|*: [package_globs]})]
+    (*list*) -- additional packages to be included in a variant and
+    architecture; format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
 **filter_packages**
-    (*list*) -- packages to be excluded from a variant and architecture; format: [(variant_uid_regex, {arch|*: [package_globs]})]
+    (*list*) -- packages to be excluded from a variant and architecture;
+    format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
 **filter_system_release_packages**
     (*bool*) -- for each variant, figure out the best system release package
@@ -484,16 +486,22 @@ Options
     one system release package. In such case, set this option to ``False``.
 
 **multilib_blacklist**
-    (*dict*) -- multilib blacklist; format: {arch|*: [package_globs]}
+    (*dict*) -- multilib blacklist; format: ``{arch|*: [package_globs]}``. The
+    patterns are tested with ``fnmatch``, so shell globbing is used (not
+    regular expression).
 
 **multilib_whitelist**
-    (*dict*) -- multilib blacklist; format: {arch|*: [package_globs]}
+    (*dict*) -- multilib blacklist; format: ``{arch|*: [package_names]}``. The
+    whitelist must contain exact package names; there are no wildcards or
+    pattern matching.
 
 **gather_lookaside_repos** = []
-    (*list*) -- lookaside repositories used for package gathering; format: [(variant_uid_regex, {arch|*: [repo_urls]})]
+    (*list*) -- lookaside repositories used for package gathering; format:
+    ``[(variant_uid_regex, {arch|*: [repo_urls]})]``
 
 **hashed_directories** = False
-    (*bool*) -- put packages into "hashed" directories, for example Packages/k/kernel-4.0.4-301.fc22.x86_64.rpm
+    (*bool*) -- put packages into "hashed" directories, for example
+    ``Packages/k/kernel-4.0.4-301.fc22.x86_64.rpm``
 
 
 Example
