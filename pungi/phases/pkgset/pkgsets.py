@@ -258,7 +258,7 @@ class KojiPackageSet(PackageSetBase):
 
         msg = "Getting latest RPMs (tag: %s, event: %s, inherit: %s)" % (tag, event, inherit)
         self.log_info("[BEGIN] %s" % msg)
-        rpms, builds = self.get_latest_rpms(tag, event)
+        rpms, builds = self.get_latest_rpms(tag, event, inherit=inherit)
 
         builds_by_id = {}
         for build_info in builds:
