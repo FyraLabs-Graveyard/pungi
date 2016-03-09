@@ -12,6 +12,12 @@ git clone ssh://git@pagure.io/docs/pungi.git /tmp/pungi-doc
 pushd /tmp/pungi-doc
 git rm -fr ./*
 cp -r /tmp/pungi/doc/_build/html/* ./
+pushd /tmp/pungi/doc
+git checkout 4.0.x
+make html
+popd
+mkdir 4.0
+cp -r /tmp/pungi/doc/_build/html/* ./4.0/
 git add .
 git commit -s -m "update rendered pungi docs"
 git push origin master
