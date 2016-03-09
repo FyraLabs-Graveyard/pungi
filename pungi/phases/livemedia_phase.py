@@ -35,7 +35,7 @@ class LiveMediaPhase(PhaseBase):
         },
         {
             "name": "live_media_release",
-            "expected_types": [str],
+            "expected_types": [str, type(None)],
             "optional": True,
         }
     )
