@@ -202,7 +202,7 @@ class KojiPackageSet(PackageSetBase):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        result["koji_profile"] = self.koji_wrapper.koji_module.config.profile
+        result["koji_profile"] = self.koji_wrapper.profile
         del result["koji_wrapper"]
         del result["_logger"]
         return result
