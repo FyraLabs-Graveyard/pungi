@@ -96,13 +96,38 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('platform.machine') as machine:
-            machine.return_value = 'armhfp'
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-                result = checks.check(conf)
+        with mock.patch('os.path.exists') as exists:
+            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+            result = checks.check(conf)
 
         self.assertTrue(result)
+
+    def test_genisoimg_not_needed_in_runroot(self):
+        conf = {
+            'runroot': True,
+        }
+
+        with mock.patch('os.path.exists') as exists:
+            exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
+            result = checks.check(conf)
+
+        self.assertTrue(result)
+
+    def test_genisoimg_needed_for_productimg(self):
+        conf = {
+            'runroot': True,
+            'productimg': True,
+            'bootable': True,
+        }
+
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
+                result = checks.check(conf)
+
+        self.assertIn('genisoimage', out.getvalue())
+        self.assertFalse(result)
+
 
 if __name__ == "__main__":
     unittest.main()

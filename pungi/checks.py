@@ -41,6 +41,15 @@ def is_isohybrid_needed(conf):
     return True
 
 
+def is_genisoimage_needed(conf):
+    """This is only needed locally for productimg and createiso without runroot.
+    """
+    runroot = conf.get('runroot', False)
+    will_do_productimg = conf.get('productimg', False) and conf.get('bootable', False)
+    if runroot and not will_do_productimg:
+        return False
+    return True
+
 # The first element in the tuple is package name expected to have the
 # executable (2nd element of the tuple). The last element is an optional
 # function that should determine if the tool is required based on
@@ -49,7 +58,7 @@ tools = [
     ("isomd5sum", "/usr/bin/implantisomd5", None),
     ("isomd5sum", "/usr/bin/checkisomd5", None),
     ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
-    ("genisoimage", "/usr/bin/genisoimage", None),
+    ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
     ("gettext", "/usr/bin/msgfmt", None),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     ("yum-utils", "/usr/bin/createrepo", None),
