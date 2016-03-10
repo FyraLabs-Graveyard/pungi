@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.8
+Version:        4.0.9
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,26 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Thu Mar 10 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.9-1
+- [init] Update documentation (lsedlar)
+- [init] Iterate over arches just once (lsedlar)
+- [init] Remove duplicated checks for comps (lsedlar)
+- [init] Break long lines (lsedlar)
+- [init] Don't overwrite the same log file (lsedlar)
+- [init] Add config option for keeping original comps (lsedlar)
+- Add tests for the init phase (lsedlar)
+- [checks] Test printing in all cases (lsedlar)
+- [checks] Reduce code duplication (lsedlar)
+- [checks] Relax check for genisoimage (lsedlar)
+- [checks] Remove duplicate msgfmt line (lsedlar)
+- [checks] Relax check for isohybrid command (lsedlar)
+- [checks] Add tests for dependency checking (lsedlar)
+- [checks] Don't always require jigdo (lsedlar)
+- [pkgset] Respect inherit setting (lsedlar)
+- specify that the 4.0 docs are for 4.0.8 (dennis)
+- [live-media] Support release set to None globally (lsedlar)
+- include tests/fixtures/* in the tarball (dennis)
+
 * Tue Mar 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.8-1
 - Add README (lsedlar)
 - [doc] Fix formatting (lsedlar)
