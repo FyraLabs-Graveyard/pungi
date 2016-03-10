@@ -34,6 +34,7 @@ class TestInitPhase(PungiTestCase):
     @mock.patch('pungi.phases.init.write_prepopulate_file')
     def test_run(self, write_prepopulate, write_variant, create_comps, write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
+        compose.has_comps = True
         phase = init.InitPhase(compose)
         phase.run()
 
@@ -61,6 +62,7 @@ class TestInitPhase(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'keep_original_comps': ['Everything'],
         })
+        compose.has_comps = True
         phase = init.InitPhase(compose)
         phase.run()
 
@@ -77,6 +79,26 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(copy_comps.mock_calls,
                               [mock.call(compose, 'x86_64', compose.variants['Everything']),
                                mock.call(compose, 'amd64', compose.variants['Everything'])])
+
+    @mock.patch('pungi.phases.init.copy_variant_comps')
+    @mock.patch('pungi.phases.init.write_global_comps')
+    @mock.patch('pungi.phases.init.write_arch_comps')
+    @mock.patch('pungi.phases.init.create_comps_repo')
+    @mock.patch('pungi.phases.init.write_variant_comps')
+    @mock.patch('pungi.phases.init.write_prepopulate_file')
+    def test_run_without_comps(self, write_prepopulate, write_variant, create_comps,
+                               write_arch, write_global, copy_comps):
+        compose = DummyCompose(self.topdir, {})
+        compose.has_comps = False
+        phase = init.InitPhase(compose)
+        phase.run()
+
+        self.assertEqual(write_global.mock_calls, [])
+        self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertItemsEqual(write_arch.mock_calls, [])
+        self.assertItemsEqual(create_comps.mock_calls, [])
+        self.assertItemsEqual(write_variant.mock_calls, [])
+        self.assertItemsEqual(copy_comps.mock_calls, [])
 
     def test_validate_keep_original_comps_missing(self):
         compose = DummyCompose(self.topdir, MIN_CONFIG)
@@ -99,18 +121,8 @@ class TestInitPhase(PungiTestCase):
 class TestWriteArchComps(PungiTestCase):
 
     @mock.patch('pungi.phases.init.run')
-    def test_does_not_run_without_comps(self, run):
-        compose = DummyCompose(self.topdir, {})
-        compose.has_comps = False
-
-        init.write_arch_comps(compose, 'x86_64')
-
-        self.assertEqual(run.mock_calls, [])
-
-    @mock.patch('pungi.phases.init.run')
     def test_run(self, run):
         compose = DummyCompose(self.topdir, {})
-        compose.has_comps = True
         compose.DEBUG = False
 
         init.write_arch_comps(compose, 'x86_64')
@@ -123,7 +135,6 @@ class TestWriteArchComps(PungiTestCase):
     @mock.patch('pungi.phases.init.run')
     def test_run_in_debug(self, run):
         compose = DummyCompose(self.topdir, {})
-        compose.has_comps = True
         compose.DEBUG = True
         touch(self.topdir + '/work/x86_64/comps/comps-x86_64.xml')
 
@@ -135,20 +146,10 @@ class TestWriteArchComps(PungiTestCase):
 class TestCreateCompsRepo(PungiTestCase):
 
     @mock.patch('pungi.phases.init.run')
-    def test_does_not_run_without_comps(self, run):
-        compose = DummyCompose(self.topdir, {})
-        compose.has_comps = False
-
-        init.create_comps_repo(compose, 'x86_64')
-
-        self.assertEqual(run.mock_calls, [])
-
-    @mock.patch('pungi.phases.init.run')
     def test_run(self, run):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.has_comps = True
         compose.DEBUG = False
 
         init.create_comps_repo(compose, 'x86_64')
@@ -167,7 +168,6 @@ class TestCreateCompsRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.has_comps = True
         compose.DEBUG = True
         os.makedirs(self.topdir + '/work/x86_64/comps_repo/repodata')
 
@@ -180,20 +180,8 @@ class TestWriteGlobalComps(PungiTestCase):
 
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.init.get_file_from_scm')
-    def test_does_not_run_without_comps(self, get_file, copy2):
-        compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
-        compose.has_comps = False
-
-        init.write_global_comps(compose)
-
-        self.assertEqual(get_file.mock_calls, [])
-        self.assertEqual(copy2.mock_calls, [])
-
-    @mock.patch('shutil.copy2')
-    @mock.patch('pungi.phases.init.get_file_from_scm')
     def test_run_in_debug(self, get_file, copy2):
         compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
-        compose.has_comps = True
         compose.DEBUG = True
         touch(self.topdir + '/work/global/comps/comps-global.xml')
 
@@ -205,7 +193,6 @@ class TestWriteGlobalComps(PungiTestCase):
     @mock.patch('pungi.phases.init.get_file_from_scm')
     def test_run_local_file(self, get_file):
         compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
-        compose.has_comps = True
         compose.DEBUG = False
 
         def gen_file(src, dest, logger=None):
@@ -222,19 +209,9 @@ class TestWriteGlobalComps(PungiTestCase):
 class TestWriteVariantComps(PungiTestCase):
 
     @mock.patch('pungi.phases.init.run')
-    def test_does_not_run_without_comps(self, run):
-        compose = DummyCompose(self.topdir, {})
-        compose.has_comps = False
-
-        init.write_variant_comps(compose, 'x86_64', compose.variants['Server'])
-
-        self.assertEqual(run.mock_calls, [])
-
-    @mock.patch('pungi.phases.init.run')
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.has_comps = True
         compose.DEBUG = False
         variant = compose.variants['Server']
 
@@ -257,7 +234,6 @@ class TestWriteVariantComps(PungiTestCase):
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run_in_debug(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.has_comps = True
         compose.DEBUG = True
         variant = compose.variants['Server']
         touch(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')
@@ -277,18 +253,8 @@ class TestWriteVariantComps(PungiTestCase):
 class TestCopyVariantComps(PungiTestCase):
 
     @mock.patch('shutil.copy')
-    def test_does_not_run_without_comps(self, copy):
-        compose = DummyCompose(self.topdir, {})
-        compose.has_comps = False
-
-        init.copy_variant_comps(compose, 'x86_64', compose.variants['Server'])
-
-        self.assertEqual(copy.mock_calls, [])
-
-    @mock.patch('shutil.copy')
     def test_run(self, copy):
         compose = DummyCompose(self.topdir, {})
-        compose.has_comps = True
         variant = compose.variants['Server']
 
         init.copy_variant_comps(compose, 'x86_64', variant)
