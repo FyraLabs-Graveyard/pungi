@@ -299,6 +299,7 @@ class CreateIsoThread(WorkerThread):
         img.disc_number = cmd["disc_num"]
         img.disc_count = cmd["disc_count"]
         img.bootable = cmd["bootable"]
+        img.subvariant = str(cmd['variant'])
         img.implant_md5 = iso.get_implanted_md5(cmd["iso_path"])
         try:
             img.volume_id = iso.get_volume_id(cmd["iso_path"])

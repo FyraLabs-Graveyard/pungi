@@ -127,8 +127,10 @@ class LiveMediaPhase(PhaseBase):
     def run(self):
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
-
             for image_conf in get_variant_data(self.compose.conf, self.name, variant):
+                subvariant = image_conf.get('subvariant', variant.uid)
+                name = image_conf.get(
+                    'name', "%s-%s-Live" % (self.compose.ci_base.release.short, subvariant))
                 config = {
                     'target': self._get_config(image_conf, 'target'),
                     'arches': self._get_arches(image_conf, arches),
@@ -138,7 +140,8 @@ class LiveMediaPhase(PhaseBase):
                     'scratch': image_conf.get('scratch', False),
                     'release': self._get_release(image_conf),
                     'skip_tag': image_conf.get('skip_tag'),
-                    'name': image_conf['name'],
+                    'name': name,
+                    'subvariant': subvariant,
                     'title': image_conf.get('title'),
                     'repo': self._get_repos(image_conf, variant),
                     'install_tree': self._get_install_tree(image_conf, variant),
@@ -189,6 +192,7 @@ class LiveMediaThread(WorkerThread):
                                                             ' '.join(config['arches']),
                                                             variant.uid)
         self.pool.log_info('[BEGIN] %s' % msg)
+        subvariant = config.pop('subvariant')
 
         koji_wrapper = KojiWrapper(compose.conf['koji_profile'])
         cmd = self._get_cmd(koji_wrapper, config)
@@ -236,6 +240,7 @@ class LiveMediaThread(WorkerThread):
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1
             img.bootable = True
+            img.subvariant = subvariant
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 
         self.pool.log_info('[DONE ] %s' % msg)
