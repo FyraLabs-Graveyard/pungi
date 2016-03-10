@@ -221,7 +221,9 @@ def write_arch_comps(compose, arch):
         return
 
     compose.log_debug(msg)
-    run(["comps_filter", "--arch=%s" % arch, "--no-cleanup", "--output=%s" % comps_file_arch, compose.paths.work.comps(arch="global")])
+    run(["comps_filter", "--arch=%s" % arch, "--no-cleanup",
+         "--output=%s" % comps_file_arch,
+         compose.paths.work.comps(arch="global")])
 
 
 def write_variant_comps(compose, arch, variant):
@@ -243,7 +245,9 @@ def write_variant_comps(compose, arch, variant):
         return
 
     compose.log_debug(msg)
-    run(["comps_filter", "--arch=%s" % arch, "--keep-empty-group=conflicts", "--keep-empty-group=conflicts-%s" % variant.uid.lower(), "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
+    run(["comps_filter", "--arch=%s" % arch, "--keep-empty-group=conflicts",
+         "--keep-empty-group=conflicts-%s" % variant.uid.lower(),
+         "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
 
     comps = CompsWrapper(comps_file)
     comps.filter_groups(variant.groups)
@@ -275,6 +279,8 @@ def create_comps_repo(compose, arch):
         compose.log_warning("[SKIP ] %s" % msg)
     else:
         compose.log_info("[BEGIN] %s" % msg)
-        cmd = repo.get_createrepo_cmd(comps_repo, update=True, database=True, skip_stat=True, outputdir=comps_repo, groupfile=comps_path, checksum=createrepo_checksum)
+        cmd = repo.get_createrepo_cmd(comps_repo, update=True, database=True, skip_stat=True,
+                                      outputdir=comps_repo, groupfile=comps_path,
+                                      checksum=createrepo_checksum)
         run(cmd, logfile=compose.paths.log.log_file(arch, "comps_repo"), show_cmd=True)
         compose.log_info("[DONE ] %s" % msg)
