@@ -276,5 +276,5 @@ def create_comps_repo(compose, arch):
     else:
         compose.log_info("[BEGIN] %s" % msg)
         cmd = repo.get_createrepo_cmd(comps_repo, update=True, database=True, skip_stat=True, outputdir=comps_repo, groupfile=comps_path, checksum=createrepo_checksum)
-        run(cmd, logfile=compose.paths.log.log_file("global", "arch_repo"), show_cmd=True)
+        run(cmd, logfile=compose.paths.log.log_file(arch, "comps_repo"), show_cmd=True)
         compose.log_info("[DONE ] %s" % msg)
