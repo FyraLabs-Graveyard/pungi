@@ -18,19 +18,27 @@
 import os.path
 
 
+def is_jigdo_needed(conf):
+    return conf.get('create_jigdo', True)
+
+
+# The first element in the tuple is package name expected to have the
+# executable (2nd element of the tuple). The last element is an optional
+# function that should determine if the tool is required based on
+# configuration.
 tools = [
-    ("isomd5sum", "/usr/bin/implantisomd5"),
-    ("isomd5sum", "/usr/bin/checkisomd5"),
-    ("jigdo", "/usr/bin/jigdo-lite"),
-    ("genisoimage", "/usr/bin/genisoimage"),
-    ("gettext", "/usr/bin/msgfmt"),
-    ("syslinux", "/usr/bin/isohybrid"),
-    ("yum-utils", "/usr/bin/createrepo"),
-    ("yum-utils", "/usr/bin/mergerepo"),
-    ("yum-utils", "/usr/bin/repoquery"),
-    ("git", "/usr/bin/git"),
-    ("cvs", "/usr/bin/cvs"),
-    ("gettext", "/usr/bin/msgfmt"),
+    ("isomd5sum", "/usr/bin/implantisomd5", None),
+    ("isomd5sum", "/usr/bin/checkisomd5", None),
+    ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
+    ("genisoimage", "/usr/bin/genisoimage", None),
+    ("gettext", "/usr/bin/msgfmt", None),
+    ("syslinux", "/usr/bin/isohybrid", None),
+    ("yum-utils", "/usr/bin/createrepo", None),
+    ("yum-utils", "/usr/bin/mergerepo", None),
+    ("yum-utils", "/usr/bin/repoquery", None),
+    ("git", "/usr/bin/git", None),
+    ("cvs", "/usr/bin/cvs", None),
+    ("gettext", "/usr/bin/msgfmt", None),
 ]
 
 imports = [
@@ -42,7 +50,7 @@ imports = [
 ]
 
 
-def check():
+def check(conf):
     fail = False
 
     # Check python modules
@@ -54,7 +62,10 @@ def check():
             fail = True
 
     # Check tools
-    for package, path in tools:
+    for package, path, test_if_required in tools:
+        if test_if_required and not test_if_required(conf):
+            # The config says this file is not required, so we won't even check it.
+            continue
         if not os.path.exists(path):
             print("Program '%s' doesn't exist. Install package '%s'." % (path, package))
             fail = True
