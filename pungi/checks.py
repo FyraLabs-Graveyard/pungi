@@ -57,7 +57,6 @@ tools = [
     ("yum-utils", "/usr/bin/repoquery", None),
     ("git", "/usr/bin/git", None),
     ("cvs", "/usr/bin/cvs", None),
-    ("gettext", "/usr/bin/msgfmt", None),
 ]
 
 imports = [
