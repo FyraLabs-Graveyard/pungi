@@ -19,6 +19,10 @@ import os.path
 import platform
 
 
+def _will_productimg_run(conf):
+    return conf.get('productimg', False) and conf.get('bootable', False)
+
+
 def is_jigdo_needed(conf):
     return conf.get('create_jigdo', True)
 
@@ -30,8 +34,7 @@ def is_isohybrid_needed(conf):
     x86_64 and i386.
     """
     runroot = conf.get('runroot', False)
-    will_do_productimg = conf.get('productimg', False) and conf.get('bootable', False)
-    if runroot and not will_do_productimg:
+    if runroot and not _will_productimg_run(conf):
         return False
     if platform.machine() not in ('x86_64', 'i386'):
         msg = ('Not checking for /usr/bin/isohybrid due to current architecture. '
@@ -45,8 +48,7 @@ def is_genisoimage_needed(conf):
     """This is only needed locally for productimg and createiso without runroot.
     """
     runroot = conf.get('runroot', False)
-    will_do_productimg = conf.get('productimg', False) and conf.get('bootable', False)
-    if runroot and not will_do_productimg:
+    if runroot and not _will_productimg_run(conf):
         return False
     return True
 
