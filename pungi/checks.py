@@ -16,10 +16,29 @@
 
 
 import os.path
+import platform
 
 
 def is_jigdo_needed(conf):
     return conf.get('create_jigdo', True)
+
+
+def is_isohybrid_needed(conf):
+    """The isohybrid command is needed locally only for productimg phase and
+    createiso phase without runroot. If that is not going to run, we don't need
+    to check for it. Additionally, the syslinux package is only available on
+    x86_64 and i386.
+    """
+    runroot = conf.get('runroot', False)
+    will_do_productimg = conf.get('productimg', False) and conf.get('bootable', False)
+    if runroot and not will_do_productimg:
+        return False
+    if platform.machine() not in ('x86_64', 'i386'):
+        msg = ('Not checking for /usr/bin/isohybrid due to current architecture. '
+               'Expect failures in productimg phase.')
+        print msg
+        return False
+    return True
 
 
 # The first element in the tuple is package name expected to have the
@@ -32,7 +51,7 @@ tools = [
     ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
     ("genisoimage", "/usr/bin/genisoimage", None),
     ("gettext", "/usr/bin/msgfmt", None),
-    ("syslinux", "/usr/bin/isohybrid", None),
+    ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     ("yum-utils", "/usr/bin/createrepo", None),
     ("yum-utils", "/usr/bin/mergerepo", None),
     ("yum-utils", "/usr/bin/repoquery", None),

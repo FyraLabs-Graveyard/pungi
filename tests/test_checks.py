@@ -13,6 +13,10 @@ from pungi import checks
 
 
 class CheckDependenciesTestCase(unittest.TestCase):
+
+    def dont_find(self, paths):
+        return lambda path: path not in paths
+
     def test_all_deps_missing(self):
         def custom_exists(path):
             return False
@@ -22,16 +26,13 @@ class CheckDependenciesTestCase(unittest.TestCase):
                 exists.side_effect = custom_exists
                 result = checks.check({})
 
-        self.assertEqual(12, len(out.getvalue().strip().split('\n')))
+        self.assertGreater(len(out.getvalue().strip().split('\n')), 1)
         self.assertFalse(result)
 
     def test_all_deps_ok(self):
-        def custom_exists(path):
-            return True
-
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
-                exists.side_effect = custom_exists
+                exists.side_effect = self.dont_find([])
                 result = checks.check({})
 
         self.assertEqual('', out.getvalue())
@@ -42,17 +43,66 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'create_jigdo': False
         }
 
-        def custom_exists(path):
-            if path == '/usr/bin/jigdo-lite':
-                return False
-            return True
-
         with mock.patch('os.path.exists') as exists:
-            exists.side_effect = custom_exists
+            exists.side_effect = self.dont_find(['/usr/bin/jigdo-lite'])
             result = checks.check(conf)
 
         self.assertTrue(result)
 
+    def test_isohybrid_not_required_without_productimg_phase(self):
+        conf = {
+            'bootable': True,
+            'productimg': False,
+            'runroot': True,
+        }
+
+        with mock.patch('os.path.exists') as exists:
+            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+            result = checks.check(conf)
+
+        self.assertTrue(result)
+
+    def test_isohybrid_not_required_on_not_bootable(self):
+        conf = {
+            'bootable': False,
+            'runroot': True,
+        }
+
+        with mock.patch('os.path.exists') as exists:
+            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+            result = checks.check(conf)
+
+        self.assertTrue(result)
+
+    def test_isohybrid_not_required_on_arm(self):
+        conf = {
+            'bootable': True,
+            'productimg': True,
+            'runroot': True,
+        }
+
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('platform.machine') as machine:
+                machine.return_value = 'armhfp'
+                with mock.patch('os.path.exists') as exists:
+                    exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+                    result = checks.check(conf)
+
+        self.assertRegexpMatches(out.getvalue(), r'^Not checking.*Expect failures.*$')
+        self.assertTrue(result)
+
+    def test_isohybrid_not_needed_in_runroot(self):
+        conf = {
+            'runroot': True,
+        }
+
+        with mock.patch('platform.machine') as machine:
+            machine.return_value = 'armhfp'
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+                result = checks.check(conf)
+
+        self.assertTrue(result)
 
 if __name__ == "__main__":
     unittest.main()
