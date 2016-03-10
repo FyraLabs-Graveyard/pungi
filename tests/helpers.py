@@ -53,6 +53,7 @@ class DummyCompose(object):
         self.image = mock.Mock(path='Client/i386/iso/image.iso')
         self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
         self.old_composes = []
+        self.config_dir = '/home/releng/config'
 
     def get_variants(self, arch=None, types=None):
         return [v for v in self.variants.values() if not arch or arch in v.arches]
@@ -84,3 +85,11 @@ def copy_fixture(fixture_name, dest):
     src = os.path.join(os.path.dirname(__file__), 'fixtures', fixture_name)
     touch(dest)
     shutil.copy2(src, dest)
+
+
+def union(*args):
+    """Create a new dict as a union of all arguments."""
+    res = {}
+    for arg in args:
+        res.update(arg)
+    return res
