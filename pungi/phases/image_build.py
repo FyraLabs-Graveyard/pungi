@@ -229,6 +229,7 @@ class CreateImageBuildThread(WorkerThread):
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1
             img.bootable = False
+            img.subvariant = cmd["image_conf"]["image-build"]["variant"]
             compose.im.add(variant=cmd["image_conf"]["image-build"]["variant"].uid,
                            arch=image_info['arch'],
                            image=img)

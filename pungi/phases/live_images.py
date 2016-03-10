@@ -122,6 +122,7 @@ class LiveImagesPhase(PhaseBase):
         for variant in self.compose.variants.values():
             for arch in variant.arches + ["src"]:
                 for data in get_arch_variant_data(self.compose.conf, "live_images", arch, variant):
+                    subvariant = data.get('subvariant', variant.uid)
                     type = data.get('type', 'live')
 
                     if type == 'live':
@@ -136,7 +137,7 @@ class LiveImagesPhase(PhaseBase):
                         continue
 
                     cmd = {
-                        "name": data.get("name", None),
+                        "name": data.get('name'),
                         "version": data.get("version", None),
                         "release": self._get_release(data),
                         "dest_dir": dest_dir,
@@ -153,6 +154,7 @@ class LiveImagesPhase(PhaseBase):
                         "sign": False,
                         "type": type,
                         "label": "",  # currently not used
+                        "subvariant": subvariant,
                     }
 
                     if 'ksurl' in data:
@@ -217,12 +219,18 @@ class CreateLiveImageThread(WorkerThread):
         self.basename = '%(name)s-%(version)s-%(release)s' % cmd
         log_file = compose.paths.log.log_file(arch, "liveimage-%s" % self.basename)
 
+        subvariant = cmd.pop('subvariant')
+
+        imgname = "%s-%s-%s-%s" % (compose.ci_base.release.short, subvariant,
+                                   'Live' if cmd['type'] == 'live' else 'Disk',
+                                   arch)
+
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (arch, variant, self.basename)
         self.pool.log_info("[BEGIN] %s" % msg)
 
         koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-        name, version = compose.compose_id.rsplit("-", 1)
-        name = cmd["name"] or name
+        _, version = compose.compose_id.rsplit("-", 1)
+        name = cmd["name"] or imgname
         version = cmd["version"] or version
         archive = False
         if cmd["specfile"] and not cmd["scratch"]:
@@ -278,11 +286,11 @@ class CreateLiveImageThread(WorkerThread):
             # ISO manifest only makes sense for live images
             self._write_manifest(destination)
 
-        self._add_to_images(compose, variant, arch, cmd['type'], self._get_format(image_path), destination)
+        self._add_to_images(compose, variant, subvariant, arch, cmd['type'], self._get_format(image_path), destination)
 
         self.pool.log_info("[DONE ] %s" % msg)
 
-    def _add_to_images(self, compose, variant, arch, type, format, path):
+    def _add_to_images(self, compose, variant, subvariant, arch, type, format, path):
         """Adds the image to images.json"""
         img = Image(compose.im)
         img.type = 'raw-xz' if type == 'appliance' else type
@@ -294,6 +302,7 @@ class CreateLiveImageThread(WorkerThread):
         img.disc_number = 1     # We don't expect multiple disks
         img.disc_count = 1
         img.bootable = True
+        img.subvariant = subvariant
         compose.im.add(variant=variant.uid, arch=arch, image=img)
 
     def _is_image(self, path):
