@@ -153,6 +153,14 @@ Options
     tree_arches = ["x86_64"]
     tree_variants = ["Server"]
 
+**comps_filter_environments** [optional]
+    (*bool*) -- When set to ``False``, the comps files for variants will not
+    have their environments filtered to match the variant.
+
+**keep_original_comps** [optional]
+    (*list*) -- List of variants for which the original comps file will be
+    copied without any modifications. Overwrites `comps_filter_environments`.
+
 Example
 -------
 ::
