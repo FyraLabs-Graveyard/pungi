@@ -144,6 +144,12 @@ class InitPhase(PhaseBase):
             "optional": True,
         },
 
+        {
+            "name": "keep_original_comps",
+            "expected_types": [list],
+            "optional": True,
+        },
+
 
     )
 
@@ -164,8 +170,12 @@ class InitPhase(PhaseBase):
 
         # write variant comps
         for variant in self.compose.get_variants():
+            should_preserve = variant.uid in self.compose.conf.get('keep_original_comps', [])
             for arch in variant.arches:
-                write_variant_comps(self.compose, arch, variant)
+                if should_preserve:
+                    copy_variant_comps(self.compose, arch, variant)
+                else:
+                    write_variant_comps(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
 
@@ -240,6 +250,15 @@ def write_variant_comps(compose, arch, variant):
     if compose.conf.get("comps_filter_environments", True):
         comps.filter_environments(variant.environments)
     comps.write_comps()
+
+
+def copy_variant_comps(compose, arch, variant):
+    if not compose.has_comps:
+        return
+
+    global_comps = compose.paths.work.comps(arch="global")
+    comps_file = compose.paths.work.comps(arch=arch, variant=variant)
+    shutil.copy(global_comps, comps_file)
 
 
 def create_comps_repo(compose, arch):

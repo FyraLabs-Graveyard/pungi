@@ -50,6 +50,34 @@ class TestInitPhase(PungiTestCase):
                                mock.call(compose, 'x86_64', compose.variants['Everything']),
                                mock.call(compose, 'amd64', compose.variants['Everything'])])
 
+    @mock.patch('pungi.phases.init.copy_variant_comps')
+    @mock.patch('pungi.phases.init.write_global_comps')
+    @mock.patch('pungi.phases.init.write_arch_comps')
+    @mock.patch('pungi.phases.init.create_comps_repo')
+    @mock.patch('pungi.phases.init.write_variant_comps')
+    @mock.patch('pungi.phases.init.write_prepopulate_file')
+    def test_run_with_preserve(self, write_prepopulate, write_variant, create_comps,
+                               write_arch, write_global, copy_comps):
+        compose = DummyCompose(self.topdir, {
+            'keep_original_comps': ['Everything'],
+        })
+        phase = init.InitPhase(compose)
+        phase.run()
+
+        self.assertEqual(write_global.mock_calls, [mock.call(compose)])
+        self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertItemsEqual(write_arch.mock_calls,
+                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
+        self.assertItemsEqual(create_comps.mock_calls,
+                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
+        self.assertItemsEqual(write_variant.mock_calls,
+                              [mock.call(compose, 'x86_64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Client'])])
+        self.assertItemsEqual(copy_comps.mock_calls,
+                              [mock.call(compose, 'x86_64', compose.variants['Everything']),
+                               mock.call(compose, 'amd64', compose.variants['Everything'])])
+
     def test_validate_keep_original_comps_missing(self):
         compose = DummyCompose(self.topdir, MIN_CONFIG)
         phase = init.InitPhase(compose)
@@ -244,6 +272,30 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(comps.filter_environments.mock_calls,
                          [mock.call(variant.environments)])
         self.assertEqual(comps.write_comps.mock_calls, [])
+
+
+class TestCopyVariantComps(PungiTestCase):
+
+    @mock.patch('shutil.copy')
+    def test_does_not_run_without_comps(self, copy):
+        compose = DummyCompose(self.topdir, {})
+        compose.has_comps = False
+
+        init.copy_variant_comps(compose, 'x86_64', compose.variants['Server'])
+
+        self.assertEqual(copy.mock_calls, [])
+
+    @mock.patch('shutil.copy')
+    def test_run(self, copy):
+        compose = DummyCompose(self.topdir, {})
+        compose.has_comps = True
+        variant = compose.variants['Server']
+
+        init.copy_variant_comps(compose, 'x86_64', variant)
+
+        self.assertEqual(copy.mock_calls,
+                         [mock.call(self.topdir + '/work/global/comps/comps-global.xml',
+                                    self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
 
 
 if __name__ == "__main__":
