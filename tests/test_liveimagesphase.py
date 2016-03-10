@@ -55,6 +55,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': '20151203.0',
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -102,6 +103,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': '20151203.0',
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -146,6 +148,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': '20151203.0',
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -192,6 +195,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': None,
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64')),
@@ -211,6 +215,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': None,
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -258,6 +263,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'appliance',
                                            'release': None,
+                                           'subvariant': 'Client',
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -304,6 +310,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'live',
                                            'release': '20151203.0',
+                                           'subvariant': 'Client',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -338,6 +345,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'type': 'live',
             'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'release': None,
+            'subvariant': 'Something',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -370,7 +378,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('Test', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Something-Live-amd64', '20151203.0.t', 'rhel-7.0-candidate',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -416,6 +424,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'type': 'live',
             'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'release': None,
+            'subvariant': 'Client',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -448,7 +457,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('Test', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Client-Live-amd64', '20151203.0.t', 'rhel-7.0-candidate',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -495,6 +504,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'type': 'appliance',
             'ksurl': None,
             'release': None,
+            'subvariant': 'Client',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -523,7 +533,7 @@ class TestCreateLiveImageThread(PungiTestCase):
 
         self.assertEqual(run.mock_calls, [])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('Test', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Client-Disk-amd64', '20151203.0.t', 'rhel-7.0-candidate',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -570,6 +580,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'version': None,
             'specfile': None,
             'ksurl': None,
+            'subvariant': 'Client',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -607,6 +618,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'version': None,
             'specfile': None,
             'ksurl': None,
+            'subvariant': 'Client',
         }
 
         def boom(*args, **kwargs):
