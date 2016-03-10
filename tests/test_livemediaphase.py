@@ -72,6 +72,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'title': None,
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
+                                         'subvariant': 'Server',
                                      }))])
 
     @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
@@ -131,6 +132,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'title': None,
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
+                                         'subvariant': 'Server',
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -148,6 +150,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'title': None,
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
+                                         'subvariant': 'Server',
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -165,6 +168,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'title': None,
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': '25',
+                                         'subvariant': 'Server',
                                      }))])
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
@@ -234,6 +238,7 @@ class TestLiveMediaPhase(PungiTestCase):
                         'release': None,
                         'version': 'Rawhide',
                         'install_tree_from': 'Everything',
+                        'subvariant': 'Something',
                     }
                 ]
             }
@@ -264,6 +269,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'title': 'Custom Title',
                                          'install_tree': self.topdir + '/compose/Everything/$basearch/os',
                                          'version': 'Rawhide',
+                                         'subvariant': 'Something',
                                      }))])
 
 
@@ -290,6 +296,7 @@ class TestLiveMediaThread(PungiTestCase):
             'target': 'f24',
             'title': None,
             'version': 'Rawhide',
+            'subvariant': 'DATA',
         }
         pool = mock.Mock()
 
@@ -368,6 +375,7 @@ class TestLiveMediaThread(PungiTestCase):
             self.assertIn(image.path, image_relative_paths)
             self.assertEqual('iso', image.format)
             self.assertEqual('live', image.type)
+            self.assertEqual('DATA', image.subvariant)
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_koji_fail(self, KojiWrapper):
