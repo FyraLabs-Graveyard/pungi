@@ -36,7 +36,7 @@ def is_isohybrid_needed(conf):
     runroot = conf.get('runroot', False)
     if runroot and not _will_productimg_run(conf):
         return False
-    if platform.machine() not in ('x86_64', 'i386'):
+    if platform.machine() not in ('x86_64', 'i686', 'i386'):
         msg = ('Not checking for /usr/bin/isohybrid due to current architecture. '
                'Expect failures in productimg phase.')
         print msg
