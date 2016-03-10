@@ -149,11 +149,6 @@ def main():
         parser.error("please specify a config")
     opts.config = os.path.abspath(opts.config)
 
-    # check if all requirements are met
-    import pungi.checks
-    if not pungi.checks.check():
-        sys.exit(1)
-
     import kobo.conf
     import kobo.log
     import productmd.composeinfo
@@ -172,6 +167,11 @@ def main():
 
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(opts.config)
+
+    # check if all requirements are met
+    import pungi.checks
+    if not pungi.checks.check(conf):
+        sys.exit(1)
 
     if opts.target_dir:
         compose_dir = Compose.get_compose_dir(opts.target_dir, conf, compose_type=compose_type, compose_label=opts.label)
