@@ -159,23 +159,24 @@ class InitPhase(PhaseBase):
         return False
 
     def run(self):
-        # write global comps and arch comps
-        write_global_comps(self.compose)
-        for arch in self.compose.get_arches():
-            write_arch_comps(self.compose, arch)
+        if self.compose.has_comps:
+            # write global comps and arch comps
+            write_global_comps(self.compose)
+            for arch in self.compose.get_arches():
+                write_arch_comps(self.compose, arch)
 
-        # create comps repos
-        for arch in self.compose.get_arches():
-            create_comps_repo(self.compose, arch)
+            # create comps repos
+            for arch in self.compose.get_arches():
+                create_comps_repo(self.compose, arch)
 
-        # write variant comps
-        for variant in self.compose.get_variants():
-            should_preserve = variant.uid in self.compose.conf.get('keep_original_comps', [])
-            for arch in variant.arches:
-                if should_preserve:
-                    copy_variant_comps(self.compose, arch, variant)
-                else:
-                    write_variant_comps(self.compose, arch, variant)
+            # write variant comps
+            for variant in self.compose.get_variants():
+                should_preserve = variant.uid in self.compose.conf.get('keep_original_comps', [])
+                for arch in variant.arches:
+                    if should_preserve:
+                        copy_variant_comps(self.compose, arch, variant)
+                    else:
+                        write_variant_comps(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
 
@@ -184,9 +185,6 @@ class InitPhase(PhaseBase):
 
 
 def write_global_comps(compose):
-    if not compose.has_comps:
-        return
-
     comps_file_global = compose.paths.work.comps(arch="global")
     msg = "Writing global comps file: %s" % comps_file_global
 
@@ -210,9 +208,6 @@ def write_global_comps(compose):
 
 
 def write_arch_comps(compose, arch):
-    if not compose.has_comps:
-        return
-
     comps_file_arch = compose.paths.work.comps(arch=arch)
     msg = "Writing comps file for arch '%s': %s" % (arch, comps_file_arch)
 
@@ -227,9 +222,6 @@ def write_arch_comps(compose, arch):
 
 
 def write_variant_comps(compose, arch, variant):
-    if not compose.has_comps:
-        return
-
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
     msg = "Writing comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
 
@@ -257,18 +249,12 @@ def write_variant_comps(compose, arch, variant):
 
 
 def copy_variant_comps(compose, arch, variant):
-    if not compose.has_comps:
-        return
-
     global_comps = compose.paths.work.comps(arch="global")
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
     shutil.copy(global_comps, comps_file)
 
 
 def create_comps_repo(compose, arch):
-    if not compose.has_comps:
-        return
-
     createrepo_c = compose.conf.get("createrepo_c", True)
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
