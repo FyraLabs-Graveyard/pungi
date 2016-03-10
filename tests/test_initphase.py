@@ -159,7 +159,7 @@ class TestCreateCompsRepo(PungiTestCase):
                                      '--groupfile=%s/work/x86_64/comps/comps-x86_64.xml' % self.topdir,
                                      '--update', '--skip-stat', '--database', '--checksum=sha256',
                                      '--unique-md-filenames'],
-                                    logfile=self.topdir + '/logs/global/arch_repo.global.log',
+                                    logfile=self.topdir + '/logs/x86_64/comps_repo.x86_64.log',
                                     show_cmd=True)])
 
     @mock.patch('pungi.phases.init.run')
