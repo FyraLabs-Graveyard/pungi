@@ -160,13 +160,10 @@ class InitPhase(PhaseBase):
 
     def run(self):
         if self.compose.has_comps:
-            # write global comps and arch comps
+            # write global comps and arch comps, create comps repos
             write_global_comps(self.compose)
             for arch in self.compose.get_arches():
                 write_arch_comps(self.compose, arch)
-
-            # create comps repos
-            for arch in self.compose.get_arches():
                 create_comps_repo(self.compose, arch)
 
             # write variant comps
