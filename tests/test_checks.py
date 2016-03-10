@@ -43,10 +43,12 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'create_jigdo': False
         }
 
-        with mock.patch('os.path.exists') as exists:
-            exists.side_effect = self.dont_find(['/usr/bin/jigdo-lite'])
-            result = checks.check(conf)
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/jigdo-lite'])
+                result = checks.check(conf)
 
+        self.assertEqual('', out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_without_productimg_phase(self):
@@ -56,10 +58,12 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('os.path.exists') as exists:
-            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-            result = checks.check(conf)
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+                result = checks.check(conf)
 
+        self.assertEqual('', out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_on_not_bootable(self):
@@ -68,10 +72,12 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('os.path.exists') as exists:
-            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-            result = checks.check(conf)
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+                result = checks.check(conf)
 
+        self.assertEqual('', out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_on_arm(self):
@@ -96,10 +102,12 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('os.path.exists') as exists:
-            exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-            result = checks.check(conf)
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+                result = checks.check(conf)
 
+        self.assertEqual('', out.getvalue())
         self.assertTrue(result)
 
     def test_genisoimg_not_needed_in_runroot(self):
@@ -107,10 +115,12 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('os.path.exists') as exists:
-            exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
-            result = checks.check(conf)
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
+                result = checks.check(conf)
 
+        self.assertEqual('', out.getvalue())
         self.assertTrue(result)
 
     def test_genisoimg_needed_for_productimg(self):
