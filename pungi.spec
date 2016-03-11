@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.9
+Version:        4.0.10
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,12 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Fri Mar 11 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.10-1
+- Remove check for disc type (lsedlar)
+- Update tests to match the subvariant (lsedlar)
+- add 'subvariant' image property, create live/appliance names (awilliam)
+- Simplify koji pkgset (lsedlar)
+
 * Thu Mar 10 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.9-1
 - [init] Update documentation (lsedlar)
 - [init] Iterate over arches just once (lsedlar)
