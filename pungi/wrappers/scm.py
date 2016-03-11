@@ -154,58 +154,39 @@ class GitWrapper(ScmBase):
 
 
 class RpmScmWrapper(ScmBase):
+    def _list_rpms(self, pats):
+        for pat in force_list(pats):
+            for rpm in glob.glob(pat):
+                yield rpm
+
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
-        # if scm_root is a list, recursively process all RPMs
-        if isinstance(scm_root, list):
-            for i in scm_root:
-                self.export_dir(i, scm_dir, target_dir, scm_branch, tmp_dir, log_file)
-            return
+        for rpm in self._list_rpms(scm_root):
+            scm_dir = scm_dir.lstrip("/")
+            tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
+            self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
+            explode_rpm_package(rpm, tmp_dir)
 
-        # if scm_root is a glob, recursively process all RPMs
-        rpms = glob.glob(scm_root)
-        if len(rpms) > 1 or (rpms and rpms[0] != scm_root):
-            for i in rpms:
-                self.export_dir(i, scm_dir, target_dir, scm_branch, tmp_dir, log_file)
-            return
-
-        scm_dir = scm_dir.lstrip("/")
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
-        self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, scm_root))
-        explode_rpm_package(scm_root, tmp_dir)
-
-        makedirs(target_dir)
-        # "dir" includes the whole directory while "dir/" includes it's content
-        if scm_dir.endswith("/"):
-            _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
-        else:
-            run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)), pipes.quote(target_dir)))
-        self._delete_temp_dir(tmp_dir)
+            makedirs(target_dir)
+            # "dir" includes the whole directory while "dir/" includes it's content
+            if scm_dir.endswith("/"):
+                _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
+            else:
+                run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)), pipes.quote(target_dir)))
+            self._delete_temp_dir(tmp_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
-        # if scm_root is a list, recursively process all RPMs
-        if isinstance(scm_root, list):
-            for i in scm_root:
-                self.export_file(i, scm_file, target_dir, scm_branch, tmp_dir, log_file)
-            return
+        for rpm in self._list_rpms(scm_root):
+            scm_file = scm_file.lstrip("/")
+            tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
 
-        # if scm_root is a glob, recursively process all RPMs
-        rpms = glob.glob(scm_root)
-        if len(rpms) > 1 or (rpms and rpms[0] != scm_root):
-            for i in rpms:
-                self.export_file(i, scm_file, target_dir, scm_branch, tmp_dir, log_file)
-            return
+            self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
+            explode_rpm_package(rpm, tmp_dir)
 
-        scm_file = scm_file.lstrip("/")
-        tmp_dir = self._create_temp_dir(tmp_dir=tmp_dir)
-
-        self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, scm_root))
-        explode_rpm_package(scm_root, tmp_dir)
-
-        makedirs(target_dir)
-        for src in glob.glob(os.path.join(tmp_dir, scm_file)):
-            dst = os.path.join(target_dir, os.path.basename(src))
-            shutil.copy2(src, dst)
-        self._delete_temp_dir(tmp_dir)
+            makedirs(target_dir)
+            for src in glob.glob(os.path.join(tmp_dir, scm_file)):
+                dst = os.path.join(target_dir, os.path.basename(src))
+                shutil.copy2(src, dst)
+            self._delete_temp_dir(tmp_dir)
 
 
 def _get_wrapper(scm_type, *args, **kwargs):
