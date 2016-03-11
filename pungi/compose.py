@@ -309,8 +309,6 @@ class Compose(kobo.log.LoggingBase):
         if arch == "src":
             arch = "source"
 
-        if disc_type not in ("cd", "dvd", "ec2", "live", "boot"):
-            raise RuntimeError("Unsupported disc type: %s" % disc_type)
         if disc_num:
             disc_num = int(disc_num)
         else:

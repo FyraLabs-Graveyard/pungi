@@ -71,6 +71,34 @@ class ComposeTestCase(unittest.TestCase):
                                          'RC-1.0', '1', 'rel_short', '2', '.iso', 'nightly',
                                          '.n', 'Server', '3.0']))
 
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_image_name_type_netinst(self, ci):
+        conf = {}
+        variant = mock.Mock(uid='Server', type='variant')
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.id = 'compose_id'
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'RC-1.0'
+        ci.return_value.compose.label_major_version = '1'
+
+        ci.return_value.release.version = '3.0'
+        ci.return_value.release.short = 'rel_short'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        keys = ['arch', 'compose_id', 'date', 'disc_num', 'disc_type',
+                'label', 'label_major_version', 'release_short', 'respin',
+                'suffix', 'type', 'type_suffix', 'variant', 'version']
+        format = '-'.join(['%(' + k + ')s' for k in keys])
+        name = compose.get_image_name('x86_64', variant, format=format,
+                                      disc_num=7, disc_type='netinst', suffix='.iso')
+
+        self.assertEqual(name, '-'.join(['x86_64', 'compose_id', '20160107', '7', 'netinst',
+                                         'RC-1.0', '1', 'rel_short', '2', '.iso', 'nightly',
+                                         '.n', 'Server', '3.0']))
+
 
 class StatusTest(unittest.TestCase):
     def setUp(self):
