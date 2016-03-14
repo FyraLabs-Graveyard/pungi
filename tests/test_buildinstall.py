@@ -57,7 +57,8 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_short': 't',
             'release_version': '1',
             'release_is_layered': False,
-            'buildinstall_method': 'lorax'
+            'buildinstall_method': 'lorax',
+            'disc_types': {'dvd': 'DVD'},
         })
 
         get_volid.return_value = 'vol_id'
@@ -91,9 +92,9 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None)])
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
-             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
-             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
+            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='DVD'),
+             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='DVD'),
+             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='DVD')])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
@@ -141,7 +142,8 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_short': 't',
             'release_version': '1',
             'release_is_layered': False,
-            'buildinstall_method': 'buildinstall'
+            'buildinstall_method': 'buildinstall',
+            'disc_types': {'dvd': 'DVD'},
         })
 
         get_volid.return_value = 'vol_id'
@@ -165,8 +167,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        buildarch='amd64', is_final=True, volid='vol_id')])
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', disc_type='dvd'),
-             mock.call(compose, 'amd64', disc_type='dvd')])
+            [mock.call(compose, 'x86_64', disc_type='DVD'),
+             mock.call(compose, 'amd64', disc_type='DVD')])
 
     def test_global_upgrade_with_lorax(self):
         compose = BuildInstallCompose(self.topdir, {
