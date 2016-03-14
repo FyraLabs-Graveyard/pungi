@@ -125,6 +125,7 @@ class BuildinstallPhase(PhaseBase):
         version = self.compose.conf["release_version"]
         release = self.compose.conf["release_version"]
         buildinstall_method = self.compose.conf["buildinstall_method"]
+        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
 
         for arch in self.compose.get_arches():
             commands = []
@@ -137,13 +138,13 @@ class BuildinstallPhase(PhaseBase):
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     if variant.is_empty:
                         continue
-                    volid = get_volid(self.compose, arch, variant=variant, disc_type="dvd")
+                    volid = get_volid(self.compose, arch, variant=variant, disc_type=disc_type)
                     commands.append(
                         (variant,
                          self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid))
                     )
             elif buildinstall_method == "buildinstall":
-                volid = get_volid(self.compose, arch, disc_type="dvd")
+                volid = get_volid(self.compose, arch, disc_type=disc_type)
                 commands.append(
                     (None,
                      lorax.get_buildinstall_cmd(product,
@@ -166,6 +167,7 @@ class BuildinstallPhase(PhaseBase):
 
     def copy_files(self):
         buildinstall_method = self.compose.conf["buildinstall_method"]
+        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
 
         # copy buildinstall files to the 'os' dir
         kickstart_file = get_kickstart_file(self.compose)
