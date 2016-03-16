@@ -20,6 +20,7 @@ import sys
 import time
 import pipes
 import shutil
+import traceback
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, save_to_file, force_list
@@ -214,6 +215,8 @@ class CreateLiveImageThread(WorkerThread):
                 msg = ('[FAIL] Creating live image for variant %s, arch %s failed, but going on anyway.\n%s'
                        % (variant.uid, arch, exc))
                 self.pool.log_info(msg)
+                tb = traceback.format_exc()
+                self.pool.log_debug(tb)
 
     def worker(self, compose, cmd, variant, arch, num):
         self.basename = '%(name)s-%(version)s-%(release)s' % cmd

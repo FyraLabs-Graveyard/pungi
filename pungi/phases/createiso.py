@@ -20,6 +20,7 @@ import time
 import pipes
 import random
 import shutil
+import traceback
 
 import productmd.treeinfo
 from productmd.images import Image
@@ -227,6 +228,8 @@ class CreateIsoThread(WorkerThread):
                 msg = ('[FAIL] Creating iso for variant %s, arch %s failed, but going on anyway.\n%s'
                        % (variant.uid, arch, exc))
                 self.pool.log_info(msg)
+                tb = traceback.format_exc()
+                self.pool.log_debug(tb)
 
     def worker(self, compose, cmd, num):
         mounts = [compose.topdir]
