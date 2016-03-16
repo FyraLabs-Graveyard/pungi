@@ -22,6 +22,7 @@ import pipes
 import tempfile
 import shutil
 import re
+import traceback
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run
@@ -384,9 +385,11 @@ class BuildinstallThread(WorkerThread):
             if not compose.can_fail(variant, arch, 'buildinstall'):
                 raise
             else:
+                tb = traceback.format_exc()
                 self.pool.log_info(
                     '[FAIL] Buildinstall for variant %s arch %s failed, but going on anyway.\n%s'
                     % (variant.uid if variant else 'None', arch, exc))
+                self.pool.log_debug(tb)
 
     def worker(self, compose, arch, variant, cmd, num):
         runroot = compose.conf.get("runroot", False)

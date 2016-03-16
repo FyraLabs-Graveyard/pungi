@@ -86,7 +86,7 @@ class KojiWrapper(object):
         contains the id, it will be captured and returned.
         """
         task_id = None
-        retcode, output = run(command, can_fail=True, logfile=log_file)
+        retcode, output = run(command, can_fail=True, logfile=log_file, show_cmd=True)
         if "--task-id" in command:
             first_line = output.splitlines()[0]
             if re.match(r'^\d+$', first_line):
