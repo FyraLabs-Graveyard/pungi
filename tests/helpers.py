@@ -25,6 +25,7 @@ class DummyCompose(object):
         self.compose_type_suffix = '.t'
         self.compose_respin = 0
         self.compose_id = 'Test-20151203.0.t'
+        self.compose_label = None
         self.ci_base = mock.Mock(
             release_id='Test-1.0',
             release=mock.Mock(

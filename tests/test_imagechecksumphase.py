@@ -86,8 +86,9 @@ class TestImageChecksumPhase(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'media_checksums': ['sha256'],
             'media_checksum_one_file': True,
-            'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s'
+            'media_checksum_base_filename': '%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s_%(label)s'
         })
+        compose.compose_label = 'Alpha-1.0'
 
         phase = ImageChecksumPhase(compose)
 
@@ -98,7 +99,7 @@ class TestImageChecksumPhase(PungiTestCase):
 
         dump.assert_called_once_with(self.topdir + '/compose/Client/i386/iso', 'sha256',
                                      {'image.iso': 'cafebabe'},
-                                     'test-Client-1.0-20151203.t.0-CHECKSUM')
+                                     'test-Client-1.0-20151203.t.0_Alpha-1.0-CHECKSUM')
         cc.assert_called_once_with(self.topdir + '/compose/Client/i386/iso/image.iso', ['sha256'])
         compose.image.add_checksum.assert_called_once_with(None, 'sha256', 'cafebabe')
 

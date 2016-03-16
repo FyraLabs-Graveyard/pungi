@@ -954,7 +954,7 @@ Media Checksums Settings
     It is possible to use format strings that will be replace by actual values.
     The allowed keys are ``%(release_showrt)s``, ``%(release_short)s``,
     ``%(release_id)s``, ``%(variant)s``, ``%(version)s``, ``%(date)s``,
-    ``%(type_suffix)s`` and ``%(respin)s``
+    ``%(type_suffix)s``, ``%(label)s`` and ``%(respin)s``
 
     For example, for Fedora the prefix should be
     ``%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s``.
