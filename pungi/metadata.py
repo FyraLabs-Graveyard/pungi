@@ -293,6 +293,10 @@ def write_tree_info(compose, arch, variant, timestamp=None):
                 ti.images.images[platform] = {}
                 ti.tree.platforms.add(platform)
                 for image, path in bi_ti.images.images[platform].items():
+                    if not path:
+                        # The .treeinfo file contains an image without a path.
+                        # We can't add that.
+                        continue
                     ti.images.images[platform][image] = path
                     ti.checksums.add(path, "sha256", root_dir=os_tree)
 
