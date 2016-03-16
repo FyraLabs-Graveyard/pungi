@@ -80,6 +80,7 @@ class ImageChecksumPhase(PhaseBase):
                 'date': self.compose.compose_date,
                 'type_suffix': self.compose.compose_type_suffix,
                 'respin': self.compose.compose_respin,
+                'label': self.compose.compose_label,
             }
             base_checksum_name += '-'
         return base_checksum_name
