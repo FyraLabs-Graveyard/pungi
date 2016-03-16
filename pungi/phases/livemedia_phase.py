@@ -3,6 +3,7 @@
 import os
 import time
 from kobo import shortcuts
+import traceback
 
 from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
 from pungi.phases.base import PhaseBase
@@ -166,6 +167,8 @@ class LiveMediaThread(WorkerThread):
                 msg = ('[FAIL] live-media for variant %s failed, but going on anyway.\n%s'
                        % (variant.uid, exc))
                 self.pool.log_info(msg)
+                tb = traceback.format_exc()
+                self.pool.log_debug(tb)
 
     def _get_log_file(self, compose, variant, config):
         arches = '-'.join(config['arches'])
