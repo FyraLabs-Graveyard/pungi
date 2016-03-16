@@ -83,7 +83,6 @@ class IsoWrapper(kobo.log.LoggingBase):
                 '-allow-multidot',
                 '-chrp-boot',
                 "-map", os.path.join(createfrom, 'mapping'),  # -map %s/ppc/mapping
-                "-magic", os.path.join(createfrom, 'magic'),  # -magic %s/ppc/magic
                 '-hfs-bless', "/ppc/mac",  # must be the last
             ]
             return result
