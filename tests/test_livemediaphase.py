@@ -296,7 +296,7 @@ class TestLiveMediaThread(PungiTestCase):
             'target': 'f24',
             'title': None,
             'version': 'Rawhide',
-            'subvariant': 'DATA',
+            'subvariant': 'KDE',
         }
         pool = mock.Mock()
 
@@ -333,7 +333,7 @@ class TestLiveMediaThread(PungiTestCase):
         self.assertEqual(
             run_blocking_cmd.mock_calls,
             [mock.call('koji-spin-livemedia',
-                       log_file=self.topdir + '/logs/amd64-x86_64/livemedia-Server.amd64-x86_64.log')])
+                       log_file=self.topdir + '/logs/amd64-x86_64/livemedia-Server-KDE.amd64-x86_64.log')])
         self.assertEqual(get_live_media_cmd.mock_calls,
                          [mock.call({'arch': 'amd64,x86_64',
                                      'ksfile': 'file.ks',
@@ -375,7 +375,7 @@ class TestLiveMediaThread(PungiTestCase):
             self.assertIn(image.path, image_relative_paths)
             self.assertEqual('iso', image.format)
             self.assertEqual('live', image.type)
-            self.assertEqual('DATA', image.subvariant)
+            self.assertEqual('KDE', image.subvariant)
 
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
     def test_handle_koji_fail(self, KojiWrapper):
@@ -398,6 +398,7 @@ class TestLiveMediaThread(PungiTestCase):
             'target': 'f24',
             'title': None,
             'version': 'Rawhide',
+            'subvariant': 'KDE',
         }
         pool = mock.Mock()
 
@@ -437,6 +438,7 @@ class TestLiveMediaThread(PungiTestCase):
             'target': 'f24',
             'title': None,
             'version': 'Rawhide',
+            'subvariant': 'KDE',
         }
         pool = mock.Mock()
 
