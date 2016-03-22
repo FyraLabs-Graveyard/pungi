@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
-from tests.helpers import DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
 class TestImageBuildPhase(PungiTestCase):
@@ -579,9 +579,6 @@ class TestCreateImageBuildThread(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             'scratch': False,
         }
-
-        def boom(*args, **kwargs):
-            raise RuntimeError('BOOM')
 
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.run_blocking_cmd.side_effect = boom

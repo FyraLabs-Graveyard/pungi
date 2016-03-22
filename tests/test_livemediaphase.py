@@ -10,7 +10,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
-from tests.helpers import DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
 class TestLiveMediaPhase(PungiTestCase):
@@ -441,9 +441,6 @@ class TestLiveMediaThread(PungiTestCase):
             'subvariant': 'KDE',
         }
         pool = mock.Mock()
-
-        def boom(*args, **kwargs):
-            raise Exception('BOOM')
 
         run_blocking_cmd = KojiWrapper.return_value.run_blocking_cmd
         run_blocking_cmd.side_effect = boom
