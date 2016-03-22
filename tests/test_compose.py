@@ -99,6 +99,30 @@ class ComposeTestCase(unittest.TestCase):
                                          'RC-1.0', '1', 'rel_short', '2', '.iso', 'nightly',
                                          '.n', 'Server', '3.0']))
 
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_release(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_release, '20160107.n.2')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_release_production(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'production'
+        ci.return_value.compose.type_suffix = '.n'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_release, '20160107.n.2')
+
 
 class StatusTest(unittest.TestCase):
     def setUp(self):

@@ -113,7 +113,7 @@ class LiveImagesPhase(PhaseBase):
     def _get_release(self, image_conf):
         """If release is set explicitly to None, replace it with date and respin."""
         if 'release' in image_conf and image_conf['release'] is None:
-            return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+            return self.compose.image_release
         return image_conf.get('release', None)
 
     def run(self):
