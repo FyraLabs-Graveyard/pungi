@@ -157,22 +157,24 @@ class LiveMediaPhase(PhaseBase):
 class LiveMediaThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
+        subvariant = config.pop('subvariant')
         self.num = num
         try:
-            self.worker(compose, variant, config)
+            self.worker(compose, variant, subvariant, config)
         except Exception as exc:
             if not compose.can_fail(variant, '*', 'live-media'):
                 raise
             else:
-                msg = ('[FAIL] live-media for variant %s failed, but going on anyway.\n%s'
-                       % (variant.uid, exc))
+                msg = ('[FAIL] live-media for variant %s (%s) failed, but going on anyway.\n%s'
+                       % (variant.uid, subvariant, exc))
                 self.pool.log_info(msg)
                 tb = traceback.format_exc()
                 self.pool.log_debug(tb)
 
-    def _get_log_file(self, compose, variant, config):
+    def _get_log_file(self, compose, variant, subvariant, config):
         arches = '-'.join(config['arches'])
-        return compose.paths.log.log_file(arches, 'livemedia-%s' % variant.uid)
+        return compose.paths.log.log_file(arches, 'livemedia-%s-%s'
+                                          % (variant.uid, subvariant))
 
     def _run_command(self, koji_wrapper, cmd, compose, log_file):
         time.sleep(self.num * 3)
@@ -190,17 +192,15 @@ class LiveMediaThread(WorkerThread):
         copy['arch'] = ','.join(copy.pop('arches', []))
         return koji_wrapper.get_live_media_cmd(copy)
 
-    def worker(self, compose, variant, config):
-        msg = 'Live media: %s (arches: %s, variant: %s)' % (config['name'],
-                                                            ' '.join(config['arches']),
-                                                            variant.uid)
+    def worker(self, compose, variant, subvariant, config):
+        msg = ('Live media: %s (arches: %s, variant: %s, subvariant: %s)'
+               % (config['name'], ' '.join(config['arches']), variant.uid, subvariant))
         self.pool.log_info('[BEGIN] %s' % msg)
-        subvariant = config.pop('subvariant')
 
         koji_wrapper = KojiWrapper(compose.conf['koji_profile'])
         cmd = self._get_cmd(koji_wrapper, config)
 
-        log_file = self._get_log_file(compose, variant, config)
+        log_file = self._get_log_file(compose, variant, subvariant, config)
         output = self._run_command(koji_wrapper, cmd, compose, log_file)
 
         # collect results and update manifest

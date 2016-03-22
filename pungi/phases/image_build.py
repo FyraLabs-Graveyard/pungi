@@ -4,6 +4,7 @@ import copy
 import os
 import time
 from kobo import shortcuts
+import traceback
 
 from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
 from pungi.phases.base import PhaseBase
@@ -142,35 +143,38 @@ class CreateImageBuildThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd = item
+        variant = cmd["image_conf"]["image-build"]["variant"]
+        subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
         try:
-            self.worker(num, compose, cmd)
+            self.worker(num, compose, variant, subvariant, cmd)
         except Exception as exc:
             if not compose.can_fail(cmd["image_conf"]["image-build"]['variant'], '*', 'image-build'):
                 raise
             else:
-                msg = ('[FAIL] image-build for variant %s failed, but going on anyway.\n%s'
-                       % (cmd['image_conf']['image-build']['variant'], exc))
+                msg = ('[FAIL] image-build for variant %s (%s) failed, but going on anyway.\n%s'
+                       % (variant.uid, subvariant, exc))
                 self.pool.log_info(msg)
+                tb = traceback.format_exc()
+                self.pool.log_debug(tb)
 
-    def worker(self, num, compose, cmd):
+    def worker(self, num, compose, variant, subvariant, cmd):
         arches = cmd["image_conf"]["image-build"]['arches'].split(',')
         dash_arches = '-'.join(arches)
         log_file = compose.paths.log.log_file(
             dash_arches,
-            "imagebuild-%s-%s-%s" % (dash_arches,
-                                     cmd["image_conf"]["image-build"]["variant"],
+            "imagebuild-%s-%s-%s" % (variant.uid, subvariant,
                                      cmd["image_conf"]["image-build"]['format'].replace(",", "-"))
         )
-        msg = "Creating %s image (arches: %s, variant: %s)" % (cmd["image_conf"]["image-build"]["format"].replace(",", "-"),
-                                                               dash_arches,
-                                                               cmd["image_conf"]["image-build"]["variant"])
+        msg = ("Creating %s image (arches: %s, variant: %s, subvariant: %s)"
+               % (cmd["image_conf"]["image-build"]["format"].replace(",", "-"),
+                  dash_arches, variant, subvariant))
         self.pool.log_info("[BEGIN] %s" % msg)
 
         koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
 
         # writes conf file for koji image-build
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
-            cmd["image_conf"]["image-build"]["variant"], dash_arches, cmd["conf_file"]))
+            variant, dash_arches, cmd["conf_file"]))
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
                                                     scratch=cmd['scratch'])
@@ -182,7 +186,8 @@ class CreateImageBuildThread(WorkerThread):
         self.pool.log_debug("build-image outputs: %s" % (output))
         if output["retcode"] != 0:
             self.fail(compose, cmd)
-            raise RuntimeError("ImageBuild task failed: %s. See %s for more details." % (output["task_id"], log_file))
+            raise RuntimeError("ImageBuild task failed: %s. See %s for more details."
+                               % (output["task_id"], log_file))
 
         # copy image to images/
         image_infos = []
@@ -229,8 +234,7 @@ class CreateImageBuildThread(WorkerThread):
             img.disc_number = 1     # We don't expect multiple disks
             img.disc_count = 1
             img.bootable = False
-            varname = cmd["image_conf"]["image-build"]["variant"].uid
-            img.subvariant = cmd["image_conf"]["image-build"].get("subvariant", varname)
-            compose.im.add(variant=varname, arch=image_info['arch'], image=img)
+            img.subvariant = subvariant
+            compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 
         self.pool.log_info("[DONE ] %s" % msg)

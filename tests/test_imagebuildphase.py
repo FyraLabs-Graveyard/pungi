@@ -388,6 +388,7 @@ class TestCreateImageBuildThread(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    'subvariant': 'KDE',
                 }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
@@ -422,6 +423,19 @@ class TestCreateImageBuildThread(PungiTestCase):
         t = CreateImageBuildThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd), 1)
+
+        self.assertItemsEqual(
+            koji_wrapper.get_image_build_cmd.call_args_list,
+            [mock.call(cmd['image_conf'],
+                       conf_file_dest='amd64,x86_64-Client-Fedora-Docker-Base-docker',
+                       scratch=False)]
+        )
+
+        self.assertItemsEqual(
+            koji_wrapper.run_blocking_cmd.call_args_list,
+            [mock.call(koji_wrapper.get_image_build_cmd.return_value,
+                       log_file=self.topdir + '/logs/amd64-x86_64/imagebuild-Client-KDE-docker.amd64-x86_64.log')]
+        )
 
         self.assertItemsEqual(
             linker.mock_calls,
@@ -473,6 +487,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             data = image_relative_paths.pop(image.path)
             self.assertEqual(data['format'], image.format)
             self.assertEqual(data['type'], image.type)
+            self.assertEqual('KDE', image.subvariant)
 
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Client/amd64/images'))
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Client/x86_64/images'))
