@@ -259,7 +259,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'ksurl': 'resolved',
                                          'ksversion': '24',
                                          'name': 'Fedora Server Live',
-                                         'release': '20151203.0',
+                                         'release': '20151203.t.0',
                                          'repo': ['http://example.com/extra_repo',
                                                   self.topdir + '/compose/Everything/$basearch/os',
                                                   self.topdir + '/compose/Server/$basearch/os'],

@@ -91,7 +91,7 @@ class LiveMediaPhase(PhaseBase):
         """
         for key, conf in [('release', image_conf), ('live_media_release', self.compose.conf)]:
             if key in conf and conf[key] is None:
-                return '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+                return self.compose.image_release
         return image_conf.get('release', self.compose.conf.get('live_media_release'))
 
     def _get_install_tree(self, image_conf, variant):

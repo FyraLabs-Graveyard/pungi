@@ -284,7 +284,7 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertTrue(phase.pool.queue_put.called_once)
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][1].get('image_conf', {}).get('image-build', {}).get('release'),
-                         '20151203.0')
+                         '20151203.t.0')
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_scratch_build(self, ThreadPool):

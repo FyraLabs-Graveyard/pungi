@@ -340,3 +340,10 @@ class Compose(kobo.log.LoggingBase):
             self.failed_deliverables.setdefault(variant_uid, {}).setdefault(arch, []).append(deliverable)
             return True
         return False
+
+    @property
+    def image_release(self):
+        """Generate a value to pass to Koji as image release. This includes
+        date, compose type and respin."""
+        return '%s%s.%s' % (self.compose_date, self.ci_base.compose.type_suffix,
+                            self.compose_respin)

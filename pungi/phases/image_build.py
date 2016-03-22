@@ -82,7 +82,7 @@ class ImageBuildPhase(PhaseBase):
     def _set_release(self, image_conf):
         """If release is set explicitly to None, replace it with date and respin."""
         if 'release' in image_conf and image_conf['release'] is None:
-            image_conf['release'] = '%s.%s' % (self.compose.compose_date, self.compose.compose_respin)
+            image_conf['release'] = self.compose.image_release
 
     def run(self):
         for variant in self.compose.get_variants():
