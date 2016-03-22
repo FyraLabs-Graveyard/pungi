@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread
-from tests.helpers import DummyCompose, PungiTestCase
+from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
 class TestLiveImagesPhase(PungiTestCase):
@@ -620,9 +620,6 @@ class TestCreateLiveImageThread(PungiTestCase):
             'ksurl': None,
             'subvariant': 'Client',
         }
-
-        def boom(*args, **kwargs):
-            raise RuntimeError('BOOM')
 
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.get_create_image_cmd.side_effect = boom
