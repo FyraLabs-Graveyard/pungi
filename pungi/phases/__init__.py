@@ -30,3 +30,4 @@ from test import TestPhase  # noqa
 from image_checksum import ImageChecksumPhase    # noqa
 from livemedia_phase import LiveMediaPhase  # noqa
 from ostree import OSTreePhase  # noqa
+from atomic_installer import AtomicInstallerPhase  # noqa

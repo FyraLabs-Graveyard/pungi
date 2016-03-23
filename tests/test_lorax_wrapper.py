@@ -34,7 +34,11 @@ class LoraxWrapperTest(unittest.TestCase):
                                        variant="Server", bugurl="http://example.com/",
                                        nomacboot=True, noupgrade=True, is_final=True,
                                        buildarch='x86_64', volid='VOLUME_ID',
-                                       buildinstallpackages=['bash', 'vim'])
+                                       buildinstallpackages=['bash', 'vim'],
+                                       add_template=['t1', 't2'],
+                                       add_arch_template=['ta1', 'ta2'],
+                                       add_template_var=['v1', 'v2'],
+                                       add_arch_template_var=['va1', 'va2'])
 
         self.assertEqual(cmd[0], 'lorax')
         self.assertItemsEqual(cmd[1:],
@@ -45,6 +49,10 @@ class LoraxWrapperTest(unittest.TestCase):
                                '--buildarch=x86_64', '--volid=VOLUME_ID',
                                '--nomacboot', '--noupgrade', '--isfinal',
                                '--installpkgs=bash', '--installpkgs=vim',
+                               '--add-template=t1', '--add-template=t2',
+                               '--add-arch-template=ta1', '--add-arch-template=ta2',
+                               '--add-template-var=v1', '--add-template-var=v2',
+                               '--add-arch-template-var=va1', '--add-arch-template-var=va2',
                                '/mnt/output_dir'])
 
 
