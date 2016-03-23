@@ -142,6 +142,7 @@ Options
      * live
      * image-build
      * live-media
+     * atomic_installer
 
        .. note::
 
@@ -968,6 +969,65 @@ Example config
                 "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                 "source_repo_from": "Everything",
                 "atomic_repo": "/mnt/koji/compose/atomic/Rawhide/"
+            }
+        })
+    ]
+
+
+Atomic Installer Settings
+=========================
+
+The ``atomic_installer`` phase of *Pungi* can produce installer image bundling
+an OSTree repository. This always runs in Koji as a ``runroot`` task.
+
+**atomic**
+    (*dict*) -- a variant/arch mapping of configuration. The format should be
+    ``[(variant_uid_regex, {arch|*: config_dict})]``.
+
+    The configuration dict for each variant arch pair must have this key:
+
+    * ``source_repo_from`` -- (*str*) Name of variant serving as source
+      repository.
+
+    These keys are optional:
+
+    * ``release`` -- (*str*) Release value to set for the installer image. Set
+      to ``None`` to use the date.respin format.
+    * ``filename`` -- (*str*) What to name the installer iso. This is a
+      template with options listed in Image naming section. If not specified,
+      global naming format will be used.
+
+    These optional keys are passed to ``lorax`` to customize the build.
+
+    * ``installpkgs`` -- (*[str]*)
+    * ``add_template`` -- (*[str]*)
+    * ``add_arch_template`` -- (*[str]*)
+    * ``add_template_var`` -- (*[str]*)
+    * ``add_arch_template_var`` -- (*[str]*)
+
+
+Example config
+--------------
+::
+
+    atomic = [
+        ("^Atomic$", {
+            "x86_64": {
+                "source_repo_from": "Everything",
+                "release": None,
+                "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(compose_date)s.iso",
+                "installpkgs": ["fedora-productimg-atomic"],
+                "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
+                "add_template_var": [
+                    "ostree_osname=fedora-atomic",
+                    "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                ],
+                "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+                "add_arch_template_var": [
+                    "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                    "ostree_osname=fedora-atomic",
+                    "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                ]
             }
         })
     ]

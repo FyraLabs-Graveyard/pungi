@@ -1,0 +1,279 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import unittest
+import mock
+
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from tests import helpers
+from pungi.phases import atomic_installer as atomic
+
+
+class AtomicInstallerPhaseTest(helpers.PungiTestCase):
+
+    @mock.patch('pungi.phases.atomic_installer.ThreadPool')
+    def test_run(self, ThreadPool):
+        cfg = mock.Mock()
+        compose = helpers.DummyCompose(self.topdir, {
+            'atomic': [
+                ('^Everything$', {'x86_64': cfg})
+            ]
+        })
+
+        pool = ThreadPool.return_value
+
+        phase = atomic.AtomicInstallerPhase(compose)
+        phase.run()
+
+        self.assertEqual(len(pool.add.call_args_list), 1)
+        self.assertEqual(pool.queue_put.call_args_list,
+                         [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg))])
+
+    @mock.patch('pungi.phases.atomic_installer.ThreadPool')
+    def test_skip_without_config(self, ThreadPool):
+        compose = helpers.DummyCompose(self.topdir, {})
+        compose.just_phases = None
+        compose.skip_phases = []
+        phase = atomic.AtomicInstallerPhase(compose)
+        self.assertTrue(phase.skip())
+
+
+class AtomicThreadTest(helpers.PungiTestCase):
+
+    def assertImageAdded(self, compose, ImageCls, IsoWrapper):
+        image = ImageCls.return_value
+        self.assertEqual(image.path, 'Everything/x86_64/iso/image-name')
+        self.assertEqual(image.mtime, 13579)
+        self.assertEqual(image.size, 1024)
+        self.assertEqual(image.arch, 'x86_64')
+        self.assertEqual(image.type, "boot")
+        self.assertEqual(image.format, "iso")
+        self.assertEqual(image.disc_number, 1)
+        self.assertEqual(image.disc_count, 1)
+        self.assertEqual(image.bootable, True)
+        self.assertEqual(image.implant_md5, IsoWrapper.return_value.get_implanted_md5.return_value)
+        self.assertEqual(compose.im.add.mock_calls,
+                         [mock.call('Everything', 'x86_64', image)])
+
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run(self, KojiWrapper, link, IsoWrapper,
+                 get_file_size, get_mtime, ImageCls):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': '20160321.n.0',
+            'filename': 'Fedora-Atomic.iso',
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
+
+        t = atomic.AtomicInstallerThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        self.assertEqual(koji.get_runroot_cmd.call_args_list,
+                         [mock.call('rrt', 'x86_64',
+                                    ['lorax',
+                                     '--product=Fedora',
+                                     '--version=Rawhide',
+                                     '--release=20160321.n.0',
+                                     '--source=file://{}/compose/Everything/x86_64/os'.format(self.topdir),
+                                     '--variant=Everything',
+                                     '--nomacboot',
+                                     self.topdir + '/compose/Everything/x86_64/os'],
+                                    channel=None, mounts=[self.topdir],
+                                    packages=['pungi', 'lorax'],
+                                    task_id=True, use_shell=True)])
+        self.assertEqual(koji.run_runroot_cmd.call_args_list,
+                         [mock.call(koji.get_runroot_cmd.return_value,
+                                    log_file=self.topdir + '/logs/x86_64/atomic/runroot.log')])
+        self.assertEqual(link.call_args_list,
+                         [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
+                                    final_iso_path)])
+        self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
+        self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
+        self.assertImageAdded(compose, ImageCls, IsoWrapper)
+        self.assertEqual(compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', compose.variants['Everything'],
+                                    disc_type='dvd', format='Fedora-Atomic.iso')])
+
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_implicit_release(self, KojiWrapper, link,
+                                       IsoWrapper, get_file_size, get_mtime, ImageCls):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': None,
+            "installpkgs": ["fedora-productimg-atomic"],
+            "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
+            "add_template_var": [
+                "ostree_osname=fedora-atomic",
+                "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+            ],
+            "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+            "add_arch_template_var": [
+                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "ostree_osname=fedora-atomic",
+                "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+            ],
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
+
+        t = atomic.AtomicInstallerThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        self.assertEqual(
+            koji.get_runroot_cmd.call_args_list,
+            [mock.call('rrt', 'x86_64',
+                       ['lorax',
+                        '--product=Fedora',
+                        '--version=Rawhide', '--release=20151203.t.0',
+                        '--source=file://{}/compose/Everything/x86_64/os'.format(self.topdir),
+                        '--variant=Everything',
+                        '--nomacboot',
+                        '--installpkgs=fedora-productimg-atomic',
+                        '--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl',
+                        '--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl',
+                        '--add-template-var=ostree_osname=fedora-atomic',
+                        '--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
+                        '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
+                        '--add-arch-template-var=ostree_osname=fedora-atomic',
+                        '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
+                        self.topdir + '/compose/Everything/x86_64/os'],
+                       channel=None, mounts=[self.topdir],
+                       packages=['pungi', 'lorax'],
+                       task_id=True, use_shell=True)])
+        self.assertEqual(koji.run_runroot_cmd.call_args_list,
+                         [mock.call(koji.get_runroot_cmd.return_value,
+                                    log_file=self.topdir + '/logs/x86_64/atomic/runroot.log')])
+        self.assertEqual(link.call_args_list,
+                         [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
+                                    final_iso_path)])
+        self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
+        self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
+        self.assertImageAdded(compose, ImageCls, IsoWrapper)
+        self.assertEqual(compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', compose.variants['Everything'],
+                                    disc_type='dvd', format=None)])
+
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_fail_crash(self, KojiWrapper, link,
+                        IsoWrapper, get_file_size, get_mtime, ImageCls):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['atomic_installer']})
+            ],
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': None,
+            'filename': 'Fedora-Atomic.iso',
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = helpers.boom
+
+        t = atomic.AtomicInstallerThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        pool.log_info.assert_has_calls([
+            mock.call('[BEGIN] Atomic phase for variant Everything, arch x86_64'),
+            mock.call('[FAIL] Atomic for variant Everything, arch x86_64, failed, but going on anyway.\n'
+                      'BOOM')
+        ])
+
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_fail_runroot_fail(self, KojiWrapper, link,
+                               IsoWrapper, get_file_size, get_mtime, ImageCls):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['atomic_installer']})
+            ],
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': None,
+            'filename': 'Fedora-Atomic.iso',
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'output': 'Failed',
+            'task_id': 1234,
+            'retcode': 1,
+        }
+
+        t = atomic.AtomicInstallerThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        pool.log_info.assert_has_calls([
+            mock.call('[BEGIN] Atomic phase for variant Everything, arch x86_64'),
+            mock.call('[FAIL] Atomic for variant Everything, arch x86_64, failed, but going on anyway.\n'
+                      'Runroot task failed: 1234. See %s/logs/x86_64/atomic/runroot.log for more details.'
+                      % self.topdir)
+        ])
+
+
+if __name__ == '__main__':
+    unittest.main()

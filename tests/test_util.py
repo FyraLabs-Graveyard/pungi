@@ -193,5 +193,14 @@ class TestFindOldCompose(unittest.TestCase):
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-Base-1-20160229.0')
 
 
+class TestHelpers(unittest.TestCase):
+    def test_process_args(self):
+        self.assertEqual(util.process_args('--opt={}', None), [])
+        self.assertEqual(util.process_args('--opt={}', []), [])
+        self.assertEqual(util.process_args('--opt={}', ['foo', 'bar']),
+                         ['--opt=foo', '--opt=bar'])
+        self.assertEqual(util.process_args('--opt={}', 'foo'), ['--opt=foo'])
+
+
 if __name__ == "__main__":
     unittest.main()

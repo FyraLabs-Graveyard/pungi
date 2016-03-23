@@ -95,3 +95,7 @@ def union(*args):
     for arg in args:
         res.update(arg)
     return res
+
+
+def boom(*args, **kwargs):
+    raise Exception('BOOM')

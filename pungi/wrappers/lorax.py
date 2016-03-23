@@ -18,12 +18,15 @@
 import os
 
 from kobo.shortcuts import force_list
+from ..util import process_args
 
 
 class LoraxWrapper(object):
     def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir,
                       variant=None, bugurl=None, nomacboot=False, noupgrade=False,
-                      is_final=False, buildarch=None, volid=None, buildinstallpackages=None):
+                      is_final=False, buildarch=None, volid=None, buildinstallpackages=None,
+                      add_template=None, add_arch_template=None,
+                      add_template_var=None, add_arch_template_var=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -55,8 +58,11 @@ class LoraxWrapper(object):
         if volid:
             cmd.append("--volid=%s" % volid)
 
-        if buildinstallpackages:
-            cmd.extend(["--installpkgs=%s" % package for package in buildinstallpackages])
+        cmd.extend(process_args('--installpkgs={}', buildinstallpackages))
+        cmd.extend(process_args('--add-template={}', add_template))
+        cmd.extend(process_args('--add-arch-template={}', add_arch_template))
+        cmd.extend(process_args('--add-template-var={}', add_template_var))
+        cmd.extend(process_args('--add-arch-template-var={}', add_arch_template_var))
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
