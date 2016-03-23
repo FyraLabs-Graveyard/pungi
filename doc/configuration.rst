@@ -934,6 +934,45 @@ Example
     }
 
 
+OSTree Settings
+===============
+
+The ``ostree`` phase of *Pungi* can create ostree repositories in a Koji
+runroot environment.
+
+**ostree**
+    (*dict*) -- a variant/arch mapping of configuration. The format should be
+    ``[(variant_uid_regex, {arch|*: config_dict})]``.
+
+    The configuration dict for each variant arch pair must have these keys:
+
+    * ``treefile`` -- (*str*) Filename of configuration for ``rpm-ostree``.
+    * ``config_url`` -- (*str*) URL for Git repository with the ``treefile``.
+    * ``source_repo_from`` -- (*str*) Name of variant serving as source repository.
+    * ``atomic_repo`` -- (*str*) Where to put the atomic repository
+
+    These keys are optional:
+
+    * ``config_branch`` -- (*str*) Git branch of the repo to use. Defaults to
+      ``master``.
+
+
+Example config
+--------------
+::
+
+    ostree = [
+        ("^Atomic$", {
+            "x86_64": {
+                "treefile": "fedora-atomic-docker-host.json",
+                "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
+                "source_repo_from": "Everything",
+                "atomic_repo": "/mnt/koji/compose/atomic/Rawhide/"
+            }
+        })
+    ]
+
+
 Media Checksums Settings
 ========================
 

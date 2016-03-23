@@ -226,6 +226,7 @@ def run_compose(compose):
     gather_phase = pungi.phases.GatherPhase(compose, pkgset_phase)
     extrafiles_phase = pungi.phases.ExtraFilesPhase(compose, pkgset_phase)
     createrepo_phase = pungi.phases.CreaterepoPhase(compose)
+    ostree_phase = pungi.phases.OSTreePhase(compose)
     productimg_phase = pungi.phases.ProductimgPhase(compose, pkgset_phase)
     createiso_phase = pungi.phases.CreateisoPhase(compose)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
@@ -239,7 +240,7 @@ def run_compose(compose):
                   buildinstall_phase, productimg_phase, gather_phase,
                   extrafiles_phase, createiso_phase, liveimages_phase,
                   livemedia_phase, image_build_phase, image_checksum_phase,
-                  test_phase):
+                  test_phase, ostree_phase):
         if phase.skip():
             continue
         try:
@@ -319,6 +320,9 @@ def run_compose(compose):
     buildinstall_phase.stop()
     if not buildinstall_phase.skip():
         buildinstall_phase.copy_files()
+
+    ostree_phase.start()
+    ostree_phase.stop()
 
     # PRODUCTIMG phase
     productimg_phase.start()
