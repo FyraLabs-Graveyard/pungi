@@ -72,3 +72,15 @@ class PhaseBase(object):
 
     def run(self):
         raise NotImplementedError
+
+
+class ConfigGuardedPhase(PhaseBase):
+    """A phase that is skipped unless config option is set."""
+
+    def skip(self):
+        if super(ConfigGuardedPhase, self).skip():
+            return True
+        if not self.compose.conf.get(self.name):
+            self.compose.log_info("Config section '%s' was not found. Skipping." % self.name)
+            return True
+        return False
