@@ -188,9 +188,20 @@ class BuildinstallPhase(PhaseBase):
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
                 # TODO: label is not used
                 label = ""
-                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type="dvd")
-                tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
-                link_boot_iso(self.compose, arch, variant)
+                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
+                try:
+                    tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
+                    link_boot_iso(self.compose, arch, variant)
+                except Exception as exc:
+                    if not self.compose.can_fail(variant, arch, 'buildinstall'):
+                        raise
+                    else:
+                        tb = traceback.format_exc()
+                        self.pool.log_info(
+                            '[FAIL] Copying results of buildinstall for variant %s arch %s failed, '
+                            'but going on anyway.\n%s'
+                            % (variant.uid, arch, exc))
+                        self.pool.log_debug(tb)
 
 
 def get_kickstart_file(compose):
