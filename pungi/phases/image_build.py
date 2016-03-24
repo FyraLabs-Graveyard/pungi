@@ -4,9 +4,8 @@ import copy
 import os
 import time
 from kobo import shortcuts
-import traceback
 
-from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
+from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -145,17 +144,8 @@ class CreateImageBuildThread(WorkerThread):
         compose, cmd = item
         variant = cmd["image_conf"]["image-build"]["variant"]
         subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
-        try:
+        with failable(compose, variant, '*', 'image-build'):
             self.worker(num, compose, variant, subvariant, cmd)
-        except Exception as exc:
-            if not compose.can_fail(cmd["image_conf"]["image-build"]['variant'], '*', 'image-build'):
-                raise
-            else:
-                msg = ('[FAIL] image-build for variant %s (%s) failed, but going on anyway.\n%s'
-                       % (variant.uid, subvariant, exc))
-                self.pool.log_info(msg)
-                tb = traceback.format_exc()
-                self.pool.log_debug(tb)
 
     def worker(self, num, compose, variant, subvariant, cmd):
         arches = cmd["image_conf"]["image-build"]['arches'].split(',')

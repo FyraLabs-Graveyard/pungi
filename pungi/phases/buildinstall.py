@@ -22,7 +22,6 @@ import pipes
 import tempfile
 import shutil
 import re
-import traceback
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run
@@ -30,7 +29,7 @@ from productmd.images import Image
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
-from pungi.util import get_file_size, get_mtime
+from pungi.util import get_file_size, get_mtime, failable
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
@@ -189,19 +188,10 @@ class BuildinstallPhase(PhaseBase):
                 # TODO: label is not used
                 label = ""
                 volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
-                try:
+                msg = 'Copying results of buildinstall'
+                with failable(self.compose, variant, arch, 'buildinstall', msg):
                     tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
                     link_boot_iso(self.compose, arch, variant)
-                except Exception as exc:
-                    if not self.compose.can_fail(variant, arch, 'buildinstall'):
-                        raise
-                    else:
-                        tb = traceback.format_exc()
-                        self.pool.log_info(
-                            '[FAIL] Copying results of buildinstall for variant %s arch %s failed, '
-                            'but going on anyway.\n%s'
-                            % (variant.uid, arch, exc))
-                        self.pool.log_debug(tb)
 
 
 def get_kickstart_file(compose):
@@ -390,17 +380,8 @@ class BuildinstallThread(WorkerThread):
     def process(self, item, num):
         # The variant is None unless lorax is used as buildinstall method.
         compose, arch, variant, cmd = item
-        try:
+        with failable(compose, variant, arch, 'buildinstall'):
             self.worker(compose, arch, variant, cmd, num)
-        except Exception as exc:
-            if not compose.can_fail(variant, arch, 'buildinstall'):
-                raise
-            else:
-                tb = traceback.format_exc()
-                self.pool.log_info(
-                    '[FAIL] Buildinstall for variant %s arch %s failed, but going on anyway.\n%s'
-                    % (variant.uid if variant else 'None', arch, exc))
-                self.pool.log_debug(tb)
 
     def worker(self, compose, arch, variant, cmd, num):
         runroot = compose.conf.get("runroot", False)

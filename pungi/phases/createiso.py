@@ -20,7 +20,6 @@ import time
 import pipes
 import random
 import shutil
-import traceback
 
 import productmd.treeinfo
 from productmd.images import Image
@@ -32,7 +31,7 @@ from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.jigdo import JigdoWrapper
 from pungi.phases.base import PhaseBase
-from pungi.util import makedirs, get_volid, get_arch_variant_data
+from pungi.util import makedirs, get_volid, get_arch_variant_data, failable
 from pungi.media_split import MediaSplitter
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 
@@ -219,17 +218,8 @@ class CreateIsoThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd, variant, arch = item
-        try:
+        with failable(compose, variant, arch, 'iso', 'Creating ISO'):
             self.worker(compose, cmd, num)
-        except Exception as exc:
-            if not compose.can_fail(variant, arch, 'iso'):
-                raise
-            else:
-                msg = ('[FAIL] Creating iso for variant %s, arch %s failed, but going on anyway.\n%s'
-                       % (variant.uid, arch, exc))
-                self.pool.log_info(msg)
-                tb = traceback.format_exc()
-                self.pool.log_debug(tb)
 
     def worker(self, compose, cmd, num):
         mounts = [compose.topdir]

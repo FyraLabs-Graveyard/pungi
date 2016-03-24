@@ -20,7 +20,6 @@ import sys
 import time
 import pipes
 import shutil
-import traceback
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, save_to_file, force_list
@@ -29,7 +28,7 @@ from productmd.images import Image
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
 from pungi.phases.base import PhaseBase
-from pungi.util import get_arch_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
+from pungi.util import get_arch_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
 from pungi.paths import translate_path
 
 
@@ -206,17 +205,8 @@ class CreateLiveImageThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd, variant, arch = item
-        try:
+        with failable(compose, variant, arch, 'live', 'Creating live images'):
             self.worker(compose, cmd, variant, arch, num)
-        except Exception as exc:
-            if not compose.can_fail(variant, arch, 'live'):
-                raise
-            else:
-                msg = ('[FAIL] Creating live image for variant %s, arch %s failed, but going on anyway.\n%s'
-                       % (variant.uid, arch, exc))
-                self.pool.log_info(msg)
-                tb = traceback.format_exc()
-                self.pool.log_debug(tb)
 
     def worker(self, compose, cmd, variant, arch, num):
         self.basename = '%(name)s-%(version)s-%(release)s' % cmd

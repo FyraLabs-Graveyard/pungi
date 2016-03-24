@@ -3,9 +3,8 @@
 import os
 import time
 from kobo import shortcuts
-import traceback
 
-from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size
+from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
 from pungi.phases.base import PhaseBase
 from pungi.linker import Linker
 from pungi.paths import translate_path
@@ -159,17 +158,8 @@ class LiveMediaThread(WorkerThread):
         compose, variant, config = item
         subvariant = config.pop('subvariant')
         self.num = num
-        try:
+        with failable(compose, variant, '*', 'live-media'):
             self.worker(compose, variant, subvariant, config)
-        except Exception as exc:
-            if not compose.can_fail(variant, '*', 'live-media'):
-                raise
-            else:
-                msg = ('[FAIL] live-media for variant %s (%s) failed, but going on anyway.\n%s'
-                       % (variant.uid, subvariant, exc))
-                self.pool.log_info(msg)
-                tb = traceback.format_exc()
-                self.pool.log_debug(tb)
 
     def _get_log_file(self, compose, variant, subvariant, config):
         arches = '-'.join(config['arches'])

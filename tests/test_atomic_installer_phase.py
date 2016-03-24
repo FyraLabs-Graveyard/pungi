@@ -228,10 +228,9 @@ class AtomicThreadTest(helpers.PungiTestCase):
         t = atomic.AtomicInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
-        pool.log_info.assert_has_calls([
-            mock.call('[BEGIN] Atomic phase for variant Everything, arch x86_64'),
-            mock.call('[FAIL] Atomic for variant Everything, arch x86_64, failed, but going on anyway.\n'
-                      'BOOM')
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Atomic (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('BOOM')
         ])
 
     @mock.patch('productmd.images.Image')
@@ -267,10 +266,9 @@ class AtomicThreadTest(helpers.PungiTestCase):
         t = atomic.AtomicInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
-        pool.log_info.assert_has_calls([
-            mock.call('[BEGIN] Atomic phase for variant Everything, arch x86_64'),
-            mock.call('[FAIL] Atomic for variant Everything, arch x86_64, failed, but going on anyway.\n'
-                      'Runroot task failed: 1234. See %s/logs/x86_64/atomic/runroot.log for more details.'
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Atomic (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/atomic/runroot.log for more details.'
                       % self.topdir)
         ])
 

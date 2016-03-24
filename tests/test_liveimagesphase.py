@@ -581,6 +581,8 @@ class TestCreateLiveImageThread(PungiTestCase):
             'specfile': None,
             'ksurl': None,
             'subvariant': 'Client',
+            'release': 'xyz',
+            'type': 'live',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -594,6 +596,12 @@ class TestCreateLiveImageThread(PungiTestCase):
         t = CreateLiveImageThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Creating live images (variant Client, arch amd64) failed, but going on anyway.'),
+            mock.call('LiveImage task failed: 123. See %s/logs/amd64/liveimage-None-None-xyz.amd64.log for more details.'
+                      % self.topdir)
+        ])
 
     @mock.patch('shutil.copy2')
     @mock.patch('pungi.phases.live_images.run')
@@ -619,6 +627,8 @@ class TestCreateLiveImageThread(PungiTestCase):
             'specfile': None,
             'ksurl': None,
             'subvariant': 'Client',
+            'release': 'xyz',
+            'type': 'live',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -627,6 +637,11 @@ class TestCreateLiveImageThread(PungiTestCase):
         t = CreateLiveImageThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Creating live images (variant Client, arch amd64) failed, but going on anyway.'),
+            mock.call('BOOM')
+        ])
 
 
 if __name__ == "__main__":
