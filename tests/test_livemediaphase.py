@@ -377,8 +377,10 @@ class TestLiveMediaThread(PungiTestCase):
             self.assertEqual('live', image.type)
             self.assertEqual('KDE', image.subvariant)
 
+    @mock.patch('pungi.phases.livemedia_phase.get_mtime')
+    @mock.patch('pungi.phases.livemedia_phase.get_file_size')
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
-    def test_handle_koji_fail(self, KojiWrapper):
+    def test_handle_koji_fail(self, KojiWrapper, get_file_size, get_mtime):
         compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
@@ -408,17 +410,23 @@ class TestLiveMediaThread(PungiTestCase):
             'retcode': 1,
             'output': None,
         }
+        get_file_size.return_value = 1024
+        get_mtime.return_value.st_mtime = 13579
 
         t = LiveMediaThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, compose.variants['Server'], config), 1)
+        with mock.patch('time.sleep'):
+            t.process((compose, compose.variants['Server'], config), 1)
 
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Live-media (variant Server, arch *) failed, but going on anyway.'),
+            mock.call('Live media task failed: 1234. See %s for more details.'
+                      % (os.path.join(self.topdir, 'logs/amd64-x86_64/livemedia-Server-KDE.amd64-x86_64.log')))
+        ])
+
+    @mock.patch('pungi.phases.livemedia_phase.get_mtime')
+    @mock.patch('pungi.phases.livemedia_phase.get_file_size')
     @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
-    def test_handle_exception(self, KojiWrapper):
+    def test_handle_exception(self, KojiWrapper, get_file_size, get_mtime):
         compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'failable_deliverables': [
@@ -444,14 +452,17 @@ class TestLiveMediaThread(PungiTestCase):
 
         run_blocking_cmd = KojiWrapper.return_value.run_blocking_cmd
         run_blocking_cmd.side_effect = boom
+        get_file_size.return_value = 1024
+        get_mtime.return_value.st_mtime = 13579
 
         t = LiveMediaThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, compose.variants['Server'], config), 1)
+        with mock.patch('time.sleep'):
+            t.process((compose, compose.variants['Server'], config), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Live-media (variant Server, arch *) failed, but going on anyway.'),
+            mock.call('BOOM')
+        ])
 
 
 if __name__ == "__main__":

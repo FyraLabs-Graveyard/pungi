@@ -2,7 +2,6 @@
 
 import os
 from kobo.threads import ThreadPool, WorkerThread
-import traceback
 import shutil
 from productmd import images
 
@@ -41,17 +40,8 @@ class AtomicInstallerThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        try:
+        with util.failable(compose, variant, arch, 'atomic_installer', 'Atomic'):
             self.worker(compose, variant, arch, config)
-        except Exception as exc:
-            if not compose.can_fail(variant, arch, 'atomic_installer'):
-                raise
-            else:
-                msg = ('[FAIL] Atomic for variant %s, arch %s, failed, but going on anyway.\n%s'
-                       % (variant.uid, arch, exc))
-                self.pool.log_info(msg)
-                tb = traceback.format_exc()
-                self.pool.log_debug(tb)
 
     def worker(self, compose, variant, arch, config):
         msg = 'Atomic phase for variant %s, arch %s' % (variant.uid, arch)

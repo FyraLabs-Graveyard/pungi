@@ -24,6 +24,8 @@ import errno
 import pipes
 import re
 import urlparse
+import contextlib
+import traceback
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -455,3 +457,20 @@ def process_args(fmt, args):
     ['--opt=foo', '--opt=bar']
     """
     return [fmt.format(val) for val in force_list(args or [])]
+
+
+@contextlib.contextmanager
+def failable(compose, variant, arch, deliverable, msg=None):
+    """If a deliverable can fail, log a message and go on as if it succeeded."""
+    msg = msg or deliverable.capitalize()
+    try:
+        yield
+    except Exception as exc:
+        if not compose.can_fail(variant, arch, deliverable):
+            raise
+        else:
+            compose.log_info('[FAIL] %s (variant %s, arch %s) failed, but going on anyway.'
+                             % (msg, variant.uid if variant else 'None', arch))
+            compose.log_info(str(exc))
+            tb = traceback.format_exc()
+            compose.log_debug(tb)

@@ -536,12 +536,15 @@ class TestCreateImageBuildThread(PungiTestCase):
         }
 
         t = CreateImageBuildThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, cmd), 1)
+        with mock.patch('time.sleep'):
+            t.process((compose, cmd), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Image-build (variant Client, arch *) failed, but going on anyway.'),
+            mock.call('ImageBuild task failed: 1234. See %s for more details.'
+                      % (os.path.join(self.topdir,
+                                      'logs/amd64-x86_64/imagebuild-Client-Client-docker.amd64-x86_64.log'))),
+        ])
 
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
@@ -584,12 +587,13 @@ class TestCreateImageBuildThread(PungiTestCase):
         koji_wrapper.run_blocking_cmd.side_effect = boom
 
         t = CreateImageBuildThread(pool)
-        with mock.patch('os.stat') as stat:
-            with mock.patch('os.path.getsize') as getsize:
-                with mock.patch('time.sleep'):
-                    getsize.return_value = 1024
-                    stat.return_value.st_mtime = 13579
-                    t.process((compose, cmd), 1)
+        with mock.patch('time.sleep'):
+            t.process((compose, cmd), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Image-build (variant Client, arch *) failed, but going on anyway.'),
+            mock.call('BOOM'),
+        ])
 
 
 if __name__ == "__main__":
