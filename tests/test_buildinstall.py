@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread, link_boot_iso
-from tests.helpers import DummyCompose, PungiTestCase, touch
+from tests.helpers import DummyCompose, PungiTestCase, touch, boom
 
 
 class BuildInstallCompose(DummyCompose):
@@ -397,6 +397,48 @@ class TestCopyFiles(PungiTestCase):
             [mock.call(compose, 'x86_64', compose.variants['Server']),
              mock.call(compose, 'amd64', compose.variants['Client']),
              mock.call(compose, 'amd64', compose.variants['Server'])])
+
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    @mock.patch('os.listdir')
+    @mock.patch('os.path.isdir')
+    @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
+    def test_copy_fail(self, get_kickstart_file, isdir, listdir,
+                       get_volid, tweak_buildinstall, link_boot_iso):
+        compose = BuildInstallCompose(self.topdir, {
+            'buildinstall_method': 'lorax',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['buildinstall']})
+            ],
+        })
+
+        get_volid.side_effect = (
+            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+        )
+        get_kickstart_file.return_value = 'kickstart'
+        tweak_buildinstall.side_effect = boom
+
+        phase = BuildinstallPhase(compose)
+        phase.copy_files()
+
+        self.assertItemsEqual(
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
+        self.assertItemsEqual(
+            tweak_buildinstall.mock_calls,
+            [mock.call(self.topdir + '/work/x86_64/buildinstall/Server',
+                       self.topdir + '/compose/Server/x86_64/os',
+                       'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall/Server',
+                       self.topdir + '/compose/Server/amd64/os',
+                       'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
+             mock.call(self.topdir + '/work/amd64/buildinstall/Client',
+                       self.topdir + '/compose/Client/amd64/os',
+                       'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
+        self.assertItemsEqual(link_boot_iso.mock_calls, [])
 
 
 class BuildinstallThreadTestCase(PungiTestCase):
