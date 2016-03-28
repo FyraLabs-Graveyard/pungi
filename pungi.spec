@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.10
+Version:        4.0.11
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,22 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Mon Mar 28 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.11-1
+- Reuse helper in all tests (lsedlar)
+- [atomic] Add atomic_installer phase (lsedlar)
+- [ostree] Add ostree phase (lsedlar)
+- [atomic] Add a script to create ostree repo (lsedlar)
+- Add compose type to release for images (lsedlar)
+- [image-build] Add traceback on failure (lsedlar)
+- [image-build] Use subvariants in logging output (lsedlar)
+- [live-media] Use subvariants in logging (lsedlar)
+- Add tracebacks to all failable phases (lsedlar)
+- ppc no longer needs magic bits in the iso (pbrobinson)
+- [buildinstall] Add more debugging output (lsedlar)
+- [metadata] Stop crashing on empty path from .treeinfo (lsedlar)
+- [checksums] Add label to file name (lsedlar)
+- image_build: fix subvariant handling (awilliam)
+
 * Fri Mar 11 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.10-1
 - Remove check for disc type (lsedlar)
 - Update tests to match the subvariant (lsedlar)
