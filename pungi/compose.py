@@ -202,9 +202,11 @@ class Compose(kobo.log.LoggingBase):
             shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)
             shutil.rmtree(tmp_dir)
 
-        file_obj = open(variants_file, "r")
         tree_arches = self.conf.get("tree_arches", None)
-        self.variants = VariantsXmlParser(file_obj, tree_arches).parse()
+        tree_variants = self.conf.get("tree_variants", None)
+        with open(variants_file, "r") as file_obj:
+            parser = VariantsXmlParser(file_obj, tree_arches, tree_variants, logger=self._logger)
+            self.variants = parser.parse()
 
         # populate ci_base with variants - needed for layered-products (compose_id)
         ####FIXME - compose_to_composeinfo is no longer needed and has been
@@ -215,27 +217,17 @@ class Compose(kobo.log.LoggingBase):
     def get_variants(self, types=None, arch=None, recursive=False):
         result = []
         types = types or ["variant", "optional", "addon", "layered-product"]
-        tree_variants = self.conf.get("tree_variants", None)
-        for i in self.variants.values():
-            if tree_variants and i.name not in tree_variants:
-                continue
-            if i.type in types:
-                if arch and arch not in i.arches:
-                    continue
+        for i in self.variants.itervalues():
+            if i.type in types and (not arch or arch in i.arches):
                 result.append(i)
             result.extend(i.get_variants(types=types, arch=arch, recursive=recursive))
         return sorted(set(result))
 
     def get_arches(self):
         result = set()
-        tree_arches = self.conf.get("tree_arches", None)
         for variant in self.get_variants():
             for arch in variant.arches:
-                if tree_arches:
-                    if arch in tree_arches:
-                        result.add(arch)
-                else:
-                    result.add(arch)
+                result.add(arch)
         return sorted(result)
 
     @property
