@@ -13,6 +13,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi.compose import Compose
 
 
+class ConfigWrapper(dict):
+    def __init__(self, *args, **kwargs):
+        super(ConfigWrapper, self).__init__(*args, **kwargs)
+        self._open_file = '%s/fixtures/config.conf' % os.path.abspath(os.path.dirname(__file__))
+
+
 class ComposeTestCase(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
@@ -122,6 +128,158 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir)
 
         self.assertEqual(compose.image_release, '20160107.n.2')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_variant_arches_without_filter(self, ci):
+        conf = ConfigWrapper(
+            variants_file={'scm': 'file',
+                           'repo': None,
+                           'file': 'variants.xml'},
+            release_name='Test',
+            release_version='1.0',
+            release_short='test',
+        )
+
+        compose = Compose(conf, self.tmp_dir)
+        compose.read_variants()
+
+        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+                         ['Client', 'Crashy', 'Live', 'Server'])
+        self.assertEqual(sorted([v.uid for v in compose.variants['Server'].variants.itervalues()]),
+                         ['Server-Gluster', 'Server-ResilientStorage', 'Server-optional'])
+        self.assertItemsEqual(compose.variants['Client'].arches,
+                              ['i386', 'x86_64'])
+        self.assertItemsEqual(compose.variants['Crashy'].arches,
+                              ['ppc64le'])
+        self.assertItemsEqual(compose.variants['Live'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].arches,
+                              ['s390x', 'x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['Gluster'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['ResilientStorage'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['optional'].arches,
+                              ['s390x', 'x86_64'])
+
+        self.assertEqual([v.uid for v in compose.get_variants()],
+                         ['Client', 'Crashy', 'Live', 'Server', 'Server-Gluster',
+                          'Server-ResilientStorage', 'Server-optional'])
+        self.assertEqual(compose.get_arches(), ['i386', 'ppc64le', 's390x', 'x86_64'])
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_variant_arches_with_arch_filter(self, ci):
+        conf = ConfigWrapper(
+            variants_file={'scm': 'file',
+                           'repo': None,
+                           'file': 'variants.xml'},
+            release_name='Test',
+            release_version='1.0',
+            release_short='test',
+            tree_arches=['x86_64'],
+        )
+
+        compose = Compose(conf, self.tmp_dir)
+        compose.read_variants()
+
+        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+                         ['Client', 'Live', 'Server'])
+        self.assertEqual(sorted([v.uid for v in compose.variants['Server'].variants.itervalues()]),
+                         ['Server-Gluster', 'Server-ResilientStorage', 'Server-optional'])
+        self.assertItemsEqual(compose.variants['Client'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Live'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['Gluster'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['ResilientStorage'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['optional'].arches,
+                              ['x86_64'])
+
+        self.assertEqual(compose.get_arches(), ['x86_64'])
+        self.assertEqual([v.uid for v in compose.get_variants()],
+                         ['Client', 'Live', 'Server', 'Server-Gluster',
+                          'Server-ResilientStorage', 'Server-optional'])
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_variant_arches_with_variant_filter(self, ci):
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'production'
+        ci.return_value.compose.type_suffix = '.n'
+
+        conf = ConfigWrapper(
+            variants_file={'scm': 'file',
+                           'repo': None,
+                           'file': 'variants.xml'},
+            release_name='Test',
+            release_version='1.0',
+            release_short='test',
+            tree_variants=['Server', 'Client', 'Server-Gluster'],
+        )
+
+        compose = Compose(conf, self.tmp_dir)
+        compose.read_variants()
+
+        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+                         ['Client', 'Server'])
+        self.assertItemsEqual(compose.variants['Client'].arches,
+                              ['i386', 'x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].arches,
+                              ['s390x', 'x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['Gluster'].arches,
+                              ['x86_64'])
+
+        self.assertEqual(compose.get_arches(), ['i386', 's390x', 'x86_64'])
+        self.assertEqual([v.uid for v in compose.get_variants()],
+                         ['Client', 'Server', 'Server-Gluster'])
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_variant_arches_with_both_filters(self, ci):
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'production'
+        ci.return_value.compose.type_suffix = '.n'
+
+        logger = mock.Mock()
+
+        conf = ConfigWrapper(
+            variants_file={'scm': 'file',
+                           'repo': None,
+                           'file': 'variants.xml'},
+            release_name='Test',
+            release_version='1.0',
+            release_short='test',
+            tree_variants=['Server', 'Client', 'Server-optional'],
+            tree_arches=['x86_64'],
+        )
+
+        compose = Compose(conf, self.tmp_dir, logger=logger)
+        compose.read_variants()
+
+        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+                         ['Client', 'Server'])
+        self.assertItemsEqual(compose.variants['Client'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].arches,
+                              ['x86_64'])
+        self.assertItemsEqual(compose.variants['Server'].variants['optional'].arches,
+                              ['x86_64'])
+
+        self.assertEqual(compose.get_arches(), ['x86_64'])
+        self.assertEqual([v.uid for v in compose.get_variants()],
+                         ['Client', 'Server', 'Server-optional'])
+
+        self.assertItemsEqual(
+            logger.info.call_args_list,
+            [mock.call('Excluding variant Live: filtered by configuration.'),
+             mock.call('Excluding variant Crashy: all its arches are filtered.'),
+             mock.call('Excluding variant Server-ResilientStorage: filtered by configuration.'),
+             mock.call('Excluding variant Server-Gluster: filtered by configuration.')]
+        )
 
 
 class StatusTest(unittest.TestCase):
