@@ -42,12 +42,14 @@ if not os.path.isfile(VARIANTS_DTD):
 
 
 class VariantsXmlParser(object):
-    def __init__(self, file_obj, tree_arches=None):
+    def __init__(self, file_obj, tree_arches=None, tree_variants=None, logger=None):
         self.tree = lxml.etree.parse(file_obj)
         self.dtd = lxml.etree.DTD(open(VARIANTS_DTD, "r"))
         self.addons = {}
         self.layered_products = {}
         self.tree_arches = tree_arches
+        self.tree_variants = tree_variants
+        self.logger = logger
         self.validate()
 
     def _is_true(self, value):
@@ -62,7 +64,7 @@ class VariantsXmlParser(object):
             errors = [str(i) for i in self.dtd.error_log.filter_from_errors()]
             raise ValueError("Variants XML doesn't validate:\n%s" % "\n".join(errors))
 
-    def parse_variant_node(self, variant_node):
+    def parse_variant_node(self, variant_node, parent=None):
         variant_dict = {
             "id": str(variant_node.attrib["id"]),
             "name": str(variant_node.attrib["name"]),
@@ -72,9 +74,14 @@ class VariantsXmlParser(object):
             "environments": [],
             "buildinstallpackages": [],
             "is_empty": bool(variant_node.attrib.get("is_empty", False)),
+            "parent": parent,
         }
         if self.tree_arches:
             variant_dict["arches"] = [i for i in variant_dict["arches"] if i in self.tree_arches]
+        if not variant_dict["arches"]:
+            if self.logger:
+                self.logger.info('Excluding variant %s: all its arches are filtered.' % variant_dict['id'])
+            return None
 
         for grouplist_node in variant_node.xpath("groups"):
             for group_node in grouplist_node.xpath("group"):
@@ -121,25 +128,40 @@ class VariantsXmlParser(object):
 
         contains_optional = False
         for child_node in variant_node.xpath("variants/variant"):
-            child_variant = self.parse_variant_node(child_node)
-            variant.add_variant(child_variant)
+            child_variant = self.parse_variant_node(child_node, variant)
+            if not self.add_child(child_variant, variant):
+                continue
             if child_variant.type == "optional":
                 contains_optional = True
 
         has_optional = self._is_true(variant_node.attrib.get("has_optional", "false"))
         if has_optional and not contains_optional:
-            optional = Variant(id="optional", name="optional", type="optional", arches=variant.arches, groups=[])
-            variant.add_variant(optional)
+            optional = Variant(id="optional", name="optional", type="optional",
+                               arches=variant.arches, groups=[], parent=variant)
+            self.add_child(optional, variant)
 
         for ref in variant_node.xpath("variants/ref/@id"):
-            child_variant = self.parse_variant_node(self.addons[ref])
-            variant.add_variant(child_variant)
+            child_variant = self.parse_variant_node(self.addons[ref], variant)
+            self.add_child(child_variant, variant)
 
 # XXX: top-level optional
 #    for ref in variant_node.xpath("variants/ref/@id"):
 #        variant["variants"].append(copy.deepcopy(addons[ref]))
 
         return variant
+
+    def _is_excluded(self, variant):
+        if self.tree_variants and variant.uid not in self.tree_variants:
+            if self.logger:
+                self.logger.info('Excluding variant %s: filtered by configuration.' % variant)
+            return True
+        return False
+
+    def add_child(self, child, parent):
+        if not child or self._is_excluded(child):
+            return None
+        parent.add_variant(child)
+        return child
 
     def parse(self):
         # we allow top-level addon definitions which can be referenced in variants
@@ -154,6 +176,8 @@ class VariantsXmlParser(object):
         result = {}
         for variant_node in self.tree.xpath("/variants/variant[@type='variant']"):
             variant = self.parse_variant_node(variant_node)
+            if not variant or self._is_excluded(variant):
+                continue
             result[variant.id] = variant
 
         for variant_node in self.tree.xpath("/variants/variant[not(@type='variant' or @type='addon' or @type='layered-product')]"):
@@ -163,7 +187,8 @@ class VariantsXmlParser(object):
 
 
 class Variant(object):
-    def __init__(self, id, name, type, arches, groups, environments=None, buildinstallpackages=None, is_empty=False):
+    def __init__(self, id, name, type, arches, groups, environments=None,
+                 buildinstallpackages=None, is_empty=False, parent=None):
         if not id.isalnum():
             raise ValueError("Variant ID must contain only alphanumeric characters: %s" % id)
 
@@ -178,7 +203,7 @@ class Variant(object):
         self.environments = sorted(copy.deepcopy(environments), lambda x, y: cmp(x["name"], y["name"]))
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
-        self.parent = None
+        self.parent = parent
         self.is_empty = is_empty
 
     def __getitem__(self, name):
