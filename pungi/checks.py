@@ -102,6 +102,16 @@ def check(conf):
     return not fail
 
 
+def check_umask(logger):
+    """Make sure umask is set to something reasonable. If not, log a warning."""
+    mask = os.umask(0)
+    os.umask(mask)
+
+    if mask > 0o022:
+        logger.warning('Unusually strict umask detected (0%03o), '
+                       'expect files with broken permissions.', mask)
+
+
 def validate_options(conf, valid_options):
     errors = []
     for i in valid_options:
