@@ -15,9 +15,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 
-import errno
 import os
 import re
+
+from .. import util
 
 
 PACKAGES_RE = {
@@ -43,11 +44,7 @@ class PungiWrapper(object):
         ks_path = os.path.abspath(ks_path)
 
         ks_dir = os.path.dirname(ks_path)
-        try:
-            os.makedirs(ks_dir)
-        except OSError as ex:
-            if ex.errno != errno.EEXIST:
-                raise
+        util.makedirs(ks_dir)
 
         kickstart = open(ks_path, "w")
 
