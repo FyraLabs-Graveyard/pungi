@@ -138,13 +138,11 @@ def _doCheckSum(path, hash, logger):
 
 
 def makedirs(path, mode=0o775):
-    mask = os.umask(0)
     try:
         os.makedirs(path, mode=mode)
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             raise
-    os.umask(mask)
 
 
 def rmtree(path, ignore_errors=False, onerror=None):
