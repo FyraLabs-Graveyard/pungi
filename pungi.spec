@@ -62,7 +62,7 @@ rm -rf $RPM_BUILD_ROOT
 python2 setup.py test
 nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #TODO: enable compose test
-#cd tests && ./test_compose.sh
+cd tests && ./test_compose.sh
 
 %changelog
 * Wed Apr 05 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.2-1
