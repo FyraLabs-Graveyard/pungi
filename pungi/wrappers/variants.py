@@ -29,22 +29,31 @@ if sys.version_info[0] == 3:
         return (a > b) - (a < b)
 
 
-VARIANTS_DTD = "/usr/share/pungi/variants.dtd"
-if not os.path.isfile(VARIANTS_DTD):
-    DEVEL_VARIANTS_DTD = os.path.normpath(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "share", "variants.dtd")))
-    msg = "Variants DTD not found: %s" % VARIANTS_DTD
-    if os.path.isfile(DEVEL_VARIANTS_DTD):
-        sys.stderr.write("%s\n" % msg)
-        sys.stderr.write("Using alternative DTD: %s\n" % DEVEL_VARIANTS_DTD)
-        VARIANTS_DTD = DEVEL_VARIANTS_DTD
-    else:
-        raise RuntimeError(msg)
+def get_variants_dtd(logger=None):
+    """
+    Find the DTD for variants file. First look into the system directory, and
+    fall back to local directory.
+    """
+    variants_dtd = "/usr/share/pungi/variants.dtd"
+    if not os.path.isfile(variants_dtd):
+        devel_variants_dtd = os.path.normpath(os.path.realpath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "share", "variants.dtd")))
+        msg = "Variants DTD not found: %s" % variants_dtd
+        if os.path.isfile(devel_variants_dtd):
+            if logger:
+                logger.warning("%s", msg)
+                logger.warning("Using alternative DTD: %s", devel_variants_dtd)
+            variants_dtd = devel_variants_dtd
+        else:
+            raise RuntimeError(msg)
+    return variants_dtd
 
 
 class VariantsXmlParser(object):
     def __init__(self, file_obj, tree_arches=None, tree_variants=None, logger=None):
         self.tree = lxml.etree.parse(file_obj)
-        self.dtd = lxml.etree.DTD(open(VARIANTS_DTD, "r"))
+        with open(get_variants_dtd(logger), 'r') as f:
+            self.dtd = lxml.etree.DTD(f)
         self.addons = {}
         self.layered_products = {}
         self.tree_arches = tree_arches
