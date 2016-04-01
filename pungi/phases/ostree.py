@@ -13,13 +13,13 @@ from ..wrappers import scm, kojiwrapper
 class OSTreePhase(ConfigGuardedPhase):
     name = 'ostree'
 
-    config_options = (
+    config_options = [
         {
             "name": "ostree",
-            "expected_types": [dict],
+            "expected_types": [list],
             "optional": True,
         }
-    )
+    ]
 
     def __init__(self, compose):
         super(OSTreePhase, self).__init__(compose)

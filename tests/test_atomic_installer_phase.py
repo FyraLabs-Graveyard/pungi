@@ -16,6 +16,46 @@ from pungi.phases import atomic_installer as atomic
 
 class AtomicInstallerPhaseTest(helpers.PungiTestCase):
 
+    def test_validate(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'atomic': [
+                ("^Atomic$", {
+                    "x86_64": {
+                        "source_repo_from": "Everything",
+                        "release": None,
+                        "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(compose_date)s.iso",
+                        "installpkgs": ["fedora-productimg-atomic"],
+                        "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
+                        "add_template_var": [
+                            "ostree_osname=fedora-atomic",
+                            "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                        ],
+                        "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+                        "add_arch_template_var": [
+                            "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                            "ostree_osname=fedora-atomic",
+                            "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                        ]
+                    }
+                })
+            ]
+        })
+
+        phase = atomic.AtomicInstallerPhase(compose)
+        try:
+            phase.validate()
+        except:
+            self.fail('Correct config must validate')
+
+    def test_validate_bad_conf(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'atomic': 'yes please'
+        })
+
+        phase = atomic.AtomicInstallerPhase(compose)
+        with self.assertRaises(ValueError):
+            phase.validate()
+
     @mock.patch('pungi.phases.atomic_installer.ThreadPool')
     def test_run(self, ThreadPool):
         cfg = mock.Mock()
