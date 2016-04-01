@@ -14,13 +14,13 @@ from ..wrappers import kojiwrapper, iso, lorax
 class AtomicInstallerPhase(ConfigGuardedPhase):
     name = 'atomic'
 
-    config_options = (
+    config_options = [
         {
             "name": "atomic",
-            "expected_types": [dict],
+            "expected_types": [list],
             "optional": True,
         }
-    )
+    ]
 
     def __init__(self, compose):
         super(AtomicInstallerPhase, self).__init__(compose)

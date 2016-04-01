@@ -16,6 +16,35 @@ from pungi.phases import ostree
 
 class OSTreePhaseTest(helpers.PungiTestCase):
 
+    def test_validate(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree': [
+                ("^Atomic$", {
+                    "x86_64": {
+                        "treefile": "fedora-atomic-docker-host.json",
+                        "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
+                        "source_repo_from": "Everything",
+                        "atomic_repo": "/mnt/koji/compose/atomic/Rawhide/"
+                    }
+                })
+            ]
+        })
+
+        phase = ostree.OSTreePhase(compose)
+        try:
+            phase.validate()
+        except:
+            self.fail('Correct config must validate')
+
+    def test_validate_bad_conf(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree': 'yes please'
+        })
+
+        phase = ostree.OSTreePhase(compose)
+        with self.assertRaises(ValueError):
+            phase.validate()
+
     @mock.patch('pungi.phases.ostree.ThreadPool')
     def test_run(self, ThreadPool):
         cfg = mock.Mock()
