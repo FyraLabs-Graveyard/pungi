@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+import argparse
+import kobo.conf
+import os
+import sys
+import tempfile
+import contextlib
+import shutil
+
+here = sys.path[0]
+if here != '/usr/bin':
+    # Git checkout
+    sys.path[0] = os.path.dirname(here)
+
+import pungi.compose
+import pungi.phases
+
+
+class ValidationCompose(pungi.compose.Compose):
+    def __init__(self, conf, has_old):
+        self.conf = conf
+        self._logger = None
+        self.just_phases = []
+        self.skip_phases = []
+        self.has_old_composes = has_old
+
+    @property
+    def old_composes(self):
+        return '/dummy' if self.has_old_composes else None
+
+
+@contextlib.contextmanager
+def in_temp_dir():
+    tempdir = tempfile.mkdtemp()
+    yield tempdir
+    shutil.rmtree(tempdir)
+
+
+def run(config, topdir, has_old):
+    conf = kobo.conf.PyConfigParser()
+    conf.load_from_file(config)
+
+    compose = ValidationCompose(conf, has_old)
+
+    pkgset_phase = pungi.phases.PkgsetPhase(compose)
+    phases = [
+        pungi.phases.InitPhase(compose),
+        pungi.phases.BuildinstallPhase(compose),
+        pkgset_phase,
+        pungi.phases.GatherPhase(compose, pkgset_phase),
+        pungi.phases.ExtraFilesPhase(compose, pkgset_phase),
+        pungi.phases.CreaterepoPhase(compose),
+        pungi.phases.AtomicInstallerPhase(compose),
+        pungi.phases.OSTreePhase(compose),
+        pungi.phases.ProductimgPhase(compose, pkgset_phase),
+        pungi.phases.CreateisoPhase(compose),
+        pungi.phases.LiveImagesPhase(compose),
+        pungi.phases.LiveMediaPhase(compose),
+        pungi.phases.ImageBuildPhase(compose),
+        pungi.phases.ImageChecksumPhase(compose),
+        pungi.phases.TestPhase(compose),
+    ]
+
+    errors = []
+    for phase in phases:
+        if phase.skip():
+            continue
+        try:
+            phase.validate()
+        except ValueError as ex:
+            for i in str(ex).splitlines():
+                errors.append("%s: %s" % (phase.name.upper(), i))
+
+    return errors
+
+
+def main(args=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config', metavar='CONFIG',
+                        help='configuration file to validate')
+    parser.add_argument('--old-composes', action='store_true',
+                        help='indicate if pungi-koji will be run with --old-composes option')
+    opts = parser.parse_args(args)
+
+    with in_temp_dir() as topdir:
+        errors = run(opts.config, topdir, opts.old_composes)
+
+    for msg in errors:
+        print(msg)
+
+    return bool(errors)
+
+
+if __name__ == '__main__':
+    if main():
+        sys.exit(1)
