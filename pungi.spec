@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.11
+Version:        4.0.12
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,17 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Fri Apr 01 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.12-1
+- Add a utility to validate config (lsedlar)
+- [variants] Stop printing stuff to stderr unconditionally (lsedlar)
+- Fix atomic/ostree config validations (lsedlar)
+- [pungi-wrapper] Remove duplicated code (lsedlar)
+- [checks] Add a check for too restrictive umask (lsedlar)
+- [util] Remove umask manipulation from makedirs (lsedlar)
+- Filter variants and architectures (lsedlar)
+- Refactor checking for failable deliverables (lsedlar)
+- [buildinstall] Do not crash on failure (lsedlar)
+
 * Mon Mar 28 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.11-1
 - Reuse helper in all tests (lsedlar)
 - [atomic] Add atomic_installer phase (lsedlar)
