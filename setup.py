@@ -35,9 +35,11 @@ setup(
     packages        = packages,
     scripts         = [
         'bin/pungi',
+        'bin/pungi-config-validate',
         'bin/pungi-koji',
         'bin/comps_filter',
         'bin/pungi-fedmsg-notification',
+        'bin/pungi-make-ostree',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),
