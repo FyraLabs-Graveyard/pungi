@@ -65,6 +65,36 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Fri Apr 01 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.1-1
+- install scripts (dennis)
+- Merge #242 `Fix wrong file permissions` (ausil)
+- Add a utility to validate config (lsedlar)
+- [variants] Stop printing stuff to stderr unconditionally (lsedlar)
+- Fix atomic/ostree config validations (lsedlar)
+- [pungi-wrapper] Remove duplicated code (lsedlar)
+- [checks] Add a check for too restrictive umask (lsedlar)
+- [util] Remove umask manipulation from makedirs (lsedlar)
+- Merge #240 `Filter variants and architectures` (ausil)
+- Filter variants and architectures (lsedlar)
+- Refactor checking for failable deliverables (lsedlar)
+- [buildinstall] Do not crash on failure (lsedlar)
+- Reuse helper in all tests (lsedlar)
+- [atomic] Add atomic_installer phase (lsedlar)
+- [ostree] Add ostree phase (lsedlar)
+- [atomic] Add a script to create ostree repo (lsedlar)
+- Merge #232 `Improve logging by adding subvariants` (ausil)
+- Add compose type to release for images (lsedlar)
+- [image-build] Add traceback on failure (lsedlar)
+- [image-build] Use subvariants in logging output (lsedlar)
+- [live-media] Use subvariants in logging (lsedlar)
+- Add tracebacks to all failable phases (lsedlar)
+- ppc no longer needs magic bits in the iso (pbrobinson)
+- [buildinstall] Add more debugging output (lsedlar)
+- [metadata] Stop crashing on empty path from .treeinfo (lsedlar)
+- [checksums] Add label to file name (lsedlar)
+- [buildinstall] Use customized dvd disc type (lsedlar)
+- image_build: fix subvariant handling (awilliam)
+
 * Tue Feb 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.0-1
 - repoint master at 4.1.x and new feature development
 
