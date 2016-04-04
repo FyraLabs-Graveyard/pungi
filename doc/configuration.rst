@@ -1051,9 +1051,19 @@ Media Checksums Settings
     prefix to that name
 
     It is possible to use format strings that will be replace by actual values.
-    The allowed keys are ``%(release_showrt)s``, ``%(release_short)s``,
-    ``%(release_id)s``, ``%(variant)s``, ``%(version)s``, ``%(date)s``,
-    ``%(type_suffix)s``, ``%(label)s`` and ``%(respin)s``
+    The allowed keys are:
+
+      * ``arch``
+      * ``compose_id``
+      * ``date``
+      * ``label``
+      * ``label_major_version``
+      * ``release_short``
+      * ``respin``
+      * ``type``
+      * ``type_suffix``
+      * ``version``
+      * ``version``
 
     For example, for Fedora the prefix should be
     ``%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s``.

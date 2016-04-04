@@ -23,9 +23,11 @@ class DummyCompose(object):
         self.supported = True
         self.compose_date = '20151203'
         self.compose_type_suffix = '.t'
+        self.compose_type = 'test'
         self.compose_respin = 0
         self.compose_id = 'Test-20151203.0.t'
         self.compose_label = None
+        self.compose_label_major_version = None
         self.image_release = '20151203.t.0'
         self.ci_base = mock.Mock(
             release_id='Test-1.0',

@@ -4,6 +4,7 @@ import os
 from kobo import shortcuts
 
 from .base import PhaseBase
+from ..util import get_format_substs
 
 
 MULTIPLE_CHECKSUMS_ERROR = (
@@ -66,29 +67,21 @@ class ImageChecksumPhase(PhaseBase):
             for arch in self.compose.im.images[variant]:
                 for image in self.compose.im.images[variant][arch]:
                     path = os.path.dirname(os.path.join(top_dir, image.path))
-                    images.setdefault((variant, path), set()).add(image)
+                    images.setdefault((variant, arch, path), set()).add(image)
         return images
 
-    def _get_base_filename(self, variant):
+    def _get_base_filename(self, variant, arch):
         base_checksum_name = self.compose.conf.get('media_checksum_base_filename', '')
         if base_checksum_name:
-            base_checksum_name = base_checksum_name % {
-                'release_short': self.compose.ci_base.release.short,
-                'release_id': self.compose.ci_base.release_id,
-                'variant': variant,
-                'version': self.compose.ci_base.release.version,
-                'date': self.compose.compose_date,
-                'type_suffix': self.compose.compose_type_suffix,
-                'respin': self.compose.compose_respin,
-                'label': self.compose.compose_label,
-            }
+            substs = get_format_substs(self.compose, variant=variant, arch=arch)
+            base_checksum_name = base_checksum_name % substs
             base_checksum_name += '-'
         return base_checksum_name
 
     def run(self):
-        for (variant, path), images in self._get_images().iteritems():
+        for (variant, arch, path), images in self._get_images().iteritems():
             checksums = {}
-            base_checksum_name = self._get_base_filename(variant)
+            base_checksum_name = self._get_base_filename(variant, arch)
             for image in images:
                 filename = os.path.basename(image.path)
                 full_path = os.path.join(path, filename)

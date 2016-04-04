@@ -370,13 +370,14 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         if not variant_uid and "%(variant)s" in i:
             continue
         try:
-            volid = i % compose.get_format_substs(variant=variant_uid,
-                                                  release_short=release_short,
-                                                  version=release_version,
-                                                  arch=arch,
-                                                  disc_type=disc_type or '',
-                                                  base_product_short=base_product_short,
-                                                  base_product_version=base_product_version)
+            volid = i % get_format_substs(compose,
+                                          variant=variant_uid,
+                                          release_short=release_short,
+                                          version=release_version,
+                                          arch=arch,
+                                          disc_type=disc_type or '',
+                                          base_product_short=base_product_short,
+                                          base_product_version=base_product_version)
         except KeyError as err:
             raise RuntimeError('Failed to create volume id: unknown format element: %s' % err.message)
         volid = _apply_substitutions(compose, volid)
@@ -472,3 +473,23 @@ def failable(compose, variant, arch, deliverable, msg=None):
             compose.log_info(str(exc))
             tb = traceback.format_exc()
             compose.log_debug(tb)
+
+
+def get_format_substs(compose, **kwargs):
+    """Return a dict of basic format substitutions.
+
+    Any kwargs will be added as well.
+    """
+    substs = {
+        'compose_id': compose.compose_id,
+        'release_short': compose.ci_base.release.short,
+        'version': compose.ci_base.release.version,
+        'date': compose.compose_date,
+        'respin': compose.compose_respin,
+        'type': compose.compose_type,
+        'type_suffix': compose.compose_type_suffix,
+        'label': compose.compose_label,
+        'label_major_version': compose.compose_label_major_version,
+    }
+    substs.update(kwargs)
+    return substs
