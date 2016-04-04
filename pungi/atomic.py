@@ -22,13 +22,13 @@ def init_atomic_repo(repo, log_dir=None):
     log_file = make_log_file(log_dir, 'init-atomic-repo')
     if not os.path.isdir(repo):
         shortcuts.run(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
-                      log_file=log_file)
+                      logfile=log_file)
 
 
 def make_ostree_repo(repo, config, log_dir=None):
     log_file = make_log_file(log_dir, 'create-atomic-repo')
     shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo), config],
-                  log_file=log_file)
+                  logfile=log_file)
 
 
 def run(opts):
