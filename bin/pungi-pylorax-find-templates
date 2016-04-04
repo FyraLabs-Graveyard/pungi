@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+
+# This needs to work with Python 3 as pylorax only provides the find_templates
+# function in recent builds that are not provided for Python 2.7.
+#
+# This script will print a location of lorax templates. If it fails to import
+# pylorax, or the find_templates function does not exist, the first command
+# line argument will be printed instead.
+
+import sys
+
+if len(sys.argv) != 2:
+    print('Usage: {} FALLBACK'.format(sys.argv[0]), file=sys.stderr)
+    sys.exit(1)
+
+try:
+    import pylorax
+    print(pylorax.find_templates())
+except (ImportError, AttributeError):
+    print(sys.argv[1])
