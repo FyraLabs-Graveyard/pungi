@@ -33,7 +33,7 @@ from productmd.images import Images
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
-from pungi.util import makedirs, get_arch_variant_data
+from pungi.util import makedirs, get_arch_variant_data, get_format_substs
 from pungi.metadata import compose_to_composeinfo
 
 
@@ -270,25 +270,6 @@ class Compose(kobo.log.LoggingBase):
             return
         return open(self.status_file, "r").read().strip()
 
-    def get_format_substs(self, **kwargs):
-        """Return a dict of basic format substitutions.
-
-        Any kwargs will be added as well.
-        """
-        substs = {
-            'compose_id': self.compose_id,
-            'release_short': self.ci_base.release.short,
-            'version': self.ci_base.release.version,
-            'date': self.compose_date,
-            'respin': self.compose_respin,
-            'type': self.compose_type,
-            'type_suffix': self.compose_type_suffix,
-            'label': self.compose_label,
-            'label_major_version': self.compose_label_major_version,
-        }
-        substs.update(kwargs)
-        return substs
-
     def get_image_name(self, arch, variant, disc_type='dvd',
                        disc_num=1, suffix='.iso', format=None):
         """Create a filename for image with given parameters.
@@ -310,11 +291,12 @@ class Compose(kobo.log.LoggingBase):
             variant_uid = variant.parent.uid
         else:
             variant_uid = variant.uid
-        args = self.get_format_substs(variant=variant_uid,
-                                      arch=arch,
-                                      disc_type=disc_type,
-                                      disc_num=disc_num,
-                                      suffix=suffix)
+        args = get_format_substs(self,
+                                 variant=variant_uid,
+                                 arch=arch,
+                                 disc_type=disc_type,
+                                 disc_num=disc_num,
+                                 suffix=suffix)
         try:
             return format % args
         except KeyError as err:
