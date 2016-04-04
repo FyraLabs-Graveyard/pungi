@@ -49,7 +49,8 @@ class AtomicInstallerThread(WorkerThread):
         self.logdir = compose.paths.log.topdir('{}/atomic'.format(arch))
 
         source_variant = compose.variants[config['source_repo_from']]
-        source_repo = translate_path(compose, compose.paths.compose.repository(arch, source_variant))
+        source_repo = translate_path(
+            compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
 
         self._run_atomic_cmd(compose, variant, arch, config, source_repo)
 
@@ -100,7 +101,7 @@ class AtomicInstallerThread(WorkerThread):
         compose.im.add(variant.uid, arch, img)
 
     def _run_atomic_cmd(self, compose, variant, arch, config, source_repo):
-        image_dir = compose.paths.compose.os_tree(arch, variant)
+        image_dir = compose.paths.compose.os_tree(arch, variant, create_dir=False)
         lorax_wrapper = lorax.LoraxWrapper()
         cmd = lorax_wrapper.get_lorax_cmd(
             compose.conf['release_name'],
