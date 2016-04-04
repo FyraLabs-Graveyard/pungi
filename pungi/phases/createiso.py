@@ -29,7 +29,6 @@ from kobo.shortcuts import run, relative_path
 from pungi.wrappers.iso import IsoWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
-from pungi.wrappers.jigdo import JigdoWrapper
 from pungi.phases.base import PhaseBase
 from pungi.util import makedirs, get_volid, get_arch_variant_data, failable
 from pungi.media_split import MediaSplitter
@@ -51,8 +50,22 @@ class CreateisoPhase(PhaseBase):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
 
+    def _find_rpms(self, path):
+        """Check if there are some RPMs in the path."""
+        for _, _, files in os.walk(path):
+            for fn in files:
+                if fn.endswith(".rpm"):
+                    return True
+        return False
+
+    def _is_bootable(self, variant, arch):
+        if arch == "src":
+            return False
+        if variant.type != "variant":
+            return False
+        return self.compose.conf.get("bootable", False)
+
     def run(self):
-        iso = IsoWrapper(logger=self.compose._logger)
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
         disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
         deliverables = []
@@ -72,17 +85,9 @@ class CreateisoPhase(PhaseBase):
                 if not iso_dir:
                     continue
 
-                found = False
-                for root, dirs, files in os.walk(os_tree):
-                    if found:
-                        break
-                    for fn in files:
-                        if fn.endswith(".rpm"):
-                            found = True
-                            break
-
-                if not found:
-                    self.compose.log_warning("No RPMs found for %s.%s, skipping ISO" % (variant, arch))
+                if not self._find_rpms(os_tree):
+                    self.compose.log_warning("No RPMs found for %s.%s, skipping ISO"
+                                             % (variant, arch))
                     continue
 
                 split_iso_data = split_iso(self.compose, arch, variant)
@@ -91,31 +96,22 @@ class CreateisoPhase(PhaseBase):
                 for disc_num, iso_data in enumerate(split_iso_data):
                     disc_num += 1
 
-                    filename = self.compose.get_image_name(arch, variant,
-                                                           disc_type=disc_type,
-                                                           disc_num=disc_num)
-                    iso_path = self.compose.paths.compose.iso_path(arch,
-                                                                   variant,
-                                                                   filename,
-                                                                   symlink_to=symlink_isos_to)
-                    relative_iso_path = self.compose.paths.compose.iso_path(arch,
-                                                                            variant,
-                                                                            filename,
-                                                                            create_dir=False,
-                                                                            relative=True)
+                    filename = self.compose.get_image_name(
+                        arch, variant, disc_type=disc_type, disc_num=disc_num)
+                    iso_path = self.compose.paths.compose.iso_path(
+                        arch, variant, filename, symlink_to=symlink_isos_to)
+                    relative_iso_path = self.compose.paths.compose.iso_path(
+                        arch, variant, filename, create_dir=False, relative=True)
                     if os.path.isfile(iso_path):
                         self.compose.log_warning("Skipping mkisofs, image already exists: %s" % iso_path)
                         continue
-                    iso_name = os.path.basename(iso_path)
                     deliverables.append(iso_path)
 
-                    graft_points = prepare_iso(self.compose, arch, variant, disc_num=disc_num, disc_count=disc_count, split_iso_data=iso_data)
+                    graft_points = prepare_iso(self.compose, arch, variant,
+                                               disc_num=disc_num, disc_count=disc_count,
+                                               split_iso_data=iso_data)
 
-                    bootable = self.compose.conf.get("bootable", False)
-                    if arch == "src":
-                        bootable = False
-                    if variant.type != "variant":
-                        bootable = False
+                    bootable = self._is_bootable(variant, arch)
 
                     cmd = {
                         "arch": arch,
@@ -131,61 +127,34 @@ class CreateisoPhase(PhaseBase):
                     }
 
                     if os.path.islink(iso_dir):
-                        cmd["mount"] = os.path.abspath(os.path.join(os.path.dirname(iso_dir), os.readlink(iso_dir)))
+                        cmd["mount"] = os.path.abspath(os.path.join(os.path.dirname(iso_dir),
+                                                                    os.readlink(iso_dir)))
 
-                    chdir_cmd = "cd %s" % pipes.quote(iso_dir)
-                    cmd["cmd"].append(chdir_cmd)
-
-                    mkisofs_kwargs = {}
+                    cmd['cmd'] = [
+                        'pungi-createiso',
+                        '--output-dir={}'.format(iso_dir),
+                        '--iso-name={}'.format(filename),
+                        '--volid={}'.format(volid),
+                        '--graft-points={}'.format(graft_points),
+                        '--arch={}'.format(arch),
+                    ]
 
                     if bootable:
-                        buildinstall_method = self.compose.conf["buildinstall_method"]
-                        if buildinstall_method == "lorax":
-                            # TODO: $arch instead of ppc
-                            mkisofs_kwargs["boot_args"] = iso.get_boot_options(arch, "/usr/share/lorax/config_files/ppc")
-                        elif buildinstall_method == "buildinstall":
-                            mkisofs_kwargs["boot_args"] = iso.get_boot_options(arch, "/usr/lib/anaconda-runtime/boot")
+                        cmd['cmd'].extend([
+                            '--bootable',
+                            '--buildinstall-method={}'.format(self.compose.conf['buildinstall_method']),
+                        ])
 
-                    # ppc(64) doesn't seem to support utf-8
-                    if arch in ("ppc", "ppc64", "ppc64le"):
-                        mkisofs_kwargs["input_charset"] = None
+                    if self.compose.supported:
+                        cmd['cmd'].append('--supported')
 
-                    mkisofs_cmd = iso.get_mkisofs_cmd(iso_name, None, volid=volid, exclude=["./lost+found"], graft_points=graft_points, **mkisofs_kwargs)
-                    mkisofs_cmd = " ".join([pipes.quote(i) for i in mkisofs_cmd])
-                    cmd["cmd"].append(mkisofs_cmd)
-
-                    if bootable and arch == "x86_64":
-                        isohybrid_cmd = "isohybrid --uefi %s" % pipes.quote(iso_name)
-                        cmd["cmd"].append(isohybrid_cmd)
-                    elif bootable and arch == "i386":
-                        isohybrid_cmd = "isohybrid %s" % pipes.quote(iso_name)
-                        cmd["cmd"].append(isohybrid_cmd)
-
-                    # implant MD5SUM to iso
-                    isomd5sum_cmd = iso.get_implantisomd5_cmd(iso_name, self.compose.supported)
-                    isomd5sum_cmd = " ".join([pipes.quote(i) for i in isomd5sum_cmd])
-                    cmd["cmd"].append(isomd5sum_cmd)
-
-                    # create iso manifest
-                    cmd["cmd"].append(iso.get_manifest_cmd(iso_name))
-
-                    # create jigdo
-                    create_jigdo = self.compose.conf.get("create_jigdo", True)
-                    if create_jigdo:
-                        jigdo = JigdoWrapper(logger=self.compose._logger)
+                    if self.compose.conf.get('create_jigdo', True):
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
-                        files = [
-                            {
-                                "path": os_tree,
-                                "label": None,
-                                "uri": None,
-                            }
-                        ]
-                        jigdo_cmd = jigdo.get_jigdo_cmd(iso_path, files, output_dir=jigdo_dir, no_servers=True, report="noprogress")
-                        jigdo_cmd = " ".join([pipes.quote(i) for i in jigdo_cmd])
-                        cmd["cmd"].append(jigdo_cmd)
+                        cmd['cmd'].extend([
+                            '--jigdo-dir={}'.format(jigdo_dir),
+                            '--os-tree={}'.format(os_tree),
+                        ])
 
-                    cmd["cmd"] = " && ".join(cmd["cmd"])
                     commands.append((cmd, variant, arch))
 
         self.compose.notifier.send('createiso-targets', deliverables=deliverables)
@@ -228,20 +197,22 @@ class CreateIsoThread(WorkerThread):
 
         runroot = compose.conf.get("runroot", False)
         bootable = compose.conf.get("bootable", False)
-        log_file = compose.paths.log.log_file(cmd["arch"], "createiso-%s" % os.path.basename(cmd["iso_path"]))
+        log_file = compose.paths.log.log_file(
+            cmd["arch"], "createiso-%s" % os.path.basename(cmd["iso_path"]))
 
-        msg = "Creating ISO (arch: %s, variant: %s): %s" % (cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
+        msg = "Creating ISO (arch: %s, variant: %s): %s" % (
+            cmd["arch"], cmd["variant"], os.path.basename(cmd["iso_path"]))
         self.pool.log_info("[BEGIN] %s" % msg)
 
         if runroot:
             # run in a koji build root
             packages = ["coreutils", "genisoimage", "isomd5sum", "jigdo", "strace", "lsof"]
+            extra_packages = {
+                'lorax': ['lorax', 'pungi'],
+                'buildinstall': ['anaconda'],
+            }
             if bootable:
-                buildinstall_method = compose.conf["buildinstall_method"]
-                if buildinstall_method == "lorax":
-                    packages += ["lorax"]
-                elif buildinstall_method == "buildinstall":
-                    packages += ["anaconda"]
+                packages.extend(extra_packages[compose.conf["buildinstall_method"]])
 
             runroot_channel = compose.conf.get("runroot_channel", None)
             runroot_tag = compose.conf["runroot_tag"]
@@ -260,7 +231,10 @@ class CreateIsoThread(WorkerThread):
                     # pick random arch from available runroot tag arches
                     cmd["build_arch"] = random.choice(tag_arches)
 
-            koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, cmd["build_arch"], cmd["cmd"], channel=runroot_channel, use_shell=True, task_id=True, packages=packages, mounts=mounts)
+            koji_cmd = koji_wrapper.get_runroot_cmd(
+                runroot_tag, cmd["build_arch"], cmd["cmd"],
+                channel=runroot_channel, use_shell=True, task_id=True,
+                packages=packages, mounts=mounts)
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
@@ -269,7 +243,8 @@ class CreateIsoThread(WorkerThread):
             output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
             if output["retcode"] != 0:
                 self.fail(compose, cmd)
-                raise RuntimeError("Runroot task failed: %s. See %s for more details." % (output["task_id"], log_file))
+                raise RuntimeError("Runroot task failed: %s. See %s for more details."
+                                   % (output["task_id"], log_file))
 
         else:
             # run locally
