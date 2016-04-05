@@ -103,6 +103,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
                                      '--log-dir={}/logs/x86_64/ostree'.format(self.topdir),
+                                     '--work-dir={}/work/x86_64/ostree'.format(self.topdir),
                                      '--treefile=fedora-atomic-docker-host.json',
                                      '--config-url=https://git.fedorahosted.org/git/fedora-atomic.git',
                                      '--config-branch=f24',

@@ -21,17 +21,16 @@ class OstreeScriptTest(helpers.PungiTestCase):
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
         helpers.touch(os.path.join(target, 'fedora-rawhide.repo'))
 
-    @mock.patch('tempfile.mkdtemp')
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
-    def test_full_run(self, get_dir_from_scm, run, tempfile):
-        tempfile.return_value = self.topdir
+    def test_full_run(self, get_dir_from_scm, run):
         get_dir_from_scm.side_effect = self._dummy_config_repo
 
         repo = os.path.join(self.topdir, 'atomic')
 
         ostree.main([
             '--log-dir={}'.format(os.path.join(self.topdir, 'logs', 'Atomic')),
+            '--work-dir={}'.format(self.topdir),
             '--treefile={}'.format('fedora-atomic-docker-host.json'),
             '--config-url=https://git.fedorahosted.org/git/fedora-atomic.git',
             '--config-branch=f24',
@@ -47,10 +46,10 @@ class OstreeScriptTest(helpers.PungiTestCase):
         self.assertItemsEqual(
             run.call_args_list,
             [mock.call(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log'),
+                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True),
              mock.call(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo),
                         self.topdir + '/config_repo/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log')])
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True)])
 
 
 if __name__ == '__main__':
