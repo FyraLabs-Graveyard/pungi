@@ -51,9 +51,11 @@ class OSTreeThread(WorkerThread):
         self.pool.log_info('[DONE ] %s' % msg)
 
     def _run_ostree_cmd(self, compose, variant, arch, config, source_repo):
+        workdir = os.path.join(compose.paths.work.topdir(arch), 'ostree')
         cmd = [
             'pungi-make-ostree',
             '--log-dir={}'.format(self.logdir),
+            '--work-dir={}'.format(workdir),
             '--treefile={}'.format(config['treefile']),
             '--config-url={}'.format(config['config_url']),
             '--config-branch={}'.format(config.get('config_branch', 'master')),
