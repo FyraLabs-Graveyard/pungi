@@ -54,7 +54,7 @@ def run(config, topdir, has_old):
         pungi.phases.GatherPhase(compose, pkgset_phase),
         pungi.phases.ExtraFilesPhase(compose, pkgset_phase),
         pungi.phases.CreaterepoPhase(compose),
-        pungi.phases.AtomicInstallerPhase(compose),
+        pungi.phases.OstreeInstallerPhase(compose),
         pungi.phases.OSTreePhase(compose),
         pungi.phases.ProductimgPhase(compose, pkgset_phase),
         pungi.phases.CreateisoPhase(compose),

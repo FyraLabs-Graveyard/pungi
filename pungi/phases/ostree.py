@@ -41,16 +41,16 @@ class OSTreeThread(WorkerThread):
 
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        self.logdir = compose.paths.log.topdir('{}/atomic'.format(arch))
+        self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
 
         source_variant = compose.variants[config['source_repo_from']]
         source_repo = translate_path(compose, compose.paths.compose.repository(arch, source_variant))
 
-        self._run_atomic_cmd(compose, variant, arch, config, source_repo)
+        self._run_ostree_cmd(compose, variant, arch, config, source_repo)
 
         self.pool.log_info('[DONE ] %s' % msg)
 
-    def _run_atomic_cmd(self, compose, variant, arch, config, source_repo):
+    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo):
         cmd = [
             'pungi-make-ostree',
             '--log-dir={}'.format(self.logdir),
@@ -58,7 +58,7 @@ class OSTreeThread(WorkerThread):
             '--config-url={}'.format(config['config_url']),
             '--config-branch={}'.format(config.get('config_branch', 'master')),
             '--source-repo={}'.format(source_repo),
-            config['atomic_repo']
+            config['ostree_repo']
         ]
 
         runroot_channel = compose.conf.get("runroot_channel", None)

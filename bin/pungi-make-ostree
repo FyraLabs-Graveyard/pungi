@@ -8,8 +8,8 @@ here = sys.path[0]
 if here != '/usr/bin':
     sys.path.insert(0, os.path.dirname(here))
 
-from pungi import atomic
+from pungi import ostree
 
 
 if __name__ == '__main__':
-    atomic.main()
+    ostree.main()

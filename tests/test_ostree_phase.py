@@ -24,7 +24,7 @@ class OSTreePhaseTest(helpers.PungiTestCase):
                         "treefile": "fedora-atomic-docker-host.json",
                         "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                         "source_repo_from": "Everything",
-                        "atomic_repo": "/mnt/koji/compose/atomic/Rawhide/"
+                        "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/"
                     }
                 })
             ]
@@ -86,7 +86,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
-            'atomic_repo': '/other/place/for/atomic'
+            'ostree_repo': '/other/place/for/atomic'
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -102,7 +102,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
-                                     '--log-dir={}/logs/x86_64/atomic'.format(self.topdir),
+                                     '--log-dir={}/logs/x86_64/ostree'.format(self.topdir),
                                      '--treefile=fedora-atomic-docker-host.json',
                                      '--config-url=https://git.fedorahosted.org/git/fedora-atomic.git',
                                      '--config-branch=f24',
@@ -113,7 +113,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/atomic/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
 
 
 if __name__ == '__main__':
