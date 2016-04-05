@@ -11,48 +11,48 @@ from ..paths import translate_path
 from ..wrappers import kojiwrapper, iso, lorax
 
 
-class AtomicInstallerPhase(ConfigGuardedPhase):
-    name = 'atomic'
+class OstreeInstallerPhase(ConfigGuardedPhase):
+    name = 'ostree_installer'
 
     config_options = [
         {
-            "name": "atomic",
+            "name": "ostree_installer",
             "expected_types": [list],
             "optional": True,
         }
     ]
 
     def __init__(self, compose):
-        super(AtomicInstallerPhase, self).__init__(compose)
+        super(OstreeInstallerPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
 
     def run(self):
         for variant in self.compose.get_variants():
             for arch in variant.arches:
                 for conf in util.get_arch_variant_data(self.compose.conf, self.name, arch, variant):
-                    self.pool.add(AtomicInstallerThread(self.pool))
+                    self.pool.add(OstreeInstallerThread(self.pool))
                     self.pool.queue_put((self.compose, variant, arch, conf))
 
         self.pool.start()
 
 
-class AtomicInstallerThread(WorkerThread):
+class OstreeInstallerThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        with util.failable(compose, variant, arch, 'atomic_installer', 'Atomic'):
+        with util.failable(compose, variant, arch, 'ostree-installer', 'Ostree installer'):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):
-        msg = 'Atomic phase for variant %s, arch %s' % (variant.uid, arch)
+        msg = 'Ostree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        self.logdir = compose.paths.log.topdir('{}/atomic'.format(arch))
+        self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
 
         source_variant = compose.variants[config['source_repo_from']]
         source_repo = translate_path(
             compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
 
-        self._run_atomic_cmd(compose, variant, arch, config, source_repo)
+        self._run_ostree_cmd(compose, variant, arch, config, source_repo)
 
         disc_type = compose.conf.get('disc_types', {}).get('dvd', 'dvd')
         filename = compose.get_image_name(arch, variant, disc_type=disc_type,
@@ -100,7 +100,7 @@ class AtomicInstallerThread(WorkerThread):
             pass
         compose.im.add(variant.uid, arch, img)
 
-    def _run_atomic_cmd(self, compose, variant, arch, config, source_repo):
+    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo):
         image_dir = compose.paths.compose.os_tree(arch, variant, create_dir=False)
         lorax_wrapper = lorax.LoraxWrapper()
         cmd = lorax_wrapper.get_lorax_cmd(

@@ -11,14 +11,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from tests import helpers
-from pungi.phases import atomic_installer as atomic
+from pungi.phases import ostree_installer as ostree
 
 
-class AtomicInstallerPhaseTest(helpers.PungiTestCase):
+class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
     def test_validate(self):
         compose = helpers.DummyCompose(self.topdir, {
-            'atomic': [
+            'ostree_installer': [
                 ("^Atomic$", {
                     "x86_64": {
                         "source_repo_from": "Everything",
@@ -41,7 +41,7 @@ class AtomicInstallerPhaseTest(helpers.PungiTestCase):
             ]
         })
 
-        phase = atomic.AtomicInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose)
         try:
             phase.validate()
         except:
@@ -49,41 +49,41 @@ class AtomicInstallerPhaseTest(helpers.PungiTestCase):
 
     def test_validate_bad_conf(self):
         compose = helpers.DummyCompose(self.topdir, {
-            'atomic': 'yes please'
+            'ostree_installer': 'yes please'
         })
 
-        phase = atomic.AtomicInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose)
         with self.assertRaises(ValueError):
             phase.validate()
 
-    @mock.patch('pungi.phases.atomic_installer.ThreadPool')
+    @mock.patch('pungi.phases.ostree_installer.ThreadPool')
     def test_run(self, ThreadPool):
         cfg = mock.Mock()
         compose = helpers.DummyCompose(self.topdir, {
-            'atomic': [
+            'ostree_installer': [
                 ('^Everything$', {'x86_64': cfg})
             ]
         })
 
         pool = ThreadPool.return_value
 
-        phase = atomic.AtomicInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose)
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
         self.assertEqual(pool.queue_put.call_args_list,
                          [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg))])
 
-    @mock.patch('pungi.phases.atomic_installer.ThreadPool')
+    @mock.patch('pungi.phases.ostree_installer.ThreadPool')
     def test_skip_without_config(self, ThreadPool):
         compose = helpers.DummyCompose(self.topdir, {})
         compose.just_phases = None
         compose.skip_phases = []
-        phase = atomic.AtomicInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose)
         self.assertTrue(phase.skip())
 
 
-class AtomicThreadTest(helpers.PungiTestCase):
+class OstreeThreadTest(helpers.PungiTestCase):
 
     def assertImageAdded(self, compose, ImageCls, IsoWrapper):
         image = ImageCls.return_value
@@ -130,7 +130,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = atomic.AtomicInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
 
@@ -149,7 +149,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/atomic/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
         self.assertEqual(link.call_args_list,
                          [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
                                     final_iso_path)])
@@ -201,7 +201,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = atomic.AtomicInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
 
@@ -228,7 +228,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
                        task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/atomic/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
         self.assertEqual(link.call_args_list,
                          [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
                                     final_iso_path)])
@@ -253,7 +253,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
             'failable_deliverables': [
-                ('^.+$', {'*': ['atomic_installer']})
+                ('^.+$', {'*': ['ostree-installer']})
             ],
         })
         pool = mock.Mock()
@@ -265,11 +265,11 @@ class AtomicThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
 
-        t = atomic.AtomicInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Atomic (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
 
@@ -287,7 +287,7 @@ class AtomicThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
             'failable_deliverables': [
-                ('^.+$', {'*': ['atomic_installer']})
+                ('^.+$', {'*': ['ostree-installer']})
             ],
         })
         pool = mock.Mock()
@@ -303,12 +303,12 @@ class AtomicThreadTest(helpers.PungiTestCase):
             'retcode': 1,
         }
 
-        t = atomic.AtomicInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool)
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Atomic (variant Everything, arch x86_64) failed, but going on anyway.'),
-            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/atomic/runroot.log for more details.'
+            mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/ostree/runroot.log for more details.'
                       % self.topdir)
         ])
 

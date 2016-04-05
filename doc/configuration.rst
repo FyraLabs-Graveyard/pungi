@@ -142,7 +142,7 @@ Options
      * live
      * image-build
      * live-media
-     * atomic_installer
+     * ostree-installer
 
        .. note::
 
@@ -950,7 +950,7 @@ runroot environment.
     * ``treefile`` -- (*str*) Filename of configuration for ``rpm-ostree``.
     * ``config_url`` -- (*str*) URL for Git repository with the ``treefile``.
     * ``source_repo_from`` -- (*str*) Name of variant serving as source repository.
-    * ``atomic_repo`` -- (*str*) Where to put the atomic repository
+    * ``ostree_repo`` -- (*str*) Where to put the ostree repository
 
     These keys are optional:
 
@@ -968,19 +968,19 @@ Example config
                 "treefile": "fedora-atomic-docker-host.json",
                 "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                 "source_repo_from": "Everything",
-                "atomic_repo": "/mnt/koji/compose/atomic/Rawhide/"
+                "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/"
             }
         })
     ]
 
 
-Atomic Installer Settings
+Ostree Installer Settings
 =========================
 
-The ``atomic_installer`` phase of *Pungi* can produce installer image bundling
+The ``ostree_installer`` phase of *Pungi* can produce installer image bundling
 an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
-**atomic**
+**ostree_installer**
     (*dict*) -- a variant/arch mapping of configuration. The format should be
     ``[(variant_uid_regex, {arch|*: config_dict})]``.
 
@@ -1010,7 +1010,7 @@ Example config
 --------------
 ::
 
-    atomic = [
+    ostree_installer = [
         ("^Atomic$", {
             "x86_64": {
                 "source_repo_from": "Everything",

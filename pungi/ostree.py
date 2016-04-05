@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This module contains functions required by pungi-make-atomic.
+This module contains functions required by pungi-make-ostree.
 It is expected to be runnable in Koji runroot.
 """
 
@@ -22,16 +22,16 @@ def make_log_file(log_dir, filename):
     return os.path.join(log_dir, '{}.log'.format(filename))
 
 
-def init_atomic_repo(repo, log_dir=None):
-    """If the atomic repo does not exist, initialize it."""
-    log_file = make_log_file(log_dir, 'init-atomic-repo')
+def init_ostree_repo(repo, log_dir=None):
+    """If the ostree repo does not exist, initialize it."""
+    log_file = make_log_file(log_dir, 'init-ostree-repo')
     if not os.path.isdir(repo):
         shortcuts.run(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
                       logfile=log_file)
 
 
 def make_ostree_repo(repo, config, log_dir=None):
-    log_file = make_log_file(log_dir, 'create-atomic-repo')
+    log_file = make_log_file(log_dir, 'create-ostree-repo')
     shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo), config],
                   logfile=log_file)
 
@@ -68,9 +68,9 @@ def run(opts):
     workdir = tempfile.mkdtemp()
     repodir = prepare_config(workdir, opts.config_url, opts.config_branch,
                              opts.source_repo)
-    init_atomic_repo(opts.atomic_repo, log_dir=opts.log_dir)
+    init_ostree_repo(opts.ostree_repo, log_dir=opts.log_dir)
     treefile = os.path.join(repodir, opts.treefile)
-    make_ostree_repo(opts.atomic_repo, treefile, log_dir=opts.log_dir)
+    make_ostree_repo(opts.ostree_repo, treefile, log_dir=opts.log_dir)
     shutil.rmtree(workdir)
 
 
@@ -79,8 +79,8 @@ def main(args=None):
     parser.add_argument('--log-dir',
                         help='where to log output')
 
-    parser.add_argument('atomic_repo', metavar='ATOMIC_REPO',
-                        help='where to put the atomic repo')
+    parser.add_argument('ostree_repo', metavar='OSTREE_REPO',
+                        help='where to put the ostree repo')
     parser.add_argument('--treefile', required=True,
                         help='treefile for rpm-ostree')
     parser.add_argument('--config-url', required=True,
