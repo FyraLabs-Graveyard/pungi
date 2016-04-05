@@ -5,6 +5,7 @@ import os
 import unittest
 import tempfile
 import shutil
+import errno
 
 from pungi.util import get_arch_variant_data
 from pungi import paths
@@ -15,7 +16,11 @@ class PungiTestCase(unittest.TestCase):
         self.topdir = tempfile.mkdtemp()
 
     def tearDown(self):
-        shutil.rmtree(self.topdir)
+        try:
+            shutil.rmtree(self.topdir)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                raise
 
 
 class DummyCompose(object):

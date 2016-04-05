@@ -2,12 +2,11 @@
 
 import os
 from kobo.threads import ThreadPool, WorkerThread
-import re
 
 from .base import ConfigGuardedPhase
 from .. import util
 from ..paths import translate_path
-from ..wrappers import scm, kojiwrapper
+from ..wrappers import kojiwrapper
 
 
 class OSTreePhase(ConfigGuardedPhase):
@@ -42,15 +41,11 @@ class OSTreeThread(WorkerThread):
 
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        workdir = compose.paths.work.topdir('atomic')
         self.logdir = compose.paths.log.topdir('{}/atomic'.format(arch))
-        repodir = os.path.join(workdir, 'config_repo')
 
         source_variant = compose.variants[config['source_repo_from']]
         source_repo = translate_path(compose, compose.paths.compose.repository(arch, source_variant))
 
-        self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
-        self._tweak_mirrorlist(repodir, source_repo)
         self._run_atomic_cmd(compose, variant, arch, config, source_repo)
 
         self.pool.log_info('[DONE ] %s' % msg)
@@ -60,6 +55,9 @@ class OSTreeThread(WorkerThread):
             'pungi-make-ostree',
             '--log-dir={}'.format(self.logdir),
             '--treefile={}'.format(config['treefile']),
+            '--config-url={}'.format(config['config_url']),
+            '--config-branch={}'.format(config.get('config_branch', 'master')),
+            '--source-repo={}'.format(source_repo),
             config['atomic_repo']
         ]
 
@@ -77,22 +75,3 @@ class OSTreeThread(WorkerThread):
         if output["retcode"] != 0:
             raise RuntimeError("Runroot task failed: %s. See %s for more details."
                                % (output["task_id"], log_file))
-
-    def _clone_repo(self, repodir, url, branch):
-        scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
-                             repodir, logger=self.pool._logger)
-
-    def _tweak_mirrorlist(self, repodir, source_repo):
-        for file in os.listdir(repodir):
-            if file.endswith('.repo'):
-                tweak_file(os.path.join(repodir, file), source_repo)
-
-
-def tweak_file(path, source_repo):
-    """Replace mirrorlist line in repo file with baseurl pointing to source_repo."""
-    with open(path, 'r') as f:
-        contents = f.read()
-    replacement = 'baseurl={}'.format(source_repo)
-    contents = re.sub(r'^mirrorlist=.*$', replacement, contents)
-    with open(path, 'w') as f:
-        f.write(contents)

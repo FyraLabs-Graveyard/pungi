@@ -74,13 +74,8 @@ class OSTreePhaseTest(helpers.PungiTestCase):
 
 class OSTreeThreadTest(helpers.PungiTestCase):
 
-    def _dummy_config_repo(self, scm_dict, target, logger=None):
-        helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
-        helpers.touch(os.path.join(target, 'fedora-rawhide.repo'))
-
-    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run(self, KojiWrapper, get_dir_from_scm):
+    def test_run(self, KojiWrapper):
         compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
@@ -93,7 +88,6 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'treefile': 'fedora-atomic-docker-host.json',
             'atomic_repo': '/other/place/for/atomic'
         }
-        get_dir_from_scm.side_effect = self._dummy_config_repo
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
             'task_id': 1234,
@@ -105,15 +99,14 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
 
-        self.assertEqual(get_dir_from_scm.call_args_list,
-                         [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
-                                     'branch': 'f24', 'dir': '.'},
-                                    self.topdir + '/work/atomic/config_repo', logger=pool._logger)])
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
                                      '--log-dir={}/logs/x86_64/atomic'.format(self.topdir),
                                      '--treefile=fedora-atomic-docker-host.json',
+                                     '--config-url=https://git.fedorahosted.org/git/fedora-atomic.git',
+                                     '--config-branch=f24',
+                                     '--source-repo={}/compose/Everything/x86_64/os'.format(self.topdir),
                                      '/other/place/for/atomic'],
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
