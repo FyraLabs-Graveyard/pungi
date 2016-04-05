@@ -8,6 +8,11 @@ It is expected to be runnable in Koji runroot.
 import argparse
 import os
 from kobo import shortcuts
+import tempfile
+import shutil
+import re
+
+from .wrappers import scm
 
 
 def make_log_file(log_dir, filename):
@@ -31,9 +36,42 @@ def make_ostree_repo(repo, config, log_dir=None):
                   logfile=log_file)
 
 
+def clone_repo(repodir, url, branch):
+    scm.get_dir_from_scm(
+        {'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'}, repodir)
+
+
+def tweak_mirrorlist(repodir, source_repo):
+    for file in os.listdir(repodir):
+        if file.endswith('.repo'):
+            tweak_file(os.path.join(repodir, file), source_repo)
+
+
+def tweak_file(path, source_repo):
+    """Replace mirrorlist line in repo file with baseurl pointing to source_repo."""
+    with open(path, 'r') as f:
+        contents = f.read()
+    replacement = 'baseurl={}'.format(source_repo)
+    contents = re.sub(r'^mirrorlist=.*$', replacement, contents)
+    with open(path, 'w') as f:
+        f.write(contents)
+
+
+def prepare_config(workdir, config_url, config_branch, source_repo):
+    repodir = os.path.join(workdir, 'config_repo')
+    clone_repo(repodir, config_url, config_branch)
+    tweak_mirrorlist(repodir, source_repo)
+    return repodir
+
+
 def run(opts):
+    workdir = tempfile.mkdtemp()
+    repodir = prepare_config(workdir, opts.config_url, opts.config_branch,
+                             opts.source_repo)
     init_atomic_repo(opts.atomic_repo, log_dir=opts.log_dir)
-    make_ostree_repo(opts.atomic_repo, opts.treefile, log_dir=opts.log_dir)
+    treefile = os.path.join(repodir, opts.treefile)
+    make_ostree_repo(opts.atomic_repo, treefile, log_dir=opts.log_dir)
+    shutil.rmtree(workdir)
 
 
 def main(args=None):
@@ -45,6 +83,12 @@ def main(args=None):
                         help='where to put the atomic repo')
     parser.add_argument('--treefile', required=True,
                         help='treefile for rpm-ostree')
+    parser.add_argument('--config-url', required=True,
+                        help='git repository with the treefile')
+    parser.add_argument('--config-branch', default='master',
+                        help='git branch to be used')
+    parser.add_argument('--source-repo', required=True,
+                        help='yum repo used as source for')
 
     opts = parser.parse_args(args)
 
