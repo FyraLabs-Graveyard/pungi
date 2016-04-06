@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.12
+Version:        4.0.13
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -12,6 +12,7 @@ BuildRequires:  python-devel, python-setuptools, python2-productmd
 BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo_c
 BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
 BuildRequires:  yum => 3.4.3-28, createrepo >= 0.4.11
+BuildRequires:  gettext, git-core, cvs
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -70,6 +71,19 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Wed Apr 06 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.13-1
+- [ostree] Enable marking ostree phase as failable (lsedlar)
+- [koji-wrapper] Initialize wrappers sequentially (lsedlar)
+- [createiso] Simplify code, test phase (lsedlar)
+- [createiso] Move runroot work to separate script (lsedlar)
+- [ostree] Use explicit work directory (lsedlar)
+- [ostree] Rename atomic to ostree (lsedlar)
+- [ostree] Move cloning config repo to chroot (lsedlar)
+- [ostree] Fix call to kobo.shortcuts.run (lsedlar)
+- [atomic] Stop creating the os directory (lsedlar)
+- [checksum] Add arch to file name (lsedlar)
+- install scripts (dennis)
+
 * Fri Apr 01 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.12-1
 - Add a utility to validate config (lsedlar)
 - [variants] Stop printing stuff to stderr unconditionally (lsedlar)
