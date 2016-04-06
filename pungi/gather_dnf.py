@@ -409,13 +409,16 @@ class Gather(GatherBase):
         # multilib
         self.q_multilib_binary_packages_cache = QueryCache(self.q_multilib_binary_packages, "name", "version", "release", arch__neq="noarch")
 
+        # prepopulate
+        self.prepopulate_cache = QueryCache(self.q_binary_packages, "name", "arch")
+
     @Profiler("Gather.add_prepopulate_packages()")
     def add_prepopulate_packages(self):
         added = set()
 
         for name_arch in self.opts.prepopulate:
             name, arch = name_arch.rsplit(".", 1)
-            pkgs = self.q_binary_packages.filter_autoglob(name=name, arch=arch)
+            pkgs = self.prepopulate_cache.get(name, arch)
             pkgs = self._get_best_package(pkgs)
             if pkgs:
                 added.update(pkgs)
