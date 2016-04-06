@@ -337,15 +337,16 @@ class Gather(GatherBase):
 
         exclude = set()
         for pattern in excludes:
-            # TODO: debug, source
-            if pattern.endswith(".+"):
-                pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2])
-            else:
-                pkgs = self.q_binary_packages.filter_autoglob(name=pattern)
+            with Profiler("Gather.add_initial_packages():exclude"):
+                # TODO: debug, source
+                if pattern.endswith(".+"):
+                    pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2])
+                else:
+                    pkgs = self.q_binary_packages.filter_autoglob(name=pattern)
 
-            exclude.update(pkgs)
-            print "EXCLUDED: %s" % list(pkgs)
-            self.dnf._sack.add_excludes(pkgs)
+                exclude.update(pkgs)
+                print "EXCLUDED: %s" % list(pkgs)
+                self.dnf._sack.add_excludes(pkgs)
 
         # HACK
         self.q_binary_packages = self.q_binary_packages.filter(pkg=[i for i in self.q_binary_packages if i not in exclude]).apply()
@@ -356,33 +357,35 @@ class Gather(GatherBase):
         self.init_query_cache()
 
         for pattern in includes:
-            if pattern == "system-release" and self.opts.greedy_method == "all":
-                pkgs = self.q_binary_packages.filter(provides=hawkey.Reldep(self.dnf.sack, "system-release")).apply()
-            else:
-                if pattern.endswith(".+"):
-                    pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2]).apply()
+            with Profiler("Gather.add_initial_packages():include"):
+                if pattern == "system-release" and self.opts.greedy_method == "all":
+                    pkgs = self.q_binary_packages.filter(provides=hawkey.Reldep(self.dnf.sack, "system-release")).apply()
                 else:
-                    pkgs = self.q_binary_packages.filter_autoglob(name=pattern).apply()
+                    if pattern.endswith(".+"):
+                        pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2]).apply()
+                    else:
+                        pkgs = self.q_binary_packages.filter_autoglob(name=pattern).apply()
 
-            pkgs = self._get_best_package(pkgs)
-            if pkgs:
-                added.update(pkgs)
-            else:
-                print "Doesn't match: %s" % pattern
+                pkgs = self._get_best_package(pkgs)
+                if pkgs:
+                    added.update(pkgs)
+                else:
+                    print "Doesn't match: %s" % pattern
 
         for pkg in added:
             self._set_flag(pkg, "input")
 
         if self.opts.greedy_method == "build":
             for pkg in added.copy():
-                prov = hawkey.Reldep(self.dnf._sack, pkg.name)
-                if pkg in self.q_native_binary_packages:
-                    greedy_build_packages = self.q_native_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
-                else:
-                    greedy_build_packages = self.q_multilib_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
-                for i in greedy_build_packages:
-                    self._set_flag(i, "input", "greedy:build")
-                    added.add(i)
+                with Profiler("Gather.add_initial_packages():greedy-build"):
+                    prov = hawkey.Reldep(self.dnf._sack, pkg.name)
+                    if pkg in self.q_native_binary_packages:
+                        greedy_build_packages = self.q_native_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
+                    else:
+                        greedy_build_packages = self.q_multilib_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
+                    for i in greedy_build_packages:
+                        self._set_flag(i, "input", "greedy:build")
+                        added.add(i)
 
         return added
 
