@@ -63,8 +63,9 @@ class DummyCompose(object):
         self.im = mock.Mock(images={'Client': {'i386': [self.image]}})
         self.old_composes = []
         self.config_dir = '/home/releng/config'
+        self.notifier = None
 
-    def get_variants(self, arch=None, types=None):
+    def get_variants(self, arch=None, types=None, recursive=None):
         return [v for v in self.variants.values() if not arch or arch in v.arches]
 
     def can_fail(self, variant, arch, deliverable):
