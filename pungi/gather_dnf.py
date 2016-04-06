@@ -132,19 +132,26 @@ def filter_binary_noarch_packages(q):
     return result
 
 
-def cache_init(queue, *args, **kwargs):
-    cache = {}
-    if kwargs:
-        queue = queue.filter(**kwargs)
-    for pkg in queue:
-        key = tuple(getattr(pkg, arg) for arg in args)
-        cache.setdefault(key, set()).add(pkg)
-    return cache
+class QueryCache(object):
+    def __init__(self, queue, *args, **kwargs):
+        self.cache = {}
+        self.nargs = len(args)
 
+        if kwargs:
+            queue = queue.filter(**kwargs)
 
-def cache_get(cache, *args):
-    key = tuple(args)
-    return cache.get(key, set())
+        for pkg in queue:
+            key = tuple(getattr(pkg, arg) for arg in args)
+            pkgs = self.cache.setdefault(key, [])
+            if pkg not in pkgs:
+                # use list preserve package order
+                pkgs.append(pkg)
+
+    def get(self, *args):
+        if len(args) != self.nargs:
+            raise ValueError("Expected %s arguments, got %s" % (self.nargs, len(args)))
+        key = tuple(args)
+        return self.cache.get(key, None)
 
 
 class GatherBase(object):
@@ -346,6 +353,8 @@ class Gather(GatherBase):
         self.q_multilib_binary_packages = self.q_multilib_binary_packages.filter(pkg=[i for i in self.q_multilib_binary_packages if i not in exclude]).apply()
         self.q_noarch_binary_packages = self.q_noarch_binary_packages.filter(pkg=[i for i in self.q_noarch_binary_packages if i not in exclude]).apply()
 
+        self.init_query_cache()
+
         for pattern in includes:
             if pattern == "system-release" and self.opts.greedy_method == "all":
                 pkgs = self.q_binary_packages.filter(provides=hawkey.Reldep(self.dnf.sack, "system-release")).apply()
@@ -376,6 +385,26 @@ class Gather(GatherBase):
                     added.add(i)
 
         return added
+
+    @Profiler("Gather.init_query_cache()")
+    def init_query_cache(self):
+        # HACK: workaround for insufficient hawkey query performance
+        # Must be executed *after* add_initial_packages() to exclude packages properly.
+
+        # source
+        self.source_pkgs_cache = QueryCache(self.q_source_packages, "name", "version", "release")
+
+        # debug
+        self.native_debug_packages_cache = QueryCache(self.q_native_debug_packages, "sourcerpm")
+        self.multilib_debug_packages_cache = QueryCache(self.q_multilib_debug_packages, "sourcerpm")
+
+        # fulltree
+        self.q_native_fulltree_pkgs_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch__neq="noarch")
+        self.q_multilib_fulltree_pkgs_cache = QueryCache(self.q_multilib_binary_packages, "sourcerpm", arch__neq="noarch")
+        self.q_noarch_fulltree_pkgs_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch="noarch")
+
+        # multilib
+        self.q_multilib_binary_packages_cache = QueryCache(self.q_multilib_binary_packages, "name", "version", "release", arch__neq="noarch")
 
     @Profiler("Gather.add_prepopulate_packages()")
     def add_prepopulate_packages(self):
@@ -482,8 +511,6 @@ class Gather(GatherBase):
         """
         added = set()
 
-        source_pkgs_cache = cache_init(self.q_source_packages,
-                                       'name', 'version', 'release')
         for pkg in self.result_binary_packages:
             assert pkg is not None
 
@@ -495,20 +522,21 @@ class Gather(GatherBase):
                     source_pkg = self.sourcerpm_cache.get(pkg.sourcerpm, None)
                     if source_pkg is None:
                         nvra = parse_nvra(pkg.sourcerpm)
-                        source_pkgs = cache_get(source_pkgs_cache,
-                                                nvra["name"], nvra["version"], nvra["release"])
+                        source_pkgs = self.source_pkgs_cache.get(nvra["name"], nvra["version"], nvra["release"])
                         if source_pkgs:
                             source_pkg = list(source_pkgs)[0]
                             self.sourcerpm_cache[pkg.sourcerpm] = source_pkg
                 self.finished_add_source_packages[pkg] = source_pkg
 
-            if source_pkg:
-                lookaside = self._has_flag(pkg, "lookaside")
-                if lookaside:
-                    self._set_flag(source_pkg, "lookaside")
-                if source_pkg not in self.result_source_packages:
-                    added.add(source_pkg)
-                self.result_source_packages.add(source_pkg)
+            if not source_pkg:
+                continue
+
+            lookaside = self._has_flag(pkg, "lookaside")
+            if lookaside:
+                self._set_flag(source_pkg, "lookaside")
+            if source_pkg not in self.result_source_packages:
+                added.add(source_pkg)
+            self.result_source_packages.add(source_pkg)
 
         return added
 
@@ -519,9 +547,6 @@ class Gather(GatherBase):
         Return newly added debug packages.
         """
         added = set()
-
-        native_debug_packages_cache = cache_init(self.q_native_debug_packages, 'sourcerpm')
-        multilib_debug_packages_cache = cache_init(self.q_multilib_debug_packages, 'sourcerpm')
 
         for pkg in self.result_binary_packages:
             assert pkg is not None
@@ -536,9 +561,12 @@ class Gather(GatherBase):
                 debug_pkgs = []
                 if pkg.sourcerpm:
                     if self.is_native_package(pkg):
-                        debug_pkgs = cache_get(native_debug_packages_cache, pkg.sourcerpm)
+                        debug_pkgs = self.native_debug_packages_cache.get(pkg.sourcerpm)
                     else:
-                        debug_pkgs = cache_get(multilib_debug_packages_cache, pkg.sourcerpm)
+                        debug_pkgs = self.multilib_debug_packages_cache.get(pkg.sourcerpm)
+
+            if not debug_pkgs:
+                continue
 
             lookaside = self._has_flag(pkg, "lookaside")
             for i in debug_pkgs:
@@ -563,30 +591,23 @@ class Gather(GatherBase):
         if not self.opts.fulltree:
             return added
 
-        q_native_fulltree_pkgs_cache = cache_init(self.q_native_binary_packages,
-                                                  'sourcerpm', arch__neq="noarch")
-        q_multilib_fulltree_pkgs_cache = cache_init(self.q_multilib_binary_packages,
-                                                    'sourcerpm', arch__neq="noarch")
-        q_noarch_fulltree_pkgs_cache = cache_init(self.q_native_binary_packages,
-                                                  'sourcerpm', arch="noarch")
-
         for pkg in sorted(self.result_binary_packages):
             assert pkg is not None
 
             try:
                 fulltree_pkgs = self.finished_add_fulltree_packages[pkg]
             except KeyError:
-                native_fulltree_pkgs = cache_get(q_native_fulltree_pkgs_cache, pkg.sourcerpm)
-                multilib_fulltree_pkgs = cache_get(q_multilib_fulltree_pkgs_cache, pkg.sourcerpm)
-                noarch_fulltree_pkgs = cache_get(q_noarch_fulltree_pkgs_cache, pkg.sourcerpm)
+                native_fulltree_pkgs = self.q_native_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
+                multilib_fulltree_pkgs = self.q_multilib_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
+                noarch_fulltree_pkgs = self.q_noarch_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
 
                 if not native_fulltree_pkgs:
                     # no existing native pkgs -> pull multilib
                     pull_native = False
-                elif native_fulltree_pkgs & self.result_binary_packages:
+                elif set(native_fulltree_pkgs) & self.result_binary_packages:
                     # native pkgs in result -> pull native
                     pull_native = True
-                elif multilib_fulltree_pkgs & self.result_binary_packages:
+                elif set(multilib_fulltree_pkgs) & self.result_binary_packages:
                     # multilib pkgs in result -> pull multilib
                     pull_native = False
                 else:
@@ -594,12 +615,12 @@ class Gather(GatherBase):
                     pull_native = True
 
                 if pull_native:
-                    fulltree_pkgs = list(native_fulltree_pkgs)
+                    fulltree_pkgs = native_fulltree_pkgs
                 else:
-                    fulltree_pkgs = list(multilib_fulltree_pkgs)
+                    fulltree_pkgs = multilib_fulltree_pkgs
 
                 # always pull all noarch subpackages
-                fulltree_pkgs += list(noarch_fulltree_pkgs)
+                fulltree_pkgs += noarch_fulltree_pkgs
 
             for i in fulltree_pkgs:
                 if i not in self.result_binary_packages:
@@ -673,9 +694,6 @@ class Gather(GatherBase):
         if not self.opts.multilib_methods or self.opts.multilib_methods == ["none"]:
             return added
 
-        q_multilib_binary_packages_cache = cache_init(self.q_multilib_binary_packages,
-                                'name', 'version', 'release', arch__neq="noarch")
-
         for pkg in sorted(self.result_binary_packages):
             try:
                 self.finished_add_multilib_packages[pkg]
@@ -689,8 +707,7 @@ class Gather(GatherBase):
                     self.finished_add_multilib_packages[pkg] = None
                     continue
 
-                pkgs = cache_get(q_multilib_binary_packages_cache,
-                                 pkg.name, pkg.version, pkg.release)
+                pkgs = self.q_multilib_binary_packages_cache.get(pkg.name, pkg.version, pkg.release)
                 pkgs = self._get_best_package(pkgs)
                 multilib_pkgs = []
                 for i in pkgs:
