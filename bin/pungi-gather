@@ -9,10 +9,15 @@ import argparse
 import pungi.ks
 from pungi.dnf_wrapper import DnfWrapper, Conf
 from pungi.gather_dnf import Gather, GatherOptions
+from pungi.profiler import Profiler
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--profiler",
+        action="store_true",
+    )
     parser.add_argument(
         "--arch",
         required=True,
@@ -103,8 +108,9 @@ def main():
             continue
         dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, ks_repo.mirrorlist)
 
-    dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
-    dnf_obj.read_comps()
+    with Profiler("DnfWrapper.fill_sack()"):
+        dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
+        dnf_obj.read_comps()
 
     gather_opts.langpacks = dnf_obj.comps_wrapper.get_langpacks()
     gather_opts.multilib_blacklist = ksparser.handler.multilib_blacklist
@@ -123,6 +129,8 @@ def main():
     g.gather(packages, conditional_packages)
 
     print_rpms(g)
+    if ns.profiler:
+        Profiler.print_results()
 
 
 def _get_flags(gather_obj, pkg):

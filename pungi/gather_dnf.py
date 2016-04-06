@@ -27,6 +27,7 @@ from kobo.rpmlib import parse_nvra
 
 import pungi.dnf_wrapper
 import pungi.multilib_dnf
+from pungi.profiler import Profiler
 
 
 class GatherOptions(object):
@@ -130,6 +131,7 @@ def filter_binary_noarch_packages(q):
     result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
     return result
 
+
 def cache_init(queue, *args, **kwargs):
     cache = {}
     if kwargs:
@@ -138,6 +140,7 @@ def cache_init(queue, *args, **kwargs):
         key = tuple(getattr(pkg, arg) for arg in args)
         cache.setdefault(key, set()).add(pkg)
     return cache
+
 
 def cache_get(cache, *args):
     key = tuple(args)
@@ -313,6 +316,7 @@ class Gather(GatherBase):
 
         return result
 
+    @Profiler("Gather.add_initial_packages()")
     def add_initial_packages(self, pattern_list):
         added = set()
 
@@ -373,6 +377,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_prepopulate_packages()")
     def add_prepopulate_packages(self):
         added = set()
 
@@ -390,6 +395,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_binary_package_deps()")
     def add_binary_package_deps(self):
         added = set()
 
@@ -411,6 +417,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_conditional_packages()")
     def add_conditional_packages(self):
         """
         For each binary package add their conditional dependencies as specified in comps.
@@ -444,6 +451,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_source_package_deps()")
     def add_source_package_deps(self):
         added = set()
 
@@ -466,6 +474,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_source_packages()")
     def add_source_packages(self):
         """
         For each binary package add it's source package.
@@ -503,6 +512,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_debug_packages()")
     def add_debug_packages(self):
         """
         For each binary package add debuginfo packages built from the same source.
@@ -542,6 +552,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_fulltree_packages()")
     def add_fulltree_packages(self):
         """
         For each binary package add all binary packages built from the same source.
@@ -603,6 +614,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_langpack_packages()")
     def add_langpack_packages(self, langpack_patterns):
         """
         For each binary package add all matching langpack packages.
@@ -654,6 +666,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_multilib_packages()")
     def add_multilib_packages(self):
         added = set()
 
@@ -692,6 +705,7 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.gather()")
     def gather(self, pattern_list, conditional_packages=None):
         self.conditional_packages = conditional_packages or []
 
