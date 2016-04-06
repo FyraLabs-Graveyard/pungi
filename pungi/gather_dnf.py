@@ -375,14 +375,23 @@ class Gather(GatherBase):
         for pkg in added:
             self._set_flag(pkg, "input")
 
+        native_binary_packages = set(self.q_native_binary_packages)
+
         if self.opts.greedy_method == "build":
             for pkg in added.copy():
                 with Profiler("Gather.add_initial_packages():greedy-build"):
-                    prov = hawkey.Reldep(self.dnf._sack, pkg.name)
-                    if pkg in self.q_native_binary_packages:
-                        greedy_build_packages = self.q_native_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
+                    if pkg in native_binary_packages:
+                        greedy_build_packages = self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
                     else:
-                        greedy_build_packages = self.q_multilib_binary_packages.filter(sourcerpm=pkg.sourcerpm, provides=prov)
+                        greedy_build_packages = self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                    greedy_build_packages += self.q_noarch_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+
+                    for greedy_pkg in greedy_build_packages[:]:
+                        # filter out packages that don't provide package name
+                        provides = set([str(i).split(" ")[0] for i in greedy_pkg.provides])
+                        if pkg.name not in provides:
+                            greedy_build_packages.remove(greedy_pkg)
+
                     for i in greedy_build_packages:
                         self._set_flag(i, "input", "greedy:build")
                         added.add(i)
@@ -401,10 +410,10 @@ class Gather(GatherBase):
         self.native_debug_packages_cache = QueryCache(self.q_native_debug_packages, "sourcerpm")
         self.multilib_debug_packages_cache = QueryCache(self.q_multilib_debug_packages, "sourcerpm")
 
-        # fulltree
-        self.q_native_fulltree_pkgs_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch__neq="noarch")
-        self.q_multilib_fulltree_pkgs_cache = QueryCache(self.q_multilib_binary_packages, "sourcerpm", arch__neq="noarch")
-        self.q_noarch_fulltree_pkgs_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch="noarch")
+        # packages by sourcerpm
+        self.q_native_pkgs_by_sourcerpm_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch__neq="noarch")
+        self.q_multilib_pkgs_by_sourcerpm_cache = QueryCache(self.q_multilib_binary_packages, "sourcerpm", arch__neq="noarch")
+        self.q_noarch_pkgs_by_sourcerpm_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch="noarch")
 
         # multilib
         self.q_multilib_binary_packages_cache = QueryCache(self.q_multilib_binary_packages, "name", "version", "release", arch__neq="noarch")
@@ -603,9 +612,9 @@ class Gather(GatherBase):
             try:
                 fulltree_pkgs = self.finished_add_fulltree_packages[pkg]
             except KeyError:
-                native_fulltree_pkgs = self.q_native_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
-                multilib_fulltree_pkgs = self.q_multilib_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
-                noarch_fulltree_pkgs = self.q_noarch_fulltree_pkgs_cache.get(pkg.sourcerpm) or []
+                native_fulltree_pkgs = self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                multilib_fulltree_pkgs = self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                noarch_fulltree_pkgs = self.q_noarch_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
 
                 if not native_fulltree_pkgs:
                     # no existing native pkgs -> pull multilib
