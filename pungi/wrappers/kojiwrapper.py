@@ -19,6 +19,7 @@ import os
 import pipes
 import re
 import time
+import threading
 
 import koji
 import rpmUtils.arch
@@ -27,12 +28,15 @@ from ConfigParser import ConfigParser
 
 
 class KojiWrapper(object):
+    lock = threading.Lock()
+
     def __init__(self, profile):
         self.profile = profile
         # assumption: profile name equals executable name (it's a symlink -> koji)
         self.executable = self.profile.replace("_", "-")
-        self.koji_module = koji.get_profile_module(profile)
-        self.koji_proxy = koji.ClientSession(self.koji_module.config.server)
+        with self.lock:
+            self.koji_module = koji.get_profile_module(profile)
+            self.koji_proxy = koji.ClientSession(self.koji_module.config.server)
 
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True):
         cmd = [self.executable, "runroot"]
