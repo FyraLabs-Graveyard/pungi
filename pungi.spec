@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.1
+Version:        4.1.2
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -65,6 +65,19 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Wed Apr 05 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.2-1
+- Merge #257 `[ostree] Enable marking ostree phase as failable` (ausil)
+- [ostree] Enable marking ostree phase as failable (lsedlar)
+- [koji-wrapper] Initialize wrappers sequentially (lsedlar)
+- [createiso] Simplify code, test phase (lsedlar)
+- [createiso] Move runroot work to separate script (lsedlar)
+- [ostree] Use explicit work directory (lsedlar)
+- [ostree] Rename atomic to ostree (lsedlar)
+- [ostree] Move cloning config repo to chroot (lsedlar)
+- [ostree] Fix call to kobo.shortcuts.run (lsedlar)
+- [atomic] Stop creating the os directory (lsedlar)
+- [checksum] Add arch to file name (lsedlar)
+
 * Fri Apr 01 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.1-1
 - install scripts (dennis)
 - Merge #242 `Fix wrong file permissions` (ausil)

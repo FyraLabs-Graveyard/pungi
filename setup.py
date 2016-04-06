@@ -25,7 +25,7 @@ packages = sorted(packages)
 
 setup(
     name            = "pungi",
-    version         = "4.1.1",  # make sure it matches with pungi.__version__
+    version         = "4.1.2",  # make sure it matches with pungi.__version__
     description     = "Distribution compose tool",
     url             = "https://pagure.io/pungi",
     author          = "Dennis Gilmore",
@@ -34,12 +34,14 @@ setup(
 
     packages        = packages,
     scripts         = [
+        'bin/comps_filter',
         'bin/pungi',
         'bin/pungi-config-validate',
-        'bin/pungi-koji',
-        'bin/comps_filter',
+        'bin/pungi-createiso',
         'bin/pungi-fedmsg-notification',
+        'bin/pungi-koji',
         'bin/pungi-make-ostree',
+        'bin/pungi-pylorax-find-templates',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),
