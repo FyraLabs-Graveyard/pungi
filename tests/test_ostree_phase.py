@@ -116,6 +116,69 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
 
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_fail(self, KojiWrapper):
+        compose = helpers.DummyCompose(self.topdir, {
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+            'failable_deliverables': [
+                ('^.*$', {'*': ['ostree']})
+            ]
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
+            'config_branch': 'f24',
+            'treefile': 'fedora-atomic-docker-host.json',
+            'ostree_repo': '/other/place/for/atomic'
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 1,
+            'output': 'Foo bar\n',
+        }
+
+        t = ostree.OSTreeThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('Runroot task failed: 1234. See {} for more details.'.format(
+                self.topdir + '/logs/x86_64/ostree/runroot.log'))
+        ])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_handle_exception(self, KojiWrapper):
+        compose = helpers.DummyCompose(self.topdir, {
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+            'failable_deliverables': [
+                ('^.*$', {'*': ['ostree']})
+            ]
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
+            'config_branch': 'f24',
+            'treefile': 'fedora-atomic-docker-host.json',
+            'ostree_repo': '/other/place/for/atomic'
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = helpers.boom
+
+        t = ostree.OSTreeThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        compose.log_info.assert_has_calls([
+            mock.call('[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway.'),
+            mock.call('BOOM')
+        ])
+
 
 if __name__ == '__main__':
     unittest.main()

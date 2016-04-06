@@ -38,7 +38,10 @@ class OSTreeThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
+        with util.failable(compose, variant, arch, 'ostree'):
+            self.worker(compose, variant, arch, config)
 
+    def worker(self, compose, variant, arch, config):
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
