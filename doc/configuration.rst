@@ -142,6 +142,7 @@ Options
      * live
      * image-build
      * live-media
+     * ostree
      * ostree-installer
 
        .. note::
