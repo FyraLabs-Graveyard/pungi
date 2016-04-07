@@ -76,7 +76,8 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
     def _dummy_config_repo(self, scm_dict, target, logger=None):
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
-        helpers.touch(os.path.join(target, 'fedora-rawhide.repo'))
+        helpers.touch(os.path.join(target, 'fedora-rawhide.repo'),
+                      'mirrorlist=mirror-mirror-on-the-wall')
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
@@ -86,6 +87,9 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
+            'translate_paths': [
+                (self.topdir + '/compose', 'http://example.com')
+            ]
         })
         pool = mock.Mock()
         cfg = {
@@ -123,6 +127,10 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
+
+        with open(self.topdir + '/work/ostree/config_repo/fedora-rawhide.repo') as f:
+            self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
+                          f.read())
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
