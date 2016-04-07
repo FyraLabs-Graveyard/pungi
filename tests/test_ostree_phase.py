@@ -109,7 +109,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      '--config-branch=f24',
                                      '--source-repo={}/compose/Everything/x86_64/os'.format(self.topdir),
                                      '/other/place/for/atomic'],
-                                    channel=None, mounts=[self.topdir],
+                                    channel=None, mounts=[self.topdir, '/other/place/for/atomic'],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
