@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.13
+Version:        4.0.14
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -48,10 +48,12 @@ A tool to create anaconda based installation trees/isos of a set of rpms.
 %{__python} setup.py build
 
 %install
-rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
-%{__install} -d $RPM_BUILD_ROOT/var/cache/pungi
-%{__install} -d $RPM_BUILD_ROOT/%{_mandir}/man8
+rm -rf %{buildroot}
+%{__python} setup.py install -O1 --skip-build --root %{buildroot}
+%{__install} -d %{buildroot}/var/cache/pungi
+%{__install} -d %{buildroot}/%{_mandir}/man8
+# this script has to be run by python3 and setup.py is too dumb
+sed -i 's|/usr/bin/python$|/usr/bin/python3|' %{buildroot}/%{_bindir}/pungi-pylorax-find-templates
 
 %files
 %defattr(-,root,root,-)
@@ -71,6 +73,15 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Fri Apr 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.14-1
+- [ostree-installer] Copy all lorax outputs (lsedlar)
+- [ostree] Log to stdout as well (lsedlar)
+- [ostree-installer] Use separate directory for logs (lsedlar)
+- [ostree-installer] Put lorax output into work dir (lsedlar)
+- [ostree] Add test check for modified repo baseurl (lsedlar)
+- [ostree] Move cloning repo back to compose box (lsedlar)
+- [ostree] Mount ostree directory in koji (lsedlar)
+
 * Wed Apr 06 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.13-1
 - [ostree] Enable marking ostree phase as failable (lsedlar)
 - [koji-wrapper] Initialize wrappers sequentially (lsedlar)
