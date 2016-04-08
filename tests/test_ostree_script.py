@@ -31,10 +31,10 @@ class OstreeScriptTest(helpers.PungiTestCase):
         self.assertItemsEqual(
             run.call_args_list,
             [mock.call(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True),
+                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
              mock.call(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo),
                         self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True)])
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
 
 if __name__ == '__main__':

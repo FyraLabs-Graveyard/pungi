@@ -34,13 +34,13 @@ def init_ostree_repo(repo, log_dir=None):
     if not os.path.isdir(repo):
         ensure_dir(repo)
         shortcuts.run(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
-                      show_cmd=True, logfile=log_file)
+                      show_cmd=True, stdout=True, logfile=log_file)
 
 
 def make_ostree_repo(repo, config, log_dir=None):
     log_file = make_log_file(log_dir, 'create-ostree-repo')
     shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo), config],
-                  show_cmd=True, logfile=log_file)
+                  show_cmd=True, stdout=True, logfile=log_file)
 
 
 def run(opts):
