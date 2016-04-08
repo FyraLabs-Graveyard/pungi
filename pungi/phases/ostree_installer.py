@@ -46,7 +46,7 @@ class OstreeInstallerThread(WorkerThread):
     def worker(self, compose, variant, arch, config):
         msg = 'Ostree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
+        self.logdir = compose.paths.log.topdir('{}/ostree_installer'.format(arch))
 
         source_variant = compose.variants[config['source_repo_from']]
         source_repo = translate_path(
