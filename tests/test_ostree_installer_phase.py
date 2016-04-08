@@ -149,7 +149,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/ostree_installer/runroot.log')])
         self.assertEqual(link.call_args_list,
                          [mock.call(self.topdir + '/work/x86_64/Everything/ostree_installer/images/boot.iso',
                                     final_iso_path)])
@@ -230,7 +230,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                        task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/ostree_installer/runroot.log')])
         self.assertEqual(link.call_args_list,
                          [mock.call(self.topdir + '/work/x86_64/Everything/ostree_installer/images/boot.iso',
                                     final_iso_path)])
@@ -310,7 +310,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
         compose.log_info.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
-            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/ostree/runroot.log for more details.'
+            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/ostree_installer/runroot.log for more details.'
                       % self.topdir)
         ])
 
