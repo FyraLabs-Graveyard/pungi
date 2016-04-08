@@ -100,6 +100,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(compose.im.add.mock_calls,
                          [mock.call('Everything', 'x86_64', image)])
 
+    @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
@@ -107,7 +108,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run(self, KojiWrapper, link, IsoWrapper,
-                 get_file_size, get_mtime, ImageCls):
+                 get_file_size, get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Fedora',
             'release_version': 'Rawhide',
@@ -161,15 +162,18 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     disc_type='dvd', format='Fedora-Atomic.iso')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
+        self.assertEqual(run.call_args_list,
+                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/iso/'.format(self.topdir))])
 
+    @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
     @mock.patch('pungi.wrappers.iso.IsoWrapper')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run_with_implicit_release(self, KojiWrapper, link,
-                                       IsoWrapper, get_file_size, get_mtime, ImageCls):
+    def test_run_with_implicit_release(self, KojiWrapper, link, IsoWrapper,
+                                       get_file_size, get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Fedora',
             'release_version': 'Rawhide',
@@ -241,14 +245,15 @@ class OstreeThreadTest(helpers.PungiTestCase):
                          [mock.call('x86_64', compose.variants['Everything'],
                                     disc_type='dvd', format=None)])
 
+    @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
     @mock.patch('pungi.wrappers.iso.IsoWrapper')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_fail_crash(self, KojiWrapper, link,
-                        IsoWrapper, get_file_size, get_mtime, ImageCls):
+    def test_fail_crash(self, KojiWrapper, link, IsoWrapper, get_file_size,
+                        get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Fedora',
             'release_version': 'Rawhide',
@@ -275,14 +280,15 @@ class OstreeThreadTest(helpers.PungiTestCase):
             mock.call('BOOM')
         ])
 
+    @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
     @mock.patch('pungi.wrappers.iso.IsoWrapper')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_fail_runroot_fail(self, KojiWrapper, link,
-                               IsoWrapper, get_file_size, get_mtime, ImageCls):
+    def test_fail_runroot_fail(self, KojiWrapper, link, IsoWrapper,
+                               get_file_size, get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Fedora',
             'release_version': 'Rawhide',

@@ -4,6 +4,8 @@ import os
 from kobo.threads import ThreadPool, WorkerThread
 import shutil
 from productmd import images
+import pipes
+from kobo import shortcuts
 
 from .base import ConfigGuardedPhase
 from .. import util
@@ -72,6 +74,8 @@ class OstreeInstallerThread(WorkerThread):
         iso_path = compose.paths.compose.iso_path(arch, variant, filename)
         boot_iso = os.path.join(output_dir, 'images', 'boot.iso')
 
+        shortcuts.run('cp -av %s/* %s/' %
+                      (pipes.quote(output_dir), pipes.quote(os.path.dirname(iso_path))))
         try:
             os.link(boot_iso, iso_path)
         except OSError:
