@@ -51,13 +51,15 @@ class OstreeInstallerThread(WorkerThread):
         source_variant = compose.variants[config['source_repo_from']]
         source_repo = translate_path(
             compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
+        output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
+        util.makedirs(os.path.dirname(output_dir))
 
-        self._run_ostree_cmd(compose, variant, arch, config, source_repo)
+        self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir)
 
         disc_type = compose.conf.get('disc_types', {}).get('dvd', 'dvd')
         filename = compose.get_image_name(arch, variant, disc_type=disc_type,
                                           format=config.get('filename'))
-        self._copy_image(compose, variant, arch, filename)
+        self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
         self.pool.log_info('[DONE ] %s' % msg)
 
@@ -66,10 +68,9 @@ class OstreeInstallerThread(WorkerThread):
             return compose.image_release
         return config.get('release', None)
 
-    def _copy_image(self, compose, variant, arch, filename):
+    def _copy_image(self, compose, variant, arch, filename, output_dir):
         iso_path = compose.paths.compose.iso_path(arch, variant, filename)
-        source_dir = compose.paths.compose.os_tree(arch, variant)
-        boot_iso = os.path.join(source_dir, 'images', 'boot.iso')
+        boot_iso = os.path.join(output_dir, 'images', 'boot.iso')
 
         try:
             os.link(boot_iso, iso_path)
@@ -100,15 +101,14 @@ class OstreeInstallerThread(WorkerThread):
             pass
         compose.im.add(variant.uid, arch, img)
 
-    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo):
-        image_dir = compose.paths.compose.os_tree(arch, variant, create_dir=False)
+    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir):
         lorax_wrapper = lorax.LoraxWrapper()
         cmd = lorax_wrapper.get_lorax_cmd(
             compose.conf['release_name'],
             compose.conf["release_version"],
             self._get_release(compose, config),
             repo_baseurl=source_repo,
-            output_dir=image_dir,
+            output_dir=output_dir,
             variant=variant.uid,
             nomacboot=True,
             buildinstallpackages=config.get('installpkgs'),

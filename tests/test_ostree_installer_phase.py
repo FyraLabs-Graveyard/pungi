@@ -143,7 +143,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--source=file://{}/compose/Everything/x86_64/os'.format(self.topdir),
                                      '--variant=Everything',
                                      '--nomacboot',
-                                     self.topdir + '/compose/Everything/x86_64/os'],
+                                     self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax'],
                                     task_id=True, use_shell=True)])
@@ -151,7 +151,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
         self.assertEqual(link.call_args_list,
-                         [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
+                         [mock.call(self.topdir + '/work/x86_64/Everything/ostree_installer/images/boot.iso',
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
@@ -159,6 +159,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(compose.get_image_name.call_args_list,
                          [mock.call('x86_64', compose.variants['Everything'],
                                     disc_type='dvd', format='Fedora-Atomic.iso')])
+        self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
+        self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
 
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
@@ -222,7 +224,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                         '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
                         '--add-arch-template-var=ostree_osname=fedora-atomic',
                         '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
-                        self.topdir + '/compose/Everything/x86_64/os'],
+                        self.topdir + '/work/x86_64/Everything/ostree_installer'],
                        channel=None, mounts=[self.topdir],
                        packages=['pungi', 'lorax'],
                        task_id=True, use_shell=True)])
@@ -230,7 +232,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
         self.assertEqual(link.call_args_list,
-                         [mock.call(self.topdir + '/compose/Everything/x86_64/os/images/boot.iso',
+                         [mock.call(self.topdir + '/work/x86_64/Everything/ostree_installer/images/boot.iso',
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
