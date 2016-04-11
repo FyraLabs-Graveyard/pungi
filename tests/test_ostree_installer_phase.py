@@ -172,6 +172,123 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.iso.IsoWrapper')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_fail_with_relative_template_path_but_no_repo(self, KojiWrapper, link,
+                                                          IsoWrapper, get_file_size,
+                                                          get_mtime, ImageCls, run):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': '20160321.n.0',
+            'filename': 'Fedora-Atomic.iso',
+            'add_template': ['some-file.txt'],
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        self.assertIn('template_repo', str(ctx.exception))
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('kobo.shortcuts.run')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_clone_templates(self, KojiWrapper, link, IsoWrapper,
+                                 get_file_size, get_mtime, ImageCls, run,
+                                 get_dir_from_scm):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+        })
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': '20160321.n.0',
+            'filename': 'Fedora-Atomic.iso',
+            'add_template': ['some_file.txt'],
+            'add_arch_template': ['other_file.txt'],
+            'template_repo': 'git://example.com/templates.git',
+            'template_branch': 'f24',
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
+        templ_dir = self.topdir + '/work/x86_64/Everything/lorax_templates'
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        self.assertEqual(get_dir_from_scm.call_args_list,
+                         [mock.call({'scm': 'git', 'repo': 'git://example.com/templates.git',
+                                     'branch': 'f24', 'dir': '.'},
+                                    templ_dir, logger=pool._logger)])
+        self.assertEqual(koji.get_runroot_cmd.call_args_list,
+                         [mock.call('rrt', 'x86_64',
+                                    ['lorax',
+                                     '--product=Fedora',
+                                     '--version=Rawhide',
+                                     '--release=20160321.n.0',
+                                     '--source=file://{}/compose/Everything/x86_64/os'.format(self.topdir),
+                                     '--variant=Everything',
+                                     '--nomacboot',
+                                     '--add-template={}/some_file.txt'.format(templ_dir),
+                                     '--add-arch-template={}/other_file.txt'.format(templ_dir),
+                                     self.topdir + '/work/x86_64/Everything/ostree_installer'],
+                                    channel=None, mounts=[self.topdir],
+                                    packages=['pungi', 'lorax'],
+                                    task_id=True, use_shell=True)])
+        self.assertEqual(koji.run_runroot_cmd.call_args_list,
+                         [mock.call(koji.get_runroot_cmd.return_value,
+                                    log_file=self.topdir + '/logs/x86_64/ostree_installer/runroot.log')])
+        self.assertEqual(link.call_args_list,
+                         [mock.call(self.topdir + '/work/x86_64/Everything/ostree_installer/images/boot.iso',
+                                    final_iso_path)])
+        self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
+        self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
+        self.assertImageAdded(compose, ImageCls, IsoWrapper)
+        self.assertEqual(compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', compose.variants['Everything'],
+                                    disc_type='dvd', format='Fedora-Atomic.iso')])
+        self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
+        self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
+        self.assertEqual(run.call_args_list,
+                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/iso/'.format(self.topdir))])
+
+    @mock.patch('kobo.shortcuts.run')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_with_implicit_release(self, KojiWrapper, link, IsoWrapper,
                                        get_file_size, get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
