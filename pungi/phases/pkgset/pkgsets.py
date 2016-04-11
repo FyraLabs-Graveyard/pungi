@@ -225,12 +225,14 @@ class KojiPackageSet(PackageSetBase):
         rpm_path = None
         found = False
         pathinfo = self.koji_wrapper.koji_module.pathinfo
+        paths = []
         for sigkey in self.sigkey_ordering:
             if sigkey is None:
                 # we're looking for *signed* copies here
                 continue
             sigkey = sigkey.lower()
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey))
+            paths.append(rpm_path)
             if os.path.isfile(rpm_path):
                 found = True
                 break
@@ -239,14 +241,17 @@ class KojiPackageSet(PackageSetBase):
             if None in self.sigkey_ordering:
                 # use an unsigned copy (if allowed)
                 rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
+                paths.append(rpm_path)
                 if os.path.isfile(rpm_path):
                     found = True
             else:
                 # or raise an exception
-                raise RuntimeError("RPM %s not found for sigs: %s" % (rpm_info, self.sigkey_ordering))
+                raise RuntimeError("RPM %s not found for sigs: %s. Paths checked: %s"
+                                   % (rpm_info, self.sigkey_ordering, paths))
 
         if not found:
-            raise RuntimeError("Package not found: %s" % rpm_info)
+            raise RuntimeError("Package not found: %s. Paths checked: %s"
+                               % (rpm_info, paths))
         return rpm_path
 
     def populate(self, tag, event=None, inherit=True):
