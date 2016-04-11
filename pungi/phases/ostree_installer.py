@@ -10,7 +10,7 @@ from kobo import shortcuts
 from .base import ConfigGuardedPhase
 from .. import util
 from ..paths import translate_path
-from ..wrappers import kojiwrapper, iso, lorax
+from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
 class OstreeInstallerPhase(ConfigGuardedPhase):
@@ -56,6 +56,9 @@ class OstreeInstallerThread(WorkerThread):
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))
 
+        self.template_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'lorax_templates')
+        self._clone_templates(config.get('template_repo'), config.get('template_branch'))
+
         self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir)
 
         disc_type = compose.conf.get('disc_types', {}).get('dvd', 'dvd')
@@ -64,6 +67,13 @@ class OstreeInstallerThread(WorkerThread):
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
         self.pool.log_info('[DONE ] %s' % msg)
+
+    def _clone_templates(self, url, branch='master'):
+        if not url:
+            self.template_dir = None
+            return
+        scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
+                             self.template_dir, logger=self.pool._logger)
 
     def _get_release(self, compose, config):
         if 'release' in config and config['release'] is None:
@@ -105,6 +115,20 @@ class OstreeInstallerThread(WorkerThread):
             pass
         compose.im.add(variant.uid, arch, img)
 
+    def _get_templates(self, config, key):
+        """Retrieve all templates from configuration and make sure the paths
+        are absolute. Raises RuntimeError if template repo is needed but not
+        configured.
+        """
+        templates = []
+        for template in config.get(key, []):
+            if template[0] != '/':
+                if not self.template_dir:
+                    raise RuntimeError('Relative path to template without setting template_repo.')
+                template = os.path.join(self.template_dir, template)
+            templates.append(template)
+        return templates
+
     def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir):
         lorax_wrapper = lorax.LoraxWrapper()
         cmd = lorax_wrapper.get_lorax_cmd(
@@ -116,8 +140,8 @@ class OstreeInstallerThread(WorkerThread):
             variant=variant.uid,
             nomacboot=True,
             buildinstallpackages=config.get('installpkgs'),
-            add_template=config.get('add_template'),
-            add_arch_template=config.get('add_arch_template'),
+            add_template=self._get_templates(config, 'add_template'),
+            add_arch_template=self._get_templates(config, 'add_arch_template'),
             add_template_var=config.get('add_template_var'),
             add_arch_template_var=config.get('add_arch_template_var')
         )

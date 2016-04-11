@@ -1005,6 +1005,13 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     * ``add_arch_template`` -- (*[str]*)
     * ``add_template_var`` -- (*[str]*)
     * ``add_arch_template_var`` -- (*[str]*)
+    * ``template_repo`` -- (*str*) Git repository with extra templates.
+    * ``template_branch`` -- (*str*) Branch to use from ``template_repo``.
+
+    The templates can either be absolute paths, in which case they will be used
+    as configured; or they can be relative paths, in which case
+    ``template_repo`` needs to point to a Git repository from which to take the
+    templates.
 
 
 Example config
@@ -1018,17 +1025,19 @@ Example config
                 "release": None,
                 "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(compose_date)s.iso",
                 "installpkgs": ["fedora-productimg-atomic"],
-                "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
+                "add_template": ["atomic-installer/lorax-configure-repo.tmpl"],
                 "add_template_var": [
                     "ostree_osname=fedora-atomic",
                     "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                 ],
-                "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+                "add_arch_template": ["atomic-installer/lorax-embed-repo.tmpl"],
                 "add_arch_template_var": [
                     "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
                     "ostree_osname=fedora-atomic",
                     "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                 ]
+                'template_repo': 'https://git.fedorahosted.org/git/spin-kickstarts.git',
+                'template_branch': 'f24',
             }
         })
     ]
