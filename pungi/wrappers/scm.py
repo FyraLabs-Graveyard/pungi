@@ -47,9 +47,6 @@ class ScmBase(kobo.log.LoggingBase):
         except OSError as ex:
             self.log_warning("Error removing %s: %s" % (path, ex))
 
-    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
-        raise NotImplemented
-
     def retry_run(self, cmd, retries=5, timeout=60, **kwargs):
         """
         @param cmd - cmd passed to kobo.shortcuts.run()
