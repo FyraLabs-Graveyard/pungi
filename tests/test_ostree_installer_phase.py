@@ -146,7 +146,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--nomacboot',
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
-                                    packages=['pungi', 'lorax'],
+                                    packages=['pungi', 'lorax', 'ostree'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
@@ -263,7 +263,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--add-arch-template={}/other_file.txt'.format(templ_dir),
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
-                                    packages=['pungi', 'lorax'],
+                                    packages=['pungi', 'lorax', 'ostree'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
@@ -347,7 +347,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                         '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
                         self.topdir + '/work/x86_64/Everything/ostree_installer'],
                        channel=None, mounts=[self.topdir],
-                       packages=['pungi', 'lorax'],
+                       packages=['pungi', 'lorax', 'ostree'],
                        task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
