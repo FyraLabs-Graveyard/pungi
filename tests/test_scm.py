@@ -69,6 +69,24 @@ class FileSCMTestCase(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
         self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
 
+    def test_get_missing_file(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            scm.get_file_from_scm({'scm': 'file',
+                                   'repo': None,
+                                   'file': 'this-is-really-not-here.txt'},
+                                  self.destdir)
+
+        self.assertIn('No files matched', str(ctx.exception))
+
+    def test_get_missing_dir(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            scm.get_dir_from_scm({'scm': 'file',
+                                  'repo': None,
+                                  'dir': 'this-is-really-not-here'},
+                                 self.destdir)
+
+        self.assertIn('No directories matched', str(ctx.exception))
+
 
 class GitSCMTestCase(unittest.TestCase):
     def setUp(self):

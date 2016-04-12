@@ -76,6 +76,8 @@ class FileWrapper(ScmBase):
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
         dirs = glob.glob(scm_dir)
+        if not dirs:
+            raise RuntimeError('No directories matched, can not export.')
         for i in dirs:
             _copy_all(i, target_dir)
 
@@ -83,6 +85,8 @@ class FileWrapper(ScmBase):
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
         files = glob.glob(scm_file)
+        if not files:
+            raise RuntimeError('No files matched, can not export.')
         for i in files:
             target_path = os.path.join(target_dir, os.path.basename(i))
             shutil.copy2(i, target_path)
