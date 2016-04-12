@@ -149,7 +149,7 @@ class OstreeInstallerThread(WorkerThread):
         runroot_channel = compose.conf.get("runroot_channel", None)
         runroot_tag = compose.conf["runroot_tag"]
 
-        packages = ['pungi', 'lorax']
+        packages = ['pungi', 'lorax', 'ostree']
         log_file = os.path.join(self.logdir, 'runroot.log')
         koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
         koji_cmd = koji.get_runroot_cmd(runroot_tag, arch, cmd,
