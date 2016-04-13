@@ -336,14 +336,14 @@ class StatusTest(unittest.TestCase):
         }
 
         variant = mock.Mock(uid='Server')
-        self.compose.can_fail(variant, 'x86_64', 'live')
-        self.compose.can_fail(None, '*', 'build-image')
+        self.compose.fail_deliverable(variant, 'x86_64', 'live')
+        self.compose.fail_deliverable(None, '*', 'build-image')
 
         self.compose.write_status('FINISHED')
 
         self.logger.log.assert_has_calls(
-            [mock.call(20, 'Failed build-image on variant <>, arch <*>.'),
-             mock.call(20, 'Failed live on variant <Server>, arch <x86_64>.')],
+            [mock.call(20, 'Failed build-image on variant <>, arch <*>, subvariant <None>.'),
+             mock.call(20, 'Failed live on variant <Server>, arch <x86_64>, subvariant <None>.')],
             any_order=True)
 
         with open(os.path.join(self.tmp_dir, 'STATUS'), 'r') as f:

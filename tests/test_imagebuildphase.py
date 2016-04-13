@@ -540,7 +540,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             t.process((compose, cmd), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Image-build (variant Client, arch *) failed, but going on anyway.'),
+            mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('ImageBuild task failed: 1234. See %s for more details.'
                       % (os.path.join(self.topdir,
                                       'logs/amd64-x86_64/imagebuild-Client-Client-docker.amd64-x86_64.log'))),
@@ -591,7 +591,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             t.process((compose, cmd), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Image-build (variant Client, arch *) failed, but going on anyway.'),
+            mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('BOOM'),
         ])
 

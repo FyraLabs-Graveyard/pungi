@@ -183,7 +183,7 @@ class CreateIsoThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd, variant, arch = item
-        with failable(compose, variant, arch, 'iso', 'Creating ISO'):
+        with failable(compose, variant, arch, 'iso'):
             self.worker(compose, cmd, variant, arch, num)
 
     def worker(self, compose, cmd, variant, arch, num):
