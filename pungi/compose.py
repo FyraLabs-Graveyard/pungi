@@ -25,6 +25,7 @@ import os
 import time
 import tempfile
 import shutil
+import json
 
 import kobo.log
 from productmd.composeinfo import ComposeInfo
@@ -135,8 +136,10 @@ class Compose(kobo.log.LoggingBase):
 
         # Stores list of deliverables that failed, but did not abort the
         # compose.
-        # {Variant.uid: {Arch: [deliverable]}}
+        # {deliverable: [(Variant.uid, arch, subvariant)]}
         self.failed_deliverables = {}
+        self.attempted_deliverables = {}
+        self.required_deliverables = {}
 
     get_compose_dir = staticmethod(get_compose_dir)
 
@@ -238,11 +241,16 @@ class Compose(kobo.log.LoggingBase):
         return self._status_file
 
     def _log_failed_deliverables(self):
-        for variant, variant_data in self.failed_deliverables.iteritems():
-            for arch, deliverables in variant_data.iteritems():
-                for deliverable in deliverables:
-                    self.log_info('Failed %s on variant <%s>, arch <%s>.'
-                                  % (deliverable, variant, arch))
+        for kind, data in self.failed_deliverables.iteritems():
+            for variant, arch, subvariant in data:
+                self.log_info('Failed %s on variant <%s>, arch <%s>, subvariant <%s>.'
+                              % (kind, variant, arch, subvariant))
+        log = os.path.join(self.paths.log.topdir('global'), 'deliverables.json')
+        with open(log, 'w') as f:
+            json.dump({'required': self.required_deliverables,
+                       'failed': self.failed_deliverables,
+                       'attempted': self.attempted_deliverables},
+                      f, indent=4)
 
     def write_status(self, stat_msg):
         if stat_msg not in ("STARTED", "FINISHED", "DOOMED"):
@@ -257,7 +265,8 @@ class Compose(kobo.log.LoggingBase):
 
         if stat_msg == 'FINISHED' and self.failed_deliverables:
             stat_msg = 'FINISHED_INCOMPLETE'
-            self._log_failed_deliverables()
+
+        self._log_failed_deliverables()
 
         with open(self.status_file, "w") as f:
             f.write(stat_msg + "\n")
@@ -308,12 +317,25 @@ class Compose(kobo.log.LoggingBase):
         Variant can be None.
         """
         failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
-        if deliverable in failable:
-            # Store failed deliverable for later logging.
-            variant_uid = variant.uid if variant else ''
-            self.failed_deliverables.setdefault(variant_uid, {}).setdefault(arch, []).append(deliverable)
-            return True
-        return False
+        return deliverable in failable
+
+    def attempt_deliverable(self, variant, arch, kind, subvariant=None):
+        """Log information about attempted deliverable."""
+        variant_uid = variant.uid if variant else ''
+        self.attempted_deliverables.setdefault(kind, []).append(
+            (variant_uid, arch, subvariant))
+
+    def require_deliverable(self, variant, arch, kind, subvariant=None):
+        """Log information about attempted deliverable."""
+        variant_uid = variant.uid if variant else ''
+        self.required_deliverables.setdefault(kind, []).append(
+            (variant_uid, arch, subvariant))
+
+    def fail_deliverable(self, variant, arch, kind, subvariant=None):
+        """Log information about failed deliverable."""
+        variant_uid = variant.uid if variant else ''
+        self.failed_deliverables.setdefault(kind, []).append(
+            (variant_uid, arch, subvariant))
 
     @property
     def image_release(self):

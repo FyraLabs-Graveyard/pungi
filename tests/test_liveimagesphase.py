@@ -598,7 +598,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Creating live images (variant Client, arch amd64) failed, but going on anyway.'),
+            mock.call('[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway.'),
             mock.call('LiveImage task failed: 123. See %s/logs/amd64/liveimage-None-None-xyz.amd64.log for more details.'
                       % self.topdir)
         ])
@@ -639,7 +639,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             t.process((compose, cmd, compose.variants['Client'], 'amd64'), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Creating live images (variant Client, arch amd64) failed, but going on anyway.'),
+            mock.call('[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
 

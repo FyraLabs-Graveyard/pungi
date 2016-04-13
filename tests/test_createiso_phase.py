@@ -357,7 +357,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Creating ISO (variant Server, arch x86_64) failed, but going on anyway.'),
+            mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
 
@@ -399,7 +399,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Creating ISO (variant Server, arch x86_64) failed, but going on anyway.'),
+            mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See {} for more details.'.format(
                 self.topdir + '/logs/x86_64/createiso-image-name.x86_64.log'))
         ])
@@ -479,7 +479,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Creating ISO (variant Server, arch x86_64) failed, but going on anyway.'),
+            mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
 

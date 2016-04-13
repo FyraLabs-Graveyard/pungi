@@ -158,7 +158,7 @@ class LiveMediaThread(WorkerThread):
         compose, variant, config = item
         subvariant = config.pop('subvariant')
         self.num = num
-        with failable(compose, variant, '*', 'live-media'):
+        with failable(compose, variant, '*', 'live-media', subvariant):
             self.worker(compose, variant, subvariant, config)
 
     def _get_log_file(self, compose, variant, subvariant, config):

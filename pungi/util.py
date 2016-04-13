@@ -459,17 +459,26 @@ def process_args(fmt, args):
 
 
 @contextlib.contextmanager
-def failable(compose, variant, arch, deliverable, msg=None):
+def failable(compose, variant, arch, deliverable, subvariant=None):
     """If a deliverable can fail, log a message and go on as if it succeeded."""
-    msg = msg or deliverable.capitalize()
+    msg = deliverable.replace('-', ' ').capitalize()
+    can_fail = compose.can_fail(variant, arch, deliverable)
+    if can_fail:
+        compose.attempt_deliverable(variant, arch, deliverable, subvariant)
+    else:
+        compose.require_deliverable(variant, arch, deliverable, subvariant)
     try:
         yield
     except Exception as exc:
-        if not compose.can_fail(variant, arch, deliverable):
+        if not can_fail:
             raise
         else:
-            compose.log_info('[FAIL] %s (variant %s, arch %s) failed, but going on anyway.'
-                             % (msg, variant.uid if variant else 'None', arch))
+            compose.fail_deliverable(variant, arch, deliverable, subvariant)
+            ident = 'variant %s, arch %s' % (variant.uid if variant else 'None', arch)
+            if subvariant:
+                ident += ', subvariant %s' % subvariant
+            compose.log_info('[FAIL] %s (%s) failed, but going on anyway.'
+                             % (msg, ident))
             compose.log_info(str(exc))
             tb = traceback.format_exc()
             compose.log_debug(tb)

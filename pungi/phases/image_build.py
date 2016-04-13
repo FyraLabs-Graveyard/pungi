@@ -144,7 +144,7 @@ class CreateImageBuildThread(WorkerThread):
         compose, cmd = item
         variant = cmd["image_conf"]["image-build"]["variant"]
         subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
-        with failable(compose, variant, '*', 'image-build'):
+        with failable(compose, variant, '*', 'image-build', subvariant):
             self.worker(num, compose, variant, subvariant, cmd)
 
     def worker(self, num, compose, variant, subvariant, cmd):

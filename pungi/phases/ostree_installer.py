@@ -42,7 +42,7 @@ class OstreeInstallerThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        with util.failable(compose, variant, arch, 'ostree-installer', 'Ostree installer'):
+        with util.failable(compose, variant, arch, 'ostree-installer'):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):

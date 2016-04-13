@@ -418,7 +418,7 @@ class TestLiveMediaThread(PungiTestCase):
             t.process((compose, compose.variants['Server'], config), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Live-media (variant Server, arch *) failed, but going on anyway.'),
+            mock.call('[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway.'),
             mock.call('Live media task failed: 1234. See %s for more details.'
                       % (os.path.join(self.topdir, 'logs/amd64-x86_64/livemedia-Server-KDE.amd64-x86_64.log')))
         ])
@@ -460,7 +460,7 @@ class TestLiveMediaThread(PungiTestCase):
             t.process((compose, compose.variants['Server'], config), 1)
 
         compose.log_info.assert_has_calls([
-            mock.call('[FAIL] Live-media (variant Server, arch *) failed, but going on anyway.'),
+            mock.call('[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
 
