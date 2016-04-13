@@ -1023,7 +1023,7 @@ Example config
             "x86_64": {
                 "source_repo_from": "Everything",
                 "release": None,
-                "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(compose_date)s.iso",
+                "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(date)s.iso",
                 "installpkgs": ["fedora-productimg-atomic"],
                 "add_template": ["atomic-installer/lorax-configure-repo.tmpl"],
                 "add_template_var": [
