@@ -23,7 +23,6 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
                     "x86_64": {
                         "source_repo_from": "Everything",
                         "release": None,
-                        "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(date)s.iso",
                         "installpkgs": ["fedora-productimg-atomic"],
                         "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
                         "add_template_var": [
@@ -119,7 +118,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'source_repo_from': 'Everything',
             'release': '20160321.n.0',
-            'filename': 'Fedora-Atomic.iso',
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -158,8 +156,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'],
-                                    disc_type='dvd', format='Fedora-Atomic.iso')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -185,7 +182,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'source_repo_from': 'Everything',
             'release': '20160321.n.0',
-            'filename': 'Fedora-Atomic.iso',
             'add_template': ['some-file.txt'],
         }
         koji = KojiWrapper.return_value
@@ -225,7 +221,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'source_repo_from': 'Everything',
             'release': '20160321.n.0',
-            'filename': 'Fedora-Atomic.iso',
             'add_template': ['some_file.txt'],
             'add_arch_template': ['other_file.txt'],
             'template_repo': 'git://example.com/templates.git',
@@ -275,8 +270,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'],
-                                    disc_type='dvd', format='Fedora-Atomic.iso')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -359,8 +353,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'],
-                                    disc_type='dvd', format=None)])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -384,7 +377,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'source_repo_from': 'Everything',
             'release': None,
-            'filename': 'Fedora-Atomic.iso',
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
@@ -419,7 +411,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'source_repo_from': 'Everything',
             'release': None,
-            'filename': 'Fedora-Atomic.iso',
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
