@@ -221,7 +221,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                           'amd64'))])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.phases.live_images.resolve_git_url')
+    @mock.patch('pungi.util.resolve_git_url')
     def test_spin_appliance(self, resolve_git_url, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'live_images': [
@@ -263,6 +263,110 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'sign': False,
                                            'type': 'appliance',
                                            'release': None,
+                                           'subvariant': 'Client',
+                                           'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
+                                          compose.variants['Client'],
+                                          'amd64'))])
+        self.assertEqual(resolve_git_url.mock_calls,
+                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
+
+    @mock.patch('pungi.phases.live_images.ThreadPool')
+    @mock.patch('pungi.util.resolve_git_url')
+    def test_spin_appliance_phase_global_settings(self, resolve_git_url, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'live_images_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
+            'live_images_release': None,
+            'live_images_version': 'Rawhide',
+            'live_images': [
+                ('^Client$', {
+                    'amd64': {
+                        'kickstart': 'test.ks',
+                        'additional_repos': ['http://example.com/repo/'],
+                        'repo_from': ['Everything'],
+                        'type': 'appliance',
+                    }
+                })
+            ],
+        })
+
+        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
+
+        phase = LiveImagesPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        self.maxDiff = None
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose,
+                                          {'ks_file': 'test.ks',
+                                           'build_arch': 'amd64',
+                                           'dest_dir': self.topdir + '/compose/Client/amd64/images',
+                                           'scratch': False,
+                                           'repos': [self.topdir + '/compose/Client/amd64/os',
+                                                     'http://example.com/repo/',
+                                                     self.topdir + '/compose/Everything/amd64/os'],
+                                           'label': '',
+                                           'name': None,
+                                           'filename': 'image-name',
+                                           'version': 'Rawhide',
+                                           'specfile': None,
+                                           'sign': False,
+                                           'type': 'appliance',
+                                           'release': '20151203.t.0',
+                                           'subvariant': 'Client',
+                                           'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
+                                          compose.variants['Client'],
+                                          'amd64'))])
+        self.assertEqual(resolve_git_url.mock_calls,
+                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
+
+    @mock.patch('pungi.phases.live_images.ThreadPool')
+    @mock.patch('pungi.util.resolve_git_url')
+    def test_spin_appliance_global_settings(self, resolve_git_url, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'global_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
+            'global_release': None,
+            'global_version': 'Rawhide',
+            'live_images': [
+                ('^Client$', {
+                    'amd64': {
+                        'kickstart': 'test.ks',
+                        'additional_repos': ['http://example.com/repo/'],
+                        'repo_from': ['Everything'],
+                        'type': 'appliance',
+                    }
+                })
+            ],
+        })
+
+        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
+
+        phase = LiveImagesPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        self.maxDiff = None
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose,
+                                          {'ks_file': 'test.ks',
+                                           'build_arch': 'amd64',
+                                           'dest_dir': self.topdir + '/compose/Client/amd64/images',
+                                           'scratch': False,
+                                           'repos': [self.topdir + '/compose/Client/amd64/os',
+                                                     'http://example.com/repo/',
+                                                     self.topdir + '/compose/Everything/amd64/os'],
+                                           'label': '',
+                                           'name': None,
+                                           'filename': 'image-name',
+                                           'version': 'Rawhide',
+                                           'specfile': None,
+                                           'sign': False,
+                                           'type': 'appliance',
+                                           'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],

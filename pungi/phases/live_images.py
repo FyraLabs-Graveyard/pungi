@@ -27,8 +27,8 @@ from productmd.images import Image
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
-from pungi.phases.base import ConfigGuardedPhase
-from pungi.util import get_arch_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
+from pungi.phases import base
+from pungi.util import get_arch_variant_data, makedirs, get_mtime, get_file_size, failable
 from pungi.paths import translate_path
 
 
@@ -38,7 +38,7 @@ if sys.version_info[0] == 3:
         return (a > b) - (a < b)
 
 
-class LiveImagesPhase(ConfigGuardedPhase):
+class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
     name = "live_images"
 
     config_options = (
@@ -71,7 +71,22 @@ class LiveImagesPhase(ConfigGuardedPhase):
             "name": "live_images_no_rename",
             "expected_types": [bool],
             "optional": True,
-        }
+        },
+        {
+            "name": "live_images_ksurl",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "live_images_release",
+            "expected_types": [str, type(None)],
+            "optional": True,
+        },
+        {
+            "name": "live_images_version",
+            "expected_types": [str],
+            "optional": True,
+        },
     )
 
     def __init__(self, compose):
@@ -102,19 +117,13 @@ class LiveImagesPhase(ConfigGuardedPhase):
         repos.extend(self._get_extra_repos(arch, variant, force_list(data.get('repo_from', []))))
         return repos
 
-    def _get_release(self, image_conf):
-        """If release is set explicitly to None, replace it with date and respin."""
-        if 'release' in image_conf and image_conf['release'] is None:
-            return self.compose.image_release
-        return image_conf.get('release', None)
-
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
         commands = []
 
         for variant in self.compose.variants.values():
             for arch in variant.arches + ["src"]:
-                for data in get_arch_variant_data(self.compose.conf, "live_images", arch, variant):
+                for data in get_arch_variant_data(self.compose.conf, self.name, arch, variant):
                     subvariant = data.get('subvariant', variant.uid)
                     type = data.get('type', 'live')
 
@@ -131,12 +140,12 @@ class LiveImagesPhase(ConfigGuardedPhase):
 
                     cmd = {
                         "name": data.get('name'),
-                        "version": data.get("version", None),
-                        "release": self._get_release(data),
+                        "version": self.get_config(data, 'version'),
+                        "release": self.get_release(data),
                         "dest_dir": dest_dir,
                         "build_arch": arch,
                         "ks_file": data['kickstart'],
-                        "ksurl": None,
+                        "ksurl": self.get_ksurl(data),
                         # Used for images wrapped in RPM
                         "specfile": data.get("specfile", None),
                         # Scratch (only taken in consideration if specfile
@@ -149,9 +158,6 @@ class LiveImagesPhase(ConfigGuardedPhase):
                         "label": "",  # currently not used
                         "subvariant": subvariant,
                     }
-
-                    if 'ksurl' in data:
-                        cmd['ksurl'] = resolve_git_url(data['ksurl'])
 
                     cmd["repos"] = self._get_repos(arch, variant, data)
 

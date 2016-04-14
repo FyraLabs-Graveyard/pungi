@@ -99,6 +99,65 @@ class TestImageBuildPhase(PungiTestCase):
                                mock.call((compose, server_args))])
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_phase_global_options(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'image_build_ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+            'image_build_release': None,
+            'image_build_target': 'f24',
+            'image_build_version': 'Rawhide',
+            'image_build': {
+                '^Server$': [
+                    {
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3
+                        }
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+        self.maxDiff = None
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        server_args = {
+            "format": [('docker', 'tar.xz')],
+            "image_conf": {
+                'image-build': {
+                    'install_tree': self.topdir + '/compose/Server/$arch/os',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': self.topdir + '/compose/Server/$arch/os',
+                    'variant': compose.variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                    'release': '20151203.t.0',
+                }
+            },
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
+            "link_type": 'hardlink-or-copy',
+            "scratch": False,
+        }
+        self.maxDiff = None
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose, server_args))])
+
+    @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_filter_all_variants(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'image_build': {
@@ -321,7 +380,7 @@ class TestImageBuildPhase(PungiTestCase):
         args, kwargs = phase.pool.queue_put.call_args
         self.assertTrue(args[0][1].get('scratch'))
 
-    @mock.patch('pungi.phases.image_build.resolve_git_url')
+    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_resolve_ksurl(self, ThreadPool, resolve_git_url):
         compose = DummyCompose(self.topdir, {
