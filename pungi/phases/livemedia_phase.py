@@ -37,7 +37,12 @@ class LiveMediaPhase(PhaseBase):
             "name": "live_media_release",
             "expected_types": [str, type(None)],
             "optional": True,
-        }
+        },
+        {
+            "name": "live_media_version",
+            "expected_types": [str],
+            "optional": True,
+        },
     )
 
     def __init__(self, compose):
