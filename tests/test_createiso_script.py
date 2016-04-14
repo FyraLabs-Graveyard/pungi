@@ -20,10 +20,14 @@ class OstreeScriptTest(helpers.PungiTestCase):
         for x, y in zip(actual, expected):
             self.assertEqual(x, y)
 
+    def setUp(self):
+        super(OstreeScriptTest, self).setUp()
+        self.outdir = os.path.join(self.topdir, 'isos')
+
     @mock.patch('kobo.shortcuts.run')
     def test_minimal_run(self, run):
         createiso.main([
-            '--output-dir={}/isos'.format(self.topdir),
+            '--output-dir={}'.format(self.outdir),
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -38,11 +42,11 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         '-input-charset', 'utf-8', '-x', './lost+found',
                         '-o', 'DP-1.0-20160405.t.3-x86_64.iso',
                         '-graft-points', '-path-list', 'graft-list'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-x86_64.iso'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest',
-                       show_cmd=True, stdout=True)]
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 
     @mock.patch('kobo.shortcuts.run')
@@ -50,7 +54,7 @@ class OstreeScriptTest(helpers.PungiTestCase):
         run.return_value = (0, '/usr/share/lorax')
 
         createiso.main([
-            '--output-dir={}/isos'.format(self.topdir),
+            '--output-dir={}'.format(self.outdir),
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -72,13 +76,13 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         '-no-emul-boot',
                         '-o', 'DP-1.0-20160405.t.3-x86_64.iso',
                         '-graft-points', '-path-list', 'graft-list'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['pungi-pylorax-find-templates', '/usr/share/lorax'],
                        show_cmd=True, stdout=True),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-x86_64.iso'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest',
-                       show_cmd=True, stdout=True)]
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 
     @mock.patch('kobo.shortcuts.run')
@@ -86,7 +90,7 @@ class OstreeScriptTest(helpers.PungiTestCase):
         run.return_value = (0, '/usr/share/lorax')
 
         createiso.main([
-            '--output-dir={}/isos'.format(self.topdir),
+            '--output-dir={}'.format(self.outdir),
             '--iso-name=DP-1.0-20160405.t.3-ppc64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -106,19 +110,19 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         '-hfs-bless', '/ppc/mac',
                         '-o', 'DP-1.0-20160405.t.3-ppc64.iso',
                         '-graft-points', '-path-list', 'graft-list'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['pungi-pylorax-find-templates', '/usr/share/lorax'],
                        show_cmd=True, stdout=True),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-ppc64.iso'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest',
-                       show_cmd=True, stdout=True)]
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 
     @mock.patch('kobo.shortcuts.run')
     def test_bootable_run_buildinstall(self, run):
         createiso.main([
-            '--output-dir={}/isos'.format(self.topdir),
+            '--output-dir={}'.format(self.outdir),
             '--iso-name=DP-1.0-20160405.t.3-ppc64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -139,11 +143,11 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         '-hfs-bless', '/ppc/mac',
                         '-o', 'DP-1.0-20160405.t.3-ppc64.iso',
                         '-graft-points', '-path-list', 'graft-list'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-ppc64.iso'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest',
-                       show_cmd=True, stdout=True)]
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 
     @mock.patch('sys.stderr')
@@ -151,7 +155,7 @@ class OstreeScriptTest(helpers.PungiTestCase):
     def test_run_with_jigdo_bad_args(self, run, stderr):
         with self.assertRaises(SystemExit):
             createiso.main([
-                '--output-dir={}/isos'.format(self.topdir),
+                '--output-dir={}'.format(self.outdir),
                 '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
                 '--volid=DP-1.0-20160405.t.3',
                 '--graft-points=graft-list',
@@ -162,7 +166,7 @@ class OstreeScriptTest(helpers.PungiTestCase):
     @mock.patch('kobo.shortcuts.run')
     def test_run_with_jigdo(self, run):
         createiso.main([
-            '--output-dir={}/isos'.format(self.topdir),
+            '--output-dir={}'.format(self.outdir),
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -179,17 +183,17 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         '-input-charset', 'utf-8', '-x', './lost+found',
                         '-o', 'DP-1.0-20160405.t.3-x86_64.iso',
                         '-graft-points', '-path-list', 'graft-list'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-x86_64.iso'],
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest',
-                       show_cmd=True, stdout=True),
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['jigdo-file', 'make-template', '--force',
                         '--image={}/isos/DP-1.0-20160405.t.3-x86_64.iso'.format(self.topdir),
                         '--jigdo={}/jigdo/DP-1.0-20160405.t.3-x86_64.iso.jigdo'.format(self.topdir),
                         '--template={}/jigdo/DP-1.0-20160405.t.3-x86_64.iso.template'.format(self.topdir),
                         '--no-servers-section', '--report=noprogress', self.topdir + '/os//'],
-                       show_cmd=True, stdout=True)]
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 
 
