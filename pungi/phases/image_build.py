@@ -6,7 +6,7 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
-from pungi.phases.base import PhaseBase
+from pungi.phases.base import ConfigGuardedPhase
 from pungi.linker import Linker
 from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -14,21 +14,13 @@ from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
 
 
-class ImageBuildPhase(PhaseBase):
+class ImageBuildPhase(ConfigGuardedPhase):
     """class for wrapping up koji image-build"""
     name = "image_build"
 
     def __init__(self, compose):
-        PhaseBase.__init__(self, compose)
+        super(ImageBuildPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
-
-    def skip(self):
-        if PhaseBase.skip(self):
-            return True
-        if not self.compose.conf.get(self.name):
-            self.compose.log_info("Config section '%s' was not found. Skipping" % self.name)
-            return True
-        return False
 
     def _get_install_tree(self, image_conf, variant):
         """

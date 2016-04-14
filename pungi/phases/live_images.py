@@ -27,7 +27,7 @@ from productmd.images import Image
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers.iso import IsoWrapper
-from pungi.phases.base import PhaseBase
+from pungi.phases.base import ConfigGuardedPhase
 from pungi.util import get_arch_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
 from pungi.paths import translate_path
 
@@ -38,8 +38,8 @@ if sys.version_info[0] == 3:
         return (a > b) - (a < b)
 
 
-class LiveImagesPhase(PhaseBase):
-    name = "liveimages"
+class LiveImagesPhase(ConfigGuardedPhase):
+    name = "live_images"
 
     config_options = (
         {
@@ -75,15 +75,8 @@ class LiveImagesPhase(PhaseBase):
     )
 
     def __init__(self, compose):
-        PhaseBase.__init__(self, compose)
+        super(LiveImagesPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
-
-    def skip(self):
-        if PhaseBase.skip(self):
-            return True
-        if not self.compose.conf.get("live_images"):
-            return True
-        return False
 
     def _get_extra_repos(self, arch, variant, extras):
         repo = []
@@ -193,11 +186,6 @@ class LiveImagesPhase(PhaseBase):
         # XXX: hardcoded disc_num
         return self.compose.get_image_name(arch, variant, disc_type=disc_type,
                                            disc_num=None, format=format)
-
-    def stop(self, *args, **kwargs):
-        PhaseBase.stop(self, *args, **kwargs)
-        if self.skip():
-            return
 
 
 class CreateLiveImageThread(WorkerThread):

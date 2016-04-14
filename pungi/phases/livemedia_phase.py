@@ -5,7 +5,7 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
-from pungi.phases.base import PhaseBase
+from pungi.phases.base import ConfigGuardedPhase
 from pungi.linker import Linker
 from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -13,7 +13,7 @@ from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
 
 
-class LiveMediaPhase(PhaseBase):
+class LiveMediaPhase(ConfigGuardedPhase):
     """class for wrapping up koji spin-livemedia"""
     name = 'live_media'
 
@@ -49,14 +49,6 @@ class LiveMediaPhase(PhaseBase):
         super(LiveMediaPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
         self._global_ksurl = None
-
-    def skip(self):
-        if super(LiveMediaPhase, self).skip():
-            return True
-        if not self.compose.conf.get(self.name):
-            self.compose.log_info("Config section '%s' was not found. Skipping" % self.name)
-            return True
-        return False
 
     def _get_repos(self, image_conf, variant):
         """
