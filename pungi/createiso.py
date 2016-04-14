@@ -2,12 +2,10 @@
 
 import argparse
 import os
-import contextlib
 from kobo import shortcuts
 
 from .wrappers.iso import IsoWrapper
 from .wrappers.jigdo import JigdoWrapper
-from .util import makedirs
 
 
 def find_templates(fallback):
@@ -18,16 +16,6 @@ def find_templates(fallback):
     _, output = shortcuts.run(['pungi-pylorax-find-templates', fallback],
                               stdout=True, show_cmd=True)
     return output.strip()
-
-
-@contextlib.contextmanager
-def in_dir(dir):
-    """Temporarily switch to another directory."""
-    old_cwd = os.getcwd()
-    makedirs(dir)
-    os.chdir(dir)
-    yield
-    os.chdir(old_cwd)
 
 
 def make_image(iso, opts):
@@ -49,16 +37,17 @@ def make_image(iso, opts):
     cmd = iso.get_mkisofs_cmd(opts.iso_name, None, volid=opts.volid,
                               exclude=["./lost+found"],
                               graft_points=opts.graft_points, **mkisofs_kwargs)
-    shortcuts.run(cmd, stdout=True, show_cmd=True)
+    shortcuts.run(cmd, stdout=True, show_cmd=True, workdir=opts.output_dir)
 
 
 def implant_md5(iso, opts):
     cmd = iso.get_implantisomd5_cmd(opts.iso_name, opts.supported)
-    shortcuts.run(cmd, stdout=True, show_cmd=True)
+    shortcuts.run(cmd, stdout=True, show_cmd=True, workdir=opts.output_dir)
 
 
 def make_manifest(iso, opts):
-    shortcuts.run(iso.get_manifest_cmd(opts.iso_name), stdout=True, show_cmd=True)
+    shortcuts.run(iso.get_manifest_cmd(opts.iso_name), stdout=True,
+                  show_cmd=True, workdir=opts.output_dir)
 
 
 def make_jigdo(opts):
@@ -73,7 +62,7 @@ def make_jigdo(opts):
     cmd = jigdo.get_jigdo_cmd(os.path.join(opts.output_dir, opts.iso_name),
                               files, output_dir=opts.jigdo_dir,
                               no_servers=True, report="noprogress")
-    shortcuts.run(cmd, stdout=True, show_cmd=True)
+    shortcuts.run(cmd, stdout=True, show_cmd=True, workdir=opts.output_dir)
 
 
 def run(opts):
@@ -111,5 +100,4 @@ def main(args=None):
 
     if bool(opts.jigdo_dir) != bool(opts.os_tree):
         parser.error('--jigdo-dir must be used together with --os-tree')
-    with in_dir(opts.output_dir):
-        run(opts)
+    run(opts)
