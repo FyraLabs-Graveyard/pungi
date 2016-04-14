@@ -994,9 +994,6 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
     * ``release`` -- (*str*) Release value to set for the installer image. Set
       to ``None`` to use the date.respin format.
-    * ``filename`` -- (*str*) What to name the installer iso. This is a
-      template with options listed in Image naming section. If not specified,
-      global naming format will be used.
 
     These optional keys are passed to ``lorax`` to customize the build.
 
@@ -1023,7 +1020,6 @@ Example config
             "x86_64": {
                 "source_repo_from": "Everything",
                 "release": None,
-                "filename": "%(release_short)s-%(variant)s-%(arch)s-%(version)s-%(compose_date)s.iso",
                 "installpkgs": ["fedora-productimg-atomic"],
                 "add_template": ["atomic-installer/lorax-configure-repo.tmpl"],
                 "add_template_var": [
