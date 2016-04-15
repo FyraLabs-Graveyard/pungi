@@ -94,10 +94,16 @@ class OSTreeThread(WorkerThread):
 
 
 def tweak_file(path, source_repo):
-    """Replace mirrorlist line in repo file with baseurl pointing to source_repo."""
+    """
+    Ensure a given .repo file points to `source_repo`.
+
+    This function replaces all lines starting with `mirrorlist`, `metalink` or
+    `baseurl` with `baseurl` set to requested repository.
+    """
     with open(path, 'r') as f:
         contents = f.read()
     replacement = 'baseurl={}'.format(source_repo)
-    contents = re.sub(r'^mirrorlist=.*$', replacement, contents, flags=re.MULTILINE)
+    contents = re.sub(r'^(mirrorlist|metalink|baseurl)=.*$',
+                      replacement, contents, flags=re.MULTILINE)
     with open(path, 'w') as f:
         f.write(contents)
