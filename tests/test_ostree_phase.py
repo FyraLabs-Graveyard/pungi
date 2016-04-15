@@ -78,6 +78,10 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
         helpers.touch(os.path.join(target, 'fedora-rawhide.repo'),
                       'mirrorlist=mirror-mirror-on-the-wall')
+        helpers.touch(os.path.join(target, 'fedora-24.repo'),
+                      'metalink=who-is-the-fairest-of-them-all')
+        helpers.touch(os.path.join(target, 'fedora-23.repo'),
+                      'baseurl=why-not-zoidberg?')
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
@@ -129,6 +133,12 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
 
         with open(self.topdir + '/work/ostree/config_repo/fedora-rawhide.repo') as f:
+            self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
+                          f.read())
+        with open(self.topdir + '/work/ostree/config_repo/fedora-24.repo') as f:
+            self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
+                          f.read())
+        with open(self.topdir + '/work/ostree/config_repo/fedora-23.repo') as f:
             self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
                           f.read())
 
