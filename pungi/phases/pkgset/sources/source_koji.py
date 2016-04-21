@@ -119,6 +119,7 @@ def get_koji_event_info(compose, koji_wrapper):
         koji_event = koji_proxy.getEvent(compose.koji_event)
         compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
         json.dump(koji_event, open(event_file, "w"))
+        return koji_event
 
     msg = "Getting koji event"
     if compose.DEBUG and os.path.exists(event_file):
