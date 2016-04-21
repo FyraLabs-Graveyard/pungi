@@ -19,8 +19,6 @@ import os
 import cPickle as pickle
 import json
 
-import koji
-
 import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
@@ -59,18 +57,17 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
         compose = self.compose
         koji_profile = compose.conf["koji_profile"]
         self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
-        path_prefix = self.koji_wrapper.koji_module.config.topdir.rstrip("/") + "/"  # must contain trailing '/'
+        # path prefix must contain trailing '/'
+        path_prefix = self.koji_wrapper.koji_module.config.topdir.rstrip("/") + "/"
         package_sets = get_pkgset_from_koji(self.compose, self.koji_wrapper, path_prefix)
         return (package_sets, path_prefix)
 
 
 def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
-    koji_proxy = koji_wrapper.koji_proxy
     event_info = get_koji_event_info(compose, koji_wrapper)
     tag_info = get_koji_tag_info(compose, koji_wrapper)
 
     pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, tag_info, event_info)
-#    get_extra_packages(compose, pkgset_global)
     package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
     package_sets["global"] = pkgset_global
 
@@ -83,12 +80,11 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
 
 
 def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, event_id):
-    koji_proxy = koji_wrapper.koji_proxy
-    ALL_ARCHES = set(["src"])
+    all_arches = set(["src"])
     for arch in compose.get_arches():
         is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
-        ALL_ARCHES.update(arches)
+        all_arches.update(arches)
 
     compose_tag = compose.conf["pkgset_koji_tag"]
     inherit = compose.conf.get("pkgset_koji_inherit", True)
@@ -99,15 +95,15 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, even
         pkgset = pickle.load(open(global_pkgset_path, "r"))
     else:
         compose.log_info(msg)
-        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_wrapper, compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
+        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_wrapper, compose.conf["sigkeys"],
+                                                            logger=compose._logger, arches=all_arches)
         pkgset.populate(compose_tag, event_id, inherit=inherit)
-        f = open(global_pkgset_path, "w")
-        data = pickle.dumps(pkgset)
-        f.write(data)
-        f.close()
+        with open(global_pkgset_path, 'w') as f:
+            f.write(pickle.dumps(pkgset))
 
     # write global package list
-    pkgset.save_file_list(compose.paths.work.package_list(arch="global"), remove_path_prefix=path_prefix)
+    pkgset.save_file_list(compose.paths.work.package_list(arch="global"),
+                          remove_path_prefix=path_prefix)
     return pkgset
 
 
