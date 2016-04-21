@@ -36,7 +36,7 @@ class CreaterepoWrapper(object):
                            oldpackagedirs=None, num_deltas=None, workers=None):
         # groupfile = /path/to/comps.xml
 
-        cmd = [self.createrepo, directory]
+        cmd = [self.createrepo, directory, '--verbose']
 
         if baseurl:
             cmd.append("--baseurl=%s" % baseurl)
