@@ -69,9 +69,6 @@ class MockFileCache(dict):
     """
     def __init__(self, _wrapper):
         super(MockFileCache, self).__init__()
-        # We get all the methods for free from dict, but need to have a member
-        # that behaves as the actual storage.
-        self.file_cache = self
 
     def add(self, file_path):
         obj = MockFile(file_path)

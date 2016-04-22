@@ -45,7 +45,8 @@ class ReaderThread(WorkerThread):
         # rpm_info, build_info = item
 
         if (num % 100 == 0) or (num == self.pool.queue_total):
-            self.pool.package_set.log_debug("Processed %s out of %s packages" % (num, self.pool.queue_total))
+            self.pool.package_set.log_debug("Processed %s out of %s packages"
+                                            % (num, self.pool.queue_total))
 
         rpm_path = self.pool.package_set.get_package_path(item)
         rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
@@ -66,7 +67,7 @@ class ReaderThread(WorkerThread):
 class PackageSetBase(kobo.log.LoggingBase):
 
     def __init__(self, sigkey_ordering, arches=None, logger=None):
-        kobo.log.LoggingBase.__init__(self, logger=logger)
+        super(PackageSetBase, self).__init__(logger=logger)
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
         self.sigkey_ordering = sigkey_ordering or [None]
         self.arches = arches
@@ -107,7 +108,8 @@ class PackageSetBase(kobo.log.LoggingBase):
             srpm_pool.add(ReaderThread(srpm_pool))
             rpm_pool.add(ReaderThread(rpm_pool))
 
-        # process SRC and NOSRC packages first (see ReaderTread for the EXCLUDEARCH/EXCLUSIVEARCH hack for noarch packages)
+        # process SRC and NOSRC packages first (see ReaderTread for the
+        # EXCLUDEARCH/EXCLUSIVEARCH hack for noarch packages)
         self.log_debug("Package set: spawning %s worker threads (SRPMs)" % thread_count)
         srpm_pool.start()
         srpm_pool.stop()
@@ -135,8 +137,10 @@ class PackageSetBase(kobo.log.LoggingBase):
                 arch_list.append(i)
 
         seen_sourcerpms = set()
-        # {Exclude,Exclusive}Arch must match *tree* arch + compatible native arches (excluding multilib arches)
-        exclusivearch_list = get_valid_arches(primary_arch, multilib=False, add_noarch=False, add_src=False)
+        # {Exclude,Exclusive}Arch must match *tree* arch + compatible native
+        # arches (excluding multilib arches)
+        exclusivearch_list = get_valid_arches(primary_arch, multilib=False,
+                                              add_noarch=False, add_src=False)
         for arch in arch_list:
             self.rpms_by_arch.setdefault(arch, [])
             for i in other.rpms_by_arch.get(arch, []):
@@ -145,10 +149,12 @@ class PackageSetBase(kobo.log.LoggingBase):
                     continue
                 if arch == "noarch":
                     if i.excludearch and set(i.excludearch) & set(exclusivearch_list):
-                        self.log_debug("Excluding (EXCLUDEARCH: %s): %s" % (sorted(set(i.excludearch)), i.file_name))
+                        self.log_debug("Excluding (EXCLUDEARCH: %s): %s"
+                                       % (sorted(set(i.excludearch)), i.file_name))
                         continue
                     if i.exclusivearch and not (set(i.exclusivearch) & set(exclusivearch_list)):
-                        self.log_debug("Excluding (EXCLUSIVEARCH: %s): %s " % (sorted(set(i.exclusivearch)), i.file_name))
+                        self.log_debug("Excluding (EXCLUSIVEARCH: %s): %s"
+                                       % (sorted(set(i.exclusivearch)), i.file_name))
                         continue
 
                 if arch in ("nosrc", "src"):
@@ -159,7 +165,7 @@ class PackageSetBase(kobo.log.LoggingBase):
                     sourcerpm_name = kobo.rpmlib.parse_nvra(i.sourcerpm)["name"]
                     seen_sourcerpms.add(sourcerpm_name)
 
-                self.file_cache.file_cache[i.file_path] = i
+                self.file_cache[i.file_path] = i
                 self.rpms_by_arch[arch].append(i)
 
         self.log_debug("[DONE ] %s" % msg)
@@ -198,7 +204,8 @@ class FilelistPackageSet(PackageSetBase):
 
 class KojiPackageSet(PackageSetBase):
     def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None):
-        PackageSetBase.__init__(self, sigkey_ordering=sigkey_ordering, arches=arches, logger=logger)
+        super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
+                                             arches=arches, logger=logger)
         self.koji_wrapper = koji_wrapper
 
     def __getstate__(self):
