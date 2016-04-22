@@ -37,28 +37,30 @@ class MockFile(object):
         if path.startswith('/tmp'):
             # Drop /tmp/something/ from path
             path = path.split('/', 3)[-1]
-        self.path = path
+        self.file_path = path
         self.file_name = os.path.basename(path)
         self.name, self.version, self.release, self.arch = self.file_name.split('@')
-        self.sourcerpm = self.name
+        self.sourcerpm = '{0.name}-{0.version}-{0.release}.{0.arch}'.format(self)
+        self.exclusivearch = []
+        self.excludearch = []
 
     def __hash__(self):
-        return hash(self.path)
+        return hash(self.file_path)
 
     def __repr__(self):
-        return self.path
+        return self.file_path
 
     def __eq__(self, other):
         try:
-            return self.path == other.path
+            return self.file_path == other.file_path
         except AttributeError:
-            return self.path == other
+            return self.file_path == other
 
     def __le__(self, other):
         try:
-            return self.path < other.path
+            return self.file_path < other.file_path
         except AttributeError:
-            return self.path < other
+            return self.file_path < other
 
 
 class MockFileCache(dict):
@@ -67,6 +69,9 @@ class MockFileCache(dict):
     """
     def __init__(self, _wrapper):
         super(MockFileCache, self).__init__()
+        # We get all the methods for free from dict, but need to have a member
+        # that behaves as the actual storage.
+        self.file_cache = self
 
     def add(self, file_path):
         obj = MockFile(file_path)
@@ -105,9 +110,18 @@ class FakePool(object):
         pass
 
 
+class PkgsetCompareMixin(object):
+    def assertPkgsetEqual(self, actual, expected):
+        for k, v1 in expected.iteritems():
+            self.assertIn(k, actual)
+            v2 = actual.pop(k)
+            self.assertItemsEqual(v1, v2)
+        self.assertEqual({}, actual)
+
+
 @mock.patch('pungi.phases.pkgset.pkgsets.ReaderPool', new=FakePool)
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
-class TestKojiPkgset(helpers.PungiTestCase):
+class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
 
     def setUp(self):
         super(TestKojiPkgset, self).setUp()
@@ -213,6 +227,128 @@ class TestKojiPkgset(helpers.PungiTestCase):
         self.assertPkgsetEqual(result,
                                {'x86_64': ['rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
                                            'signed/cafebabe/bash@4.3.42@4.fc24@x86_64']})
+
+
+@mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
+class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
+    def test_merge_in_another_arch(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        for name in ['rpms/pungi@4.1.3@3.fc25@noarch', 'rpms/pungi@4.1.3@3.fc25@src']:
+            pkg = first.file_cache.add(name)
+            first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        for name in ['rpms/bash@4.3.42@4.fc24@i686']:
+            pkg = second.file_cache.add(name)
+            second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'src': ['rpms/pungi@4.1.3@3.fc25@src'],
+                                'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch'],
+                                'i686': ['rpms/bash@4.3.42@4.fc24@i686']})
+
+    def test_merge_includes_noarch_with_different_exclude_arch(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/pungi@4.1.3@3.fc25@noarch')
+        pkg.excludearch = ['x86_64']
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686', 'noarch'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch']})
+
+    def test_merge_excludes_noarch_exclude_arch(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/pungi@4.1.3@3.fc25@noarch')
+        pkg.excludearch = ['i686']
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686', 'noarch'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'noarch': []})
+
+    def test_merge_excludes_noarch_exclusive_arch(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/pungi@4.1.3@3.fc25@noarch')
+        pkg.exclusivearch = ['x86_64']
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686', 'noarch'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'noarch': []})
+
+    def test_merge_includes_noarch_with_same_exclusive_arch(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/pungi@4.1.3@3.fc25@noarch')
+        pkg.exclusivearch = ['i686']
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686', 'noarch'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch']})
+
+    def test_merge_skips_package_in_cache(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686']})
+
+    def test_merge_skips_src_without_binary(self):
+        first = pkgsets.PackageSetBase([None])
+        second = pkgsets.PackageSetBase([None])
+
+        pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
+        first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkg = second.file_cache.add('rpms/pungi@4.1.3@3.fc25@src')
+        second.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        first.merge(second, 'i386', ['i686', 'src'])
+
+        self.assertPkgsetEqual(first.rpms_by_arch,
+                               {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'src': [],
+                                'nosrc': []})
 
 
 if __name__ == "__main__":
