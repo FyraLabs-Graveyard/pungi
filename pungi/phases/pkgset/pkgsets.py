@@ -64,6 +64,7 @@ class ReaderThread(WorkerThread):
 
 
 class PackageSetBase(kobo.log.LoggingBase):
+
     def __init__(self, sigkey_ordering, arches=None, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)

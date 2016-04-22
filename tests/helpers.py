@@ -94,8 +94,11 @@ def touch(path, content=None):
         f.write(content)
 
 
+FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+
 def copy_fixture(fixture_name, dest):
-    src = os.path.join(os.path.dirname(__file__), 'fixtures', fixture_name)
+    src = os.path.join(FIXTURE_DIR, fixture_name)
     touch(dest)
     shutil.copy2(src, dest)
 
