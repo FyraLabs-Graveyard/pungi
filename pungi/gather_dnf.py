@@ -501,6 +501,8 @@ class Gather(GatherBase):
     def add_source_package_deps(self):
         added = set()
 
+        if not self.opts.resolve_deps:
+            return added
         if not self.opts.selfhosting:
             return added
 
