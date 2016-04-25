@@ -25,12 +25,17 @@ import shutil
 import tempfile
 
 import dnf
-import dnf.arch
+
 import dnf.conf
 import dnf.repo
 import dnf.sack
 
 import pungi.arch
+
+try:
+    import dnf.rpm as dnf_arch
+except ImportError:
+    import dnf.arch as dnf_arch
 
 
 class Conf(dnf.conf.Conf):
@@ -45,7 +50,7 @@ class Substitutions(dict):
     def __init__(self, arch):
         super(Substitutions, self).__init__()
         self['arch'] = arch
-        self['basearch'] = dnf.arch.basearch(arch)
+        self['basearch'] = dnf_arch.basearch(arch)
 
 
 class DnfWrapper(dnf.Base):
@@ -145,7 +150,7 @@ class CompsWrapper(object):
 
 class ArchWrapper(object):
     def __init__(self, arch):
-        self.base_arch = dnf.arch.basearch(arch)
+        self.base_arch = dnf_arch.basearch(arch)
         self.all_arches = pungi.arch.get_valid_arches(self.base_arch, multilib=True, add_noarch=True)
         self.native_arches = pungi.arch.get_valid_arches(self.base_arch, multilib=False, add_noarch=True)
         self.multilib_arches = pungi.arch.get_valid_multilib_arches(self.base_arch)
