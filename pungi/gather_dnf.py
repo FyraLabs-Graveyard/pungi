@@ -16,19 +16,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-# TODO: logging
-# TODO: move print functions from pungi-gather to this module, also write results to a file
 
-
-import logging
 
 import hawkey
-from kobo.rpmlib import parse_nvra
-
+import logging
 import pungi.dnf_wrapper
 import pungi.multilib_dnf
 from pungi.profiler import Profiler
-
+from kobo.rpmlib import parse_nvra
 
 class GatherOptions(object):
     def __init__(self, **kwargs):
@@ -193,9 +188,16 @@ class GatherBase(object):
 
 
 class Gather(GatherBase):
-    def __init__(self, dnf_obj, gather_options):
+    def __init__(self, dnf_obj, gather_options, logger=None):
         super(Gather, self).__init__(dnf_obj)
+        self.logger = logger
+        if not self.logger:
+            # Default logger
+            self.logger = logging.getLogger("gather_dnf")
+            self.logger.setLevel(logging.DEBUG)
+
         self.opts = gather_options
+        self.logger.debug("Gather received gather_options=%s" % gather_options.__dict__)
         self._multilib = pungi.multilib_dnf.Multilib(self.dnf._sack, gather_options.multilib_methods, blacklist=self.opts.multilib_blacklist, whitelist=self.opts.multilib_whitelist)
 
         # already processed packages
@@ -286,7 +288,7 @@ class Gather(GatherBase):
                 pb = ""
                 if pulled_by:
                     pb = " (pulled by %s, repo: %s)" % (pulled_by, pulled_by.repo.id)
-                print "Added package %s%s" % (i, pb)
+                self.logger.debug("Added package %s%s" % (i, pb))
                 self.result_binary_packages.add(i)
                 # lookaside
                 if i.repoid in self.opts.lookaside_repos:
@@ -345,7 +347,7 @@ class Gather(GatherBase):
                     pkgs = self.q_binary_packages.filter_autoglob(name=pattern)
 
                 exclude.update(pkgs)
-                print "EXCLUDED: %s" % list(pkgs)
+                self.logger.debug("EXCLUDED: %s" % list(pkgs))
                 self.dnf._sack.add_excludes(pkgs)
 
         # HACK
@@ -370,7 +372,7 @@ class Gather(GatherBase):
                 if pkgs:
                     added.update(pkgs)
                 else:
-                    print "Doesn't match: %s" % pattern
+                    self.logger.error("Doesn't match: %s" % pattern)
 
         for pkg in added:
             self._set_flag(pkg, "input")
@@ -432,7 +434,7 @@ class Gather(GatherBase):
             if pkgs:
                 added.update(pkgs)
             else:
-                print "Prepopulate: Doesn't match: %s" % name_arch
+                self.logger.warn("Prepopulate: Doesn't match: %s" % name_arch)
 
         for pkg in added:
             self._set_flag(pkg, "prepopulate")
@@ -741,11 +743,11 @@ class Gather(GatherBase):
     def gather(self, pattern_list, conditional_packages=None):
         self.conditional_packages = conditional_packages or []
 
-        print "INITIAL PACKAGES"
+        self.logger.debug("INITIAL PACKAGES")
         added = self.add_initial_packages(pattern_list)
         self._add_packages(added)
 
-        print "PREPOPULATE"
+        self.logger.debug("PREPOPULATE")
         added = self.add_prepopulate_packages()
         self._add_packages(added)
 
@@ -755,56 +757,54 @@ class Gather(GatherBase):
             if pass_num > 0 and not added:
                 break
             pass_num += 1
-            print 80 * "-"
-            # self.logger.info("Pass #%s" % pass_num)
-            print "PASS %s" % pass_num
+            self.logger.debug("PASS %s" % pass_num)
 
-            print "DEPS"
+            self.logger.debug("DEPS")
             added = self.add_conditional_packages()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
             # resolve deps
-            print "DEPS"
+            self.logger.debug("DEPS")
             added = self.add_binary_package_deps()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
             added = self.add_source_package_deps()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
-            print "SOURCE PACKAGES"
+            self.logger.debug("SOURCE PACKAGES")
             added = self.add_source_packages()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
-            print "DEBUG PACKAGES"
+            self.logger.debug("DEBUG PACKAGES")
             added = self.add_debug_packages()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
             # TODO: debug deps
 
-            print "FULLTREE"
+            self.logger.debug("FULLTREE")
             added = self.add_fulltree_packages()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
-            print "LANGPACKS"
+            self.logger.debug("LANGPACKS")
             added = self.add_langpack_packages(self.opts.langpacks)
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
-            print "MULTILIB"
+            self.logger.debug("MULTILIB")
             added = self.add_multilib_packages()
-            print "ADDED: %s" % bool(added)
+            self.logger.debug("ADDED: %s" % bool(added))
             if added:
                 continue
 
