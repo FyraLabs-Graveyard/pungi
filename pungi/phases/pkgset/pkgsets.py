@@ -230,8 +230,6 @@ class KojiPackageSet(PackageSetBase):
 
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item
-        rpm_path = None
-        found = False
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []
         for sigkey in self.sigkey_ordering:
@@ -242,25 +240,17 @@ class KojiPackageSet(PackageSetBase):
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey))
             paths.append(rpm_path)
             if os.path.isfile(rpm_path):
-                found = True
-                break
+                return rpm_path
 
-        if not found:
-            if None in self.sigkey_ordering:
-                # use an unsigned copy (if allowed)
-                rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
-                paths.append(rpm_path)
-                if os.path.isfile(rpm_path):
-                    found = True
-            else:
-                # or raise an exception
-                raise RuntimeError("RPM %s not found for sigs: %s. Paths checked: %s"
-                                   % (rpm_info, self.sigkey_ordering, paths))
+        if None in self.sigkey_ordering:
+            # use an unsigned copy (if allowed)
+            rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
+            paths.append(rpm_path)
+            if os.path.isfile(rpm_path):
+                return rpm_path
 
-        if not found:
-            raise RuntimeError("Package not found: %s. Paths checked: %s"
-                               % (rpm_info, paths))
-        return rpm_path
+        raise RuntimeError("RPM %s not found for sigs: %s. Paths checked: %s"
+                           % (rpm_info, self.sigkey_ordering, paths))
 
     def populate(self, tag, event=None, inherit=True):
         result_rpms = []

@@ -225,6 +225,32 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                                {'x86_64': ['rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
                                            'signed/cafebabe/bash@4.3.42@4.fc24@x86_64']})
 
+    def test_can_not_find_signed_package(self):
+        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe'], arches=['x86_64'])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            pkgset.populate('f25')
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
+
+        self.assertRegexpMatches(str(ctx.exception),
+                                 r'^RPM .+ not found for sigs: .+ Paths checked: .+$')
+
+    def test_can_not_find_any_package(self):
+        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            pkgset.populate('f25')
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
+
+        self.assertRegexpMatches(str(ctx.exception),
+                                 r'^RPM .+ not found for sigs: .+ Paths checked: .+$')
+
 
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
