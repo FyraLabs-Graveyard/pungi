@@ -7,6 +7,7 @@ import sys
 import unittest
 import json
 import functools
+import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -372,6 +373,45 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                {'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
                                 'src': [],
                                 'nosrc': []})
+
+
+@mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
+class TestSaveFileList(unittest.TestCase):
+    def setUp(self):
+        fd, self.tmpfile = tempfile.mkstemp()
+        os.close(fd)
+
+    def tearDown(self):
+        os.unlink(self.tmpfile)
+
+    def test_save_arches_alphabetically(self):
+        pkgset = pkgsets.PackageSetBase([None])
+        for name in ['rpms/pungi@4.1.3@3.fc25@x86_64',
+                     'rpms/pungi@4.1.3@3.fc25@src',
+                     'rpms/pungi@4.1.3@3.fc25@ppc64']:
+            pkg = pkgset.file_cache.add(name)
+            pkgset.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkgset.save_file_list(self.tmpfile)
+
+        with open(self.tmpfile) as f:
+            rpms = f.read().strip().split('\n')
+            self.assertEqual(rpms, ['rpms/pungi@4.1.3@3.fc25@ppc64',
+                                    'rpms/pungi@4.1.3@3.fc25@src',
+                                    'rpms/pungi@4.1.3@3.fc25@x86_64'])
+
+    def test_save_strip_prefix(self):
+        pkgset = pkgsets.PackageSetBase([None])
+        for name in ['rpms/pungi@4.1.3@3.fc25@noarch', 'rpms/pungi@4.1.3@3.fc25@src']:
+            pkg = pkgset.file_cache.add(name)
+            pkgset.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
+
+        pkgset.save_file_list(self.tmpfile, remove_path_prefix='rpms/')
+
+        with open(self.tmpfile) as f:
+            rpms = f.read().strip().split('\n')
+            self.assertItemsEqual(rpms, ['pungi@4.1.3@3.fc25@noarch',
+                                         'pungi@4.1.3@3.fc25@src'])
 
 
 if __name__ == "__main__":
