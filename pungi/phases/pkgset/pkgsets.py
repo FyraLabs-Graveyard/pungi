@@ -171,14 +171,13 @@ class PackageSetBase(kobo.log.LoggingBase):
         self.log_debug("[DONE ] %s" % msg)
 
     def save_file_list(self, file_path, remove_path_prefix=None):
-        f = open(file_path, "w")
-        for arch in sorted(self.rpms_by_arch):
-            for i in self.rpms_by_arch[arch]:
-                rpm_path = i.file_path
-                if remove_path_prefix and rpm_path.startswith(remove_path_prefix):
-                    rpm_path = rpm_path[len(remove_path_prefix):]
-                f.write("%s\n" % rpm_path)
-        f.close()
+        with open(file_path, "w") as f:
+            for arch in sorted(self.rpms_by_arch):
+                for i in self.rpms_by_arch[arch]:
+                    rpm_path = i.file_path
+                    if remove_path_prefix and rpm_path.startswith(remove_path_prefix):
+                        rpm_path = rpm_path[len(remove_path_prefix):]
+                    f.write("%s\n" % rpm_path)
 
 
 class FilelistPackageSet(PackageSetBase):
