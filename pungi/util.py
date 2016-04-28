@@ -30,6 +30,8 @@ import traceback
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
 
+from .wrappers import kojiwrapper
+
 
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
     """Run a command and log the output.  Error out if we get something on stderr"""
@@ -306,12 +308,10 @@ def get_buildroot_rpms(compose, task_id):
     result = []
     if task_id:
         # runroot
-        import koji
-        koji_url = compose.conf["pkgset_koji_url"]
-        koji_proxy = koji.ClientSession(koji_url)
-        buildroot_infos = koji_proxy.listBuildroots(taskID=task_id)
+        koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
+        buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
         buildroot_info = buildroot_infos[-1]
-        data = koji_proxy.listRPMs(componentBuildrootID=buildroot_info["id"])
+        data = koji.koji_proxy.listRPMs(componentBuildrootID=buildroot_info["id"])
         for rpm_info in data:
             fmt = "%(nvr)s.%(arch)s"
             result.append(fmt % rpm_info)

@@ -320,22 +320,22 @@ RPM_LIST = [
 
 class TestGetBuildrootRPMs(unittest.TestCase):
 
-    @mock.patch('koji.ClientSession')
-    def test_get_from_koji(self, ClientSession):
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_get_from_koji(self, KojiWrapper):
         compose = mock.Mock(conf={
-            'pkgset_koji_url': 'http://example.com/koji'
+            'koji_profile': 'koji',
         })
 
-        ClientSession.return_value.listBuildroots.return_value = BUILDROOT_LIST
-        ClientSession.return_value.listRPMs.return_value = RPM_LIST
+        KojiWrapper.return_value.koji_proxy.listBuildroots.return_value = BUILDROOT_LIST
+        KojiWrapper.return_value.koji_proxy.listRPMs.return_value = RPM_LIST
 
         rpms = util.get_buildroot_rpms(compose, 1234)
 
-        self.assertEqual(ClientSession.call_args_list,
-                         [mock.call('http://example.com/koji')])
-        self.assertEqual(ClientSession.return_value.mock_calls,
-                         [mock.call.listBuildroots(taskID=1234),
-                          mock.call.listRPMs(componentBuildrootID=5458481)])
+        self.assertEqual(KojiWrapper.call_args_list,
+                         [mock.call('koji')])
+        self.assertEqual(KojiWrapper.return_value.mock_calls,
+                         [mock.call.koji_proxy.listBuildroots(taskID=1234),
+                          mock.call.koji_proxy.listRPMs(componentBuildrootID=5458481)])
 
         self.assertItemsEqual(rpms, [
             'python3-kickstart-2.25-2.fc24.noarch',
