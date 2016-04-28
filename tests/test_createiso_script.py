@@ -13,7 +13,7 @@ from tests import helpers
 from pungi import createiso
 
 
-class OstreeScriptTest(helpers.PungiTestCase):
+class CreateIsoScriptTest(helpers.PungiTestCase):
 
     def assertEqualCalls(self, actual, expected):
         self.assertEqual(len(actual), len(expected))
@@ -21,7 +21,7 @@ class OstreeScriptTest(helpers.PungiTestCase):
             self.assertEqual(x, y)
 
     def setUp(self):
-        super(OstreeScriptTest, self).setUp()
+        super(CreateIsoScriptTest, self).setUp()
         self.outdir = os.path.join(self.topdir, 'isos')
 
     @mock.patch('kobo.shortcuts.run')
@@ -79,9 +79,48 @@ class OstreeScriptTest(helpers.PungiTestCase):
                        show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['pungi-pylorax-find-templates', '/usr/share/lorax'],
                        show_cmd=True, stdout=True),
+             mock.call(['/usr/bin/isohybrid', '--uefi', 'DP-1.0-20160405.t.3-x86_64.iso'],
+                       show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-x86_64.iso'],
                        show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest',
+                       show_cmd=True, stdout=True, workdir=self.outdir)]
+        )
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_bootable_run_on_i386(self, run):
+        # This will call isohybrid, but not with --uefi switch
+        run.return_value = (0, '/usr/share/lorax')
+
+        createiso.main([
+            '--output-dir={}'.format(self.outdir),
+            '--iso-name=DP-1.0-20160405.t.3-i386.iso',
+            '--volid=DP-1.0-20160405.t.3',
+            '--graft-points=graft-list',
+            '--arch=i386',
+            '--buildinstall-method=lorax',
+        ])
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            run.call_args_list,
+            [mock.call(['/usr/bin/genisoimage', '-untranslated-filenames',
+                        '-volid', 'DP-1.0-20160405.t.3', '-J', '-joliet-long',
+                        '-rational-rock', '-translation-table',
+                        '-input-charset', 'utf-8', '-x', './lost+found',
+                        '-b', 'isolinux/isolinux.bin', '-c', 'isolinux/boot.cat',
+                        '-no-emul-boot',
+                        '-boot-load-size', '4', '-boot-info-table',
+                        '-o', 'DP-1.0-20160405.t.3-i386.iso',
+                        '-graft-points', '-path-list', 'graft-list'],
+                       show_cmd=True, stdout=True, workdir=self.outdir),
+             mock.call(['pungi-pylorax-find-templates', '/usr/share/lorax'],
+                       show_cmd=True, stdout=True),
+             mock.call(['/usr/bin/isohybrid', 'DP-1.0-20160405.t.3-i386.iso'],
+                       show_cmd=True, stdout=True, workdir=self.outdir),
+             mock.call(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-i386.iso'],
+                       show_cmd=True, stdout=True, workdir=self.outdir),
+             mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-i386.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-i386.iso.manifest',
                        show_cmd=True, stdout=True, workdir=self.outdir)]
         )
 

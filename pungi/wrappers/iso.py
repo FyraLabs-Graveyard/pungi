@@ -205,6 +205,15 @@ class IsoWrapper(kobo.log.LoggingBase):
         result = line.rsplit(":")[-1].strip()
         return result
 
+    def get_isohybrid_cmd(self, iso_path, arch):
+        # isohybrid is in syslinux which is x86 only
+        cmd = ["/usr/bin/isohybrid"]
+        # uefi is only supported on x86_64
+        if arch == "x86_64":
+            cmd.append("--uefi")
+        cmd.append(iso_path)
+        return cmd
+
     def get_manifest_cmd(self, iso_name):
         return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (pipes.quote(iso_name), pipes.quote(iso_name))
 
