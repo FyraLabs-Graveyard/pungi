@@ -45,6 +45,15 @@ def implant_md5(iso, opts):
     shortcuts.run(cmd, stdout=True, show_cmd=True, workdir=opts.output_dir)
 
 
+def run_isohybrid(iso, opts):
+    """If the image is bootable, it needs to include an MBR or GPT so that it
+    can actually be booted. This is done by running isohybrid on the image.
+    """
+    if opts.buildinstall_method and opts.arch in ["x86_64", "i386"]:
+        cmd = iso.get_isohybrid_cmd(opts.iso_name, opts.arch)
+        shortcuts.run(cmd, stdout=True, show_cmd=True, workdir=opts.output_dir)
+
+
 def make_manifest(iso, opts):
     shortcuts.run(iso.get_manifest_cmd(opts.iso_name), stdout=True,
                   show_cmd=True, workdir=opts.output_dir)
@@ -68,6 +77,7 @@ def make_jigdo(opts):
 def run(opts):
     iso = IsoWrapper()
     make_image(iso, opts)
+    run_isohybrid(iso, opts)
     implant_md5(iso, opts)
     make_manifest(iso, opts)
     if opts.jigdo_dir:
