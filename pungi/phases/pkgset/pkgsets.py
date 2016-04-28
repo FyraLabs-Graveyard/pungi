@@ -165,7 +165,7 @@ class PackageSetBase(kobo.log.LoggingBase):
                     sourcerpm_name = kobo.rpmlib.parse_nvra(i.sourcerpm)["name"]
                     seen_sourcerpms.add(sourcerpm_name)
 
-                self.file_cache[i.file_path] = i
+                self.file_cache.file_cache[i.file_path] = i
                 self.rpms_by_arch[arch].append(i)
 
         self.log_debug("[DONE ] %s" % msg)

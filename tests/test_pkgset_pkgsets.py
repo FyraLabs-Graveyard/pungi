@@ -70,6 +70,7 @@ class MockFileCache(dict):
     """
     def __init__(self, _wrapper):
         super(MockFileCache, self).__init__()
+        self.file_cache = self
 
     def add(self, file_path):
         obj = MockFile(file_path)
