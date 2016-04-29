@@ -150,6 +150,27 @@ class InitPhase(PhaseBase):
             "optional": True,
         },
 
+        # Configuration shared by all image building phases.
+        {
+            "name": "global_ksurl",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "global_target",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "global_release",
+            "expected_types": [str, type(None)],
+            "optional": True,
+        },
+        {
+            "name": "global_version",
+            "expected_types": [str],
+            "optional": True,
+        },
 
     )
 

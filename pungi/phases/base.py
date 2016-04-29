@@ -15,6 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 from pungi.checks import validate_options
+from pungi import util
 
 
 class PhaseBase(object):
@@ -84,3 +85,67 @@ class ConfigGuardedPhase(PhaseBase):
             self.compose.log_info("Config section '%s' was not found. Skipping." % self.name)
             return True
         return False
+
+
+class ImageConfigMixin(object):
+    """
+    A mixin for phase that needs to access image related settings: ksurl,
+    version, target and release.
+
+    First, it checks config object given as argument, then it checks
+    phase-level configuration and finally falls back to global configuration.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ImageConfigMixin, self).__init__(*args, **kwargs)
+        self._phase_ksurl = None
+
+    def get_config(self, cfg, opt):
+        return cfg.get(
+            opt, self.compose.conf.get(
+                '{}_{}'.format(self.name, opt), self.compose.conf.get(
+                    'global_{}'.format(opt))))
+
+    def get_release(self, cfg):
+        """
+        If release is set explicitly to None, replace it with date and respin.
+        Uses configuration passed as argument, phase specific settings and
+        global settings.
+        """
+        for key, conf in [('release', cfg),
+                          ('{}_release'.format(self.name), self.compose.conf),
+                          ('global_release', self.compose.conf)]:
+            if key in conf:
+                return conf[key] or self.compose.image_release
+        return None
+
+    def get_ksurl(self, cfg):
+        """
+        Get ksurl from `cfg`. If not present, fall back to phase defined one or
+        global one.
+        """
+        if 'ksurl' in cfg:
+            return util.resolve_git_url(cfg['ksurl'])
+        if '{}_ksurl'.format(self.name) in self.compose.conf:
+            return self.phase_ksurl
+        if 'global_ksurl' in self.compose.conf:
+            return self.global_ksurl
+        return None
+
+    @property
+    def phase_ksurl(self):
+        """Get phase level ksurl, making sure to resolve it only once."""
+        # The phase-level setting is cached as instance attribute of the phase.
+        if not self._phase_ksurl:
+            ksurl = self.compose.conf.get('{}_ksurl'.format(self.name))
+            self._phase_ksurl = util.resolve_git_url(ksurl)
+        return self._phase_ksurl
+
+    @property
+    def global_ksurl(self):
+        """Get global ksurl setting, making sure to resolve it only once."""
+        # The global setting is cached in the configuration object.
+        if '_global_ksurl' not in self.compose.conf:
+            ksurl = self.compose.conf.get('global_ksurl')
+            self.compose.conf['_global_ksurl'] = util.resolve_git_url(ksurl)
+        return self.compose.conf['_global_ksurl']

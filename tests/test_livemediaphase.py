@@ -75,14 +75,110 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'subvariant': 'Server',
                                      }))])
 
-    @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
+    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
-    def test_live_media_with_global_opts(self, ThreadPool, resolve_git_url):
+    def test_live_media_with_phase_global_opts(self, ThreadPool, resolve_git_url):
         compose = DummyCompose(self.topdir, {
             'live_media_ksurl': 'git://example.com/repo.git#HEAD',
             'live_media_target': 'f24',
             'live_media_release': 'RRR',
             'live_media_version': 'Rawhide',
+            'live_media': {
+                '^Server$': [
+                    {
+                        'kickstart': 'file.ks',
+                        'name': 'Fedora Server Live',
+                    },
+                    {
+                        'kickstart': 'different.ks',
+                        'name': 'Fedora Server Live',
+                    },
+                    {
+                        'kickstart': 'yet-another.ks',
+                        'name': 'Fedora Server Live',
+                        'ksurl': 'git://different.com/repo.git',
+                        'target': 'f25',
+                        'release': 'XXX',
+                        'version': '25',
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        resolve_git_url.return_value = 'git://example.com/repo.git#BEEFCAFE'
+
+        phase = LiveMediaPhase(compose)
+
+        phase.run()
+        self.assertTrue(phase.pool.add.called)
+        self.assertItemsEqual(resolve_git_url.mock_calls,
+                              [mock.call('git://example.com/repo.git#HEAD'),
+                               mock.call('git://different.com/repo.git')])
+        self.assertEqual(phase.pool.queue_put.call_args_list,
+                         [mock.call((compose,
+                                     compose.variants['Server'],
+                                     {
+                                         'arches': ['amd64', 'x86_64'],
+                                         'ksfile': 'file.ks',
+                                         'ksurl': 'git://example.com/repo.git#BEEFCAFE',
+                                         'ksversion': None,
+                                         'name': 'Fedora Server Live',
+                                         'release': 'RRR',
+                                         'repo': [self.topdir + '/compose/Server/$basearch/os'],
+                                         'scratch': False,
+                                         'skip_tag': None,
+                                         'target': 'f24',
+                                         'title': None,
+                                         'install_tree': self.topdir + '/compose/Server/$basearch/os',
+                                         'version': 'Rawhide',
+                                         'subvariant': 'Server',
+                                     })),
+                          mock.call((compose,
+                                     compose.variants['Server'],
+                                     {
+                                         'arches': ['amd64', 'x86_64'],
+                                         'ksfile': 'different.ks',
+                                         'ksurl': 'git://example.com/repo.git#BEEFCAFE',
+                                         'ksversion': None,
+                                         'name': 'Fedora Server Live',
+                                         'release': 'RRR',
+                                         'repo': [self.topdir + '/compose/Server/$basearch/os'],
+                                         'scratch': False,
+                                         'skip_tag': None,
+                                         'target': 'f24',
+                                         'title': None,
+                                         'install_tree': self.topdir + '/compose/Server/$basearch/os',
+                                         'version': 'Rawhide',
+                                         'subvariant': 'Server',
+                                     })),
+                          mock.call((compose,
+                                     compose.variants['Server'],
+                                     {
+                                         'arches': ['amd64', 'x86_64'],
+                                         'ksfile': 'yet-another.ks',
+                                         'ksurl': 'git://example.com/repo.git#BEEFCAFE',
+                                         'ksversion': None,
+                                         'name': 'Fedora Server Live',
+                                         'release': 'XXX',
+                                         'repo': [self.topdir + '/compose/Server/$basearch/os'],
+                                         'scratch': False,
+                                         'skip_tag': None,
+                                         'target': 'f25',
+                                         'title': None,
+                                         'install_tree': self.topdir + '/compose/Server/$basearch/os',
+                                         'version': '25',
+                                         'subvariant': 'Server',
+                                     }))])
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
+    def test_live_media_with_global_opts(self, ThreadPool, resolve_git_url):
+        compose = DummyCompose(self.topdir, {
+            'global_ksurl': 'git://example.com/repo.git#HEAD',
+            'global_target': 'f24',
+            'global_release': 'RRR',
+            'global_version': 'Rawhide',
             'live_media': {
                 '^Server$': [
                     {
@@ -217,7 +313,7 @@ class TestLiveMediaPhase(PungiTestCase):
         with self.assertRaisesRegexp(RuntimeError, r'no.+Missing.+when building.+Server'):
             phase.run()
 
-    @mock.patch('pungi.phases.livemedia_phase.resolve_git_url')
+    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_full(self, ThreadPool, resolve_git_url):
         compose = DummyCompose(self.topdir, {

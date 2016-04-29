@@ -735,6 +735,47 @@ Example
     ]
 
 
+Common options for Live Images, Live Media and Image Build
+==========================================================
+
+All images can have ``ksurl``, ``version``, ``release`` and ``target``
+specified. Since this can create a lot of duplication, there are global options
+that can be used instead.
+
+For each of the phases, if the option is not specified for a particular
+deliverable, an option named ``<PHASE_NAME>_<OPTION>`` is checked. If that is
+not specified either, the last fallback is ``global_<OPTION>``. If even that is
+unset, the value is considered to not be specified.
+
+The kickstart URL is configured by these options.
+
+ * ``global_ksurl`` -- global fallback setting
+ * ``live_media_ksurl``
+ * ``image_build_ksurl``
+ * ``live_images_ksurl``
+
+Target is specified by these settings. For live images refer to ``live_target``.
+
+ * ``global_target`` -- global fallback setting
+ * ``live_media_target``
+ * ``image_build_target``
+
+Version is specified by these options.
+
+ * ``global_version`` -- global fallback setting
+ * ``live_media_version``
+ * ``image_build_version``
+ * ``live_images_version``
+
+Release is specified by these options. If set explicitly to ``None``, a value
+will be generated based on date, compose type and respin.
+
+ * ``global_release`` -- global fallback setting
+ * ``live_media_release``
+ * ``image_build_release``
+ * ``live_images_release``
+
+
 Live Images Settings
 ====================
 

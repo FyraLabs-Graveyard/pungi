@@ -5,8 +5,8 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import get_variant_data, resolve_git_url, makedirs, get_mtime, get_file_size, failable
-from pungi.phases.base import PhaseBase
+from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
+from pungi.phases import base
 from pungi.linker import Linker
 from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -14,21 +14,41 @@ from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
 
 
-class ImageBuildPhase(PhaseBase):
+class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
     """class for wrapping up koji image-build"""
     name = "image_build"
 
-    def __init__(self, compose):
-        PhaseBase.__init__(self, compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+    config_options = [
+        {
+            "name": "image_build",
+            "expected_types": [dict],
+            "optional": True,
+        },
+        {
+            "name": "image_build_ksurl",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "image_build_target",
+            "expected_types": [str],
+            "optional": True,
+        },
+        {
+            "name": "image_build_release",
+            "expected_types": [str, type(None)],
+            "optional": True,
+        },
+        {
+            "name": "image_build_version",
+            "expected_types": [str],
+            "optional": True,
+        },
+    ]
 
-    def skip(self):
-        if PhaseBase.skip(self):
-            return True
-        if not self.compose.conf.get(self.name):
-            self.compose.log_info("Config section '%s' was not found. Skipping" % self.name)
-            return True
-        return False
+    def __init__(self, compose):
+        super(ImageBuildPhase, self).__init__(compose)
+        self.pool = ThreadPool(logger=self.compose._logger)
 
     def _get_install_tree(self, image_conf, variant):
         """
@@ -100,14 +120,20 @@ class ImageBuildPhase(PhaseBase):
                     continue
 
                 # Replace possible ambiguous ref name with explicit hash.
-                if 'ksurl' in image_conf['image-build']:
-                    image_conf["image-build"]['ksurl'] = resolve_git_url(image_conf["image-build"]['ksurl'])
+                ksurl = self.get_ksurl(image_conf['image-build'])
+                if ksurl:
+                    image_conf["image-build"]['ksurl'] = ksurl
 
                 image_conf["image-build"]["variant"] = variant
 
                 image_conf["image-build"]["install_tree"] = self._get_install_tree(image_conf['image-build'], variant)
 
-                self._set_release(image_conf['image-build'])
+                release = self.get_release(image_conf['image-build'])
+                if release:
+                    image_conf['image-build']['release'] = release
+
+                image_conf['image-build']['version'] = self.get_config(image_conf['image-build'], 'version')
+                image_conf['image-build']['target'] = self.get_config(image_conf['image-build'], 'target')
 
                 # transform format into right 'format' for image-build
                 # e.g. 'docker,qcow2'
