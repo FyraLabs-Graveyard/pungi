@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.3
+Version:        4.1.4
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -72,6 +72,43 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Apr 29 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.4-1
+- Merge #273 `Deduplicate configuration a bit` (dennis)
+- Merge #280 `[createrepo] Use more verbose output` (dennis)
+- Merge #283 `Pungi should log when it tries to publish notifications.`
+  (dennis)
+- [createiso] Add back running isohybrid on x86 disk images (dennis)
+- [createiso] Remove chdir() (lsedlar)
+- [pkgset] Fix caching RPMs (lsedlar)
+- [createrepo] Use more verbose output (lsedlar)
+- Pungi should log when it tries to publish notifications. (rbean)
+- [pkgset] Use context manager for opening file list (lsedlar)
+- [pkgset] Add tests for writing filelists (lsedlar)
+- [pkgset] Simplify finding RPM in koji buildroot (lsedlar)
+- [pkgset] Clean up koji package set (lsedlar)
+- [pkgset] Add test for pkgset merging (lsedlar)
+- [pkgset] Add tests for KojiPackageSet (lsedlar)
+- [pkgset] Clean up Koji source (lsedlar)
+- [pkgset] Add tests for Koji source (lsedlar)
+- Add common global settings for images (lsedlar)
+- Remove duplicated and dead code (lsedlar)
+- [live-media] Add check for live_media_version option (lsedlar)
+- [scm-wrapper] Remove unused method (lsedlar)
+- [scm-wrapper] Report when file wrapper did not match anything (lsedlar)
+- [scm-wrapper] Use context manager for managing temp dir (lsedlar)
+- [scm-wrapper] Reduce code duplication in RPM wrapper (lsedlar)
+- [scm-wrapper] Copy files directly (lsedlar)
+- [scm-wrapper] Reduce code duplication (lsedlar)
+- [scm-wrapper] Add tests for SCM wrappers (lsedlar)
+- [ostree] Set each repo to point to current compose (lsedlar)
+- [ostree-installer] Drop filename setting (lsedlar)
+- Merge #269 `Improve logging of failable deliverables` (ausil)
+- [ostree-installer] Fix example documentation (lsedlar)
+- Improve logging of failable deliverables (lsedlar)
+- [ostree-installer] Install ostree in runroot (lsedlar)
+- [pkgset] Print more detailed logs when rpm is not found (lsedlar)
+- [ostree-installer] Clone repo with templates (lsedlar)
+
 * Fri Apr 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.3-1
 - enable the compose test (dennis)
 - [ostree-installer] Copy all lorax outputs (lsedlar)
