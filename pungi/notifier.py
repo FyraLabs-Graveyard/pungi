@@ -57,6 +57,8 @@ class PungiNotifier(object):
         self._update_args(kwargs)
 
         with self.lock:
+            self.compose.log_debug("Notification: %r %r, %r" % (
+                self.cmd, msg, kwargs))
             ret, _ = shortcuts.run((self.cmd, msg),
                                    stdin_data=json.dumps(kwargs),
                                    can_fail=True,
