@@ -155,7 +155,7 @@ class TestCreateCompsRepo(PungiTestCase):
         init.create_comps_repo(compose, 'x86_64')
 
         self.assertEqual(run.mock_calls,
-                         [mock.call(['createrepo_c', self.topdir + '/work/x86_64/comps_repo',
+                         [mock.call(['createrepo_c', self.topdir + '/work/x86_64/comps_repo', '--verbose',
                                      '--outputdir=%s/work/x86_64/comps_repo' % self.topdir,
                                      '--groupfile=%s/work/x86_64/comps/comps-x86_64.xml' % self.topdir,
                                      '--update', '--skip-stat', '--database', '--checksum=sha256',
