@@ -108,6 +108,7 @@ class OstreeInstallerThread(WorkerThread):
         img.bootable = True
         img.subvariant = variant.name
         img.implant_md5 = implant_md5
+        setattr(img, 'deliverable', 'ostree-installer')
         try:
             img.volume_id = iso_wrapper.get_volume_id(full_iso_path)
         except RuntimeError:

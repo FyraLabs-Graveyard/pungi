@@ -370,6 +370,7 @@ def link_boot_iso(compose, arch, variant):
     img.bootable = True
     img.subvariant = variant.name
     img.implant_md5 = implant_md5
+    setattr(img, 'deliverable', 'buildinstall')
     try:
         img.volume_id = iso.get_volume_id(new_boot_iso_path)
     except RuntimeError:

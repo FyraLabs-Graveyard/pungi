@@ -204,6 +204,7 @@ class LiveMediaThread(WorkerThread):
             img.disc_count = 1
             img.bootable = True
             img.subvariant = subvariant
+            setattr(img, 'deliverable', 'live-media')
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 
         self.pool.log_info('[DONE ] %s' % msg)

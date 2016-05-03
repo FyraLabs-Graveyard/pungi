@@ -290,6 +290,7 @@ class CreateLiveImageThread(WorkerThread):
         img.disc_count = 1
         img.bootable = True
         img.subvariant = subvariant
+        setattr(img, 'deliverable', 'live')
         compose.im.add(variant=variant.uid, arch=arch, image=img)
 
     def _is_image(self, path):

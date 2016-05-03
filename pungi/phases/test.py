@@ -16,6 +16,7 @@
 
 
 import tempfile
+import os
 
 from kobo.shortcuts import run
 
@@ -23,7 +24,7 @@ from pungi.wrappers.repoclosure import RepoclosureWrapper
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import get_lookaside_repos
-from pungi.util import rmtree, is_arch_multilib
+from pungi.util import rmtree, is_arch_multilib, failable
 
 
 class TestPhase(PhaseBase):
@@ -31,6 +32,7 @@ class TestPhase(PhaseBase):
 
     def run(self):
         run_repoclosure(self.compose)
+        check_image_sanity(self.compose)
 
 
 def run_repoclosure(compose):
@@ -99,3 +101,53 @@ def run_repoclosure(compose):
         rmtree(tmp_dir)
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def check_image_sanity(compose):
+    """
+    Go through all images in manifest and make basic sanity tests on them. If
+    any check fails for a failable deliverable, it will be removed from
+    manifest and logged. Otherwise the compose will be aborted.
+    """
+    im = compose.im
+    for variant_uid in im.images:
+        variant = compose.variants[variant_uid]
+        for arch in im.images[variant_uid]:
+            images = im.images[variant_uid][arch]
+            im.images[variant_uid][arch] = [img for img in images
+                                            if check(compose, variant, arch, img)]
+
+
+def check(compose, variant, arch, image):
+    result = True
+    path = os.path.join(compose.paths.compose.topdir(), image.path)
+    deliverable = getattr(image, 'deliverable')
+    with failable(compose, variant, arch, deliverable, subvariant=image.subvariant):
+        with open(path) as f:
+            if image.format == 'iso' and not is_iso(f):
+                result = False
+                raise RuntimeError('%s does not look like an ISO file' % path)
+            if image.bootable and not has_mbr(f) and not has_gpt(f):
+                result = False
+                raise RuntimeError(
+                    '%s is supposed to be bootable, but does not have MBR nor GPT' % path)
+    # If exception is raised above, failable may catch it
+    return result
+
+
+def _check_magic(f, offset, bytes):
+    """Check that the file has correct magic number at correct offset."""
+    f.seek(offset)
+    return f.read(len(bytes)) == bytes
+
+
+def is_iso(f):
+    return _check_magic(f, 0x8001, 'CD001')
+
+
+def has_mbr(f):
+    return _check_magic(f, 0x1fe, '\x55\xAA')
+
+
+def has_gpt(f):
+    return _check_magic(f, 0x200, 'EFI PART')

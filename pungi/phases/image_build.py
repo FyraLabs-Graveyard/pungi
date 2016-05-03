@@ -251,6 +251,7 @@ class CreateImageBuildThread(WorkerThread):
             img.disc_count = 1
             img.bootable = False
             img.subvariant = subvariant
+            setattr(img, 'deliverable', 'image-build')
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 
         self.pool.log_info("[DONE ] %s" % msg)
