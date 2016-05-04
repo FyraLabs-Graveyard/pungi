@@ -119,5 +119,44 @@ class DiscInfoTestCase(helpers.PungiTestCase):
         self.assertFalse(os.path.isfile(self.path))
 
 
+class MediaRepoTestCase(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(MediaRepoTestCase, self).setUp()
+        self.path = os.path.join(self.topdir, 'compose/Server/x86_64/os/media.repo')
+
+    def test_write_media_repo(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Test',
+            'release_version': '1.0',
+        })
+
+        metadata.write_media_repo(compose, 'x86_64', compose.variants['Server'],
+                                  timestamp=123456)
+
+        with open(self.path) as f:
+            lines = f.read().strip().split('\n')
+            self.assertEqual(lines[0], '[InstallMedia]')
+            self.assertItemsEqual(lines[1:],
+                                  ['name=Test 1.0',
+                                   'mediaid=123456',
+                                   'metadata_expire=-1',
+                                   'gpgcheck=0',
+                                   'cost=500'])
+
+    def test_addons_dont_have_media_repo(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Test',
+            'release_version': '1.0',
+        })
+        compose.variants['ILP'] = mock.Mock(uid='Server', arches=['x86_64'],
+                                            type='addon', is_empty=False,
+                                            parent=compose.variants['Server'])
+
+        metadata.write_discinfo(compose, 'x86_64', compose.variants['ILP'])
+
+        self.assertFalse(os.path.isfile(self.path))
+
+
 if __name__ == "__main__":
     unittest.main()
