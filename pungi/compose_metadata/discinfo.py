@@ -70,16 +70,11 @@ def read_discinfo(file_path):
     return result
 
 
-def write_media_repo(file_path, description, timestamp=None):
+def write_media_repo(file_path, description, timestamp):
     """
     Write media.repo file for the disc to be used on installed system.
     PackageKit uses this.
     """
-
-    if not timestamp:
-        raise
-        timestamp = "%f" % time.time()
-
     data = [
         "[InstallMedia]",
         "name=%s" % description,
@@ -90,7 +85,6 @@ def write_media_repo(file_path, description, timestamp=None):
         "",
     ]
 
-    repo_file = open(file_path, "w")
-    repo_file.write("\n".join(data))
-    repo_file.close()
+    with open(file_path, "w") as repo_file:
+        repo_file.write("\n".join(data))
     return timestamp
