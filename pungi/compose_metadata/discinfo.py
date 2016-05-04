@@ -45,23 +45,22 @@ def write_discinfo(file_path, description, arch, disc_numbers=None, timestamp=No
         raise TypeError("Invalid type: disc_numbers type is %s; expected: <list>" % type(disc_numbers))
     if not timestamp:
         timestamp = "%f" % time.time()
-    f = open(file_path, "w")
-    f.write("%s\n" % timestamp)
-    f.write("%s\n" % description)
-    f.write("%s\n" % arch)
-    if disc_numbers:
-        f.write("%s\n" % ",".join([str(i) for i in disc_numbers]))
-    f.close()
+    with open(file_path, "w") as f:
+        f.write("%s\n" % timestamp)
+        f.write("%s\n" % description)
+        f.write("%s\n" % arch)
+        if disc_numbers:
+            f.write("%s\n" % ",".join([str(i) for i in disc_numbers]))
     return timestamp
 
 
 def read_discinfo(file_path):
     result = {}
-    f = open(file_path, "r")
-    result["timestamp"] = f.readline().strip()
-    result["description"] = f.readline().strip()
-    result["arch"] = f.readline().strip()
-    disc_numbers = f.readline().strip()
+    with open(file_path, "r") as f:
+        result["timestamp"] = f.readline().strip()
+        result["description"] = f.readline().strip()
+        result["arch"] = f.readline().strip()
+        disc_numbers = f.readline().strip()
     if not disc_numbers:
         result["disc_numbers"] = None
     elif disc_numbers == "ALL":
