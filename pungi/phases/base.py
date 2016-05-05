@@ -145,7 +145,7 @@ class ImageConfigMixin(object):
     def global_ksurl(self):
         """Get global ksurl setting, making sure to resolve it only once."""
         # The global setting is cached in the configuration object.
-        if '_global_ksurl' not in self.compose.conf:
+        if 'private_global_ksurl' not in self.compose.conf:
             ksurl = self.compose.conf.get('global_ksurl')
-            self.compose.conf['_global_ksurl'] = util.resolve_git_url(ksurl)
-        return self.compose.conf['_global_ksurl']
+            self.compose.conf['private_global_ksurl'] = util.resolve_git_url(ksurl)
+        return self.compose.conf['private_global_ksurl']
