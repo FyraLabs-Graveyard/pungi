@@ -69,6 +69,7 @@ class Linker(kobo.log.LoggingBase):
         if path1 == path2:
             return True
         if os.path.islink(path2) and not os.path.exists(path2):
+            # Broken symlink
             return True
         if os.path.getsize(path1) != os.path.getsize(path2):
             return False
