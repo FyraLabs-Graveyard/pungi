@@ -9,7 +9,6 @@ try:
 except ImportError:
     import unittest
 import os
-import shutil
 import stat
 import sys
 
@@ -338,16 +337,6 @@ class TestLinkerLink(TestLinkerBase):
         self.assertEqual(os.readlink(self.dst_symlink1), "../file1")
         self.assertEqual(os.readlink(self.dst_symlink2), "subdir")
         self.assertEqual(os.readlink(self.dst_symlink3), "does-not-exist")
-
-    def test_scan_hardlink(self):
-        os.makedirs(self.dst_dir)
-        cache_dir = os.path.join(self.dst_dir, "cache")
-        os.makedirs(cache_dir)
-        cache_file = os.path.join(cache_dir, 'file1')
-        shutil.copy2(self.file1, cache_file)
-        self.linker.scan(self.dst_dir)
-        self.linker.link(self.src_dir, self.dst_dir, link_type="hardlink")
-        self.assertTrue(self.same_inode(self.dst_file1, cache_file))
 
     def test_copy_preserve_hardlinks(self):
         self.assertTrue(self.same_inode(self.file1, self.hardlink1))
