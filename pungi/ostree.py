@@ -31,7 +31,7 @@ def make_log_file(log_dir, filename):
 def init_ostree_repo(repo, log_dir=None):
     """If the ostree repo does not exist, initialize it."""
     log_file = make_log_file(log_dir, 'init-ostree-repo')
-    if not os.path.isdir(repo):
+    if not os.path.isdir(repo) or not os.listdir(repo):
         ensure_dir(repo)
         shortcuts.run(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
                       show_cmd=True, stdout=True, logfile=log_file)

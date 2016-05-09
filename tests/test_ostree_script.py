@@ -36,6 +36,46 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
+    @mock.patch('kobo.shortcuts.run')
+    def test_run_on_existing_empty_dir(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        os.mkdir(repo)
+
+        ostree.main([
+            '--log-dir={}'.format(os.path.join(self.topdir, 'logs', 'Atomic')),
+            '--treefile={}/fedora-atomic-docker-host.json'.format(self.topdir),
+            repo,
+        ])
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            run.call_args_list,
+            [mock.call(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
+                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
+             mock.call(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo),
+                        self.topdir + '/fedora-atomic-docker-host.json'],
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_run_on_initialized_repo(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        helpers.touch(os.path.join(repo, 'initialized'))
+
+        ostree.main([
+            '--log-dir={}'.format(os.path.join(self.topdir, 'logs', 'Atomic')),
+            '--treefile={}/fedora-atomic-docker-host.json'.format(self.topdir),
+            repo,
+        ])
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            run.call_args_list,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo),
+                        self.topdir + '/fedora-atomic-docker-host.json'],
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+
 
 if __name__ == '__main__':
     unittest.main()
