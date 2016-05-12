@@ -190,8 +190,7 @@ class BuildinstallPhase(PhaseBase):
                 # TODO: label is not used
                 label = ""
                 volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
-                msg = 'Copying results of buildinstall'
-                with failable(self.compose, variant, arch, 'buildinstall', msg):
+                with failable(self.compose, variant, arch, 'buildinstall'):
                     tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
                     link_boot_iso(self.compose, arch, variant)
 
