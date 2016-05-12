@@ -82,7 +82,7 @@ class DummyCompose(object):
         result = set()
         for variant in self.variants.itervalues():
             result |= set(variant.arches)
-        return result
+        return sorted(result)
 
 
 def touch(path, content=None):
