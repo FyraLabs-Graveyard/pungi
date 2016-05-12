@@ -58,7 +58,6 @@ def copy_extra_files(compose, arch, variant, package_sets):
     }
 
     msg = "Getting extra files (arch: %s, variant: %s)" % (arch, variant)
-    # no skip (yet?)
     compose.log_info("[BEGIN] %s" % msg)
 
     os_tree = compose.paths.compose.os_tree(arch, variant)
@@ -66,24 +65,37 @@ def copy_extra_files(compose, arch, variant, package_sets):
 
     for scm_dict in get_arch_variant_data(compose.conf, "extra_files", arch, variant):
         scm_dict = copy.deepcopy(scm_dict)
-        # if scm is "rpm" and repo contains a package name, find the package(s) in package set
-        if scm_dict["scm"] == "rpm" and not (scm_dict["repo"].startswith("/") or "://" in scm_dict["repo"]):
+        # if scm is "rpm" and repo contains only a package name, find the
+        # package(s) in package set
+        if scm_dict["scm"] == "rpm" and not _is_external(scm_dict["repo"]):
             rpms = []
             for pkgset_file in package_sets[arch]:
                 pkg_obj = package_sets[arch][pkgset_file]
                 if not pkg_is_rpm(pkg_obj):
                     continue
                 pkg_name, pkg_arch = split_name_arch(scm_dict["repo"] % var_dict)
-                if fnmatch.fnmatch(pkg_obj.name, pkg_name) and pkg_arch is None or pkg_arch == pkg_obj.arch:
+                if _pkg_matches(pkg_obj, pkg_name, pkg_arch):
                     rpms.append(pkg_obj.file_path)
             scm_dict["repo"] = rpms
 
-        if "file" in scm_dict:
-            get_file_from_scm(scm_dict, os.path.join(extra_files_dir, scm_dict.get("target", "").lstrip("/")), logger=compose._logger)
-        else:
-            get_dir_from_scm(scm_dict, os.path.join(extra_files_dir, scm_dict.get("target", "").lstrip("/")), logger=compose._logger)
+        getter = get_file_from_scm if 'file' in scm_dict else get_dir_from_scm
+        getter(scm_dict,
+               os.path.join(extra_files_dir, scm_dict.get('target', '').lstrip('/')),
+               logger=compose._logger)
 
     if os.listdir(extra_files_dir):
         copy_all(extra_files_dir, os_tree)
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def _pkg_matches(pkg_obj, name_glob, arch):
+    """Check if `pkg_obj` matches name and arch."""
+    return (fnmatch.fnmatch(pkg_obj.name, name_glob) and
+            (arch is None or arch == pkg_obj.arch))
+
+
+def _is_external(rpm):
+    """Check if path to rpm points outside of the compose: i.e. it is an
+    absolute path or a URL."""
+    return rpm.startswith('/') or '://' in rpm
