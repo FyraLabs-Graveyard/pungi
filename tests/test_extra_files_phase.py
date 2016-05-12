@@ -15,6 +15,14 @@ from tests import helpers
 class TestExtraFilePhase(helpers.PungiTestCase):
 
     @mock.patch('pungi.phases.extra_files.copy_extra_files')
+    def test_skips_unless_has_config(self, copy_extra_files):
+        compose = helpers.DummyCompose(self.topdir, {})
+        compose.just_phases = None
+        compose.skip_phases = []
+        phase = extra_files.ExtraFilesPhase(compose, mock.Mock())
+        self.assertTrue(phase.skip())
+
+    @mock.patch('pungi.phases.extra_files.copy_extra_files')
     def test_runs_copy_files_for_each_variant(self, copy_extra_files):
         cfg = mock.Mock()
         pkgset_phase = mock.Mock()
@@ -38,18 +46,6 @@ class TestExtraFilePhase(helpers.PungiTestCase):
 
 
 class TestCopyFiles(helpers.PungiTestCase):
-
-    @mock.patch('pungi.phases.extra_files.copy_all')
-    @mock.patch('pungi.phases.extra_files.get_file_from_scm')
-    @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
-    def test_run_without_config(self, get_dir_from_scm, get_file_from_scm, copy_all):
-        compose = helpers.DummyCompose(self.topdir, {})
-
-        extra_files.copy_extra_files(compose, 'x86_64', compose.variants['Server'], mock.Mock())
-
-        self.assertEqual(copy_all.call_args_list, [])
-        self.assertEqual(get_file_from_scm.call_args_list, [])
-        self.assertEqual(get_dir_from_scm.call_args_list, [])
 
     def test_copy_local_file(self):
         tgt = os.path.join(self.topdir, 'file')

@@ -22,10 +22,10 @@ import fnmatch
 from pungi.util import get_arch_variant_data, pkg_is_rpm, copy_all
 from pungi.arch import split_name_arch
 from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
-from pungi.phases.base import PhaseBase
+from pungi.phases.base import ConfigGuardedPhase
 
 
-class ExtraFilesPhase(PhaseBase):
+class ExtraFilesPhase(ConfigGuardedPhase):
     """EXTRA_FILES"""
     name = "extra_files"
 
@@ -38,8 +38,8 @@ class ExtraFilesPhase(PhaseBase):
     )
 
     def __init__(self, compose, pkgset_phase):
-        PhaseBase.__init__(self, compose)
-        # pkgset_phase provides package_sets and path_prefix
+        super(ExtraFilesPhase, self).__init__(compose)
+        # pkgset_phase provides package_sets
         self.pkgset_phase = pkgset_phase
 
     def run(self):
@@ -49,9 +49,6 @@ class ExtraFilesPhase(PhaseBase):
 
 
 def copy_extra_files(compose, arch, variant, package_sets):
-    if "extra_files" not in compose.conf:
-        return
-
     var_dict = {
         "arch": arch,
         "variant_id": variant.id,
