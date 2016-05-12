@@ -18,11 +18,8 @@
 import os
 import copy
 import fnmatch
-import pipes
 
-from kobo.shortcuts import run
-
-from pungi.util import get_arch_variant_data, pkg_is_rpm
+from pungi.util import get_arch_variant_data, pkg_is_rpm, copy_all
 from pungi.arch import split_name_arch
 from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 from pungi.phases.base import PhaseBase
@@ -90,7 +87,6 @@ def copy_extra_files(compose, arch, variant, package_sets):
             get_dir_from_scm(scm_dict, os.path.join(extra_files_dir, scm_dict.get("target", "").lstrip("/")), logger=compose._logger)
 
     if os.listdir(extra_files_dir):
-        cmd = "cp -av --remove-destination %s/* %s/" % (pipes.quote(extra_files_dir), pipes.quote(os_tree))
-        run(cmd)
+        copy_all(extra_files_dir, os_tree)
 
     compose.log_info("[DONE ] %s" % msg)

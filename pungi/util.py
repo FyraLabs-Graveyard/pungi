@@ -506,3 +506,18 @@ def get_format_substs(compose, **kwargs):
     }
     substs.update(kwargs)
     return substs
+
+
+def copy_all(src, dest):
+    """This function is equivalent to running `cp src/* dest`."""
+    contents = os.listdir(src)
+    if not contents:
+        raise RuntimeError('Source directory %s is empty.' % src)
+    makedirs(dest)
+    for item in contents:
+        source = os.path.join(src, item)
+        destination = os.path.join(dest, item)
+        if os.path.isdir(source):
+            shutil.copytree(source, destination)
+        else:
+            shutil.copy2(source, destination)

@@ -39,15 +39,15 @@ class TestExtraFilePhase(helpers.PungiTestCase):
 
 class TestCopyFiles(helpers.PungiTestCase):
 
-    @mock.patch('pungi.phases.extra_files.run')
+    @mock.patch('pungi.phases.extra_files.copy_all')
     @mock.patch('pungi.phases.extra_files.get_file_from_scm')
     @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
-    def test_run_without_config(self, get_dir_from_scm, get_file_from_scm, run):
+    def test_run_without_config(self, get_dir_from_scm, get_file_from_scm, copy_all):
         compose = helpers.DummyCompose(self.topdir, {})
 
         extra_files.copy_extra_files(compose, 'x86_64', compose.variants['Server'], mock.Mock())
 
-        self.assertEqual(run.call_args_list, [])
+        self.assertEqual(copy_all.call_args_list, [])
         self.assertEqual(get_file_from_scm.call_args_list, [])
         self.assertEqual(get_dir_from_scm.call_args_list, [])
 

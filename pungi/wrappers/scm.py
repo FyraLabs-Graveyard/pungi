@@ -26,7 +26,7 @@ import contextlib
 
 import kobo.log
 from kobo.shortcuts import run, force_list
-from pungi.util import explode_rpm_package, makedirs
+from pungi.util import explode_rpm_package, makedirs, copy_all
 
 
 class ScmBase(kobo.log.LoggingBase):
@@ -76,7 +76,7 @@ class FileWrapper(ScmBase):
         if not dirs:
             raise RuntimeError('No directories matched, can not export.')
         for i in dirs:
-            _copy_all(i, target_dir)
+            copy_all(i, target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         if scm_root:
@@ -98,7 +98,7 @@ class CvsWrapper(ScmBase):
                            % (scm_dir, scm_root, scm_branch))
             self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir],
                            workdir=tmp_dir, show_cmd=True, logfile=log_file)
-            _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
+            copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_file = scm_file.lstrip("/")
@@ -133,7 +133,7 @@ class GitWrapper(ScmBase):
                        % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
             self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
 
-            _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
+            copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_file = scm_file.lstrip("/")
@@ -176,7 +176,7 @@ class RpmScmWrapper(ScmBase):
                 makedirs(target_dir)
                 # "dir" includes the whole directory while "dir/" includes it's content
                 if scm_dir.endswith("/"):
-                    _copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
+                    copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
                 else:
                     run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)),
                                           pipes.quote(target_dir)))
@@ -224,7 +224,7 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
     for i in force_list(scm_file):
         tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
         scm.export_file(scm_repo, i, scm_branch=scm_branch, target_dir=tmp_dir)
-        _copy_all(tmp_dir, target_path)
+        copy_all(tmp_dir, target_path)
         shutil.rmtree(tmp_dir)
 
 
@@ -244,20 +244,5 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
 
     tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
     scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
-    _copy_all(tmp_dir, target_path)
+    copy_all(tmp_dir, target_path)
     shutil.rmtree(tmp_dir)
-
-
-def _copy_all(src, dest):
-    """This function is equivalent to running `cp src/* dest`."""
-    contents = os.listdir(src)
-    if not contents:
-        raise RuntimeError('Source directory %s is empty.' % src)
-    makedirs(dest)
-    for item in contents:
-        source = os.path.join(src, item)
-        destination = os.path.join(dest, item)
-        if os.path.isdir(source):
-            shutil.copytree(source, destination)
-        else:
-            shutil.copy2(source, destination)
