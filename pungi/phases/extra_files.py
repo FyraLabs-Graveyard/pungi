@@ -45,10 +45,15 @@ class ExtraFilesPhase(ConfigGuardedPhase):
     def run(self):
         for arch in self.compose.get_arches() + ["src"]:
             for variant in self.compose.get_variants(arch=arch):
-                copy_extra_files(self.compose, arch, variant, self.pkgset_phase.package_sets)
+                cfg = get_arch_variant_data(self.compose.conf, self.name, arch, variant)
+                if cfg:
+                    copy_extra_files(self.compose, cfg, arch, variant, self.pkgset_phase.package_sets)
+                else:
+                    self.compose.log_info('[SKIP ] No extra files (arch: %s, variant: %s)'
+                                          % (arch, variant.uid))
 
 
-def copy_extra_files(compose, arch, variant, package_sets):
+def copy_extra_files(compose, cfg, arch, variant, package_sets):
     var_dict = {
         "arch": arch,
         "variant_id": variant.id,
@@ -63,7 +68,7 @@ def copy_extra_files(compose, arch, variant, package_sets):
     os_tree = compose.paths.compose.os_tree(arch, variant)
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
 
-    for scm_dict in get_arch_variant_data(compose.conf, "extra_files", arch, variant):
+    for scm_dict in cfg:
         scm_dict = copy.deepcopy(scm_dict)
         # if scm is "rpm" and repo contains only a package name, find the
         # package(s) in package set
