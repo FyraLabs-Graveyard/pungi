@@ -125,7 +125,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
-                                     '--log-dir={}/logs/x86_64/ostree'.format(self.topdir),
+                                     '--log-dir={}/logs/x86_64/Everything/ostree'.format(self.topdir),
                                      '--treefile={}/fedora-atomic-docker-host.json'.format(
                                          self.topdir + '/work/ostree/config_repo'),
                                      self.repo],
@@ -134,7 +134,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/ostree/runroot.log')])
+                                    log_file=self.topdir + '/logs/x86_64/Everything/ostree/runroot.log')])
 
         with open(self.topdir + '/work/ostree/config_repo/fedora-rawhide.repo') as f:
             self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
@@ -181,7 +181,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         compose.log_info.assert_has_calls([
             mock.call('[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See {} for more details.'.format(
-                self.topdir + '/logs/x86_64/ostree/runroot.log'))
+                self.topdir + '/logs/x86_64/Everything/ostree/runroot.log'))
         ])
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')

@@ -46,7 +46,8 @@ class OSTreeThread(WorkerThread):
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
         workdir = compose.paths.work.topdir('ostree')
-        self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
+        self.logdir = compose.paths.log.topdir('{}/{}/ostree'.format(
+            arch, variant.uid))
         repodir = os.path.join(workdir, 'config_repo')
 
         source_variant = compose.variants[config['source_repo_from']]
@@ -66,7 +67,7 @@ class OSTreeThread(WorkerThread):
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo):
         cmd = [
             'pungi-make-ostree',
-            '--log-dir={}'.format(self.logdir),
+            '--log-dir={}'.format(os.path.join(self.logdir)),
             '--treefile={}'.format(os.path.join(config_repo, config['treefile'])),
             config['ostree_repo']
         ]
