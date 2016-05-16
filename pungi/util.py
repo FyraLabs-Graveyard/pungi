@@ -243,7 +243,11 @@ def resolve_git_url(url):
     if not ref:
         return url
 
-    baseurl = urlparse.urlunsplit((r.scheme, r.netloc, r.path, '', ''))
+    # Remove git+ prefix from scheme if present. This is for resolving only,
+    # the final result must use original scheme.
+    scheme = r.scheme.replace('git+', '')
+
+    baseurl = urlparse.urlunsplit((scheme, r.netloc, r.path, '', ''))
     _, output = run(['git', 'ls-remote', baseurl, ref])
 
     lines = [line for line in output.split('\n') if line]
