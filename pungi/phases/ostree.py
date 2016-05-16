@@ -55,6 +55,10 @@ class OSTreeThread(WorkerThread):
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
         self._tweak_mirrorlist(repodir, source_repo)
 
+        # Ensure target directory exists, otherwise Koji task will fail to
+        # mount it.
+        util.makedirs(config['ostree_repo'])
+
         self._run_ostree_cmd(compose, variant, arch, config, repodir)
 
         self.pool.log_info('[DONE ] %s' % msg)

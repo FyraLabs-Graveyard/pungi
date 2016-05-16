@@ -74,6 +74,10 @@ class OSTreePhaseTest(helpers.PungiTestCase):
 
 class OSTreeThreadTest(helpers.PungiTestCase):
 
+    def setUp(self):
+        super(OSTreeThreadTest, self).setUp()
+        self.repo = os.path.join(self.topdir, 'place/for/atomic')
+
     def _dummy_config_repo(self, scm_dict, target, logger=None):
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
         helpers.touch(os.path.join(target, 'fedora-rawhide.repo'),
@@ -101,7 +105,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
-            'ostree_repo': '/other/place/for/atomic'
+            'ostree_repo': self.repo
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -124,8 +128,8 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      '--log-dir={}/logs/x86_64/ostree'.format(self.topdir),
                                      '--treefile={}/fedora-atomic-docker-host.json'.format(
                                          self.topdir + '/work/ostree/config_repo'),
-                                     '/other/place/for/atomic'],
-                                    channel=None, mounts=[self.topdir, '/other/place/for/atomic'],
+                                     self.repo],
+                                    channel=None, mounts=[self.topdir, self.repo],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
@@ -141,6 +145,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         with open(self.topdir + '/work/ostree/config_repo/fedora-23.repo') as f:
             self.assertIn('baseurl=http://example.com/Everything/x86_64/os'.format(self.topdir),
                           f.read())
+        self.assertTrue(os.path.isdir(self.repo))
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
@@ -160,7 +165,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
-            'ostree_repo': '/other/place/for/atomic'
+            'ostree_repo': self.repo,
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -197,7 +202,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
-            'ostree_repo': '/other/place/for/atomic'
+            'ostree_repo': self.repo,
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
