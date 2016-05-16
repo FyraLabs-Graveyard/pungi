@@ -1,19 +1,62 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
+import mock
 import unittest
 
 import os
 import sys
-import tempfile
-import shutil
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.arch import *
 
 
+class MockArchModule(object):
+    """
+    This is a class intended to be used as a replacement for rpmUtils.arch
+    module in following tests. The data is intentionally not complete.
+    """
+    arches = {'i386': 'noarch',
+              'x86_64': 'athlon'}
+
+    @staticmethod
+    def getMultiArchInfo(yum_arch):
+        DATA = {
+            'athlon': None,
+            'x86_64': ('athlon', 'x86_64', 'athlon'),
+            'armv7hnl': None,
+            'noarch': None,
+            'ppc64p7': ('ppc', 'ppc64', 'ppc64'),
+        }
+        return DATA[yum_arch]
+
+    @staticmethod
+    def getArchList(yum_arch):
+        ARCHES = {
+            'athlon': ['athlon', 'i686', 'i586', 'i486', 'i386', 'noarch'],
+            'x86_64': ['x86_64', 'athlon', 'i686', 'i586', 'i486', 'i386', 'noarch'],
+            'armv7hnl': ['armv7hnl', 'armv7hl', 'armv6hl', 'noarch'],
+            'noarch': ['noarch'],
+            'ppc64p7': ['ppc64p7', 'ppc64', 'ppc', 'noarch'],
+            'ppc': ['ppc', 'noarch'],
+        }
+        return ARCHES[yum_arch]
+
+    @staticmethod
+    def getBaseArch(yum_arch):
+        ARCHES = {
+            'noarch': 'noarch',
+            'i386': 'i386',
+            'i586': 'i386',
+            'x86_64': 'x86_64',
+            'ppc64p7': 'ppc64',
+            'armhfp': 'armhfp',
+        }
+        return ARCHES[yum_arch]
+
+
+@mock.patch('rpmUtils.arch', MockArchModule)
 class TestArch(unittest.TestCase):
 
     def test_i386(self):
