@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.4
+Version:        4.1.5
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -72,6 +72,15 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon May 16 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.5-1
+- [ostree] Put variant name in ostree log dir (lsedlar)
+- Merge #294 `[ostree] Initialize empty repo` (dennis)
+- [util] Resolve git+https URLs (lsedlar)
+- [ostree] Initialize empty repo (lsedlar)
+- [test] Add checks for created images (lsedlar)
+- Fix caching global ksurl (lsedlar)
+- include tests/fixtures in manifest (dennis)
+
 * Fri Apr 29 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.4-1
 - Merge #273 `Deduplicate configuration a bit` (dennis)
 - Merge #280 `[createrepo] Use more verbose output` (dennis)
