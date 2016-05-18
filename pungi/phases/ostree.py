@@ -45,9 +45,9 @@ class OSTreeThread(WorkerThread):
     def worker(self, compose, variant, arch, config):
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        workdir = compose.paths.work.topdir('ostree')
-        self.logdir = compose.paths.log.topdir('{}/{}/ostree'.format(
-            arch, variant.uid))
+        workdir = compose.paths.work.topdir('ostree-%d' % self.num)
+        self.logdir = compose.paths.log.topdir('%s/%s/ostree-%d' %
+                                               (arch, variant.uid, self.num))
         repodir = os.path.join(workdir, 'config_repo')
 
         source_variant = compose.variants[config['source_repo_from']]
