@@ -51,6 +51,7 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
         ci.base_product.name = conf["base_product_name"]
         ci.base_product.short = conf["base_product_short"]
         ci.base_product.version = conf["base_product_version"]
+        ci.base_product.type = conf.get("base_product_type", "ga").lower()
 
     ci.compose.label = compose_label
     ci.compose.type = compose_type

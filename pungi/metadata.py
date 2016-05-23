@@ -84,6 +84,7 @@ def compose_to_composeinfo(compose):
         ci.base_product.name = compose.conf["base_product_name"]
         ci.base_product.version = compose.conf["base_product_version"]
         ci.base_product.short = compose.conf["base_product_short"]
+        ci.base_product.type = compose.conf.get("base_product_type", "ga").lower()
 
     def dump_variant(variant, parent=None):
         var = productmd.composeinfo.Variant(ci)

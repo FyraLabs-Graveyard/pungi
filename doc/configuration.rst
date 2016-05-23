@@ -98,6 +98,10 @@ Options
 **base_product_version**
     (*str*) -- base product **major** version
 
+**base_product_type** = "ga"
+    (*str*) -- base product type, "ga", "updates" etc., for full list see
+    documentation of *productmd*.
+
 
 Example
 -------
