@@ -57,6 +57,8 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
         dict.
         """
         install_tree_from = image_conf.pop('install_tree_from', variant.uid)
+        if '://' in install_tree_from:
+            return install_tree_from
         install_tree_source = self.compose.variants.get(install_tree_from)
         if not install_tree_source:
             raise RuntimeError(
