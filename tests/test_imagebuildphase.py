@@ -251,6 +251,66 @@ class TestImageBuildPhase(PungiTestCase):
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_set_external_install_tree(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'image_build': {
+                '^Server$': [
+                    {
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'install_tree_from': 'http://example.com/install-tree/',
+                        }
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][0], compose)
+        self.maxDiff = None
+        self.assertDictEqual(args[0][1], {
+            "format": [('docker', 'tar.xz')],
+            "image_conf": {
+                'image-build': {
+                    'install_tree': 'http://example.com/install-tree/',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': ','.join([self.topdir + '/compose/Server/$arch/os']),
+                    'variant': compose.variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                }
+            },
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
+            "link_type": 'hardlink-or-copy',
+            "scratch": False,
+        })
+
+    @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_create_release(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'image_build': {
