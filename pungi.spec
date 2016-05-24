@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.14
+Version:        4.0.15
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -73,6 +73,12 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Tue May 24 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.15-1
+- [ostree-installer] Allow using external repos as source (lsedlar)
+- [image-build] Allow using external install trees (lsedlar)
+- Add type to base product for layered releases (lsedlar)
+- [util] Resolve git+https URLs (lsedlar)
+
 * Fri Apr 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.14-1
 - [ostree-installer] Copy all lorax outputs (lsedlar)
 - [ostree] Log to stdout as well (lsedlar)
