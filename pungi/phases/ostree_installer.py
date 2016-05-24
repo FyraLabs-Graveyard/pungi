@@ -50,9 +50,7 @@ class OstreeInstallerThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('{}/ostree_installer'.format(arch))
 
-        source_variant = compose.variants[config['source_repo_from']]
-        source_repo = translate_path(
-            compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
+        source_repo = self._get_source_repo(compose, arch, config['source_repo_from'])
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))
 
@@ -66,6 +64,18 @@ class OstreeInstallerThread(WorkerThread):
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
         self.pool.log_info('[DONE ] %s' % msg)
+
+    def _get_source_repo(self, compose, arch, source):
+        """
+        If `source` is a URL, return it as-is (possibly replacing $arch with
+        actual arch. Otherwise treat is a a variant name and return path to
+        repo in that variant.
+        """
+        if '://' in source:
+            return source.replace('$arch', arch)
+        source_variant = compose.variants[source]
+        return translate_path(
+            compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
 
     def _clone_templates(self, url, branch='master'):
         if not url:

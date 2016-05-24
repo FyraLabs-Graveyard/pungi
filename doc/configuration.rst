@@ -992,7 +992,7 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     The configuration dict for each variant arch pair must have this key:
 
     * ``source_repo_from`` -- (*str*) Name of variant serving as source
-      repository.
+      repository or a URL pointing the the repo.
 
     These keys are optional:
 
