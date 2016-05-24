@@ -16,16 +16,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-
+import logging
 
 import hawkey
-import logging
+from kobo.rpmlib import parse_nvra
+
+import pungi.common
 import pungi.dnf_wrapper
 import pungi.multilib_dnf
 from pungi.profiler import Profiler
-from kobo.rpmlib import parse_nvra
 
-class GatherOptions(object):
+
+class GatherOptions(pungi.common.OptionsBase):
     def __init__(self, **kwargs):
         super(GatherOptions, self).__init__()
 
@@ -56,75 +58,7 @@ class GatherOptions(object):
         # lookaside repos; packages will be flagged accordingly
         self.lookaside_repos = []
 
-        for key, value in kwargs.items():
-            if not hasattr(self, key):
-                raise ValueError("Invalid gather option: %s" % key)
-            setattr(self, key, value)
-
-
-def filter_debug_packages(q, arch=None):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    if arch:
-        arches = pungi.dnf_wrapper.ArchWrapper(arch).all_arches
-        result = result.filter(arch=arches)
-    result = result.filter(name__glob=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_native_debug_packages(q, arch):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    arches = pungi.dnf_wrapper.ArchWrapper(arch).native_arches
-    result = result.filter(arch=arches)
-    result = result.filter(name__glob=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_multilib_debug_packages(q, arch):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    arches = pungi.dnf_wrapper.ArchWrapper(arch).multilib_arches
-    result = result.filter(arch=arches)
-    result = result.filter(name__glob=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_source_packages(q):
-    result = q.filter(arch=["src", "nosrc"])
-    return result
-
-
-def filter_binary_packages(q, arch=None):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    if arch:
-        arches = pungi.dnf_wrapper.ArchWrapper(arch).all_arches
-        result = result.filter(arch=arches)
-    result = result.filter(latest_per_arch=True)
-    result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_native_binary_packages(q, arch):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    arches = pungi.dnf_wrapper.ArchWrapper(arch).native_arches
-    result = result.filter(arch=arches)
-    result = result.filter(latest_per_arch=True)
-    result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_multilib_binary_packages(q, arch):
-    result = q.filter(arch__neq=["src", "nosrc"])
-    arches = pungi.dnf_wrapper.ArchWrapper(arch).multilib_arches
-    result = result.filter(arch=arches)
-    result = result.filter(latest_per_arch=True)
-    result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
-    return result
-
-
-def filter_binary_noarch_packages(q):
-    result = q.filter(arch="noarch")
-    result = result.filter(latest_per_arch=True)
-    result = result.filter(name__glob__not=["*-debuginfo", "*-debuginfo-*"])
-    return result
+        self.merge_options(**kwargs)
 
 
 class QueryCache(object):
@@ -152,14 +86,30 @@ class QueryCache(object):
 class GatherBase(object):
     def __init__(self, dnf_obj):
         self.dnf = dnf_obj
-        self.q_binary_packages = filter_binary_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_native_binary_packages = filter_native_binary_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_multilib_binary_packages = filter_multilib_binary_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_noarch_binary_packages = filter_binary_packages(self._query).apply()
-        self.q_debug_packages = filter_debug_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_native_debug_packages = filter_native_debug_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_multilib_debug_packages = filter_multilib_debug_packages(self._query, arch=self.dnf.basearch).apply()
-        self.q_source_packages = filter_source_packages(self._query).apply()
+
+        q = self._query
+        q = q.filter(latest_per_arch=True).apply()
+
+        # source packages
+        self.q_source_packages = q.filter(arch=self.dnf.arch_wrapper.source_arches).apply()
+        q = q.difference(self.q_source_packages)
+
+        # filter arches
+        q = q.filter(arch=self.dnf.arch_wrapper.all_arches).apply()
+        q_noarch = q.filter(arch="noarch").apply()
+        q_native = q.filter(arch=self.dnf.arch_wrapper.native_arches).apply()
+        q_multilib = q.difference(q_native).union(q_noarch).apply()
+
+        # debug packages
+        self.q_debug_packages = q.filter(name__glob=["*-debuginfo", "*-debuginfo-*"]).apply()
+        self.q_native_debug_packages = self.q_debug_packages.intersection(q_native)
+        self.q_multilib_debug_packages = self.q_debug_packages.intersection(q_multilib)
+
+        # binary packages
+        self.q_binary_packages = q.difference(self.q_debug_packages)
+        self.q_native_binary_packages = q_native.difference(self.q_debug_packages)
+        self.q_multilib_binary_packages = q_multilib.difference(self.q_debug_packages)
+        self.q_noarch_binary_packages = q_noarch.difference(self.q_debug_packages)
 
     @property
     def _query(self):
@@ -169,7 +119,7 @@ class GatherBase(object):
         return pkg.arch == "noarch"
 
     def is_native_package(self, pkg):
-        if pkg.arch in ["src", "nosrc"]:
+        if pkg.arch in self.dnf.arch_wrapper.source_arches:
             return False
         if pkg.arch == "noarch":
             return True
@@ -178,7 +128,7 @@ class GatherBase(object):
         return False
 
     def is_multilib_package(self, pkg):
-        if pkg.arch in ["src", "nosrc"]:
+        if pkg.arch in self.dnf.arch_wrapper.source_arches:
             return False
         if pkg.arch == "noarch":
             return False
@@ -236,7 +186,7 @@ class Gather(GatherBase):
 
         all_pkgs = list(package_list)
         native_pkgs = self.q_native_binary_packages.filter(pkg=all_pkgs).apply()
-        multilib_pkgs = [pkg for pkg in all_pkgs if pkg.arch != "noarch"]
+        multilib_pkgs = self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply()
 
         result = set()
 
@@ -342,19 +292,19 @@ class Gather(GatherBase):
             with Profiler("Gather.add_initial_packages():exclude"):
                 # TODO: debug, source
                 if pattern.endswith(".+"):
-                    pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2])
+                    pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2])
                 else:
-                    pkgs = self.q_binary_packages.filter_autoglob(name=pattern)
+                    pkgs = self.q_binary_packages.filter(name__glob=pattern)
 
                 exclude.update(pkgs)
                 self.logger.debug("EXCLUDED: %s" % list(pkgs))
                 self.dnf._sack.add_excludes(pkgs)
 
-        # HACK
-        self.q_binary_packages = self.q_binary_packages.filter(pkg=[i for i in self.q_binary_packages if i not in exclude]).apply()
-        self.q_native_binary_packages = self.q_native_binary_packages.filter(pkg=[i for i in self.q_native_binary_packages if i not in exclude]).apply()
-        self.q_multilib_binary_packages = self.q_multilib_binary_packages.filter(pkg=[i for i in self.q_multilib_binary_packages if i not in exclude]).apply()
-        self.q_noarch_binary_packages = self.q_noarch_binary_packages.filter(pkg=[i for i in self.q_noarch_binary_packages if i not in exclude]).apply()
+        with Profiler("Gather.add_initial_packages():exclude-queries"):
+            self.q_binary_packages = self.q_binary_packages.filter(pkg__neq=exclude).apply()
+            self.q_native_binary_packages = self.q_native_binary_packages.filter(pkg__neq=exclude).apply()
+            self.q_multilib_binary_packages = self.q_multilib_binary_packages.filter(pkg__neq=exclude).apply()
+            self.q_noarch_binary_packages = self.q_noarch_binary_packages.filter(pkg__neq=exclude).apply()
 
         self.init_query_cache()
 
@@ -364,9 +314,9 @@ class Gather(GatherBase):
                     pkgs = self.q_binary_packages.filter(provides=hawkey.Reldep(self.dnf.sack, "system-release")).apply()
                 else:
                     if pattern.endswith(".+"):
-                        pkgs = self.q_multilib_binary_packages.filter_autoglob(name=pattern[:-2]).apply()
+                        pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2]).apply()
                     else:
-                        pkgs = self.q_binary_packages.filter_autoglob(name=pattern).apply()
+                        pkgs = self.q_binary_packages.filter(name__glob=pattern).apply()
 
                 pkgs = self._get_best_package(pkgs)
                 if pkgs:
@@ -377,12 +327,10 @@ class Gather(GatherBase):
         for pkg in added:
             self._set_flag(pkg, "input")
 
-        native_binary_packages = set(self.q_native_binary_packages)
-
         if self.opts.greedy_method == "build":
             for pkg in added.copy():
                 with Profiler("Gather.add_initial_packages():greedy-build"):
-                    if pkg in native_binary_packages:
+                    if pkg in self.q_native_binary_packages:
                         greedy_build_packages = self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
                     else:
                         greedy_build_packages = self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
