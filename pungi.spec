@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.15
+Version:        4.0.16
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -73,11 +73,22 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
-* Tue May 24 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.15-1
+* Tue May 24 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.16-1
 - [ostree-installer] Allow using external repos as source (lsedlar)
 - [image-build] Allow using external install trees (lsedlar)
 - Add type to base product for layered releases (lsedlar)
 - [util] Resolve git+https URLs (lsedlar)
+
+* Fri Apr 29 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.15-1
+- [createiso] Add back running isohybrid on x86 disk images (dennis)
+- [createiso] Remove chdir() (lsedlar)
+- Pungi should log when it tries to publish notifications. (rbean)
+- [createrepo] Use more verbose output (lsedlar)
+- [ostree-installer] Drop filename setting (lsedlar)
+- [ostree] Set each repo to point to current compose (lsedlar)
+- [ostree-installer] Install ostree in runroot (lsedlar)
+- [pkgset] Print more detailed logs when rpm is not found (lsedlar)
+- [ostree-installer] Clone repo with templates (lsedlar)
 
 * Fri Apr 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.14-1
 - [ostree-installer] Copy all lorax outputs (lsedlar)
