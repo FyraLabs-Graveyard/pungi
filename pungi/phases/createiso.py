@@ -127,16 +127,16 @@ class CreateisoPhase(PhaseBase):
 
                     cmd['cmd'] = [
                         'pungi-createiso',
-                        '--output-dir={}'.format(iso_dir),
-                        '--iso-name={}'.format(filename),
-                        '--volid={}'.format(volid),
-                        '--graft-points={}'.format(graft_points),
-                        '--arch={}'.format(arch),
+                        '--output-dir=%s' % iso_dir,
+                        '--iso-name=%s' % filename,
+                        '--volid=%s' % volid,
+                        '--graft-points=%s' % graft_points,
+                        '--arch=%s' % arch,
                     ]
 
                     if bootable:
                         cmd['cmd'].append(
-                            '--buildinstall-method={}'.format(self.compose.conf['buildinstall_method'])
+                            '--buildinstall-method=%s' % self.compose.conf['buildinstall_method']
                         )
 
                     if self.compose.supported:
@@ -145,8 +145,8 @@ class CreateisoPhase(PhaseBase):
                     if self.compose.conf.get('create_jigdo', True):
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
                         cmd['cmd'].extend([
-                            '--jigdo-dir={}'.format(jigdo_dir),
-                            '--os-tree={}'.format(os_tree),
+                            '--jigdo-dir=%s' % jigdo_dir,
+                            '--os-tree=%s' % os_tree,
                         ])
 
                     commands.append((cmd, variant, arch))
