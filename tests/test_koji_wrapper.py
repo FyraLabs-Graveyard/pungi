@@ -442,7 +442,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertItemsEqual(run.mock_calls,
                               [mock.call('cmd', can_fail=True, logfile=None)])
-        self.assertIn('Could not find task ID', ctx.exception.message)
+        self.assertIn('Could not find task ID', str(ctx.exception))
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_disconnect_and_retry(self, run):
@@ -497,7 +497,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         with self.assertRaises(RuntimeError) as ctx:
             self.koji.run_blocking_cmd('cmd', max_retries=2)
 
-        self.assertIn('Failed to wait', ctx.exception.message)
+        self.assertIn('Failed to wait', str(ctx.exception))
         self.assertEqual(run.mock_calls,
                          [mock.call('cmd', can_fail=True, logfile=None),
                           mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
