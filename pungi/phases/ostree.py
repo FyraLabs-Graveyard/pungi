@@ -46,7 +46,7 @@ class OSTreeThread(WorkerThread):
         msg = 'OSTree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
         workdir = compose.paths.work.topdir('ostree')
-        self.logdir = compose.paths.log.topdir('{}/ostree'.format(arch))
+        self.logdir = compose.paths.log.topdir('%s/ostree' % arch)
         repodir = os.path.join(workdir, 'config_repo')
 
         source_variant = compose.variants[config['source_repo_from']]
@@ -62,8 +62,8 @@ class OSTreeThread(WorkerThread):
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo):
         cmd = [
             'pungi-make-ostree',
-            '--log-dir={}'.format(self.logdir),
-            '--treefile={}'.format(os.path.join(config_repo, config['treefile'])),
+            '--log-dir=%s' % os.path.join(self.logdir),
+            '--treefile=%s' % os.path.join(config_repo, config['treefile']),
             config['ostree_repo']
         ]
 
@@ -102,8 +102,8 @@ def tweak_file(path, source_repo):
     """
     with open(path, 'r') as f:
         contents = f.read()
-    replacement = 'baseurl={}'.format(source_repo)
-    contents = re.sub(r'^(mirrorlist|metalink|baseurl)=.*$',
-                      replacement, contents, flags=re.MULTILINE)
+    replacement = 'baseurl=%s' % source_repo
+    exp = re.compile(r'^(mirrorlist|metalink|baseurl)=.*$', re.MULTILINE)
+    contents = exp.sub(replacement, contents)
     with open(path, 'w') as f:
         f.write(contents)

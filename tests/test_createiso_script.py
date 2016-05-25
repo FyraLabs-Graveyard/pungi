@@ -27,7 +27,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
     @mock.patch('kobo.shortcuts.run')
     def test_minimal_run(self, run):
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -54,7 +54,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
         run.return_value = (0, '/usr/share/lorax')
 
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -93,7 +93,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
         run.return_value = (0, '/usr/share/lorax')
 
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-i386.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -129,7 +129,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
         run.return_value = (0, '/usr/share/lorax')
 
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-ppc64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -161,7 +161,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
     @mock.patch('kobo.shortcuts.run')
     def test_bootable_run_buildinstall(self, run):
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-ppc64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
@@ -194,24 +194,24 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
     def test_run_with_jigdo_bad_args(self, run, stderr):
         with self.assertRaises(SystemExit):
             createiso.main([
-                '--output-dir={}'.format(self.outdir),
+                '--output-dir=%s' % self.outdir,
                 '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
                 '--volid=DP-1.0-20160405.t.3',
                 '--graft-points=graft-list',
                 '--arch=x86_64',
-                '--jigdo-dir={}/jigdo'.format(self.topdir),
+                '--jigdo-dir=%s/jigdo' % self.topdir,
             ])
 
     @mock.patch('kobo.shortcuts.run')
     def test_run_with_jigdo(self, run):
         createiso.main([
-            '--output-dir={}'.format(self.outdir),
+            '--output-dir=%s' % self.outdir,
             '--iso-name=DP-1.0-20160405.t.3-x86_64.iso',
             '--volid=DP-1.0-20160405.t.3',
             '--graft-points=graft-list',
             '--arch=x86_64',
-            '--jigdo-dir={}/jigdo'.format(self.topdir),
-            '--os-tree={}/os'.format(self.topdir),
+            '--jigdo-dir=%s/jigdo' % self.topdir,
+            '--os-tree=%s/os' % self.topdir,
         ])
         self.maxDiff = None
         self.assertItemsEqual(
@@ -228,9 +228,9 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
              mock.call('isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest',
                        show_cmd=True, stdout=True, workdir=self.outdir),
              mock.call(['jigdo-file', 'make-template', '--force',
-                        '--image={}/isos/DP-1.0-20160405.t.3-x86_64.iso'.format(self.topdir),
-                        '--jigdo={}/jigdo/DP-1.0-20160405.t.3-x86_64.iso.jigdo'.format(self.topdir),
-                        '--template={}/jigdo/DP-1.0-20160405.t.3-x86_64.iso.template'.format(self.topdir),
+                        '--image=%s/isos/DP-1.0-20160405.t.3-x86_64.iso' % self.topdir,
+                        '--jigdo=%s/jigdo/DP-1.0-20160405.t.3-x86_64.iso.jigdo' % self.topdir,
+                        '--template=%s/jigdo/DP-1.0-20160405.t.3-x86_64.iso.template' % self.topdir,
                         '--no-servers-section', '--report=noprogress', self.topdir + '/os//'],
                        show_cmd=True, stdout=True, workdir=self.outdir)]
         )

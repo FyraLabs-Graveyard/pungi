@@ -25,7 +25,7 @@ def make_log_file(log_dir, filename):
     if not log_dir:
         return None
     ensure_dir(log_dir)
-    return os.path.join(log_dir, '{}.log'.format(filename))
+    return os.path.join(log_dir, '%s.log' % filename)
 
 
 def init_ostree_repo(repo, log_dir=None):
@@ -33,13 +33,13 @@ def init_ostree_repo(repo, log_dir=None):
     log_file = make_log_file(log_dir, 'init-ostree-repo')
     if not os.path.isdir(repo):
         ensure_dir(repo)
-        shortcuts.run(['ostree', 'init', '--repo={}'.format(repo), '--mode=archive-z2'],
+        shortcuts.run(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
                       show_cmd=True, stdout=True, logfile=log_file)
 
 
 def make_ostree_repo(repo, config, log_dir=None):
     log_file = make_log_file(log_dir, 'create-ostree-repo')
-    shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo={}'.format(repo), config],
+    shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo, config],
                   show_cmd=True, stdout=True, logfile=log_file)
 
 
