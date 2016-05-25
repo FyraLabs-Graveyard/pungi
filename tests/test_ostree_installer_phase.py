@@ -169,8 +169,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.iso.IsoWrapper')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run(self, KojiWrapper, link, IsoWrapper,
-                 get_file_size, get_mtime, ImageCls, run):
+    def test_run_external_source(self, KojiWrapper, link, IsoWrapper,
+                                 get_file_size, get_mtime, ImageCls, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Fedora',
             'release_version': 'Rawhide',
