@@ -6,7 +6,6 @@ import os
 import sys
 import unittest
 import json
-import functools
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -32,7 +31,6 @@ class MockPathInfo(object):
         return os.path.join('rpms', self.get_filename(rpm_info))
 
 
-@functools.total_ordering
 class MockFile(object):
     def __init__(self, path):
         if path.startswith('/tmp'):
@@ -62,6 +60,15 @@ class MockFile(object):
             return self.file_path < other.file_path
         except AttributeError:
             return self.file_path < other
+
+    def __lt__(self, other):
+        return self <= other and self != other
+
+    def __ge__(self, other):
+        return not (self <= other) or self == other
+
+    def __gt__(self, other):
+        return not (self <= other)
 
 
 class MockFileCache(dict):
