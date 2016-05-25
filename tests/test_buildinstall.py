@@ -183,7 +183,7 @@ class TestBuildinstallPhase(PungiTestCase):
             phase.validate()
 
         self.assertIn('Deprecated config option: buildinstall_upgrade_image',
-                      ctx.exception.message)
+                      str(ctx.exception))
 
     def test_lorax_options_with_buildinstall(self):
         compose = BuildInstallCompose(self.topdir, {
@@ -197,8 +197,8 @@ class TestBuildinstallPhase(PungiTestCase):
         with self.assertRaises(ValueError) as ctx:
             phase.validate()
 
-        self.assertIn('buildinstall', ctx.exception.message)
-        self.assertIn('lorax_options', ctx.exception.message)
+        self.assertIn('buildinstall', str(ctx.exception))
+        self.assertIn('lorax_options', str(ctx.exception))
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
