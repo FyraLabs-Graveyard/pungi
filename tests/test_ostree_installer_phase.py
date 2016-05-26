@@ -160,7 +160,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
-                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/iso/'.format(self.topdir))])
+                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/os/'.format(self.topdir))])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -223,7 +223,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
-                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/iso/'.format(self.topdir))])
+                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/os/'.format(self.topdir))])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -337,7 +337,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
-                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/iso/'.format(self.topdir))])
+                         [mock.call('cp -av {0}/work/x86_64/Everything/ostree_installer/* {0}/compose/Everything/x86_64/os/'.format(self.topdir))])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
