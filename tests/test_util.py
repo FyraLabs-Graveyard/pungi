@@ -4,7 +4,10 @@
 import mock
 import os
 import sys
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import tempfile
 import shutil
 
@@ -204,11 +207,11 @@ class TestFindOldCompose(unittest.TestCase):
 
 class TestHelpers(PungiTestCase):
     def test_process_args(self):
-        self.assertEqual(util.process_args('--opt={}', None), [])
-        self.assertEqual(util.process_args('--opt={}', []), [])
-        self.assertEqual(util.process_args('--opt={}', ['foo', 'bar']),
+        self.assertEqual(util.process_args('--opt=%s', None), [])
+        self.assertEqual(util.process_args('--opt=%s', []), [])
+        self.assertEqual(util.process_args('--opt=%s', ['foo', 'bar']),
                          ['--opt=foo', '--opt=bar'])
-        self.assertEqual(util.process_args('--opt={}', 'foo'), ['--opt=foo'])
+        self.assertEqual(util.process_args('--opt=%s', 'foo'), ['--opt=foo'])
 
     def test_makedirs(self):
         util.makedirs(self.topdir + '/foo/bar/baz')

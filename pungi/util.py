@@ -456,10 +456,10 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
 def process_args(fmt, args):
     """Given a list of arguments, format each value with the format string.
 
-    >>> process_args('--opt={}', ['foo', 'bar'])
+    >>> process_args('--opt=%s', ['foo', 'bar'])
     ['--opt=foo', '--opt=bar']
     """
-    return [fmt.format(val) for val in force_list(args or [])]
+    return [fmt % val for val in force_list(args or [])]
 
 
 @contextlib.contextmanager

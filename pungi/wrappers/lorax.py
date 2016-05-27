@@ -58,11 +58,11 @@ class LoraxWrapper(object):
         if volid:
             cmd.append("--volid=%s" % volid)
 
-        cmd.extend(process_args('--installpkgs={}', buildinstallpackages))
-        cmd.extend(process_args('--add-template={}', add_template))
-        cmd.extend(process_args('--add-arch-template={}', add_arch_template))
-        cmd.extend(process_args('--add-template-var={}', add_template_var))
-        cmd.extend(process_args('--add-arch-template-var={}', add_arch_template_var))
+        cmd.extend(process_args('--installpkgs=%s', buildinstallpackages))
+        cmd.extend(process_args('--add-template=%s', add_template))
+        cmd.extend(process_args('--add-arch-template=%s', add_arch_template))
+        cmd.extend(process_args('--add-template-var=%s', add_template_var))
+        cmd.extend(process_args('--add-arch-template-var=%s', add_arch_template_var))
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)

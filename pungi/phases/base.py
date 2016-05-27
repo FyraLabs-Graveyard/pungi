@@ -103,8 +103,8 @@ class ImageConfigMixin(object):
     def get_config(self, cfg, opt):
         return cfg.get(
             opt, self.compose.conf.get(
-                '{}_{}'.format(self.name, opt), self.compose.conf.get(
-                    'global_{}'.format(opt))))
+                '%s_%s' % (self.name, opt), self.compose.conf.get(
+                    'global_%s' % opt)))
 
     def get_release(self, cfg):
         """
@@ -113,7 +113,7 @@ class ImageConfigMixin(object):
         global settings.
         """
         for key, conf in [('release', cfg),
-                          ('{}_release'.format(self.name), self.compose.conf),
+                          ('%s_release' % self.name, self.compose.conf),
                           ('global_release', self.compose.conf)]:
             if key in conf:
                 return conf[key] or self.compose.image_release
@@ -126,7 +126,7 @@ class ImageConfigMixin(object):
         """
         if 'ksurl' in cfg:
             return util.resolve_git_url(cfg['ksurl'])
-        if '{}_ksurl'.format(self.name) in self.compose.conf:
+        if '%s_ksurl' % self.name in self.compose.conf:
             return self.phase_ksurl
         if 'global_ksurl' in self.compose.conf:
             return self.global_ksurl
@@ -137,7 +137,7 @@ class ImageConfigMixin(object):
         """Get phase level ksurl, making sure to resolve it only once."""
         # The phase-level setting is cached as instance attribute of the phase.
         if not self._phase_ksurl:
-            ksurl = self.compose.conf.get('{}_ksurl'.format(self.name))
+            ksurl = self.compose.conf.get('%s_ksurl' % self.name)
             self._phase_ksurl = util.resolve_git_url(ksurl)
         return self._phase_ksurl
 

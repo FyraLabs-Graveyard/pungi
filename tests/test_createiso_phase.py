@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import mock
 
 import os
@@ -96,15 +99,15 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
             [mock.call((
                 compose,
                 {
-                    'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+                    'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
                     'bootable': False,
                     'cmd': ['pungi-createiso',
-                            '--output-dir={}/compose/Server/x86_64/iso'.format(self.topdir),
+                            '--output-dir=%s/compose/Server/x86_64/iso' % self.topdir,
                             '--iso-name=image-name', '--volid=test-1.0 Server.x86_64',
                             '--graft-points=dummy-graft-points',
                             '--arch=x86_64', '--supported',
-                            '--jigdo-dir={}/compose/Server/x86_64/jigdo'.format(self.topdir),
-                            '--os-tree={}/compose/Server/x86_64/os'.format(self.topdir)],
+                            '--jigdo-dir=%s/compose/Server/x86_64/jigdo' % self.topdir,
+                            '--os-tree=%s/compose/Server/x86_64/os' % self.topdir],
                     'label': '',
                     'disc_num': 1,
                     'disc_count': 1,
@@ -157,32 +160,32 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         self.assertItemsEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,
-                        {'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+                        {'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
                          'bootable': True,
                          'cmd': ['pungi-createiso',
-                                 '--output-dir={}/compose/Server/x86_64/iso'.format(self.topdir),
+                                 '--output-dir=%s/compose/Server/x86_64/iso' % self.topdir,
                                  '--iso-name=image-name', '--volid=test-1.0 Server.x86_64',
                                  '--graft-points=dummy-graft-points',
                                  '--arch=x86_64',
                                  '--buildinstall-method=lorax',
                                  '--supported',
-                                 '--jigdo-dir={}/compose/Server/x86_64/jigdo'.format(self.topdir),
-                                 '--os-tree={}/compose/Server/x86_64/os'.format(self.topdir)],
+                                 '--jigdo-dir=%s/compose/Server/x86_64/jigdo' % self.topdir,
+                                 '--os-tree=%s/compose/Server/x86_64/os' % self.topdir],
                          'label': '',
                          'disc_num': 1,
                          'disc_count': 1},
                         compose.variants['Server'],
                         'x86_64')),
              mock.call((compose,
-                        {'iso_path': '{}/compose/Server/source/iso/image-name'.format(self.topdir),
+                        {'iso_path': '%s/compose/Server/source/iso/image-name' % self.topdir,
                          'bootable': False,
                          'cmd': ['pungi-createiso',
-                                 '--output-dir={}/compose/Server/source/iso'.format(self.topdir),
+                                 '--output-dir=%s/compose/Server/source/iso' % self.topdir,
                                  '--iso-name=image-name', '--volid=test-1.0 Server.src',
                                  '--graft-points=dummy-graft-points',
                                  '--arch=src', '--supported',
-                                 '--jigdo-dir={}/compose/Server/source/jigdo'.format(self.topdir),
-                                 '--os-tree={}/compose/Server/source/tree'.format(self.topdir)],
+                                 '--jigdo-dir=%s/compose/Server/source/jigdo' % self.topdir,
+                                 '--os-tree=%s/compose/Server/source/tree' % self.topdir],
                          'label': '',
                          'disc_num': 1,
                          'disc_count': 1},
@@ -207,7 +210,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': False,
             'cmd': mock.Mock(),
             'label': '',
@@ -233,14 +236,14 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         self.assertEqual(getTag.call_args_list, [mock.call('f25-build')])
         self.assertEqual(get_runroot_cmd.call_args_list,
                          [mock.call('f25-build', 'x86_64', cmd['cmd'], channel=None,
-                                    mounts=['{}'.format(self.topdir)],
+                                    mounts=[self.topdir],
                                     packages=['coreutils', 'genisoimage', 'isomd5sum',
                                               'jigdo', 'pungi'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(
             run_runroot.call_args_list,
             [mock.call(get_runroot_cmd.return_value,
-                       log_file='{}/logs/x86_64/createiso-image-name.x86_64.log'.format(self.topdir))])
+                       log_file='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(IsoWrapper.return_value.get_implanted_md5.call_args_list,
                          [mock.call(cmd['iso_path'])])
         self.assertEqual(IsoWrapper.return_value.get_volume_id.call_args_list,
@@ -273,7 +276,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': True,
             'cmd': mock.Mock(),
             'label': '',
@@ -299,14 +302,14 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         self.assertEqual(getTag.call_args_list, [mock.call('f25-build')])
         self.assertEqual(get_runroot_cmd.call_args_list,
                          [mock.call('f25-build', 'x86_64', cmd['cmd'], channel=None,
-                                    mounts=['{}'.format(self.topdir)],
+                                    mounts=[self.topdir],
                                     packages=['coreutils', 'genisoimage', 'isomd5sum',
                                               'jigdo', 'pungi', 'lorax'],
                                     task_id=True, use_shell=True)])
         self.assertEqual(
             run_runroot.call_args_list,
             [mock.call(get_runroot_cmd.return_value,
-                       log_file='{}/logs/x86_64/createiso-image-name.x86_64.log'.format(self.topdir))])
+                       log_file='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(IsoWrapper.return_value.get_implanted_md5.call_args_list,
                          [mock.call(cmd['iso_path'])])
         self.assertEqual(IsoWrapper.return_value.get_volume_id.call_args_list,
@@ -340,7 +343,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             ]
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': False,
             'cmd': mock.Mock(),
             'label': '',
@@ -378,7 +381,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             ]
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': False,
             'cmd': mock.Mock(),
             'label': '',
@@ -400,8 +403,8 @@ class CreateisoThreadTest(helpers.PungiTestCase):
 
         compose.log_info.assert_has_calls([
             mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
-            mock.call('Runroot task failed: 1234. See {} for more details.'.format(
-                self.topdir + '/logs/x86_64/createiso-image-name.x86_64.log'))
+            mock.call('Runroot task failed: 1234. See %s for more details.'
+                      % (self.topdir + '/logs/x86_64/createiso-image-name.x86_64.log'))
         ])
 
     @mock.patch('pungi.phases.createiso.IsoWrapper')
@@ -417,7 +420,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             'runroot': False,
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': False,
             'cmd': mock.Mock(),
             'label': '',
@@ -435,7 +438,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         self.assertEqual(
             run.call_args_list,
             [mock.call(cmd['cmd'], show_cmd=True,
-                       logfile='{}/logs/x86_64/createiso-image-name.x86_64.log'.format(self.topdir))])
+                       logfile='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(IsoWrapper.return_value.get_implanted_md5.call_args_list,
                          [mock.call(cmd['iso_path'])])
         self.assertEqual(IsoWrapper.return_value.get_volume_id.call_args_list,
@@ -465,7 +468,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             ]
         })
         cmd = {
-            'iso_path': '{}/compose/Server/x86_64/iso/image-name'.format(self.topdir),
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
             'bootable': False,
             'cmd': mock.Mock(),
             'label': '',

@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import mock
 
 import os
@@ -558,18 +561,22 @@ class TestCreateImageBuildThread(PungiTestCase):
 
         self.assertItemsEqual(
             linker.mock_calls,
-            [mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',
-                       self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2',
-                       link_type='hardlink-or-copy'),
-             mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.xz',
-                       self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.xz',
-                       link_type='hardlink-or-copy'),
-             mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2',
-                       self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2',
-                       link_type='hardlink-or-copy'),
-             mock.call('/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.xz',
-                       self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.xz',
-                       link_type='hardlink-or-copy')])
+            [mock.call.link(
+                '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',
+                self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2',
+                link_type='hardlink-or-copy'),
+             mock.call.link(
+                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.xz',
+                 self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.xz',
+                 link_type='hardlink-or-copy'),
+             mock.call.link(
+                 '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2',
+                 self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2',
+                 link_type='hardlink-or-copy'),
+             mock.call.link(
+                 '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.xz',
+                 self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.xz',
+                 link_type='hardlink-or-copy')])
 
         image_relative_paths = {
             'image_dir/Client/amd64/Fedora-Docker-Base-20160103.amd64.qcow2': {
