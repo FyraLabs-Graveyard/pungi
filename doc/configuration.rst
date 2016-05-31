@@ -370,6 +370,15 @@ Options
     (*bool*) -- generate delta RPMs against an older compose. This needs to be
     used together with `--old-composes`` command line argument.
 
+**product_id** = None
+    (*scm_dict*) -- If specified, it should point to a directory with
+    certificates ``<variant_uid>-<arch>-*.pem``. This certificate will be
+    injected into the repository.
+
+**product_id_allow_missing** = False
+    (*bool*) -- When ``product_id`` is used and a certificate for some variant
+    is missing, an error will be reported by default. Use this option to
+    instead ignore the missing certificate.
 
 
 Example
@@ -396,7 +405,12 @@ Options
     (*str*) -- tag to read package set from
 
 **pkgset_koji_inherit** = True
-    (*bool*) -- inherit builds from parent tags; we can turn it off only if we have all builds tagged in a single tag
+    (*bool*) -- inherit builds from parent tags; we can turn it off only if we
+    have all builds tagged in a single tag
+
+**pkgset_repos**
+    (*dict*) -- A mapping of architectures to repositories with RPMs: ``{arch:
+    [repo]}``. Only use when ``pkgset_source = "repos"``.
 
 
 Example
@@ -414,8 +428,8 @@ Script or process that creates bootable images with
 Anaconda installer is historically called
 `buildinstall <https://git.fedorahosted.org/cgit/anaconda.git/tree/scripts/buildinstall?h=f15-branch>`_.
 
-Options:
---------
+Options
+-------
 
 **bootable**
     (*bool*) -- whether to run the buildinstall phase
@@ -432,6 +446,9 @@ Options:
       * ``bugurl`` -- *str* (default ``None``)
       * ``nomacboot`` -- *bool* (default ``True``)
       * ``noupgrade`` -- *bool* (default ``True``)
+**buildinstall_kickstart**
+    (*scm_dict*) -- If specified, this kickstart file will be copied into each
+    file and pointed to in boot configuration.
 
 Example
 -------
@@ -479,6 +496,14 @@ Options
 **gather_method** [mandatory]
     (*str*) -- "deps", "nodeps"
 
+**gather_fulltree** = False
+    (*bool*) -- When set to ``True`` all RPMs built from an SRPM will always be
+    included. Only use when ``gather_method = "deps"``.
+
+**gather_selfhosting** = False
+    (*bool*) -- When set to ``True``, *Pungi* will build a self-hosting tree by
+    following build dependencies. Only use when ``gather_method = "deps"``.
+
 **greedy_method**
     (*str*) -- see :doc:`gather`, recommended value: "build"
 
@@ -515,6 +540,12 @@ Options
     and filter out all others. This will not work if a variant needs more than
     one system release package. In such case, set this option to ``False``.
 
+**gather_prepopulate** = None
+    (*scm_dict*) -- If specified, you can use this to add additional packages.
+    The format of the file pointed to by this option is a JSON mapping
+    ``{variant_uid: {arch: {build: [package]}}}``. Packages added through this
+    option can not be removed by ``filter_packages``.
+
 **multilib_blacklist**
     (*dict*) -- multilib blacklist; format: ``{arch|*: [package_globs]}``. The
     patterns are tested with ``fnmatch``, so shell globbing is used (not
@@ -532,6 +563,15 @@ Options
 **hashed_directories** = False
     (*bool*) -- put packages into "hashed" directories, for example
     ``Packages/k/kernel-4.0.4-301.fc22.x86_64.rpm``
+
+**check_deps** = True
+    (*bool*) -- Set to ``False`` if you don't want the compose to abort when
+    some package has broken dependencies.
+
+**gather_source_mapping**
+    (*str*) -- Only use when ``gather_source = "json"``. The value should be a
+    path to JSON file with following mapping: ``{variant: {arch: {rpm_name:
+    [rpm_arch|None]}}}``.
 
 
 Example
@@ -719,6 +759,11 @@ Options
 
 **create_jigdo** = True
     (*bool*) -- controls the creation of jigdo from ISO
+
+**create_optional_isos** = False
+    (*bool*) -- when set to ``True``, ISOs will be created even for
+    ``optional`` variants. By default only variants with type ``variant`` or
+    ``layered-product`` will get ISOs.
 
 .. note::
 
@@ -1147,3 +1192,36 @@ Example usage
     >>> from pungi.paths import translate_paths
     >>> print translate_paths(compose_object_with_mapping, "/mnt/a/c/somefile")
     http://b/dir/c/somefile
+
+
+Miscelanous Settings
+====================
+
+**paths_module**
+    (*str*) -- Name of Python module implementing the same interface as
+    ``pungi.paths``. This module can be used to override where things are
+    placed.
+
+**link_type** = ``hardlink-or-copy``
+    (*str*) -- Method of putting packages into compose directory.
+
+    Available options:
+
+    * ``hardlink-or-copy``
+    * ``hardlink``
+    * ``copy``
+    * ``symlink``
+    * ``abspath-symlink``
+
+**skip_phases**
+    (*list*) -- List of phase names that should be skipped. The same
+    functionality is available via a command line option.
+
+**release_discinfo_description**
+    (*str*) -- Override description in ``.discinfo`` files. The value is a
+    format string accepting ``%(variant_name)s`` and ``%(arch)s`` placeholders.
+
+**symlink_isos_to**
+    (*str*) -- If set, the ISO files from ``buildinstall``, ``createiso`` and
+    ``live_images`` phases will be put into this destination, and a symlink
+    pointing to this location will be created in actual compose directory.
