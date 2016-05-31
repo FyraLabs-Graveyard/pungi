@@ -21,6 +21,7 @@ import fnmatch
 
 from pungi.util import get_arch_variant_data, pkg_is_rpm, copy_all
 from pungi.arch import split_name_arch
+from pungi import metadata
 from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 from pungi.phases.base import ConfigGuardedPhase
 
@@ -45,7 +46,7 @@ class ExtraFilesPhase(ConfigGuardedPhase):
                                           % (arch, variant.uid))
 
 
-def copy_extra_files(compose, cfg, arch, variant, package_sets):
+def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type='sha256'):
     var_dict = {
         "arch": arch,
         "variant_id": variant.id,
@@ -76,12 +77,12 @@ def copy_extra_files(compose, cfg, arch, variant, package_sets):
             scm_dict["repo"] = rpms
 
         getter = get_file_from_scm if 'file' in scm_dict else get_dir_from_scm
-        getter(scm_dict,
-               os.path.join(extra_files_dir, scm_dict.get('target', '').lstrip('/')),
-               logger=compose._logger)
+        target_path = os.path.join(extra_files_dir, scm_dict.get('target', '').lstrip('/'))
+        getter(scm_dict, target_path, logger=compose._logger)
 
     if os.listdir(extra_files_dir):
-        copy_all(extra_files_dir, os_tree)
+        files_copied = copy_all(extra_files_dir, os_tree)
+        metadata.write_extra_files(os_tree, files_copied, checksum_type, compose._logger)
 
     compose.log_info("[DONE ] %s" % msg)
 

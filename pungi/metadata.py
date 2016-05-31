@@ -17,6 +17,7 @@
 
 import os
 import time
+import json
 
 import productmd.composeinfo
 import productmd.treeinfo
@@ -25,6 +26,7 @@ from kobo.shortcuts import relative_path
 
 from pungi.compose_metadata.discinfo import write_discinfo as create_discinfo
 from pungi.compose_metadata.discinfo import write_media_repo as create_media_repo
+from pungi import util as pungi_util
 
 
 def get_description(compose, variant, arch):
@@ -317,3 +319,46 @@ def write_tree_info(compose, arch, variant, timestamp=None):
     path = os.path.join(compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo")
     compose.log_info("Writing treeinfo: %s" % path)
     ti.dump(path)
+
+
+def write_extra_files(tree_path, files, checksum_type='sha256', logger=None):
+    """
+    Write the metadata for all extra files added to the compose.
+
+    :param tree_path:
+        Root of the tree to write the ``extra_files.json`` metadata file for.
+
+    :param files:
+        A list of files that should be included in the metadata file. These
+        should be paths that are relative to ``tree_path``.
+
+    :return:
+        Path to the metadata file written.
+    """
+    metadata_path = os.path.join(tree_path, 'extra_files.json')
+    if logger:
+        logger.info('Calculating content of {metadata}'.format(metadata=metadata_path))
+    metadata = {'header': {'version': '1.0'}, 'data': []}
+    for f in files:
+        if logger:
+            logger.debug('Processing {file}'.format(file=f))
+        path = os.path.join(tree_path, f)
+        checksum = pungi_util._doCheckSum(path, checksum_type, logger)
+        # _doCheckSum returns in the format <type>:<digest> _or_ False for failure
+        if checksum is False:
+            err = 'Failed to calculate the checksum for {file}.'.format(file=path)
+            raise RuntimeError(err)
+        checksum = checksum.split(':')[1]
+        entry = {
+            'file': f,
+            'checksums': {checksum_type: checksum},
+            'size': os.path.getsize(path),
+        }
+        metadata['data'].append(entry)
+
+    if logger:
+        logger.info('Writing {metadata}'.format(metadata=metadata_path))
+
+    with open(metadata_path, 'w') as fd:
+        json.dump(metadata, fd, sort_keys=True, indent=4, separators=(',', ': '))
+    return metadata_path

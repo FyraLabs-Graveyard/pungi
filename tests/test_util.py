@@ -379,5 +379,32 @@ class TestLevenshtein(unittest.TestCase):
         self.assertEqual(util.levenshtein('kitten', 'sitting'), 3)
 
 
+class TestRecursiveFileList(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_flat_file_list(self):
+        """Build a directory containing files and assert they are listed."""
+        expected_files = sorted(['file1', 'file2', 'file3'])
+        for expected_file in [os.path.join(self.tmp_dir, f) for f in expected_files]:
+            touch(expected_file)
+
+        actual_files = sorted(util.recursive_file_list(self.tmp_dir))
+        self.assertEqual(expected_files, actual_files)
+
+    def test_nested_file_list(self):
+        """Build a directory containing files and assert they are listed."""
+        expected_files = sorted(['file1', 'subdir/file2', 'sub/subdir/file3'])
+        for expected_file in [os.path.join(self.tmp_dir, f) for f in expected_files]:
+            touch(expected_file)
+
+        actual_files = sorted(util.recursive_file_list(self.tmp_dir))
+        self.assertEqual(expected_files, actual_files)
+
+
 if __name__ == "__main__":
     unittest.main()

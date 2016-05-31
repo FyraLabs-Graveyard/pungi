@@ -506,7 +506,24 @@ def get_format_substs(compose, **kwargs):
 
 
 def copy_all(src, dest):
-    """This function is equivalent to running `cp src/* dest`."""
+    """
+    Copy all files and directories within ``src`` to the ``dest`` directory.
+
+    This is equivalent to running ``cp -r src/* dest``.
+
+    :param src:
+        Source directory to copy from.
+
+    :param dest:
+        Destination directory to copy to.
+
+    :return:
+        A list of relative paths to the files copied.
+
+    Example:
+        >>> _copy_all('/tmp/src/', '/tmp/dest/')
+        ['file1', 'dir1/file2', 'dir1/subdir/file3']
+    """
     contents = os.listdir(src)
     if not contents:
         raise RuntimeError('Source directory %s is empty.' % src)
@@ -518,6 +535,26 @@ def copy_all(src, dest):
             shutil.copytree(source, destination)
         else:
             shutil.copy2(source, destination)
+
+    return recursive_file_list(src)
+
+
+def recursive_file_list(directory):
+    """Return a list of files contained in ``directory``.
+
+    The files are paths relative to ``directory``
+
+    :param directory:
+        Path to the directory to list.
+
+    Example:
+        >>> recursive_file_list('/some/dir')
+        ['file1', 'subdir/file2']
+    """
+    file_list = []
+    for root, dirs, files in os.walk(directory):
+        file_list += [os.path.relpath(os.path.join(root, f), directory) for f in files]
+    return file_list
 
 
 def levenshtein(a, b):

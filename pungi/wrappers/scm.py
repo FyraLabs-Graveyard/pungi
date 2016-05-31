@@ -212,6 +212,36 @@ def _get_wrapper(scm_type, *args, **kwargs):
 
 
 def get_file_from_scm(scm_dict, target_path, logger=None):
+    """
+    Copy one or more files from source control to a target path. A list of files
+    created in ``target_path`` is returned.
+
+    :param scm_dict:
+        A dictionary describing the source control repository; this can
+        optionally be a path to a directory on the local filesystem or reference
+        an RPM. Supported keys for the dictionary are ``scm``, ``repo``,
+        ``file``, and ``branch``. ``scm`` is the type of version control system
+        used ('git', 'cvs', 'rpm', etc.), ``repo`` is the URL of the repository
+        (or, if 'rpm' is the ``scm``, the package name), ``file`` is either a
+        path or list of paths to copy, and ``branch`` is the branch to check
+        out, if any.
+
+    :param target_path:
+        The destination path for the files being copied.
+
+    :param logger:
+        The logger to use for any logging performed.
+
+    Example:
+        >>> scm_dict = {
+        >>>     'scm': 'git',
+        >>>     'repo': 'https://pagure.io/pungi.git',
+        >>>     'file': ['share/variants.dtd'],
+        >>> }
+        >>> target_path = '/tmp/path/'
+        >>> get_file_from_scm(scm_dict, target_path)
+        ['/tmp/path/share/variants.dtd']
+    """
     if isinstance(scm_dict, str):
         scm_type = "file"
         scm_repo = None
@@ -225,14 +255,45 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
 
     scm = _get_wrapper(scm_type, logger=logger)
 
+    files_copied = []
     for i in force_list(scm_file):
         tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
         scm.export_file(scm_repo, i, scm_branch=scm_branch, target_dir=tmp_dir)
-        copy_all(tmp_dir, target_path)
+        files_copied += copy_all(tmp_dir, target_path)
         shutil.rmtree(tmp_dir)
+    return files_copied
 
 
 def get_dir_from_scm(scm_dict, target_path, logger=None):
+    """
+    Copy a directory from source control to a target path. A list of files
+    created in ``target_path`` is returned.
+
+    :param scm_dict:
+        A dictionary describing the source control repository; this can
+        optionally be a path to a directory on the local filesystem or reference
+        an RPM. Supported keys for the dictionary are ``scm``, ``repo``,
+        ``dir``, and ``branch``. ``scm`` is the type of version control system
+        used ('git', 'cvs', 'rpm', etc.), ``repo`` is the URL of the repository
+        (or, if 'rpm' is the ``scm``, the package name), ``dir`` is the
+        directory to copy, and ``branch`` is the branch to check out, if any.
+
+    :param target_path:
+        The destination path for the directory being copied.
+
+    :param logger:
+        The logger to use for any logging performed.
+
+    Example:
+        >>> scm_dict = {
+        >>>     'scm': 'git',
+        >>>     'repo': 'https://pagure.io/pungi.git',
+        >>>     'dir': 'share,
+        >>> }
+        >>> target_path = '/tmp/path/'
+        >>> get_dir_from_scm(scm_dict, target_path)
+        ['/tmp/path/share/variants.dtd', '/tmp/path/share/rawhide-fedora.ks', ...]
+    """
     if isinstance(scm_dict, str):
         scm_type = "file"
         scm_repo = None
@@ -248,5 +309,6 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
 
     tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
     scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
-    copy_all(tmp_dir, target_path)
+    files_copied = copy_all(tmp_dir, target_path)
     shutil.rmtree(tmp_dir)
+    return files_copied

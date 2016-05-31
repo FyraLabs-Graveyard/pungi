@@ -81,7 +81,6 @@ class TestCopyFiles(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'file', 'dir': os.path.join(self.topdir, 'src'),
                'repo': None, 'target': 'subdir'}
-
         extra_files.copy_extra_files(compose, [cfg], 'x86_64',
                                      compose.variants['Server'], mock.Mock())
 
@@ -147,6 +146,7 @@ class TestCopyFiles(helpers.PungiTestCase):
     def fake_get_file(self, scm_dict, dest, logger):
         self.scm_dict = scm_dict
         helpers.touch(os.path.join(dest, scm_dict['file']))
+        return [scm_dict['file']]
 
 
 if __name__ == "__main__":

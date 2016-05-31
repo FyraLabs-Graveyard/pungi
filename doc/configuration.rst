@@ -703,6 +703,34 @@ Example
     ]
 
 
+Extra Files Metadata
+--------------------
+If extra files are specified a metadata file, ``extra_files.json``, is placed
+in the os/ directory and media. This metadata file is in the format:
+
+::
+
+    {
+      "header": {"version": "1.0},
+      "data": [
+        {
+          "file": "GPL",
+          "checksums": {
+            "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+          },
+          "size": 18092
+        },
+        {
+          "file": "release-notes/notes.html",
+          "checksums": {
+            "sha256": "82b1ba8db522aadf101dca6404235fba179e559b95ea24ff39ee1e5d9a53bdcb"
+          },
+          "size": 1120
+        }
+      ]
+    }
+
+
 Productimg Settings
 ===================
 Product images are placed on installation media and provide additional branding
@@ -1240,7 +1268,7 @@ Translate Paths Settings
     This feature becomes useful when you need to transform compose location
     into e.g. a HTTP repo which is can be passed to ``koji image-build``.
     The ``path`` part is normalized via ``os.path.normpath()``.
-    
+
 
 Example config
 --------------
