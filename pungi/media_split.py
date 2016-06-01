@@ -73,13 +73,14 @@ class MediaSplitter(object):
         name = os.path.normpath(name)
         size = int(size)
         old_size = self.file_sizes.get(name, None)
-        if old_size is None:
-            self.files.append(name)
-            self.file_sizes[name] = size
-        elif old_size != size:
+
+        if old_size is not None and old_size != size:
             raise ValueError("File size mismatch; file: %s; sizes: %s vs %s" % (name, old_size, size))
-        elif size > self.media_size:
+        if size > self.media_size:
             raise ValueError("File is larger than media size: %s" % name)
+
+        self.files.append(name)
+        self.file_sizes[name] = size
         if sticky:
             self.sticky_files.add(name)
 
@@ -127,16 +128,15 @@ class MediaSplitter(object):
 
         disks = []
         disk = {}
-        total_size_single = sticky_files_size # as it would be on single medium (sticky_files just once)
+        # as it would be on single medium (sticky_files just once)
+        total_size_single = sticky_files_size
         while all_files:
             name = all_files.pop(0)
             size = convert_file_size(self.file_sizes[name])
 
             if not disks or disk["size"] + size > self.media_size:
-                disk = {"size": 0, "files": []}
+                disk = {"size": sticky_files_size, "files": sticky_files[:]}
                 disks.append(disk)
-                disk["files"].extend(sticky_files)
-                disk["size"] += sticky_files_size
 
             disk["files"].append(name)
             disk["size"] += size
