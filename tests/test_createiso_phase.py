@@ -487,5 +487,122 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         ])
 
 
+TREEINFO = '''
+[header]
+version = 1.0
+
+[release]
+name = Dummy Product
+short = DP
+version = 1.0
+
+[tree]
+arch = x86_64
+platforms = x86_64
+build_timestamp = 1464715102
+variants = Server
+
+[variant-Server]
+id = Server
+uid = Server
+name = Server
+type = variant
+'''
+
+
+class DummySize(object):
+    """
+    This is intended as a replacement for os.path.getsize that returns
+    predefined sizes. The argument to __init__ should be a mapping from
+    substring of filepath to size.
+    """
+    def __init__(self, sizes):
+        self.sizes = sizes
+
+    def __call__(self, path):
+        for fragment, size in self.sizes.iteritems():
+            if fragment in path:
+                return size
+        return 0
+
+
+class SplitIsoTest(helpers.PungiTestCase):
+    def test_split_fits_on_single_disc(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'work/x86_64/Server/extra-files/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/repodata/repomd.xml'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/b/bash.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/n/media.repo'))
+
+        with mock.patch('os.path.getsize',
+                        DummySize({'GPL': 20 * 2048, 'bash': 150 * 2048,
+                                   'media': 100 * 2048, 'treeinfo': 10 * 2048})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'])
+
+        base_path = os.path.join(self.topdir, 'compose/Server/x86_64/os')
+        # GPL is sticky file, it should be first at all times. Files are
+        # searched top-down, so nested ones are after top level ones.
+        self.assertEqual(data,
+                         [{'files': [os.path.join(base_path, 'GPL'),
+                                     os.path.join(base_path, '.treeinfo'),
+                                     os.path.join(base_path, 'n/media.repo'),
+                                     os.path.join(base_path, 'Packages/b/bash.rpm')],
+                           'size': 573440}])
+
+    def test_split_needs_two_discs(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'work/x86_64/Server/extra-files/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/repodata/repomd.xml'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/b/bash.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/n/media.repo'))
+
+        M = 1024 ** 2
+        G = 1024 ** 3
+
+        with mock.patch('os.path.getsize',
+                        DummySize({'GPL': 20 * M, 'bash': 3 * G,
+                                   'media': 2 * G, 'treeinfo': 10 * M})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'])
+
+        base_path = os.path.join(self.topdir, 'compose/Server/x86_64/os')
+        # GPL is the only sticky file, it should be first at all times.
+        # Files are searched top-down, so nested ones are after top level ones.
+        self.assertEqual(data,
+                         [{'files': [os.path.join(base_path, 'GPL'),
+                                     os.path.join(base_path, '.treeinfo'),
+                                     os.path.join(base_path, 'n/media.repo')],
+                           'size': 2178940928},
+                          {'files': [os.path.join(base_path, 'GPL'),
+                                     os.path.join(base_path, 'Packages/b/bash.rpm')],
+                           'size': 3242196992}])
+
+    def test_keeps_reserve(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/spacer.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/x/pad.rpm'))
+
+        M = 1024 ** 2
+
+        # treeinfo has size 0, spacer leaves 11M of free space, so with 10M
+        # reserve the padding package should be on second disk
+
+        with mock.patch('os.path.getsize', DummySize({'spacer': 4688465664, 'pad': 5 * M})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'])
+
+        base_path = os.path.join(self.topdir, 'compose/Server/x86_64/os')
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['files'], [os.path.join(base_path, '.treeinfo'),
+                                            os.path.join(base_path, 'Packages/spacer.rpm')])
+        self.assertEqual(data[1]['files'], [os.path.join(base_path, 'Packages/x/pad.rpm')])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -329,7 +329,7 @@ def split_iso(compose, arch, variant):
             if rel_path in all_files_ignore:
                 compose.log_info("split_iso: Skipping %s" % rel_path)
                 continue
-            if root == compose.paths.compose.packages(arch, variant):
+            if root.startswith(compose.paths.compose.packages(arch, variant)):
                 packages.append((path, os.path.getsize(path), sticky))
             else:
                 all_files.append((path, os.path.getsize(path), sticky))
