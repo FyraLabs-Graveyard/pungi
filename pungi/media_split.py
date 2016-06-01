@@ -84,28 +84,6 @@ class MediaSplitter(object):
         if sticky:
             self.sticky_files.add(name)
 
-    '''
-    def load(self, file_name):
-        f = open(file_name, "r")
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            name, size = line.split(" ")
-            self.add_file(name, size)
-        f.close()
-
-    def scan(self, pattern):
-        for i in glob.glob(pattern):
-            self.add_file(i, os.path.getsize(i))
-
-    def dump(self, file_name):
-        f = open(file_name, "w")
-        for name in self.files:
-            f.write("%s %s\n" % (os.path.basename(name), self.file_sizes[name]))
-        f.close()
-    '''
-
     @property
     def total_size(self):
         return sum(self.file_sizes.values())
