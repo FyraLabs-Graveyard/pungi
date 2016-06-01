@@ -50,4 +50,7 @@ setup(
         ('/usr/share/pungi/multilib', glob.glob('share/multilib/*')),
     ],
     test_suite      = "tests",
+    install_requires = [
+        "lxml",
+        ],
 )
