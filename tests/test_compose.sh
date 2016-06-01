@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export PYTHONPATH=$(pwd)/../
+export PYTHONPATH=$(pwd)/../:$PYTHONPATH
 export PATH=$(pwd)/../bin:$PATH
 
 mkdir -p _composes
