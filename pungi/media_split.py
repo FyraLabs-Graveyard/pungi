@@ -53,6 +53,15 @@ def convert_file_size(size, block_size=2048):
 
 
 class MediaSplitter(object):
+    """
+    MediaSplitter splits files so that they fit on a media of given size.
+
+    Each file added to the spliter has a size in bytes that will be rounded to
+    the nearest multiple of block size. If the file is sticky, it will be
+    included on each disk. The files will be on disks in the same order they
+    are added; there is no re-ordering. The number of disk is thus not the
+    possible minimum.
+    """
     def __init__(self, media_size, compose=None):
         self.media_size = convert_media_size(media_size)
         self.files = []  # to preserve order
