@@ -32,7 +32,7 @@ from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.phases.base import PhaseBase
 from pungi.util import (makedirs, get_volid, get_arch_variant_data, failable,
                         get_file_size, get_mtime)
-from pungi.media_split import MediaSplitter
+from pungi.media_split import MediaSplitter, convert_media_size
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 
 
@@ -284,18 +284,19 @@ class CreateIsoThread(WorkerThread):
 
 
 def split_iso(compose, arch, variant):
-    # XXX: hardcoded
-    media_size = 4700000000
-    media_reserve = 10 * 1024 * 1024
+    """
+    Split contents of the os/ directory for given tree into chunks fitting on ISO.
 
-    ms = MediaSplitter(str(media_size - media_reserve), compose)
+    All files from the directory are taken except for possible boot.iso image.
+    Files added in extra_files phase are put on all disks.
+    """
+    media_size = compose.conf.get('iso_size', 4700000000)
+    media_reserve = compose.conf.get('split_iso_reserve', 10 * 1024 * 1024)
+
+    ms = MediaSplitter(convert_media_size(media_size) - convert_media_size(media_reserve), compose)
 
     os_tree = compose.paths.compose.os_tree(arch, variant)
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
-
-#    ti_path = os.path.join(os_tree, ".treeinfo")
-#    ti = productmd.treeinfo.TreeInfo()
-#    ti.load(ti_path)
 
     # scan extra files to mark them "sticky" -> they'll be on all media after split
     extra_files = set()

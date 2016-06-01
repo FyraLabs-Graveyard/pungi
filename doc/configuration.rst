@@ -765,6 +765,15 @@ Options
     ``optional`` variants. By default only variants with type ``variant`` or
     ``layered-product`` will get ISOs.
 
+**iso_size** = 4700000000
+    (*int|str*) -- size of ISO image. The value should either be an integer
+    meaning size in bytes, or it can be a string with ``k``, ``M``, ``G``
+    suffix (using multiples of 1024).
+
+**split_iso_reserve** = 10MiB
+    (*int|str*) -- how much free space should be left on each disk. The format
+    is the same as for ``iso_size`` option.
+
 .. note::
 
     Source architecture needs to be listed explicitly.

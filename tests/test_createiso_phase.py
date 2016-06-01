@@ -603,6 +603,34 @@ class SplitIsoTest(helpers.PungiTestCase):
                                             os.path.join(base_path, 'Packages/spacer.rpm')])
         self.assertEqual(data[1]['files'], [os.path.join(base_path, 'Packages/x/pad.rpm')])
 
+    def test_can_customize_reserve(self):
+        compose = helpers.DummyCompose(self.topdir, {'split_iso_reserve': 1024 ** 2})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/spacer.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/x/pad.rpm'))
+
+        M = 1024 ** 2
+
+        with mock.patch('os.path.getsize', DummySize({'spacer': 4688465664, 'pad': 5 * M})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'])
+
+        self.assertEqual(len(data), 1)
+
+    def test_can_change_iso_size(self):
+        compose = helpers.DummyCompose(self.topdir, {'iso_size': '8G'})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/spacer.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/x/pad.rpm'))
+
+        M = 1024 ** 2
+
+        with mock.patch('os.path.getsize', DummySize({'spacer': 4688465664, 'pad': 5 * M})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'])
+
+        self.assertEqual(len(data), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
