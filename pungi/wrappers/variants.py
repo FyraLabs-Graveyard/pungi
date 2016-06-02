@@ -198,8 +198,6 @@ class VariantsXmlParser(object):
 class Variant(object):
     def __init__(self, id, name, type, arches, groups, environments=None,
                  buildinstallpackages=None, is_empty=False, parent=None):
-        if not id.isalnum():
-            raise ValueError("Variant ID must contain only alphanumeric characters: %s" % id)
 
         environments = environments or []
         buildinstallpackages = buildinstallpackages or []
