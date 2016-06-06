@@ -264,6 +264,70 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
     @mock.patch('pungi.phases.createiso.KojiWrapper')
+    def test_process_source_iso(self, KojiWrapper, get_file_size, get_mtime, IsoWrapper):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_short': 'test',
+            'release_version': '1.0',
+            'release_is_layered': False,
+            'runroot': True,
+            'runroot_tag': 'f25-build',
+            'koji_profile': 'koji',
+        })
+        cmd = {
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
+            'bootable': False,
+            'cmd': mock.Mock(),
+            'label': '',
+            'disc_num': 1,
+            'disc_count': 1,
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        getTag = KojiWrapper.return_value.koji_proxy.getTag
+        getTag.return_value = {'arches': 'x86_64'}
+        get_runroot_cmd = KojiWrapper.return_value.get_runroot_cmd
+        run_runroot = KojiWrapper.return_value.run_runroot_cmd
+        run_runroot.return_value = {
+            'retcode': 0,
+            'output': 'whatever',
+            'task_id': 1234,
+        }
+
+        t = createiso.CreateIsoThread(mock.Mock())
+        with mock.patch('time.sleep'):
+            t.process((compose, cmd, compose.variants['Server'], 'src'), 1)
+
+        self.assertEqual(getTag.call_args_list, [mock.call('f25-build')])
+        self.assertEqual(get_runroot_cmd.call_args_list,
+                         [mock.call('f25-build', 'x86_64', cmd['cmd'], channel=None,
+                                    mounts=[self.topdir],
+                                    packages=['coreutils', 'genisoimage', 'isomd5sum',
+                                              'jigdo', 'pungi'],
+                                    task_id=True, use_shell=True)])
+        self.assertEqual(
+            run_runroot.call_args_list,
+            [mock.call(get_runroot_cmd.return_value,
+                       log_file='%s/logs/src/createiso-image-name.src.log' % self.topdir)])
+        self.assertEqual(IsoWrapper.return_value.get_implanted_md5.call_args_list,
+                         [mock.call(cmd['iso_path'])])
+        self.assertEqual(IsoWrapper.return_value.get_volume_id.call_args_list,
+                         [mock.call(cmd['iso_path'])])
+
+        self.assertEqual(len(compose.im.add.call_args_list), 2)
+        for args, _ in compose.im.add.call_args_list:
+            self.assertEqual(args[0], 'Server')
+            self.assertIn(args[1], ['x86_64', 'amd64'])
+            image = args[2]
+            self.assertEqual(image.arch, 'src')
+            self.assertEqual(image.path, 'Server/x86_64/iso/image-name')
+            self.assertEqual(image.format, 'iso')
+            self.assertEqual(image.type, 'dvd')
+            self.assertEqual(image.subvariant, 'Server')
+
+    @mock.patch('pungi.phases.createiso.IsoWrapper')
+    @mock.patch('pungi.phases.createiso.get_mtime')
+    @mock.patch('pungi.phases.createiso.get_file_size')
+    @mock.patch('pungi.phases.createiso.KojiWrapper')
     def test_process_bootable(self, KojiWrapper, get_file_size, get_mtime, IsoWrapper):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
