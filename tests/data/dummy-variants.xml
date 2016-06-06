@@ -73,4 +73,29 @@
     </variants>
   </variant>
 
+  <!-- layered products - Tools for Foo and Bar variants from a base product -->
+  <variant id="Foo-Tools" name="Tools" type="variant" has_optional="false">
+    <arches>
+      <arch>x86_64</arch>
+    </arches>
+    <groups>
+      <group default="true" uservisible="true">core</group>
+    </groups>
+    <environments>
+      <environment>minimal</environment>
+    </environments>
+  </variant>
+
+  <variant id="Bar-Tools" name="Tools" type="variant" has_optional="false">
+    <arches>
+      <arch>x86_64</arch>
+    </arches>
+    <groups>
+      <group default="true" uservisible="true">core</group>
+    </groups>
+    <environments>
+      <environment>minimal</environment>
+    </environments>
+  </variant>
+
 </variants>

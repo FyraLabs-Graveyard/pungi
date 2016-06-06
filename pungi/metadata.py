@@ -94,7 +94,8 @@ def compose_to_composeinfo(compose):
             return None
 
         # variant details
-        var.id = variant.id
+        # remove dashes from variant ID, rely on productmd verification
+        var.id = variant.id.replace("-", "")
         var.uid = variant.uid
         var.name = variant.name
         var.type = variant.type
@@ -230,7 +231,8 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         var.name = variant.parent.name
         var.type = "variant"
     else:
-        var.id = variant.id
+        # remove dashes from variant ID, rely on productmd verification
+        var.id = variant.id.replace("-", "")
         var.uid = variant.uid
         var.name = variant.name
         var.type = variant.type
