@@ -271,7 +271,11 @@ class CreateIsoThread(WorkerThread):
             img.volume_id = iso.get_volume_id(cmd["iso_path"])
         except RuntimeError:
             pass
-        compose.im.add(variant.uid, arch, img)
+        if arch == "src":
+            for variant_arch in variant.arches:
+                compose.im.add(variant.uid, variant_arch, img)
+        else:
+            compose.im.add(variant.uid, arch, img)
         # TODO: supported_iso_bit
         # add: boot.iso
 
