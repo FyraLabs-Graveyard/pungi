@@ -7,6 +7,7 @@ try:
 except ImportError:
     import unittest
 
+import mock
 import os
 import sys
 
@@ -123,6 +124,25 @@ class TestCheckImageSanity(PungiTestCase):
             test_phase.check_image_sanity(compose)
         except:
             self.fail('Bootable image with MBR and GPT must not raise')
+
+    def test_checks_with_optional_variant(self):
+        compose = DummyCompose(self.topdir, {})
+        compose.variants['Server'].variants = {
+            'optional': mock.Mock(uid='Server-optional', arches=['x86_64'],
+                                  type='optional', is_empty=False)
+        }
+        compose.image.format = 'iso'
+        compose.image.bootable = True
+        touch(os.path.join(self.topdir, 'compose', compose.image.path), ISO_WITH_MBR_AND_GPT)
+
+        image = mock.Mock(path="Server/i386/optional/iso/image.iso",
+                          format='iso', bootable=False)
+        compose.im.images['Server-optional'] = {'i386': [image]}
+
+        try:
+            test_phase.check_image_sanity(compose)
+        except:
+            self.fail('Checking optional variant must not raise')
 
 
 if __name__ == "__main__":

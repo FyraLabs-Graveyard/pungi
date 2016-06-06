@@ -110,11 +110,14 @@ def check_image_sanity(compose):
     manifest and logged. Otherwise the compose will be aborted.
     """
     im = compose.im
-    for variant_uid in im.images:
-        variant = compose.variants[variant_uid]
-        for arch in im.images[variant_uid]:
-            images = im.images[variant_uid][arch]
-            im.images[variant_uid][arch] = [img for img in images
+    for variant in compose.get_variants():
+        if variant.uid not in im.images:
+            continue
+        for arch in variant.arches:
+            if arch not in im.images[variant.uid]:
+                continue
+            images = im.images[variant.uid][arch]
+            im.images[variant.uid][arch] = [img for img in images
                                             if check(compose, variant, arch, img)]
 
 
