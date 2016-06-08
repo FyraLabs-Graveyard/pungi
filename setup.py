@@ -50,4 +50,15 @@ setup(
         ('/usr/share/pungi/multilib', glob.glob('share/multilib/*')),
     ],
     test_suite      = "tests",
+    install_requires = [
+        "kobo",
+        "lockfile",
+        "lxml",
+        "productmd",
+        ],
+    tests_require = [
+        "mock",
+        "nose",
+        "nose-cov",
+        ],
 )
