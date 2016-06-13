@@ -71,6 +71,7 @@ def compose_to_composeinfo(compose):
     ci.compose.date = compose.compose_date
     ci.compose.respin = compose.compose_respin
     ci.compose.label = compose.compose_label
+    ci.compose.final = compose.supported
 
     # product
     ci.release.name = compose.conf["release_name"]
