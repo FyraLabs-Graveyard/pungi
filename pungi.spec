@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.0.16
+Version:        4.0.17
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -73,6 +73,14 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 #cd tests && ./test_compose.sh
 
 %changelog
+* Tue Jun 14 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.17-1
+- Setup global log file before logging anything (lsedlar)
+- [metadata] Correctly save final flag (lsedlar)
+- Use unittest2 if available (lsedlar)
+- Stop using str.format (lsedlar)
+- The message attribute on exception is deprecated (lsedlar)
+- [ostree] Rename duplicated test (lsedlar)
+
 * Tue May 24 2016 Dennis Gilmore <dennis@ausil.us> - 4.0.16-1
 - [ostree-installer] Allow using external repos as source (lsedlar)
 - [image-build] Allow using external install trees (lsedlar)
