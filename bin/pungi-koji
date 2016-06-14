@@ -192,7 +192,6 @@ def main():
                       logger=logger,
                       notifier=notifier)
     notifier.compose = compose
-    kobo.log.add_file_logger(logger, compose.paths.log.log_file("global", "pungi.log"))
     COMPOSE = compose
     try:
         run_compose(compose)

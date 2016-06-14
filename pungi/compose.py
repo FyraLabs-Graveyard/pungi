@@ -112,6 +112,10 @@ class Compose(kobo.log.LoggingBase):
         # path definitions
         self.paths = Paths(self)
 
+        # Set up logging to file
+        if logger:
+            kobo.log.add_file_logger(logger, self.paths.log.log_file("global", "pungi.log"))
+
         # to provide compose_id, compose_date and compose_respin
         self.ci_base = ComposeInfo()
         self.ci_base.load(os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json"))
