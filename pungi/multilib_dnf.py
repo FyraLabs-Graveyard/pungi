@@ -20,45 +20,7 @@ import re
 import fnmatch
 
 
-DEVEL_BLACKLIST = [
-    "dmraid-devel",
-    "ghc-*",
-    "java-*-gcj-devel",
-    "java-*-icedtea-devel",
-    "java-*-openjdk-devel",
-    "kdeutils-devel",
-    "kernel-devel",
-    "mkinitrd-devel",
-    "php-devel",
-]
-
-
-DEVEL_WHITELIST = [
-    "glibc-static",
-    "libstdc++-static",
-]
-
-
-RUNTIME_BLACKLIST = [
-    "gcc",
-    "kernel",
-    "tomcat-native",
-]
-
-
-RUNTIME_WHITELIST = [
-    "glibc-static",
-    "libflashsupport",
-    "libgnat",
-    "lmms-vst",
-    "nspluginwrapper",
-    "perl-libs",
-    "redhat-lsb",
-    "valgrind",
-    "wine",
-    "wine-arts",
-    "yaboot",
-]
+RE_SONAME = re.compile(r"^.*\.so\.\d+.*$")
 
 
 class Multilib(object):
@@ -67,7 +29,6 @@ class Multilib(object):
         self.methods = []
         self.blacklist = blacklist or []
         self.whitelist = whitelist or []
-        self.use_default_blacklists = True  # use *_BLACKLIST and *_WHITELIST lists
 
         for i in methods:
             name = "method_%s" % i
@@ -90,11 +51,6 @@ class Multilib(object):
         return True
 
     def method_devel(self, pkg):
-        if self.use_default_blacklists:
-            if self._match_any(pkg, DEVEL_BLACKLIST):
-                return False
-            if self._match_any(pkg, DEVEL_WHITELIST):
-                return True
         if pkg.name.endswith("-devel"):
             return True
         if pkg.name.endswith("-static"):
@@ -109,15 +65,9 @@ class Multilib(object):
         return False
 
     def method_runtime(self, pkg):
-        if self.use_default_blacklists:
-            if self._match_any(pkg, RUNTIME_BLACKLIST):
-                return False
-            if self._match_any(pkg, RUNTIME_WHITELIST):
-                return True
-        so = re.compile(r"^.*\.so\.\d+.*$")
         for prov in pkg.provides:
             prov = str(prov)
-            if so.match(prov):
+            if RE_SONAME.match(prov):
                 return True
         return False
 
