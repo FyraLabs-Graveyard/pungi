@@ -664,9 +664,6 @@ class Gather(GatherBase):
     def add_multilib_packages(self):
         added = set()
 
-        if not self.opts.multilib_methods or self.opts.multilib_methods == ["none"]:
-            return added
-
         for pkg in sorted(self.result_binary_packages):
             try:
                 self.finished_add_multilib_packages[pkg]
