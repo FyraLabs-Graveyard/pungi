@@ -233,6 +233,7 @@ def run_compose(compose):
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     livemedia_phase = pungi.phases.LiveMediaPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose)
+    osbs_phase = pungi.phases.OSBSPhase(compose)
     image_checksum_phase = pungi.phases.ImageChecksumPhase(compose)
     test_phase = pungi.phases.TestPhase(compose)
 
@@ -241,7 +242,8 @@ def run_compose(compose):
                   buildinstall_phase, productimg_phase, gather_phase,
                   extrafiles_phase, createiso_phase, liveimages_phase,
                   livemedia_phase, image_build_phase, image_checksum_phase,
-                  test_phase, ostree_phase, ostree_installer_phase):
+                  test_phase, ostree_phase, ostree_installer_phase,
+                  osbs_phase):
         if phase.skip():
             continue
         try:
@@ -348,17 +350,20 @@ def run_compose(compose):
     image_build_phase.start()
     livemedia_phase.start()
     ostree_installer_phase.start()
+    osbs_phase.start()
 
     createiso_phase.stop()
     liveimages_phase.stop()
     image_build_phase.stop()
     livemedia_phase.stop()
     ostree_installer_phase.stop()
+    osbs_phase.stop()
 
     image_checksum_phase.start()
     image_checksum_phase.stop()
 
     pungi.metadata.write_compose_info(compose)
+    osbs_phase.dump_metadata()
 
     # TEST phase
     test_phase.start()

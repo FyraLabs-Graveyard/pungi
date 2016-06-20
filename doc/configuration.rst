@@ -148,6 +148,7 @@ Options
      * live-media
      * ostree
      * ostree-installer
+     * osbs
 
        .. note::
 
@@ -327,11 +328,13 @@ Example
         signing_key_password_file = '~/password_for_fedora-24_key'
 
 
+.. _git-urls:
+
 Git URLs
 ========
 
-In multiple places the config requires URL of a Git repository to download
-kickstart file from. This URL is passed on to *Koji*. It is possible to which
+In multiple places the config requires URL of a Git repository to download some
+file from. This URL is passed on to *Koji*. It is possible to specify which
 commit to use using this syntax: ::
 
     git://git.example.com/git/repo-name.git?#<rev_spec>
@@ -1136,6 +1139,54 @@ Example config
             }
         })
     ]
+
+
+OSBS Settings
+=============
+
+*Pungi* can build docker images in OSBS. The build is initiated through Koji
+``container-build`` plugin. The base image will be using RPMs from the current
+compose and a ``Dockerfile`` from specified Git repository.
+
+Please note that the image is uploaded to a Docker v2 registry and not exported
+into compose directory. There will be a metadata file in
+``compose/metadata/osbs.json`` with details about the built images (assuming
+they are not scratch builds).
+
+**osbs**
+    (*dict*) -- a mapping from variant regexes to configuration blocks. The
+    format should be ``{variant_uid_regex: [config_dict]}``.
+
+    The configuration for each image must have at least these keys:
+
+    * ``url`` -- (*str*) URL pointing to a Git repository with ``Dockerfile``.
+      Please see :ref:`git-urls` section for more details.
+    * ``target`` -- (*str*) A Koji target to build the image for.
+
+    The configuration will pass other attributes directly to the Koji task.
+    This includes ``name``, ``version``, ``release``, ``scratch`` and
+    ``priority``.
+
+    If ``release`` is set explicitly to ``None``, the value will be retrieved
+    from Koji. If this feature is used, a ``name`` key must be set as well..
+
+    A value for ``yum_repourls`` will be created automatically and point at a
+    repository in the current compose.
+
+
+Example config
+--------------
+::
+
+    osbs = {
+        "^Server$": {
+            "url": "git://example.com/dockerfiles.git?#HEAD",
+            "name": "fedora-docker-base",
+            "target": "f24-docker-candidate",
+            "version": "24",
+            "release": None,
+        }
+    }
 
 
 Media Checksums Settings

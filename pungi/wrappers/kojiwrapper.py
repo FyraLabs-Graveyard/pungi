@@ -36,7 +36,29 @@ class KojiWrapper(object):
         self.executable = self.profile.replace("_", "-")
         with self.lock:
             self.koji_module = koji.get_profile_module(profile)
-            self.koji_proxy = koji.ClientSession(self.koji_module.config.server)
+            session_opts = {}
+            for key in ('krbservice', 'timeout', 'keepalive',
+                        'max_retries', 'retry_interval', 'anon_retry',
+                        'offline_retry', 'offline_retry_interval',
+                        'debug', 'debug_xmlrpc',
+                        'use_fast_upload'):
+                value = getattr(self.koji_module.config, key, None)
+                if value is not None:
+                    session_opts[key] = value
+            self.koji_proxy = koji.ClientSession(self.koji_module.config.server, session_opts)
+
+    def login(self):
+        """Authenticate to the hub."""
+        auth_type = self.koji_module.config.authtype
+        if auth_type == 'ssl' or (os.path.isfile(os.path.expanduser(self.koji_module.config.cert))
+                                  and auth_type is None):
+            self.koji_proxy.ssl_login(os.path.expanduser(self.koji_module.config.cert),
+                                      os.path.expanduser(self.koji_module.config.ca),
+                                      os.path.expanduser(self.koji_module.config.serverca))
+        elif auth_type == 'kerberos':
+            self.koji_proxy.krb_login()
+        else:
+            raise RuntimeError('Unsupported authentication type in Koji')
 
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True):
         cmd = [self.executable, "runroot"]
@@ -286,6 +308,10 @@ class KojiWrapper(object):
             "output": output,
             "task_id": task_id,
         }
+
+    def watch_task(self, task_id, log_file=None, max_retries=None):
+        retcode, _ = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
+        return retcode
 
     def get_image_paths(self, task_id):
         """
