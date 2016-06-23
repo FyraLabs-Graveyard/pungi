@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.6
+Version:        4.1.7
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -72,6 +72,53 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu Jun 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.7-1
+- [scm] Add logging for exporting local files (lsedlar)
+- [extra-files] Only copy files when there is a config (lsedlar)
+- [extra-files] Refactoring (lsedlar)
+- [extra-files] Skip whole phase if not configured (lsedlar)
+- [extra-files] Copy files using existing function (lsedlar)
+- [extra-files] Add tests (lsedlar)
+- [osbs] Add a phase to build images in OSBS (lsedlar)
+- Setup global log file before logging anything (lsedlar)
+- [metadata] Correctly save final flag (lsedlar)
+- Merge #326 `add missing dependencies` (dennis)
+- [createiso] Add test for adding source iso to metadata (lsedlar)
+- Merge #325 `Fix checking optional ISO images in test phase` (dennis)
+- Merge #321 `Add support for top-level variant IDs with dashes.` (dennis)
+- Merge #320 `images.json: Move src images under binary arches.` (dennis)
+- add missing dependencies (nils)
+- Fix checking optional ISO images in test phase (lsedlar)
+- add lxml dependency (nils)
+- images.json: Move src images under binary arches. (dmach)
+- Add support for top-level variant IDs with dashes. (dmach)
+- Fix PYTHONPATH usage in test_compose.sh. (dmach)
+- [createiso] Enable customizing media reserve (lsedlar)
+- [createiso] Add test for splitting media (lsedlar)
+- [media-split] Remove commented-out code (lsedlar)
+- [media-split] Simplify code (lsedlar)
+- [media-split] Add code documentation (lsedlar)
+- [media-split] Add unit tests (lsedlar)
+- Add missing documentation (lsedlar)
+- [buildinstall] Fix bad error message (lsedlar)
+- Merge #309 `Add compatibility for Python 2.6` (dennis)
+- Merge #293 `Add tests for generating discinfo and media.repo files` (dennis)
+- Merge #287 `Use koji profiles to list RPMs in buildroot` (dennis)
+- [ostree-installer] Put images to os/ directory (lsedlar)
+- [ostree] Rename duplicated test (lsedlar)
+- [util] Use koji profile for getting RPMs from buildroot (lsedlar)
+- [util] Add test for getting list of buildroot RPMs (lsedlar)
+- pungi-koji: fix up latest symlink creation (dennis)
+- Use unittest2 if available (lsedlar)
+- Stop using str.format (lsedlar)
+- Stop using functools.total_ordering (lsedlar)
+- The message attribute on exception is deprecated (lsedlar)
+- [ostree] Rename duplicated test (lsedlar)
+- [metadata] Simplify writing media.repo (lsedlar)
+- [metadata] Add test for writing media.repo (lsedlar)
+- [discinfo] Use context manager for file access (lsedlar)
+- [metadata] Add tests for discinfo files (lsedlar)
+
 * Tue May 24 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.6-1
 - [ostree-installer] Allow using external repos as source (lsedlar)
 - [image-build] Allow using external install trees (lsedlar)
