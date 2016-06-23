@@ -70,6 +70,8 @@ class ScmBase(kobo.log.LoggingBase):
 
 class FileWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+        self.log_debug("Exporting directory %s from current working directory..."
+                       % (scm_dir))
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
         dirs = glob.glob(scm_dir)
@@ -81,6 +83,8 @@ class FileWrapper(ScmBase):
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
+        self.log_debug("Exporting file %s from current working directory..."
+                       % (scm_file))
         files = glob.glob(scm_file)
         if not files:
             raise RuntimeError('No files matched, can not export.')
