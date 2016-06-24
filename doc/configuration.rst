@@ -117,13 +117,6 @@ Example
     base_product_short = "Fedora"
     base_product_version = "23"
 
-**tree_arches**
-    ([*str*]) -- list of architectures which should be included; if undefined, all architectures from variants.xml will be included
-
-**tree_variants**
-    ([*str*]) -- list of variants which should be included; if undefined, all variants from variants.xml will be included
-
-
 General Settings
 ================
 
@@ -138,27 +131,11 @@ Options
 
 **failable_deliverables** [optional]
     (*list*) -- list which deliverables on which variant and architecture can
-    fail and not abort the whole compose
-
-    Currently handled deliverables are:
-     * buildinstall
-     * iso
-     * live
-     * image-build
-     * live-media
-     * ostree
-     * ostree-installer
-     * osbs
-
-       .. note::
-
-           Image building is not run per-architecture. If you want to mark it
-           as failable, specify it in a block with arch set as ``*``.
+    fail and not abort the whole compose. This only applies to ``buildinstall``
+    and ``iso`` parts. All other artifacts can be configured in their
+    respective part of configuration.
 
     Please note that ``*`` as a wildcard matches all architectures but ``src``.
-
-    tree_arches = ["x86_64"]
-    tree_variants = ["Server"]
 
 **comps_filter_environments** [optional]
     (*bool*) -- When set to ``False``, the comps files for variants will not
@@ -167,6 +144,15 @@ Options
 **keep_original_comps** [optional]
     (*list*) -- List of variants for which the original comps file will be
     copied without any modifications. Overwrites `comps_filter_environments`.
+
+**tree_arches**
+    ([*str*]) -- list of architectures which should be included; if undefined,
+    all architectures from variants.xml will be included
+
+**tree_variants**
+    ([*str*]) -- list of variants which should be included; if undefined, all
+    variants from variants.xml will be included
+
 
 Example
 -------
@@ -195,6 +181,9 @@ Example
             'i386': ['buildinstall', 'iso', 'live'],
         })
     ]
+
+    tree_arches = ["x86_64"]
+    tree_variants = ["Server"]
 
 
 Image Naming
@@ -836,6 +825,14 @@ will be generated based on date, compose type and respin.
  * ``image_build_release``
  * ``live_images_release``
 
+Each configuration block can also optionally specify a list of architectures
+that are not release blocking with ``failable`` key. If any deliverable fails,
+it will not abort the whole compose. Due to limitations in how the tasks are
+done in Koji, if any architecture fails, all of them fail. Until this is
+resolved, it is not possible to configure failability per architecture. An
+empty list means required deliverable, non-empty list means non-blocking
+deliverable.
+
 
 Live Images Settings
 ====================
@@ -1059,6 +1056,8 @@ runroot environment.
 
     * ``config_branch`` -- (*str*) Git branch of the repo to use. Defaults to
       ``master``.
+    * ``failable`` -- (*[str]*) List of architectures for which this
+      deliverable is not release blocking.
 
 
 Example config
@@ -1096,6 +1095,8 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
     * ``release`` -- (*str*) Release value to set for the installer image. Set
       to ``None`` to use the date.respin format.
+    * ``failable`` -- (*[str]*) List of architectures for which this
+      deliverable is not release blocking.
 
     These optional keys are passed to ``lorax`` to customize the build.
 
@@ -1162,6 +1163,14 @@ they are not scratch builds).
     * ``url`` -- (*str*) URL pointing to a Git repository with ``Dockerfile``.
       Please see :ref:`git-urls` section for more details.
     * ``target`` -- (*str*) A Koji target to build the image for.
+
+    Optionally you can specify ``failable``. If it has a truthy value, failure
+    to create the image will not abort the whole compose.
+
+    .. note::
+        Once OSBS gains support for multiple architectures, the usage of this
+        option will most likely change to list architectures that are allowed
+        to fail.
 
     The configuration will pass other attributes directly to the Koji task.
     This includes ``name``, ``version``, ``release``, ``scratch`` and

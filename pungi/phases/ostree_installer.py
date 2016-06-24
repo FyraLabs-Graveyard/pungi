@@ -42,7 +42,9 @@ class OstreeInstallerThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        with util.failable(compose, variant, arch, 'ostree-installer'):
+        failable_arches = config.get('failable', [])
+        self.can_fail = util.can_arch_fail(failable_arches, arch)
+        with util.failable(compose, self.can_fail, variant, arch, 'ostree-installer'):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):
@@ -119,6 +121,7 @@ class OstreeInstallerThread(WorkerThread):
         img.bootable = True
         img.subvariant = variant.name
         img.implant_md5 = implant_md5
+        setattr(img, 'can_fail', self.can_fail)
         setattr(img, 'deliverable', 'ostree-installer')
         try:
             img.volume_id = iso_wrapper.get_volume_id(full_iso_path)

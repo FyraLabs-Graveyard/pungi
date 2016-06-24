@@ -62,7 +62,7 @@ class DummyCompose(object):
         self.log_debug = mock.Mock()
         self.log_warning = mock.Mock()
         self.get_image_name = mock.Mock(return_value='image-name')
-        self.image = mock.Mock(path='Client/i386/iso/image.iso')
+        self.image = mock.Mock(path='Client/i386/iso/image.iso', can_fail=False)
         self.im = mock.Mock(images={'Client': {'amd64': [self.image]}})
         self.old_composes = []
         self.config_dir = '/home/releng/config'

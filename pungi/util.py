@@ -464,10 +464,9 @@ def process_args(fmt, args):
 
 
 @contextlib.contextmanager
-def failable(compose, variant, arch, deliverable, subvariant=None):
+def failable(compose, can_fail, variant, arch, deliverable, subvariant=None):
     """If a deliverable can fail, log a message and go on as if it succeeded."""
     msg = deliverable.replace('-', ' ').capitalize()
-    can_fail = compose.can_fail(variant, arch, deliverable)
     if can_fail:
         compose.attempt_deliverable(variant, arch, deliverable, subvariant)
     else:
@@ -487,6 +486,11 @@ def failable(compose, variant, arch, deliverable, subvariant=None):
             compose.log_info(str(exc))
             tb = traceback.format_exc()
             compose.log_debug(tb)
+
+
+def can_arch_fail(failable_arches, arch):
+    """Check if `arch` is in `failable_arches` or `*` can fail."""
+    return '*' in failable_arches or arch in failable_arches
 
 
 def get_format_substs(compose, **kwargs):

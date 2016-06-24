@@ -155,9 +155,6 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
-            'failable_deliverables': [
-                ('^.*$', {'*': ['ostree']})
-            ]
         })
         pool = mock.Mock()
         cfg = {
@@ -166,6 +163,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
             'ostree_repo': self.repo,
+            'failable': ['*']
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -192,9 +190,6 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
-            'failable_deliverables': [
-                ('^.*$', {'*': ['ostree']})
-            ]
         })
         pool = mock.Mock()
         cfg = {
@@ -203,6 +198,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
             'ostree_repo': self.repo,
+            'failable': ['*']
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom

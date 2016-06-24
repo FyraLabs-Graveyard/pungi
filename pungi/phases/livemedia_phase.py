@@ -116,6 +116,7 @@ class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
                     'repo': self._get_repos(image_conf, variant),
                     'install_tree': self._get_install_tree(image_conf, variant),
                     'version': self.get_config(image_conf, 'version'),
+                    'failable_arches': image_conf.get('failable', []),
                 }
                 self.pool.add(LiveMediaThread(self.pool))
                 self.pool.queue_put((self.compose, variant, config))
@@ -127,8 +128,10 @@ class LiveMediaThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
         subvariant = config.pop('subvariant')
+        self.failable_arches = config.pop('failable_arches')
         self.num = num
-        with failable(compose, variant, '*', 'live-media', subvariant):
+        # TODO handle failure per architecture; currently not possible in single task
+        with failable(compose, bool(self.failable_arches), variant, '*', 'live-media', subvariant):
             self.worker(compose, variant, subvariant, config)
 
     def _get_log_file(self, compose, variant, subvariant, config):
@@ -204,6 +207,7 @@ class LiveMediaThread(WorkerThread):
             img.disc_count = 1
             img.bootable = True
             img.subvariant = subvariant
+            setattr(img, 'can_fail', bool(self.failable_arches))
             setattr(img, 'deliverable', 'live-media')
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 

@@ -125,7 +125,9 @@ def check(compose, variant, arch, image):
     result = True
     path = os.path.join(compose.paths.compose.topdir(), image.path)
     deliverable = getattr(image, 'deliverable')
-    with failable(compose, variant, arch, deliverable, subvariant=image.subvariant):
+    can_fail = getattr(image, 'can_fail', False)
+    with failable(compose, can_fail, variant, arch, deliverable,
+                  subvariant=image.subvariant):
         with open(path) as f:
             iso = is_iso(f)
             if image.format == 'iso' and not iso:

@@ -71,6 +71,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Client/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         }
         server_args = {
             "format": [('docker', 'tar.xz')],
@@ -95,6 +96,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         }
         self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
@@ -155,6 +157,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         }
         self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
@@ -249,6 +252,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -310,6 +314,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -370,6 +375,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
+            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -621,14 +627,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_fail(self, Linker, KojiWrapper):
-        compose = DummyCompose(self.topdir, {
-            'koji_profile': 'koji',
-            'failable_deliverables': [
-                ('^.*$', {
-                    '*': ['image-build']
-                })
-            ]
-        })
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
@@ -653,6 +652,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
             'scratch': False,
+            "failable_arches": ['*'],
         }
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.run_blocking_cmd.return_value = {
@@ -675,14 +675,7 @@ class TestCreateImageBuildThread(PungiTestCase):
     @mock.patch('pungi.phases.image_build.KojiWrapper')
     @mock.patch('pungi.phases.image_build.Linker')
     def test_process_handle_exception(self, Linker, KojiWrapper):
-        compose = DummyCompose(self.topdir, {
-            'koji_profile': 'koji',
-            'failable_deliverables': [
-                ('^.*$', {
-                    '*': ['image-build']
-                })
-            ]
-        })
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
@@ -707,6 +700,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
             'scratch': False,
+            "failable_arches": ['*'],
         }
 
         koji_wrapper = KojiWrapper.return_value
