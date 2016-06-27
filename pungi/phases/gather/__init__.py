@@ -114,6 +114,13 @@ class GatherPhase(PhaseBase):
         PhaseBase.__init__(self, compose)
         # pkgset_phase provides package_sets and path_prefix
         self.pkgset_phase = pkgset_phase
+        # Prepare empty manifest
+        self.manifest_file = self.compose.paths.compose.metadata("rpms.json")
+        self.manifest = Rpms()
+        self.manifest.compose.id = self.compose.compose_id
+        self.manifest.compose.type = self.compose.compose_type
+        self.manifest.compose.date = self.compose.compose_date
+        self.manifest.compose.respin = self.compose.compose_respin
 
     @staticmethod
     def check_deps():
@@ -124,22 +131,24 @@ class GatherPhase(PhaseBase):
         for i in ["release_name", "release_short", "release_version"]:
             errors.append(self.conf_assert_str(i))
 
-    def run(self):
-        pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets, self.pkgset_phase.path_prefix)
+    def _write_manifest(self):
+        self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
+        self.manifest.dump(self.manifest_file)
 
-        manifest_file = self.compose.paths.compose.metadata("rpms.json")
-        manifest = Rpms()
-        manifest.compose.id = self.compose.compose_id
-        manifest.compose.type = self.compose.compose_type
-        manifest.compose.date = self.compose.compose_date
-        manifest.compose.respin = self.compose.compose_respin
+    def run(self):
+        pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets,
+                                 self.pkgset_phase.path_prefix)
 
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch):
-                link_files(self.compose, arch, variant, pkg_map[arch][variant.uid], self.pkgset_phase.package_sets, manifest=manifest)
+                link_files(self.compose, arch, variant,
+                           pkg_map[arch][variant.uid],
+                           self.pkgset_phase.package_sets,
+                           manifest=self.manifest)
 
-        self.compose.log_info("Writing RPM manifest: %s" % manifest_file)
-        manifest.dump(manifest_file)
+    def stop(self):
+        self._write_manifest()
+        super(GatherPhase, self).stop()
 
 
 def get_parent_pkgs(arch, variant, result_dict):

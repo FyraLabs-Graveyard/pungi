@@ -244,7 +244,8 @@ def write_tree_info(compose, arch, variant, timestamp=None):
     ti.variants.add(var)
 
     repomd_path = os.path.join(var.repository, "repodata", "repomd.xml")
-    ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
+    if os.path.isfile(repomd_path):
+        ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
 
     for i in variant.get_variants(types=["addon"], arch=arch):
         addon = productmd.treeinfo.Variant(ti)
@@ -259,7 +260,8 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         var.add(addon)
 
         repomd_path = os.path.join(addon.repository, "repodata", "repomd.xml")
-        ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
+        if os.path.isfile(repomd_path):
+            ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
 
     class LoraxProduct(productmd.treeinfo.Release):
         def _check_short(self):

@@ -155,7 +155,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     manifest = productmd.rpms.Rpms()
     manifest.load(manifest_file)
 
-    for rpms_arch, data in manifest.rpms[variant.uid].iteritems():
+    for rpms_arch, data in manifest.rpms.get(variant.uid, {}).iteritems():
         if arch is not None and arch != rpms_arch:
             continue
         for srpm_data in data.itervalues():
