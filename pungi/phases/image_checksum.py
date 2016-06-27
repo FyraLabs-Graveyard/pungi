@@ -74,7 +74,7 @@ class ImageChecksumPhase(PhaseBase):
         base_checksum_name = self.compose.conf.get('media_checksum_base_filename', '')
         if base_checksum_name:
             substs = get_format_substs(self.compose, variant=variant, arch=arch)
-            base_checksum_name = base_checksum_name % substs
+            base_checksum_name = (base_checksum_name % substs).format(**substs)
             base_checksum_name += '-'
         return base_checksum_name
 

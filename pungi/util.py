@@ -354,13 +354,13 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         variant_uid = variant and variant.uid or None
 
     products = [
-        "%(release_short)s-%(version)s %(variant)s.%(arch)s",
-        "%(release_short)s-%(version)s %(arch)s",
+        "{release_short}-{version} {variant}.{arch}",
+        "{release_short}-{version} {arch}",
     ]
     products = compose.conf.get('image_volid_formats', products)
     layered_products = [
-        "%(release_short)s-%(version)s %(base_product_short)s-%(base_product_version)s %(variant)s.%(arch)s",
-        "%(release_short)s-%(version)s %(base_product_short)s-%(base_product_version)s %(arch)s",
+        "{release_short}-{version} {base_product_short}-{base_product_version} {variant}.{arch}",
+        "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",
     ]
     layered_products = compose.conf.get('image_volid_layered_product_formats', layered_products)
 
@@ -374,14 +374,15 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         if not variant_uid and "%(variant)s" in i:
             continue
         try:
-            volid = i % get_format_substs(compose,
-                                          variant=variant_uid,
-                                          release_short=release_short,
-                                          version=release_version,
-                                          arch=arch,
-                                          disc_type=disc_type or '',
-                                          base_product_short=base_product_short,
-                                          base_product_version=base_product_version)
+            args = get_format_substs(compose,
+                                     variant=variant_uid,
+                                     release_short=release_short,
+                                     version=release_version,
+                                     arch=arch,
+                                     disc_type=disc_type or '',
+                                     base_product_short=base_product_short,
+                                     base_product_version=base_product_version)
+            volid = (i % args).format(**args)
         except KeyError as err:
             raise RuntimeError('Failed to create volume id: unknown format element: %s' % err.message)
         volid = _apply_substitutions(compose, volid)
