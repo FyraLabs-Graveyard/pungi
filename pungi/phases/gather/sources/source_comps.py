@@ -48,8 +48,9 @@ class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
         groups = set()
         comps = CompsWrapper(self.compose.paths.work.comps(arch=arch))
 
-        if variant is not None:
-            # get packages for a particular variant
+        if variant is not None and variant.groups:
+            # Get packages for a particular variant. If the variant has no
+            # groups listed, all groups will be used.
             comps.filter_groups(variant.groups)
 
         for i in comps.get_comps_groups():

@@ -27,6 +27,13 @@
     </groups>
   </variant>
 
+  <variant id="Everything" name="Everything" type="variant">
+    <arches>
+      <arch>i386</arch>
+      <arch>x86_64</arch>
+    </arches>
+  </variant>
+
   <variant id="Client" name="Client" type="variant" has_optional="true">
     <arches>
       <arch>i386</arch>
