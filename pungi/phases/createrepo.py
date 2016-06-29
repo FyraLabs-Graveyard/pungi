@@ -194,7 +194,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
                                   checksum=createrepo_checksum, deltas=createrepo_deltas,
                                   oldpackagedirs=old_packages_dir)
-    log_file = compose.paths.log.log_file(arch, "createrepo-%s" % variant)
+    log_file = compose.paths.log.log_file(arch, "createrepo-%s.%s" % (variant, pkg_type))
     run(cmd, logfile=log_file, show_cmd=True)
 
     # call modifyrepo to inject productid
