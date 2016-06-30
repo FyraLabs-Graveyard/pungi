@@ -83,7 +83,7 @@ class CreaterepoPhase(PhaseBase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        if not self.compose.old_composes and 'createrepo_deltas' in self.compose.conf:
+        if not self.compose.old_composes and self.compose.conf.get('createrepo_deltas', False):
             errors.append('Can not generate deltas without old compose')
 
         if errors:
