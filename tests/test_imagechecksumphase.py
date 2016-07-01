@@ -137,6 +137,38 @@ class TestImageChecksumPhase(PungiTestCase):
                                                      mock.call(None, 'md5', 'cafebabe')],
                                                     any_order=True)
 
+    @mock.patch('os.path.exists')
+    @mock.patch('kobo.shortcuts.compute_file_checksums')
+    @mock.patch('pungi.phases.image_checksum.dump_checksums')
+    def test_checksum_save_individuals_custom_name_str_format(self, dump, cc, exists):
+        compose = DummyCompose(self.topdir, {
+            'media_checksums': ['md5', 'sha256'],
+            'media_checksum_base_filename': '{release_short}-{variant}-{version}-{date}{type_suffix}.{respin}'
+        })
+
+        phase = ImageChecksumPhase(compose)
+
+        exists.return_value = True
+        cc.return_value = {'md5': 'cafebabe', 'sha256': 'deadbeef'}
+
+        phase.run()
+
+        dump.assert_has_calls(
+            [mock.call(self.topdir + '/compose/Client/i386/iso', 'md5',
+                       {'image.iso': 'cafebabe'}, 'image.iso.MD5SUM'),
+             mock.call(self.topdir + '/compose/Client/i386/iso', 'sha256',
+                       {'image.iso': 'deadbeef'}, 'image.iso.SHA256SUM'),
+             mock.call(self.topdir + '/compose/Client/i386/iso', 'md5', {'image.iso': 'cafebabe'},
+                       'test-Client-1.0-20151203.t.0-MD5SUM'),
+             mock.call(self.topdir + '/compose/Client/i386/iso', 'sha256', {'image.iso': 'deadbeef'},
+                       'test-Client-1.0-20151203.t.0-SHA256SUM')],
+            any_order=True
+        )
+        cc.assert_called_once_with(self.topdir + '/compose/Client/i386/iso/image.iso', ['md5', 'sha256'])
+        compose.image.add_checksum.assert_has_calls([mock.call(None, 'sha256', 'deadbeef'),
+                                                     mock.call(None, 'md5', 'cafebabe')],
+                                                    any_order=True)
+
 
 class TestChecksums(unittest.TestCase):
     def setUp(self):

@@ -290,7 +290,7 @@ class Compose(kobo.log.LoggingBase):
 
         :raises RuntimeError: when unknown ``disc_type`` is given
         """
-        default_format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
+        default_format = "{compose_id}-{variant}-{arch}-{disc_type}{disc_num}{suffix}"
         format = format or self.conf.get('image_name_format', default_format)
 
         if arch == "src":
@@ -312,7 +312,7 @@ class Compose(kobo.log.LoggingBase):
                                  disc_num=disc_num,
                                  suffix=suffix)
         try:
-            return format % args
+            return (format % args).format(**args)
         except KeyError as err:
             raise RuntimeError('Failed to create image name: unknown format element: %s' % err.message)
 
