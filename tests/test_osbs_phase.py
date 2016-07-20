@@ -277,63 +277,6 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_set_release_dynamically(self, KojiWrapper, resolve_git_url):
-        cfg = {
-            'url': 'git://example.com/repo?#HEAD',
-            'target': 'f24-docker-candidate',
-            'release': None,
-            'name': 'fedora-server-docker',
-        }
-        self._setupMock(KojiWrapper, resolve_git_url)
-        last_build = mock.Mock()
-        self.wrapper.koji_proxy.getLatestBuilds.return_value = [last_build, mock.Mock()]
-        self.wrapper.koji_proxy.getNextRelease.return_value = 3
-
-        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
-
-        self._assertCorrectCalls(
-            {'release': 3, 'name': 'fedora-server-docker'},
-            [mock.call.koji_proxy.getLatestBuilds(
-                'f24-docker-candidate', package='fedora-server-docker'),
-             mock.call.koji_proxy.getNextRelease(last_build)])
-
-    @mock.patch('pungi.util.resolve_git_url')
-    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_set_release_dynamically_no_previous_build(self, KojiWrapper, resolve_git_url):
-        cfg = {
-            'url': 'git://example.com/repo?#HEAD',
-            'target': 'f24-docker-candidate',
-            'release': None,
-            'name': 'fedora-server-docker',
-        }
-        self._setupMock(KojiWrapper, resolve_git_url)
-        self.wrapper.koji_proxy.getLatestBuilds.return_value = []
-
-        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
-
-        self._assertCorrectCalls(
-            {'release': 1, 'name': 'fedora-server-docker'},
-            [mock.call.koji_proxy.getLatestBuilds(
-                'f24-docker-candidate', package='fedora-server-docker')])
-
-    @mock.patch('pungi.util.resolve_git_url')
-    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_set_release_dynamically_missing_name(self, KojiWrapper, resolve_git_url):
-        cfg = {
-            'url': 'git://example.com/repo?#HEAD',
-            'target': 'fedora-24-docker-candidate',
-            'release': None,
-        }
-        self._setupMock(KojiWrapper, resolve_git_url)
-        self.wrapper.koji_proxy.getLatestBuilds.return_value = []
-
-        with self.assertRaises(RuntimeError) as ctx:
-            self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
-
-        self.assertIn("missing config key 'name' for Server", str(ctx.exception))
-
-    @mock.patch('pungi.util.resolve_git_url')
-    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_failing_task(self, KojiWrapper, resolve_git_url):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',

@@ -1164,11 +1164,7 @@ they are not scratch builds).
     * ``target`` -- (*str*) A Koji target to build the image for.
 
     The configuration will pass other attributes directly to the Koji task.
-    This includes ``name``, ``version``, ``release``, ``scratch`` and
-    ``priority``.
-
-    If ``release`` is set explicitly to ``None``, the value will be retrieved
-    from Koji. If this feature is used, a ``name`` key must be set as well..
+    This includes ``name``, ``version``, ``scratch`` and ``priority``.
 
     A value for ``yum_repourls`` will be created automatically and point at a
     repository in the current compose.
@@ -1184,7 +1180,6 @@ Example config
             "name": "fedora-docker-base",
             "target": "f24-docker-candidate",
             "version": "24",
-            "release": None,
         }
     }
 

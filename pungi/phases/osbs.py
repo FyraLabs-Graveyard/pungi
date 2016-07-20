@@ -60,10 +60,6 @@ class OSBSThread(WorkerThread):
         try:
             source = util.resolve_git_url(config.pop('url'))
             target = config.pop('target')
-
-            # Set release dynamically
-            if 'release' in config and config['release'] is None:
-                config['release'] = self._get_release(koji, target, config['name'])
         except KeyError as exc:
             raise RuntimeError('OSBS: missing config key %s for %s'
                                % (exc, variant.uid))
@@ -133,14 +129,3 @@ class OSBSThread(WorkerThread):
             f.write('gpgcheck=0\n')
 
         return translate_path(compose, repo_file)
-
-    def _get_release(self, koji, target, name):
-        """
-        Get next release value based on last build. If no build has been done
-        yet (in given target), use 1 as initial value.
-        """
-        latest_builds = koji.koji_proxy.getLatestBuilds(target, package=name)
-        try:
-            return koji.koji_proxy.getNextRelease(latest_builds[0])
-        except IndexError:
-            return 1
