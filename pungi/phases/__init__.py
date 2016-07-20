@@ -16,19 +16,19 @@
 
 
 # phases in runtime order
-from init import InitPhase  # noqa
-from pkgset import PkgsetPhase  # noqa
-from gather import GatherPhase  # noqa
-from createrepo import CreaterepoPhase  # noqa
-from product_img import ProductimgPhase  # noqa
-from buildinstall import BuildinstallPhase  # noqa
-from extra_files import ExtraFilesPhase  # noqa
-from createiso import CreateisoPhase  # noqa
-from live_images import LiveImagesPhase  # noqa
-from image_build import ImageBuildPhase  # noqa
-from test import TestPhase  # noqa
-from image_checksum import ImageChecksumPhase    # noqa
-from livemedia_phase import LiveMediaPhase  # noqa
-from ostree import OSTreePhase  # noqa
-from ostree_installer import OstreeInstallerPhase  # noqa
-from osbs import OSBSPhase  # noqa
+from .init import InitPhase  # noqa
+from .pkgset import PkgsetPhase  # noqa
+from .gather import GatherPhase  # noqa
+from .createrepo import CreaterepoPhase  # noqa
+from .product_img import ProductimgPhase  # noqa
+from .buildinstall import BuildinstallPhase  # noqa
+from .extra_files import ExtraFilesPhase  # noqa
+from .createiso import CreateisoPhase  # noqa
+from .live_images import LiveImagesPhase  # noqa
+from .image_build import ImageBuildPhase  # noqa
+from .test import TestPhase  # noqa
+from .image_checksum import ImageChecksumPhase    # noqa
+from .livemedia_phase import LiveMediaPhase  # noqa
+from .ostree import OSTreePhase  # noqa
+from .ostree_installer import OstreeInstallerPhase  # noqa
+from .osbs import OSBSPhase  # noqa

@@ -24,7 +24,7 @@ from kobo.rpmlib import parse_nvra
 from productmd.rpms import Rpms
 
 from pungi.wrappers.scm import get_file_from_scm
-from link import link_files
+from .link import link_files
 
 from pungi.util import get_arch_variant_data, get_arch_data
 from pungi.phases.base import PhaseBase
