@@ -127,13 +127,15 @@ def check(compose, variant, arch, image):
     deliverable = getattr(image, 'deliverable')
     with failable(compose, variant, arch, deliverable, subvariant=image.subvariant):
         with open(path) as f:
-            if image.format == 'iso' and not is_iso(f):
+            iso = is_iso(f)
+            if image.format == 'iso' and not iso:
                 result = False
                 raise RuntimeError('%s does not look like an ISO file' % path)
-            if image.bootable and not has_mbr(f) and not has_gpt(f):
+            if image.bootable and not has_mbr(f) and not has_gpt(f) and not (iso and has_eltorito(f)):
                 result = False
                 raise RuntimeError(
-                    '%s is supposed to be bootable, but does not have MBR nor GPT' % path)
+                    '%s is supposed to be bootable, but does not have MBR nor '
+                    'GPT nor is it a bootable ISO' % path)
     # If exception is raised above, failable may catch it
     return result
 
@@ -154,3 +156,7 @@ def has_mbr(f):
 
 def has_gpt(f):
     return _check_magic(f, 0x200, 'EFI PART')
+
+
+def has_eltorito(f):
+    return _check_magic(f, 0x8801, 'CD001\1EL TORITO SPECIFICATION')

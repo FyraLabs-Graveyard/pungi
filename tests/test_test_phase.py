@@ -23,10 +23,12 @@ FAILABLE_CONFIG = {
     ]
 }
 
-UNBOOTABLE_ISO = ('\0' * 0x8001) + 'CD001' + ('\0' * 100)
-ISO_WITH_MBR = ('\0' * 0x1fe) + '\x55\xAA' + ('\0' * 0x7e01) + 'CD001' + ('\0' * 100)
-ISO_WITH_GPT = ('\0' * 0x200) + 'EFI PART' + ('\0' * 0x7df9) + 'CD001' + ('\0' * 100)
-ISO_WITH_MBR_AND_GPT = ('\0' * 0x1fe) + '\x55\xAAEFI PART' + ('\0' * 0x7df9) + 'CD001' + ('\0' * 100)
+PAD = '\0' * 100
+UNBOOTABLE_ISO = ('\0' * 0x8001) + 'CD001' + PAD
+ISO_WITH_MBR = ('\0' * 0x1fe) + '\x55\xAA' + ('\0' * 0x7e01) + 'CD001' + PAD
+ISO_WITH_GPT = ('\0' * 0x200) + 'EFI PART' + ('\0' * 0x7df9) + 'CD001' + PAD
+ISO_WITH_MBR_AND_GPT = ('\0' * 0x1fe) + '\x55\xAAEFI PART' + ('\0' * 0x7df9) + 'CD001' + PAD
+ISO_WITH_TORITO = ('\0' * 0x8001) + 'CD001' + ('\0' * 0x7fa) + '\0CD001\1EL TORITO SPECIFICATION' + PAD
 
 
 class TestCheckImageSanity(PungiTestCase):
@@ -124,6 +126,17 @@ class TestCheckImageSanity(PungiTestCase):
             test_phase.check_image_sanity(compose)
         except:
             self.fail('Bootable image with MBR and GPT must not raise')
+
+    def test_bootable_iso_with_el_torito_does_not_raise(self):
+        compose = DummyCompose(self.topdir, {})
+        compose.image.format = 'iso'
+        compose.image.bootable = True
+        touch(os.path.join(self.topdir, 'compose', compose.image.path), ISO_WITH_TORITO)
+
+        try:
+            test_phase.check_image_sanity(compose)
+        except:
+            self.fail('Bootable image with El Torito must not raise')
 
     def test_checks_with_optional_variant(self):
         compose = DummyCompose(self.topdir, {})
