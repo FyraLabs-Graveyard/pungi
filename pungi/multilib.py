@@ -18,8 +18,8 @@
 
 import re
 import fnmatch
-import pathmatch
 
+import pungi.pathmatch
 import pungi.gather
 
 
@@ -72,7 +72,7 @@ def read_runtime_patterns_from_file(path):
 
 
 def expand_runtime_patterns(patterns):
-    pm = pathmatch.PathMatch()
+    pm = pungi.pathmatch.PathMatch()
     result = []
     for path, pattern in patterns:
         for root in ("", "/opt/*/*/root"):
