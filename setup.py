@@ -41,7 +41,6 @@ setup(
         'bin/pungi-fedmsg-notification',
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
-        'bin/pungi-pylorax-find-templates',
     ],
     data_files      = [
         ('/usr/share/pungi', glob.glob('share/*.xsl')),

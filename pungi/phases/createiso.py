@@ -35,6 +35,8 @@ from pungi.util import (makedirs, get_volid, get_arch_variant_data, failable,
 from pungi.media_split import MediaSplitter, convert_media_size
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 
+from .. import createiso
+
 
 class CreateisoPhase(PhaseBase):
     name = "createiso"
@@ -125,30 +127,27 @@ class CreateisoPhase(PhaseBase):
                         cmd["mount"] = os.path.abspath(os.path.join(os.path.dirname(iso_dir),
                                                                     os.readlink(iso_dir)))
 
-                    cmd['cmd'] = [
-                        'pungi-createiso',
-                        '--output-dir=%s' % iso_dir,
-                        '--iso-name=%s' % filename,
-                        '--volid=%s' % volid,
-                        '--graft-points=%s' % graft_points,
-                        '--arch=%s' % arch,
-                    ]
+                    opts = createiso.CreateIsoOpts(
+                        output_dir=iso_dir,
+                        iso_name=filename,
+                        volid=volid,
+                        graft_points=graft_points,
+                        arch=arch,
+                        supported=self.compose.supported,
+                    )
 
                     if bootable:
-                        cmd['cmd'].append(
-                            '--buildinstall-method=%s' % self.compose.conf['buildinstall_method']
-                        )
-
-                    if self.compose.supported:
-                        cmd['cmd'].append('--supported')
+                        opts = opts._replace(buildinstall_method=self.compose.conf['buildinstall_method'])
 
                     if self.compose.conf.get('create_jigdo', True):
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
-                        cmd['cmd'].extend([
-                            '--jigdo-dir=%s' % jigdo_dir,
-                            '--os-tree=%s' % os_tree,
-                        ])
+                        opts = opts._replace(jigdo_dir=jigdo_dir, os_tree=os_tree)
 
+                    script_file = os.path.join(self.compose.paths.work.tmp_dir(arch, variant),
+                                               'createiso-%s.sh' % filename)
+                    with open(script_file, 'w') as f:
+                        createiso.write_script(opts, f)
+                    cmd['cmd'] = ['bash', script_file]
                     commands.append((cmd, variant, arch))
 
         if self.compose.notifier:
@@ -203,7 +202,9 @@ class CreateIsoThread(WorkerThread):
 
         if runroot:
             # run in a koji build root
-            packages = ["coreutils", "genisoimage", "isomd5sum", "jigdo", "pungi"]
+            packages = ["coreutils", "genisoimage", "isomd5sum"]
+            if compose.conf.get('create_jigdo', True):
+                packages.append('jigdo')
             extra_packages = {
                 'lorax': ['lorax'],
                 'buildinstall': ['anaconda'],
