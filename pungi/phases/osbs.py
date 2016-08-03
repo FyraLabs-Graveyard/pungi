@@ -47,7 +47,7 @@ class OSBSThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
         self.num = num
-        with util.failable(compose, variant, '*', 'osbs'):
+        with util.failable(compose, bool(config.pop('failable', None)), variant, '*', 'osbs'):
             self.worker(compose, variant, config)
 
     def worker(self, compose, variant, config):

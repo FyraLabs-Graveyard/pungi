@@ -190,9 +190,10 @@ class BuildinstallPhase(PhaseBase):
                 # TODO: label is not used
                 label = ""
                 volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
-                with failable(self.compose, variant, arch, 'buildinstall'):
+                can_fail = self.compose.can_fail(variant, arch, 'buildinstall')
+                with failable(self.compose, can_fail, variant, arch, 'buildinstall'):
                     tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
-                    link_boot_iso(self.compose, arch, variant)
+                    link_boot_iso(self.compose, arch, variant, can_fail)
 
 
 def get_kickstart_file(compose):
@@ -315,7 +316,7 @@ def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=Non
     shutil.rmtree(tmp_dir)
 
 
-def link_boot_iso(compose, arch, variant):
+def link_boot_iso(compose, arch, variant, can_fail):
     if arch == "src":
         return
 
@@ -369,6 +370,7 @@ def link_boot_iso(compose, arch, variant):
     img.bootable = True
     img.subvariant = variant.name
     img.implant_md5 = implant_md5
+    setattr(img, 'can_fail', can_fail)
     setattr(img, 'deliverable', 'buildinstall')
     try:
         img.volume_id = iso.get_volume_id(new_boot_iso_path)
@@ -382,7 +384,8 @@ class BuildinstallThread(WorkerThread):
     def process(self, item, num):
         # The variant is None unless lorax is used as buildinstall method.
         compose, arch, variant, cmd = item
-        with failable(compose, variant, arch, 'buildinstall'):
+        can_fail = compose.can_fail(variant, arch, 'buildinstall')
+        with failable(compose, can_fail, variant, arch, 'buildinstall'):
             self.worker(compose, arch, variant, cmd, num)
 
     def worker(self, compose, arch, variant, cmd, num):

@@ -233,6 +233,21 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
+    def test_run_failable(self, KojiWrapper, resolve_git_url):
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+            'failable': ['*']
+        }
+        self._setupMock(KojiWrapper, resolve_git_url)
+
+        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
+
+        self._assertCorrectCalls({})
+        self._assertCorrectMetadata()
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_run_with_more_args(self, KojiWrapper, resolve_git_url):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
@@ -296,10 +311,10 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'fedora-24-docker-candidate',
+            'failable': ['*']
         }
         self._setupMock(KojiWrapper, resolve_git_url)
         self.wrapper.watch_task.return_value = 1
-        self.compose.conf['failable_deliverables'] = [('.*', {'*': ['osbs']})]
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 

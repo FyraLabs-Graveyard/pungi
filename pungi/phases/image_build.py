@@ -157,6 +157,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
                     ),
                     "link_type": self.compose.conf.get("link_type", "hardlink-or-copy"),
                     "scratch": image_conf['image-build'].pop('scratch', False),
+                    "failable_arches": image_conf.pop('failable', []),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
                 self.pool.queue_put((self.compose, cmd))
@@ -172,7 +173,10 @@ class CreateImageBuildThread(WorkerThread):
         compose, cmd = item
         variant = cmd["image_conf"]["image-build"]["variant"]
         subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
-        with failable(compose, variant, '*', 'image-build', subvariant):
+        failable_arches = cmd.get('failable_arches', [])
+        self.can_fail = bool(failable_arches)
+        # TODO handle failure per architecture; currently not possible in single task
+        with failable(compose, self.can_fail, variant, '*', 'image-build', subvariant):
             self.worker(num, compose, variant, subvariant, cmd)
 
     def worker(self, num, compose, variant, subvariant, cmd):
@@ -253,6 +257,7 @@ class CreateImageBuildThread(WorkerThread):
             img.disc_count = 1
             img.bootable = False
             img.subvariant = subvariant
+            setattr(img, 'can_fail', self.can_fail)
             setattr(img, 'deliverable', 'image-build')
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 

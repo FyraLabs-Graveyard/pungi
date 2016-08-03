@@ -17,12 +17,6 @@ import pungi.phases.test as test_phase
 from tests.helpers import DummyCompose, PungiTestCase, touch
 
 
-FAILABLE_CONFIG = {
-    'failable_deliverables': [
-        ('^.+$', {'*': ['iso']}),
-    ]
-}
-
 PAD = '\0' * 100
 UNBOOTABLE_ISO = ('\0' * 0x8001) + 'CD001' + PAD
 ISO_WITH_MBR = ('\0' * 0x1fe) + '\x55\xAA' + ('\0' * 0x7e01) + 'CD001' + PAD
@@ -40,8 +34,9 @@ class TestCheckImageSanity(PungiTestCase):
             test_phase.check_image_sanity(compose)
 
     def test_missing_file_doesnt_report_if_failable(self):
-        compose = DummyCompose(self.topdir, FAILABLE_CONFIG)
+        compose = DummyCompose(self.topdir, {})
         compose.image.deliverable = 'iso'
+        compose.image.can_fail = True
 
         try:
             test_phase.check_image_sanity(compose)
@@ -83,10 +78,11 @@ class TestCheckImageSanity(PungiTestCase):
                       str(ctx.exception))
 
     def test_failable_bootable_iso_without_mbr_gpt_doesnt_raise(self):
-        compose = DummyCompose(self.topdir, FAILABLE_CONFIG)
+        compose = DummyCompose(self.topdir, {})
         compose.image.format = 'iso'
         compose.image.bootable = True
         compose.image.deliverable = 'iso'
+        compose.image.can_fail = True
         touch(os.path.join(self.topdir, 'compose', compose.image.path), UNBOOTABLE_ISO)
 
         try:

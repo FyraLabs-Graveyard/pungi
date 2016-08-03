@@ -157,6 +157,7 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
                         "type": type,
                         "label": "",  # currently not used
                         "subvariant": subvariant,
+                        "failable_arches": data.get('failable', []),
                     }
 
                     cmd["repos"] = self._get_repos(arch, variant, data)
@@ -199,7 +200,10 @@ class CreateLiveImageThread(WorkerThread):
 
     def process(self, item, num):
         compose, cmd, variant, arch = item
-        with failable(compose, variant, arch, 'live', cmd.get('subvariant')):
+        self.failable_arches = cmd.get('failable_arches', [])
+        # TODO handle failure per architecture; currently not possible in single task
+        self.can_fail = bool(self.failable_arches)
+        with failable(compose, self.can_fail, variant, arch, 'live', cmd.get('subvariant')):
             self.worker(compose, cmd, variant, arch, num)
 
     def worker(self, compose, cmd, variant, arch, num):
@@ -290,6 +294,7 @@ class CreateLiveImageThread(WorkerThread):
         img.disc_count = 1
         img.bootable = True
         img.subvariant = subvariant
+        setattr(img, 'can_fail', self.can_fail)
         setattr(img, 'deliverable', 'live')
         compose.im.add(variant=variant.uid, arch=arch, image=img)
 

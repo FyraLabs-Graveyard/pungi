@@ -73,6 +73,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      }))])
 
     @mock.patch('pungi.util.resolve_git_url')
@@ -133,6 +134,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -151,6 +153,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -169,6 +172,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': '25',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      }))])
 
     @mock.patch('pungi.util.resolve_git_url')
@@ -229,6 +233,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -247,6 +252,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      })),
                           mock.call((compose,
                                      compose.variants['Server'],
@@ -265,6 +271,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server/$basearch/os',
                                          'version': '25',
                                          'subvariant': 'Server',
+                                         'failable_arches': [],
                                      }))])
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
@@ -335,6 +342,7 @@ class TestLiveMediaPhase(PungiTestCase):
                         'version': 'Rawhide',
                         'install_tree_from': 'Everything',
                         'subvariant': 'Something',
+                        'failable': ['*'],
                     }
                 ]
             }
@@ -366,6 +374,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Everything/$basearch/os',
                                          'version': 'Rawhide',
                                          'subvariant': 'Something',
+                                         'failable_arches': ['*'],
                                      }))])
 
 
@@ -393,6 +402,7 @@ class TestLiveMediaThread(PungiTestCase):
             'title': None,
             'version': 'Rawhide',
             'subvariant': 'KDE',
+            'failable_arches': [],
         }
         pool = mock.Mock()
 
@@ -479,9 +489,6 @@ class TestLiveMediaThread(PungiTestCase):
     def test_handle_koji_fail(self, KojiWrapper, get_file_size, get_mtime):
         compose = DummyCompose(self.topdir, {
             'koji_profile': 'koji',
-            'failable_deliverables': [
-                ('^.+$', {'*': ['live-media']})
-            ]
         })
         config = {
             'arches': ['amd64', 'x86_64'],
@@ -497,6 +504,7 @@ class TestLiveMediaThread(PungiTestCase):
             'title': None,
             'version': 'Rawhide',
             'subvariant': 'KDE',
+            'failable_arches': ['*'],
         }
         pool = mock.Mock()
 
@@ -543,6 +551,7 @@ class TestLiveMediaThread(PungiTestCase):
             'title': None,
             'version': 'Rawhide',
             'subvariant': 'KDE',
+            'failable_arches': ['*'],
         }
         pool = mock.Mock()
 

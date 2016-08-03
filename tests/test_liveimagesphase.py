@@ -56,6 +56,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -104,6 +105,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -149,6 +151,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -196,6 +199,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': None,
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64')),
@@ -216,6 +220,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': None,
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -264,6 +269,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'appliance',
                                            'release': None,
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -316,6 +322,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'appliance',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -368,6 +375,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'appliance',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -415,6 +423,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'type': 'live',
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
+                                           'failable_arches': [],
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -665,10 +674,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_handles_fail(self, KojiWrapper, run, copy2):
-        compose = DummyCompose(self.topdir, {
-            'koji_profile': 'koji',
-            'failable_deliverables': [('^.+$', {'*': ['live']})],
-        })
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
@@ -687,6 +693,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'subvariant': 'Client',
             'release': 'xyz',
             'type': 'live',
+            'failable_arches': ['*'],
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -711,10 +718,7 @@ class TestCreateLiveImageThread(PungiTestCase):
     @mock.patch('pungi.phases.live_images.run')
     @mock.patch('pungi.phases.live_images.KojiWrapper')
     def test_process_handles_exception(self, KojiWrapper, run, copy2):
-        compose = DummyCompose(self.topdir, {
-            'koji_profile': 'koji',
-            'failable_deliverables': [('^.+$', {'*': ['live']})],
-        })
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
             'ks_file': '/path/to/ks_file',
@@ -733,6 +737,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'subvariant': 'Client',
             'release': 'xyz',
             'type': 'live',
+            'failable_arches': ['*'],
         }
 
         koji_wrapper = KojiWrapper.return_value

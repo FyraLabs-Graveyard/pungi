@@ -355,9 +355,9 @@ class TestCopyFiles(PungiTestCase):
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
             link_boot_iso.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server']),
-             mock.call(compose, 'amd64', compose.variants['Client']),
-             mock.call(compose, 'amd64', compose.variants['Server'])])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], False),
+             mock.call(compose, 'amd64', compose.variants['Client'], False),
+             mock.call(compose, 'amd64', compose.variants['Server'], False)])
 
     @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
@@ -397,9 +397,9 @@ class TestCopyFiles(PungiTestCase):
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
             link_boot_iso.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server']),
-             mock.call(compose, 'amd64', compose.variants['Client']),
-             mock.call(compose, 'amd64', compose.variants['Server'])])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], False),
+             mock.call(compose, 'amd64', compose.variants['Client'], False),
+             mock.call(compose, 'amd64', compose.variants['Server'], False)])
 
     @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
@@ -622,7 +622,7 @@ class TestSymlinkIso(PungiTestCase):
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
-        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
+        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'], False)
 
         tgt = self.topdir + '/compose/Server/x86_64/iso/image-name'
         self.assertTrue(os.path.isfile(tgt))
@@ -654,6 +654,7 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(image.disc_count, 1)
         self.assertEqual(image.bootable, True)
         self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(image.can_fail, False)
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])
 
@@ -671,7 +672,7 @@ class TestSymlinkIso(PungiTestCase):
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
-        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'])
+        link_boot_iso(self.compose, 'x86_64', self.compose.variants['Server'], True)
 
         tgt = self.topdir + '/compose/Server/x86_64/iso/image-name'
         self.assertTrue(os.path.isfile(tgt))
@@ -703,6 +704,7 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(image.disc_count, 1)
         self.assertEqual(image.bootable, True)
         self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(image.can_fail, True)
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])
 

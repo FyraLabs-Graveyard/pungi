@@ -432,14 +432,12 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'release_version': 'Rawhide',
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
-            'failable_deliverables': [
-                ('^.+$', {'*': ['ostree-installer']})
-            ],
         })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
             'release': None,
+            'failable': ['x86_64']
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
@@ -466,14 +464,12 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'release_version': 'Rawhide',
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
-            'failable_deliverables': [
-                ('^.+$', {'*': ['ostree-installer']})
-            ],
         })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
             'release': None,
+            'failable': ['*'],
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {

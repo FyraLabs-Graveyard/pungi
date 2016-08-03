@@ -39,7 +39,9 @@ class OSTreeThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        with util.failable(compose, variant, arch, 'ostree'):
+        failable_arches = config.get('failable', [])
+        with util.failable(compose, util.can_arch_fail(failable_arches, arch),
+                           variant, arch, 'ostree'):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):
