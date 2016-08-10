@@ -425,7 +425,9 @@ def get_prepopulate_packages(compose, arch, variant):
             for i in packages:
                 pkg_name, pkg_arch = split_name_arch(i)
                 if pkg_arch not in get_compatible_arches(arch, multilib=True):
-                    raise ValueError("Incompatible package arch '%s' for tree arch '%s'" % (pkg_arch, arch))
+                    raise ValueError(
+                        "Incompatible package arch '%s' for tree arch '%s' in prepopulate package '%s'"
+                        % (pkg_arch, arch, pkg_name))
                 result.add(i)
     return result
 
@@ -435,7 +437,9 @@ def get_additional_packages(compose, arch, variant):
     for i in get_arch_variant_data(compose.conf, "additional_packages", arch, variant):
         pkg_name, pkg_arch = split_name_arch(i)
         if pkg_arch is not None and pkg_arch not in get_compatible_arches(arch, multilib=True):
-            raise ValueError("Incompatible package arch '%s' for tree arch '%s'" % (pkg_arch, arch))
+            raise ValueError(
+                "Incompatible package arch '%s' for tree arch '%s' in additional package '%s'"
+                % (pkg_arch, arch, pkg_name))
         result.add((pkg_name, pkg_arch))
     return result
 
