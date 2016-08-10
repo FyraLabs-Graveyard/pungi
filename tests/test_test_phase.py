@@ -65,8 +65,9 @@ class TestCheckImageSanity(PungiTestCase):
 
         self.assertIn('does not look like an ISO file', str(ctx.exception))
 
-    def test_bootable_iso_without_mbr_or_gpt_raises(self):
+    def test_bootable_iso_without_mbr_or_gpt_raises_on_x86_64(self):
         compose = DummyCompose(self.topdir, {})
+        compose.image.arch = 'x86_64'
         compose.image.format = 'iso'
         compose.image.bootable = True
         touch(os.path.join(self.topdir, 'compose', compose.image.path), UNBOOTABLE_ISO)
@@ -76,6 +77,18 @@ class TestCheckImageSanity(PungiTestCase):
 
         self.assertIn('is supposed to be bootable, but does not have MBR nor GPT',
                       str(ctx.exception))
+
+    def test_bootable_iso_without_mbr_or_gpt_doesnt_raise_on_arm(self):
+        compose = DummyCompose(self.topdir, {})
+        compose.image.arch = 'armhfp'
+        compose.image.format = 'iso'
+        compose.image.bootable = True
+        touch(os.path.join(self.topdir, 'compose', compose.image.path), UNBOOTABLE_ISO)
+
+        try:
+            test_phase.check_image_sanity(compose)
+        except:
+            self.fail('Failable deliverable must not raise')
 
     def test_failable_bootable_iso_without_mbr_gpt_doesnt_raise(self):
         compose = DummyCompose(self.topdir, {})

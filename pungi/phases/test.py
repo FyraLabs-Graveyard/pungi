@@ -133,7 +133,11 @@ def check(compose, variant, arch, image):
             if image.format == 'iso' and not iso:
                 result = False
                 raise RuntimeError('%s does not look like an ISO file' % path)
-            if image.bootable and not has_mbr(f) and not has_gpt(f) and not (iso and has_eltorito(f)):
+            if (image.arch in ('x86_64', 'i386') and
+                    image.bootable and
+                    not has_mbr(f) and
+                    not has_gpt(f) and
+                    not (iso and has_eltorito(f))):
                 result = False
                 raise RuntimeError(
                     '%s is supposed to be bootable, but does not have MBR nor '
