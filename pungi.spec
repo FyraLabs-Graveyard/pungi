@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.7
+Version:        4.1.8
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -70,6 +70,28 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Aug 10 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.8-1
+- [createiso] Use shell script for runroot (lsedlar)
+- Merge #357 `Improve error messages for gathering packages` (dennis)
+- [test] Only check bootability for images on x86_64 and i386 (lsedlar)
+- Improve error messages for gathering packages (lsedlar)
+- Merge #339 `Refactor failables, step 1` (dennis)
+- Refactor failables (lsedlar)
+- Stop setting release in OSBS phase (lsedlar)
+- Merge #351 `Remove ambiguous imports` (dennis)
+- [test] Correctly check bootable ISOs (lsedlar)
+- Remove ambiguous imports (lsedlar)
+- Merge #347 `Remove duplicate definition of find_old_composes.`
+  (lubomir.sedlar)
+- Merge #342 `Simplify naming format placeholders` (dennis)
+- Merge #345 `createrepo: use separate logs for different pkg_type` (dennis)
+- Remove duplicate definition of find_old_composes... (rbean)
+- [createrepo] fix 'createrepo_deltas' option (qwan)
+- createrepo: use separate logs for different pkg_type (lsedlar)
+- Simplify naming format placeholders (lsedlar)
+- Treat variants without comps groups as having all of them (lsedlar)
+- Always generate rpms.json file (lsedlar)
+
 * Thu Jun 23 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.7-1
 - [scm] Add logging for exporting local files (lsedlar)
 - [extra-files] Only copy files when there is a config (lsedlar)
