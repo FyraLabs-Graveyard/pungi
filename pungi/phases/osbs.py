@@ -89,7 +89,7 @@ class OSBSThread(WorkerThread):
     def _add_metadata(self, koji_proxy, variant, task_id):
         # Create metadata
         result = koji_proxy.getTaskResult(task_id)
-        build_id = result['koji_builds'][0]
+        build_id = int(result['koji_builds'][0])
         buildinfo = koji_proxy.getBuild(build_id)
         archives = koji_proxy.listArchives(build_id)
 

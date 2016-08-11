@@ -209,8 +209,8 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 mock.call.watch_task(
                     12345, self.topdir + '/logs/global/osbs/Server-1-watch-task.log'),
                 mock.call.koji_proxy.getTaskResult(12345),
-                mock.call.koji_proxy.getBuild('54321'),
-                mock.call.koji_proxy.listArchives('54321')])
+                mock.call.koji_proxy.getBuild(54321),
+                mock.call.koji_proxy.listArchives(54321)])
 
     def _assertRepoFile(self):
         with open(self.topdir + '/work/global/tmp-Server/compose-rpms-1.repo') as f:
