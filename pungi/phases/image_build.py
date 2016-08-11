@@ -157,7 +157,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
                     ),
                     "link_type": self.compose.conf.get("link_type", "hardlink-or-copy"),
                     "scratch": image_conf['image-build'].pop('scratch', False),
-                    "failable_arches": image_conf.pop('failable', []),
+                    "failable_arches": image_conf['image-build'].pop('failable', []),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
                 self.pool.queue_put((self.compose, cmd))
