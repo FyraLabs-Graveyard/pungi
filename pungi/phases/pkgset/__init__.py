@@ -15,14 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 
-import os
-
-from kobo.shortcuts import force_list
-
-import pungi.phases.pkgset.pkgsets
-from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
-from pungi.util import is_arch_multilib
 
 
 class PkgsetPhase(PhaseBase):
