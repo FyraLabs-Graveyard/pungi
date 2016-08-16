@@ -106,8 +106,8 @@ def run_repoclosure(compose):
 def check_image_sanity(compose):
     """
     Go through all images in manifest and make basic sanity tests on them. If
-    any check fails for a failable deliverable, it will be removed from
-    manifest and logged. Otherwise the compose will be aborted.
+    any check fails for a failable deliverable, a message will be printed and
+    logged. Otherwise the compose will be aborted.
     """
     im = compose.im
     for variant in compose.get_variants():
@@ -116,13 +116,11 @@ def check_image_sanity(compose):
         for arch in variant.arches:
             if arch not in im.images[variant.uid]:
                 continue
-            images = im.images[variant.uid][arch]
-            im.images[variant.uid][arch] = [img for img in images
-                                            if check(compose, variant, arch, img)]
+            for img in im.images[variant.uid][arch]:
+                check(compose, variant, arch, img)
 
 
 def check(compose, variant, arch, image):
-    result = True
     path = os.path.join(compose.paths.compose.topdir(), image.path)
     deliverable = getattr(image, 'deliverable')
     can_fail = getattr(image, 'can_fail', False)
@@ -131,19 +129,17 @@ def check(compose, variant, arch, image):
         with open(path) as f:
             iso = is_iso(f)
             if image.format == 'iso' and not iso:
-                result = False
                 raise RuntimeError('%s does not look like an ISO file' % path)
             if (image.arch in ('x86_64', 'i386') and
                     image.bootable and
                     not has_mbr(f) and
                     not has_gpt(f) and
                     not (iso and has_eltorito(f))):
-                result = False
                 raise RuntimeError(
                     '%s is supposed to be bootable, but does not have MBR nor '
                     'GPT nor is it a bootable ISO' % path)
-    # If exception is raised above, failable may catch it
-    return result
+    # If exception is raised above, failable may catch it, in which case
+    # nothing else will happen.
 
 
 def _check_magic(f, offset, bytes):
