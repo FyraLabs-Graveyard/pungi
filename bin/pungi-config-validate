@@ -18,19 +18,38 @@ if here != '/usr/bin':
 
 import pungi.compose
 import pungi.phases
+import pungi.paths
 
 
 class ValidationCompose(pungi.compose.Compose):
-    def __init__(self, conf, has_old):
+    def __init__(self, conf, has_old, topdir):
+        self.topdir = topdir
         self.conf = conf
         self._logger = None
         self.just_phases = []
         self.skip_phases = []
         self.has_old_composes = has_old
+        self.paths = pungi.paths.Paths(self)
 
     @property
     def old_composes(self):
         return '/dummy' if self.has_old_composes else None
+
+    @property
+    def compose_id(self):
+        return 'Dummy-1.0-20160811.t.0'
+
+    @property
+    def compose_type(self):
+        return 'test'
+
+    @property
+    def compose_date(self):
+        return '20160811'
+
+    @property
+    def compose_respin(self):
+        return '0'
 
 
 @contextlib.contextmanager
@@ -44,7 +63,7 @@ def run(config, topdir, has_old):
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(config)
 
-    compose = ValidationCompose(conf, has_old)
+    compose = ValidationCompose(conf, has_old, topdir)
 
     pkgset_phase = pungi.phases.PkgsetPhase(compose)
     phases = [
