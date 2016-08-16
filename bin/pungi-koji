@@ -18,7 +18,7 @@ if here != '/usr/bin':
     # Git checkout
     sys.path[0] = os.path.dirname(here)
 
-from pungi import __version__
+from pungi import get_full_version
 
 
 # force C locales
@@ -123,7 +123,7 @@ def main():
     opts, args = parser.parse_args()
 
     if opts.version:
-        print("pungi %s" % __version__)
+        print("pungi %s" % get_full_version())
         sys.exit(0)
 
     if opts.target_dir and opts.compose_dir:
@@ -208,6 +208,7 @@ def run_compose(compose):
 
     compose.write_status("STARTED")
     compose.log_info("Host: %s" % socket.gethostname())
+    compose.log_info("Pungi version: %s" % get_full_version())
     compose.log_info("User name: %s" % getpass.getuser())
     compose.log_info("Working directory: %s" % os.getcwd())
     compose.log_info("Command line: %s" % " ".join([pipes.quote(arg) for arg in sys.argv]))
