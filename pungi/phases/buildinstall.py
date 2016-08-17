@@ -104,20 +104,23 @@ class BuildinstallPhase(PhaseBase):
                 bugurl = data.get('bugurl')
             if not data.get('nomacboot', True):
                 nomacboot = False
+        output_dir = os.path.join(output_dir, variant.uid)
         lorax = LoraxWrapper()
-        return lorax.get_lorax_cmd(self.compose.conf["release_name"],
-                                   self.compose.conf["release_version"],
-                                   self.compose.conf["release_version"],
-                                   repo_baseurl,
-                                   os.path.join(output_dir, variant.uid),
-                                   variant=variant.uid,
-                                   buildinstallpackages=variant.buildinstallpackages,
-                                   is_final=self.compose.supported,
-                                   buildarch=buildarch,
-                                   volid=volid,
-                                   nomacboot=nomacboot,
-                                   bugurl=bugurl,
-                                   noupgrade=noupgrade)
+        lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
+                                        self.compose.conf["release_version"],
+                                        self.compose.conf["release_version"],
+                                        repo_baseurl,
+                                        output_dir,
+                                        variant=variant.uid,
+                                        buildinstallpackages=variant.buildinstallpackages,
+                                        is_final=self.compose.supported,
+                                        buildarch=buildarch,
+                                        volid=volid,
+                                        nomacboot=nomacboot,
+                                        bugurl=bugurl,
+                                        noupgrade=noupgrade)
+        return 'rm -rf %s && %s' % (pipes.quote(output_dir),
+                                    ' '.join([pipes.quote(x) for x in lorax_cmd]))
 
     def run(self):
         lorax = LoraxWrapper()
@@ -394,18 +397,17 @@ class BuildinstallThread(WorkerThread):
         log_filename = ('buildinstall-%s' % variant.uid) if variant else 'buildinstall'
         log_file = compose.paths.log.log_file(arch, log_filename)
 
-        msg = "Running buildinstall for arch %s" % arch
+        msg = "Running buildinstall for arch %s, variant %s" % (arch, variant)
 
         output_dir = compose.paths.work.buildinstall_dir(arch)
-        if os.path.isdir(output_dir):
-            if os.listdir(output_dir):
-                # output dir is *not* empty -> SKIP
-                self.pool.log_warning("[SKIP ] %s" % msg)
-                return
-            else:
-                # output dir is empty -> remove it and run buildinstall
-                self.pool.log_debug("Removing existing (but empty) buildinstall dir: %s" % output_dir)
-                os.rmdir(output_dir)
+        if variant:
+            output_dir = os.path.join(output_dir, variant.uid)
+
+        if os.path.isdir(output_dir) and os.listdir(output_dir):
+            # output dir is *not* empty -> SKIP
+            self.pool.log_warning(
+                '[SKIP ] Buildinstall for arch %s, variant %s' % (arch, variant))
+            return
 
         self.pool.log_info("[BEGIN] %s" % msg)
 

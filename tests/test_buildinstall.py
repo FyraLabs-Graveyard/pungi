@@ -65,6 +65,7 @@ class TestBuildinstallPhase(PungiTestCase):
         })
 
         get_volid.return_value = 'vol_id'
+        loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
         phase = BuildinstallPhase(compose)
 
@@ -74,6 +75,11 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
+        self.assertItemsEqual(
+            [call[0][0][3] for call in pool.queue_put.call_args_list],
+            ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
+             'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
+             'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
         self.assertItemsEqual(
@@ -114,6 +120,7 @@ class TestBuildinstallPhase(PungiTestCase):
 
         get_volid.return_value = 'vol_id'
         compose.variants['Server'].is_empty = True
+        loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
         phase = BuildinstallPhase(compose)
 
@@ -121,6 +128,9 @@ class TestBuildinstallPhase(PungiTestCase):
 
         pool = poolCls.return_value
         self.assertEqual(1, len(pool.queue_put.mock_calls))
+        self.assertItemsEqual(
+            [call[0][0][3] for call in pool.queue_put.call_args_list],
+            ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir])
 
         # Obtained correct lorax command.
         lorax = loraxCls.return_value
@@ -226,6 +236,7 @@ class TestBuildinstallPhase(PungiTestCase):
         })
 
         get_volid.return_value = 'vol_id'
+        loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
         phase = BuildinstallPhase(compose)
 
@@ -235,6 +246,11 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
+        self.assertItemsEqual(
+            [call[0][0][3] for call in pool.queue_put.call_args_list],
+            ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
+             'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
+             'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
         self.assertItemsEqual(
@@ -280,6 +296,7 @@ class TestBuildinstallPhase(PungiTestCase):
         })
 
         get_volid.return_value = 'vol_id'
+        loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
         phase = BuildinstallPhase(compose)
 
@@ -289,6 +306,11 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
+        self.assertItemsEqual(
+            [call[0][0][3] for call in pool.queue_put.call_args_list],
+            ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
+             'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
+             'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
         self.assertItemsEqual(
@@ -600,6 +622,36 @@ class BuildinstallThreadTestCase(PungiTestCase):
             mock.call('[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])
+
+    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_skips_on_existing_output_dir(self, run, get_buildroot_rpms, KojiWrapperMock):
+        compose = BuildInstallCompose(self.topdir, {
+            'buildinstall_method': 'lorax',
+            'runroot': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['buildinstall']})
+            ],
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+        pool = mock.Mock()
+        cmd = mock.Mock()
+
+        dummy_file = os.path.join(self.topdir, 'work/x86_64/buildinstall/Server/dummy')
+        touch(os.path.join(dummy_file))
+
+        t = BuildinstallThread(pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
+
+        self.assertEqual(0, len(run.mock_calls))
+
+        self.assertTrue(os.path.exists(dummy_file))
 
 
 class TestSymlinkIso(PungiTestCase):
