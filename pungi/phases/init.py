@@ -47,12 +47,14 @@ class InitPhase(PhaseBase):
 
             # write variant comps
             for variant in self.compose.get_variants():
-                should_preserve = variant.uid in self.compose.conf['keep_original_comps']
                 for arch in variant.arches:
-                    if should_preserve:
-                        copy_variant_comps(self.compose, arch, variant)
-                    else:
+                    if variant.groups:
+                        # The variant lists only some groups, run filter.
                         write_variant_comps(self.compose, arch, variant)
+                    else:
+                        # The variant does not mention any groups, copy
+                        # original file.
+                        copy_variant_comps(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
 

@@ -141,10 +141,6 @@ Options
     (*bool*) -- When set to ``False``, the comps files for variants will not
     have their environments filtered to match the variant.
 
-**keep_original_comps** [optional]
-    (*list*) -- List of variants for which the original comps file will be
-    copied without any modifications. Overwrites `comps_filter_environments`.
-
 **tree_arches**
     ([*str*]) -- list of architectures which should be included; if undefined,
     all architectures from variants.xml will be included

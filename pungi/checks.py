@@ -577,8 +577,7 @@ def _make_schema():
                 "default": True,
             },
             "keep_original_comps": {
-                "$ref": "#/definitions/list_of_strings",
-                "default": []
+                "deprecated": "no <groups> tag for respective variant in variants XML"
             },
 
             "link_type": {

@@ -369,22 +369,8 @@ class LiveMediaConfigTestCase(unittest.TestCase):
         self.assertEqual(checks.validate(cfg), [])
 
 
-class InitConfigTestCase(unittest.TestCase):
-    def test_validate_keep_original_comps_empty(self):
-        cfg = load_config(PKGSET_REPOS,
-                          keep_original_comps=[])
-
-        self.assertEqual(checks.validate(cfg), [])
-
-    def test_validate_keep_original_comps_filled_in(self):
-        cfg = load_config(PKGSET_REPOS,
-                          keep_original_comps=['Everything'])
-
-        self.assertEqual(checks.validate(cfg), [])
-
-
 class TestSuggestions(unittest.TestCase):
-    def test_validate_keep_original_comps_empty(self):
+    def test_with_a_typo(self):
         cfg = load_config(PKGSET_REPOS,
                           product_pid=None)
 
