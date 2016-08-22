@@ -183,36 +183,6 @@ class TestBuildinstallPhase(PungiTestCase):
             [mock.call(compose, 'x86_64', disc_type='DVD'),
              mock.call(compose, 'amd64', disc_type='DVD')])
 
-    def test_global_upgrade_with_lorax(self):
-        compose = BuildInstallCompose(self.topdir, {
-            'bootable': True,
-            'buildinstall_method': 'lorax',
-            'buildinstall_upgrade_image': True,
-        })
-
-        phase = BuildinstallPhase(compose)
-
-        with self.assertRaises(ValueError) as ctx:
-            phase.validate()
-
-        self.assertIn('Deprecated config option: buildinstall_upgrade_image',
-                      str(ctx.exception))
-
-    def test_lorax_options_with_buildinstall(self):
-        compose = BuildInstallCompose(self.topdir, {
-            'bootable': True,
-            'buildinstall_method': 'buildinstall',
-            'lorax_options': [],
-        })
-
-        phase = BuildinstallPhase(compose)
-
-        with self.assertRaises(ValueError) as ctx:
-            phase.validate()
-
-        self.assertIn('buildinstall', str(ctx.exception))
-        self.assertIn('lorax_options', str(ctx.exception))
-
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
@@ -669,7 +639,7 @@ class TestSymlinkIso(PungiTestCase):
     @mock.patch('pungi.phases.buildinstall.IsoWrapper')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_hardlink(self, run, IsoWrapperCls, get_file_size, get_mtime, ImageCls):
-        self.compose.conf = {'buildinstall_symlink': False}
+        self.compose.conf = {'buildinstall_symlink': False, 'disc_types': {}}
         IsoWrapper = IsoWrapperCls.return_value
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579

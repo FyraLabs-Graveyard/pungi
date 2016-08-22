@@ -32,7 +32,7 @@ def translate_path(compose, path):
     @param path
     """
     normpath = os.path.normpath(path)
-    mapping = compose.conf.get("translate_paths", [])
+    mapping = compose.conf["translate_paths"]
 
     for prefix, newvalue in mapping:
         prefix = os.path.normpath(prefix)
@@ -47,7 +47,7 @@ def translate_path(compose, path):
 
 class Paths(object):
     def __init__(self, compose):
-        paths_module_name = compose.conf.get("paths_module", None)
+        paths_module_name = compose.conf.get("paths_module")
         if paths_module_name:
             # custom paths
             compose.log_info("Using custom paths from module %s" % paths_module_name)

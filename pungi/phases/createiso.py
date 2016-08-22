@@ -41,14 +41,6 @@ from .. import createiso
 class CreateisoPhase(PhaseBase):
     name = "createiso"
 
-    config_options = (
-        {
-            "name": "createiso_skip",
-            "expected_types": [list],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -66,11 +58,11 @@ class CreateisoPhase(PhaseBase):
             return False
         if variant.type != "variant":
             return False
-        return self.compose.conf.get("bootable", False)
+        return self.compose.conf["bootable"]
 
     def run(self):
-        symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
-        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
+        symlink_isos_to = self.compose.conf.get("symlink_isos_to")
+        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
         deliverables = []
 
         commands = []
@@ -139,7 +131,7 @@ class CreateisoPhase(PhaseBase):
                     if bootable:
                         opts = opts._replace(buildinstall_method=self.compose.conf['buildinstall_method'])
 
-                    if self.compose.conf.get('create_jigdo', True):
+                    if self.compose.conf['create_jigdo']:
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
                         opts = opts._replace(jigdo_dir=jigdo_dir, os_tree=os_tree)
 
@@ -191,7 +183,7 @@ class CreateIsoThread(WorkerThread):
         if "mount" in cmd:
             mounts.append(cmd["mount"])
 
-        runroot = compose.conf.get("runroot", False)
+        runroot = compose.conf["runroot"]
         bootable = cmd['bootable']
         log_file = compose.paths.log.log_file(
             arch, "createiso-%s" % os.path.basename(cmd["iso_path"]))
@@ -203,7 +195,7 @@ class CreateIsoThread(WorkerThread):
         if runroot:
             # run in a koji build root
             packages = ["coreutils", "genisoimage", "isomd5sum"]
-            if compose.conf.get('create_jigdo', True):
+            if compose.conf['create_jigdo']:
                 packages.append('jigdo')
             extra_packages = {
                 'lorax': ['lorax'],
@@ -212,7 +204,7 @@ class CreateIsoThread(WorkerThread):
             if bootable:
                 packages.extend(extra_packages[compose.conf["buildinstall_method"]])
 
-            runroot_channel = compose.conf.get("runroot_channel", None)
+            runroot_channel = compose.conf.get("runroot_channel")
             runroot_tag = compose.conf["runroot_tag"]
 
             # get info about build arches in buildroot_tag
@@ -299,8 +291,8 @@ def split_iso(compose, arch, variant):
     All files from the directory are taken except for possible boot.iso image.
     Files added in extra_files phase are put on all disks.
     """
-    media_size = compose.conf.get('iso_size', 4700000000)
-    media_reserve = compose.conf.get('split_iso_reserve', 10 * 1024 * 1024)
+    media_size = compose.conf['iso_size']
+    media_reserve = compose.conf['split_iso_reserve']
 
     ms = MediaSplitter(convert_media_size(media_size) - convert_media_size(media_reserve), compose)
 
@@ -387,7 +379,7 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             del ti.checksums.checksums["repodata/repomd.xml"]
 
         # rebuild repodata
-        createrepo_c = compose.conf.get("createrepo_c", True)
+        createrepo_c = compose.conf["createrepo_c"]
         createrepo_checksum = compose.conf["createrepo_checksum"]
         repo = CreaterepoWrapper(createrepo_c=createrepo_c)
 

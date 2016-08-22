@@ -135,7 +135,9 @@ class TestVolumeIdGenerator(unittest.TestCase):
                 'release_short': 'rel_short2',
                 'release_version': '6.0',
                 'release_is_layered': False,
-                'image_volid_formats': [format]
+                'image_volid_formats': [format],
+                'image_volid_layered_product_formats': [],
+                'volume_id_substitutions': {},
             }
             variant = mock.Mock(uid='Server', type='variant')
             ci.return_value.compose.respin = 2
@@ -361,6 +363,20 @@ class TestGetBuildrootRPMs(unittest.TestCase):
             'kbd-2.0.2-8.fc23.x86_64',
             'coreutils-8.24-6.fc23.x86_64',
         ])
+
+
+class TestLevenshtein(unittest.TestCase):
+    def test_edit_dist_empty_str(self):
+        self.assertEqual(util.levenshtein('', ''), 0)
+
+    def test_edit_dist_same_str(self):
+        self.assertEqual(util.levenshtein('aaa', 'aaa'), 0)
+
+    def test_edit_dist_one_change(self):
+        self.assertEqual(util.levenshtein('aab', 'aaa'), 1)
+
+    def test_edit_dist_different_words(self):
+        self.assertEqual(util.levenshtein('kitten', 'sitting'), 3)
 
 
 if __name__ == "__main__":

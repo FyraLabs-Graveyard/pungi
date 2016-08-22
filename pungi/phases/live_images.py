@@ -41,54 +41,6 @@ if sys.version_info[0] == 3:
 class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
     name = "live_images"
 
-    config_options = (
-        {
-            "name": "live_target",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "live_images",
-            "expected_types": [list],
-            "optional": True,
-        },
-        {
-            "name": "signing_key_id",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "signing_key_password_file",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "signing_command",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "live_images_no_rename",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "live_images_ksurl",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "live_images_release",
-            "expected_types": [str, type(None)],
-            "optional": True,
-        },
-        {
-            "name": "live_images_version",
-            "expected_types": [str],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose):
         super(LiveImagesPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -118,7 +70,7 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
         return repos
 
     def run(self):
-        symlink_isos_to = self.compose.conf.get("symlink_isos_to", None)
+        symlink_isos_to = self.compose.conf.get("symlink_isos_to")
         commands = []
 
         for variant in self.compose.variants.values():
@@ -177,10 +129,10 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
         self.pool.start()
 
     def _get_file_name(self, arch, variant, name=None, version=None):
-        if self.compose.conf.get('live_images_no_rename', False):
+        if self.compose.conf['live_images_no_rename']:
             return None
 
-        disc_type = self.compose.conf.get('disc_types', {}).get('live', 'live')
+        disc_type = self.compose.conf['disc_types'].get('live', 'live')
 
         format = "%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s"
         # Custom name (prefix)
@@ -227,7 +179,7 @@ class CreateLiveImageThread(WorkerThread):
         if cmd["specfile"] and not cmd["scratch"]:
             # Non scratch build are allowed only for rpm wrapped images
             archive = True
-        target = compose.conf.get("live_target", "rhel-7.0-candidate")  # compatability for hardcoded target
+        target = compose.conf["live_target"]
         koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target,
                                                      cmd["build_arch"],
                                                      cmd["ks_file"],

@@ -17,34 +17,6 @@ class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
     """class for wrapping up koji spin-livemedia"""
     name = 'live_media'
 
-    config_options = (
-        {
-            "name": "live_media",
-            "expected_types": [dict],
-            "optional": True,
-        },
-        {
-            "name": "live_media_ksurl",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "live_media_target",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "live_media_release",
-            "expected_types": [str, type(None)],
-            "optional": True,
-        },
-        {
-            "name": "live_media_version",
-            "expected_types": [str],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose):
         super(LiveMediaPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -183,7 +155,7 @@ class LiveMediaThread(WorkerThread):
             raise RuntimeError('Image count mismatch in task %s.' % output['task_id'])
 
         linker = Linker(logger=compose._logger)
-        link_type = compose.conf.get("link_type", "hardlink-or-copy")
+        link_type = compose.conf["link_type"]
         for image_info in image_infos:
             image_dir = compose.paths.compose.iso_dir(image_info['arch'], variant)
             makedirs(image_dir)

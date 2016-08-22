@@ -19,26 +19,6 @@ from pungi.phases import osbs
 
 class OSBSPhaseTest(helpers.PungiTestCase):
 
-    def test_validate(self):
-        compose = helpers.DummyCompose(self.topdir, {
-            'osbs': {"^Server$": {}}
-        })
-
-        phase = osbs.OSBSPhase(compose)
-        try:
-            phase.validate()
-        except:
-            self.fail('Correct config must validate')
-
-    def test_validate_bad_conf(self):
-        compose = helpers.DummyCompose(self.topdir, {
-            'osbs': 'yes please'
-        })
-
-        phase = osbs.OSBSPhase(compose)
-        with self.assertRaises(ValueError):
-            phase.validate()
-
     @mock.patch('pungi.phases.osbs.ThreadPool')
     def test_run(self, ThreadPool):
         cfg = mock.Mock()

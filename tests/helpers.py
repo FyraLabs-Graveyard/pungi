@@ -11,7 +11,7 @@ import shutil
 import errno
 
 from pungi.util import get_arch_variant_data
-from pungi import paths
+from pungi import paths, checks
 
 
 class PungiTestCase(unittest.TestCase):
@@ -46,7 +46,8 @@ class DummyCompose(object):
             ),
         )
         self.topdir = topdir
-        self.conf = config
+        self.conf = load_config(PKGSET_REPOS, **config)
+        checks.validate(self.conf)
         self.paths = paths.Paths(self)
         self._logger = mock.Mock()
         self.variants = {
@@ -106,13 +107,32 @@ def copy_fixture(fixture_name, dest):
     shutil.copy2(src, dest)
 
 
-def union(*args):
-    """Create a new dict as a union of all arguments."""
-    res = {}
-    for arg in args:
-        res.update(arg)
-    return res
-
-
 def boom(*args, **kwargs):
     raise Exception('BOOM')
+
+
+PKGSET_REPOS = dict(
+    pkgset_source='repos',
+    pkgset_repos={},
+)
+
+BASE_CONFIG = dict(
+    release_short='test',
+    release_name='Test',
+    release_version='1.0',
+    release_is_layered=False,
+    variants_file='variants.xml',
+    runroot=False,
+    createrepo_checksum='sha256',
+    gather_method='deps',
+    gather_source='none',
+    sigkeys=[],
+)
+
+
+def load_config(data={}, **kwargs):
+    conf = dict()
+    conf.update(BASE_CONFIG)
+    conf.update(data)
+    conf.update(kwargs)
+    return conf

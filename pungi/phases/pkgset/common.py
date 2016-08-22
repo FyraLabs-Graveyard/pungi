@@ -40,7 +40,7 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
 
 
 def create_global_repo(compose, path_prefix):
-    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
@@ -56,7 +56,7 @@ def create_global_repo(compose, path_prefix):
     old_compose_path = None
     update_md_path = None
     if compose.old_composes:
-        old_compose_path = find_old_compose(compose.old_composes, compose.conf["release_short"], compose.conf["release_version"], compose.conf.get("base_product_short", None), compose.conf.get("base_product_version", None))
+        old_compose_path = find_old_compose(compose.old_composes, compose.conf["release_short"], compose.conf["release_version"], compose.conf.get("base_product_short"), compose.conf.get("base_product_version"))
         if old_compose_path is None:
             compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
         else:
@@ -74,7 +74,7 @@ def create_global_repo(compose, path_prefix):
 
 
 def create_arch_repos(compose, arch, path_prefix):
-    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")

@@ -29,14 +29,6 @@ class ExtraFilesPhase(ConfigGuardedPhase):
     """EXTRA_FILES"""
     name = "extra_files"
 
-    config_options = (
-        {
-            "name": "extra_files",
-            "expected_types": [list],
-            "optional": True
-        },
-    )
-
     def __init__(self, compose, pkgset_phase):
         super(ExtraFilesPhase, self).__init__(compose)
         # pkgset_phase provides package_sets

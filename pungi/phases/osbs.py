@@ -13,14 +13,6 @@ from ..paths import translate_path
 class OSBSPhase(ConfigGuardedPhase):
     name = 'osbs'
 
-    config_options = [
-        {
-            "name": "osbs",
-            "expected_types": [dict],
-            "optional": True,
-        }
-    ]
-
     def __init__(self, compose):
         super(OSBSPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)

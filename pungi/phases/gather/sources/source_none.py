@@ -32,13 +32,5 @@ import pungi.phases.gather.source
 class GatherSourceNone(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
-    config_options = (
-        {
-            "name": "gather_source",
-            "expected_types": [str],
-            "expected_values": ["none"],
-        },
-    )
-
     def __call__(self, arch, variant):
         return set(), set()

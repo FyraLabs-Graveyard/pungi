@@ -10,29 +10,11 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
+from pungi.checks import validate
 from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
 class TestLiveMediaPhase(PungiTestCase):
-
-    def test_global_config_validation(self):
-        compose = DummyCompose(self.topdir, {
-            'live_media_ksurl': 'git://example.com/repo.git#HEAD',
-            'live_media_target': 'f24',
-            'live_media_release': 'RRR',
-            'live_media_version': 'Rawhide',
-        })
-
-        phase = LiveMediaPhase(compose)
-        phase.validate()
-
-    def test_global_config_null_release(self):
-        compose = DummyCompose(self.topdir, {
-            'live_media_release': None,
-        })
-
-        phase = LiveMediaPhase(compose)
-        phase.validate()
 
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_minimal(self, ThreadPool):
@@ -50,6 +32,8 @@ class TestLiveMediaPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = LiveMediaPhase(compose)
 
@@ -106,6 +90,8 @@ class TestLiveMediaPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         resolve_git_url.return_value = 'git://example.com/repo.git#BEEFCAFE'
 
@@ -206,6 +192,8 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         resolve_git_url.return_value = 'git://example.com/repo.git#BEEFCAFE'
 
         phase = LiveMediaPhase(compose)
@@ -292,6 +280,8 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         phase = LiveMediaPhase(compose)
 
         with self.assertRaisesRegexp(RuntimeError, r'no.+Missing.+when building.+Server'):
@@ -314,6 +304,8 @@ class TestLiveMediaPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = LiveMediaPhase(compose)
 
@@ -347,6 +339,8 @@ class TestLiveMediaPhase(PungiTestCase):
                 ]
             }
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         resolve_git_url.return_value = 'resolved'
 

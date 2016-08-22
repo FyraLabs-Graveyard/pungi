@@ -26,9 +26,10 @@ class TestImageChecksumPhase(PungiTestCase):
             'media_checksum_one_file': True
         })
         phase = ImageChecksumPhase(compose)
-        with self.assertRaises(ValueError) as err:
+        with self.assertRaises(ValueError) as ctx:
             phase.validate()
-            self.assertIn('media_checksum_one_file', err.message)
+
+        self.assertIn('media_checksum_one_file', str(ctx.exception))
 
     @mock.patch('os.path.exists')
     @mock.patch('kobo.shortcuts.compute_file_checksums')

@@ -22,13 +22,6 @@ class PkgsetPhase(PhaseBase):
     """PKGSET"""
     name = "pkgset"
 
-    config_options = (
-        {
-            "name": "pkgset_source",
-            "expected_types": [str],
-        },
-    )
-
     def run(self):
         pkgset_source = "PkgsetSource%s" % self.compose.conf["pkgset_source"]
         from source import PkgsetSourceContainer

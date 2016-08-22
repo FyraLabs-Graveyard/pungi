@@ -60,13 +60,13 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
 
     msg = "Linking packages (arch: %s, variant: %s)" % (arch, variant)
     compose.log_info("[BEGIN] %s" % msg)
-    link_type = compose.conf.get("link_type", "hardlink-or-copy")
+    link_type = compose.conf["link_type"]
 
     pool = LinkerPool(link_type, logger=compose._logger)
     for i in range(10):
         pool.add(LinkerThread(pool))
 
-    hashed_directories = compose.conf.get("hashed_directories", False)
+    hashed_directories = compose.conf["hashed_directories"]
 
     packages_dir = compose.paths.compose.packages("src", variant)
     packages_dir_relpath = compose.paths.compose.packages("src", variant, relative=True)

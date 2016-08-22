@@ -13,6 +13,7 @@ BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo
 BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
 BuildRequires:  yum => 3.4.3-28, createrepo >= 0.4.11
 BuildRequires:  gettext, git-core, cvs
+BuildRequires:  python-jsonschema
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -35,6 +36,7 @@ Requires:       genisoimage
 Requires:       gettext
 Requires:       syslinux
 Requires:       git
+Requires:       python-jsonschema
 
 BuildArch:      noarch
 

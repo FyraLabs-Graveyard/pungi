@@ -40,46 +40,6 @@ from pungi.phases.base import PhaseBase
 class BuildinstallPhase(PhaseBase):
     name = "buildinstall"
 
-    config_options = (
-        {
-            "name": "bootable",
-            "expected_types": [bool],
-            "expected_values": [True],
-        },
-        {
-            "name": "buildinstall_method",
-            "extected_types": [str],
-            "expected_values": ["lorax", "buildinstall"],
-            "requires": (
-                (lambda x: bool(x) is True, ["bootable"]),
-            ),
-            "conflicts": (
-                (lambda val: val == "buildinstall", ["lorax_options"]),
-            ),
-        },
-        {
-            "name": "buildinstall_upgrade_image",
-            "expected_types": [bool],
-            "optional": True,
-            "deprecated": True,
-            "comment": "use lorax_options instead",
-        },
-        {
-            "name": "lorax_options",
-            "optional": True,
-        },
-        {
-            "name": "buildinstall_kickstart",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "buildinstall_symlink",
-            "expected_types": [bool],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -128,7 +88,7 @@ class BuildinstallPhase(PhaseBase):
         version = self.compose.conf["release_version"]
         release = self.compose.conf["release_version"]
         buildinstall_method = self.compose.conf["buildinstall_method"]
-        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
+        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
         for arch in self.compose.get_arches():
             commands = []
@@ -170,7 +130,7 @@ class BuildinstallPhase(PhaseBase):
 
     def copy_files(self):
         buildinstall_method = self.compose.conf["buildinstall_method"]
-        disc_type = self.compose.conf.get('disc_types', {}).get('dvd', 'dvd')
+        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
         # copy buildinstall files to the 'os' dir
         kickstart_file = get_kickstart_file(self.compose)
@@ -200,7 +160,7 @@ class BuildinstallPhase(PhaseBase):
 
 
 def get_kickstart_file(compose):
-    scm_dict = compose.conf.get("buildinstall_kickstart", None)
+    scm_dict = compose.conf.get("buildinstall_kickstart")
     if not scm_dict:
         compose.log_debug("Path to ks.cfg (buildinstall_kickstart) not specified.")
         return
@@ -323,9 +283,9 @@ def link_boot_iso(compose, arch, variant, can_fail):
     if arch == "src":
         return
 
-    disc_type = compose.conf.get('disc_types', {}).get('boot', 'boot')
+    disc_type = compose.conf['disc_types'].get('boot', 'boot')
 
-    symlink_isos_to = compose.conf.get("symlink_isos_to", None)
+    symlink_isos_to = compose.conf.get("symlink_isos_to")
     os_tree = compose.paths.compose.os_tree(arch, variant)
     # TODO: find in treeinfo?
     boot_iso_path = os.path.join(os_tree, "images", "boot.iso")
@@ -392,7 +352,7 @@ class BuildinstallThread(WorkerThread):
             self.worker(compose, arch, variant, cmd, num)
 
     def worker(self, compose, arch, variant, cmd, num):
-        runroot = compose.conf.get("runroot", False)
+        runroot = compose.conf["runroot"]
         buildinstall_method = compose.conf["buildinstall_method"]
         log_filename = ('buildinstall-%s' % variant.uid) if variant else 'buildinstall'
         log_file = compose.paths.log.log_file(arch, log_filename)
@@ -419,7 +379,7 @@ class BuildinstallThread(WorkerThread):
                 packages += ["lorax"]
             elif buildinstall_method == "buildinstall":
                 packages += ["anaconda"]
-            runroot_channel = compose.conf.get("runroot_channel", None)
+            runroot_channel = compose.conf.get("runroot_channel")
             runroot_tag = compose.conf["runroot_tag"]
 
             koji_wrapper = KojiWrapper(compose.conf["koji_profile"])

@@ -56,27 +56,6 @@ class ProductimgPhase(PhaseBase):
     """PRODUCTIMG"""
     name = "productimg"
 
-    config_options = (
-        {
-            "name": "productimg",
-            "expected_types": [bool],
-            "requires": (
-                (lambda x: bool(x) is True, ["productimg_install_class"]),
-                (lambda x: bool(x) is True, ["productimg_po_files"]),
-            ),
-        },
-        {
-            "name": "productimg_install_class",
-            "expected_types": [dict],
-            "optional": True,
-        },
-        {
-            "name": "productimg_po_files",
-            "expected_types": [dict],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose, pkgset_phase):
         PhaseBase.__init__(self, compose)
         # pkgset_phase provides package_sets and path_prefix
@@ -85,11 +64,11 @@ class ProductimgPhase(PhaseBase):
     def skip(self):
         if PhaseBase.skip(self):
             return True
-        if not self.compose.conf.get("productimg", False):
+        if not self.compose.conf["productimg"]:
             msg = "Config option 'productimg' not set. Skipping creating product images."
             self.compose.log_debug(msg)
             return True
-        if not self.compose.conf.get("bootable", False):
+        if not self.compose.conf["bootable"]:
             msg = "Not a bootable product. Skipping creating product images."
             self.compose.log_debug(msg)
             return True

@@ -31,27 +31,6 @@ import pungi.phases.gather.method
 
 class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
-    config_options = (
-        {
-            "name": "gather_method",
-            "expected_types": [str],
-            "expected_values": ["deps"],
-        },
-        {
-            "name": "check_deps",
-            "expected_types": [bool],
-        },
-        {
-            "name": "gather_fulltree",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "gather_selfhosting",
-            "expected_types": [bool],
-            "optional": True,
-        },
-    )
 
     def __call__(self, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_sets, path_prefix=None, fulltree_excludes=None, prepopulate=None):
         # result = {
@@ -117,11 +96,11 @@ def resolve_deps(compose, arch, variant):
 
     multilib_methods = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
 
-    greedy_method = compose.conf.get("greedy_method", "none")
+    greedy_method = compose.conf["greedy_method"]
 
     # variant
-    fulltree = compose.conf.get("gather_fulltree", False)
-    selfhosting = compose.conf.get("gather_selfhosting", False)
+    fulltree = compose.conf["gather_fulltree"]
+    selfhosting = compose.conf["gather_selfhosting"]
 
     # optional
     if variant.type == "optional":
@@ -156,8 +135,7 @@ def resolve_deps(compose, arch, variant):
 
 
 def check_deps(compose, arch, variant):
-    check_deps = compose.conf.get("check_deps", True)
-    if not check_deps:
+    if not compose.conf["check_deps"]:
         return
 
     pungi_wrapper = PungiWrapper()

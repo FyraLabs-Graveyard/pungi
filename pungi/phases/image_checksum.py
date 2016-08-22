@@ -20,28 +20,10 @@ class ImageChecksumPhase(PhaseBase):
 
     name = 'image_checksum'
 
-    config_options = (
-        {
-            "name": "media_checksums",
-            "expected_types": [list],
-            "optional": True,
-        },
-        {
-            "name": "media_checksum_one_file",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "media_checksum_base_filename",
-            "expected_types": [str],
-            "optional": True,
-        }
-    )
-
     def __init__(self, compose):
         super(ImageChecksumPhase, self).__init__(compose)
-        self.checksums = self.compose.conf.get('media_checksums', ['md5', 'sha1', 'sha256'])
-        self.one_file = self.compose.conf.get('media_checksum_one_file', False)
+        self.checksums = self.compose.conf['media_checksums']
+        self.one_file = self.compose.conf['media_checksum_one_file']
 
     def validate(self):
         errors = []
@@ -71,7 +53,7 @@ class ImageChecksumPhase(PhaseBase):
         return images
 
     def _get_base_filename(self, variant, arch):
-        base_checksum_name = self.compose.conf.get('media_checksum_base_filename', '')
+        base_checksum_name = self.compose.conf['media_checksum_base_filename']
         if base_checksum_name:
             substs = get_format_substs(self.compose, variant=variant, arch=arch)
             base_checksum_name = (base_checksum_name % substs).format(**substs)

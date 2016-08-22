@@ -16,45 +16,6 @@ from pungi.phases import ostree_installer as ostree
 
 class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
-    def test_validate(self):
-        compose = helpers.DummyCompose(self.topdir, {
-            'ostree_installer': [
-                ("^Atomic$", {
-                    "x86_64": {
-                        "source_repo_from": "Everything",
-                        "release": None,
-                        "installpkgs": ["fedora-productimg-atomic"],
-                        "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
-                        "add_template_var": [
-                            "ostree_osname=fedora-atomic",
-                            "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
-                        ],
-                        "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
-                        "add_arch_template_var": [
-                            "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
-                            "ostree_osname=fedora-atomic",
-                            "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
-                        ]
-                    }
-                })
-            ]
-        })
-
-        phase = ostree.OstreeInstallerPhase(compose)
-        try:
-            phase.validate()
-        except:
-            self.fail('Correct config must validate')
-
-    def test_validate_bad_conf(self):
-        compose = helpers.DummyCompose(self.topdir, {
-            'ostree_installer': 'yes please'
-        })
-
-        phase = ostree.OstreeInstallerPhase(compose)
-        with self.assertRaises(ValueError):
-            phase.validate()
-
     @mock.patch('pungi.phases.ostree_installer.ThreadPool')
     def test_run(self, ThreadPool):
         cfg = mock.Mock()

@@ -53,6 +53,7 @@ setup(
         "lockfile",
         "lxml",
         "productmd",
+        "jsonschema",
         ],
     tests_require = [
         "mock",

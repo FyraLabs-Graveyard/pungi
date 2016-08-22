@@ -16,14 +16,6 @@ from ..wrappers import kojiwrapper, iso, lorax, scm
 class OstreeInstallerPhase(ConfigGuardedPhase):
     name = 'ostree_installer'
 
-    config_options = [
-        {
-            "name": "ostree_installer",
-            "expected_types": [list],
-            "optional": True,
-        }
-    ]
-
     def __init__(self, compose):
         super(OstreeInstallerPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -61,7 +53,7 @@ class OstreeInstallerThread(WorkerThread):
 
         self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir)
 
-        disc_type = compose.conf.get('disc_types', {}).get('dvd', 'dvd')
+        disc_type = compose.conf['disc_types'].get('dvd', 'dvd')
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
@@ -160,7 +152,7 @@ class OstreeInstallerThread(WorkerThread):
             add_arch_template_var=config.get('add_arch_template_var')
         )
 
-        runroot_channel = compose.conf.get("runroot_channel", None)
+        runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
 
         packages = ['pungi', 'lorax', 'ostree']

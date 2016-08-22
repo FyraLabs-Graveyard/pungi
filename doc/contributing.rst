@@ -22,6 +22,7 @@ will have to installed:
  * koji
  * libselinux-python
  * lorax
+ * python-jsonschema
  * python-kickstart
  * python-lockfile
  * python-lxml

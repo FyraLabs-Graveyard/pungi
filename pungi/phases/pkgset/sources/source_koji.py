@@ -32,26 +32,6 @@ import pungi.phases.pkgset.source
 
 class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
-    config_options = (
-        {
-            "name": "koji_profile",
-            "expected_types": [str],
-        },
-        {
-            "name": "pkgset_source",
-            "expected_types": [str],
-            "expected_values": "koji",
-        },
-        {
-            "name": "pkgset_koji_tag",
-            "expected_types": [str],
-        },
-        {
-            "name": "pkgset_koji_inherit",
-            "expected_types": [bool],
-            "optional": True,
-        },
-    )
 
     def __call__(self):
         compose = self.compose
@@ -87,7 +67,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, even
         all_arches.update(arches)
 
     compose_tag = compose.conf["pkgset_koji_tag"]
-    inherit = compose.conf.get("pkgset_koji_inherit", True)
+    inherit = compose.conf["pkgset_koji_inherit"]
     msg = "Populating the global package set from tag '%s'" % compose_tag
     global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "pkgset_global.pickle")
     if compose.DEBUG and os.path.isfile(global_pkgset_path):

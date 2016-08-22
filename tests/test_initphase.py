@@ -11,18 +11,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases import init
-from tests.helpers import DummyCompose, PungiTestCase, touch, union
-
-MIN_CONFIG = {
-    'release_short': 'Fedora',
-    'release_name': 'Fedora',
-    'release_version': 'Rawhide',
-    'release_is_layered': False,
-    'variants_file': 'does-not-exist.xml',
-    'sigkeys': [],
-    'createrepo_checksum': 'sha256',
-    'runroot': False,
-}
+from tests.helpers import DummyCompose, PungiTestCase, touch
 
 
 class TestInitPhase(PungiTestCase):
@@ -99,23 +88,6 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(create_comps.mock_calls, [])
         self.assertItemsEqual(write_variant.mock_calls, [])
         self.assertItemsEqual(copy_comps.mock_calls, [])
-
-    def test_validate_keep_original_comps_missing(self):
-        compose = DummyCompose(self.topdir, MIN_CONFIG)
-        phase = init.InitPhase(compose)
-        phase.validate()
-
-    def test_validate_keep_original_comps_empty(self):
-        config = union(MIN_CONFIG, {'keep_original_comps': []})
-        compose = DummyCompose(self.topdir, config)
-        phase = init.InitPhase(compose)
-        phase.validate()
-
-    def test_validate_keep_original_comps_filled_in(self):
-        config = union(MIN_CONFIG, {'keep_original_comps': ['Everything']})
-        compose = DummyCompose(self.topdir, config)
-        phase = init.InitPhase(compose)
-        phase.validate()
 
 
 class TestWriteArchComps(PungiTestCase):

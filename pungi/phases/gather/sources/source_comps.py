@@ -32,17 +32,6 @@ import pungi.phases.gather.source
 
 class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
-    config_options = (
-        {
-            "name": "gather_source",
-            "expected_types": [str],
-            "expected_values": ["comps"],
-        },
-        {
-            "name": "comps_file",
-            "expected_types": [str, dict],
-        },
-    )
 
     def __call__(self, arch, variant):
         groups = set()

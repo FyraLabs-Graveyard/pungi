@@ -17,19 +17,11 @@
 
 import kobo.plugins
 
-from pungi.checks import validate_options
-
 
 class GatherMethodBase(kobo.plugins.Plugin):
-    config_options = ()
 
     def __init__(self, compose):
         self.compose = compose
-
-    def validate(self):
-        errors = validate_options(self.compose.conf, self.config_options)
-        if errors:
-            raise ValueError("\n".join(errors))
 
 
 class GatherMethodContainer(kobo.plugins.PluginContainer):

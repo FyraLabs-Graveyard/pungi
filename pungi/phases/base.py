@@ -14,12 +14,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from pungi.checks import validate_options
 from pungi import util
 
 
 class PhaseBase(object):
-    config_options = ()
 
     def __init__(self, compose):
         self.compose = compose
@@ -28,9 +26,7 @@ class PhaseBase(object):
         self._skipped = False
 
     def validate(self):
-        errors = validate_options(self.compose.conf, self.config_options)
-        if errors:
-            raise ValueError("\n".join(errors))
+        pass
 
     def conf_assert_str(self, name):
         missing = []
@@ -48,7 +44,7 @@ class PhaseBase(object):
             return True
         if self.name in self.compose.skip_phases:
             return True
-        if self.name in self.compose.conf.get("skip_phases", []):
+        if self.name in self.compose.conf["skip_phases"]:
             return True
         return False
 

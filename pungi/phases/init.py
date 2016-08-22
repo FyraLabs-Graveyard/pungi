@@ -32,148 +32,6 @@ class InitPhase(PhaseBase):
     """INIT is a mandatory phase"""
     name = "init"
 
-    config_options = (
-        # PRODUCT INFO
-        {
-            "name": "release_name",
-            "expected_types": [str],
-        },
-        {
-            "name": "release_short",
-            "expected_types": [str],
-        },
-        {
-            "name": "release_version",
-            "expected_types": [str],
-        },
-        {
-            # override description in .discinfo; accepts %(variant_name)s and %(arch)s variables
-            "name": "release_discinfo_description",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "release_is_layered",
-            "expected_types": [bool],
-            "requires": (
-                (lambda x: bool(x), ["base_product_name", "base_product_short", "base_product_version"]),
-            ),
-            "conflicts": (
-                (lambda x: not bool(x), ["base_product_name", "base_product_short", "base_product_version"]),
-            ),
-        },
-
-        # BASE PRODUCT INFO (FOR A LAYERED PRODUCT ONLY)
-        {
-            "name": "base_product_name",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "base_product_short",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "base_product_version",
-            "expected_types": [str],
-            "optional": True,
-        },
-
-        {
-            "name": "comps_file",
-            "expected_types": [str, dict],
-            "optional": True,
-        },
-        {
-            "name": "comps_filter_environments",  # !!! default is True !!!
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "variants_file",
-            "expected_types": [str, dict],
-        },
-        {
-            "name": "sigkeys",
-            "expected_types": [list],
-        },
-
-        {
-            "name": "tree_arches",
-            "expected_types": [list],
-            "optional": True,
-        },
-        {
-            "name": "tree_variants",
-            "expected_types": [list],
-            "optional": True,
-        },
-
-        # CREATEREPO SETTINGS
-        {
-            "name": "createrepo_c",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "createrepo_checksum",
-            "expected_types": [str],
-            "expected_values": ["sha256", "sha"],
-        },
-
-        # RUNROOT SETTINGS
-        {
-            "name": "runroot",
-            "expected_types": [bool],
-            "requires": (
-                (lambda x: bool(x), ["koji_profile", "runroot_tag", "runroot_channel"]),
-            ),
-            "conflicts": (
-                (lambda x: not bool(x), ["runroot_tag", "runroot_channel"]),
-            ),
-        },
-        {
-            "name": "runroot_tag",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "runroot_channel",
-            "expected_types": [str],
-            "optional": True,
-        },
-
-        {
-            "name": "keep_original_comps",
-            "expected_types": [list],
-            "optional": True,
-        },
-
-        # Configuration shared by all image building phases.
-        {
-            "name": "global_ksurl",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "global_target",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "global_release",
-            "expected_types": [str, type(None)],
-            "optional": True,
-        },
-        {
-            "name": "global_version",
-            "expected_types": [str],
-            "optional": True,
-        },
-
-    )
-
     def skip(self):
         # INIT must never be skipped,
         # because it generates data for LIVEIMAGES
@@ -189,7 +47,7 @@ class InitPhase(PhaseBase):
 
             # write variant comps
             for variant in self.compose.get_variants():
-                should_preserve = variant.uid in self.compose.conf.get('keep_original_comps', [])
+                should_preserve = variant.uid in self.compose.conf['keep_original_comps']
                 for arch in variant.arches:
                     if should_preserve:
                         copy_variant_comps(self.compose, arch, variant)
@@ -248,7 +106,7 @@ def write_variant_comps(compose, arch, variant):
         comps = CompsWrapper(comps_file)
         # groups = variant.groups
         comps.filter_groups(variant.groups)
-        if compose.conf.get("comps_filter_environments", True):
+        if compose.conf["comps_filter_environments"]:
             comps.filter_environments(variant.environments)
 
         compose.log_warning("[SKIP ] %s" % msg)
@@ -261,7 +119,7 @@ def write_variant_comps(compose, arch, variant):
 
     comps = CompsWrapper(comps_file)
     comps.filter_groups(variant.groups)
-    if compose.conf.get("comps_filter_environments", True):
+    if compose.conf["comps_filter_environments"]:
         comps.filter_environments(variant.environments)
     comps.write_comps()
 
@@ -273,7 +131,7 @@ def copy_variant_comps(compose, arch, variant):
 
 
 def create_comps_repo(compose, arch):
-    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     comps_repo = compose.paths.work.comps_repo(arch=arch)

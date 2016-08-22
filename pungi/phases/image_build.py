@@ -18,34 +18,6 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
     """class for wrapping up koji image-build"""
     name = "image_build"
 
-    config_options = [
-        {
-            "name": "image_build",
-            "expected_types": [dict],
-            "optional": True,
-        },
-        {
-            "name": "image_build_ksurl",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "image_build_target",
-            "expected_types": [str],
-            "optional": True,
-        },
-        {
-            "name": "image_build_release",
-            "expected_types": [str, type(None)],
-            "optional": True,
-        },
-        {
-            "name": "image_build_version",
-            "expected_types": [str],
-            "optional": True,
-        },
-    ]
-
     def __init__(self, compose):
         super(ImageBuildPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -155,7 +127,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
                     "relative_image_dir": self.compose.paths.compose.image_dir(
                         variant, relative=True
                     ),
-                    "link_type": self.compose.conf.get("link_type", "hardlink-or-copy"),
+                    "link_type": self.compose.conf["link_type"],
                     "scratch": image_conf['image-build'].pop('scratch', False),
                     "failable_arches": image_conf['image-build'].pop('failable', []),
                 }

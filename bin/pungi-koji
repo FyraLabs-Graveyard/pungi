@@ -173,6 +173,11 @@ def main():
     if not pungi.checks.check(conf):
         sys.exit(1)
     pungi.checks.check_umask(logger)
+    errors = pungi.checks.validate(conf)
+    if errors:
+        for error in errors:
+            print >>sys.stderr, error
+        sys.exit(1)
 
     if opts.target_dir:
         compose_dir = Compose.get_compose_dir(opts.target_dir, conf, compose_type=compose_type, compose_label=opts.label)

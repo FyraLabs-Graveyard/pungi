@@ -4,12 +4,12 @@
 from __future__ import print_function
 
 import argparse
+import contextlib
 import kobo.conf
 import os
+import shutil
 import sys
 import tempfile
-import contextlib
-import shutil
 
 here = sys.path[0]
 if here != '/usr/bin':
@@ -17,8 +17,9 @@ if here != '/usr/bin':
     sys.path[0] = os.path.dirname(here)
 
 import pungi.compose
-import pungi.phases
+import pungi.checks
 import pungi.paths
+import pungi.phases
 
 
 class ValidationCompose(pungi.compose.Compose):
@@ -62,6 +63,12 @@ def in_temp_dir():
 def run(config, topdir, has_old):
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(config)
+
+    errors = pungi.checks.validate(conf)
+    if errors:
+        for error in errors:
+            print(error)
+        sys.exit(1)
 
     compose = ValidationCompose(conf, has_old, topdir)
 

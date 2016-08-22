@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
+from pungi.checks import validate
 from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
@@ -33,13 +34,16 @@ class TestImageBuildPhase(PungiTestCase):
                             'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                             'kickstart': "fedora-docker-base.ks",
                             'distro': 'Fedora-20',
-                            'disk_size': 3
+                            'disk_size': 3,
+                            'failable': ['x86_64'],
                         }
                     }
                 ]
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = ImageBuildPhase(compose)
 
@@ -71,7 +75,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Client/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
+            "failable_arches": ['x86_64'],
         }
         server_args = {
             "format": [('docker', 'tar.xz')],
@@ -96,7 +100,7 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
+            "failable_arches": ['x86_64'],
         }
         self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
@@ -125,6 +129,8 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = ImageBuildPhase(compose)
 
@@ -186,6 +192,8 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         phase = ImageBuildPhase(compose)
 
         phase.run()
@@ -217,6 +225,8 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = ImageBuildPhase(compose)
 
@@ -278,6 +288,8 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         phase = ImageBuildPhase(compose)
 
@@ -341,6 +353,8 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         phase = ImageBuildPhase(compose)
 
         phase.run()
@@ -402,6 +416,8 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         phase = ImageBuildPhase(compose)
 
         phase.run()
@@ -438,6 +454,8 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
+        self.assertEqual(validate(compose.conf), [])
+
         phase = ImageBuildPhase(compose)
 
         phase.run()
@@ -473,6 +491,8 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+
+        self.assertEqual(validate(compose.conf), [])
 
         resolve_git_url.return_value = 'git://git.fedorahosted.org/git/spin-kickstarts.git?#BEEFCAFE'
 

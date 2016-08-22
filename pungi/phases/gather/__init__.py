@@ -51,65 +51,6 @@ class GatherPhase(PhaseBase):
     """GATHER"""
     name = "gather"
 
-    config_options = (
-        {
-            "name": "gather_lookaside_repos",
-            "expected_types": [list],
-            "optional": True,
-        },
-        {
-            "name": "greedy_method",
-            "expected_values": ["none", "all", "build"],
-            "optional": True,
-        },
-        {
-            "name": "gather_fulltree",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "gather_prepopulate",
-            "expected_types": [str, dict],
-            "optional": True,
-        },
-        {
-            "name": "hashed_directories",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "filter_system_release_packages",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "multilib",
-            "expected_types": [list],
-            "optional": True,
-        },
-        # DEPRECATED OPTIONS
-        {
-            "name": "multilib_arches",
-            "deprecated": True,
-            "comment": "Use multilib instead",
-        },
-        {
-            "name": "multilib_methods",
-            "deprecated": True,
-            "comment": "Use multilib instead",
-        },
-        {
-            "name": "additional_packages_multiarch",
-            "deprecated": True,
-            "comment": "Use multilib_whitelist instead",
-        },
-        {
-            "name": "filter_packages_multiarch",
-            "deprecated": True,
-            "comment": "Use multilib_blacklist instead",
-        },
-    )
-
     def __init__(self, compose, pkgset_phase):
         PhaseBase.__init__(self, compose)
         # pkgset_phase provides package_sets and path_prefix
@@ -125,11 +66,6 @@ class GatherPhase(PhaseBase):
     @staticmethod
     def check_deps():
         pass
-
-    def check_config(self):
-        errors = []
-        for i in ["release_name", "release_short", "release_version"]:
-            errors.append(self.conf_assert_str(i))
 
     def _write_manifest(self):
         self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
@@ -380,7 +316,7 @@ def gather_wrapper(compose, package_sets, path_prefix):
 
 
 def write_prepopulate_file(compose):
-    if not compose.conf.get("gather_prepopulate", None):
+    if 'gather_prepopulate' not in compose.conf:
         return
 
     prepopulate_file = os.path.join(compose.paths.work.topdir(arch="global"), "prepopulate.json")
@@ -479,7 +415,7 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
     packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
-    if compose.conf.get('filter_system_release_packages', True):
+    if compose.conf['filter_system_release_packages']:
         system_release_packages, system_release_filter_packages = get_system_release_packages(
             compose, arch, variant, package_sets)
         packages |= system_release_packages

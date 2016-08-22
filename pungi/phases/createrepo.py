@@ -44,34 +44,6 @@ createrepo_dirs = set()
 class CreaterepoPhase(PhaseBase):
     name = "createrepo"
 
-    config_options = (
-        {
-            "name": "createrepo_c",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "createrepo_checksum",
-            "expected_types": [str],
-            "expected_values": ["sha256", "sha"],
-        },
-        {
-            "name": "createrepo_deltas",
-            "expected_types": [bool],
-            "optional": True,
-        },
-        {
-            "name": "product_id",
-            "expected_types": [dict],
-            "optional": True,
-        },
-        {
-            "name": "product_id_allow_missing",
-            "expected_types": [bool],
-            "optional": True,
-        },
-    )
-
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -83,7 +55,7 @@ class CreaterepoPhase(PhaseBase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        if not self.compose.old_composes and self.compose.conf.get('createrepo_deltas', False):
+        if not self.compose.old_composes and self.compose.conf['createrepo_deltas']:
             errors.append('Can not generate deltas without old compose')
 
         if errors:
@@ -119,9 +91,9 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         compose.log_info("[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant))
         return
 
-    createrepo_c = compose.conf.get("createrepo_c", True)
+    createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
-    createrepo_deltas = compose.conf.get("createrepo_deltas", False)
+    createrepo_deltas = compose.conf["createrepo_deltas"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_arch = compose.paths.work.arch_repo(arch='global' if pkg_type == 'srpm' else arch)
 
@@ -227,7 +199,7 @@ def get_productids_from_scm(compose):
         compose.log_info("No product certificates specified")
         return
 
-    product_id_allow_missing = compose.conf.get("product_id_allow_missing", False)
+    product_id_allow_missing = compose.conf["product_id_allow_missing"]
 
     msg = "Getting product certificates from SCM..."
     compose.log_info("[BEGIN] %s" % msg)

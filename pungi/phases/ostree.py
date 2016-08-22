@@ -13,14 +13,6 @@ from ..wrappers import kojiwrapper, scm
 class OSTreePhase(ConfigGuardedPhase):
     name = 'ostree'
 
-    config_options = [
-        {
-            "name": "ostree",
-            "expected_types": [list],
-            "optional": True,
-        }
-    ]
-
     def __init__(self, compose):
         super(OSTreePhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
@@ -74,7 +66,7 @@ class OSTreeThread(WorkerThread):
             config['ostree_repo']
         ]
 
-        runroot_channel = compose.conf.get("runroot_channel", None)
+        runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
 
         packages = ['pungi', 'ostree', 'rpm-ostree']

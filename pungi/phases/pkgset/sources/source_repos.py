@@ -35,17 +35,6 @@ import pungi.phases.pkgset.source
 
 class PkgsetSourceRepos(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
-    config_options = (
-        {
-            "name": "pkgset_source",
-            "expected_types": [str],
-            "expected_values": "repos",
-        },
-        {
-            "name": "pkgset_repos",
-            "expected_types": [dict],
-        },
-    )
 
     def __call__(self):
         package_sets, path_prefix = get_pkgset_from_repos(self.compose)
@@ -57,7 +46,7 @@ def get_pkgset_from_repos(compose):
     # TODO: noarch hack - secondary arches, use x86_64 noarch where possible
     flist = []
 
-    link_type = compose.conf.get("link_type", "hardlink-or-copy")
+    link_type = compose.conf["link_type"]
     pool = LinkerPool(link_type, logger=compose._logger)
     for i in range(10):
         pool.add(LinkerThread(pool))

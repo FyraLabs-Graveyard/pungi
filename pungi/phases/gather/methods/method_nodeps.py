@@ -23,13 +23,6 @@ import pungi.phases.gather.method
 
 class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
-    config_options = (
-        {
-            "name": "gather_method",
-            "expected_types": [str],
-            "expected_values": ["nodeps"],
-        },
-    )
 
     def __call__(self, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_sets, path_prefix=None, fulltree_excludes=None, prepopulate=None):
         global_pkgset = package_sets["global"]

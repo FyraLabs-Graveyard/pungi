@@ -327,7 +327,7 @@ def get_buildroot_rpms(compose, task_id):
 
 
 def _apply_substitutions(compose, volid):
-    for k, v in compose.conf.get('volume_id_substitutions', {}).iteritems():
+    for k, v in compose.conf['volume_id_substitutions'].iteritems():
         volid = volid.replace(k, v)
     return volid
 
@@ -353,16 +353,8 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         base_product_version = compose.conf.get("base_product_version", "")
         variant_uid = variant and variant.uid or None
 
-    products = [
-        "{release_short}-{version} {variant}.{arch}",
-        "{release_short}-{version} {arch}",
-    ]
-    products = compose.conf.get('image_volid_formats', products)
-    layered_products = [
-        "{release_short}-{version} {base_product_short}-{base_product_version} {variant}.{arch}",
-        "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",
-    ]
-    layered_products = compose.conf.get('image_volid_layered_product_formats', layered_products)
+    products = compose.conf['image_volid_formats']
+    layered_products = compose.conf['image_volid_layered_product_formats']
 
     volid = None
     if release_is_layered:
@@ -526,3 +518,23 @@ def copy_all(src, dest):
             shutil.copytree(source, destination)
         else:
             shutil.copy2(source, destination)
+
+
+def levenshtein(a, b):
+    """Compute Levenshtein edit distance between two strings."""
+    mat = [[0 for _ in xrange(len(a) + 1)] for _ in xrange(len(b) + 1)]
+
+    for i in xrange(len(a) + 1):
+        mat[0][i] = i
+
+    for j in xrange(len(b) + 1):
+        mat[j][0] = j
+
+    for j in xrange(1, len(b) + 1):
+        for i in xrange(1, len(a) + 1):
+            cost = 0 if a[i - 1] == b[j - 1] else 1
+            mat[j][i] = min(mat[j - 1][i] + 1,
+                            mat[j][i - 1] + 1,
+                            mat[j - 1][i - 1] + cost)
+
+    return mat[len(b)][len(a)]
