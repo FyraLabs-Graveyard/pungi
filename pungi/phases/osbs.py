@@ -108,6 +108,8 @@ class OSBSThread(WorkerThread):
             data.update(archive['extra'])
             data.update(metadata)
             arch = archive['extra']['image']['arch']
+            self.pool.log_debug('Created Docker base image %s-%s-%s.%s' % (
+                metadata['name'], metadata['version'], metadata['release'], arch))
             self.pool.metadata.setdefault(
                 variant.uid, {}).setdefault(arch, []).append(data)
 
