@@ -115,6 +115,7 @@ class ComposeTestCase(unittest.TestCase):
         ci.return_value.compose.date = '20160107'
         ci.return_value.compose.type = 'nightly'
         ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = None
 
         compose = Compose(conf, self.tmp_dir)
 
@@ -127,10 +128,24 @@ class ComposeTestCase(unittest.TestCase):
         ci.return_value.compose.date = '20160107'
         ci.return_value.compose.type = 'production'
         ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = None
 
         compose = Compose(conf, self.tmp_dir)
 
         self.assertEqual(compose.image_release, '20160107.n.2')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_release_from_label(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'production'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'Alpha-1.2'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_release, '1.2')
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_without_filter(self, ci):

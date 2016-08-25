@@ -344,7 +344,14 @@ class Compose(kobo.log.LoggingBase):
 
     @property
     def image_release(self):
-        """Generate a value to pass to Koji as image release. This includes
-        date, compose type and respin."""
+        """Generate a value to pass to Koji as image release.
+
+        If this compose has a label, the version from it will be used,
+        otherwise we will create a string with date, compose type and respin.
+        """
+        if self.compose_label:
+            milestone, release = self.compose_label.split('-')
+            return release
+
         return '%s%s.%s' % (self.compose_date, self.ci_base.compose.type_suffix,
                             self.compose_respin)
