@@ -817,8 +817,12 @@ Version is specified by these options.
  * ``image_build_version``
  * ``live_images_version``
 
+
+.. _auto_release:
+
 Release is specified by these options. If set explicitly to ``None``, a value
-will be generated based on date, compose type and respin.
+will be generated based on compose label, and when compose label is not
+provided; date, compose type and respin will be used.
 
  * ``global_release`` -- global fallback setting
  * ``live_media_release``
@@ -888,7 +892,8 @@ Live Media Settings
       * ``ksversion`` (*str*)
       * ``scratch`` (*bool*)
       * ``release`` (*str*) -- a string with the release, or explicit ``None``
-        for using compose date and respin.
+        for automatically generating one. See :ref:`common options
+        <auto_release>` for details.
       * ``skip_tag`` (*bool*)
       * ``repo`` (*[str]*) -- external repo
       * ``repo_from`` (*[str]*) -- list of variants to take extra repos from
@@ -937,7 +942,7 @@ Image Build Settings
     currently built variant will be added as well.
 
     If you explicitly set ``release`` to ``None``, it will be replaced with
-    ``DATE.RESPIN`` of the current compose.
+    a value generated as described in :ref:`common options <auto_release>`.
 
     You can also add extra variants to get repos from with key ``repo_from``.
     The value should be a list of variant names.
@@ -1020,7 +1025,7 @@ Example
                     'install_tree_from': 'Everything',
                     'repo_from': ['Everything'],
 
-                    # Set release based on date and respin.
+                    # Set release automatically.
                     'release': None,
                 }
             }
@@ -1087,7 +1092,7 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     These keys are optional:
 
     * ``release`` -- (*str*) Release value to set for the installer image. Set
-      to ``None`` to use the date.respin format.
+      to ``None`` to generate the value :ref:`automatically <auto_release>`.
     * ``failable`` -- (*[str]*) List of architectures for which this
       deliverable is not release blocking.
 
