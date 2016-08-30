@@ -140,7 +140,7 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
 
                     cmd = {
                         "name": data.get('name'),
-                        "version": self.get_config(data, 'version'),
+                        "version": self.get_version(data),
                         "release": self.get_release(data),
                         "dest_dir": dest_dir,
                         "build_arch": arch,
