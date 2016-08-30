@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # run this script to (re-)generate ../repo and ../repo-krb5-lookaside directories
 
@@ -7,7 +7,7 @@
 #  * rpmbuild
 
 
-#set -e
+set -e
 
 
 DIR=$(dirname $(readlink -f $0))
