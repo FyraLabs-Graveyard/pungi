@@ -37,7 +37,6 @@ setup(
         'bin/comps_filter',
         'bin/pungi',
         'bin/pungi-config-validate',
-        'bin/pungi-createiso',
         'bin/pungi-fedmsg-notification',
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
