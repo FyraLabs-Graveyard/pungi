@@ -406,6 +406,38 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
     @mock.patch('pungi.phases.createiso.KojiWrapper')
+    def test_process_in_runroot_non_existing_tag(self, KojiWrapper, get_file_size,
+                                                 get_mtime, IsoWrapper):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_short': 'test',
+            'release_version': '1.0',
+            'release_is_layered': False,
+            'runroot': True,
+            'runroot_tag': 'f25-build',
+            'koji_profile': 'koji',
+        })
+        cmd = {
+            'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
+            'bootable': False,
+            'cmd': mock.Mock(),
+            'label': '',
+            'disc_num': 1,
+            'disc_count': 1,
+        }
+        getTag = KojiWrapper.return_value.koji_proxy.getTag
+        getTag.return_value = None
+
+        t = createiso.CreateIsoThread(mock.Mock())
+        with self.assertRaises(RuntimeError) as ctx:
+            with mock.patch('time.sleep'):
+                t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
+
+        self.assertEqual('Tag "f25-build" does not exist.', str(ctx.exception))
+
+    @mock.patch('pungi.phases.createiso.IsoWrapper')
+    @mock.patch('pungi.phases.createiso.get_mtime')
+    @mock.patch('pungi.phases.createiso.get_file_size')
+    @mock.patch('pungi.phases.createiso.KojiWrapper')
     def test_process_in_runroot_crash(self, KojiWrapper, get_file_size, get_mtime, IsoWrapper):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',

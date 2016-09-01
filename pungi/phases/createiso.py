@@ -219,6 +219,8 @@ class CreateIsoThread(WorkerThread):
             koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
             koji_proxy = koji_wrapper.koji_proxy
             tag_info = koji_proxy.getTag(runroot_tag)
+            if not tag_info:
+                raise RuntimeError('Tag "%s" does not exist.' % runroot_tag)
             tag_arches = tag_info["arches"].split(" ")
 
             build_arch = arch
