@@ -93,10 +93,10 @@ clean:
 
 
 test:
-	nosetests --exe
+	nosetests --exe $(NOSE_OPTS)
 
 test-coverage:
-	nosetests --exe --with-cov --cov-report html --cov-config tox.ini
+	nosetests --exe --with-cov --cov-report html --cov-config tox.ini $(NOSE_OPTS)
 
 test-data:
 	./tests/data/specs/build.sh
