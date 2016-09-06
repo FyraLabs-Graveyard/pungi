@@ -810,13 +810,16 @@ Target is specified by these settings. For live images refer to ``live_target``.
  * ``live_media_target``
  * ``image_build_target``
 
-Version is specified by these options.
+.. _auto_version:
+
+Version is specified by these options. If no version is set, a default value
+will be provided based on product version. If label is used (and is not
+``RC``), the milestone will be appended to the version with an underscore.
 
  * ``global_version`` -- global fallback setting
  * ``live_media_version``
  * ``image_build_version``
  * ``live_images_version``
-
 
 .. _auto_release:
 

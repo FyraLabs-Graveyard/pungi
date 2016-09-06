@@ -127,12 +127,12 @@ class ComposeTestCase(unittest.TestCase):
         ci.return_value.compose.respin = 2
         ci.return_value.compose.date = '20160107'
         ci.return_value.compose.type = 'production'
-        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.type_suffix = ''
         ci.return_value.compose.label = None
 
         compose = Compose(conf, self.tmp_dir)
 
-        self.assertEqual(compose.image_release, '20160107.n.2')
+        self.assertEqual(compose.image_release, '20160107.2')
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_image_release_from_label(self, ci):
@@ -146,6 +146,48 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir)
 
         self.assertEqual(compose.image_release, '1.2')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_version_without_label(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = None
+        ci.return_value.release.version = '25'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_version, '25')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_version_with_label(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'Alpha-1.2'
+        ci.return_value.release.version = '25'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_version, '25_Alpha')
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_image_version_with_label_rc(self, ci):
+        conf = {}
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'RC-1.2'
+        ci.return_value.release.version = '25'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        self.assertEqual(compose.image_version, '25')
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_without_filter(self, ci):

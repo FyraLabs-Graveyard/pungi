@@ -87,7 +87,7 @@ class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
                     'title': image_conf.get('title'),
                     'repo': self._get_repos(image_conf, variant),
                     'install_tree': self._get_install_tree(image_conf, variant),
-                    'version': self.get_config(image_conf, 'version'),
+                    'version': self.get_version(image_conf),
                     'failable_arches': image_conf.get('failable', []),
                 }
                 self.pool.add(LiveMediaThread(self.pool))

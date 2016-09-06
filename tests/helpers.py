@@ -37,6 +37,7 @@ class DummyCompose(object):
         self.compose_label = None
         self.compose_label_major_version = None
         self.image_release = '20151203.t.0'
+        self.image_version = '25'
         self.ci_base = mock.Mock(
             release_id='Test-1.0',
             release=mock.Mock(

@@ -355,3 +355,17 @@ class Compose(kobo.log.LoggingBase):
 
         return '%s%s.%s' % (self.compose_date, self.ci_base.compose.type_suffix,
                             self.compose_respin)
+
+    @property
+    def image_version(self):
+        """Generate a value to pass to Koji as image version.
+
+        The value is based on release version. If compose has a label, the
+        milestone from it is appended to the version (unless it is RC).
+        """
+        version = self.ci_base.release.version
+        if self.compose_label and not self.compose_label.startswith('RC-'):
+            milestone, release = self.compose_label.split('-')
+            return '%s_%s' % (version, milestone)
+
+        return version

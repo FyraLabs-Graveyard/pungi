@@ -331,7 +331,6 @@ class TestLiveMediaPhase(PungiTestCase):
                         'arches': ['x86_64'],
                         'ksversion': '24',
                         'release': None,
-                        'version': 'Rawhide',
                         'install_tree_from': 'Everything',
                         'subvariant': 'Something',
                         'failable': ['*'],
@@ -366,7 +365,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'target': 'f24',
                                          'title': 'Custom Title',
                                          'install_tree': self.topdir + '/compose/Everything/$basearch/os',
-                                         'version': 'Rawhide',
+                                         'version': '25',
                                          'subvariant': 'Something',
                                          'failable_arches': ['*'],
                                      }))])

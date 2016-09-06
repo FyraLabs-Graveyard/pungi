@@ -102,6 +102,13 @@ class ImageConfigMixin(object):
                 '%s_%s' % (self.name, opt), self.compose.conf.get(
                     'global_%s' % opt)))
 
+    def get_version(self, cfg):
+        """
+        Get version from configuration hierarchy or fall back to release
+        version.
+        """
+        return self.get_config(cfg, 'version') or self.compose.image_version
+
     def get_release(self, cfg):
         """
         If release is set explicitly to None, replace it with date and respin.

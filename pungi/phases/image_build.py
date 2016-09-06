@@ -106,7 +106,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
                 if release:
                     image_conf['image-build']['release'] = release
 
-                image_conf['image-build']['version'] = self.get_config(image_conf['image-build'], 'version')
+                image_conf['image-build']['version'] = self.get_version(image_conf['image-build'])
                 image_conf['image-build']['target'] = self.get_config(image_conf['image-build'], 'target')
 
                 # transform format into right 'format' for image-build
