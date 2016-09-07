@@ -22,11 +22,10 @@ import json
 import productmd.composeinfo
 import productmd.treeinfo
 from productmd.common import get_major_version
-from kobo.shortcuts import relative_path
+from kobo.shortcuts import relative_path, compute_file_checksums
 
 from pungi.compose_metadata.discinfo import write_discinfo as create_discinfo
 from pungi.compose_metadata.discinfo import write_media_repo as create_media_repo
-from pungi import util as pungi_util
 
 
 def get_description(compose, variant, arch):
@@ -343,15 +342,14 @@ def write_extra_files(tree_path, files, checksum_type='sha256', logger=None):
         if logger:
             logger.debug('Processing {file}'.format(file=f))
         path = os.path.join(tree_path, f)
-        checksum = pungi_util._doCheckSum(path, checksum_type, logger)
-        # _doCheckSum returns in the format <type>:<digest> _or_ False for failure
-        if checksum is False:
-            err = 'Failed to calculate the checksum for {file}.'.format(file=path)
-            raise RuntimeError(err)
-        checksum = checksum.split(':')[1]
+        try:
+            checksum = compute_file_checksums(path, checksum_type)
+        except IOError as exc:
+            file = os.path.relpath(exc.filename, '/'.join(tree_path.split('/')[:-3]))
+            raise RuntimeError('Failed to calculate checksum for %s: %s' % (file, exc.strerror))
         entry = {
             'file': f,
-            'checksums': {checksum_type: checksum},
+            'checksums': checksum,
             'size': os.path.getsize(path),
         }
         metadata['data'].append(entry)
