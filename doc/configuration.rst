@@ -362,6 +362,10 @@ Options
     (*bool*) -- generate delta RPMs against an older compose. This needs to be
     used together with `--old-composes`` command line argument.
 
+**createrepo_use_xz** = False
+    (*bool*) -- whether to pass ``--xz`` to the createrepo command. This will
+    cause the SQLite databases to be compressed with xz.
+
 **product_id** = None
     (*scm_dict*) -- If specified, it should point to a directory with
     certificates ``<variant_uid>-<arch>-*.pem``. This certificate will be

@@ -165,7 +165,8 @@ def create_variant_repo(compose, arch, variant, pkg_type):
                                   pkglist=file_list, outputdir=repo_dir, workers=3,
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
                                   checksum=createrepo_checksum, deltas=createrepo_deltas,
-                                  oldpackagedirs=old_packages_dir)
+                                  oldpackagedirs=old_packages_dir,
+                                  use_xz=compose.conf['createrepo_use_xz'])
     log_file = compose.paths.log.log_file(arch, "createrepo-%s.%s" % (variant, pkg_type))
     run(cmd, logfile=log_file, show_cmd=True)
 

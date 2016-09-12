@@ -31,7 +31,8 @@ class CreateRepoWrapperTest(unittest.TestCase):
             update=False, update_md_path='/test/md_path', skip_stat=True, checkts=True,
             split=True, pretty=False, database=False, checksum='sha256', unique_md_filenames=False,
             distro='Fedora', content=['c1', 'c2'], repo=['r1', 'r2'], revision='rev', deltas=True,
-            oldpackagedirs='/test/old', num_deltas=2, workers=3, outputdir='/test/output'
+            oldpackagedirs='/test/old', num_deltas=2, workers=3, outputdir='/test/output',
+            use_xz=True
         )
         self.maxDiff = None
 
@@ -43,7 +44,7 @@ class CreateRepoWrapperTest(unittest.TestCase):
                                '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
                                '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
                                '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
-                               '--outputdir=/test/output', '--verbose'])
+                               '--outputdir=/test/output', '--verbose', '--xz'])
 
     def test_get_createrepo_cmd_minimal(self):
         repo = CreaterepoWrapper(False)

@@ -424,6 +424,10 @@ def _make_schema():
                 "type": "string",
                 "enum": ["sha", "sha256"],
             },
+            "createrepo_use_xz": {
+                "type": "boolean",
+                "default": False,
+            },
 
             "hashed_directories": {
                 "type": "boolean",
