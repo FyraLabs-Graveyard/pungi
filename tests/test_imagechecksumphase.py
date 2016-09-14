@@ -20,6 +20,11 @@ from tests.helpers import DummyCompose, PungiTestCase
 
 class TestImageChecksumPhase(PungiTestCase):
 
+    def test_phase_is_never_skipped(self):
+        compose = DummyCompose(self.topdir, {})
+        phase = ImageChecksumPhase(compose)
+        self.assertFalse(phase.skip())
+
     def test_config_skip_individual_with_multiple_algorithms(self):
         compose = DummyCompose(self.topdir, {
             'media_checksums': ['md5', 'sha1'],
