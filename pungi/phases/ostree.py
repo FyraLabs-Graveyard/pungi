@@ -56,7 +56,24 @@ class OSTreeThread(WorkerThread):
 
         self._run_ostree_cmd(compose, variant, arch, config, repodir)
 
+        if compose.notifier:
+            ref, commitid = self._get_commit_info()
+            compose.notifier.send('ostree',
+                                  variant=variant.uid,
+                                  arch=arch,
+                                  ref=ref,
+                                  commitid=commitid)
+
         self.pool.log_info('[DONE ] %s' % msg)
+
+    def _get_commit_info(self):
+        with open(os.path.join(self.logdir, 'create-ostree-repo.log'), 'r') as f:
+            for line in f.readlines():
+                if ' => ' in line:
+                    line = line.replace('\n', '')
+                    ref, _, commitid = line.partition(' => ')
+                    return ref, commitid
+        return None, None
 
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo):
         cmd = [
