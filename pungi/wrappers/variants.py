@@ -150,7 +150,11 @@ class VariantsXmlParser(object):
             self.add_child(optional, variant)
 
         for ref in variant_node.xpath("variants/ref/@id"):
-            child_variant = self.parse_variant_node(self.addons[ref], variant)
+            try:
+                child_variant = self.parse_variant_node(self.addons[ref], variant)
+            except KeyError:
+                raise RuntimeError("Variant %s references non-existing variant %s"
+                                   % (variant.uid, ref))
             self.add_child(child_variant, variant)
 
 # XXX: top-level optional

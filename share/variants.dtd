@@ -2,7 +2,7 @@
 
 <!ELEMENT variant (release?,arches,groups?,environments*,variants*,buildinstallpackages?)?>
 <!ATTLIST variant
-    id ID #REQUIRED
+    id CDATA #REQUIRED
     name CDATA #REQUIRED
     type (variant|addon|optional|layered-product) #REQUIRED
     has_optional (true|false) #IMPLIED
@@ -39,7 +39,7 @@
 
 <!ELEMENT ref EMPTY>
 <!ATTLIST ref
-    id IDREF #REQUIRED
+    id CDATA #REQUIRED
 >
 
 <!ELEMENT buildinstallpackages (package)+>
