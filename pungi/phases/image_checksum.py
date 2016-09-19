@@ -25,6 +25,13 @@ class ImageChecksumPhase(PhaseBase):
         self.checksums = self.compose.conf['media_checksums']
         self.one_file = self.compose.conf['media_checksum_one_file']
 
+    def skip(self):
+        # Skipping this phase does not make sense:
+        #  * if there are no images, it doesn't do anything and is quick
+        #  * if there are images, they must have checksums computed or else
+        #    writing metadata will fail
+        return False
+
     def validate(self):
         errors = []
         try:
