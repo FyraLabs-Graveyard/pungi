@@ -10,7 +10,6 @@ import locale
 import datetime
 import getpass
 import socket
-import json
 import pipes
 
 here = sys.path[0]
@@ -223,7 +222,7 @@ def run_compose(compose):
     # dump the config file
     date_str = datetime.datetime.strftime(datetime.datetime.now(), "%F_%X").replace(":", "-")
     config_dump = compose.paths.log.log_file("global", "config-dump_%s" % date_str)
-    open(config_dump, "w").write(json.dumps(compose.conf, sort_keys=True, indent=4))
+    open(config_dump, "w").write(open(compose.conf._open_file, 'r').read())
 
     # initialize all phases
     init_phase = pungi.phases.InitPhase(compose)
