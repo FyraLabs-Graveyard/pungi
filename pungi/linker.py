@@ -46,12 +46,10 @@ class LinkerThread(WorkerThread):
 
 
 class Linker(kobo.log.LoggingBase):
-    def __init__(self, ignore_existing=False, always_copy=None, test=False, logger=None):
+    def __init__(self, always_copy=None, test=False, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
-        self.ignore_existing = ignore_existing
         self.always_copy = always_copy or []
         self.test = test
-        self._precache = {}
         self._inode_map = {}
 
     def _is_same_type(self, path1, path2):
@@ -64,11 +62,10 @@ class Linker(kobo.log.LoggingBase):
         return True
 
     def _is_same(self, path1, path2):
-        if self.ignore_existing:
-            return True
         if path1 == path2:
             return True
         if os.path.islink(path2) and not os.path.exists(path2):
+            # Broken symlink
             return True
         if os.path.getsize(path1) != os.path.getsize(path2):
             return False
@@ -101,21 +98,6 @@ class Linker(kobo.log.LoggingBase):
                 self.log_debug("The same file already exists, skipping symlink %s -> %s" % (dst, src))
             else:
                 raise
-
-    def hardlink_on_dest(self, src, dst):
-        if src == dst:
-            return
-
-        if os.path.exists(src):
-            st = os.stat(src)
-            file_name = os.path.basename(src)
-            precache_key = (file_name, int(st.st_mtime), st.st_size)
-            if precache_key in self._precache:
-                self.log_warning("HIT %s" % str(precache_key))
-                cached_path = self._precache[precache_key]["path"]
-                self.hardlink(cached_path, dst)
-                return True
-        return False
 
     def hardlink(self, src, dst):
         if src == dst:
@@ -187,44 +169,9 @@ class Linker(kobo.log.LoggingBase):
             # XXX:
             raise OSError(errno.EEXIST, "File exists")
 
-    def _put_into_cache(self, path):
-        def get_stats(item):
-            return [item[i] for i in ("st_dev", "st_ino", "st_mtime", "st_size")]
-
-        filename = os.path.basename(path)
-        st = os.stat(path)
-        item = {
-            "st_dev": st.st_dev,
-            "st_ino": st.st_ino,
-            "st_mtime": int(st.st_mtime),
-            "st_size": st.st_size,
-            "path": path,
-        }
-        precache_key = (filename, int(st.st_mtime), st.st_size)
-        if precache_key in self._precache:
-            if get_stats(self._precache[precache_key]) != get_stats(item):
-                # Files have same mtime and size but device
-                # or/and inode is/are different.
-                self.log_debug("Caching failed, files are different: %s, %s"
-                               % (path, self._precache[precache_key]["path"]))
-            return False
-        self._precache[precache_key] = item
-        return True
-
-    def scan(self, path):
-        """Recursively scan a directory and populate the cache."""
-        msg = "Scanning directory: %s" % path
-        self.log_debug("[BEGIN] %s" % msg)
-        for dirpath, _, filenames in os.walk(path):
-            for filename in filenames:
-                path = os.path.join(dirpath, filename)
-                self._put_into_cache(path)
-        self.log_debug("[DONE ] %s" % msg)
-
     def _link_file(self, src, dst, link_type):
         if link_type == "hardlink":
-            if not self.hardlink_on_dest(src, dst):
-                self.hardlink(src, dst)
+            self.hardlink(src, dst)
         elif link_type == "copy":
             self.copy(src, dst)
         elif link_type in ("symlink", "abspath-symlink"):
@@ -234,17 +181,16 @@ class Linker(kobo.log.LoggingBase):
                 relative = link_type != "abspath-symlink"
                 self.symlink(src, dst, relative)
         elif link_type == "hardlink-or-copy":
-            if not self.hardlink_on_dest(src, dst):
-                src_stat = os.stat(src)
-                dst_stat = os.stat(os.path.dirname(dst))
-                if src_stat.st_dev == dst_stat.st_dev:
-                    self.hardlink(src, dst)
-                else:
-                    self.copy(src, dst)
+            src_stat = os.stat(src)
+            dst_stat = os.stat(os.path.dirname(dst))
+            if src_stat.st_dev == dst_stat.st_dev:
+                self.hardlink(src, dst)
+            else:
+                self.copy(src, dst)
         else:
             raise ValueError("Unknown link_type: %s" % link_type)
 
-    def link(self, src, dst, link_type="hardlink-or-copy", scan=True):
+    def link(self, src, dst, link_type="hardlink-or-copy"):
         """Link directories recursively."""
         if os.path.isfile(src) or os.path.islink(src):
             self._link_file(src, dst, link_type)
@@ -262,56 +208,3 @@ class Linker(kobo.log.LoggingBase):
             src_path = os.path.join(src, i)
             dst_path = os.path.join(dst, i)
             self.link(src_path, dst_path, link_type)
-
-        return
-
-        if scan:
-            self.scan(dst)
-
-        self.log_debug("Start linking")
-
-        src = os.path.abspath(src)
-        for dirpath, dirnames, filenames in os.walk(src):
-            rel_path = dirpath[len(src):].lstrip("/")
-            dst_path = os.path.join(dst, rel_path)
-
-            # Dir check and creation
-            if not os.path.isdir(dst_path):
-                if os.path.exists(dst_path):
-                    # At destination there is a file with same name but
-                    # it is not a directory.
-                    self.log_error("Cannot create directory %s" % dst_path)
-                    dirnames = []  # noqa
-                    continue
-                os.mkdir(dst_path)
-
-            # Process all files in directory
-            for filename in filenames:
-                path = os.path.join(dirpath, filename)
-                st = os.stat(path)
-                # Check cache
-                # Same file already exists at a destination dir =>
-                # Create the new file by hardlink to the cached one.
-                precache_key = (filename, int(st.st_mtime), st.st_size)
-                full_dst_path = os.path.join(dst_path, filename)
-                if precache_key in self._precache:
-                    # Cache hit
-                    cached_path = self._precache[precache_key]["path"]
-                    self.log_debug("Cache HIT for %s [%s]" % (path, cached_path))
-                    if cached_path != full_dst_path:
-                        self.hardlink(cached_path, full_dst_path)
-                    else:
-                        self.log_debug("Files are same, skip hardlinking")
-                    continue
-                # Cache miss
-                # Copy the new file and put it to the cache.
-                try:
-                    self.copy(path, full_dst_path)
-                except Exception as ex:
-                    print(ex)
-                    print(path, open(path, "r").read())
-                    print(full_dst_path, open(full_dst_path, "r").read())
-                    print(os.stat(path))
-                    print(os.stat(full_dst_path))
-                    os.utime(full_dst_path, (st.st_atime, int(st.st_mtime)))
-                    self._put_into_cache(full_dst_path)
