@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.8
+Version:        4.1.9
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -72,6 +72,47 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Sep 21 2016 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.9-1
+- ostree_installer: Add --isfinal lorax argument (lsedlar)
+- Recreate JSON dump of configuration (lsedlar)
+- Merge #385 `Test and clean up pungi.linker` (dennis)
+- Merge #390 `checksums: Never skip checksumming phase` (dennis)
+- variants: Allow multiple explicit optional variants (lsedlar)
+- checksums: Never skip checksumming phase (lsedlar)
+- [linker] Remove dead code (lsedlar)
+- [linker] Add tests (lsedlar)
+- Dump original pungi conf (cqi)
+- ostree: Add tests for sending ostree messages (lsedlar)
+- Send fedmsg message on ostree compose finishg (puiterwijk)
+- createrepo: Add option to use xz compression (lsedlar)
+- Allow user to set a ~/.pungirc for some defaults (riehecky)
+- metadata: Improve error reporting on failed checksum (lsedlar)
+- extra-files: Write a metadata file enumerating extra files (jeremy)
+- Merge #381 `Automatically generate missing image version` (dennis)
+- Automatically generate missing image version (lsedlar)
+- Add JSON Schema for configuration (lsedlar)
+- Allow arbitrary arguments in make test (lsedlar)
+- createiso: Report nice error when tag does not exist (lsedlar)
+- Fix test data build script (lsedlar)
+- [osbs] Add NVRA of created image into main log (lsedlar)
+- [createiso] Remove unused script (lsedlar)
+- Update doc about generating release value (lsedlar)
+- Use label to populate image release (lsedlar)
+- doc: Fix example for image_build (lsedlar)
+- Ignore module imports not at top of file (lsedlar)
+- Merge #367 `Remove unused imports` (dennis)
+- [buildinstall] Fix cleaning output dir (lsedlar)
+- Remove unused imports (lsedlar)
+- Merge #360 `[osbs] Convert build_id to int` (dennis)
+- Merge #361 `Fix config validation script` (dennis)
+- Merge #365 `Make image test at end of compose less strict` (dennis)
+- [test] Make image test at end of compose less strict (lsedlar)
+- [iso] Fix check on failable ISO (lsedlar)
+- Add full Pungi version to log output (lsedlar)
+- Fix config validation script (lsedlar)
+- [osbs] Convert build_id to int (lsedlar)
+- [image-build] Get failable config from correct place (lsedlar)
+
 * Wed Aug 10 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.8-1
 - [createiso] Use shell script for runroot (lsedlar)
 - Merge #357 `Improve error messages for gathering packages` (dennis)
@@ -206,7 +247,7 @@ cd tests && ./test_compose.sh
 - [ostree] Move cloning repo back to compose box (lsedlar)
 - [ostree] Mount ostree directory in koji (lsedlar)
 
-* Wed Apr 05 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.2-1
+* Tue Apr 05 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.2-1
 - Merge #257 `[ostree] Enable marking ostree phase as failable` (ausil)
 - [ostree] Enable marking ostree phase as failable (lsedlar)
 - [koji-wrapper] Initialize wrappers sequentially (lsedlar)
@@ -434,7 +475,7 @@ cd tests && ./test_compose.sh
 - Add dependency of 'runroot' config option on 'koji_profile'. (dmach)
 - Rename product_* to release_*. (dmach)
 - Implement koji profiles. (dmach)
-- Drop repoclosure-%arch tests. (dmach)
+- Drop repoclosure-%%arch tests. (dmach)
 - Config option create_optional_isos now defaults to False. (dmach)
 - Change createrepo config options defaults. (dmach)
 - Rewrite documentation to Sphinx. (dmach)
