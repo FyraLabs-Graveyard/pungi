@@ -11,6 +11,7 @@ import datetime
 import getpass
 import socket
 import pipes
+import json
 
 here = sys.path[0]
 if here != '/usr/bin':
@@ -221,8 +222,11 @@ def run_compose(compose):
 
     # dump the config file
     date_str = datetime.datetime.strftime(datetime.datetime.now(), "%F_%X").replace(":", "-")
-    config_dump = compose.paths.log.log_file("global", "config-dump_%s" % date_str)
+    config_dump = compose.paths.log.log_file("global", "config-copy_%s" % date_str)
     open(config_dump, "w").write(open(compose.conf._open_file, 'r').read())
+    config_dump_full = compose.paths.log.log_file("global", "config-dump_%s" % date_str)
+    with open(config_dump_full, "w") as f:
+        json.dump(compose.conf, f, sort_keys=True, indent=4)
 
     # initialize all phases
     init_phase = pungi.phases.InitPhase(compose)
