@@ -75,6 +75,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
         })
+        compose.supported = False
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -166,6 +167,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--source=http://example.com/repo/x86_64/',
                                      '--variant=Everything',
                                      '--nomacboot',
+                                     '--isfinal',
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
@@ -278,6 +280,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--source=file://%s/compose/Everything/x86_64/os' % self.topdir,
                                      '--variant=Everything',
                                      '--nomacboot',
+                                     '--isfinal',
                                      '--add-template=%s/some_file.txt' % templ_dir,
                                      '--add-arch-template=%s/other_file.txt' % templ_dir,
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
@@ -355,6 +358,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                         '--source=file://%s/compose/Everything/x86_64/os' % self.topdir,
                         '--variant=Everything',
                         '--nomacboot',
+                        '--isfinal',
                         '--installpkgs=fedora-productimg-atomic',
                         '--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl',
                         '--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl',
