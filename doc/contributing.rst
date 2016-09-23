@@ -38,27 +38,20 @@ For running unit tests, these packages are recommended as well:
  * python-nose
  * python-nose-cov
 
-Technically, it is possible to work on *Fedora 22*, but setting it up is a
-major headache. Packaged version of *productmd* is too old, and *Pungi* does
-not easily work with *virtualenv*, mostly because many of its Python
-dependencies are not available on PyPI. To get it working, you have to install
-*kobo* and *productmd* directly from Git and provide symlinks to other packages
-and files in ``$(virtualenvwrapper_get_site_packages_dir)``. You will still
-need to install all of the non-Python packages above as they are used by
-calling an executable. ::
+While being difficult, it is possible to work on *Pungi* using *virtualenv*.
+Install *python-virtualenvwrapper* and use following steps. It will link system
+libraries into the virtual environment and install all packages preferably from
+PyPI or from tarball. You will still need to install all of the non-Python
+packages above as they are used by calling an executable. ::
 
-    $ ln -vs "$(deactivate && python -c 'import os, koji; print os.path.dirname(koji.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, rpm; print os.path.dirname(rpm.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, rpmUtils; print os.path.dirname(rpmUtils.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, yum; print os.path.dirname(yum.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, urlgrabber; print os.path.dirname(urlgrabber.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, krbV; print krbV.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, sqlitecachec; print sqlitecachec.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ ln -vs "$(deactivate && python -c 'import os, _sqlitecache; print _sqlitecache.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"
-    $ PYCURL_SSL_LIBRARY=nss pip install pycurl
-    $ pip install https://git.fedorahosted.org/cgit/kobo.git/snapshot/kobo-0.4.3.tar.gz#egg=kobo
-    $ pip install https://github.com/release-engineering/productmd/archive/master.tar.gz#egg=productmd
-    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov
+    $ mkvirtualenv pungienv
+    $ for pkg in koji rpm rpmUtils pykickstart selinux createrepo yum urlgrabber; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in _selinux deltarpm _deltarpm krbV sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
+    $ pip install https://github.com/release-engineering/kobo/archive/0.5.2.tar.gz
+    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile
+
+Now you should be able to run all existing tests.
 
 
 Developing
