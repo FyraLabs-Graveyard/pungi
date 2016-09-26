@@ -40,6 +40,34 @@ class TestNotifier(unittest.TestCase):
                                     can_fail=True, return_stdout=False, workdir='/a/b')
 
     @mock.patch('kobo.shortcuts.run')
+    def test_translates_path(self, run):
+        compose = mock.Mock(
+            compose_id='COMPOSE_ID',
+            paths=mock.Mock(
+                compose=mock.Mock(
+                    topdir=mock.Mock(return_value='/root/a/b')
+                )
+            ),
+            conf={
+                "translate_paths": [("/root/", "http://example.com/compose/")],
+            }
+        )
+
+        run.return_value = (0, None)
+
+        n = PungiNotifier('run-notify')
+        n.compose = compose
+        data = {'foo': 'bar', 'baz': 'quux'}
+        n.send('cmd', **data)
+
+        data['compose_id'] = 'COMPOSE_ID'
+        data['location'] = 'http://example.com/compose/a/b'
+        run.assert_called_once_with(('run-notify', 'cmd'),
+                                    stdin_data=json.dumps(data),
+                                    can_fail=True, return_stdout=False,
+                                    workdir='/root/a/b')
+
+    @mock.patch('kobo.shortcuts.run')
     def test_does_not_run_without_config(self, run):
         n = PungiNotifier(None)
         n.send('cmd', foo='bar', baz='quux')
