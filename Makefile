@@ -3,7 +3,7 @@
 PKGNAME=pungi
 VERSION=$(shell rpm -q --qf "%{VERSION}\n" --specfile ${PKGNAME}.spec)
 RELEASE=$(shell rpm -q --qf "%{RELEASE}\n" --specfile ${PKGNAME}.spec)
-GITTAG=${PKGNAME}-$(VERSION)-$(RELEASE)
+GITTAG=${PKGNAME}-$(VERSION)
 PKGRPMFLAGS=--define "_topdir ${PWD}" --define "_specdir ${PWD}" --define "_sourcedir ${PWD}/dist" --define "_srcrpmdir ${PWD}" --define "_rpmdir ${PWD}" --define "_builddir ${PWD}"
 
 RPM="noarch/${PKGNAME}-$(VERSION)-$(RELEASE).noarch.rpm"
