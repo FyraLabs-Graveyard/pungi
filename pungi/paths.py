@@ -36,6 +36,8 @@ def translate_path(compose, path):
 
     for prefix, newvalue in mapping:
         prefix = os.path.normpath(prefix)
+        # Strip trailing slashes: the prefix has them stripped by `normpath`.
+        newvalue = newvalue.rstrip('/')
         if normpath.startswith(prefix):
             # We can't call os.path.normpath on result since it is not actually
             # a path - http:// would get changed to  http:/ and so on.
