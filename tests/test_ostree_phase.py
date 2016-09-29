@@ -108,7 +108,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      self.repo],
                                     channel=None, mounts=[self.topdir, self.repo],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
-                                    task_id=True, use_shell=True)])
+                                    task_id=True, use_shell=True, new_chroot=True)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])

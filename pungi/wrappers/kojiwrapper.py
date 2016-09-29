@@ -59,11 +59,14 @@ class KojiWrapper(object):
         else:
             raise RuntimeError('Unsupported authentication type in Koji')
 
-    def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True):
+    def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True, new_chroot=False):
         cmd = [self.executable, "runroot"]
 
         if quiet:
             cmd.append("--quiet")
+
+        if new_chroot:
+            cmd.append("--new-chroot")
 
         if use_shell:
             cmd.append("--use-shell")
