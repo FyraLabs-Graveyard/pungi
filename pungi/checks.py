@@ -286,7 +286,7 @@ def _make_schema():
                         "enum": ["file", "cvs", "git", "rpm"],
                     },
                     "repo": {"type": "string"},
-                    "branch": {"type": "string"},
+                    "branch": {"$ref": "#/definitions/optional_string"},
                     "file": {"type": "string"},
                     "dir": {"type": "string"},
                 },
