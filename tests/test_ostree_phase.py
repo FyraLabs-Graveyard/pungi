@@ -115,7 +115,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         for fp in ['fedora-rawhide.repo', 'fedora-24.repo', 'fedora-24.repo']:
             with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
-                self.assertIn('baseurl=http://example.com/Everything/x86_64/os',
+                self.assertIn('baseurl=http://example.com/Everything/$basearch/os',
                               f.read())
         self.assertTrue(os.path.isdir(self.repo))
 

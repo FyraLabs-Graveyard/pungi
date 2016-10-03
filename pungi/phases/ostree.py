@@ -45,7 +45,10 @@ class OSTreeThread(WorkerThread):
         repodir = os.path.join(workdir, 'config_repo')
 
         source_variant = compose.variants[config['source_repo_from']]
-        source_repo = translate_path(compose, compose.paths.compose.repository(arch, source_variant))
+        source_repo = translate_path(compose,
+                                     compose.paths.compose.repository('$basearch',
+                                                                      source_variant,
+                                                                      create_dir=False))
 
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
         self._tweak_mirrorlist(repodir, source_repo)
