@@ -45,6 +45,16 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
 class OstreeThreadTest(helpers.PungiTestCase):
 
+    def setUp(self):
+        super(OstreeThreadTest, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {
+            'release_name': 'Fedora',
+            'release_version': 'Rawhide',
+            'koji_profile': 'koji',
+            'runroot_tag': 'rrt',
+            'image_volid_formats': ['{release_short}-{variant}-{arch}'],
+        })
+
     def assertImageAdded(self, compose, ImageCls, IsoWrapper):
         image = ImageCls.return_value
         self.assertEqual(image.path, 'Everything/x86_64/iso/image-name')
@@ -69,13 +79,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run(self, KojiWrapper, link, IsoWrapper,
                  get_file_size, get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
-        compose.supported = False
+        self.compose.supported = False
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -93,7 +97,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
@@ -104,6 +108,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--source=file://%s/compose/Everything/x86_64/os' % self.topdir,
                                      '--variant=Everything',
                                      '--nomacboot',
+                                     '--volid=test-Everything-x86_64',
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
@@ -116,9 +121,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
-        self.assertImageAdded(compose, ImageCls, IsoWrapper)
-        self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
+        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertEqual(self.compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', self.compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -133,12 +138,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_external_source(self, KojiWrapper, link, IsoWrapper,
                                  get_file_size, get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'http://example.com/repo/$arch/',
@@ -156,7 +155,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
@@ -168,6 +167,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--variant=Everything',
                                      '--nomacboot',
                                      '--isfinal',
+                                     '--volid=test-Everything-x86_64',
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
@@ -180,9 +180,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
-        self.assertImageAdded(compose, ImageCls, IsoWrapper)
-        self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
+        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertEqual(self.compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', self.compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -198,12 +198,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     def test_fail_with_relative_template_path_but_no_repo(self, KojiWrapper, link,
                                                           IsoWrapper, get_file_size,
                                                           get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -222,7 +216,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t = ostree.OstreeInstallerThread(pool)
 
         with self.assertRaises(RuntimeError) as ctx:
-            t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+            t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertIn('template_repo', str(ctx.exception))
 
@@ -237,12 +231,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     def test_run_clone_templates(self, KojiWrapper, link, IsoWrapper,
                                  get_file_size, get_mtime, ImageCls, run,
                                  get_dir_from_scm):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -265,7 +253,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'git://example.com/templates.git',
@@ -281,6 +269,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      '--variant=Everything',
                                      '--nomacboot',
                                      '--isfinal',
+                                     '--volid=test-Everything-x86_64',
                                      '--add-template=%s/some_file.txt' % templ_dir,
                                      '--add-arch-template=%s/other_file.txt' % templ_dir,
                                      self.topdir + '/work/x86_64/Everything/ostree_installer'],
@@ -295,9 +284,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
-        self.assertImageAdded(compose, ImageCls, IsoWrapper)
-        self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
+        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertEqual(self.compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', self.compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -312,12 +301,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_with_implicit_release(self, KojiWrapper, link, IsoWrapper,
                                        get_file_size, get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -347,7 +330,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertEqual(
             koji.get_runroot_cmd.call_args_list,
@@ -359,6 +342,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                         '--variant=Everything',
                         '--nomacboot',
                         '--isfinal',
+                        '--volid=test-Everything-x86_64',
                         '--installpkgs=fedora-productimg-atomic',
                         '--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl',
                         '--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl',
@@ -379,9 +363,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     final_iso_path)])
         self.assertEqual(get_file_size.call_args_list, [mock.call(final_iso_path)])
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
-        self.assertImageAdded(compose, ImageCls, IsoWrapper)
-        self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
+        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertEqual(self.compose.get_image_name.call_args_list,
+                         [mock.call('x86_64', self.compose.variants['Everything'], disc_type='ostree')])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -392,12 +376,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_fail_crash(self, KojiWrapper, link, IsoWrapper, get_file_size,
                         get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -409,8 +387,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
-        compose.log_info.assert_has_calls([
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+        self.compose.log_info.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
@@ -424,12 +402,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_fail_runroot_fail(self, KojiWrapper, link, IsoWrapper,
                                get_file_size, get_mtime, ImageCls, run):
-        compose = helpers.DummyCompose(self.topdir, {
-            'release_name': 'Fedora',
-            'release_version': 'Rawhide',
-            'koji_profile': 'koji',
-            'runroot_tag': 'rrt',
-        })
         pool = mock.Mock()
         cfg = {
             'source_repo_from': 'Everything',
@@ -445,8 +417,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t = ostree.OstreeInstallerThread(pool)
 
-        t.process((compose, compose.variants['Everything'], 'x86_64', cfg), 1)
-        compose.log_info.assert_has_calls([
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+        self.compose.log_info.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/ostree_installer/runroot.log for more details.'
                       % self.topdir)

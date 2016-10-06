@@ -10,6 +10,7 @@ from kobo import shortcuts
 from .base import ConfigGuardedPhase
 from .. import util
 from ..paths import translate_path
+from ..util import get_volid
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
@@ -50,10 +51,11 @@ class OstreeInstallerThread(WorkerThread):
 
         self.template_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'lorax_templates')
         self._clone_templates(config.get('template_repo'), config.get('template_branch'))
-
-        self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir)
-
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
+
+        volid = get_volid(compose, arch, variant, disc_type=disc_type)
+        self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir, volid)
+
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
@@ -135,7 +137,7 @@ class OstreeInstallerThread(WorkerThread):
             templates.append(template)
         return templates
 
-    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir):
+    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir, volid):
         lorax_wrapper = lorax.LoraxWrapper()
         cmd = lorax_wrapper.get_lorax_cmd(
             compose.conf['release_name'],
@@ -145,6 +147,7 @@ class OstreeInstallerThread(WorkerThread):
             output_dir=output_dir,
             variant=variant.uid,
             nomacboot=True,
+            volid=volid,
             buildinstallpackages=config.get('installpkgs'),
             add_template=self._get_templates(config, 'add_template'),
             add_arch_template=self._get_templates(config, 'add_arch_template'),
