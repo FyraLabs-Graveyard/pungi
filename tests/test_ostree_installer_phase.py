@@ -61,7 +61,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(image.mtime, 13579)
         self.assertEqual(image.size, 1024)
         self.assertEqual(image.arch, 'x86_64')
-        self.assertEqual(image.type, "boot")
+        self.assertEqual(image.type, "dvd-ostree")
         self.assertEqual(image.format, "iso")
         self.assertEqual(image.disc_number, 1)
         self.assertEqual(image.disc_count, 1)

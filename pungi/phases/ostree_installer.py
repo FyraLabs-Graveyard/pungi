@@ -108,7 +108,7 @@ class OstreeInstallerThread(WorkerThread):
         img.mtime = util.get_mtime(full_iso_path)
         img.size = util.get_file_size(full_iso_path)
         img.arch = arch
-        img.type = "boot"
+        img.type = "dvd-ostree"
         img.format = "iso"
         img.disc_number = 1
         img.disc_count = 1
