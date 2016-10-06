@@ -246,6 +246,7 @@ There a couple common format specifiers available for both the options:
      * ``boot`` -- for ``boot.iso`` images created in  *buildinstall* phase
      * ``live`` -- for images created by *live_images* phase
      * ``dvd`` -- for images created by *createiso* phase
+     * ``ostree`` -- for ostree installer images
 
     Default values are the same as the keys.
 

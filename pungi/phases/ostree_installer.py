@@ -53,7 +53,7 @@ class OstreeInstallerThread(WorkerThread):
 
         self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir)
 
-        disc_type = compose.conf['disc_types'].get('dvd', 'dvd')
+        disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)

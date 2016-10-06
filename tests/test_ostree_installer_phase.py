@@ -118,7 +118,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -182,7 +182,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -297,7 +297,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
         self.assertTrue(os.path.isdir(self.topdir + '/work/x86_64/Everything/'))
         self.assertFalse(os.path.isdir(self.topdir + '/work/x86_64/Everything/ostree_installer'))
         self.assertEqual(run.call_args_list,
@@ -381,7 +381,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_mtime.call_args_list, [mock.call(final_iso_path)])
         self.assertImageAdded(compose, ImageCls, IsoWrapper)
         self.assertEqual(compose.get_image_name.call_args_list,
-                         [mock.call('x86_64', compose.variants['Everything'], disc_type='dvd')])
+                         [mock.call('x86_64', compose.variants['Everything'], disc_type='ostree')])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
