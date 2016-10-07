@@ -1397,8 +1397,10 @@ class Pungi(PungiBase):
                 # The not bool() thing is because pykickstart is yes/no on
                 # whether to ignore groups, but yum is a yes/no on whether to
                 # include groups.  Awkward.
+                repo.mirrorlist = yum.parser.varReplace(repo.mirrorlist, self.ayum.conf.yumvar)
                 cmd.extend(["--mirrorlist", repo.mirrorlist])
             else:
+                repo.baseurl = yum.parser.varReplace(repo.baseurl, self.ayum.conf.yumvar)
                 cmd.extend(["--source", repo.baseurl])
 
         # Add the repo in the destdir to our yum object
