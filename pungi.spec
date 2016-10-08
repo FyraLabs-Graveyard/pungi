@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.9
+Version:        4.1.10
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -72,6 +72,23 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Sat Oct 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.10-1
+- pungi: Replace kickstart repo url (mark)
+- ostree-installer: Reduce duplication in tests (lsedlar)
+- ostree-installer: Generate correct volume ID (lsedlar)
+- ostree-installer: Use ostree as type in filename (lsedlar)
+- ostree: Use $basearch in repo file (lsedlar)
+- config: Accept empty branch in SCM dict (lsedlar)
+- Remove duplicated version from pungi script (lsedlar)
+- use --new-chroot when making ostree's (dennis)
+- Create git tags without release (lsedlar)
+- Translate paths without double slash (lsedlar)
+- Remove shebangs from non-executable files (lsedlar)
+- Remove FSF address from comments (lsedlar)
+- Update contributing guide (lsedlar)
+- init: Remove keep_original_comps option (lsedlar)
+- tests: Use unittest2 consistently (lsedlar)
+
 * Wed Sep 21 2016 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.9-1
 - ostree_installer: Add --isfinal lorax argument (lsedlar)
 - Recreate JSON dump of configuration (lsedlar)
