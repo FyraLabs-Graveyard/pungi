@@ -37,6 +37,7 @@ Requires:       gettext
 Requires:       syslinux
 Requires:       git
 Requires:       python-jsonschema
+Requires:       libguestfs-tools-c
 
 BuildArch:      noarch
 
