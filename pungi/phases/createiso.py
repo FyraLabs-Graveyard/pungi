@@ -25,7 +25,7 @@ from productmd.images import Image
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
 
-from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers import iso
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.phases.base import PhaseBase
@@ -246,8 +246,6 @@ class CreateIsoThread(WorkerThread):
                 self.fail(compose, cmd, variant, arch)
                 raise
 
-        iso = IsoWrapper()
-
         img = Image(compose.im)
         img.path = cmd["iso_path"].replace(compose.paths.compose.topdir(), '').lstrip('/')
         img.mtime = get_mtime(cmd["iso_path"])
@@ -412,13 +410,12 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     new_di_path = os.path.join(iso_dir, ".discinfo")
     write_discinfo(new_di_path, **data)
 
-    i = IsoWrapper()
     if not disc_count or disc_count == 1:
-        data = i.get_graft_points([tree_dir, iso_dir])
+        data = iso.get_graft_points([tree_dir, iso_dir])
     else:
-        data = i.get_graft_points([i._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
+        data = iso.get_graft_points([iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
 
     # TODO: /content /graft-points
     gp = "%s-graft-points" % iso_dir
-    i.write_graft_points(gp, data, exclude=["*/lost+found", "*/boot.iso"])
+    iso.write_graft_points(gp, data, exclude=["*/lost+found", "*/boot.iso"])
     return gp

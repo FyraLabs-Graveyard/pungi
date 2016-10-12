@@ -47,7 +47,7 @@ from kobo.shortcuts import run
 from pungi.arch import split_name_arch
 from pungi.util import makedirs, pkg_is_rpm
 from pungi.phases.base import PhaseBase
-from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 
 
@@ -177,8 +177,6 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
         return
 
     compose.log_info("[BEGIN] %s" % msg)
-
-    iso = IsoWrapper()
 
     # read the original volume id
     volume_id = iso.get_volume_id(boot_iso)

@@ -100,8 +100,7 @@ class OstreeInstallerThread(WorkerThread):
     def _add_to_manifest(self, compose, variant, arch, filename):
         full_iso_path = compose.paths.compose.iso_path(arch, variant, filename)
         iso_path = compose.paths.compose.iso_path(arch, variant, filename, relative=True)
-        iso_wrapper = iso.IsoWrapper()
-        implant_md5 = iso_wrapper.get_implanted_md5(full_iso_path)
+        implant_md5 = iso.get_implanted_md5(full_iso_path)
 
         img = images.Image(compose.im)
         img.path = iso_path
@@ -118,7 +117,7 @@ class OstreeInstallerThread(WorkerThread):
         setattr(img, 'can_fail', self.can_fail)
         setattr(img, 'deliverable', 'ostree-installer')
         try:
-            img.volume_id = iso_wrapper.get_volume_id(full_iso_path)
+            img.volume_id = iso.get_volume_id(full_iso_path)
         except RuntimeError:
             pass
         compose.im.add(variant.uid, arch, img)

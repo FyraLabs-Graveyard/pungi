@@ -636,11 +636,10 @@ class TestSymlinkIso(PungiTestCase):
     @mock.patch('pungi.phases.buildinstall.Image')
     @mock.patch('pungi.phases.buildinstall.get_mtime')
     @mock.patch('pungi.phases.buildinstall.get_file_size')
-    @mock.patch('pungi.phases.buildinstall.IsoWrapper')
+    @mock.patch('pungi.phases.buildinstall.iso')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_hardlink(self, run, IsoWrapperCls, get_file_size, get_mtime, ImageCls):
+    def test_hardlink(self, run, iso, get_file_size, get_mtime, ImageCls):
         self.compose.conf = {'buildinstall_symlink': False, 'disc_types': {}}
-        IsoWrapper = IsoWrapperCls.return_value
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
@@ -655,14 +654,14 @@ class TestSymlinkIso(PungiTestCase):
             self.compose.get_image_name.mock_calls,
             [mock.call('x86_64', self.compose.variants['Server'],
                        disc_type='boot', disc_num=None, suffix='.iso')])
-        self.assertItemsEqual(IsoWrapper.get_implanted_md5.mock_calls,
+        self.assertItemsEqual(iso.get_implanted_md5.mock_calls,
                               [mock.call(tgt)])
-        self.assertItemsEqual(IsoWrapper.get_manifest_cmd.mock_calls,
+        self.assertItemsEqual(iso.get_manifest_cmd.mock_calls,
                               [mock.call('image-name')])
-        self.assertItemsEqual(IsoWrapper.get_volume_id.mock_calls,
+        self.assertItemsEqual(iso.get_volume_id.mock_calls,
                               [mock.call(tgt)])
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call(IsoWrapper.get_manifest_cmd.return_value,
+                              [mock.call(iso.get_manifest_cmd.return_value,
                                          workdir=self.topdir + '/compose/Server/x86_64/iso')])
 
         image = ImageCls.return_value
@@ -675,7 +674,7 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(image.disc_number, 1)
         self.assertEqual(image.disc_count, 1)
         self.assertEqual(image.bootable, True)
-        self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(image.implant_md5, iso.get_implanted_md5.return_value)
         self.assertEqual(image.can_fail, False)
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])
@@ -683,14 +682,13 @@ class TestSymlinkIso(PungiTestCase):
     @mock.patch('pungi.phases.buildinstall.Image')
     @mock.patch('pungi.phases.buildinstall.get_mtime')
     @mock.patch('pungi.phases.buildinstall.get_file_size')
-    @mock.patch('pungi.phases.buildinstall.IsoWrapper')
+    @mock.patch('pungi.phases.buildinstall.iso')
     @mock.patch('pungi.phases.buildinstall.run')
-    def test_hardlink_with_custom_type(self, run, IsoWrapperCls, get_file_size, get_mtime, ImageCls):
+    def test_hardlink_with_custom_type(self, run, iso, get_file_size, get_mtime, ImageCls):
         self.compose.conf = {
             'buildinstall_symlink': False,
             'disc_types': {'boot': 'netinst'},
         }
-        IsoWrapper = IsoWrapperCls.return_value
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
@@ -705,14 +703,14 @@ class TestSymlinkIso(PungiTestCase):
             self.compose.get_image_name.mock_calls,
             [mock.call('x86_64', self.compose.variants['Server'],
                        disc_type='netinst', disc_num=None, suffix='.iso')])
-        self.assertItemsEqual(IsoWrapper.get_implanted_md5.mock_calls,
+        self.assertItemsEqual(iso.get_implanted_md5.mock_calls,
                               [mock.call(tgt)])
-        self.assertItemsEqual(IsoWrapper.get_manifest_cmd.mock_calls,
+        self.assertItemsEqual(iso.get_manifest_cmd.mock_calls,
                               [mock.call('image-name')])
-        self.assertItemsEqual(IsoWrapper.get_volume_id.mock_calls,
+        self.assertItemsEqual(iso.get_volume_id.mock_calls,
                               [mock.call(tgt)])
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call(IsoWrapper.get_manifest_cmd.return_value,
+                              [mock.call(iso.get_manifest_cmd.return_value,
                                          workdir=self.topdir + '/compose/Server/x86_64/iso')])
 
         image = ImageCls.return_value
@@ -725,7 +723,7 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(image.disc_number, 1)
         self.assertEqual(image.disc_count, 1)
         self.assertEqual(image.bootable, True)
-        self.assertEqual(image.implant_md5, IsoWrapper.get_implanted_md5.return_value)
+        self.assertEqual(image.implant_md5, iso.get_implanted_md5.return_value)
         self.assertEqual(image.can_fail, True)
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])

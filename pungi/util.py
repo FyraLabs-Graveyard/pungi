@@ -380,10 +380,6 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         if len(volid) <= 32:
             break
 
-    # from wrappers.iso import IsoWrapper
-    # iso = IsoWrapper(logger=compose._logger)
-    # volid = iso._truncate_volid(volid)
-
     if volid and len(volid) > 32:
         raise ValueError("Could not create volume ID <= 32 characters")
 
