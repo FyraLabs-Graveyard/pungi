@@ -38,6 +38,7 @@ When a new config option is added, the schema must be updated (see the
 import os.path
 import platform
 import jsonschema
+import re
 
 from . import util
 
@@ -174,7 +175,9 @@ def validate(config):
     """
     schema = _make_schema()
     DefaultValidator = _extend_with_default(jsonschema.Draft4Validator)
-    validator = DefaultValidator(schema, {'array': (tuple, list)})
+    validator = DefaultValidator(schema,
+                                 {'array': (tuple, list),
+                                  'regex': (str, unicode)})
     errors = []
     for error in validator.iter_errors(config):
         if isinstance(error, ConfigDeprecation):
@@ -220,8 +223,13 @@ UNKNOWN_SUGGEST = 'Unrecognized config option: {0}. Did you mean {1}?'
 
 def _extend_with_default(validator_class):
     validate_properties = validator_class.VALIDATORS["properties"]
+    validate_type = validator_class.VALIDATORS['type']
 
     def set_defaults(validator, properties, instance, schema):
+        """
+        Assign default values to options that have them defined and are not
+        specified.
+        """
         for property, subschema in properties.iteritems():
             if "default" in subschema and property not in instance:
                 instance.setdefault(property, subschema["default"])
@@ -230,13 +238,32 @@ def _extend_with_default(validator_class):
             yield error
 
     def error_on_deprecated(validator, properties, instance, schema):
+        """Unconditionally raise deprecation error if encountered."""
         yield ConfigDeprecation(
             'use %s instead' % properties
         )
 
+    def validate_regex_type(validator, properties, instance, schema):
+        """
+        Extend standard type validation to check correctness in regular
+        expressions.
+        """
+        if properties == 'regex':
+            try:
+                re.compile(instance)
+            except re.error as exc:
+                yield jsonschema.ValidationError(
+                    'incorrect regular expression: %s' % str(exc),
+                )
+        else:
+            # Not a regular expression, delegate to original validator.
+            for error in validate_type(validator, properties, instance, schema):
+                yield error
+
     return jsonschema.validators.extend(
         validator_class, {"properties": set_defaults,
-                          "deprecated": error_on_deprecated},
+                          "deprecated": error_on_deprecated,
+                          "type": validate_regex_type},
     )
 
 
@@ -258,25 +285,9 @@ def _make_schema():
                 "additionalProperties": False,
             },
 
-            "package_mapping": {
-                "type": "array",
-                "items": {
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "string",
-                        },
-                        {
-                            "type": "object",
-                            "patternProperties": {
-                                ".+": {"$ref": "#/definitions/list_of_strings"},
-                            },
-                            "additionalProperties": False,
-                        }
-                    ],
-                    "additionalItems": False,
-                },
-            },
+            "package_mapping": _variant_arch_mapping(
+                {"$ref": "#/definitions/list_of_strings"}
+            ),
 
             "scm_dict": {
                 "type": "object",
@@ -618,6 +629,9 @@ def _make_schema():
             "live_media": {
                 "type": "object",
                 "patternProperties": {
+                    # Warning: this pattern is a variant uid regex, but the
+                    # format does not let us validate it as there is no regular
+                    # expression to describe all regular expressions.
                     ".+": {
                         "type": "array",
                         "items": {
@@ -695,6 +709,9 @@ def _make_schema():
             "image_build": {
                 "type": "object",
                 "patternProperties": {
+                    # Warning: this pattern is a variant uid regex, but the
+                    # format does not let us validate it as there is no regular
+                    # expression to describe all regular expressions.
                     ".+": {
                         "type": "array",
                         "items": {
@@ -764,6 +781,9 @@ def _make_schema():
             "osbs": {
                 "type": "object",
                 "patternProperties": {
+                    # Warning: this pattern is a variant uid regex, but the
+                    # format does not let us validate it as there is no regular
+                    # expression to describe all regular expressions.
                     ".+": {
                         "type": "object",
                         "properties": {
@@ -839,7 +859,7 @@ def _variant_arch_mapping(value):
         "items": {
             "type": "array",
             "items": [
-                {"type": "string"},
+                {"type": "regex"},
                 {
                     "type": "object",
                     "patternProperties": {".+": value},

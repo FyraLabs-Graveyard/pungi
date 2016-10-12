@@ -379,5 +379,16 @@ class TestSuggestions(unittest.TestCase):
             [checks.UNKNOWN_SUGGEST.format('product_pid', 'product_id')])
 
 
+class TestRegexValidation(unittest.TestCase):
+    def test_incorrect_regular_expression(self):
+        cfg = load_config(PKGSET_REPOS,
+                          multilib=[('^*$', {'*': []})])
+
+        self.assertEqual(
+            checks.validate(cfg),
+            ['Failed validation in multilib.0.0: incorrect regular '
+             'expression: nothing to repeat'])
+
+
 if __name__ == '__main__':
     unittest.main()
