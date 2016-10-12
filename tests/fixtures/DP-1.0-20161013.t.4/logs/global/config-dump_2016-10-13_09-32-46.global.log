@@ -1,0 +1,164 @@
+{
+    "additional_packages": [
+        [
+            "^Server$",
+            {
+                "*": [
+                    "dummy-libtool"
+                ]
+            }
+        ],
+        [
+            "^Client-optional$",
+            {
+                "*": [
+                    "dummy-httpd"
+                ]
+            }
+        ]
+    ],
+    "base_product_type": "ga",
+    "bootable": false,
+    "check_deps": false,
+    "comps_file": "dummy-comps.xml",
+    "comps_filter_environments": true,
+    "create_jigdo": false,
+    "create_optional_isos": false,
+    "createiso_skip": [
+        [
+            "^Server-Gluster$",
+            {
+                "*": true,
+                "src": true
+            }
+        ]
+    ],
+    "createrepo_c": true,
+    "createrepo_checksum": "sha256",
+    "createrepo_deltas": false,
+    "createrepo_use_xz": false,
+    "disc_types": {},
+    "extra_files": [],
+    "failable_deliverables": [],
+    "filter_packages": [
+        [
+            "^.*$",
+            {
+                "*": [
+                    "dummy-pacemaker"
+                ]
+            }
+        ],
+        [
+            "^Client$",
+            {
+                "*": [
+                    "dummy-httpd"
+                ]
+            }
+        ],
+        [
+            "^Server-optional$",
+            {
+                "*": [
+                    "dummy-httpd.i686"
+                ]
+            }
+        ],
+        [
+            "^.*-ResilientStorage$",
+            {
+                "*": [
+                    "dummy-glusterfs-resource-agents"
+                ]
+            }
+        ]
+    ],
+    "filter_system_release_packages": true,
+    "gather_fulltree": false,
+    "gather_lookaside_repos": [],
+    "gather_method": "deps",
+    "gather_selfhosting": false,
+    "gather_source": "comps",
+    "greedy_method": "build",
+    "hashed_directories": true,
+    "image_volid_formats": [
+        "{release_short}-{version} {variant}.{arch}",
+        "{release_short}-{version} {arch}"
+    ],
+    "image_volid_layered_product_formats": [
+        "{release_short}-{version} {base_product_short}-{base_product_version} {variant}.{arch}",
+        "{release_short}-{version} {base_product_short}-{base_product_version} {arch}"
+    ],
+    "iso_size": 4700000000,
+    "link_type": "hardlink-or-copy",
+    "live_images": [],
+    "live_images_no_rename": false,
+    "live_target": "rhel-7.0-candidate",
+    "lorax_options": [],
+    "media_checksum_base_filename": "",
+    "media_checksum_one_file": false,
+    "media_checksums": [
+        "md5",
+        "sha1",
+        "sha256"
+    ],
+    "multilib": [
+        [
+            "^Server.*$",
+            {
+                "*": [
+                    "devel",
+                    "runtime"
+                ]
+            }
+        ]
+    ],
+    "multilib_blacklist": {
+        "*": [
+            "kernel-devel",
+            "httpd-devel"
+        ]
+    },
+    "multilib_whitelist": {
+        "*": [
+            "dummy-glibc"
+        ]
+    },
+    "ostree": [],
+    "ostree_installer": [],
+    "pkgset_koji_inherit": true,
+    "pkgset_repos": {
+        "i386": [
+            "repo"
+        ],
+        "s390x": [
+            "repo"
+        ],
+        "x86_64": [
+            "repo"
+        ]
+    },
+    "pkgset_source": "repos",
+    "product_id_allow_missing": false,
+    "productimg": false,
+    "release_is_layered": false,
+    "release_name": "Dummy Product",
+    "release_short": "DP",
+    "release_type": "ga",
+    "release_version": "1.0",
+    "runroot": false,
+    "sigkeys": [
+        null
+    ],
+    "skip_phases": [],
+    "split_iso_reserve": 10485760,
+    "translate_paths": [],
+    "tree_arches": [],
+    "tree_variants": [
+        "Client",
+        "Server"
+    ],
+    "variants_file": "dummy-variants.xml",
+    "volume_id_substitutions": {}
+}

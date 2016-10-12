@@ -10,4 +10,4 @@ include doc/*
 include tests/*
 include tests/data/*
 include tests/data/*/*
-recursive-include tests/fixtures *.json *.xml *.bz2 *.gz
+recursive-include tests/fixtures *.json *.xml *.bz2 *.gz *.iso *.log MD5SUM SHA1SUM SHA256SUM treeinfo
