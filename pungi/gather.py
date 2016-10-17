@@ -471,10 +471,13 @@ class Pungi(PungiBase):
     def expand_excluded_list(self):
         excluded_list = []
         multilib_excluded_list = []
+        source_excluded_list = []
 
         for pattern in self.ksparser.handler.packages.excludedList:
             if pattern.endswith(".+"):
                 multilib_excluded_list.append(pattern[:-2])
+            elif pattern.endswith(".src"):
+                source_excluded_list.append(pattern[:-4])
             else:
                 excluded_list.append(pattern)
 
@@ -526,14 +529,35 @@ class Pungi(PungiBase):
                                      % (pkg.name, pkg.arch, found))
                 self.excluded_packages.add(pkg)
 
+        # source packages
+        exactmatched, matched, unmatched = yum.packages.parsePackages(
+            self.all_pkgs, source_excluded_list, casematch=1, pkgdict=self.pkg_refs.copy())
+
+        for i in sorted(unmatched):
+            self.logger.warning("Unmatched source exclude: %s.src" % i)
+
+        for pkg in exactmatched + matched:
+            if pkg.arch != "src":
+                continue
+
+            found = None
+            for pattern in source_excluded_list:
+                if fnmatch(pkg.name, pattern):
+                    found = pattern
+                    break
+
+            if found:
+                if pkg not in self.excluded_packages:
+                    self.logger.info("Excluding %s.%s (pattern: %s.src)"
+                                     % (pkg.name, pkg.arch, found))
+                self.excluded_packages.add(pkg)
+
     def excludePackages(self, pkg_sack):
         """exclude packages according to config file"""
         if not pkg_sack:
             return pkg_sack
 
         for pkg in pkg_sack[:]:
-            if pkg.arch == "src":
-                continue
             if pkg in self.multilib_blacklist:
                 pkg_sack.remove(pkg)
                 continue
@@ -961,6 +985,7 @@ class Pungi(PungiBase):
 
         # ... but even "nosrc" packages are stored as "src" in repodata
         srpm_po_list = self.ayum.pkgSack.searchNevra(name=name, ver=ver, rel=rel, arch="src")
+        srpm_po_list = self.excludePackages(srpm_po_list)
         if not srpm_po_list:
             raise RuntimeError("Cannot find a source rpm for %s" % po.sourcerpm)
         srpm_po = srpm_po_list[0]
