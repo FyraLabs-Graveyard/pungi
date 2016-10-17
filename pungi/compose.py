@@ -300,16 +300,18 @@ class Compose(kobo.log.LoggingBase):
         else:
             disc_num = ""
 
+        kwargs = {
+            'arch': arch,
+            'disc_type': disc_type,
+            'disc_num': disc_num,
+            'suffix': suffix
+        }
         if variant.type == "layered-product":
             variant_uid = variant.parent.uid
+            kwargs['compose_id'] = self.ci_base[variant.uid].compose_id
         else:
             variant_uid = variant.uid
-        args = get_format_substs(self,
-                                 variant=variant_uid,
-                                 arch=arch,
-                                 disc_type=disc_type,
-                                 disc_num=disc_num,
-                                 suffix=suffix)
+        args = get_format_substs(self, variant=variant_uid, **kwargs)
         try:
             return (format % args).format(**args)
         except KeyError as err:
