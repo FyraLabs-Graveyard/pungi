@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
 import re
@@ -58,9 +59,21 @@ class OSTreeThread(WorkerThread):
         util.makedirs(config['ostree_repo'])
 
         self._run_ostree_cmd(compose, variant, arch, config, repodir)
+        ref, commitid = self._get_commit_info(config, repodir)
+        if config.get('tag_ref', True) and ref and commitid:
+            # Let's write the tag out ourselves
+            heads_dir = os.path.join(config['ostree_repo'], 'refs', 'heads')
+            if not os.path.exists(heads_dir):
+                raise RuntimeError('Refs/heads did not exist in ostree repo')
+
+            ref_path = os.path.join(heads_dir, ref)
+            if not os.path.exists(os.path.dirname(ref_path)):
+                os.makedirs(os.path.dirname(ref_path))
+
+            with open(ref_path, 'w') as f:
+                f.write(commitid + '\n')
 
         if compose.notifier:
-            ref, commitid = self._get_commit_info()
             compose.notifier.send('ostree',
                                   variant=variant.uid,
                                   arch=arch,
@@ -69,14 +82,21 @@ class OSTreeThread(WorkerThread):
 
         self.pool.log_info('[DONE ] %s' % msg)
 
-    def _get_commit_info(self):
-        with open(os.path.join(self.logdir, 'create-ostree-repo.log'), 'r') as f:
-            for line in f.readlines():
-                if ' => ' in line:
-                    line = line.replace('\n', '')
-                    ref, _, commitid = line.partition(' => ')
-                    return ref, commitid
-        return None, None
+    def _get_commit_info(self, config, config_repo):
+        ref = None
+        commitid = None
+        with open(os.path.join(config_repo, config['treefile']), 'r') as f:
+            try:
+                parsed = json.loads(f.read())
+                ref = parsed['ref']
+            except ValueError:
+                return None, None
+        if os.path.exists(os.path.join(self.logdir, 'commitid')):
+            with open(os.path.join(self.logdir, 'commitid'), 'r') as f:
+                commitid = f.read().replace('\n', '')
+        else:
+            return None, None
+        return ref, commitid
 
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo):
         cmd = [

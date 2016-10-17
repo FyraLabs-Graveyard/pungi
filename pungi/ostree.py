@@ -39,7 +39,9 @@ def init_ostree_repo(repo, log_dir=None):
 
 def make_ostree_repo(repo, config, log_dir=None):
     log_file = make_log_file(log_dir, 'create-ostree-repo')
-    shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo, config],
+    shortcuts.run(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+                   '--write-commitid-to=%s' % make_log_file(log_dir, 'commitid'),
+                   config],
                   show_cmd=True, stdout=True, logfile=log_file)
 
 
