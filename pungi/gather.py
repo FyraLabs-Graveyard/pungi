@@ -802,15 +802,19 @@ class Pungi(PungiBase):
         self.expand_multilib_blacklist()
         self.all_pkgs = self.excludePackages(self.all_pkgs)
 
-
         lookaside_nvrs = set()
         for po in self.all_pkgs:
             if po.repoid in self.lookaside_repos:
                 lookaside_nvrs.add(po.nvra)
-        for po in self.all_pkgs[:]:
+        all_pkgs = []   # building a new list is cheaper than deleting from existing
+        for po in sorted(self.all_pkgs):
             if po.repoid not in self.lookaside_repos and po.nvra in lookaside_nvrs:
-                self.logger.debug("Removed %s (repo: %s), because it's also in a lookaside repo" % (po, po.repoid))
-                self.all_pkgs.remove(po)
+                self.logger.info("Removed %s (repo: %s), because it's also in a lookaside repo"
+                                 % (po, po.repoid))
+                self.excluded_packages.add(po)
+            else:
+                all_pkgs.append(po)
+        self.all_pkgs = all_pkgs
 
         self.get_langpacks()
 
