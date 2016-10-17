@@ -230,8 +230,9 @@ class Pungi(PungiBase):
 
         self.ksparser = ksparser
 
-        self.resolved_deps = {} # list the deps we've already resolved, short circuit.
-        self.excluded_pkgs = {} # list the packages we've already excluded.
+        self.resolved_deps = {} # list the deps we've already resolved, short circuit
+        self.excluded_packages = set() # set of packages we've already excluded
+        self.multilib_blacklist = set() # set of packages we've already excluded through a multilib blacklist
         self.seen_pkgs = {}     # list the packages we've already seen so we can check all deps only once
         self.multilib_methods = self.config.get('pungi', 'multilib').split(" ")
 
@@ -441,35 +442,104 @@ class Pungi(PungiBase):
 
         return True
 
+    def expand_multilib_blacklist(self):
+        multilib_blacklist = self.ksparser.handler.multilib_blacklist
+        exactmatched, matched, unmatched = yum.packages.parsePackages(
+            self.all_pkgs, multilib_blacklist, casematch=1, pkgdict=self.pkg_refs.copy())
+
+        for i in sorted(unmatched):
+            self.logger.warning("Unmatched multilib blacklist pattern: %s" % i)
+
+        for pkg in exactmatched + matched:
+            if pkg.arch == "src":
+                continue
+            if pkg.arch not in self.valid_multilib_arches:
+                continue
+
+            found = None
+            for pattern in multilib_blacklist:
+                if fnmatch(pkg.name, pattern):
+                    found = pattern
+                    break
+
+            if found:
+                if pkg not in self.multilib_blacklist:
+                    self.logger.info("Excluding %s.%s (multilib-blacklist pattern: %s)"
+                                     % (pkg.name, pkg.arch, found))
+                self.multilib_blacklist.add(pkg)
+
+    def expand_excluded_list(self):
+        excluded_list = []
+        multilib_excluded_list = []
+
+        for pattern in self.ksparser.handler.packages.excludedList:
+            if pattern.endswith(".+"):
+                multilib_excluded_list.append(pattern[:-2])
+            else:
+                excluded_list.append(pattern)
+
+        # native packages
+        exactmatched, matched, unmatched = yum.packages.parsePackages(
+            self.all_pkgs, excluded_list, casematch=1, pkgdict=self.pkg_refs.copy())
+
+        for i in sorted(unmatched):
+            self.logger.warning("Unmatched exclude: %s" % i)
+
+        for pkg in exactmatched + matched:
+            if pkg.arch == "src":
+                continue
+
+            found = None
+            for pattern in excluded_list:
+                if fnmatch(pkg.name, pattern):
+                    found = pattern
+                    break
+
+            if found:
+                if pkg not in self.excluded_packages:
+                    self.logger.info("Excluding %s.%s (pattern: %s)"
+                                     % (pkg.name, pkg.arch, found))
+                self.excluded_packages.add(pkg)
+
+        # multilib packages
+        exactmatched, matched, unmatched = yum.packages.parsePackages(
+            self.all_pkgs, multilib_excluded_list, casematch=1, pkgdict=self.pkg_refs.copy())
+
+        for i in sorted(unmatched):
+            self.logger.warning("Unmatched multilib exclude: %s.+" % i)
+
+        for pkg in exactmatched + matched:
+            if pkg.arch == "src":
+                continue
+            if pkg.arch not in self.valid_multilib_arches:
+                continue
+
+            found = None
+            for pattern in multilib_excluded_list:
+                if fnmatch(pkg.name, pattern):
+                    found = pattern
+                    break
+
+            if found:
+                if pkg not in self.excluded_packages:
+                    self.logger.info("Excluding %s.%s (pattern: %s.+)"
+                                     % (pkg.name, pkg.arch, found))
+                self.excluded_packages.add(pkg)
+
     def excludePackages(self, pkg_sack):
         """exclude packages according to config file"""
         if not pkg_sack:
             return pkg_sack
 
-        excludes = [] # list of (name, arch, pattern)
-        for i in self.ksparser.handler.packages.excludedList:
-            pattern = i
-            multilib = False
-            if i.endswith(".+"):
-                multilib = True
-                i = i[:-2]
-            name, arch = arch_module.split_name_arch(i)
-            excludes.append((name, arch, pattern, multilib))
-
-        for name in self.ksparser.handler.multilib_blacklist:
-            excludes.append((name, None, "multilib-blacklist: %s" % name, True))
-
         for pkg in pkg_sack[:]:
-            for name, arch, exclude_pattern, multilib in excludes:
-                if fnmatch(pkg.name, name):
-                    if not arch or fnmatch(pkg.arch, arch):
-                        if multilib and pkg.arch not in self.valid_multilib_arches:
-                            continue
-                        if pkg.nvra not in self.excluded_pkgs:
-                            self.logger.info("Excluding %s.%s (pattern: %s)" % (pkg.name, pkg.arch, exclude_pattern))
-                            self.excluded_pkgs[pkg.nvra] = pkg
-                        pkg_sack.remove(pkg)
-                        break
+            if pkg.arch == "src":
+                continue
+            if pkg in self.multilib_blacklist:
+                pkg_sack.remove(pkg)
+                continue
+            if pkg in self.excluded_packages:
+                pkg_sack.remove(pkg)
+                continue
 
         return pkg_sack
 
@@ -573,6 +643,8 @@ class Pungi(PungiBase):
 
                 for i, pkg_sack in packages_by_name.iteritems():
                     pkg_sack = self.excludePackages(pkg_sack)
+                    if not pkg_sack:
+                        continue
                     match = self.ayum._bestPackageFromList(pkg_sack)
                     msg = 'Added langpack %s.%s (repo: %s) for package %s (pattern: %s)' % (match.name, match.arch, match.repoid, po.name, pattern)
                     self.add_package(match, msg)
@@ -701,6 +773,9 @@ class Pungi(PungiBase):
 
         # precompute pkgs and pkg_refs to speed things up
         self.all_pkgs = list(set(self.ayum.pkgSack.returnPackages()))
+        self.pkg_refs = yum.packages.buildPkgRefDict(self.all_pkgs, casematch=True)
+        self.expand_excluded_list()
+        self.expand_multilib_blacklist()
         self.all_pkgs = self.excludePackages(self.all_pkgs)
 
 
@@ -712,8 +787,6 @@ class Pungi(PungiBase):
             if po.repoid not in self.lookaside_repos and po.nvra in lookaside_nvrs:
                 self.logger.debug("Removed %s (repo: %s), because it's also in a lookaside repo" % (po, po.repoid))
                 self.all_pkgs.remove(po)
-
-        self.pkg_refs = yum.packages.buildPkgRefDict(self.all_pkgs, casematch=True)
 
         self.get_langpacks()
 
