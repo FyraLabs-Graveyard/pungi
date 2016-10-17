@@ -705,7 +705,12 @@ class Pungi(PungiBase):
             if not match:
                 continue
 
-            if po.name in self.ksparser.handler.multilib_whitelist:
+            found = False
+            for pattern in self.ksparser.handler.multilib_whitelist:
+                if fnmatch(po.name, pattern):
+                    found = True
+                    break
+            if found:
                 msg = "Added multilib package %s.%s (repo: %s) for package %s.%s (method: %s)" % (match.name, match.arch, match.repoid, po.name, po.arch, "multilib-whitelist")
                 self.add_package(match, msg)
                 self.completed_multilib.add(match)
