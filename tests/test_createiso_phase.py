@@ -93,7 +93,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                          [mock.call(compose, 'x86_64', compose.variants['Server'],
                                     disc_count=1, disc_num=1, split_iso_data=disc_data)])
         self.assertEqual(split_iso.call_args_list,
-                         [mock.call(compose, 'x86_64', compose.variants['Server'])])
+                         [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False)])
         self.assertEqual(len(pool.add.call_args_list), 1)
         self.maxDiff = None
         self.assertItemsEqual(
@@ -160,8 +160,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                        disc_count=1, disc_num=1, split_iso_data=disc_data)])
         self.assertItemsEqual(
             split_iso.call_args_list,
-            [mock.call(compose, 'x86_64', compose.variants['Server']),
-             mock.call(compose, 'src', compose.variants['Server'])])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=True),
+             mock.call(compose, 'src', compose.variants['Server'], no_split=False)])
         self.assertEqual(len(pool.add.call_args_list), 2)
         self.maxDiff = None
         self.assertItemsEqual(
@@ -689,6 +689,39 @@ class SplitIsoTest(helpers.PungiTestCase):
                           {'files': [os.path.join(base_path, 'GPL'),
                                      os.path.join(base_path, 'Packages/b/bash.rpm')],
                            'size': 3242196992}])
+
+    def test_no_split_when_requested(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/.treeinfo'),
+                      TREEINFO)
+        helpers.touch(os.path.join(self.topdir, 'work/x86_64/Server/extra-files/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/GPL'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/repodata/repomd.xml'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/Packages/b/bash.rpm'))
+        helpers.touch(os.path.join(self.topdir, 'compose/Server/x86_64/os/n/media.repo'))
+
+        M = 1024 ** 2
+        G = 1024 ** 3
+
+        with mock.patch('os.path.getsize',
+                        DummySize({'GPL': 20 * M, 'bash': 3 * G,
+                                   'media': 2 * G, 'treeinfo': 10 * M})):
+            data = createiso.split_iso(compose, 'x86_64', compose.variants['Server'], no_split=True)
+
+        base_path = os.path.join(self.topdir, 'compose/Server/x86_64/os')
+        # GPL is the only sticky file, it should be first at all times.
+        # Files are searched top-down, so nested ones are after top level ones.
+        self.assertEqual(data,
+                         [{'files': [os.path.join(base_path, 'GPL'),
+                                     os.path.join(base_path, '.treeinfo'),
+                                     os.path.join(base_path, 'n/media.repo'),
+                                     os.path.join(base_path, 'Packages/b/bash.rpm')],
+                           'size': 5400166400}])
+        self.assertEqual(
+            compose.log_warning.call_args_list,
+            [mock.call('ISO for Server.x86_64 does not fit on single media! '
+                       'It is 710652160 bytes too big. (Total size: 5400166400 B)')]
+        )
 
     def test_keeps_reserve(self):
         compose = helpers.DummyCompose(self.topdir, {})
