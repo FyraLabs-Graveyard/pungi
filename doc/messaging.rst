@@ -36,4 +36,4 @@ Setting it up
 The script should be provided as a command line argument
 ``--notification-script``. ::
 
-    --notification_script=pungi-fedmsg-notification
+    --notification-script=pungi-fedmsg-notification
