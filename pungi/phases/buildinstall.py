@@ -94,9 +94,9 @@ class BuildinstallPhase(PhaseBase):
 
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             output_dir = self.compose.paths.work.buildinstall_dir(arch)
-            buildarch = get_valid_arches(arch)[0]
 
             if buildinstall_method == "lorax":
+                buildarch = get_valid_arches(arch)[0]
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     if variant.is_empty:
                         continue
@@ -115,7 +115,7 @@ class BuildinstallPhase(PhaseBase):
                                                 repo_baseurl,
                                                 output_dir,
                                                 is_final=self.compose.supported,
-                                                buildarch=buildarch,
+                                                buildarch=arch,
                                                 volid=volid))
                 )
             else:
