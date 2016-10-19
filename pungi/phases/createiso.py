@@ -84,7 +84,9 @@ class CreateisoPhase(PhaseBase):
                                              % (variant.uid, arch))
                     continue
 
-                split_iso_data = split_iso(self.compose, arch, variant)
+                bootable = self._is_bootable(variant, arch)
+
+                split_iso_data = split_iso(self.compose, arch, variant, no_split=bootable)
                 disc_count = len(split_iso_data)
 
                 for disc_num, iso_data in enumerate(split_iso_data):
@@ -102,8 +104,6 @@ class CreateisoPhase(PhaseBase):
                     graft_points = prepare_iso(self.compose, arch, variant,
                                                disc_num=disc_num, disc_count=disc_count,
                                                split_iso_data=iso_data)
-
-                    bootable = self._is_bootable(variant, arch)
 
                     cmd = {
                         "iso_path": iso_path,
@@ -281,17 +281,23 @@ class CreateIsoThread(WorkerThread):
                                   variant=str(variant))
 
 
-def split_iso(compose, arch, variant):
+def split_iso(compose, arch, variant, no_split=False):
     """
     Split contents of the os/ directory for given tree into chunks fitting on ISO.
 
     All files from the directory are taken except for possible boot.iso image.
     Files added in extra_files phase are put on all disks.
+
+    If `no_split` is set, we will pretend that the media is practically
+    infinite so that everything goes on single disc. A warning is printed if
+    the size is bigger than configured.
     """
     media_size = compose.conf['iso_size']
     media_reserve = compose.conf['split_iso_reserve']
+    split_size = convert_media_size(media_size) - convert_media_size(media_reserve)
+    real_size = 10**20 if no_split else split_size
 
-    ms = MediaSplitter(convert_media_size(media_size) - convert_media_size(media_reserve), compose)
+    ms = MediaSplitter(real_size, compose)
 
     os_tree = compose.paths.compose.os_tree(arch, variant)
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
@@ -336,7 +342,14 @@ def split_iso(compose, arch, variant):
     for path, size, sticky in all_files + packages:
         ms.add_file(path, size, sticky)
 
-    return ms.split()
+    result = ms.split()
+    if no_split and result[0]['size'] > split_size:
+        compose.log_warning('ISO for %s.%s does not fit on single media! '
+                            'It is %s bytes too big. (Total size: %s B)'
+                            % (variant.uid, arch,
+                               result[0]['size'] - split_size,
+                               result[0]['size']))
+    return result
 
 
 def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_data=None):
