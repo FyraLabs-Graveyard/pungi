@@ -25,7 +25,7 @@ from kobo.shortcuts import run, save_to_file, force_list
 from productmd.images import Image
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
-from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers import iso
 from pungi.phases import base
 from pungi.util import get_arch_variant_data, makedirs, get_mtime, get_file_size, failable
 from pungi.paths import translate_path
@@ -268,7 +268,6 @@ class CreateLiveImageThread(WorkerThread):
         :param iso_path: (str) absolute path to the ISO
         """
         dir, filename = os.path.split(iso_path)
-        iso = IsoWrapper()
         run("cd %s && %s" % (pipes.quote(dir), iso.get_manifest_cmd(filename)))
 
     def _sign_image(self, koji_wrapper, compose, cmd, koji_task_id):

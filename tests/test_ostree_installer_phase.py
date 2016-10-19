@@ -55,7 +55,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'image_volid_formats': ['{release_short}-{variant}-{arch}'],
         })
 
-    def assertImageAdded(self, compose, ImageCls, IsoWrapper):
+    def assertImageAdded(self, compose, ImageCls, iso):
         image = ImageCls.return_value
         self.assertEqual(image.path, 'Everything/x86_64/iso/image-name')
         self.assertEqual(image.mtime, 13579)
@@ -66,7 +66,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(image.disc_number, 1)
         self.assertEqual(image.disc_count, 1)
         self.assertEqual(image.bootable, True)
-        self.assertEqual(image.implant_md5, IsoWrapper.return_value.get_implanted_md5.return_value)
+        self.assertEqual(image.implant_md5, iso.get_implanted_md5.return_value)
         self.assertEqual(compose.im.add.mock_calls,
                          [mock.call('Everything', 'x86_64', image)])
 
@@ -111,10 +111,10 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run(self, KojiWrapper, link, IsoWrapper,
+    def test_run(self, KojiWrapper, link, iso,
                  get_file_size, get_mtime, ImageCls, run):
         self.compose.supported = False
         pool = mock.Mock()
@@ -140,17 +140,17 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                'file://%s/compose/Everything/x86_64/os' % self.topdir,
                                cfg['release'])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
-        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run_external_source(self, KojiWrapper, link, IsoWrapper,
+    def test_run_external_source(self, KojiWrapper, link, iso,
                                  get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
@@ -173,18 +173,18 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(koji, 'http://example.com/repo/x86_64/', cfg['release'], isfinal=True)
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
-        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.wrappers.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_fail_with_relative_template_path_but_no_repo(self, KojiWrapper, link,
-                                                          IsoWrapper, get_file_size,
+                                                          iso, get_file_size,
                                                           get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
@@ -213,10 +213,10 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run_clone_templates(self, KojiWrapper, link, IsoWrapper,
+    def test_run_clone_templates(self, KojiWrapper, link, iso,
                                  get_file_size, get_mtime, ImageCls, run,
                                  get_dir_from_scm):
         pool = mock.Mock()
@@ -254,17 +254,17 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
                                       '--add-arch-template=%s/other_file.txt' % templ_dir])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
-        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_run_with_implicit_release(self, KojiWrapper, link, IsoWrapper,
+    def test_run_with_implicit_release(self, KojiWrapper, link, iso,
                                        get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
@@ -312,17 +312,17 @@ class OstreeThreadTest(helpers.PungiTestCase):
                    '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host']
         )
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
-        self.assertImageAdded(self.compose, ImageCls, IsoWrapper)
+        self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_fail_crash(self, KojiWrapper, link, IsoWrapper, get_file_size,
+    def test_fail_crash(self, KojiWrapper, link, iso, get_file_size,
                         get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
@@ -345,10 +345,10 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
-    @mock.patch('pungi.wrappers.iso.IsoWrapper')
+    @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
-    def test_fail_runroot_fail(self, KojiWrapper, link, IsoWrapper,
+    def test_fail_runroot_fail(self, KojiWrapper, link, iso,
                                get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {

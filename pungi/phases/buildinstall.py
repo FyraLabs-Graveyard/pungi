@@ -31,7 +31,7 @@ from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
 from pungi.util import get_file_size, get_mtime, failable
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
-from pungi.wrappers.iso import IsoWrapper
+from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.phases.base import PhaseBase
 
@@ -312,7 +312,6 @@ def link_boot_iso(compose, arch, variant, can_fail):
     except OSError:
         shutil.copy2(boot_iso_path, new_boot_iso_path)
 
-    iso = IsoWrapper()
     implant_md5 = iso.get_implanted_md5(new_boot_iso_path)
     iso_name = os.path.basename(new_boot_iso_path)
     iso_dir = os.path.dirname(new_boot_iso_path)

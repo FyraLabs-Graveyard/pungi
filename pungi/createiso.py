@@ -6,7 +6,7 @@ import os
 import pipes
 from collections import namedtuple
 
-from .wrappers.iso import IsoWrapper
+from .wrappers import iso
 from .wrappers.jigdo import JigdoWrapper
 
 
@@ -40,7 +40,7 @@ fi
 """.replace('\n', '')
 
 
-def make_image(f, iso, opts):
+def make_image(f, opts):
     mkisofs_kwargs = {}
 
     if opts.buildinstall_method:
@@ -62,12 +62,12 @@ def make_image(f, iso, opts):
     emit(f, cmd)
 
 
-def implant_md5(f, iso, opts):
+def implant_md5(f, opts):
     cmd = iso.get_implantisomd5_cmd(opts.iso_name, opts.supported)
     emit(f, cmd)
 
 
-def run_isohybrid(f, iso, opts):
+def run_isohybrid(f, opts):
     """If the image is bootable, it should include an MBR or GPT so that it can
     be booted when written to USB disk. This is done by running isohybrid on
     the image.
@@ -77,7 +77,7 @@ def run_isohybrid(f, iso, opts):
         emit(f, cmd)
 
 
-def make_manifest(f, iso, opts):
+def make_manifest(f, opts):
     emit(f, iso.get_manifest_cmd(opts.iso_name))
 
 
@@ -103,10 +103,9 @@ def write_script(opts, f):
     emit(f, "#!/bin/bash")
     emit(f, "set -ex")
     emit(f, "cd %s" % opts.output_dir)
-    iso = IsoWrapper()
-    make_image(f, iso, opts)
-    run_isohybrid(f, iso, opts)
-    implant_md5(f, iso, opts)
-    make_manifest(f, iso, opts)
+    make_image(f, opts)
+    run_isohybrid(f, opts)
+    implant_md5(f, opts)
+    make_manifest(f, opts)
     if opts.jigdo_dir:
         make_jigdo(f, opts)
