@@ -372,13 +372,12 @@ def run_compose(compose):
     image_checksum_phase.stop()
 
     pungi.metadata.write_compose_info(compose)
+    compose.im.dump(compose.paths.compose.metadata("images.json"))
     osbs_phase.dump_metadata()
 
     # TEST phase
     test_phase.start()
     test_phase.stop()
-
-    compose.im.dump(compose.paths.compose.metadata("images.json"))
 
     # create a latest symlink
     compose_dir = os.path.basename(compose.topdir)
