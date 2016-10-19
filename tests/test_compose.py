@@ -81,6 +81,32 @@ class ComposeTestCase(unittest.TestCase):
                                          '.n', 'Server', '3.0']))
 
     @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_image_name_layered_product(self, ci):
+        conf = {}
+        variant = mock.Mock(uid='Server-LP', type='layered-product')
+        variant.parent = mock.Mock(uid='Server')
+        ci.return_value.compose.respin = 2
+        ci.return_value.compose.id = 'compose_id'
+        ci.return_value.compose.date = '20160107'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'RC-1.0'
+        ci.return_value.compose.label_major_version = '1'
+
+        ci.return_value.release.version = '3.0'
+        ci.return_value.release.short = 'rel_short'
+
+        ci.return_value['Server-LP'].compose_id = 'Gluster 1.0'
+
+        compose = Compose(conf, self.tmp_dir)
+
+        format = '{compose_id} {variant}'
+        name = compose.get_image_name('x86_64', variant, format=format,
+                                      disc_num=7, disc_type='live', suffix='.iso')
+
+        self.assertEqual(name, 'Gluster 1.0 Server')
+
+    @mock.patch('pungi.compose.ComposeInfo')
     def test_get_image_name_type_netinst(self, ci):
         conf = {}
         variant = mock.Mock(uid='Server', type='variant')
