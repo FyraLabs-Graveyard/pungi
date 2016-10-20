@@ -184,6 +184,8 @@ def main():
         sys.exit(1)
     pungi.checks.check_umask(logger)
     errors = pungi.checks.validate(conf)
+    for warning in pungi.checks.report_removed(conf):
+        print >>sys.stderr, warning
     if errors:
         for error in errors:
             print >>sys.stderr, error
