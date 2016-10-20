@@ -238,12 +238,12 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         var.name = variant.name
         var.type = variant.type
 
-    var.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
-    var.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+    var.paths.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+    var.paths.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
 
     ti.variants.add(var)
 
-    repomd_path = os.path.join(var.repository, "repodata", "repomd.xml")
+    repomd_path = os.path.join(var.paths.repository, "repodata", "repomd.xml")
     if os.path.isfile(repomd_path):
         ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
 
