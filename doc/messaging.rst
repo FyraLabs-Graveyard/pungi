@@ -12,6 +12,9 @@ happened. A JSON-encoded object will be passed to standard input to provide
 more information about the event. At the very least, the object will contain a
 ``compose_id`` key.
 
+The script is invoked in compose directory and can read other information
+there.
+
 Currently these messages are sent:
 
  * ``status-change`` -- when composing starts, finishes or fails; a ``status``
@@ -21,11 +24,11 @@ Currently these messages are sent:
  * ``createiso-targets`` -- with a list of images to be created
  * ``createiso-imagedone`` -- when any single image is finished
  * ``createiso-imagefail`` -- when any single image fails to create
+ * ``fail-to-start`` -- when there are incorrect CLI options or errors in
+   configuration file; this message does not contain ``compose_id`` nor is it
+   started in the compose directory (which does not exist yet)
 
 For phase related messages ``phase_name`` key is provided as well.
-
-The script is invoked in compose directory and can read other information
-there.
 
 A ``pungi-fedmsg-notification`` script is provided and understands this
 interface.

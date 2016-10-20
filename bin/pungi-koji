@@ -121,32 +121,43 @@ def main():
     )
 
     opts, args = parser.parse_args()
+    import pungi.notifier
+    notifier = pungi.notifier.PungiNotifier(opts.notification_script)
+
+    def fail_to_start(msg, **kwargs):
+        notifier.send('fail-to-start', workdir=opts.target_dir,
+                      command=sys.argv, target_dir=opts.target_dir,
+                      config=opts.config, detail=msg, **kwargs)
+
+    def abort(msg):
+        fail_to_start(msg)
+        parser.error(msg)
 
     if opts.version:
         print("pungi %s" % get_full_version())
         sys.exit(0)
 
     if opts.target_dir and opts.compose_dir:
-        parser.error("cannot specify --target-dir and --compose-dir at once")
+        abort("cannot specify --target-dir and --compose-dir at once")
 
     if not opts.target_dir and not opts.compose_dir:
-        parser.error("please specify a target directory")
+        abort("please specify a target directory")
 
     if opts.target_dir and not opts.compose_dir:
         opts.target_dir = os.path.abspath(opts.target_dir)
         if not os.path.isdir(opts.target_dir):
-            parser.error("The target directory does not exist or is not a directory: %s" % opts.target_dir)
+            abort("The target directory does not exist or is not a directory: %s" % opts.target_dir)
     else:
         opts.compose_dir = os.path.abspath(opts.compose_dir)
         if not os.path.isdir(opts.compose_dir):
-            parser.error("The compose directory does not exist or is not a directory: %s" % opts.compose_dir)
+            abort("The compose directory does not exist or is not a directory: %s" % opts.compose_dir)
 
     compose_type = opts.compose_type or "production"
     if compose_type == "production" and not opts.label and not opts.no_label:
-        parser.error("must specify label for a production compose")
+        abort("must specify label for a production compose")
 
     if not opts.config:
-        parser.error("please specify a config")
+        abort("please specify a config")
     opts.config = os.path.abspath(opts.config)
 
     import kobo.conf
@@ -157,10 +168,9 @@ def main():
         try:
             productmd.composeinfo.verify_label(opts.label)
         except ValueError as ex:
-            parser.error(str(ex))
+            abort(str(ex))
 
     from pungi.compose import Compose
-    import pungi.notifier
 
     logger = logging.Logger("Pungi")
     kobo.log.add_stderr_logger(logger)
@@ -177,14 +187,13 @@ def main():
     if errors:
         for error in errors:
             print >>sys.stderr, error
+        fail_to_start('Config validation failed', errors=errors)
         sys.exit(1)
 
     if opts.target_dir:
         compose_dir = Compose.get_compose_dir(opts.target_dir, conf, compose_type=compose_type, compose_label=opts.label)
     else:
         compose_dir = opts.compose_dir
-
-    notifier = pungi.notifier.PungiNotifier(opts.notification_script)
 
     compose = Compose(conf,
                       topdir=compose_dir,

@@ -30,9 +30,12 @@ class PungiNotifier(object):
     def __init__(self, cmd):
         self.cmd = cmd
         self.lock = threading.Lock()
+        self.compose = None
 
     def _update_args(self, data):
         """Add compose related information to the data."""
+        if not self.compose:
+            return
         data.setdefault('compose_id', self.compose.compose_id)
 
         # Publish where in the world this compose will end up living
@@ -40,7 +43,7 @@ class PungiNotifier(object):
             self.compose, self.compose.paths.compose.topdir())
         data.setdefault('location', location)
 
-    def send(self, msg, **kwargs):
+    def send(self, msg, workdir=None, **kwargs):
         """Send a message.
 
         The actual meaning of ``msg`` depends on what the notification script
@@ -55,13 +58,18 @@ class PungiNotifier(object):
 
         self._update_args(kwargs)
 
+        if self.compose:
+            workdir = self.compose.paths.compose.topdir()
+
         with self.lock:
-            self.compose.log_debug("Notification: %r %r, %r" % (
-                self.cmd, msg, kwargs))
+            if self.compose:
+                self.compose.log_debug("Notification: %r %r, %r" % (
+                    self.cmd, msg, kwargs))
             ret, _ = shortcuts.run((self.cmd, msg),
                                    stdin_data=json.dumps(kwargs),
                                    can_fail=True,
-                                   workdir=self.compose.paths.compose.topdir(),
+                                   workdir=workdir,
                                    return_stdout=False)
             if ret != 0:
-                self.compose.log_warning('Failed to invoke notification script.')
+                if self.compose:
+                    self.compose.log_warning('Failed to invoke notification script.')
