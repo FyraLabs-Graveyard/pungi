@@ -281,7 +281,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         # clone all but 'general' sections from buildinstall .treeinfo
 
         bi_dir = compose.paths.work.buildinstall_dir(arch)
-        if compose.conf['buildinstall_method'] == 'lorax':
+        if compose.conf.get('buildinstall_method') == 'lorax':
             # The .treeinfo file produced by lorax is nested in variant
             # subdirectory. Legacy buildinstall runs once per arch, so there is
             # only one file.
