@@ -180,22 +180,27 @@ def validate(config):
                                   'regex': (str, unicode)})
     errors = []
     for error in validator.iter_errors(config):
-        if isinstance(error, ConfigDeprecation):
-            errors.append(DEPRECATED.format('.'.join(error.path), error.message))
+        if not error.path and error.validator == 'additionalProperties':
+            allowed_keys = set(error.schema['properties'].keys())
+            used_keys = set(error.instance.keys())
+            for key in used_keys - allowed_keys:
+                suggestion = _get_suggestion(key, allowed_keys)
+                if suggestion:
+                    errors.append(UNKNOWN_SUGGEST.format(key, suggestion))
+                else:
+                    errors.append(UNKNOWN.format(key))
         else:
-            if not error.path and error.validator == 'additionalProperties':
-                allowed_keys = set(error.schema['properties'].keys())
-                used_keys = set(error.instance.keys())
-                for key in used_keys - allowed_keys:
-                    suggestion = _get_suggestion(key, allowed_keys)
-                    if suggestion:
-                        errors.append(UNKNOWN_SUGGEST.format(key, suggestion))
-                    else:
-                        errors.append(UNKNOWN.format(key))
-            else:
-                errors.append('Failed validation in %s: %s' % (
-                    '.'.join([str(x) for x in error.path]), error.message))
+            errors.append('Failed validation in %s: %s' % (
+                '.'.join([str(x) for x in error.path]), error.message))
     return errors + _validate_requires(schema, config, CONFIG_DEPS)
+
+
+def report_removed(config):
+    schema = _make_schema()
+    for key in config:
+        msg = schema['properties'].get(key, {}).get('deprecated')
+        if msg:
+            yield REMOVED.format(key, msg)
 
 
 def _get_suggestion(desired, names):
@@ -214,11 +219,11 @@ def _get_suggestion(desired, names):
     return closest
 
 
-CONFLICTS = 'Config option {0}={1} conflicts with option {2}.'
-REQUIRES = 'Config option {0}={1} requires {2} which is not set.'
-DEPRECATED = 'Deprecated config option: {0}; {1}.'
-UNKNOWN = 'Unrecognized config option: {0}.'
-UNKNOWN_SUGGEST = 'Unrecognized config option: {0}. Did you mean {1}?'
+CONFLICTS = 'ERROR: Config option {0}={1} conflicts with option {2}.'
+REQUIRES = 'ERROR: Config option {0}={1} requires {2} which is not set.'
+REMOVED = 'WARNING: Config option {0} was removed and has no effect; {1}.'
+UNKNOWN = 'ERROR: Unrecognized config option: {0}.'
+UNKNOWN_SUGGEST = 'ERROR: Unrecognized config option: {0}. Did you mean {1}?'
 
 
 def _extend_with_default(validator_class):
@@ -236,12 +241,6 @@ def _extend_with_default(validator_class):
 
         for error in validate_properties(validator, properties, instance, schema):
             yield error
-
-    def error_on_deprecated(validator, properties, instance, schema):
-        """Unconditionally raise deprecation error if encountered."""
-        yield ConfigDeprecation(
-            'use %s instead' % properties
-        )
 
     def validate_regex_type(validator, properties, instance, schema):
         """
@@ -262,13 +261,8 @@ def _extend_with_default(validator_class):
 
     return jsonschema.validators.extend(
         validator_class, {"properties": set_defaults,
-                          "deprecated": error_on_deprecated,
                           "type": validate_regex_type},
     )
-
-
-class ConfigDeprecation(jsonschema.exceptions.ValidationError):
-    pass
 
 
 def _make_schema():
@@ -588,7 +582,7 @@ def _make_schema():
                 "default": True,
             },
             "keep_original_comps": {
-                "deprecated": "no <groups> tag for respective variant in variants XML"
+                "deprecated": "remove <groups> tag from respective variant in variants XML"
             },
 
             "link_type": {
@@ -822,25 +816,25 @@ def _make_schema():
 
             # Deprecated options
             "multilib_arches": {
-                "deprecated": "multilib"
+                "deprecated": "use multilib instead"
             },
             "multilib_methods": {
-                "deprecated": "multilib"
+                "deprecated": "use multilib instead"
             },
             "additional_packages_multiarch": {
-                "deprecated": "multilib_whitelist"
+                "deprecated": "use multilib_whitelist instead"
             },
             "filter_packages_multiarch": {
-                "deprecated": "multilib_blacklist"
+                "deprecated": "use multilib_blacklist instead"
             },
             "buildinstall_upgrade_image": {
-                "deprecated": "lorax_options"
+                "deprecated": "use lorax_options instead"
             },
             "pkgset_koji_path_prefix": {
-                "deprecated": "koji_profile",
+                "deprecated": "use koji_profile instead",
             },
             "pkgset_koji_url": {
-                "deprecated": "koji_profile",
+                "deprecated": "use koji_profile instead",
             },
         },
 

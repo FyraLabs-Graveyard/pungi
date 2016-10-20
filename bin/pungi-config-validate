@@ -65,8 +65,9 @@ def run(config, topdir, has_old):
     conf.load_from_file(config)
 
     errors = pungi.checks.validate(conf)
-    if errors:
-        for error in errors:
+    warnings = list(pungi.checks.report_removed(conf))
+    if errors or warnings:
+        for error in errors + warnings:
             print(error)
         sys.exit(1)
 

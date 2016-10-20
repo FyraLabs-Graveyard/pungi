@@ -194,9 +194,11 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             buildinstall_upgrade_image=True,
         )
 
+        self.assertItemsEqual(checks.validate(cfg), [])
+
         self.assertItemsEqual(
-            checks.validate(cfg),
-            [checks.DEPRECATED.format('buildinstall_upgrade_image', 'use lorax_options instead')]
+            checks.report_removed(cfg),
+            [checks.REMOVED.format('buildinstall_upgrade_image', 'use lorax_options instead')]
         )
 
 
