@@ -557,15 +557,15 @@ class Pungi(PungiBase):
         if not pkg_sack:
             return pkg_sack
 
-        for pkg in pkg_sack[:]:
+        result = []
+        for pkg in pkg_sack:
             if pkg in self.multilib_blacklist:
-                pkg_sack.remove(pkg)
                 continue
             if pkg in self.excluded_packages:
-                pkg_sack.remove(pkg)
                 continue
+            result.append(pkg)
 
-        return pkg_sack
+        return result
 
     def get_package_deps(self, po):
         """Add the dependencies for a given package to the
