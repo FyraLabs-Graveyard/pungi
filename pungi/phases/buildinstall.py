@@ -253,7 +253,9 @@ def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=Non
         if not os.path.isfile(image):
             continue
         mount_tmp_dir = tempfile.mkdtemp(prefix="tweak_buildinstall")
-        cmd = ["mount", "-o", "loop", image, mount_tmp_dir]
+        # use guestmount to mount the image, which doesn't require root privileges
+        # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
+        cmd = ["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_tmp_dir]
         run(cmd)
 
         for config in configs:
@@ -264,7 +266,7 @@ def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=Non
                 cmd = ["cp", "-v", "--remove-destination", config_path, config_in_image]
                 run(cmd)
 
-        cmd = ["umount", mount_tmp_dir]
+        cmd = ["fusermount", "-u", mount_tmp_dir]
         run(cmd)
         shutil.rmtree(mount_tmp_dir)
 

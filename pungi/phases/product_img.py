@@ -138,7 +138,9 @@ def create_product_img(compose, arch, variant):
         "dd if=/dev/zero of=%s bs=1k count=5760" % pipes.quote(image),
         # create file system
         "mke2fs -F %s" % pipes.quote(image),
-        "mount -o loop %s %s" % (pipes.quote(image), pipes.quote(mount_tmp)),
+        # use guestmount to mount the image, which doesn't require root privileges
+        # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
+        "LIBGUESTFS_BACKEND=direct guestmount -a %s -m /dev/sda %s" % (pipes.quote(image), pipes.quote(mount_tmp)),
         "mkdir -p %s/run/install/product" % pipes.quote(mount_tmp),
         "cp -rp %s/* %s/run/install/product/" % (pipes.quote(product_tmp), pipes.quote(mount_tmp)),
         "mkdir -p %s/run/install/product/pyanaconda" % pipes.quote(mount_tmp),
@@ -148,7 +150,7 @@ def create_product_img(compose, arch, variant):
         "ln -s run/install/product/locale %s" % pipes.quote(mount_tmp),
         # compat symlink: run/install/product/pyanaconda/installclasses -> ../installclasses
         "ln -s ../installclasses %s/run/install/product/pyanaconda/installclasses" % pipes.quote(mount_tmp),
-        "umount %s" % pipes.quote(mount_tmp),
+        "fusermount -u %s" % pipes.quote(mount_tmp),
         # tweak last mount path written in the image
         "tune2fs -M /run/install/product %s" % pipes.quote(image),
     ]
