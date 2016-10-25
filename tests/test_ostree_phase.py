@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import json
 import unittest
 import mock
 
@@ -48,6 +49,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
     def setUp(self):
         super(OSTreeThreadTest, self).setUp()
         self.repo = os.path.join(self.topdir, 'place/for/atomic')
+        os.makedirs(os.path.join(self.repo, 'refs', 'heads'))
         self.cfg = {
             'source_repo_from': 'Everything',
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
@@ -65,7 +67,9 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.pool = mock.Mock()
 
     def _dummy_config_repo(self, scm_dict, target, logger=None):
-        helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'))
+        os.makedirs(target)
+        helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'),
+                      json.dumps({'ref': 'fedora-atomic/25/x86_64'}))
         helpers.touch(os.path.join(target, 'fedora-rawhide.repo'),
                       'mirrorlist=mirror-mirror-on-the-wall')
         helpers.touch(os.path.join(target, 'fedora-24.repo'),
@@ -73,13 +77,16 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         helpers.touch(os.path.join(target, 'fedora-23.repo'),
                       'baseurl=why-not-zoidberg?')
 
-    def _mock_runroot(self, retcode, logs=None):
-        """Pretend to run a task in runroot, creating a log file with given line"""
+    def _mock_runroot(self, retcode, writefiles=None):
+        """Pretend to run a task in runroot, creating a log file with given line
+
+        Also allows for writing other files of requested"""
         def fake_runroot(self, log_file, **kwargs):
-            if logs:
+            if writefiles:
                 logdir = os.path.dirname(log_file)
-                helpers.touch(os.path.join(logdir, 'create-ostree-repo.log'),
-                              '\n'.join(['Doing work', logs]))
+                for filename in writefiles:
+                    helpers.touch(os.path.join(logdir, filename),
+                                  '\n'.join(writefiles[filename]))
             return {'task_id': 1234, 'retcode': retcode, 'output': 'Foo bar\n'}
         return fake_runroot
 
@@ -165,7 +172,10 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(
-            0, 'fedora-atomic/25/x86_64 => fca3465861a')
+            0,
+            {'commitid': 'fca3465861a',
+             'create-ostree-repo.log':
+                ['Doing work', 'fedora-atomic/25/x86_64 -> fca3465861a']})
         t = ostree.OSTreeThread(self.pool)
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
@@ -185,7 +195,9 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.compose.notifier = mock.Mock()
 
         koji = KojiWrapper.return_value
-        koji.run_runroot_cmd.side_effect = self._mock_runroot(0, 'Weird output')
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(
+            0,
+            {'create-ostree-repo.log': ['Doing work', 'Weird output']})
         t = ostree.OSTreeThread(self.pool)
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
