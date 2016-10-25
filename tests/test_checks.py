@@ -38,7 +38,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
                 machine.return_value = 'x86_64'
                 with mock.patch('os.path.exists') as exists:
                     exists.side_effect = self.dont_find([])
-                    result = checks.check({})
+                    with mock.patch('__builtin__.__import__'):
+                        result = checks.check({})
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
@@ -53,7 +54,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
                 machine.return_value = 'x86_64'
                 with mock.patch('os.path.exists') as exists:
                     exists.side_effect = self.dont_find(['/usr/bin/jigdo-lite'])
-                    result = checks.check(conf)
+                    with mock.patch('__builtin__.__import__'):
+                        result = checks.check(conf)
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
@@ -68,7 +70,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-                result = checks.check(conf)
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
@@ -82,7 +85,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-                result = checks.check(conf)
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
@@ -99,7 +103,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
                 machine.return_value = 'armhfp'
                 with mock.patch('os.path.exists') as exists:
                     exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-                    result = checks.check(conf)
+                    with mock.patch('__builtin__.__import__'):
+                        result = checks.check(conf)
 
         self.assertRegexpMatches(out.getvalue(), r'^Not checking.*Expect failures.*$')
         self.assertTrue(result)
@@ -112,7 +117,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
-                result = checks.check(conf)
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
@@ -125,7 +131,8 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
-                result = checks.check(conf)
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
