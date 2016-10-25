@@ -119,6 +119,13 @@ def main():
         "--notification-script",
         help="script for sending progress notification messages"
     )
+    parser.add_option(
+        "--no-latest-link",
+        action="store_true",
+        default=False,
+        dest="no_latest_link",
+        help="don't create latest symbol link to this compose"
+    )
 
     opts, args = parser.parse_args()
     import pungi.notifier
@@ -159,6 +166,8 @@ def main():
     if not opts.config:
         abort("please specify a config")
     opts.config = os.path.abspath(opts.config)
+
+    create_latest_link = not opts.no_latest_link
 
     import kobo.conf
     import kobo.log
@@ -210,13 +219,13 @@ def main():
     notifier.compose = compose
     COMPOSE = compose
     try:
-        run_compose(compose)
+        run_compose(compose, create_latest_link)
     except Exception, ex:
         compose.log_error("Compose run failed: %s" % ex)
         raise
 
 
-def run_compose(compose):
+def run_compose(compose, create_latest_link=True):
     import pungi.phases
     import pungi.metadata
 
@@ -390,25 +399,26 @@ def run_compose(compose):
     test_phase.start()
     test_phase.stop()
 
-    # create a latest symlink
-    compose_dir = os.path.basename(compose.topdir)
-    if len(compose.conf["release_version"].split(".")) == 1:
-        symlink_name = "latest-%s-%s" % (compose.conf["release_short"], compose.conf["release_version"])
-    else:
-        symlink_name = "latest-%s-%s" % (compose.conf["release_short"], ".".join(compose.conf["release_version"].split(".")[:-1]))
-    if compose.conf["release_is_layered"]:
-        symlink_name += "-%s-%s" % (compose.conf["base_product_short"], compose.conf["base_product_version"])
-    symlink = os.path.join(compose.topdir, "..", symlink_name)
+    if create_latest_link:
+        # create a latest symlink
+        compose_dir = os.path.basename(compose.topdir)
+        if len(compose.conf["release_version"].split(".")) == 1:
+            symlink_name = "latest-%s-%s" % (compose.conf["release_short"], compose.conf["release_version"])
+        else:
+            symlink_name = "latest-%s-%s" % (compose.conf["release_short"], ".".join(compose.conf["release_version"].split(".")[:-1]))
+        if compose.conf["release_is_layered"]:
+            symlink_name += "-%s-%s" % (compose.conf["base_product_short"], compose.conf["base_product_version"])
+        symlink = os.path.join(compose.topdir, "..", symlink_name)
 
-    try:
-        os.unlink(symlink)
-    except OSError as ex:
-        if ex.errno != 2:
-            raise
-    try:
-        os.symlink(compose_dir, symlink)
-    except Exception as ex:
-        compose.log_error("Couldn't create latest symlink: %s" % ex)
+        try:
+            os.unlink(symlink)
+        except OSError as ex:
+            if ex.errno != 2:
+                raise
+        try:
+            os.symlink(compose_dir, symlink)
+        except Exception as ex:
+            compose.log_error("Couldn't create latest symlink: %s" % ex)
 
     compose.log_info("Compose finished: %s" % compose.topdir)
     compose.write_status("FINISHED")
