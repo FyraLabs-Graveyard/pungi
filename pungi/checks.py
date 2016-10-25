@@ -76,6 +76,10 @@ def is_genisoimage_needed(conf):
         return False
     return True
 
+
+def is_createrepo_c_needed(conf):
+    return conf.get('createrepo_c', True)
+
 # The first element in the tuple is package name expected to have the
 # executable (2nd element of the tuple). The last element is an optional
 # function that should determine if the tool is required based on
@@ -87,8 +91,15 @@ tools = [
     ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
     ("gettext", "/usr/bin/msgfmt", None),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
-    ("createrepo", "/usr/bin/createrepo", None),
-    ("createrepo", "/usr/bin/mergerepo", None),
+    # modifyrepo can always be called
+    ("createrepo", "/usr/bin/modifyrepo", None),
+    # createrepo and mergerepo are not needed by default, only when
+    # createrepo_c is not configured
+    ("createrepo", "/usr/bin/createrepo", lambda conf: not is_createrepo_c_needed(conf)),
+    ("createrepo", "/usr/bin/mergerepo", lambda conf: not is_createrepo_c_needed(conf)),
+    ("createrepo_c", "/usr/bin/createrepo_c", is_createrepo_c_needed),
+    ("createrepo_c", "/usr/bin/mergerepo_c", is_createrepo_c_needed),
+
     ("yum-utils", "/usr/bin/repoquery", None),
     ("git", "/usr/bin/git", None),
     ("cvs", "/usr/bin/cvs", None),

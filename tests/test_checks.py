@@ -147,10 +147,45 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
-                result = checks.check(conf)
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
 
         self.assertIn('genisoimage', out.getvalue())
         self.assertFalse(result)
+
+    def test_requires_modifyrepo(self):
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/modifyrepo'])
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check({})
+
+        self.assertIn('createrepo', out.getvalue())
+        self.assertFalse(result)
+
+    def test_requires_createrepo_c(self):
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check({})
+
+        self.assertIn('createrepo_c', out.getvalue())
+        self.assertFalse(result)
+
+    def test_doesnt_require_createrepo_c_if_configured(self):
+        conf = {
+            'createrepo_c': False,
+        }
+
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+            with mock.patch('os.path.exists') as exists:
+                exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
+                with mock.patch('__builtin__.__import__'):
+                    result = checks.check(conf)
+
+        self.assertNotIn('createrepo_c', out.getvalue())
+        self.assertTrue(result)
 
 
 class TestUmask(unittest.TestCase):
