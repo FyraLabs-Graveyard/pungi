@@ -100,6 +100,8 @@ imports = [
     ("python-lxml", "lxml"),
     ("koji", "koji"),
     ("python-productmd", "productmd"),
+    ("python-kickstart", "pykickstart.parser"),
+    ("libselinux-python", "selinux"),
 ]
 
 
