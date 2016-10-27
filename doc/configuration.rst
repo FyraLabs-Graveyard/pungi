@@ -1068,8 +1068,11 @@ Example
 OSTree Settings
 ===============
 
-The ``ostree`` phase of *Pungi* can create ostree repositories in a Koji
-runroot environment.
+The ``ostree`` phase of *Pungi* can create ostree repositories. This is done by
+running ``rpm-ostree compose`` in a Koji runroot environment. The ostree
+repository itself is not part of the compose and should be located in another
+directory. Any new packages in the compose will be added to the repository with
+a new commit.
 
 **ostree**
     (*dict*) -- a variant/arch mapping of configuration. The format should be
@@ -1091,6 +1094,8 @@ runroot environment.
     * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
       Defaults to ``False``.
     * ``version`` -- (*str*) Version string to be added as versioning metadata.
+    * ``tag_ref`` -- (*bool*, default ``True``) If set to ``False``, a git
+      reference will not be created.
 
 
 Example config

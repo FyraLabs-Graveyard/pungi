@@ -27,6 +27,8 @@ Currently these messages are sent:
  * ``fail-to-start`` -- when there are incorrect CLI options or errors in
    configuration file; this message does not contain ``compose_id`` nor is it
    started in the compose directory (which does not exist yet)
+ * ``ostree`` -- when a new commit is created, this message will announce its
+   hash and the name of ref it is meant for.
 
 For phase related messages ``phase_name`` key is provided as well.
 
