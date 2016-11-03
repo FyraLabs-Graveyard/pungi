@@ -12,11 +12,19 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 import os
+import selinux
+import sys
+
+here = sys.path[0]
+if here != '/usr/bin':
+    # Git checkout
+    sys.path.insert(1, os.path.dirname(here))
+
 from pungi import get_full_version
 import pungi.gather
 import pungi.config
 import pungi.ks
-import selinux
+
 
 def main():
 
