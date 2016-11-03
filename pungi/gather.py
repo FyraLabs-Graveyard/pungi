@@ -864,6 +864,7 @@ class Pungi(PungiBase):
         for name in searchlist:
             pattern = name
             multilib = False
+            orig_name = name
             if name.endswith(".+"):
                 name = name[:-2]
                 multilib = True
@@ -898,7 +899,7 @@ class Pungi(PungiBase):
                     # works for both "none" and "build" greedy methods
                     packages = [self.ayum._bestPackageFromList(packages)]
 
-                if name in input_packages:
+                if orig_name in input_packages:
                     self.input_packages.update(packages)
                 if name in comps_package_names:
                     self.comps_packages.update(packages)
@@ -1104,7 +1105,7 @@ class Pungi(PungiBase):
                     elif po.arch in self.valid_native_arches:
                         has_native = True
                     continue
-                if po.arch in self.valid_multilib_arches and self.greedy_method == "all":
+                if po.arch in self.valid_multilib_arches and (po in self.input_packages or self.greedy_method == "all"):
                     include_multilib = True
                 elif po.arch in self.valid_native_arches:
                     include_native = True

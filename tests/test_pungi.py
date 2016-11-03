@@ -664,7 +664,6 @@ class TestPungi(unittest.TestCase):
             "dummy-krb5-debuginfo-1.10-5.x86_64.rpm",
         ])
 
-    @unittest.skip
     def test_bash_multilib(self):
         packages = [
             "dummy-bash.+",
@@ -698,7 +697,6 @@ class TestPungi(unittest.TestCase):
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
 
-    @unittest.skip
     def test_bash_multilib_exclude(self):
         # test if excluding a package really works
         # NOTE: dummy-bash-doc would pull x86_64 bash in (we want noarch pulling 64bit deps in composes)
