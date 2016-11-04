@@ -24,7 +24,7 @@ from ConfigParser import SafeConfigParser
 
 # In development, `here` will point to the bin/ directory with scripts.
 here = sys.path[0]
-MULTILIBCONF = (os.path.join(os.path.dirname(here), 'share', 'multilib')
+MULTILIBCONF = (os.path.join(os.path.dirname(__file__), '..', 'share', 'multilib')
                 if here != '/usr/bin'
                 else '/usr/share/pungi/multilib')
 
