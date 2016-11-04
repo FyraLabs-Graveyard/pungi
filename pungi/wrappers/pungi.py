@@ -197,3 +197,58 @@ class PungiWrapper(object):
                 result.setdefault(match.group(2), set()).add(match.group(1))
 
         return result
+
+    def run_pungi(self, ks_file, destdir, name, selfhosting=False, fulltree=False,
+                  greedy='', cache_dir=None, arch='', multilib_methods=[],
+                  nodeps=False, lookaside_repos=[]):
+        """
+        This is a replacement for get_pungi_cmd that runs it in-process. Not
+        all arguments are supported.
+        """
+        from .. import ks, gather, config
+        ksparser = ks.get_ksparser(ks_path=ks_file)
+        cfg = config.Config()
+        cfg.set('pungi', 'destdir', destdir)
+        cfg.set('pungi', 'family', name)
+        cfg.set('pungi', 'iso_basename', name)
+        cfg.set('pungi', 'fulltree', str(fulltree))
+        cfg.set('pungi', 'selfhosting', str(selfhosting))
+        cfg.set('pungi', 'cachedir', cache_dir)
+        cfg.set('pungi', 'full_archlist', "True")
+        cfg.set('pungi', 'workdirbase', "%s/work" % destdir)
+        cfg.set('pungi', 'greedy', greedy)
+        cfg.set('pungi', 'nosource', 'False')
+        cfg.set('pungi', 'nodebuginfo', 'False')
+        cfg.set('pungi', 'force', 'False')
+        cfg.set('pungi', 'resolve_deps', str(not nodeps))
+        if arch:
+            cfg.set('pungi', 'arch', arch)
+        if multilib_methods:
+            cfg.set('pungi', 'multilib', " ".join(multilib_methods))
+        if lookaside_repos:
+            cfg.set('pungi', 'lookaside_repos', " ".join(lookaside_repos))
+
+        mypungi = gather.Pungi(cfg, ksparser)
+
+        with open(os.path.join(destdir, 'out'), 'w') as f:
+            with mypungi.yumlock:
+                mypungi._inityum()
+                mypungi.gather()
+
+                for line in mypungi.list_packages():
+                    flags_str = ",".join(line["flags"])
+                    if flags_str:
+                        flags_str = "(%s)" % flags_str
+                    f.write("RPM%s: %s\n" % (flags_str, line["path"]))
+                mypungi.makeCompsFile()
+                mypungi.getDebuginfoList()
+                for line in mypungi.list_debuginfo():
+                    flags_str = ",".join(line["flags"])
+                    if flags_str:
+                        flags_str = "(%s)" % flags_str
+                    f.write("DEBUGINFO%s: %s\n" % (flags_str, line["path"]))
+                for line in mypungi.list_srpms():
+                    flags_str = ",".join(line["flags"])
+                    if flags_str:
+                        flags_str = "(%s)" % flags_str
+                    f.write("SRPM%s: %s\n" % (flags_str, line["path"]))

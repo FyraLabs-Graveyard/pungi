@@ -10,8 +10,7 @@ import os
 import tempfile
 import shutil
 import sys
-
-from kobo.shortcuts import run
+import logging
 
 HERE = os.path.dirname(__file__)
 BINDIR = (os.path.join(HERE, '..', 'bin'))
@@ -42,7 +41,13 @@ class TestPungi(unittest.TestCase):
                                       "fixtures/repos/repo-krb5-lookaside")
         self.ks = os.path.join(self.tmp_dir, "ks")
         self.out = os.path.join(self.tmp_dir, "out")
-        self.p = PungiWrapper()
+        logger = logging.getLogger('Pungi')
+        if not logger.handlers:
+            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            console = logging.StreamHandler(sys.stdout)
+            console.setFormatter(formatter)
+            console.setLevel(logging.INFO)
+            logger.addHandler(console)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -53,17 +58,16 @@ class TestPungi(unittest.TestCase):
         Write a kickstart with given packages and groups, then run the
         depsolving and parse the output.
         """
+        p = PungiWrapper()
         repos = {"repo": repo or self.repo}
         if lookaside:
             repos['lookaside'] = lookaside
-        self.p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
-                               multilib_whitelist=multilib_whitelist)
-        kwargs.setdefault('full_archlist', True)
+        p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
+                          multilib_whitelist=multilib_whitelist)
         kwargs.setdefault('cache_dir', self.tmp_dir)
-        cmd = self.p.get_pungi_cmd(self.ks, self.tmp_dir, "DP", **kwargs)
-        run(cmd, logfile=self.out, stdout=True)
+        p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
         with open(self.out, "r") as f:
-            pkg_map = self.p.get_packages(f.read())
+            pkg_map = p.get_packages(f.read())
         return convert_pkg_map(pkg_map)
 
     def test_kernel(self):
