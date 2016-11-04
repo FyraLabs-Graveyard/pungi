@@ -150,7 +150,17 @@ class PungiBase(object):
 class CallBack(urlgrabber.progress.TextMeter):
     """A call back function used with yum."""
 
-    def progressbar(self, current, total, name=None):
+    def __init__(self, logger):
+        self.logger = logger
+
+    def start(self, filename=None, url=None, basename=None, size=None, now=None, text=None):
+        self.logger.info('Downloading %s (%sB)'
+                         % (text, urlgrabber.progress.format_number(size)))
+
+    def update(self, amount_read, name=None):
+        return
+
+    def end(self, amount_read, now=None):
         return
 
 
@@ -325,8 +335,8 @@ class Pungi(PungiBase):
         self.ayum.repos.enableRepo(thisrepo.id)
         self.ayum._getRepos(thisrepo=thisrepo.id, doSetup=True)
         # Set the repo callback.
-        self.ayum.repos.setProgressBar(CallBack())
-        self.ayum.repos.callback = CallBack()
+        self.ayum.repos.setProgressBar(CallBack(logger=self.logger))
+        self.ayum.repos.callback = CallBack(logger=self.logger)
         thisrepo.metadata_expire = 0
         thisrepo.mirrorlist_expire = 0
         if os.path.exists(os.path.join(thisrepo.cachedir, 'repomd.xml')):
