@@ -214,12 +214,13 @@ class Pungi(PungiBase):
         lock = lockfile.LockFile(filename)
         self.yumlock = ReentrantYumLock(lock, self.logger)
 
-        # Create the stdout/err streams and only send INFO+ stuff there
-        formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
-        console = logging.StreamHandler()
-        console.setFormatter(formatter)
-        console.setLevel(logging.INFO)
-        self.logger.addHandler(console)
+        if not self.logger.handlers:
+            # Create the stdout/err streams and only send INFO+ stuff there
+            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            console = logging.StreamHandler()
+            console.setFormatter(formatter)
+            console.setLevel(logging.INFO)
+            self.logger.addHandler(console)
 
         self.destdir = self.config.get('pungi', 'destdir')
         self.archdir = os.path.join(self.destdir,
