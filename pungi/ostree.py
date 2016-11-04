@@ -45,9 +45,17 @@ def make_ostree_repo(repo, config, log_dir=None):
                   show_cmd=True, stdout=True, logfile=log_file)
 
 
+def update_ostree_summary(repo, log_dir=None):
+    log_file = make_log_file(log_dir, 'ostree-summary')
+    shortcuts.run(['ostree', 'summary', '-u', '--repo=%s' % repo],
+                  show_cmd=True, stdout=True, logfile=log_file)
+
+
 def run(opts):
     init_ostree_repo(opts.ostree_repo, log_dir=opts.log_dir)
     make_ostree_repo(opts.ostree_repo, opts.treefile, log_dir=opts.log_dir)
+    if opts.update_summary:
+        update_ostree_summary(opts.ostree_repo, log_dir=opts.log_dir)
 
 
 def main(args=None):
@@ -59,6 +67,8 @@ def main(args=None):
                         help='where to put the ostree repo')
     parser.add_argument('--treefile', required=True,
                         help='treefile for rpm-ostree')
+    parser.add_argument('--update-summary', action='store_true',
+                        help='update summary metadata')
 
     opts = parser.parse_args(args)
 

@@ -79,6 +79,29 @@ class OstreeScriptTest(helpers.PungiTestCase):
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
+    @mock.patch('kobo.shortcuts.run')
+    def test_update_summary(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        ostree.main([
+            '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
+            '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
+            '--update-summary',
+            repo,
+        ])
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            run.call_args_list,
+            [mock.call(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
+                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
+             mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+                       '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
+                        self.topdir + '/fedora-atomic-docker-host.json'],
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True),
+             mock.call(['ostree', 'summary', '-u', '--repo=%s' % repo],
+                       logfile=self.topdir + '/logs/Atomic/ostree-summary.log', show_cmd=True, stdout=True)]),
+
 
 if __name__ == '__main__':
     unittest.main()

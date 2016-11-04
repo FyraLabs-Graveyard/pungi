@@ -103,8 +103,13 @@ class OSTreeThread(WorkerThread):
             'pungi-make-ostree',
             '--log-dir=%s' % os.path.join(self.logdir),
             '--treefile=%s' % os.path.join(config_repo, config['treefile']),
-            config['ostree_repo']
         ]
+
+        if config.get('update_summary', False):
+            cmd.append('--update-summary')
+
+        # positional argument: ostree_repo
+        cmd.append(config['ostree_repo'])
 
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]

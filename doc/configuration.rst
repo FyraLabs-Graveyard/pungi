@@ -1088,6 +1088,8 @@ runroot environment.
       ``master``.
     * ``failable`` -- (*[str]*) List of architectures for which this
       deliverable is not release blocking.
+    * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
+      Defaults to ``False``.
 
 
 Example config
@@ -1100,7 +1102,8 @@ Example config
                 "treefile": "fedora-atomic-docker-host.json",
                 "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                 "source_repo_from": "Everything",
-                "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/"
+                "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
+                "update_summary": True
             }
         })
     ]
