@@ -1090,6 +1090,7 @@ runroot environment.
       deliverable is not release blocking.
     * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
       Defaults to ``False``.
+    * ``version`` -- (*str*) Version string to be added as versioning metadata.
 
 
 Example config
@@ -1103,7 +1104,8 @@ Example config
                 "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                 "source_repo_from": "Everything",
                 "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
-                "update_summary": True
+                "update_summary": True,
+                "version": "24"
             }
         })
     ]

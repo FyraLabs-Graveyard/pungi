@@ -105,6 +105,10 @@ class OSTreeThread(WorkerThread):
             '--treefile=%s' % os.path.join(config_repo, config['treefile']),
         ]
 
+        version = config.get('version', None)
+        if version:
+            cmd.append('--version=%s' % version)
+
         if config.get('update_summary', False):
             cmd.append('--update-summary')
 

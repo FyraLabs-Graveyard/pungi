@@ -678,6 +678,7 @@ def _make_schema():
                     "ostree_repo": {"type": "string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
                     "update_summary": {"type": "boolean"},
+                    "version": {"type": "string"},
                     "config_branch": {"type": "string"},
                     "tag_ref": {"type": "boolean"},
                 },
