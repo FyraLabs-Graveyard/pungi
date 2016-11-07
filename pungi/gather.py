@@ -1162,8 +1162,10 @@ class Pungi(PungiBase):
             if po.sourcerpm not in self.sourcerpm_arch_map:
                 # TODO: print a warning / throw an error
                 continue
-            if not (set(self.compatible_arches[po.arch]) & set(self.sourcerpm_arch_map[po.sourcerpm]) - set(["noarch"])):
-                # skip all incompatible arches
+            if po.arch != 'noarch' and not (set(self.compatible_arches[po.arch]) &
+                                            set(self.sourcerpm_arch_map[po.sourcerpm]) -
+                                            set(["noarch"])):
+                # skip all incompatible arches unless it's a noarch debuginfo
                 # this pulls i386 debuginfo for a i686 package for example
                 continue
             msg = 'Added debuginfo %s.%s (repo: %s)' % (po.name, po.arch, po.repoid)
