@@ -69,13 +69,14 @@ class OSTreeThreadTest(helpers.PungiTestCase):
     def _dummy_config_repo(self, scm_dict, target, logger=None):
         os.makedirs(target)
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'),
-                      json.dumps({'ref': 'fedora-atomic/25/x86_64'}))
+                      json.dumps({'ref': 'fedora-atomic/25/x86_64',
+                                  'repos': ['fedora-rawhide', 'fedora-24', 'fedora-23']}))
         helpers.touch(os.path.join(target, 'fedora-rawhide.repo'),
-                      'mirrorlist=mirror-mirror-on-the-wall')
+                      '[fedora-rawhide]\nmirrorlist=mirror-mirror-on-the-wall')
         helpers.touch(os.path.join(target, 'fedora-24.repo'),
-                      'metalink=who-is-the-fairest-of-them-all')
+                      '[fedora-24]\nmetalink=who-is-the-fairest-of-them-all')
         helpers.touch(os.path.join(target, 'fedora-23.repo'),
-                      'baseurl=why-not-zoidberg?')
+                      '[fedora-23]\nbaseurl=why-not-zoidberg?')
 
     def _mock_runroot(self, retcode, writefiles=None):
         """Pretend to run a task in runroot, creating a log file with given line
@@ -120,10 +121,17 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
 
-        for fp in ['fedora-rawhide.repo', 'fedora-24.repo', 'fedora-24.repo']:
-            with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
-                self.assertIn('baseurl=http://example.com/Everything/$basearch/os',
-                              f.read())
+        repo_files = []
+        for fp in os.listdir(os.path.join(self.topdir, 'work/ostree-1/config_repo')):
+            if fp.endswith('.repo'):
+                repo_files.append(fp)
+
+                if fp not in ['fedora-rawhide.repo', 'fedora-24.repo', 'fedora-23.repo']:
+                    with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
+                        self.assertIn('baseurl=http://example.com/Everything/$basearch/os', f.read())
+        # test a new repo file created
+        self.assertEqual(len(repo_files), 4)
+
         self.assertTrue(os.path.isdir(self.repo))
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
@@ -257,12 +265,6 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
 
-        for fp in ['fedora-rawhide.repo', 'fedora-24.repo', 'fedora-24.repo']:
-            with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
-                self.assertIn('baseurl=http://example.com/Everything/$basearch/os',
-                              f.read())
-        self.assertTrue(os.path.isdir(self.repo))
-
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_with_versioning_metadata(self, KojiWrapper, get_dir_from_scm):
@@ -294,6 +296,95 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_extra_source_repos(self, KojiWrapper, get_dir_from_scm):
+        get_dir_from_scm.side_effect = self._dummy_config_repo
+
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
+
+        cfg = {
+            'source_repo_from': 'Everything',
+            'extra_source_repos': [
+                {
+                    'name': 'repo_a',
+                    'baseurl': 'http://url/to/repo/a',
+                    'exclude': 'systemd-container'
+                },
+                {
+                    'name': 'Server',
+                    'baseurl': 'Server',
+                    'exclude': 'systemd-container'
+                }
+            ],
+            'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
+            'config_branch': 'f24',
+            'treefile': 'fedora-atomic-docker-host.json',
+            'ostree_repo': self.repo
+        }
+
+        t = ostree.OSTreeThread(self.pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        repo_files = []
+        for fp in os.listdir(os.path.join(self.topdir, 'work/ostree-1/config_repo')):
+            if fp.endswith('.repo'):
+                repo_files.append(fp)
+
+                if fp not in ['fedora-rawhide.repo', 'fedora-24.repo', 'fedora-23.repo']:
+                    if fp.startswith('repo_a'):
+                        with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
+                            # ignore timestamp in repo name while checking
+                            content = f.read()
+                            self.assertIn('[repo_a', content)
+                            self.assertIn('name=repo_a', content)
+                            self.assertIn('baseurl=http://url/to/repo/a', content)
+                            self.assertIn('exclude=systemd-container', content)
+                            self.assertIn('gpgcheck=0', content)
+                    elif fp.startswith('Server'):
+                        with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
+                            content = f.read()
+                            self.assertIn('[Server', content)
+                            self.assertIn('baseurl=http://example.com/Server/$basearch/os', content)
+                            self.assertIn('exclude=systemd-container', content)
+                            self.assertIn('gpgcheck=0', content)
+                    else:
+                        # this is the Everything repo (source_repo_from)
+                        with open(os.path.join(self.topdir, 'work/ostree-1/config_repo', fp)) as f:
+                            self.assertIn('baseurl=http://example.com/Everything/$basearch/os', f.read())
+        # test new repos files created
+        self.assertEqual(len(repo_files), 3 + 1 + len(cfg['extra_source_repos']))
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_keep_original_source_repos(self, KojiWrapper, get_dir_from_scm):
+        get_dir_from_scm.side_effect = self._dummy_config_repo
+
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
+
+        cfg = {
+            'source_repo_from': 'Everything',
+            'keep_original_sources': True,
+            'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
+            'config_branch': 'f24',
+            'treefile': 'fedora-atomic-docker-host.json',
+            'ostree_repo': self.repo
+        }
+
+        t = ostree.OSTreeThread(self.pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        treeconf_content = json.load(open(os.path.join(self.topdir,
+                                                       'work/ostree-1/config_repo',
+                                                       cfg['treefile'])))
+
+        # added 1 repo (Everything), have 4 (3 + 1) repos now
+        self.assertEqual(len(treeconf_content['repos']), 4)
 
 if __name__ == '__main__':
     unittest.main()

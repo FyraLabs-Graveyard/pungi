@@ -318,9 +318,25 @@ def _make_schema():
                 ]
             },
 
+            "source_repo_dict": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "baseurl": {"type": "string"},
+                    "exclude": {"type": "string"},
+                    "gpgcheck": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+
             "list_of_strings": {
                 "type": "array",
                 "items": {"type": "string"},
+            },
+
+            "list_of_source_repo_dicts": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/source_repo_dict"},
             },
 
             "strings": {
@@ -675,6 +691,8 @@ def _make_schema():
                     "treefile": {"type": "string"},
                     "config_url": {"type": "string"},
                     "source_repo_from": {"type": "string"},
+                    "extra_source_repos": {"$ref": "#/definitions/list_of_source_repo_dicts"},
+                    "keep_original_sources": {"type": "boolean"},
                     "ostree_repo": {"type": "string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
                     "update_summary": {"type": "boolean"},

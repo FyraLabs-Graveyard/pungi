@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
-import re
 
 from .base import ConfigGuardedPhase
 from .. import util
@@ -52,7 +52,29 @@ class OSTreeThread(WorkerThread):
                                                                       create_dir=False))
 
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
-        self._tweak_mirrorlist(repodir, source_repo)
+
+        treeconf = os.path.join(repodir, config['treefile'])
+        source_repos = [{'name': '%s-%s' % (compose.compose_id, config['source_repo_from']),
+                         'baseurl': source_repo}]
+
+        extra_source_repos = config.get('extra_source_repos', None)
+        if extra_source_repos:
+            for extra in extra_source_repos:
+                baseurl = extra['baseurl']
+                if "://" not in baseurl:
+                    # it's variant UID, translate to url
+                    variant = compose.variants[baseurl]
+                    url = translate_path(compose,
+                                         compose.paths.compose.repository('$basearch',
+                                                                          variant,
+                                                                          create_dir=False))
+                    extra['baseurl'] = url
+
+            source_repos = source_repos + extra_source_repos
+
+        keep_original_sources = config.get('keep_original_sources', False)
+        self._tweak_treeconf(treeconf, source_repos=source_repos,
+                             keep_original_sources=keep_original_sources)
 
         # Ensure target directory exists, otherwise Koji task will fail to
         # mount it.
@@ -136,23 +158,42 @@ class OSTreeThread(WorkerThread):
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
                              repodir, logger=self.pool._logger)
 
-    def _tweak_mirrorlist(self, repodir, source_repo):
-        for file in os.listdir(repodir):
-            if file.endswith('.repo'):
-                tweak_file(os.path.join(repodir, file), source_repo)
+    def _tweak_treeconf(self, treeconf, source_repos, keep_original_sources=False):
+        """
+        Update tree config file by adding new repos and remove existing repos
+        from the tree config file if 'keep_original_sources' is not enabled.
+        """
+        # add this timestamp to repo name to get unique repo filename and repo name
+        # should be safe enough
+        time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
+        treeconf_dir = os.path.dirname(treeconf)
+        with open(treeconf, 'r') as f:
+            treeconf_content = json.load(f)
 
-def tweak_file(path, source_repo):
-    """
-    Ensure a given .repo file points to `source_repo`.
+        # backup the old tree config
+        os.rename(treeconf, '%s.%s.bak' % (treeconf, time))
 
-    This function replaces all lines starting with `mirrorlist`, `metalink` or
-    `baseurl` with `baseurl` set to requested repository.
-    """
-    with open(path, 'r') as f:
-        contents = f.read()
-    replacement = 'baseurl=%s' % source_repo
-    exp = re.compile(r'^(mirrorlist|metalink|baseurl)=.*$', re.MULTILINE)
-    contents = exp.sub(replacement, contents)
-    with open(path, 'w') as f:
-        f.write(contents)
+        repos = []
+        for repo in source_repos:
+            name = "%s-%s" % (repo['name'], time)
+            with open("%s/%s.repo" % (treeconf_dir, name), 'w') as f:
+                f.write("[%s]\n" % name)
+                f.write("name=%s\n" % name)
+                f.write("baseurl=%s\n" % repo['baseurl'])
+                exclude = repo.get('exclude', None)
+                if exclude:
+                    f.write("exclude=%s\n" % exclude)
+                gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
+                f.write("gpgcheck=%s\n" % gpgcheck)
+            repos.append(name)
+
+        original_repos = treeconf_content.get('repos', [])
+        if keep_original_sources:
+            treeconf_content['repos'] = original_repos + repos
+        else:
+            treeconf_content['repos'] = repos
+
+        # update tree config to add new repos
+        with open(treeconf, 'w') as f:
+            json.dump(treeconf_content, f, indent=4)
