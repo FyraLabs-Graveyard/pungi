@@ -138,7 +138,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(koji,
                                'file://%s/compose/Everything/x86_64/os' % self.topdir,
-                               cfg['release'])
+                               cfg['release'],
+                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -171,7 +172,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
-        self.assertRunrootCall(koji, 'http://example.com/repo/x86_64/', cfg['release'], isfinal=True)
+        self.assertRunrootCall(koji, 'http://example.com/repo/x86_64/', cfg['release'], isfinal=True,
+                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -252,7 +254,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                cfg['release'],
                                isfinal=True,
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
-                                      '--add-arch-template=%s/other_file.txt' % templ_dir])
+                                      '--add-arch-template=%s/other_file.txt' % templ_dir,
+                                      '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -309,7 +312,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
                    '--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
                    '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
                    '--add-arch-template-var=ostree_osname=fedora-atomic',
-                   '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host']
+                   '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
+                   '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir]
         )
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)

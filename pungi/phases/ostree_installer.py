@@ -153,6 +153,7 @@ class OstreeInstallerThread(WorkerThread):
             add_template_var=config.get('add_template_var'),
             add_arch_template_var=config.get('add_arch_template_var'),
             is_final=compose.supported,
+            log_dir=self.logdir,
         )
 
         runroot_channel = compose.conf.get("runroot_channel")
