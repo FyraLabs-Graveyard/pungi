@@ -28,7 +28,7 @@ from productmd.images import Image
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
-from pungi.util import get_file_size, get_mtime, failable
+from pungi.util import get_file_size, get_mtime, failable, makedirs
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
@@ -64,6 +64,13 @@ class BuildinstallPhase(PhaseBase):
             if not data.get('nomacboot', True):
                 nomacboot = False
         output_dir = os.path.join(output_dir, variant.uid)
+
+        # The paths module will modify the filename (by inserting arch). But we
+        # only care about the directory anyway.
+        log_filename = 'buildinstall-%s-logs/dumym' % variant.uid
+        log_dir = os.path.dirname(self.compose.paths.log.log_file(arch, log_filename))
+        makedirs(log_dir)
+
         lorax = LoraxWrapper()
         lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
                                         self.compose.conf["release_version"],
@@ -77,7 +84,8 @@ class BuildinstallPhase(PhaseBase):
                                         volid=volid,
                                         nomacboot=nomacboot,
                                         bugurl=bugurl,
-                                        noupgrade=noupgrade)
+                                        noupgrade=noupgrade,
+                                        log_dir=log_dir)
         return 'rm -rf %s && %s' % (pipes.quote(output_dir),
                                     ' '.join([pipes.quote(x) for x in lorax_cmd]))
 

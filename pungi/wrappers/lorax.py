@@ -25,7 +25,8 @@ class LoraxWrapper(object):
                       variant=None, bugurl=None, nomacboot=False, noupgrade=False,
                       is_final=False, buildarch=None, volid=None, buildinstallpackages=None,
                       add_template=None, add_arch_template=None,
-                      add_template_var=None, add_arch_template_var=None):
+                      add_template_var=None, add_arch_template_var=None,
+                      log_dir=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -62,6 +63,9 @@ class LoraxWrapper(object):
         cmd.extend(process_args('--add-arch-template=%s', add_arch_template))
         cmd.extend(process_args('--add-template-var=%s', add_template_var))
         cmd.extend(process_args('--add-arch-template-var=%s', add_arch_template_var))
+
+        if log_dir:
+            cmd.append('--logfile=%s' % os.path.join(log_dir, 'lorax.log'))
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
