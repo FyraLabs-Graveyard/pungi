@@ -97,7 +97,11 @@ class Compose(kobo.log.LoggingBase):
         kobo.log.LoggingBase.__init__(self, logger)
         # TODO: check if minimal conf values are set
         self.conf = conf
+        # This is a dict mapping UID to Variant objects. It only contains top
+        # level variants.
         self.variants = {}
+        # This is a similar mapping, but contains even nested variants.
+        self.all_variants = {}
         self.topdir = os.path.abspath(topdir)
         self.skip_phases = skip_phases or []
         self.just_phases = just_phases or []
@@ -214,6 +218,10 @@ class Compose(kobo.log.LoggingBase):
         with open(variants_file, "r") as file_obj:
             parser = VariantsXmlParser(file_obj, tree_arches, tree_variants, logger=self._logger)
             self.variants = parser.parse()
+
+        self.all_variants = {}
+        for variant in self.get_variants():
+            self.all_variants[variant.uid] = variant
 
         # populate ci_base with variants - needed for layered-products (compose_id)
         ####FIXME - compose_to_composeinfo is no longer needed and has been

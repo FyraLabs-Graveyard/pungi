@@ -59,6 +59,11 @@ class DummyCompose(object):
             'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'],
                                     type='variant', is_empty=False),
         }
+        self.all_variants = self.variants.copy()
+        self.all_variants['Server-optional'] = mock.Mock(
+            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False,
+            parent=self.variants['Server'])
+        self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}
         self.log_info = mock.Mock()
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()

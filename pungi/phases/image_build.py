@@ -31,7 +31,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
         install_tree_from = image_conf.pop('install_tree_from', variant.uid)
         if '://' in install_tree_from:
             return install_tree_from
-        install_tree_source = self.compose.variants.get(install_tree_from)
+        install_tree_source = self.compose.all_variants.get(install_tree_from)
         if not install_tree_source:
             raise RuntimeError(
                 'There is no variant %s to get install tree from when building image for %s.'
@@ -56,7 +56,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
             extras.append(variant.uid)
 
         for extra in extras:
-            v = self.compose.variants.get(extra)
+            v = self.compose.all_variants.get(extra)
             if not v:
                 raise RuntimeError(
                     'There is no variant %s to get repo from when building image for %s.'

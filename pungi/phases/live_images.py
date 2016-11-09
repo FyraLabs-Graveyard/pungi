@@ -47,7 +47,7 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
     def _get_extra_repos(self, arch, variant, extras):
         repo = []
         for extra in extras:
-            v = self.compose.variants.get(extra)
+            v = self.compose.all_variants.get(extra)
             if not v:
                 raise RuntimeError(
                     'There is no variant %s to get repo from when building live image for %s.'
@@ -72,7 +72,7 @@ class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to")
         commands = []
 
-        for variant in self.compose.variants.values():
+        for variant in self.compose.all_variants.values():
             for arch in variant.arches + ["src"]:
                 for data in get_arch_variant_data(self.compose.conf, self.name, arch, variant):
                     subvariant = data.get('subvariant', variant.uid)
