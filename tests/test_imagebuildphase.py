@@ -284,6 +284,7 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 
@@ -347,6 +348,7 @@ class TestImageBuildPhase(PungiTestCase):
             },
             'koji_profile': 'koji',
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 

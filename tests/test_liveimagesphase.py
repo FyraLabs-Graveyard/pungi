@@ -31,6 +31,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 })
             ],
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 

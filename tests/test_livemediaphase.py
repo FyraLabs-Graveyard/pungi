@@ -338,6 +338,7 @@ class TestLiveMediaPhase(PungiTestCase):
                 ]
             }
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 

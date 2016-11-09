@@ -229,13 +229,13 @@ class Compose(kobo.log.LoggingBase):
         ####        or if it is at all
         self.ci_base = compose_to_composeinfo(self)
 
-    def get_variants(self, types=None, arch=None, recursive=False):
+    def get_variants(self, types=None, arch=None):
         result = []
         types = types or ["variant", "optional", "addon", "layered-product"]
         for i in self.variants.itervalues():
             if i.type in types and (not arch or arch in i.arches):
                 result.append(i)
-            result.extend(i.get_variants(types=types, arch=arch, recursive=recursive))
+            result.extend(i.get_variants(types=types, arch=arch))
         return sorted(set(result))
 
     def get_arches(self):

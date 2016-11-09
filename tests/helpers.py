@@ -60,10 +60,6 @@ class DummyCompose(object):
                                     type='variant', is_empty=False),
         }
         self.all_variants = self.variants.copy()
-        self.all_variants['Server-optional'] = mock.Mock(
-            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False,
-            parent=self.variants['Server'])
-        self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}
         self.log_info = mock.Mock()
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()
@@ -78,8 +74,14 @@ class DummyCompose(object):
         self.fail_deliverable = mock.Mock()
         self.require_deliverable = mock.Mock()
 
-    def get_variants(self, arch=None, types=None, recursive=None):
-        return [v for v in self.variants.values() if not arch or arch in v.arches]
+    def setup_optional(self):
+        self.all_variants['Server-optional'] = mock.Mock(
+            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False,
+            parent=self.variants['Server'])
+        self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}
+
+    def get_variants(self, arch=None, types=None):
+        return [v for v in self.all_variants.values() if not arch or arch in v.arches]
 
     def can_fail(self, variant, arch, deliverable):
         failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)

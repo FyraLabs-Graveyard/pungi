@@ -65,7 +65,7 @@ class CreateisoPhase(PhaseBase):
         deliverables = []
 
         commands = []
-        for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"], recursive=True):
+        for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"]):
             for arch in variant.arches + ["src"]:
                 skip_iso = get_arch_variant_data(self.compose.conf, "createiso_skip", arch, variant)
                 if skip_iso == [True]:

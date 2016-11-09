@@ -28,6 +28,7 @@ class BuildInstallCompose(DummyCompose):
                                 type='variant', buildinstallpackages=[],
                                 is_empty=False),
         }
+        self.all_variants = self.variants.copy()
 
 
 class TestBuildinstallPhase(PungiTestCase):
