@@ -66,13 +66,14 @@ def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type='s
         # package(s) in package set
         if scm_dict["scm"] == "rpm" and not _is_external(scm_dict["repo"]):
             rpms = []
+            pattern = scm_dict["repo"] % var_dict
+            pkg_name, pkg_arch = split_name_arch(pattern)
             for pkgset_file in package_sets[arch]:
                 pkg_obj = package_sets[arch][pkgset_file]
-                if not pkg_is_rpm(pkg_obj):
-                    continue
-                pkg_name, pkg_arch = split_name_arch(scm_dict["repo"] % var_dict)
-                if _pkg_matches(pkg_obj, pkg_name, pkg_arch):
+                if pkg_is_rpm(pkg_obj) and _pkg_matches(pkg_obj, pkg_name, pkg_arch):
                     rpms.append(pkg_obj.file_path)
+            if not rpms:
+                raise RuntimeError('No package matching %s in the package set.' % pattern)
             scm_dict["repo"] = rpms
 
         getter = get_file_from_scm if 'file' in scm_dict else get_dir_from_scm
