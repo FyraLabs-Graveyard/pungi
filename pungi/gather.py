@@ -150,7 +150,17 @@ class PungiBase(object):
 class CallBack(urlgrabber.progress.TextMeter):
     """A call back function used with yum."""
 
-    def progressbar(self, current, total, name=None):
+    def __init__(self, logger):
+        self.logger = logger
+
+    def start(self, filename=None, url=None, basename=None, size=None, now=None, text=None):
+        self.logger.info('Downloading %s (%sB)'
+                         % (text, urlgrabber.progress.format_number(size)))
+
+    def update(self, amount_read, name=None):
+        return
+
+    def end(self, amount_read, now=None):
         return
 
 
@@ -204,12 +214,13 @@ class Pungi(PungiBase):
         lock = lockfile.LockFile(filename)
         self.yumlock = ReentrantYumLock(lock, self.logger)
 
-        # Create the stdout/err streams and only send INFO+ stuff there
-        formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
-        console = logging.StreamHandler()
-        console.setFormatter(formatter)
-        console.setLevel(logging.INFO)
-        self.logger.addHandler(console)
+        if not self.logger.handlers:
+            # Create the stdout/err streams and only send INFO+ stuff there
+            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            console = logging.StreamHandler()
+            console.setFormatter(formatter)
+            console.setLevel(logging.INFO)
+            self.logger.addHandler(console)
 
         self.destdir = self.config.get('pungi', 'destdir')
         self.archdir = os.path.join(self.destdir,
@@ -325,8 +336,8 @@ class Pungi(PungiBase):
         self.ayum.repos.enableRepo(thisrepo.id)
         self.ayum._getRepos(thisrepo=thisrepo.id, doSetup=True)
         # Set the repo callback.
-        self.ayum.repos.setProgressBar(CallBack())
-        self.ayum.repos.callback = CallBack()
+        self.ayum.repos.setProgressBar(CallBack(logger=self.logger))
+        self.ayum.repos.callback = CallBack(logger=self.logger)
         thisrepo.metadata_expire = 0
         thisrepo.mirrorlist_expire = 0
         if os.path.exists(os.path.join(thisrepo.cachedir, 'repomd.xml')):
@@ -864,6 +875,7 @@ class Pungi(PungiBase):
         for name in searchlist:
             pattern = name
             multilib = False
+            orig_name = name
             if name.endswith(".+"):
                 name = name[:-2]
                 multilib = True
@@ -898,7 +910,7 @@ class Pungi(PungiBase):
                     # works for both "none" and "build" greedy methods
                     packages = [self.ayum._bestPackageFromList(packages)]
 
-                if name in input_packages:
+                if orig_name in input_packages:
                     self.input_packages.update(packages)
                 if name in comps_package_names:
                     self.comps_packages.update(packages)
@@ -1104,7 +1116,7 @@ class Pungi(PungiBase):
                     elif po.arch in self.valid_native_arches:
                         has_native = True
                     continue
-                if po.arch in self.valid_multilib_arches and self.greedy_method == "all":
+                if po.arch in self.valid_multilib_arches and (po in self.input_packages or self.greedy_method == "all"):
                     include_multilib = True
                 elif po.arch in self.valid_native_arches:
                     include_native = True
