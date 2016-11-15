@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.10
+Version:        4.1.11
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -73,6 +73,53 @@ nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue Nov 15 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.11-1
+- [ostree] Allow extra repos to get packages for composing OSTree repository
+  (qwan)
+- pungi: Run in-process for testing (lsedlar)
+- pungi: Only add logger once (lsedlar)
+- pungi: Connect yum callback to logger (lsedlar)
+- extra-files: Nice error message on missing RPM (lsedlar)
+- compose: Drop unused argument (lsedlar)
+- compose: Search all nested variants (lsedlar)
+- ostree-installer: Capture all lorax logs (lsedlar)
+- lorax-wrapper: Put all log files into compose logs (lsedlar)
+- pungi: Fix reading multilib config files (lsedlar)
+- pungi: Fulltree should not apply for input multilib package (lsedlar)
+- pungi: Add tests for depsolving (lsedlar)
+- Update ostree phase documentation (lsedlar)
+- [ostree] Allow adding versioning metadata (qwan)
+  (lubomir.sedlar)
+- [ostree] New option to enable generating ostree summary file (qwan)
+- pungi: Avoid removing from list (lsedlar)
+- pungi: Allow globs in %multilib-whitelist (dmach)
+- pungi: Exclude RPMs that are in lookaside (dmach)
+- pungi: Fix excluding SRPMs (dmach)
+- pungi: Speed up blacklist processing (dmach)
+- Update tests to use ostree write-commit-id (puiterwijk)
+- ostree: Use the write-commitid-to feature rather than parsing ostree logs
+  (puiterwijk)
+- checks: Check for createrepo_c (lsedlar)
+- checks: Update tests to not require python modules (lsedlar)
+- Remove executable permissions on test scripts (puiterwijk)
+- Add more require checks (puiterwijk)
+- Fix package name for createrepo and mergerepo (puiterwijk)
+- not using 'git -C path' which is not supported by git 1.x (qwan)
+- pungi-koji: add option for not creating latest symbol link (qwan)
+- Replace mount/umount with guestfsmount and 'fusermount -u' (qwan)
+- config: Don't abort on deprecated options (lsedlar)
+- metadata: Treeinfo should point to packages and repo (lsedlar)
+- Send notification when compose fails to start (lsedlar)
+- metadata: Stop crashing for non-bootable products (lsedlar)
+- createiso: Do not split bootable media (lsedlar)
+- doc: Fix a typo in progress notification example (lsedlar)
+- Dump images.json after checksumming (lsedlar)
+- metadata: Correctly clone buildinstall .treeinfo (lsedlar)
+- createiso: Include layered product name in iso name (lsedlar)
+- buildinstall: Only transform arch for lorax (lsedlar)
+- iso-wrapper: Remove the class (lsedlar)
+- config: Validate variant regular expressions (lsedlar)
+
 * Sat Oct 08 2016 Dennis Gilmore <dennis@ausil.us> - 4.1.10-1
 - pungi: Replace kickstart repo url (mark)
 - ostree-installer: Reduce duplication in tests (lsedlar)
