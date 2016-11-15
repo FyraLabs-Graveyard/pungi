@@ -148,6 +148,22 @@ class TestCopyFiles(helpers.PungiTestCase):
         helpers.touch(os.path.join(dest, scm_dict['file']))
         return [scm_dict['file']]
 
+    @mock.patch('pungi.phases.extra_files.get_file_from_scm')
+    @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
+    def test_copy_from_non_existing_rpm_in_compose(self, get_dir_from_scm, get_file_from_scm):
+        compose = helpers.DummyCompose(self.topdir, {})
+        cfg = {'scm': 'rpm', 'file': 'file.txt', 'repo': 'bad-%(variant_uid_lower)s*'}
+        package_sets = {'x86_64': {}}
+
+        with self.assertRaises(RuntimeError) as ctx:
+            extra_files.copy_extra_files(
+                compose, [cfg], 'x86_64', compose.variants['Server'], package_sets)
+
+        self.assertRegexpMatches(str(ctx.exception), 'No.*package.*matching bad-server\*.*')
+
+        self.assertEqual(len(get_file_from_scm.call_args_list), 0)
+        self.assertEqual(get_dir_from_scm.call_args_list, [])
+
 
 if __name__ == "__main__":
     unittest.main()
