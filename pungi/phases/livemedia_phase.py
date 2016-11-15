@@ -36,7 +36,7 @@ class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
             extras.append(variant.uid)
 
         for extra in extras:
-            v = self.compose.variants.get(extra)
+            v = self.compose.all_variants.get(extra)
             if not v:
                 raise RuntimeError(
                     'There is no variant %s to get repo from when building live media for %s.'
@@ -56,7 +56,7 @@ class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
         if 'install_tree_from' in image_conf:
             variant_uid = image_conf['install_tree_from']
             try:
-                variant = self.compose.variants[variant_uid]
+                variant = self.compose.all_variants[variant_uid]
             except KeyError:
                 raise RuntimeError(
                     'There is no variant %s to get repo from when building live media for %s.'

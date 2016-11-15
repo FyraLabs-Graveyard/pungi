@@ -25,12 +25,13 @@ class TestLiveImagesPhase(PungiTestCase):
                     'amd64': {
                         'kickstart': 'test.ks',
                         'additional_repos': ['http://example.com/repo/'],
-                        'repo_from': ['Everything'],
+                        'repo_from': ['Everything', 'Server-optional'],
                         'release': None,
                     }
                 })
             ],
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 
@@ -49,7 +50,8 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'scratch': False,
                                            'repos': [self.topdir + '/compose/Client/amd64/os',
                                                      'http://example.com/repo/',
-                                                     self.topdir + '/compose/Everything/amd64/os'],
+                                                     self.topdir + '/compose/Everything/amd64/os',
+                                                     self.topdir + '/compose/Server-optional/amd64/os'],
                                            'label': '',
                                            'name': None,
                                            'filename': 'image-name',

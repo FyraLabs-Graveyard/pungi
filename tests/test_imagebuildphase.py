@@ -277,13 +277,14 @@ class TestImageBuildPhase(PungiTestCase):
                             'distro': 'Fedora-20',
                             'disk_size': 3,
                             'arches': ['x86_64'],
-                            'install_tree_from': 'Everything',
+                            'install_tree_from': 'Server-optional',
                         }
                     }
                 ]
             },
             'koji_profile': 'koji',
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 
@@ -302,7 +303,7 @@ class TestImageBuildPhase(PungiTestCase):
             "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
-                    'install_tree': self.topdir + '/compose/Everything/$arch/os',
+                    'install_tree': self.topdir + '/compose/Server-optional/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
                     'repo': self.topdir + '/compose/Server/$arch/os',
@@ -340,13 +341,14 @@ class TestImageBuildPhase(PungiTestCase):
                             'distro': 'Fedora-20',
                             'disk_size': 3,
                             'arches': ['x86_64'],
-                            'repo_from': 'Everything',
+                            'repo_from': ['Everything', 'Server-optional'],
                         }
                     }
                 ]
             },
             'koji_profile': 'koji',
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 
@@ -369,6 +371,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'kickstart': 'fedora-docker-base.ks',
                     'format': 'docker',
                     'repo': ','.join([self.topdir + '/compose/Everything/$arch/os',
+                                      self.topdir + '/compose/Server-optional/$arch/os',
                                       self.topdir + '/compose/Server/$arch/os']),
                     'variant': compose.variants['Server'],
                     'target': 'f24',

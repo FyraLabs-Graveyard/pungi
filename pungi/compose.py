@@ -97,7 +97,11 @@ class Compose(kobo.log.LoggingBase):
         kobo.log.LoggingBase.__init__(self, logger)
         # TODO: check if minimal conf values are set
         self.conf = conf
+        # This is a dict mapping UID to Variant objects. It only contains top
+        # level variants.
         self.variants = {}
+        # This is a similar mapping, but contains even nested variants.
+        self.all_variants = {}
         self.topdir = os.path.abspath(topdir)
         self.skip_phases = skip_phases or []
         self.just_phases = just_phases or []
@@ -215,19 +219,23 @@ class Compose(kobo.log.LoggingBase):
             parser = VariantsXmlParser(file_obj, tree_arches, tree_variants, logger=self._logger)
             self.variants = parser.parse()
 
+        self.all_variants = {}
+        for variant in self.get_variants():
+            self.all_variants[variant.uid] = variant
+
         # populate ci_base with variants - needed for layered-products (compose_id)
         ####FIXME - compose_to_composeinfo is no longer needed and has been
         ####        removed, but I'm not entirely sure what this is needed for
         ####        or if it is at all
         self.ci_base = compose_to_composeinfo(self)
 
-    def get_variants(self, types=None, arch=None, recursive=False):
+    def get_variants(self, types=None, arch=None):
         result = []
         types = types or ["variant", "optional", "addon", "layered-product"]
         for i in self.variants.itervalues():
             if i.type in types and (not arch or arch in i.arches):
                 result.append(i)
-            result.extend(i.get_variants(types=types, arch=arch, recursive=recursive))
+            result.extend(i.get_variants(types=types, arch=arch))
         return sorted(set(result))
 
     def get_arches(self):

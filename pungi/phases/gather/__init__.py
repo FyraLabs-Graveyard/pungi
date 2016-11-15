@@ -307,7 +307,7 @@ def gather_wrapper(compose, package_sets, path_prefix):
 
     # write packages (package lists) for all variants
     for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, recursive=True):
+        for variant in compose.get_variants(arch=arch):
             pkg_map = result[arch][variant.uid]
             write_packages(compose, arch, variant, pkg_map, path_prefix=path_prefix)
 

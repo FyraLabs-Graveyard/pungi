@@ -326,18 +326,19 @@ class TestLiveMediaPhase(PungiTestCase):
                         'scratch': True,
                         'skip_tag': True,
                         'title': 'Custom Title',
-                        'repo_from': ['Everything'],
+                        'repo_from': ['Everything', 'Server-optional'],
                         'repo': ['http://example.com/extra_repo'],
                         'arches': ['x86_64'],
                         'ksversion': '24',
                         'release': None,
-                        'install_tree_from': 'Everything',
+                        'install_tree_from': 'Server-optional',
                         'subvariant': 'Something',
                         'failable': ['*'],
                     }
                 ]
             }
         })
+        compose.setup_optional()
 
         self.assertEqual(validate(compose.conf), [])
 
@@ -359,12 +360,13 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'release': '20151203.t.0',
                                          'repo': ['http://example.com/extra_repo',
                                                   self.topdir + '/compose/Everything/$basearch/os',
+                                                  self.topdir + '/compose/Server-optional/$basearch/os',
                                                   self.topdir + '/compose/Server/$basearch/os'],
                                          'scratch': True,
                                          'skip_tag': True,
                                          'target': 'f24',
                                          'title': 'Custom Title',
-                                         'install_tree': self.topdir + '/compose/Everything/$basearch/os',
+                                         'install_tree': self.topdir + '/compose/Server-optional/$basearch/os',
                                          'version': '25',
                                          'subvariant': 'Something',
                                          'failable_arches': ['*'],

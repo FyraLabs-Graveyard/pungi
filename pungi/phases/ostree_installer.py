@@ -69,7 +69,7 @@ class OstreeInstallerThread(WorkerThread):
         """
         if '://' in source:
             return source.replace('$arch', arch)
-        source_variant = compose.variants[source]
+        source_variant = compose.all_variants[source]
         return translate_path(
             compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
 

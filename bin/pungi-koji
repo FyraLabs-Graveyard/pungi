@@ -366,7 +366,7 @@ def run_compose(compose, create_latest_link=True):
             pungi.metadata.write_tree_info(compose, arch, variant)
 
     # write .discinfo and media.repo before ISOs are created
-    for variant in compose.get_variants(recursive=True):
+    for variant in compose.get_variants():
         if variant.type == "addon" or variant.is_empty:
             continue
         for arch in variant.arches + ["src"]:

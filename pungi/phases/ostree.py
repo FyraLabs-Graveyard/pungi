@@ -45,7 +45,7 @@ class OSTreeThread(WorkerThread):
                                                (arch, variant.uid, self.num))
         repodir = os.path.join(workdir, 'config_repo')
 
-        source_variant = compose.variants[config['source_repo_from']]
+        source_variant = compose.all_variants[config['source_repo_from']]
         source_repo = translate_path(compose,
                                      compose.paths.compose.repository('$basearch',
                                                                       source_variant,
