@@ -1087,6 +1087,19 @@ a new commit.
 
     These keys are optional:
 
+    * ``extra_source_repos`` -- (*[dict]*) Extra source repos to get packages
+      while composing the OSTree repository. Each dict represents a yum repo.
+      The allowed keys are:
+
+      * ``name`` (required)
+      * ``baseurl`` (required) -- URL of external repo or variant UID, in the case
+        of variant UID, url to variant repo will be built automatically.
+      * ``gpgcheck`` (optional)
+      * ``exclude`` (optional)
+
+    * ``keep_original_sources`` -- (*bool*) Keep the existing source repos in
+      the tree config file. If not enabled, all the original source repos will
+      be removed from the tree config file.
     * ``config_branch`` -- (*str*) Git branch of the repo to use. Defaults to
       ``master``.
     * ``failable`` -- (*[str]*) List of architectures for which this
@@ -1107,7 +1120,20 @@ Example config
             "x86_64": {
                 "treefile": "fedora-atomic-docker-host.json",
                 "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
-                "source_repo_from": "Everything",
+                "source_repo_from": "Server",
+                "extra_source_repos": [
+                    {
+                        "name": "repo_a",
+                        "baseurl": "http://example.com/repo/x86_64/os",
+                        "exclude": "systemd-container",
+                        "gpgcheck": False
+                    },
+                    {
+                        "name": "Everything",
+                        "baseurl": "Everything",
+                    }
+                ],
+                "keep_original_sources": True,
                 "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
                 "update_summary": True,
                 "version": "24"
