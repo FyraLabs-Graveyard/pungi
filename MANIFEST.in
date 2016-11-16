@@ -10,4 +10,4 @@ include doc/*
 include tests/*
 include tests/data/*
 include tests/data/*/*
-include tests/fixtures/*
+recursive-include tests/fixtures *.json *.xml *.bz2 *.gz
