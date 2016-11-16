@@ -776,8 +776,7 @@ class TestPungi(unittest.TestCase):
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
 
-    # This test is broken.
-    @unittest.skip
+    @unittest.skip('This test is broken')
     def test_bash_multilib_nogreedy(self):
         packages = [
             "dummy-bash.+",
