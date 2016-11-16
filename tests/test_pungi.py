@@ -65,6 +65,11 @@ class TestPungi(unittest.TestCase):
         p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
                           multilib_whitelist=multilib_whitelist)
         kwargs.setdefault('cache_dir', self.tmp_dir)
+        # Unless the test specifies an arch, we need to default to x86_64.
+        # Otherwise the arch of current machine will be used, which will cause
+        # failure most of the time.
+        kwargs.setdefault('arch', 'x86_64')
+
         p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
         with open(self.out, "r") as f:
             pkg_map = p.get_packages(f.read())
