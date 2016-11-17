@@ -62,7 +62,7 @@ class MediaSplitter(object):
     possible minimum.
     """
     def __init__(self, media_size, compose=None):
-        self.media_size = convert_media_size(media_size)
+        self.media_size = media_size
         self.files = []  # to preserve order
         self.file_sizes = {}
         self.sticky_files = set()
@@ -75,7 +75,7 @@ class MediaSplitter(object):
 
         if old_size is not None and old_size != size:
             raise ValueError("File size mismatch; file: %s; sizes: %s vs %s" % (name, old_size, size))
-        if size > self.media_size:
+        if self.media_size and size > self.media_size:
             raise ValueError("File is larger than media size: %s" % name)
 
         self.files.append(name)
@@ -111,7 +111,7 @@ class MediaSplitter(object):
             name = all_files.pop(0)
             size = convert_file_size(self.file_sizes[name])
 
-            if not disks or disk["size"] + size > self.media_size:
+            if not disks or (self.media_size and disk["size"] + size > self.media_size):
                 disk = {"size": sticky_files_size, "files": sticky_files[:]}
                 disks.append(disk)
 
@@ -119,5 +119,10 @@ class MediaSplitter(object):
             disk["size"] += size
             total_size_single += size
         if self.compose:
-            self.compose.log_debug("MediaSplitter: free space on single media would be %s. Total size of single medium: %s." % (self.media_size - total_size_single, total_size_single))
+            if self.media_size:
+                self.compose.log_debug("MediaSplitter: free space on single media would be %s. "
+                                       "Total size of single medium: %s."
+                                       % (self.media_size - total_size_single, total_size_single))
+            else:
+                self.compose.log_debug("MediaSplitter: Total size of single medium: %s." % total_size_single)
         return disks

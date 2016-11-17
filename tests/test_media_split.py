@@ -7,6 +7,7 @@ except ImportError:
     import unittest
 import os
 import sys
+import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -59,6 +60,20 @@ def bl(s):
 
 class MediaSplitterTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.compose = mock.Mock()
+
+    def assertFreeSpace(self, free, total):
+        self.assertEqual(
+            self.compose.mock_calls,
+            [mock.call.log_debug('MediaSplitter: free space on single media would be %s. '
+                                 'Total size of single medium: %s.' % (free, total))])
+
+    def assertUnlimited(self, total):
+        self.assertEqual(
+            self.compose.mock_calls,
+            [mock.call.log_debug('MediaSplitter: Total size of single medium: %s.' % total)])
+
     def test_sum_size(self):
         ms = media_split.MediaSplitter(bl(100))
         ms.add_file('first', bl(20))
@@ -87,15 +102,16 @@ class MediaSplitterTestCase(unittest.TestCase):
             ms.add_file('too-big', bl(300))
 
     def test_fit_on_one(self):
-        ms = media_split.MediaSplitter(bl(100))
+        ms = media_split.MediaSplitter(bl(100), compose=self.compose)
         ms.add_file('first', bl(20))
         ms.add_file('second', bl(30))
 
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second'], 'size': bl(50)}])
+        self.assertFreeSpace(bl(50), bl(50))
 
     def test_split_on_two_discs(self):
-        ms = media_split.MediaSplitter(bl(100))
+        ms = media_split.MediaSplitter(bl(100), compose=self.compose)
         ms.add_file('first', bl(25))
         ms.add_file('second', bl(40))
         ms.add_file('third', bl(80))
@@ -103,6 +119,7 @@ class MediaSplitterTestCase(unittest.TestCase):
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second'], 'size': bl(65)},
                           {'files': ['third'], 'size': bl(80)}])
+        self.assertFreeSpace(bl(100 - 25 - 40 - 80), bl(25 + 40 + 80))
 
     def test_split_with_sticky_file(self):
         ms = media_split.MediaSplitter(bl(100))
@@ -114,6 +131,17 @@ class MediaSplitterTestCase(unittest.TestCase):
         self.assertEqual(ms.split(),
                          [{'files': ['sticky', 'first', 'second'], 'size': bl(80)},
                           {'files': ['sticky', 'third'], 'size': bl(95)}])
+
+    def test_split_unlimited_media(self):
+        ms = media_split.MediaSplitter(None, compose=self.compose)
+        ms.add_file('first', bl(25))
+        ms.add_file('second', bl(40))
+        ms.add_file('third', bl(80))
+
+        self.assertEqual(ms.split(),
+                         [{'files': ['first', 'second', 'third'], 'size': bl(145)}])
+        self.assertUnlimited(bl(25 + 40 + 80))
+
 
 if __name__ == "__main__":
     unittest.main()
