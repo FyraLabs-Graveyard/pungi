@@ -1364,6 +1364,22 @@ class TestPungi(unittest.TestCase):
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
 
+    def test_noarch_debuginfo(self):
+        packages = [
+            "dummy-mingw32-qt5-qtbase",
+        ]
+        pkg_map = self.go(packages, None)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-mingw32-qt5-qtbase-5.6.0-1.noarch.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-mingw-qt5-qtbase-5.6.0-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-mingw32-qt5-qtbase-debuginfo-5.6.0-1.noarch.rpm",
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()
