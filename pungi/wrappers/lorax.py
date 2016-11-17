@@ -26,6 +26,7 @@ class LoraxWrapper(object):
                       is_final=False, buildarch=None, volid=None, buildinstallpackages=None,
                       add_template=None, add_arch_template=None,
                       add_template_var=None, add_arch_template_var=None,
+                      rootfs_size=None,
                       log_dir=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
@@ -66,6 +67,9 @@ class LoraxWrapper(object):
 
         if log_dir:
             cmd.append('--logfile=%s' % os.path.join(log_dir, 'lorax.log'))
+
+        if rootfs_size is not None:
+            cmd.append('--rootfs-size=%s' % (rootfs_size))
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)

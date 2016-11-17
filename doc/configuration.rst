@@ -1171,6 +1171,7 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     * ``add_arch_template`` -- (*[str]*)
     * ``add_template_var`` -- (*[str]*)
     * ``add_arch_template_var`` -- (*[str]*)
+    * ``rootfs_size`` -- (*[str]*)
     * ``template_repo`` -- (*str*) Git repository with extra templates.
     * ``template_branch`` -- (*str*) Branch to use from ``template_repo``.
 

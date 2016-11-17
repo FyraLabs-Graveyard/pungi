@@ -310,6 +310,7 @@ class OstreeInstallerConfigTestCase(unittest.TestCase):
                             "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                         ],
                         "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+                        "rootfs_size": "3",
                         "add_arch_template_var": [
                             "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
                             "ostree_osname=fedora-atomic",

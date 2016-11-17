@@ -715,6 +715,7 @@ def _make_schema():
                     "add_arch_template": {"$ref": "#/definitions/list_of_strings"},
                     "add_template_var": {"$ref": "#/definitions/list_of_strings"},
                     "add_arch_template_var": {"$ref": "#/definitions/list_of_strings"},
+                    "rootfs_size": {"type": "string"},
                     "template_repo": {"type": "string"},
                     "template_branch": {"type": "string"},
                 },

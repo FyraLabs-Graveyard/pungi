@@ -152,6 +152,7 @@ class OstreeInstallerThread(WorkerThread):
             add_arch_template=self._get_templates(config, 'add_arch_template'),
             add_template_var=config.get('add_template_var'),
             add_arch_template_var=config.get('add_arch_template_var'),
+            rootfs_size=config.get('rootfs_size'),
             is_final=compose.supported,
             log_dir=self.logdir,
         )
