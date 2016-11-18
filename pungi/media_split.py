@@ -61,12 +61,15 @@ class MediaSplitter(object):
     are added; there is no re-ordering. The number of disk is thus not the
     possible minimum.
     """
-    def __init__(self, media_size, compose=None):
+    def __init__(self, media_size, compose=None, logger=None):
         self.media_size = media_size
         self.files = []  # to preserve order
         self.file_sizes = {}
         self.sticky_files = set()
         self.compose = compose
+        self.logger = logger
+        if not self.logger and self.compose:
+            self.logger = self.compose._logger
 
     def add_file(self, name, size, sticky=False):
         name = os.path.normpath(name)
@@ -120,9 +123,9 @@ class MediaSplitter(object):
             total_size_single += size
         if self.compose:
             if self.media_size:
-                self.compose.log_debug("MediaSplitter: free space on single media would be %s. "
-                                       "Total size of single medium: %s."
-                                       % (self.media_size - total_size_single, total_size_single))
+                self.logger.debug("MediaSplitter: free space on single media would be %s. "
+                                  "Total size of single medium: %s."
+                                  % (self.media_size - total_size_single, total_size_single))
             else:
-                self.compose.log_debug("MediaSplitter: Total size of single medium: %s." % total_size_single)
+                self.logger.debug("MediaSplitter: Total size of single medium: %s." % total_size_single)
         return disks

@@ -5,7 +5,7 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
-from pungi.phases.base import ConfigGuardedPhase, ImageConfigMixin
+from pungi.phases.base import ConfigGuardedPhase, ImageConfigMixin, PhaseLoggerMixin
 from pungi.linker import Linker
 from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -13,13 +13,13 @@ from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
 
 
-class LiveMediaPhase(ImageConfigMixin, ConfigGuardedPhase):
+class LiveMediaPhase(PhaseLoggerMixin, ImageConfigMixin, ConfigGuardedPhase):
     """class for wrapping up koji spin-livemedia"""
     name = 'live_media'
 
     def __init__(self, compose):
         super(LiveMediaPhase, self).__init__(compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        self.pool = ThreadPool(logger=self.logger)
 
     def _get_repos(self, image_conf, variant):
         """
@@ -103,7 +103,8 @@ class LiveMediaThread(WorkerThread):
         self.failable_arches = config.pop('failable_arches')
         self.num = num
         # TODO handle failure per architecture; currently not possible in single task
-        with failable(compose, bool(self.failable_arches), variant, '*', 'live-media', subvariant):
+        with failable(compose, bool(self.failable_arches), variant, '*', 'live-media', subvariant,
+                      logger=self.pool._logger):
             self.worker(compose, variant, subvariant, config)
 
     def _get_log_file(self, compose, variant, subvariant, config):
@@ -116,7 +117,7 @@ class LiveMediaThread(WorkerThread):
         output = koji_wrapper.run_blocking_cmd(cmd, log_file=log_file)
         self.pool.log_debug('live media outputs: %s' % (output))
         if output['retcode'] != 0:
-            compose.log_error('Live media task failed.')
+            self.pool.log_error('Live media task failed.')
             raise RuntimeError('Live media task failed: %s. See %s for more details.'
                                % (output['task_id'], log_file))
         return output
@@ -154,7 +155,7 @@ class LiveMediaThread(WorkerThread):
                 % (output['task_id'], len(config['arches']), len(image_infos)))
             raise RuntimeError('Image count mismatch in task %s.' % output['task_id'])
 
-        linker = Linker(logger=compose._logger)
+        linker = Linker(logger=self.pool._logger)
         link_type = compose.conf["link_type"]
         for image_info in image_infos:
             image_dir = compose.paths.compose.iso_dir(image_info['arch'], variant)

@@ -175,7 +175,7 @@ def get_kickstart_file(compose):
     msg = "Getting ks.cfg"
     kickstart_path = os.path.join(compose.paths.work.topdir(arch="global"), "ks.cfg")
     if os.path.exists(kickstart_path):
-        compose.log_warn("[SKIP ] %s" % msg)
+        compose.log_warning("[SKIP ] %s" % msg)
         return kickstart_path
 
     compose.log_info("[BEGIN] %s" % msg)

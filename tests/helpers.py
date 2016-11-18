@@ -60,6 +60,11 @@ class DummyCompose(object):
                                     type='variant', is_empty=False),
         }
         self.all_variants = self.variants.copy()
+
+        # for PhaseLoggerMixin
+        self._logger = mock.Mock()
+        self._logger.handlers = [mock.Mock()]
+
         self.log_info = mock.Mock()
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()

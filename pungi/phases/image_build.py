@@ -14,13 +14,13 @@ from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image
 
 
-class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
+class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigGuardedPhase):
     """class for wrapping up koji image-build"""
     name = "image_build"
 
     def __init__(self, compose):
         super(ImageBuildPhase, self).__init__(compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        self.pool = ThreadPool(logger=self.logger)
 
     def _get_install_tree(self, image_conf, variant):
         """
@@ -139,7 +139,7 @@ class ImageBuildPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
 
 class CreateImageBuildThread(WorkerThread):
     def fail(self, compose, cmd):
-        compose.log_error("CreateImageBuild failed.")
+        self.pool.log_error("CreateImageBuild failed.")
 
     def process(self, item, num):
         compose, cmd = item
@@ -148,7 +148,8 @@ class CreateImageBuildThread(WorkerThread):
         failable_arches = cmd.get('failable_arches', [])
         self.can_fail = bool(failable_arches)
         # TODO handle failure per architecture; currently not possible in single task
-        with failable(compose, self.can_fail, variant, '*', 'image-build', subvariant):
+        with failable(compose, self.can_fail, variant, '*', 'image-build', subvariant,
+                      logger=self.pool._logger):
             self.worker(num, compose, variant, subvariant, cmd)
 
     def worker(self, num, compose, variant, subvariant, cmd):
@@ -207,7 +208,7 @@ class CreateImageBuildThread(WorkerThread):
         # The usecase here is that you can run koji image-build with multiple --format
         # It's ok to do it serialized since we're talking about max 2 images per single
         # image_build record
-        linker = Linker(logger=compose._logger)
+        linker = Linker(logger=self.pool._logger)
         for image_info in image_infos:
             image_dir = cmd["image_dir"] % {"arch": image_info['arch']}
             makedirs(image_dir)

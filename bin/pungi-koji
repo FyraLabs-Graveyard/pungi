@@ -181,7 +181,8 @@ def main():
 
     from pungi.compose import Compose
 
-    logger = logging.Logger("Pungi")
+    logger = logging.getLogger("Pungi")
+    logger.setLevel(logging.DEBUG)
     kobo.log.add_stderr_logger(logger)
 
     conf = kobo.conf.PyConfigParser()

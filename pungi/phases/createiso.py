@@ -28,7 +28,7 @@ from kobo.shortcuts import run, relative_path
 from pungi.wrappers import iso
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
-from pungi.phases.base import PhaseBase
+from pungi.phases.base import PhaseBase, PhaseLoggerMixin
 from pungi.util import (makedirs, get_volid, get_arch_variant_data, failable,
                         get_file_size, get_mtime)
 from pungi.media_split import MediaSplitter, convert_media_size
@@ -37,12 +37,12 @@ from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 from .. import createiso
 
 
-class CreateisoPhase(PhaseBase):
+class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
     name = "createiso"
 
     def __init__(self, compose):
-        PhaseBase.__init__(self, compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        super(CreateisoPhase, self).__init__(compose)
+        self.pool = ThreadPool(logger=self.logger)
 
     def _find_rpms(self, path):
         """Check if there are some RPMs in the path."""
@@ -69,7 +69,7 @@ class CreateisoPhase(PhaseBase):
             for arch in variant.arches + ["src"]:
                 skip_iso = get_arch_variant_data(self.compose.conf, "createiso_skip", arch, variant)
                 if skip_iso == [True]:
-                    self.compose.log_info("Skipping createiso for %s.%s due to config option" % (variant, arch))
+                    self.logger.info("Skipping createiso for %s.%s due to config option" % (variant, arch))
                     continue
 
                 volid = get_volid(self.compose, arch, variant, disc_type=disc_type)
@@ -80,13 +80,14 @@ class CreateisoPhase(PhaseBase):
                     continue
 
                 if not self._find_rpms(os_tree):
-                    self.compose.log_warning("No RPMs found for %s.%s, skipping ISO"
-                                             % (variant.uid, arch))
+                    self.logger.warn("No RPMs found for %s.%s, skipping ISO"
+                                     % (variant.uid, arch))
                     continue
 
                 bootable = self._is_bootable(variant, arch)
 
-                split_iso_data = split_iso(self.compose, arch, variant, no_split=bootable)
+                split_iso_data = split_iso(self.compose, arch, variant, no_split=bootable,
+                                           logger=self.logger)
                 disc_count = len(split_iso_data)
 
                 for disc_num, iso_data in enumerate(split_iso_data):
@@ -97,7 +98,7 @@ class CreateisoPhase(PhaseBase):
                     iso_path = self.compose.paths.compose.iso_path(
                         arch, variant, filename, symlink_to=symlink_isos_to)
                     if os.path.isfile(iso_path):
-                        self.compose.log_warning("Skipping mkisofs, image already exists: %s" % iso_path)
+                        self.logger.warn("Skipping mkisofs, image already exists: %s" % iso_path)
                         continue
                     deliverables.append(iso_path)
 
@@ -158,7 +159,7 @@ class CreateisoPhase(PhaseBase):
 
 class CreateIsoThread(WorkerThread):
     def fail(self, compose, cmd, variant, arch):
-        compose.log_error("CreateISO failed, removing ISO: %s" % cmd["iso_path"])
+        self.pool.log_error("CreateISO failed, removing ISO: %s" % cmd["iso_path"])
         try:
             # remove incomplete ISO
             os.unlink(cmd["iso_path"])
@@ -174,7 +175,7 @@ class CreateIsoThread(WorkerThread):
     def process(self, item, num):
         compose, cmd, variant, arch = item
         can_fail = compose.can_fail(variant, arch, 'iso')
-        with failable(compose, can_fail, variant, arch, 'iso'):
+        with failable(compose, can_fail, variant, arch, 'iso', logger=self.pool._logger):
             self.worker(compose, cmd, variant, arch, num)
 
     def worker(self, compose, cmd, variant, arch, num):
@@ -281,7 +282,7 @@ class CreateIsoThread(WorkerThread):
                                   variant=str(variant))
 
 
-def split_iso(compose, arch, variant, no_split=False):
+def split_iso(compose, arch, variant, no_split=False, logger=None):
     """
     Split contents of the os/ directory for given tree into chunks fitting on ISO.
 
@@ -292,12 +293,14 @@ def split_iso(compose, arch, variant, no_split=False):
     infinite so that everything goes on single disc. A warning is printed if
     the size is bigger than configured.
     """
+    if not logger:
+        logger = compose._logger
     media_size = compose.conf['iso_size']
     media_reserve = compose.conf['split_iso_reserve']
     split_size = convert_media_size(media_size) - convert_media_size(media_reserve)
     real_size = 10**20 if no_split else split_size
 
-    ms = MediaSplitter(real_size, compose)
+    ms = MediaSplitter(real_size, compose, logger=logger)
 
     os_tree = compose.paths.compose.os_tree(arch, variant)
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
@@ -319,7 +322,7 @@ def split_iso(compose, arch, variant, no_split=False):
     boot_iso_rpath = ti.images.images.get(arch, {}).get("boot.iso", None)
     if boot_iso_rpath:
         all_files_ignore.append(boot_iso_rpath)
-    compose.log_debug("split_iso all_files_ignore = %s" % ", ".join(all_files_ignore))
+    logger.debug("split_iso all_files_ignore = %s" % ", ".join(all_files_ignore))
 
     for root, dirs, files in os.walk(os_tree):
         for dn in dirs[:]:
@@ -332,7 +335,7 @@ def split_iso(compose, arch, variant, no_split=False):
             rel_path = relative_path(path, os_tree.rstrip("/") + "/")
             sticky = rel_path in extra_files
             if rel_path in all_files_ignore:
-                compose.log_info("split_iso: Skipping %s" % rel_path)
+                logger.info("split_iso: Skipping %s" % rel_path)
                 continue
             if root.startswith(compose.paths.compose.packages(arch, variant)):
                 packages.append((path, os.path.getsize(path), sticky))
@@ -344,11 +347,11 @@ def split_iso(compose, arch, variant, no_split=False):
 
     result = ms.split()
     if no_split and result[0]['size'] > split_size:
-        compose.log_warning('ISO for %s.%s does not fit on single media! '
-                            'It is %s bytes too big. (Total size: %s B)'
-                            % (variant.uid, arch,
-                               result[0]['size'] - split_size,
-                               result[0]['size']))
+        logger.warn('ISO for %s.%s does not fit on single media! '
+                    'It is %s bytes too big. (Total size: %s B)'
+                    % (variant.uid, arch,
+                       result[0]['size'] - split_size,
+                       result[0]['size']))
     return result
 
 

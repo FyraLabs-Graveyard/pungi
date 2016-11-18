@@ -747,7 +747,7 @@ class TestCreateImageBuildThread(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd), 1)
 
-        compose.log_info.assert_has_calls([
+        pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('ImageBuild task failed: 1234. See %s for more details.'
                       % (os.path.join(self.topdir,
@@ -792,7 +792,7 @@ class TestCreateImageBuildThread(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd), 1)
 
-        compose.log_info.assert_has_calls([
+        pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('BOOM'),
         ])

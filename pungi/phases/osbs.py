@@ -4,18 +4,18 @@ import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
 
-from .base import ConfigGuardedPhase
+from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
 from ..wrappers import kojiwrapper
 from ..paths import translate_path
 
 
-class OSBSPhase(ConfigGuardedPhase):
+class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     name = 'osbs'
 
     def __init__(self, compose):
         super(OSBSPhase, self).__init__(compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        self.pool = ThreadPool(logger=self.logger)
         self.pool.metadata = {}
 
     def run(self):
@@ -39,7 +39,8 @@ class OSBSThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
         self.num = num
-        with util.failable(compose, bool(config.pop('failable', None)), variant, '*', 'osbs'):
+        with util.failable(compose, bool(config.pop('failable', None)), variant, '*', 'osbs',
+                           logger=self.pool._logger):
             self.worker(compose, variant, config)
 
     def worker(self, compose, variant, config):

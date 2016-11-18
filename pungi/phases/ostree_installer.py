@@ -7,19 +7,19 @@ from productmd import images
 import pipes
 from kobo import shortcuts
 
-from .base import ConfigGuardedPhase
+from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
 from ..paths import translate_path
 from ..util import get_volid
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
-class OstreeInstallerPhase(ConfigGuardedPhase):
+class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     name = 'ostree_installer'
 
     def __init__(self, compose):
         super(OstreeInstallerPhase, self).__init__(compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        self.pool = ThreadPool(logger=self.logger)
 
     def run(self):
         for variant in self.compose.get_variants():
@@ -37,7 +37,8 @@ class OstreeInstallerThread(WorkerThread):
         self.num = num
         failable_arches = config.get('failable', [])
         self.can_fail = util.can_arch_fail(failable_arches, arch)
-        with util.failable(compose, self.can_fail, variant, arch, 'ostree-installer'):
+        with util.failable(compose, self.can_fail, variant, arch, 'ostree-installer',
+                           logger=self.pool._logger):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):

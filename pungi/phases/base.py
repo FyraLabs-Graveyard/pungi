@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+import logging
+
 from pungi import util
 
 
@@ -151,3 +153,21 @@ class ImageConfigMixin(object):
             ksurl = self.compose.conf.get('global_ksurl')
             self.compose.conf['private_global_ksurl'] = util.resolve_git_url(ksurl)
         return self.compose.conf['private_global_ksurl']
+
+
+class PhaseLoggerMixin(object):
+    """
+    A mixin that can extend a phase with a new logging logger that copy
+    handlers from compose, but with different formatter that includes phase name.
+    """
+    def __init__(self, *args, **kwargs):
+        super(PhaseLoggerMixin, self).__init__(*args, **kwargs)
+        self.logger = logging.getLogger(self.name.upper())
+        self.logger.setLevel(logging.DEBUG)
+        format = "%(asctime)s [%(name)-16s] [%(levelname)-8s] %(message)s"
+        import copy
+        for handler in self.compose._logger.handlers:
+            hl = copy.copy(handler)
+            hl.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
+            hl.setLevel(logging.DEBUG)
+            self.logger.addHandler(hl)

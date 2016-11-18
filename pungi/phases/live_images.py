@@ -37,12 +37,12 @@ if sys.version_info[0] == 3:
         return (a > b) - (a < b)
 
 
-class LiveImagesPhase(base.ImageConfigMixin, base.ConfigGuardedPhase):
+class LiveImagesPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigGuardedPhase):
     name = "live_images"
 
     def __init__(self, compose):
         super(LiveImagesPhase, self).__init__(compose)
-        self.pool = ThreadPool(logger=self.compose._logger)
+        self.pool = ThreadPool(logger=self.logger)
 
     def _get_extra_repos(self, arch, variant, extras):
         repo = []
@@ -154,7 +154,8 @@ class CreateLiveImageThread(WorkerThread):
         self.failable_arches = cmd.get('failable_arches', [])
         # TODO handle failure per architecture; currently not possible in single task
         self.can_fail = bool(self.failable_arches)
-        with failable(compose, self.can_fail, variant, arch, 'live', cmd.get('subvariant')):
+        with failable(compose, self.can_fail, variant, arch, 'live', cmd.get('subvariant'),
+                      logger=self.pool._logger):
             self.worker(compose, cmd, variant, arch, num)
 
     def worker(self, compose, cmd, variant, arch, num):
@@ -215,8 +216,8 @@ class CreateLiveImageThread(WorkerThread):
 
             if cmd["sign"]:
                 # Sign the rpm wrapped images and get their paths
-                compose.log_info("Signing rpm wrapped images in task_id: %s (expected key ID: %s)"
-                                 % (output["task_id"], compose.conf.get("signing_key_id")))
+                self.pool.log_info("Signing rpm wrapped images in task_id: %s (expected key ID: %s)"
+                                   % (output["task_id"], compose.conf.get("signing_key_id")))
                 signed_rpm_paths = self._sign_image(koji_wrapper, compose, cmd, output["task_id"])
                 if signed_rpm_paths:
                     rpm_paths = signed_rpm_paths
@@ -275,12 +276,12 @@ class CreateLiveImageThread(WorkerThread):
         signing_command = compose.conf.get("signing_command")
 
         if not signing_key_id:
-            compose.log_warning("Signing is enabled but signing_key_id is not specified")
-            compose.log_warning("Signing skipped")
+            self.pool.log_warning("Signing is enabled but signing_key_id is not specified")
+            self.pool.log_warning("Signing skipped")
             return None
         if not signing_command:
-            compose.log_warning("Signing is enabled but signing_command is not specified")
-            compose.log_warning("Signing skipped")
+            self.pool.log_warning("Signing is enabled but signing_command is not specified")
+            self.pool.log_warning("Signing skipped")
             return None
 
         # Prepare signing log file
@@ -293,7 +294,7 @@ class CreateLiveImageThread(WorkerThread):
                                 log_file=signing_log_file,
                                 signing_key_password=compose.conf.get("signing_key_password"))
         except RuntimeError:
-            compose.log_error("Error while signing rpm wrapped images. See log: %s" % signing_log_file)
+            self.pool.log_error("Error while signing rpm wrapped images. See log: %s" % signing_log_file)
             raise
 
         # Get pats to the signed rpms
@@ -306,8 +307,8 @@ class CreateLiveImageThread(WorkerThread):
             return rpm_paths
 
         # Signed RPMs are not available
-        compose.log_warning("Signed files are not available: %s" % rpm_paths)
-        compose.log_warning("Unsigned files will be used")
+        self.pool.log_warning("Signed files are not available: %s" % rpm_paths)
+        self.pool.log_warning("Unsigned files will be used")
         return None
 
 

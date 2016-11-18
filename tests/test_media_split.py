@@ -65,14 +65,14 @@ class MediaSplitterTestCase(unittest.TestCase):
 
     def assertFreeSpace(self, free, total):
         self.assertEqual(
-            self.compose.mock_calls,
-            [mock.call.log_debug('MediaSplitter: free space on single media would be %s. '
-                                 'Total size of single medium: %s.' % (free, total))])
+            self.compose._logger.debug.mock_calls,
+            [mock.call('MediaSplitter: free space on single media would be %s. '
+                       'Total size of single medium: %s.' % (free, total))])
 
     def assertUnlimited(self, total):
         self.assertEqual(
-            self.compose.mock_calls,
-            [mock.call.log_debug('MediaSplitter: Total size of single medium: %s.' % total)])
+            self.compose._logger.debug.mock_calls,
+            [mock.call('MediaSplitter: Total size of single medium: %s.' % total)])
 
     def test_sum_size(self):
         ms = media_split.MediaSplitter(bl(100))

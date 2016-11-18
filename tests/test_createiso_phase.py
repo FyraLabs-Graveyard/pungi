@@ -49,12 +49,13 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         pool = ThreadPool.return_value
 
         phase = createiso.CreateisoPhase(compose)
+        phase.logger = mock.Mock()
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 0)
         self.assertEqual(pool.queue_put.call_args_list, [])
         self.assertItemsEqual(
-            compose.log_warning.call_args_list,
+            phase.logger.warn.call_args_list,
             [mock.call('No RPMs found for Everything.x86_64, skipping ISO'),
              mock.call('No RPMs found for Everything.amd64, skipping ISO'),
              mock.call('No RPMs found for Everything.src, skipping ISO'),
@@ -93,7 +94,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                          [mock.call(compose, 'x86_64', compose.variants['Server'],
                                     disc_count=1, disc_num=1, split_iso_data=disc_data)])
         self.assertEqual(split_iso.call_args_list,
-                         [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False)])
+                         [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 1)
         self.maxDiff = None
         self.assertItemsEqual(
@@ -160,8 +161,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                        disc_count=1, disc_num=1, split_iso_data=disc_data)])
         self.assertItemsEqual(
             split_iso.call_args_list,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=True),
-             mock.call(compose, 'src', compose.variants['Server'], no_split=False)])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=True, logger=phase.logger),
+             mock.call(compose, 'src', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 2)
         self.maxDiff = None
         self.assertItemsEqual(
@@ -463,11 +464,12 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         run_runroot = KojiWrapper.return_value.run_runroot_cmd
         run_runroot.side_effect = helpers.boom
 
-        t = createiso.CreateIsoThread(mock.Mock())
+        pool = mock.Mock()
+        t = createiso.CreateIsoThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
-        compose.log_info.assert_has_calls([
+        pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
@@ -505,11 +507,12 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             'task_id': '1234',
         }
 
-        t = createiso.CreateIsoThread(mock.Mock())
+        pool = mock.Mock()
+        t = createiso.CreateIsoThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
-        compose.log_info.assert_has_calls([
+        pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s for more details.'
                       % (self.topdir + '/logs/x86_64/createiso-image-name.x86_64.log'))
@@ -585,11 +588,12 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         }
         run.side_effect = helpers.boom
 
-        t = createiso.CreateIsoThread(mock.Mock())
+        pool = mock.Mock()
+        t = createiso.CreateIsoThread(pool)
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
-        compose.log_info.assert_has_calls([
+        pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
@@ -718,7 +722,7 @@ class SplitIsoTest(helpers.PungiTestCase):
                                      os.path.join(base_path, 'Packages/b/bash.rpm')],
                            'size': 5400166400}])
         self.assertEqual(
-            compose.log_warning.call_args_list,
+            compose._logger.warn.call_args_list,
             [mock.call('ISO for Server.x86_64 does not fit on single media! '
                        'It is 710652160 bytes too big. (Total size: 5400166400 B)')]
         )
