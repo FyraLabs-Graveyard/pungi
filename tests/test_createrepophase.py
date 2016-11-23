@@ -87,7 +87,7 @@ class TestCreaterepoPhase(PungiTestCase):
              mock.call((compose, None, compose.variants['Everything'], 'srpm'))])
 
 
-class TestCreateRepoThread(PungiTestCase):
+class TestCreateVariantRepo(PungiTestCase):
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -114,6 +114,9 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
                        deltas=False, oldpackagedirs=None, use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -142,10 +145,13 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/global/repo',
                        deltas=False, oldpackagedirs=None, use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertItemsEqual(
                 f.read().strip().split('\n'),
-                ['../SRPMS/b/bash-4.3.30-2.fc21.src.rpm'])
+                ['Packages/b/bash-4.3.30-2.fc21.src.rpm'])
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -173,6 +179,9 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
                        deltas=False, oldpackagedirs=None, use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -202,6 +211,9 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
                        deltas=False, oldpackagedirs=None, use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -232,6 +244,9 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
                        deltas=False, oldpackagedirs=None, use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -261,6 +276,9 @@ class TestCreateRepoThread(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
                        oldpackagedirs=None, use_xz=True)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -293,6 +311,9 @@ class TestCreateRepoThread(PungiTestCase):
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os',
                        use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
 
@@ -325,10 +346,13 @@ class TestCreateRepoThread(PungiTestCase):
                        update_md_path=self.topdir + '/work/global/repo', deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/source/tree',
                        use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertItemsEqual(
                 f.read().strip().split('\n'),
-                ['../SRPMS/b/bash-4.3.30-2.fc21.src.rpm'])
+                ['Packages/b/bash-4.3.30-2.fc21.src.rpm'])
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -359,8 +383,115 @@ class TestCreateRepoThread(PungiTestCase):
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/debug/tree',
                        use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+
+    @mock.patch('pungi.phases.createrepo.run')
+    @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
+    def test_variant_repo_rpms_with_productid(self, CreaterepoWrapperCls, run):
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+            'product_id': 'yes',    # Truthy value is enough for this test
+        })
+        compose.DEBUG = False
+        compose.has_comps = False
+        product_id = compose.paths.work.product_id('x86_64', compose.variants['Server'])
+        repodata_dir = os.path.join(
+            compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
+            'repodata')
+        touch(product_id)
+        os.mkdir(repodata_dir)
+
+        repo = CreaterepoWrapperCls.return_value
+        copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
+
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+
+        self.maxDiff = None
+        list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
+        self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
+                         mock.call(createrepo_c=True))
+        self.assertItemsEqual(
+            repo.get_createrepo_cmd.mock_calls,
+            [mock.call(self.topdir + '/compose/Server/x86_64/os', checksum='sha256',
+                       database=True, groupfile=None, workers=3,
+                       outputdir=self.topdir + '/compose/Server/x86_64/os',
+                       pkglist=list_file, skip_stat=True, update=True,
+                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
+                       oldpackagedirs=None,
+                       use_xz=False)])
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [mock.call(repodata_dir, product_id, compress_type='gz')])
+        with open(list_file) as f:
+            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+
+    @mock.patch('pungi.phases.createrepo.run')
+    @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
+    def test_variant_repo_debug_with_productid(self, CreaterepoWrapperCls, run):
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+            'product_id': 'yes',    # Truthy value is enough for this test
+        })
+        compose.DEBUG = False
+        compose.has_comps = False
+
+        repo = CreaterepoWrapperCls.return_value
+        copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
+
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'debuginfo')
+
+        self.maxDiff = None
+        list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.debuginfo.conf'
+        self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
+                         mock.call(createrepo_c=True))
+        self.assertItemsEqual(
+            repo.get_createrepo_cmd.mock_calls,
+            [mock.call(self.topdir + '/compose/Server/x86_64/debug/tree', checksum='sha256',
+                       database=True, groupfile=None, workers=3,
+                       outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
+                       pkglist=list_file, skip_stat=True, update=True,
+                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
+                       oldpackagedirs=None,
+                       use_xz=False)])
+        self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
+        with open(list_file) as f:
+            self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+
+    @mock.patch('pungi.phases.createrepo.run')
+    @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
+    def test_variant_repo_source_with_productid(self, CreaterepoWrapperCls, run):
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+            'product_id': 'yes',    # Truthy value is enough for this test
+        })
+        compose.DEBUG = False
+        compose.has_comps = False
+
+        repo = CreaterepoWrapperCls.return_value
+        copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
+
+        create_variant_repo(compose, None, compose.variants['Server'], 'srpm')
+
+        self.maxDiff = None
+        list_file = self.topdir + '/work/global/repo_package_list/Server.None.srpm.conf'
+        self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
+                         mock.call(createrepo_c=True))
+        self.assertItemsEqual(
+            repo.get_createrepo_cmd.mock_calls,
+            [mock.call(self.topdir + '/compose/Server/source/tree', checksum='sha256',
+                       database=True, groupfile=None, workers=3,
+                       outputdir=self.topdir + '/compose/Server/source/tree',
+                       pkglist=list_file, skip_stat=True, update=True,
+                       update_md_path=self.topdir + '/work/global/repo', deltas=False,
+                       oldpackagedirs=None,
+                       use_xz=False)])
+        self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
+        with open(list_file) as f:
+            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')
 
 
 class ANYSingleton(object):
