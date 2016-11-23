@@ -26,6 +26,11 @@ class PungiTestCase(unittest.TestCase):
                 raise
 
 
+class MockVariant(mock.Mock):
+    def __str__(self):
+        return self.uid
+
+
 class DummyCompose(object):
     def __init__(self, topdir, config):
         self.supported = True
@@ -52,12 +57,12 @@ class DummyCompose(object):
         self.paths = paths.Paths(self)
         self._logger = mock.Mock()
         self.variants = {
-            'Server': mock.Mock(uid='Server', arches=['x86_64', 'amd64'],
-                                type='variant', is_empty=False),
-            'Client': mock.Mock(uid='Client', arches=['amd64'],
-                                type='variant', is_empty=False),
-            'Everything': mock.Mock(uid='Everything', arches=['x86_64', 'amd64'],
-                                    type='variant', is_empty=False),
+            'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
+                                  type='variant', is_empty=False),
+            'Client': MockVariant(uid='Client', arches=['amd64'],
+                                  type='variant', is_empty=False),
+            'Everything': MockVariant(uid='Everything', arches=['x86_64', 'amd64'],
+                                      type='variant', is_empty=False),
         }
         self.all_variants = self.variants.copy()
 
@@ -80,7 +85,7 @@ class DummyCompose(object):
         self.require_deliverable = mock.Mock()
 
     def setup_optional(self):
-        self.all_variants['Server-optional'] = mock.Mock(
+        self.all_variants['Server-optional'] = MockVariant(
             uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False,
             parent=self.variants['Server'])
         self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}

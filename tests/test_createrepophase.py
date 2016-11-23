@@ -8,12 +8,15 @@ except ImportError:
     import unittest
 import mock
 
+import glob
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.createrepo import CreaterepoPhase, create_variant_repo
+from pungi.phases.createrepo import (CreaterepoPhase,
+                                     create_variant_repo,
+                                     get_productids_from_scm)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
 
 
@@ -358,6 +361,125 @@ class TestCreateRepoThread(PungiTestCase):
                        use_xz=False)])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+
+
+class ANYSingleton(object):
+    """An object that is equal to anything."""
+    def __eq__(self, another):
+        return True
+
+    def __repr__(self):
+        return u'ANY'
+
+ANY = ANYSingleton()
+
+
+class TestGetProductIds(PungiTestCase):
+    def mock_get(self, filenames):
+        def _mock_get(scm, dest):
+            for filename in filenames:
+                touch(os.path.join(dest, filename))
+        return _mock_get
+
+    def assertProductIds(self, mapping):
+        pids = glob.glob(self.compose.paths.work.product_id('*', '*'))
+        expected = set()
+        for variant, arches in mapping.iteritems():
+            for arch in arches:
+                expected.add(os.path.join(self.topdir, 'work', arch,
+                                          'product_id',
+                                          '%s.%s.pem' % (variant, arch),
+                                          'productid'))
+        self.assertItemsEqual(pids, expected)
+
+    @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
+    def test_not_configured(self, get_dir_from_scm):
+        self.compose = DummyCompose(self.topdir, {})
+        get_productids_from_scm(self.compose)
+        self.assertEqual(get_dir_from_scm.call_args_list, [])
+        self.assertProductIds({})
+
+    @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
+    def test_correct(self, get_dir_from_scm):
+        cfg = mock.Mock()
+        self.compose = DummyCompose(self.topdir, {
+            'product_id': cfg,
+        })
+        get_dir_from_scm.side_effect = self.mock_get([
+            'Client-amd64-cert.pem',
+            'Everything-amd64-cert.pem',
+            'Server-amd64-cert.pem',
+            'Everything-x86_64-cert.pem',
+            'Server-x86_64-cert.pem',
+        ])
+
+        get_productids_from_scm(self.compose)
+
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertProductIds({
+            'Client': ['amd64'],
+            'Everything': ['amd64', 'x86_64'],
+            'Server': ['amd64', 'x86_64'],
+        })
+
+    @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
+    def test_allow_missing(self, get_dir_from_scm):
+        cfg = mock.Mock()
+        self.compose = DummyCompose(self.topdir, {
+            'product_id': cfg,
+            'product_id_allow_missing': True,
+        })
+        get_dir_from_scm.side_effect = self.mock_get([
+            'Server-amd64-cert.pem',
+            'Server-x86_64-cert.pem',
+        ])
+
+        get_productids_from_scm(self.compose)
+
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertProductIds({
+            'Server': ['amd64', 'x86_64'],
+        })
+
+    @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
+    def test_missing_fails(self, get_dir_from_scm):
+        cfg = mock.Mock()
+        self.compose = DummyCompose(self.topdir, {
+            'product_id': cfg,
+        })
+        get_dir_from_scm.side_effect = self.mock_get([
+            'Server-amd64-cert.pem',
+            'Server-x86_64-cert.pem',
+        ])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            get_productids_from_scm(self.compose)
+
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertEqual(str(ctx.exception),
+                         'No product certificate found (arch: amd64, variant: Everything)')
+
+    @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
+    def test_multiple_matching(self, get_dir_from_scm):
+        cfg = mock.Mock()
+        self.compose = DummyCompose(self.topdir, {
+            'product_id': cfg,
+        })
+        get_dir_from_scm.side_effect = self.mock_get([
+            'Client-amd64-cert.pem',
+            'Client-amd64-cert-duplicate.pem',
+            'Everything-amd64-cert.pem',
+            'Server-amd64-cert.pem',
+            'Everything-x86_64-cert.pem',
+            'Server-x86_64-cert.pem',
+        ])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            get_productids_from_scm(self.compose)
+
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertRegexpMatches(str(ctx.exception),
+                                 'Multiple product certificates found.+')
 
 
 if __name__ == "__main__":
