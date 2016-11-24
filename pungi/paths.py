@@ -530,10 +530,6 @@ class ComposePaths(object):
         @param symlink_to=None
         @param relative=False
         """
-        # skip optional and addons
-        if variant.type != "variant":
-            return None
-
         path = os.path.join(self.topdir('%(arch)s', variant, create_dir=False, relative=relative),
                             "images")
         if symlink_to:

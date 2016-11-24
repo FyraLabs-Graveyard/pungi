@@ -89,8 +89,8 @@ class DummyCompose(object):
 
     def setup_optional(self):
         self.all_variants['Server-optional'] = MockVariant(
-            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False,
-            parent=self.variants['Server'])
+            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False)
+        self.all_variants['Server-optional'].parent = self.variants['Server']
         self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}
 
     def get_variants(self, arch=None, types=None):

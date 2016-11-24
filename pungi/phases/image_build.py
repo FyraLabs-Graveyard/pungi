@@ -28,6 +28,11 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
         current variant. If the config is set, it will be removed from the
         dict.
         """
+        if variant.type != 'variant':
+            # Buildinstall only runs for top-level variants. Nested variants
+            # need to re-use install tree from parent.
+            variant = variant.parent
+
         install_tree_from = image_conf.pop('install_tree_from', variant.uid)
         if '://' in install_tree_from:
             return install_tree_from
