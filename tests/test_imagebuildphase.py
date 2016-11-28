@@ -20,6 +20,10 @@ from tests.helpers import DummyCompose, PungiTestCase, boom
 
 class TestImageBuildPhase(PungiTestCase):
 
+    def setUp(self):
+        super(TestImageBuildPhase, self).setUp()
+        self.maxDiff = None
+
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
@@ -48,7 +52,6 @@ class TestImageBuildPhase(PungiTestCase):
         phase = ImageBuildPhase(compose)
 
         phase.run()
-        self.maxDiff = None
 
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
@@ -102,7 +105,6 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
             "failable_arches": ['x86_64'],
         }
-        self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, client_args)),
                                mock.call((compose, server_args))])
@@ -135,7 +137,6 @@ class TestImageBuildPhase(PungiTestCase):
         phase = ImageBuildPhase(compose)
 
         phase.run()
-        self.maxDiff = None
 
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
@@ -165,7 +166,6 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
             "failable_arches": [],
         }
-        self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
 
@@ -194,7 +194,6 @@ class TestImageBuildPhase(PungiTestCase):
         phase = ImageBuildPhase(compose)
 
         phase.run()
-        self.maxDiff = None
 
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
@@ -224,7 +223,6 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
             "failable_arches": [],
         }
-        self.maxDiff = None
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
 
@@ -298,7 +296,6 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertTrue(phase.pool.queue_put.called_once)
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
-        self.maxDiff = None
         self.assertDictEqual(args[0][1], {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
@@ -362,7 +359,6 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertTrue(phase.pool.queue_put.called_once)
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
-        self.maxDiff = None
         self.assertDictEqual(args[0][1], {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
@@ -427,7 +423,6 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertTrue(phase.pool.queue_put.called_once)
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
-        self.maxDiff = None
         self.assertDictEqual(args[0][1], {
             "format": [('docker', 'tar.xz')],
             "image_conf": {
