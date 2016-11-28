@@ -864,13 +864,11 @@ provided; date, compose type and respin will be used.
  * ``image_build_release``
  * ``live_images_release``
 
-Each configuration block can also optionally specify a list of architectures
-that are not release blocking with ``failable`` key. If any deliverable fails,
-it will not abort the whole compose. Due to limitations in how the tasks are
-done in Koji, if any architecture fails, all of them fail. Until this is
-resolved, it is not possible to configure failability per architecture. An
-empty list means required deliverable, non-empty list means non-blocking
-deliverable.
+Each configuration block can also optionally specify a ``failable`` key. For
+live images it should have a boolean value. For live media and image build it
+should be a list of strings containing architectures that are optional. If any
+deliverable fails on an optional architecture, it will not abort the whole
+compose. If the list contains only ``"*"``, all arches will be substituted.
 
 
 Live Images Settings
