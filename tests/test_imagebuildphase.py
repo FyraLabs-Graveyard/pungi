@@ -70,6 +70,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    'can_fail': 'x86_64',
                 }
             },
             "conf_file": self.topdir + '/work/image-build/Client/docker_Fedora-Docker-Base.cfg',
@@ -77,7 +78,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Client/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": ['x86_64'],
         }
         server_args = {
             "format": [('docker', 'tar.xz')],
@@ -95,6 +95,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    'can_fail': 'x86_64',
                 }
             },
             "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
@@ -102,7 +103,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": ['x86_64'],
         }
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, client_args)),
@@ -163,7 +163,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
         }
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
@@ -220,7 +219,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
         }
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
@@ -318,7 +316,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -383,7 +380,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -445,7 +441,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": [],
         })
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
@@ -612,6 +607,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    'can_fail': 'x86_64',
                 }
             },
             "conf_file": self.topdir + '/work/image-build/Server-optional/docker_Fedora-Docker-Base.cfg',
@@ -619,7 +615,6 @@ class TestImageBuildPhase(PungiTestCase):
             "relative_image_dir": 'Server-optional/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
             "scratch": False,
-            "failable_arches": ['x86_64'],
         }
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
@@ -781,6 +776,7 @@ class TestCreateImageBuildThread(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    "can_fail": 'amd64,x86_64',
                 }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
@@ -788,7 +784,6 @@ class TestCreateImageBuildThread(PungiTestCase):
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
             'scratch': False,
-            "failable_arches": ['*'],
         }
         koji_wrapper = KojiWrapper.return_value
         koji_wrapper.run_blocking_cmd.return_value = {
@@ -829,6 +824,7 @@ class TestCreateImageBuildThread(PungiTestCase):
                     'version': 'Rawhide',
                     'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
                     'distro': 'Fedora-20',
+                    'can_fail': 'amd64,x86_64',
                 }
             },
             "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
@@ -836,7 +832,6 @@ class TestCreateImageBuildThread(PungiTestCase):
             "relative_image_dir": 'image_dir/Client/%(arch)s',
             "link_type": 'hardlink-or-copy',
             'scratch': False,
-            "failable_arches": ['*'],
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -850,6 +845,49 @@ class TestCreateImageBuildThread(PungiTestCase):
             mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('BOOM'),
         ])
+
+    @mock.patch('pungi.phases.image_build.KojiWrapper')
+    @mock.patch('pungi.phases.image_build.Linker')
+    def test_process_handle_fail_only_one_optional(self, Linker, KojiWrapper):
+        compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
+        pool = mock.Mock()
+        cmd = {
+            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
+            "image_conf": {
+                'image-build': {
+                    'install_tree': '/ostree/$arch/Client',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': '/ostree/$arch/Client',
+                    'variant': compose.variants['Client'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                    'can_fail': 'amd64',
+                }
+            },
+            "conf_file": 'amd64,x86_64-Client-Fedora-Docker-Base-docker',
+            "image_dir": '/image_dir/Client/%(arch)s',
+            "relative_image_dir": 'image_dir/Client/%(arch)s',
+            "link_type": 'hardlink-or-copy',
+            'scratch': False,
+        }
+
+        koji_wrapper = KojiWrapper.return_value
+        koji_wrapper.run_blocking_cmd.return_value = {
+            "retcode": 1,
+            "output": None,
+            "task_id": 1234,
+        }
+
+        t = CreateImageBuildThread(pool)
+        with self.assertRaises(RuntimeError):
+            with mock.patch('time.sleep'):
+                t.process((compose, cmd), 1)
 
 
 if __name__ == "__main__":
