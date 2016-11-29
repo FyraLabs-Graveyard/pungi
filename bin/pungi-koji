@@ -105,6 +105,13 @@ def main():
         help="make a test compose",
     )
     parser.add_option(
+        "--ci",
+        action="store_const",
+        const="ci",
+        dest="compose_type",
+        help="make a CI compose",
+    )
+    parser.add_option(
         "--koji-event",
         metavar="ID",
         type="int",
