@@ -162,12 +162,14 @@ class PhaseLoggerMixin(object):
     """
     def __init__(self, *args, **kwargs):
         super(PhaseLoggerMixin, self).__init__(*args, **kwargs)
-        self.logger = logging.getLogger(self.name.upper())
-        self.logger.setLevel(logging.DEBUG)
-        format = "%(asctime)s [%(name)-16s] [%(levelname)-8s] %(message)s"
-        import copy
-        for handler in self.compose._logger.handlers:
-            hl = copy.copy(handler)
-            hl.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
-            hl.setLevel(logging.DEBUG)
-            self.logger.addHandler(hl)
+        self.logger = None
+        if self.compose._logger and self.compose._logger.handlers:
+            self.logger = logging.getLogger(self.name.upper())
+            self.logger.setLevel(logging.DEBUG)
+            format = "%(asctime)s [%(name)-16s] [%(levelname)-8s] %(message)s"
+            import copy
+            for handler in self.compose._logger.handlers:
+                hl = copy.copy(handler)
+                hl.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
+                hl.setLevel(logging.DEBUG)
+                self.logger.addHandler(hl)
