@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+import copy
 import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
 
 from .base import ConfigGuardedPhase
 from .. import util
+from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
 from ..paths import translate_path
 from ..wrappers import kojiwrapper, scm
 
@@ -53,7 +54,6 @@ class OSTreeThread(WorkerThread):
 
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
 
-        treeconf = os.path.join(repodir, config['treefile'])
         source_repos = [{'name': '%s-%s' % (compose.compose_id, config['source_repo_from']),
                          'baseurl': source_repo}]
 
@@ -72,30 +72,41 @@ class OSTreeThread(WorkerThread):
 
             source_repos = source_repos + extra_source_repos
 
-        keep_original_sources = config.get('keep_original_sources', False)
-        self._tweak_treeconf(treeconf, source_repos=source_repos,
-                             keep_original_sources=keep_original_sources)
+        # copy the original config and update before save to a json file
+        new_config = copy.copy(config)
+
+        # repos in configuration can have repo url set to variant UID,
+        # update it to have the actual url that we just translated.
+        new_config.update({'source_repo_from': source_repo})
+        if extra_source_repos:
+            new_config.update({'extra_source_repos': extra_source_repos})
+
+        # remove unnecessary (for 'pungi-make-ostree tree' script ) elements
+        # from config, it doesn't hurt to have them, however remove them can
+        # reduce confusion
+        for k in ['ostree_repo', 'treefile', 'config_url', 'config_branch',
+                  'failable', 'version', 'update_summary']:
+            new_config.pop(k, None)
+
+        extra_config_file = None
+        if new_config:
+            # write a json file to save the configuration, so 'pungi-make-ostree tree'
+            # can take use of it
+            extra_config_file = os.path.join(workdir, 'extra_config.json')
+            with open(extra_config_file, 'w') as f:
+                json.dump(new_config, f, indent=4)
 
         # Ensure target directory exists, otherwise Koji task will fail to
         # mount it.
         util.makedirs(config['ostree_repo'])
 
-        self._run_ostree_cmd(compose, variant, arch, config, repodir)
-        ref, commitid = self._get_commit_info(config, repodir)
-        if config.get('tag_ref', True) and ref and commitid:
-            # Let's write the tag out ourselves
-            heads_dir = os.path.join(config['ostree_repo'], 'refs', 'heads')
-            if not os.path.exists(heads_dir):
-                raise RuntimeError('Refs/heads did not exist in ostree repo')
-
-            ref_path = os.path.join(heads_dir, ref)
-            if not os.path.exists(os.path.dirname(ref_path)):
-                os.makedirs(os.path.dirname(ref_path))
-
-            with open(ref_path, 'w') as f:
-                f.write(commitid + '\n')
+        self._run_ostree_cmd(compose, variant, arch, config, repodir,
+                             extra_config_file=extra_config_file)
 
         if compose.notifier:
+            ref = get_ref_from_treefile(os.path.join(repodir, config['treefile']))
+            # 'pungi-make-ostree tree' writes commitid to commitid.log in logdir
+            commitid = get_commitid_from_commitid_file(os.path.join(self.logdir, 'commitid.log'))
             compose.notifier.send('ostree',
                                   variant=variant.uid,
                                   arch=arch,
@@ -104,26 +115,12 @@ class OSTreeThread(WorkerThread):
 
         self.pool.log_info('[DONE ] %s' % msg)
 
-    def _get_commit_info(self, config, config_repo):
-        ref = None
-        commitid = None
-        with open(os.path.join(config_repo, config['treefile']), 'r') as f:
-            try:
-                parsed = json.loads(f.read())
-                ref = parsed['ref']
-            except ValueError:
-                return None, None
-        if os.path.exists(os.path.join(self.logdir, 'commitid')):
-            with open(os.path.join(self.logdir, 'commitid'), 'r') as f:
-                commitid = f.read().replace('\n', '')
-        else:
-            return None, None
-        return ref, commitid
-
-    def _run_ostree_cmd(self, compose, variant, arch, config, config_repo):
+    def _run_ostree_cmd(self, compose, variant, arch, config, config_repo, extra_config_file=None):
         cmd = [
             'pungi-make-ostree',
-            '--log-dir=%s' % os.path.join(self.logdir),
+            'tree',
+            '--repo=%s' % config['ostree_repo'],
+            '--log-dir=%s' % self.logdir,
             '--treefile=%s' % os.path.join(config_repo, config['treefile']),
         ]
 
@@ -131,11 +128,11 @@ class OSTreeThread(WorkerThread):
         if version:
             cmd.append('--version=%s' % version)
 
+        if extra_config_file:
+            cmd.append('--extra-config=%s' % extra_config_file)
+
         if config.get('update_summary', False):
             cmd.append('--update-summary')
-
-        # positional argument: ostree_repo
-        cmd.append(config['ostree_repo'])
 
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
@@ -157,43 +154,3 @@ class OSTreeThread(WorkerThread):
     def _clone_repo(self, repodir, url, branch):
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
                              repodir, logger=self.pool._logger)
-
-    def _tweak_treeconf(self, treeconf, source_repos, keep_original_sources=False):
-        """
-        Update tree config file by adding new repos and remove existing repos
-        from the tree config file if 'keep_original_sources' is not enabled.
-        """
-        # add this timestamp to repo name to get unique repo filename and repo name
-        # should be safe enough
-        time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
-        treeconf_dir = os.path.dirname(treeconf)
-        with open(treeconf, 'r') as f:
-            treeconf_content = json.load(f)
-
-        # backup the old tree config
-        os.rename(treeconf, '%s.%s.bak' % (treeconf, time))
-
-        repos = []
-        for repo in source_repos:
-            name = "%s-%s" % (repo['name'], time)
-            with open("%s/%s.repo" % (treeconf_dir, name), 'w') as f:
-                f.write("[%s]\n" % name)
-                f.write("name=%s\n" % name)
-                f.write("baseurl=%s\n" % repo['baseurl'])
-                exclude = repo.get('exclude', None)
-                if exclude:
-                    f.write("exclude=%s\n" % exclude)
-                gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
-                f.write("gpgcheck=%s\n" % gpgcheck)
-            repos.append(name)
-
-        original_repos = treeconf_content.get('repos', [])
-        if keep_original_sources:
-            treeconf_content['repos'] = original_repos + repos
-        else:
-            treeconf_content['repos'] = repos
-
-        # update tree config to add new repos
-        with open(treeconf, 'w') as f:
-            json.dump(treeconf_content, f, indent=4)
