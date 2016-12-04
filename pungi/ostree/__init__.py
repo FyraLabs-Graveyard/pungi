@@ -17,6 +17,7 @@
 import argparse
 
 from .tree import Tree
+from .installer import Installer
 
 
 def main(args=None):
@@ -37,6 +38,44 @@ def main(args=None):
                        help='version string to be added as versioning metadata')
     treep.add_argument('--update-summary', action='store_true',
                        help='update summary metadata')
+
+    installerp = subparser.add_parser("installer", help="Create an OSTree installer image")
+    installerp.set_defaults(_class=Installer, func='run')
+    installerp.add_argument('-p', '--product', metavar='PRODUCT', required=True,
+                            help='product name (required)')
+    installerp.add_argument('-v', '--version', metavar='VERSION', required=True,
+                            help='version identifier (required)')
+    installerp.add_argument('-r', '--release', metavar='RELEASE', required=True,
+                            help='release information (required)')
+    installerp.add_argument('-s', '--source', metavar='REPOSITORY', required=True,
+                            action='append',
+                            help='source repository (required)')
+    installerp.add_argument('-o', '--output', metavar='DIR', required=True,
+                            help='path to image output directory (required)')
+    installerp.add_argument('--log-dir', metavar='DIR',
+                            help='path to log directory')
+    installerp.add_argument('--volid', metavar='VOLID',
+                            help='volume id')
+    installerp.add_argument('--variant', metavar='VARIANT',
+                            help='variant name')
+    installerp.add_argument('--rootfs-size', metavar='SIZE')
+    installerp.add_argument('--nomacboot', action='store_true', default=False)
+    installerp.add_argument('--noupgrade', action='store_true', default=False)
+    installerp.add_argument('--isfinal', action='store_true', default=False)
+
+    installerp.add_argument('--installpkgs', metavar='PACKAGE', action='append',
+                            help='package glob to install before runtime-install.tmpl')
+    installerp.add_argument('--add-template', metavar='FILE', action='append',
+                            help='Additional template for runtime image')
+    installerp.add_argument('--add-template-var', metavar='ADD_TEMPLATE_VARS', action='append',
+                            help='Set variable for runtime image template')
+    installerp.add_argument('--add-arch-template', metavar='FILE', action='append',
+                            help='Additional template for architecture-specific image')
+    installerp.add_argument('--add-arch-template-var', metavar='ADD_ARCH_TEMPLATE_VARS', action='append',
+                            help='Set variable for architecture-specific image')
+
+    installerp.add_argument('--extra-config', metavar='FILE',
+                            help='JSON file contains extra configurations')
 
     args = parser.parse_args(args)
     _class = args._class()

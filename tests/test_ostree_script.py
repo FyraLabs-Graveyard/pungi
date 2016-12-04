@@ -266,5 +266,102 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
                      source_repo_from_name, optional_repo_name, extra_repo_name]:
             self.assertIn(name, repos)
 
+
+class OstreeInstallerScriptTest(helpers.PungiTestCase):
+    def setUp(self):
+        super(OstreeInstallerScriptTest, self).setUp()
+        self.product = "dummyproduct"
+        self.version = "1.0"
+        self.release = "20160101.t.0"
+        self.output = os.path.join(self.topdir, 'output')
+        self.logdir = os.path.join(self.topdir, 'logs')
+        self.volid = '%s-%s' % (self.product, self.version)
+        self.variant = 'dummy'
+        self.rootfs_size = None
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_run_with_args(self, run):
+        args = ['installer',
+                '--product=%s' % self.product,
+                '--version=%s' % self.version,
+                '--release=%s' % self.release,
+                '--output=%s' % self.output,
+                '--variant=%s' % self.variant,
+                '--rootfs-size=%s' % self.rootfs_size,
+                '--nomacboot',
+                '--isfinal']
+        args.append('--source=%s' % 'http://www.example.com/dummy/repo')
+        args.append('--installpkgs=dummy-foo')
+        args.append('--installpkgs=dummy-bar')
+        args.append('--add-template=/path/to/lorax.tmpl')
+        args.append('--add-template-var=ostree_osname=dummy')
+        args.append('--add-arch-template=/path/to/lorax-embed.tmpl')
+        args.append('--add-arch-template-var=ostree_repo=http://www.example.com/ostree')
+        ostree.main(args)
+        self.maxDiff = None
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call(['lorax',
+                                          '--product=dummyproduct',
+                                          '--version=1.0',
+                                          '--release=20160101.t.0',
+                                          '--source=http://www.example.com/dummy/repo',
+                                          '--variant=dummy',
+                                          '--nomacboot',
+                                          '--isfinal',
+                                          '--installpkgs=dummy-foo',
+                                          '--installpkgs=dummy-bar',
+                                          '--add-template=/path/to/lorax.tmpl',
+                                          '--add-arch-template=/path/to/lorax-embed.tmpl',
+                                          '--add-template-var=ostree_osname=dummy',
+                                          '--add-arch-template-var=ostree_repo=http://www.example.com/ostree',
+                                          '--rootfs-size=None',
+                                          self.output])])
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_run_with_extra_config_file(self, run):
+        extra_config_file = os.path.join(self.topdir, 'extra_config.json')
+        helpers.touch(extra_config_file,
+                      json.dumps({'source_repo_from': 'http://www.example.com/another/repo',
+                                  'installpkgs': ['dummy-foo', 'dummy-bar'],
+                                  'add_template': ['/path/to/lorax.tmpl'],
+                                  'add_template_var': ['ostree_osname=dummy-atomic',
+                                                       'ostree_ref=dummy/x86_64/docker'],
+                                  'add_arch_template': ['/path/to/lorax-embed.tmpl'],
+                                  'add_arch_template_var': ['ostree_osname=dummy-atomic',
+                                                            'ostree_repo=http://www.example.com/ostree']}))
+        args = ['installer',
+                '--product=%s' % self.product,
+                '--version=%s' % self.version,
+                '--release=%s' % self.release,
+                '--output=%s' % self.output,
+                '--variant=%s' % self.variant,
+                '--rootfs-size=%s' % self.rootfs_size,
+                '--nomacboot',
+                '--isfinal']
+        args.append('--source=%s' % 'http://www.example.com/dummy/repo')
+        args.append('--extra-config=%s' % extra_config_file)
+        ostree.main(args)
+        self.maxDiff = None
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call(['lorax',
+                                          '--product=dummyproduct',
+                                          '--version=1.0',
+                                          '--release=20160101.t.0',
+                                          '--source=http://www.example.com/dummy/repo',
+                                          '--source=http://www.example.com/another/repo',
+                                          '--variant=dummy',
+                                          '--nomacboot',
+                                          '--isfinal',
+                                          '--installpkgs=dummy-foo',
+                                          '--installpkgs=dummy-bar',
+                                          '--add-template=/path/to/lorax.tmpl',
+                                          '--add-arch-template=/path/to/lorax-embed.tmpl',
+                                          '--add-template-var=ostree_osname=dummy-atomic',
+                                          '--add-template-var=ostree_ref=dummy/x86_64/docker',
+                                          '--add-arch-template-var=ostree_osname=dummy-atomic',
+                                          '--add-arch-template-var=ostree_repo=http://www.example.com/ostree',
+                                          '--rootfs-size=None',
+                                          self.output])])
+
 if __name__ == '__main__':
     unittest.main()
