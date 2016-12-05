@@ -741,6 +741,36 @@ class TestPungi(unittest.TestCase):
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
 
+    def test_bash_multilib_exclude_source(self):
+        packages = [
+            "dummy-bash.+",
+            "-dummy-bash.src",
+        ]
+        pkg_map = self.go(packages, None, greedy="none")
+
+        self.assertNotIn("dummy-bash-4.2.37-6.src.rpm", pkg_map["srpm"])
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-bash-4.2.37-6.i686.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+        ])
+
     def test_bash_multilib_greedy(self):
         packages = [
             "dummy-bash.+",

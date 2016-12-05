@@ -20,7 +20,6 @@ import re
 import shutil
 import sys
 import pungi.util
-import pprint
 import lockfile
 import logging
 import urlgrabber.progress
@@ -1007,9 +1006,11 @@ class Pungi(PungiBase):
         # ... but even "nosrc" packages are stored as "src" in repodata
         srpm_po_list = self.ayum.pkgSack.searchNevra(name=name, ver=ver, rel=rel, arch="src")
         srpm_po_list = self.excludePackages(srpm_po_list)
-        if not srpm_po_list:
-            raise RuntimeError("Cannot find a source rpm for %s" % po.sourcerpm)
-        srpm_po = srpm_po_list[0]
+        try:
+            srpm_po = srpm_po_list[0]
+        except IndexError:
+            self.logger.warning("Cannot find a source rpm for %s" % po.sourcerpm)
+            srpm_po = None
         self.sourcerpm_srpmpo_map[po.sourcerpm] = srpm_po
         return srpm_po
 
@@ -1020,28 +1021,13 @@ class Pungi(PungiBase):
         self.src_by_bin = {}
         self.bin_by_src = {}
         self.logger.info("Generating source <-> binary package mappings")
-        #(dummy1, everything, dummy2) = yum.packages.parsePackages(self.all_pkgs, ['*'], pkgdict=self.pkg_refs.copy())
-        failed = []
         for po in self.all_pkgs:
             if is_source(po):
                 continue
-            try:
-                srpmpo = self.get_srpm_po(po)
-            except RuntimeError:
-                failed.append(po.sourcerpm)
-                continue
+            srpmpo = self.get_srpm_po(po)
 
             self.src_by_bin[po] = srpmpo
-            if self.bin_by_src.has_key(srpmpo):
-                self.bin_by_src[srpmpo].append(po)
-            else:
-                self.bin_by_src[srpmpo] = [po]
-
-        if failed:
-            self.logger.info("The following srpms could not be found: %s" % (
-                pprint.pformat(list(sorted(failed)))))
-            self.logger.info("Couldn't find %i of %i srpms." % (
-                len(failed), len(self.src_by_bin)))
+            self.bin_by_src.setdefault(srpmpo, []).append(po)
 
     def add_srpms(self, po_list=None):
         """Cycle through the list of package objects and
