@@ -47,6 +47,7 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
     ci.release.version = conf["release_version"]
     ci.release.is_layered = bool(conf.get("release_is_layered", False))
     ci.release.type = conf.get("release_type", "ga").lower()
+    ci.release.internal = bool(conf.get("release_internal", False))
     if ci.release.is_layered:
         ci.base_product.name = conf["base_product_name"]
         ci.base_product.short = conf["base_product_short"]

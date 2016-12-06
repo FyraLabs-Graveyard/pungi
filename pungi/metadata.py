@@ -79,6 +79,7 @@ def compose_to_composeinfo(compose):
     ci.release.short = compose.conf["release_short"]
     ci.release.is_layered = compose.conf["release_is_layered"]
     ci.release.type = compose.conf["release_type"].lower()
+    ci.release.internal = bool(compose.conf["release_internal"])
 
     # base product
     if ci.release.is_layered:

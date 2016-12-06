@@ -68,6 +68,9 @@ Options
 **release_is_layered** = False
     (*bool*) -- typically False for an operating system, True otherwise
 
+**release_internal** = False
+    (*bool*) -- whether the compose is meant for public consumption
+
 
 Example
 -------

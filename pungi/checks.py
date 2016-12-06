@@ -399,6 +399,7 @@ def _make_schema():
                 "default": "ga",
             },
             "release_is_layered": {"type": "boolean"},
+            "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
 
             "base_product_name": {"type": "string"},
