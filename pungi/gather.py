@@ -1158,7 +1158,11 @@ class Pungi(PungiBase):
             self.add_debuginfo(po, msg)
 
             # flags
-            srpm_po = self.sourcerpm_srpmpo_map[po.sourcerpm]
+            try:
+                srpm_po = self.sourcerpm_srpmpo_map[po.sourcerpm]
+            except:
+                self.logger.warning('Failed to find source for %s', po.sourcerpm)
+                srpm_po = None
             if srpm_po in self.input_packages:
                 self.input_packages.add(po)
             if srpm_po in self.fulltree_packages:
