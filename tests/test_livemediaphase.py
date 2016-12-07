@@ -10,7 +10,6 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
-from pungi.checks import validate
 from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
@@ -33,7 +32,7 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveMediaPhase(compose)
 
@@ -91,7 +90,7 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'git://example.com/repo.git#BEEFCAFE'
 
@@ -192,7 +191,7 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'git://example.com/repo.git#BEEFCAFE'
 
@@ -280,7 +279,7 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveMediaPhase(compose)
 
@@ -305,7 +304,7 @@ class TestLiveMediaPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveMediaPhase(compose)
 
@@ -340,7 +339,7 @@ class TestLiveMediaPhase(PungiTestCase):
         })
         compose.setup_optional()
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'resolved'
 

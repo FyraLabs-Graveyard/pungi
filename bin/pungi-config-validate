@@ -64,8 +64,7 @@ def run(config, topdir, has_old):
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(config)
 
-    errors = pungi.checks.validate(conf)
-    warnings = list(pungi.checks.report_removed(conf))
+    errors, warnings = pungi.checks.validate(conf)
     if errors or warnings:
         for error in errors + warnings:
             print(error)

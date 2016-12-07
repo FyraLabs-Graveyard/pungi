@@ -25,6 +25,9 @@ class PungiTestCase(unittest.TestCase):
             if err.errno != errno.ENOENT:
                 raise
 
+    def assertValidConfig(self, conf):
+        self.assertEqual(checks.validate(conf), ([], []))
+
 
 class MockVariant(mock.Mock):
     def __str__(self):

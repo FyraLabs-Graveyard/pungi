@@ -11,7 +11,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread
-from pungi.checks import validate
 from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
@@ -33,7 +32,7 @@ class TestLiveImagesPhase(PungiTestCase):
         })
         compose.setup_optional()
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveImagesPhase(compose)
 
@@ -85,7 +84,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveImagesPhase(compose)
 
@@ -133,7 +132,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveImagesPhase(compose)
 
@@ -183,7 +182,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveImagesPhase(compose)
 
@@ -253,7 +252,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
 
@@ -308,7 +307,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
 
@@ -363,7 +362,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
 
@@ -415,7 +414,7 @@ class TestLiveImagesPhase(PungiTestCase):
             ],
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = LiveImagesPhase(compose)
 

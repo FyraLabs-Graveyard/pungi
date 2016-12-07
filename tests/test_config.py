@@ -16,7 +16,14 @@ from pungi import checks
 from tests.helpers import load_config, PKGSET_REPOS
 
 
-class PkgsetConfigTestCase(unittest.TestCase):
+class ConfigTestCase(unittest.TestCase):
+    def assertValidation(self, cfg, errors=[], warnings=[]):
+        actual_errors, actual_warnings = checks.validate(cfg)
+        self.assertItemsEqual(errors, actual_errors)
+        self.assertEqual(warnings, actual_warnings)
+
+
+class PkgsetConfigTestCase(ConfigTestCase):
 
     def test_validate_minimal_pkgset_koji(self):
         cfg = load_config(
@@ -24,7 +31,7 @@ class PkgsetConfigTestCase(unittest.TestCase):
             pkgset_koji_tag="f25",
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_validate_minimal_pkgset_repos(self):
         cfg = load_config(
@@ -32,7 +39,7 @@ class PkgsetConfigTestCase(unittest.TestCase):
             pkgset_repos={'x86_64': '/first', 'ppc64': '/second'},
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_pkgset_mismatch_repos(self):
         cfg = load_config(
@@ -41,8 +48,8 @@ class PkgsetConfigTestCase(unittest.TestCase):
             pkgset_koji_inherit=False,
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('pkgset_source', 'repos', 'pkgset_repos'),
              checks.CONFLICTS.format('pkgset_source', 'repos', 'pkgset_koji_tag'),
              checks.CONFLICTS.format('pkgset_source', 'repos', 'pkgset_koji_inherit')])
@@ -53,21 +60,21 @@ class PkgsetConfigTestCase(unittest.TestCase):
             pkgset_repos={'whatever': '/foo'},
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('pkgset_source', 'koji', 'pkgset_koji_tag'),
              checks.CONFLICTS.format('pkgset_source', 'koji', 'pkgset_repos')])
 
 
-class ReleaseConfigTestCase(unittest.TestCase):
+class ReleaseConfigTestCase(ConfigTestCase):
     def test_layered_without_base_product(self):
         cfg = load_config(
             PKGSET_REPOS,
             release_is_layered=True
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('release_is_layered', 'True', 'base_product_name'),
              checks.REQUIRES.format('release_is_layered', 'True', 'base_product_short'),
              checks.REQUIRES.format('release_is_layered', 'True', 'base_product_version')])
@@ -81,23 +88,23 @@ class ReleaseConfigTestCase(unittest.TestCase):
             base_product_type='updates',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_name'),
              checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_short'),
              checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_type'),
              checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_version')])
 
 
-class RunrootConfigTestCase(unittest.TestCase):
+class RunrootConfigTestCase(ConfigTestCase):
     def test_runroot_without_deps(self):
         cfg = load_config(
             PKGSET_REPOS,
             runroot=True,
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('runroot', 'True', 'koji_profile'),
              checks.REQUIRES.format('runroot', 'True', 'runroot_tag'),
              checks.REQUIRES.format('runroot', 'True', 'runroot_channel')])
@@ -111,23 +118,22 @@ class RunrootConfigTestCase(unittest.TestCase):
             runroot_channel='compose',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.CONFLICTS.format('runroot', 'False', 'runroot_tag'),
              checks.CONFLICTS.format('runroot', 'False', 'runroot_channel')])
 
 
-class BuildinstallConfigTestCase(unittest.TestCase):
+class BuildinstallConfigTestCase(ConfigTestCase):
     def test_bootable_without_method(self):
         cfg = load_config(
             PKGSET_REPOS,
             bootable=True,
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
-            [checks.REQUIRES.format('bootable', 'True', 'buildinstall_method')]
-        )
+        self.assertValidation(
+            cfg,
+            [checks.REQUIRES.format('bootable', 'True', 'buildinstall_method')])
 
     def test_non_bootable_with_method(self):
         cfg = load_config(
@@ -136,10 +142,9 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             buildinstall_method='lorax',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
-            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')]
-        )
+        self.assertValidation(
+            cfg,
+            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')])
 
     def test_buildinstall_method_without_bootable(self):
         cfg = load_config(
@@ -147,10 +152,9 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             buildinstall_method='lorax',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
-            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')]
-        )
+        self.assertValidation(
+            cfg,
+            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')])
 
     def test_buildinstall_with_lorax_options(self):
         cfg = load_config(
@@ -160,10 +164,9 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             lorax_options=[('^Server$', {})]
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
-            [checks.CONFLICTS.format('buildinstall_method', 'buildinstall', 'lorax_options')]
-        )
+        self.assertValidation(
+            cfg,
+            [checks.CONFLICTS.format('buildinstall_method', 'buildinstall', 'lorax_options')])
 
     def test_lorax_with_lorax_options(self):
         cfg = load_config(
@@ -173,7 +176,7 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             lorax_options=[]
         )
 
-        self.assertItemsEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_lorax_options_without_bootable_and_method(self):
         cfg = load_config(
@@ -182,11 +185,10 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             buildinstall_kickstart='foo',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.CONFLICTS.format('buildinstall_method', 'None', 'lorax_options'),
-             checks.CONFLICTS.format('buildinstall_method', 'None', 'buildinstall_kickstart')]
-        )
+             checks.CONFLICTS.format('buildinstall_method', 'None', 'buildinstall_kickstart')])
 
     def test_deprecated(self):
         cfg = load_config(
@@ -194,15 +196,13 @@ class BuildinstallConfigTestCase(unittest.TestCase):
             buildinstall_upgrade_image=True,
         )
 
-        self.assertItemsEqual(checks.validate(cfg), [])
-
-        self.assertItemsEqual(
-            checks.report_removed(cfg),
+        self.assertValidation(
+            cfg, [],
             [checks.REMOVED.format('buildinstall_upgrade_image', 'use lorax_options instead')]
         )
 
 
-class CreaterepoConfigTestCase(unittest.TestCase):
+class CreaterepoConfigTestCase(ConfigTestCase):
     def test_validate_minimal_pkgset_koji(self):
         cfg = load_config(
             pkgset_source='koji',
@@ -210,13 +210,12 @@ class CreaterepoConfigTestCase(unittest.TestCase):
             product_id_allow_missing=True,
         )
 
-        self.assertEqual(
-            checks.validate(cfg),
-            [checks.CONFLICTS.format('product_id', 'None', 'product_id_allow_missing')]
-        )
+        self.assertValidation(
+            cfg,
+            [checks.CONFLICTS.format('product_id', 'None', 'product_id_allow_missing')])
 
 
-class GatherConfigTestCase(unittest.TestCase):
+class GatherConfigTestCase(ConfigTestCase):
     def test_source_comps_requires_comps(self):
         cfg = load_config(
             pkgset_source='koji',
@@ -225,11 +224,10 @@ class GatherConfigTestCase(unittest.TestCase):
             gather_source_mapping='foo'
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('gather_source', 'comps', 'comps_file'),
-             checks.CONFLICTS.format('gather_source', 'comps', 'gather_source_mapping')]
-        )
+             checks.CONFLICTS.format('gather_source', 'comps', 'gather_source_mapping')])
 
     def test_source_json_requires_mapping(self):
         cfg = load_config(
@@ -239,14 +237,13 @@ class GatherConfigTestCase(unittest.TestCase):
             comps_file='comps',
         )
 
-        self.assertItemsEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             [checks.REQUIRES.format('gather_source', 'json', 'gather_source_mapping'),
-             checks.CONFLICTS.format('gather_source', 'json', 'comps_file')]
-        )
+             checks.CONFLICTS.format('gather_source', 'json', 'comps_file')])
 
 
-class OSBSConfigTestCase(unittest.TestCase):
+class OSBSConfigTestCase(ConfigTestCase):
     def test_validate(self):
         cfg = load_config(
             PKGSET_REPOS,
@@ -256,7 +253,7 @@ class OSBSConfigTestCase(unittest.TestCase):
             }}
         )
 
-        self.assertItemsEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_validate_bad_conf(self):
         cfg = load_config(
@@ -264,10 +261,10 @@ class OSBSConfigTestCase(unittest.TestCase):
             osbs='yes please'
         )
 
-        self.assertNotEqual(checks.validate(cfg), [])
+        self.assertNotEqual(checks.validate(cfg), ([], []))
 
 
-class OstreeConfigTestCase(unittest.TestCase):
+class OstreeConfigTestCase(ConfigTestCase):
     def test_validate(self):
         cfg = load_config(
             PKGSET_REPOS,
@@ -283,7 +280,7 @@ class OstreeConfigTestCase(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_validate_bad_conf(self):
         cfg = load_config(
@@ -291,10 +288,10 @@ class OstreeConfigTestCase(unittest.TestCase):
             ostree='yes please'
         )
 
-        self.assertNotEqual(checks.validate(cfg), [])
+        self.assertNotEqual(checks.validate(cfg), ([], []))
 
 
-class OstreeInstallerConfigTestCase(unittest.TestCase):
+class OstreeInstallerConfigTestCase(ConfigTestCase):
     def test_validate(self):
         cfg = load_config(
             PKGSET_REPOS,
@@ -321,7 +318,7 @@ class OstreeInstallerConfigTestCase(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_validate_bad_conf(self):
         cfg = load_config(
@@ -348,10 +345,10 @@ class OstreeInstallerConfigTestCase(unittest.TestCase):
             ]
         )
 
-        self.assertNotEqual(checks.validate(cfg), [])
+        self.assertNotEqual(checks.validate(cfg), ([], []))
 
 
-class LiveMediaConfigTestCase(unittest.TestCase):
+class LiveMediaConfigTestCase(ConfigTestCase):
     def test_global_config_validation(self):
         cfg = load_config(
             PKGSET_REPOS,
@@ -361,7 +358,7 @@ class LiveMediaConfigTestCase(unittest.TestCase):
             live_media_version='Rawhide',
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
     def test_global_config_null_release(self):
         cfg = load_config(
@@ -369,28 +366,27 @@ class LiveMediaConfigTestCase(unittest.TestCase):
             live_media_release=None,
         )
 
-        self.assertEqual(checks.validate(cfg), [])
+        self.assertValidation(cfg)
 
 
-class TestSuggestions(unittest.TestCase):
+class TestSuggestions(ConfigTestCase):
     def test_with_a_typo(self):
         cfg = load_config(PKGSET_REPOS,
                           product_pid=None)
 
-        self.assertEqual(
-            checks.validate(cfg),
-            [checks.UNKNOWN_SUGGEST.format('product_pid', 'product_id')])
+        self.assertValidation(cfg, [], [checks.UNKNOWN_SUGGEST.format('product_pid', 'product_id')])
 
 
-class TestRegexValidation(unittest.TestCase):
+class TestRegexValidation(ConfigTestCase):
     def test_incorrect_regular_expression(self):
         cfg = load_config(PKGSET_REPOS,
                           multilib=[('^*$', {'*': []})])
 
-        self.assertEqual(
-            checks.validate(cfg),
+        self.assertValidation(
+            cfg,
             ['Failed validation in multilib.0.0: incorrect regular '
-             'expression: nothing to repeat'])
+             'expression: nothing to repeat'],
+            [])
 
 
 if __name__ == '__main__':

@@ -192,28 +192,24 @@ def validate(config):
                                  {'array': (tuple, list),
                                   'regex': (str, unicode)})
     errors = []
+    warnings = []
     for error in validator.iter_errors(config):
-        if not error.path and error.validator == 'additionalProperties':
+        if isinstance(error, ConfigDeprecation):
+            warnings.append(REMOVED.format('.'.join(error.path), error.message))
+        elif not error.path and error.validator == 'additionalProperties':
             allowed_keys = set(error.schema['properties'].keys())
             used_keys = set(error.instance.keys())
             for key in used_keys - allowed_keys:
                 suggestion = _get_suggestion(key, allowed_keys)
                 if suggestion:
-                    errors.append(UNKNOWN_SUGGEST.format(key, suggestion))
+                    warnings.append(UNKNOWN_SUGGEST.format(key, suggestion))
                 else:
-                    errors.append(UNKNOWN.format(key))
+                    warnings.append(UNKNOWN.format(key))
         else:
             errors.append('Failed validation in %s: %s' % (
                 '.'.join([str(x) for x in error.path]), error.message))
-    return errors + _validate_requires(schema, config, CONFIG_DEPS)
-
-
-def report_removed(config):
-    schema = _make_schema()
-    for key in config:
-        msg = schema['properties'].get(key, {}).get('deprecated')
-        if msg:
-            yield REMOVED.format(key, msg)
+    return (errors + _validate_requires(schema, config, CONFIG_DEPS),
+            warnings)
 
 
 def _get_suggestion(desired, names):
@@ -235,8 +231,8 @@ def _get_suggestion(desired, names):
 CONFLICTS = 'ERROR: Config option {0}={1} conflicts with option {2}.'
 REQUIRES = 'ERROR: Config option {0}={1} requires {2} which is not set.'
 REMOVED = 'WARNING: Config option {0} was removed and has no effect; {1}.'
-UNKNOWN = 'ERROR: Unrecognized config option: {0}.'
-UNKNOWN_SUGGEST = 'ERROR: Unrecognized config option: {0}. Did you mean {1}?'
+UNKNOWN = 'WARNING: Unrecognized config option: {0}.'
+UNKNOWN_SUGGEST = 'WARNING: Unrecognized config option: {0}. Did you mean {1}?'
 
 
 def _extend_with_default(validator_class):
@@ -254,6 +250,10 @@ def _extend_with_default(validator_class):
 
         for error in validate_properties(validator, properties, instance, schema):
             yield error
+
+    def error_on_deprecated(validator, properties, instance, schema):
+        """Unconditionally raise deprecation error if encountered."""
+        yield ConfigDeprecation(properties)
 
     def validate_regex_type(validator, properties, instance, schema):
         """
@@ -274,8 +274,13 @@ def _extend_with_default(validator_class):
 
     return jsonschema.validators.extend(
         validator_class, {"properties": set_defaults,
+                          "deprecated": error_on_deprecated,
                           "type": validate_regex_type},
     )
+
+
+class ConfigDeprecation(jsonschema.exceptions.ValidationError):
+    pass
 
 
 def _make_schema():

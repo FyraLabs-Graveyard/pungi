@@ -14,7 +14,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
-from pungi.checks import validate
 from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
@@ -47,7 +46,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -132,7 +131,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -249,7 +248,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -284,7 +283,7 @@ class TestImageBuildPhase(PungiTestCase):
         })
         compose.setup_optional()
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -347,7 +346,7 @@ class TestImageBuildPhase(PungiTestCase):
         })
         compose.setup_optional()
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -411,7 +410,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -473,7 +472,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -511,7 +510,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         phase = ImageBuildPhase(compose)
 
@@ -549,7 +548,7 @@ class TestImageBuildPhase(PungiTestCase):
             'koji_profile': 'koji',
         })
 
-        self.assertEqual(validate(compose.conf), [])
+        self.assertValidConfig(compose.conf)
 
         resolve_git_url.return_value = 'git://git.fedorahosted.org/git/spin-kickstarts.git?#BEEFCAFE'
 
