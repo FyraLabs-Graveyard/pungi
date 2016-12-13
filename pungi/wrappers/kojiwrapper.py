@@ -55,7 +55,9 @@ class KojiWrapper(object):
                                       os.path.expanduser(self.koji_module.config.ca),
                                       os.path.expanduser(self.koji_module.config.serverca))
         elif auth_type == 'kerberos':
-            self.koji_proxy.krb_login()
+            self.koji_proxy.krb_login(
+                getattr(self.koji_module.config, 'principal', None),
+                getattr(self.koji_module.config, 'keytab', None))
         else:
             raise RuntimeError('Unsupported authentication type in Koji')
 
