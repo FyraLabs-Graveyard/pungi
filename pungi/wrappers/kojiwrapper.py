@@ -39,7 +39,7 @@ class KojiWrapper(object):
             for key in ('krbservice', 'timeout', 'keepalive',
                         'max_retries', 'retry_interval', 'anon_retry',
                         'offline_retry', 'offline_retry_interval',
-                        'debug', 'debug_xmlrpc',
+                        'debug', 'debug_xmlrpc', 'krb_rdns',
                         'use_fast_upload'):
                 value = getattr(self.koji_module.config, key, None)
                 if value is not None:
