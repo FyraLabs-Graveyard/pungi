@@ -31,7 +31,7 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
                 )
             )
             self.koji_profile = koji.get_profile_module.return_value
-            self.koji = KojiWrapper('koji')
+            self.koji = KojiWrapper('custom-koji')
 
     def tearDown(self):
         os.remove(self.tmpfile)
@@ -68,7 +68,7 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
             self.tmpfile
         )
 
-        self.assertEqual(cmd[0], 'koji')
+        self.assertEqual(cmd[0], 'custom-koji')
         self.assertEqual(cmd[1], 'image-build')
         self.assertItemsEqual(cmd[2:],
                               ['--config=' + self.tmpfile, '--wait'])
@@ -298,7 +298,7 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_create_image_cmd_minimal(self):
         cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
                                              'x86_64', '/path/to/ks', ['/repo/1'])
-        self.assertEqual(cmd[0:2], ['koji', 'spin-livecd'])
+        self.assertEqual(cmd[0:2], ['custom-koji', 'spin-livecd'])
         self.assertItemsEqual(cmd[2:6], ['--noprogress', '--scratch', '--wait', '--repo=/repo/1'])
         self.assertEqual(cmd[6:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
@@ -307,7 +307,7 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
                                              'x86_64', '/path/to/ks', ['/repo/1', '/repo/2'],
                                              release='1', wait=False, archive=True, specfile='foo.spec',
                                              ksurl='https://git.example.com/')
-        self.assertEqual(cmd[0:2], ['koji', 'spin-livecd'])
+        self.assertEqual(cmd[0:2], ['custom-koji', 'spin-livecd'])
         self.assertEqual(cmd[-5:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
         self.assertItemsEqual(cmd[2:-5],
                               ['--noprogress', '--nowait', '--repo=/repo/1', '--repo=/repo/2',
@@ -324,7 +324,7 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
                                              'x86_64', '/path/to/ks', [],
                                              image_type='appliance',
                                              image_format='qcow')
-        self.assertEqual(cmd[0:2], ['koji', 'spin-appliance'])
+        self.assertEqual(cmd[0:2], ['custom-koji', 'spin-appliance'])
         self.assertItemsEqual(cmd[2:6], ['--noprogress', '--scratch', '--wait', '--format=qcow'])
         self.assertEqual(cmd[6:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
@@ -340,7 +340,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False, task_id=False)
         self.assertEqual(len(cmd), 6)
-        self.assertEqual(cmd[0], 'koji')
+        self.assertEqual(cmd[0], 'custom-koji')
         self.assertEqual(cmd[1], 'runroot')
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
@@ -354,7 +354,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                                         packages=['strace', 'lorax'],
                                         mounts=['/tmp'], weight=1000)
         self.assertEqual(len(cmd), 13)
-        self.assertEqual(cmd[0], 'koji')
+        self.assertEqual(cmd[0], 'custom-koji')
         self.assertEqual(cmd[1], 'runroot')
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
@@ -458,7 +458,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
                          [mock.call('cmd', can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_disconnect_and_retry_but_fail(self, run):
@@ -471,7 +471,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         self.assertDictEqual(result, {'retcode': 1, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
                          [mock.call('cmd', can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
 
     @mock.patch('time.sleep')
     @mock.patch('pungi.wrappers.kojiwrapper.run')
@@ -485,9 +485,9 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
                          [mock.call('cmd', can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
         self.assertEqual(sleep.mock_calls,
                          [mock.call(i * 10) for i in range(1, 3)])
 
@@ -503,8 +503,8 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         self.assertIn('Failed to wait', str(ctx.exception))
         self.assertEqual(run.mock_calls,
                          [mock.call('cmd', can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None),
-                          mock.call(['koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None),
+                          mock.call(['custom-koji', 'watch-task', '1234'], can_fail=True, logfile=None)])
         self.assertEqual(sleep.mock_calls, [mock.call(i * 10) for i in range(1, 2)])
 
 
