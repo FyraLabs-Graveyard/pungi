@@ -21,8 +21,15 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
         _, self.tmpfile = tempfile.mkstemp()
         self.koji_profile = mock.Mock()
         with mock.patch('pungi.wrappers.kojiwrapper.koji') as koji:
+            koji.krb_login = mock.Mock()
             koji.get_profile_module = mock.Mock(
                 return_value=mock.Mock(
+                    config=mock.Mock(
+                        authtype='kerberos',
+                        principal='testprincipal',
+                        keytab='testkeytab',
+                        krb_rdns=False,
+                        cert=''),
                     pathinfo=mock.Mock(
                         work=mock.Mock(return_value='/koji'),
                         taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
@@ -38,6 +45,12 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
 
 
 class KojiWrapperTest(KojiWrapperBaseTestCase):
+    def test_krb_login_krb(self):
+        self.assertEquals(self.koji.koji_module.config.krb_rdns, False)
+        self.koji.login()
+        self.koji.koji_proxy.krb_login.assert_called_with('testprincipal',
+                                                          'testkeytab')
+
     def test_get_image_build_cmd_without_required_data(self):
         with self.assertRaises(AssertionError):
             self.koji.get_image_build_cmd(
