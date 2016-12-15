@@ -505,6 +505,7 @@ def _make_schema():
             },
             "gather_prepopulate": {"$ref": "#/definitions/str_or_scm_dict"},
             "gather_source_mapping": {"type": "string"},
+            "dnf_gather": {"type": "boolean", "default": False},
 
             "pkgset_source": {
                 "type": "string",
