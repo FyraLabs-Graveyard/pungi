@@ -72,7 +72,7 @@ Syntax:
 
 import pykickstart.parser
 import pykickstart.sections
-from pykickstart.constants import GROUP_REQUIRED, GROUP_DEFAULT, GROUP_ALL
+from pykickstart.constants import GROUP_REQUIRED, GROUP_DEFAULT
 
 
 class FulltreeExcludesSection(pykickstart.sections.Section):

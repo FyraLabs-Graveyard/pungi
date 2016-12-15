@@ -154,7 +154,10 @@ class Gather(GatherBase):
 
         self.opts = gather_options
         self.logger.debug("Gather received gather_options=%s" % gather_options.__dict__)
-        self._multilib = pungi.multilib_dnf.Multilib(self.dnf._sack, gather_options.multilib_methods, blacklist=self.opts.multilib_blacklist, whitelist=self.opts.multilib_whitelist)
+        self._multilib = pungi.multilib_dnf.Multilib(self.dnf._sack,
+                                                     gather_options.multilib_methods,
+                                                     blacklist=self.opts.multilib_blacklist,
+                                                     whitelist=self.opts.multilib_whitelist)
 
         # already processed packages
         self.finished_add_binary_package_deps = {}      # {pkg: [deps]}
@@ -229,10 +232,8 @@ class Gather(GatherBase):
         if self.opts.greedy_method == "build" and req:
             if self.is_native_package(match):
                 return [i for i in native_pkgs if i.sourcerpm == match.sourcerpm]
-#                return list(native_pkgs.filter(sourcerpm=match.sourcerpm, provides=req))
             else:
                 return [i for i in multilib_pkgs if i.sourcerpm == match.sourcerpm]
-#                return list(multilib_pkgs.filter(sourcerpm=match.sourcerpm, provides=req))
         return [match]
 
     def _add_packages(self, packages, pulled_by=None):

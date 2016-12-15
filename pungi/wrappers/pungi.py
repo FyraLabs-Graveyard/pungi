@@ -200,7 +200,6 @@ class PungiWrapper(object):
 
         return cmd
 
-
     def get_packages(self, output):
         global PACKAGES_RE
         result = dict(((i, []) for i in PACKAGES_RE))
