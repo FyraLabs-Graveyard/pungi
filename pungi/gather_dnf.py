@@ -146,11 +146,13 @@ class Gather(GatherBase):
             self.logger = logging.getLogger("gather_dnf")
             self.logger.setLevel(logging.DEBUG)
 
-            # default logging handler
-            handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)-8s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-            handler.setLevel(logging.DEBUG)
-            self.logger.addHandler(handler)
+            if not self.logger.handlers:
+                # default logging handler
+                handler = logging.StreamHandler()
+                handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)-8s] %(message)s",
+                                                       datefmt="%Y-%m-%d %H:%M:%S"))
+                handler.setLevel(logging.DEBUG)
+                self.logger.addHandler(handler)
 
         self.opts = gather_options
         self.logger.debug("Gather received gather_options=%s" % gather_options.__dict__)
