@@ -30,8 +30,9 @@ def main(args=None):
                        help='where to put the OSTree repo (required)')
     treep.add_argument('--treefile', metavar="FILE", required=True,
                        help='treefile for rpm-ostree (required)')
-    treep.add_argument('--log-dir', metavar="DIR",
-                       help='where to log output')
+    treep.add_argument('--log-dir', metavar="DIR", required=True,
+                       help='where to log output and commitid (required). \
+                             Note: commitid file will be written to this dir')
     treep.add_argument('--extra-config', metavar="FILE",
                        help='JSON file contains extra configurations')
     treep.add_argument('--version', metavar="VERSION",
