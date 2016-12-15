@@ -4,6 +4,8 @@
 
 import os
 import argparse
+import tempfile
+import shutil
 
 import pungi.ks
 from pungi.dnf_wrapper import DnfWrapper, Conf
@@ -71,6 +73,7 @@ def main():
     ns = parser.parse_args()
 
     dnf_conf = Conf(ns.arch)
+    dnf_conf.persistdir = tempfile.mkdtemp()
     dnf_obj = DnfWrapper(dnf_conf)
 
     gather_opts = GatherOptions()
@@ -126,6 +129,7 @@ def main():
         packages.add("-%s" % i)
 
     g.gather(packages, conditional_packages)
+    shutil.rmtree(dnf_conf.persistdir)
 
     print_rpms(g)
     if ns.profiler:
