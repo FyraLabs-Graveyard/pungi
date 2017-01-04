@@ -1244,7 +1244,9 @@ they are not scratch builds).
     This includes ``name``, ``version``, ``scratch`` and ``priority``.
 
     A value for ``yum_repourls`` will be created automatically and point at a
-    repository in the current compose.
+    repository in the current compose. You can add extra repositories with
+    ``repo`` key having a list of urls pointing to ``.repo`` files or
+    ``repo_from`` as a list of variants in current compose.
 
 
 Example config
