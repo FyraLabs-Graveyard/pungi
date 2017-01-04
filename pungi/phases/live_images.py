@@ -152,7 +152,6 @@ class CreateLiveImageThread(WorkerThread):
     def process(self, item, num):
         compose, cmd, variant, arch = item
         self.failable_arches = cmd.get('failable_arches', [])
-        # TODO handle failure per architecture; currently not possible in single task
         self.can_fail = bool(self.failable_arches)
         with failable(compose, self.can_fail, variant, arch, 'live', cmd.get('subvariant'),
                       logger=self.pool._logger):

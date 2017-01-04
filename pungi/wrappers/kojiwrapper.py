@@ -191,6 +191,9 @@ class KojiWrapper(object):
         if 'release' in options:
             cmd.append('--release=%s' % options['release'])
 
+        if 'can_fail' in options:
+            cmd.append('--can-fail=%s' % ','.join(options['can_fail']))
+
         if wait:
             cmd.append('--wait')
 

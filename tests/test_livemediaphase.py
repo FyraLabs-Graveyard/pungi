@@ -59,6 +59,51 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'failable_arches': [],
                                      }))])
 
+    @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
+    def test_expand_failable(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'live_media': {
+                '^Server$': [
+                    {
+                        'target': 'f24',
+                        'kickstart': 'file.ks',
+                        'ksurl': 'git://example.com/repo.git',
+                        'name': 'Fedora Server Live',
+                        'version': 'Rawhide',
+                        'failable': ['*'],
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        self.assertValidConfig(compose.conf)
+
+        phase = LiveMediaPhase(compose)
+
+        phase.run()
+        self.assertTrue(phase.pool.add.called)
+        self.assertEqual(phase.pool.queue_put.call_args_list,
+                         [mock.call((compose,
+                                     compose.variants['Server'],
+                                     {
+                                         'arches': ['amd64', 'x86_64'],
+                                         'ksfile': 'file.ks',
+                                         'ksurl': 'git://example.com/repo.git',
+                                         'ksversion': None,
+                                         'name': 'Fedora Server Live',
+                                         'release': None,
+                                         'repo': [self.topdir + '/compose/Server/$basearch/os'],
+                                         'scratch': False,
+                                         'skip_tag': None,
+                                         'target': 'f24',
+                                         'title': None,
+                                         'install_tree': self.topdir + '/compose/Server/$basearch/os',
+                                         'version': 'Rawhide',
+                                         'subvariant': 'Server',
+                                         'failable_arches': ['amd64', 'x86_64'],
+                                     }))])
+
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.livemedia_phase.ThreadPool')
     def test_live_media_with_phase_global_opts(self, ThreadPool, resolve_git_url):
@@ -368,7 +413,7 @@ class TestLiveMediaPhase(PungiTestCase):
                                          'install_tree': self.topdir + '/compose/Server-optional/$basearch/os',
                                          'version': '25',
                                          'subvariant': 'Something',
-                                         'failable_arches': ['*'],
+                                         'failable_arches': ['x86_64'],
                                      }))])
 
 
@@ -446,7 +491,8 @@ class TestLiveMediaThread(PungiTestCase):
                                      'skip_tag': None,
                                      'target': 'f24',
                                      'title': None,
-                                     'version': 'Rawhide'})])
+                                     'version': 'Rawhide',
+                                     'can_fail': []})])
         self.assertEqual(get_image_paths.mock_calls,
                          [mock.call(1234)])
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/x86_64/iso'))
@@ -498,7 +544,7 @@ class TestLiveMediaThread(PungiTestCase):
             'title': None,
             'version': 'Rawhide',
             'subvariant': 'KDE',
-            'failable_arches': ['*'],
+            'failable_arches': ['amd64', 'x86_64'],
         }
         pool = mock.Mock()
 
@@ -520,6 +566,22 @@ class TestLiveMediaThread(PungiTestCase):
             mock.call('Live media task failed: 1234. See %s for more details.'
                       % (os.path.join(self.topdir, 'logs/amd64-x86_64/livemedia-Server-KDE.amd64-x86_64.log')))
         ])
+        self.assertEqual(KojiWrapper.return_value.get_live_media_cmd.mock_calls,
+                         [mock.call({
+                             'arch': 'amd64,x86_64',
+                             'ksfile': 'file.ks',
+                             'ksurl': 'git://example.com/repo.git',
+                             'ksversion': None,
+                             'skip_tag': None,
+                             'target': 'f24',
+                             'title': None,
+                             'release': None,
+                             'version': 'Rawhide',
+                             'scratch': False,
+                             'can_fail': ['amd64', 'x86_64'],
+                             'name': 'Fedora Server Live',
+                             'repo': ['/repo/$basearch/Server'],
+                         })])
 
     @mock.patch('pungi.phases.livemedia_phase.get_mtime')
     @mock.patch('pungi.phases.livemedia_phase.get_file_size')
@@ -545,7 +607,7 @@ class TestLiveMediaThread(PungiTestCase):
             'title': None,
             'version': 'Rawhide',
             'subvariant': 'KDE',
-            'failable_arches': ['*'],
+            'failable_arches': ['amd64', 'x86_64'],
         }
         pool = mock.Mock()
 
@@ -562,6 +624,77 @@ class TestLiveMediaThread(PungiTestCase):
             mock.call('[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
+        self.assertEqual(KojiWrapper.return_value.get_live_media_cmd.mock_calls,
+                         [mock.call({
+                             'arch': 'amd64,x86_64',
+                             'ksfile': 'file.ks',
+                             'ksurl': 'git://example.com/repo.git',
+                             'ksversion': None,
+                             'skip_tag': None,
+                             'target': 'f24',
+                             'title': None,
+                             'release': None,
+                             'version': 'Rawhide',
+                             'scratch': False,
+                             'can_fail': ['amd64', 'x86_64'],
+                             'name': 'Fedora Server Live',
+                             'repo': ['/repo/$basearch/Server'],
+                         })])
+
+    @mock.patch('pungi.phases.livemedia_phase.get_mtime')
+    @mock.patch('pungi.phases.livemedia_phase.get_file_size')
+    @mock.patch('pungi.phases.livemedia_phase.KojiWrapper')
+    def test_handle_exception_only_one_arch_optional(self, KojiWrapper, get_file_size, get_mtime):
+        compose = DummyCompose(self.topdir, {
+            'koji_profile': 'koji',
+            'failable_deliverables': [
+                ('^.+$', {'*': ['live-media']})
+            ]
+        })
+        config = {
+            'arches': ['amd64', 'x86_64'],
+            'ksfile': 'file.ks',
+            'ksurl': 'git://example.com/repo.git',
+            'ksversion': None,
+            'name': 'Fedora Server Live',
+            'release': None,
+            'repo': ['/repo/$basearch/Server'],
+            'scratch': False,
+            'skip_tag': None,
+            'target': 'f24',
+            'title': None,
+            'version': 'Rawhide',
+            'subvariant': 'KDE',
+            'failable_arches': ['amd64'],
+        }
+        pool = mock.Mock()
+
+        run_blocking_cmd = KojiWrapper.return_value.run_blocking_cmd
+        run_blocking_cmd.side_effect = boom
+        get_file_size.return_value = 1024
+        get_mtime.return_value.st_mtime = 13579
+
+        t = LiveMediaThread(pool)
+        with self.assertRaises(Exception):
+            with mock.patch('time.sleep'):
+                t.process((compose, compose.variants['Server'], config), 1)
+
+        self.assertEqual(KojiWrapper.return_value.get_live_media_cmd.mock_calls,
+                         [mock.call({
+                             'arch': 'amd64,x86_64',
+                             'ksfile': 'file.ks',
+                             'ksurl': 'git://example.com/repo.git',
+                             'ksversion': None,
+                             'skip_tag': None,
+                             'target': 'f24',
+                             'title': None,
+                             'release': None,
+                             'version': 'Rawhide',
+                             'scratch': False,
+                             'can_fail': ['amd64'],
+                             'name': 'Fedora Server Live',
+                             'repo': ['/repo/$basearch/Server'],
+                         })])
 
 
 if __name__ == "__main__":

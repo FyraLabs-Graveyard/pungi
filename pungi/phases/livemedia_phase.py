@@ -90,6 +90,8 @@ class LiveMediaPhase(PhaseLoggerMixin, ImageConfigMixin, ConfigGuardedPhase):
                     'version': self.get_version(image_conf),
                     'failable_arches': image_conf.get('failable', []),
                 }
+                if config['failable_arches'] == ['*']:
+                    config['failable_arches'] = config['arches']
                 self.pool.add(LiveMediaThread(self.pool))
                 self.pool.queue_put((self.compose, variant, config))
 
@@ -102,8 +104,8 @@ class LiveMediaThread(WorkerThread):
         subvariant = config.pop('subvariant')
         self.failable_arches = config.pop('failable_arches')
         self.num = num
-        # TODO handle failure per architecture; currently not possible in single task
-        with failable(compose, bool(self.failable_arches), variant, '*', 'live-media', subvariant,
+        can_fail = set(self.failable_arches) == set(config['arches'])
+        with failable(compose, can_fail, variant, '*', 'live-media', subvariant,
                       logger=self.pool._logger):
             self.worker(compose, variant, subvariant, config)
 
@@ -126,6 +128,7 @@ class LiveMediaThread(WorkerThread):
         """Replace `arches` (as list) with `arch` as a comma-separated string."""
         copy = dict(config)
         copy['arch'] = ','.join(copy.pop('arches', []))
+        copy['can_fail'] = self.failable_arches
         return koji_wrapper.get_live_media_cmd(copy)
 
     def worker(self, compose, variant, subvariant, config):
@@ -149,9 +152,10 @@ class LiveMediaThread(WorkerThread):
                 if path.endswith('.iso'):
                     image_infos.append({'path': path, 'arch': arch})
 
-        if len(image_infos) != len(config['arches']):
+        if len(image_infos) < len(config['arches']) - len(self.failable_arches):
             self.pool.log_error(
-                'Error in koji task %s. Expected to find one image for each arch (%s). Got %s.'
+                'Error in koji task %s. Expected to find at least one image '
+                'for each required arch (%s). Got %s.'
                 % (output['task_id'], len(config['arches']), len(image_infos)))
             raise RuntimeError('Image count mismatch in task %s.' % output['task_id'])
 

@@ -120,6 +120,12 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                 image_conf["image-build"]["format"] = ",".join([x[0] for x in image_conf["image-build"]["format"]])
                 image_conf["image-build"]['repo'] = self._get_repo(image_conf['image-build'], variant)
 
+                can_fail = image_conf['image-build'].pop('failable', [])
+                if can_fail == ['*']:
+                    can_fail = image_conf['image-build']['arches']
+                if can_fail:
+                    image_conf['image-build']['can_fail'] = ','.join(sorted(can_fail))
+
                 cmd = {
                     "format": format,
                     "image_conf": image_conf,
@@ -134,7 +140,6 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                     ),
                     "link_type": self.compose.conf["link_type"],
                     "scratch": image_conf['image-build'].pop('scratch', False),
-                    "failable_arches": image_conf['image-build'].pop('failable', []),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
                 self.pool.queue_put((self.compose, cmd))
@@ -150,15 +155,15 @@ class CreateImageBuildThread(WorkerThread):
         compose, cmd = item
         variant = cmd["image_conf"]["image-build"]["variant"]
         subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
-        failable_arches = cmd.get('failable_arches', [])
-        self.can_fail = bool(failable_arches)
-        # TODO handle failure per architecture; currently not possible in single task
+        self.failable_arches = cmd["image_conf"]['image-build'].get('can_fail', '')
+        self.can_fail = self.failable_arches == cmd['image_conf']['image-build']['arches']
         with failable(compose, self.can_fail, variant, '*', 'image-build', subvariant,
                       logger=self.pool._logger):
             self.worker(num, compose, variant, subvariant, cmd)
 
     def worker(self, num, compose, variant, subvariant, cmd):
         arches = cmd["image_conf"]["image-build"]['arches'].split(',')
+        failable_arches = self.failable_arches.split(',')
         dash_arches = '-'.join(arches)
         log_file = compose.paths.log.log_file(
             dash_arches,
@@ -202,7 +207,7 @@ class CreateImageBuildThread(WorkerThread):
                         image_infos.append({'path': path, 'suffix': suffix, 'type': format, 'arch': arch})
                         break
 
-        if len(image_infos) != len(cmd['format']) * len(arches):
+        if len(image_infos) != len(cmd['format']) * (len(arches) - len(failable_arches)):
             self.pool.log_error(
                 "Error in koji task %s. Expected to find same amount of images "
                 "as in suffixes attr in image-build (%s) for each arch (%s). Got '%s'." %
