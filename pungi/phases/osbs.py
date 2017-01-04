@@ -51,12 +51,8 @@ class OSBSThread(WorkerThread):
         koji.login()
 
         # Start task
-        try:
-            source = util.resolve_git_url(config.pop('url'))
-            target = config.pop('target')
-        except KeyError as exc:
-            raise RuntimeError('OSBS: missing config key %s for %s'
-                               % (exc, variant.uid))
+        source = util.resolve_git_url(config.pop('url'))
+        target = config.pop('target')
         priority = config.pop('priority', None)
         repos = shortcuts.force_list(config.pop('repo', []))
         compose_repos = [self._get_repo(compose, v)
