@@ -192,10 +192,12 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 mock.call.koji_proxy.getBuild(54321),
                 mock.call.koji_proxy.listArchives(54321)])
 
-    def _assertRepoFile(self):
-        with open(self.topdir + '/work/global/tmp-Server/compose-rpms-1.repo') as f:
-            lines = f.read().split('\n')
-            self.assertIn('baseurl=http://root/compose/Server/$baseurl/os', lines)
+    def _assertRepoFile(self, variants=None):
+        variants = variants or ['Server']
+        for variant in variants:
+            with open(self.topdir + '/work/global/tmp-%s/compose-rpms-1.repo' % variant) as f:
+                lines = f.read().split('\n')
+                self.assertIn('baseurl=http://root/compose/%s/$basearch/os' % variant, lines)
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -210,6 +212,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self._assertCorrectCalls({})
         self._assertCorrectMetadata()
+        self._assertRepoFile()
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -225,6 +228,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self._assertCorrectCalls({})
         self._assertCorrectMetadata()
+        self._assertRepoFile()
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -241,6 +245,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self._assertCorrectCalls({'name': 'my-name', 'version': '1.0'})
         self._assertCorrectMetadata()
+        self._assertRepoFile()
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -268,6 +273,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         }
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
+        self._assertRepoFile(['Server', 'Everything'])
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -296,6 +302,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         }
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
+        self._assertRepoFile(['Server', 'Everything', 'Client'])
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
