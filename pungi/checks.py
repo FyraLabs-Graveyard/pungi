@@ -828,6 +828,8 @@ def _make_schema():
                             "version": {"type": "string"},
                             "scratch": {"type": "boolean"},
                             "priority": {"type": "number"},
+                            "repo": {"$ref": "#/definitions/strings"},
+                            "repo_from": {"$ref": "#/definitions/strings"},
                         },
                         "required": ["url", "target"]
                     }

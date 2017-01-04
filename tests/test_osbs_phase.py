@@ -244,6 +244,78 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
+    def test_run_with_extra_repos(self, KojiWrapper, resolve_git_url):
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+            'name': 'my-name',
+            'version': '1.0',
+            'repo': 'http://pkgs.example.com/my.repo',
+            'repo_from': 'Everything',
+        }
+        self._setupMock(KojiWrapper, resolve_git_url)
+
+        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
+
+        options = {
+            'name': 'my-name',
+            'version': '1.0',
+            'yum_repourls': [
+                'http://root/work/global/tmp-Server/compose-rpms-1.repo',
+                'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
+                'http://pkgs.example.com/my.repo',
+            ]
+        }
+        self._assertCorrectCalls(options)
+        self._assertCorrectMetadata()
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
+    def test_run_with_extra_repos_in_list(self, KojiWrapper, resolve_git_url):
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+            'name': 'my-name',
+            'version': '1.0',
+            'repo': ['http://pkgs.example.com/my.repo'],
+            'repo_from': ['Everything', 'Client'],
+        }
+        self._setupMock(KojiWrapper, resolve_git_url)
+
+        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
+
+        options = {
+            'name': 'my-name',
+            'version': '1.0',
+            'yum_repourls': [
+                'http://root/work/global/tmp-Server/compose-rpms-1.repo',
+                'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
+                'http://root/work/global/tmp-Client/compose-rpms-1.repo',
+                'http://pkgs.example.com/my.repo',
+            ]
+        }
+        self._assertCorrectCalls(options)
+        self._assertCorrectMetadata()
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
+    def test_run_with_extra_repos_missing_variant(self, KojiWrapper, resolve_git_url):
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+            'name': 'my-name',
+            'version': '1.0',
+            'repo_from': 'Gold',
+        }
+        self._setupMock(KojiWrapper, resolve_git_url)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
+
+        self.assertIn('no variant Gold', str(ctx.exception))
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_run_with_missing_url(self, KojiWrapper, resolve_git_url):
         cfg = {
             'target': 'f24-docker-candidate',

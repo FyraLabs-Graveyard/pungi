@@ -3,6 +3,7 @@
 import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
+from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
@@ -57,8 +58,12 @@ class OSBSThread(WorkerThread):
             raise RuntimeError('OSBS: missing config key %s for %s'
                                % (exc, variant.uid))
         priority = config.pop('priority', None)
+        repos = shortcuts.force_list(config.pop('repo', []))
+        compose_repos = [self._get_repo(compose, v)
+                         for v in [variant.uid] + shortcuts.force_list(
+                             config.pop('repo_from', []))]
 
-        config['yum_repourls'] = [self._get_repo(compose, variant)]
+        config['yum_repourls'] = compose_repos + repos
 
         task_id = koji.koji_proxy.buildContainer(source, target, config,
                                                  priority=priority)
@@ -106,11 +111,17 @@ class OSBSThread(WorkerThread):
             self.pool.metadata.setdefault(
                 variant.uid, {}).setdefault(arch, []).append(data)
 
-    def _get_repo(self, compose, variant):
+    def _get_repo(self, compose, variant_uid):
         """
         Write a .repo file pointing to current variant and return URL to the
         file.
         """
+        try:
+            variant = compose.all_variants[variant_uid]
+        except KeyError:
+            raise RuntimeError(
+                'There is no variant %s to get repo from to pass to OSBS.'
+                % (variant_uid))
         os_tree = compose.paths.compose.os_tree('$basearch', variant,
                                                 create_dir=False)
         repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),
