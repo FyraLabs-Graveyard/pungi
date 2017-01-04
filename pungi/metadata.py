@@ -265,15 +265,15 @@ def write_tree_info(compose, arch, variant, timestamp=None):
             ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
 
     class LoraxProduct(productmd.treeinfo.Release):
-        def _check_short(self):
+        def _validate_short(self):
             # HACK: set self.short so .treeinfo produced by lorax can be read
             if not self.short:
                 self.short = compose.conf["release_short"]
 
     class LoraxTreeInfo(productmd.treeinfo.TreeInfo):
-        def clear(self):
-            super(LoraxTreeInfo, self).clear()
-            self.product = LoraxProduct(self)
+        def __init__(self, *args, **kwargs):
+            super(LoraxTreeInfo, self).__init__(*args, **kwargs)
+            self.release = LoraxProduct(self)
 
     # images
     if variant.type == "variant":
