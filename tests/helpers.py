@@ -117,6 +117,7 @@ def touch(path, content=None):
         pass
     with open(path, 'w') as f:
         f.write(content)
+    return path
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')

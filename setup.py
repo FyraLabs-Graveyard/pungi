@@ -14,7 +14,7 @@ distutils.command.sdist.sdist.default_format = {"posix": "bztar"}
 
 
 # recursively scan for python modules to be included
-package_root_dirs = ["pungi"]
+package_root_dirs = ["pungi", "pungi_utils"]
 packages = set()
 for package_root_dir in package_root_dirs:
     for root, dirs, files in os.walk(package_root_dir):
@@ -37,6 +37,7 @@ setup(
         'bin/comps_filter',
         'bin/pungi',
         'bin/pungi-config-validate',
+        'bin/pungi-create-unified-isos',
         'bin/pungi-fedmsg-notification',
         'bin/pungi-koji',
         'bin/pungi-make-ostree',

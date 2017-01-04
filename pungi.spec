@@ -44,6 +44,16 @@ BuildArch:      noarch
 %description
 A tool to create anaconda based installation trees/isos of a set of rpms.
 
+%package utils
+Summary:    Utilities for working with finished composes
+Requires:   pungi = %{version}-%{release}
+
+%description utils
+These utilities work with finished composes produced by Pungi. They can be used
+for creating unified ISO images, validating config file or sending progress
+notification to Fedora Message Bus.
+
+
 %prep
 %setup -q
 
@@ -62,9 +72,18 @@ rm -rf %{buildroot}
 %doc AUTHORS
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}-%{version}-py?.?.egg-info
-%{_bindir}/*
-%{_datadir}/pungi
-/var/cache/pungi
+%{_bindir}/%{name}
+%{_bindir}/%{name}-koji
+%{_bindir}/comps_filter
+%{_bindir}/%{name}-make-ostree
+%{_datadir}/%{name}
+/var/cache/%{name}
+
+%files utils
+%{python_sitelib}/%{name}_utils
+%{_bindir}/%{name}-create-unified-isos
+%{_bindir}/%{name}-config-validate
+%{_bindir}/%{name}-fedmsg-notification
 
 %check
 ./tests/data/specs/build.sh

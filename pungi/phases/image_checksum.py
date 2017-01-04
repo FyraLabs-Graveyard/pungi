@@ -68,36 +68,42 @@ class ImageChecksumPhase(PhaseBase):
         return base_checksum_name
 
     def run(self):
-        for (variant, arch, path), images in self._get_images().iteritems():
-            checksums = {}
+        topdir = self.compose.paths.compose.topdir()
+        for (variant, arch, path), images in get_images(topdir, self.compose.im).iteritems():
             base_checksum_name = self._get_base_filename(variant, arch)
-            for image in images:
-                filename = os.path.basename(image.path)
-                full_path = os.path.join(path, filename)
-                if not os.path.exists(full_path):
-                    continue
+            make_checksums(variant, arch, path, images,
+                           self.checksums, base_checksum_name, self.one_file)
 
-                digests = shortcuts.compute_file_checksums(full_path, self.checksums)
-                for checksum, digest in digests.iteritems():
-                    checksums.setdefault(checksum, {})[filename] = digest
-                    image.add_checksum(None, checksum, digest)
-                    if not self.one_file:
-                        dump_checksums(path, checksum,
-                                       {filename: digest},
-                                       '%s.%sSUM' % (filename, checksum.upper()))
 
-            if not checksums:
-                continue
+def make_checksums(variant, arch, path, images, checksum_types, base_checksum_name, one_file):
+    checksums = {}
+    for image in images:
+        filename = os.path.basename(image.path)
+        full_path = os.path.join(path, filename)
+        if not os.path.exists(full_path):
+            continue
 
-            if self.one_file:
-                dump_checksums(path, self.checksums[0],
-                               checksums[self.checksums[0]],
-                               base_checksum_name + 'CHECKSUM')
-            else:
-                for checksum in self.checksums:
-                    dump_checksums(path, checksum,
-                                   checksums[checksum],
-                                   '%s%sSUM' % (base_checksum_name, checksum.upper()))
+        digests = shortcuts.compute_file_checksums(full_path, checksum_types)
+        for checksum, digest in digests.iteritems():
+            checksums.setdefault(checksum, {})[filename] = digest
+            image.add_checksum(None, checksum, digest)
+            if not one_file:
+                dump_checksums(path, checksum,
+                               {filename: digest},
+                               '%s.%sSUM' % (filename, checksum.upper()))
+
+    if not checksums:
+        return
+
+    if one_file:
+        dump_checksums(path, checksum_types[0],
+                       checksums[checksum_types[0]],
+                       base_checksum_name + 'CHECKSUM')
+    else:
+        for checksum in checksums:
+            dump_checksums(path, checksum,
+                           checksums[checksum],
+                           '%s%sSUM' % (base_checksum_name, checksum.upper()))
 
 
 def dump_checksums(dir, alg, checksums, filename):
@@ -108,6 +114,22 @@ def dump_checksums(dir, alg, checksums, filename):
     :param checksums: mapping from filenames to checksums
     :param filename: what to call the file
     """
-    with open(os.path.join(dir, filename), 'w') as f:
+    checksum_file = os.path.join(dir, filename)
+    with open(checksum_file, 'w') as f:
         for file, checksum in checksums.iteritems():
             f.write('%s (%s) = %s\n' % (alg.upper(), file, checksum))
+    return checksum_file
+
+
+def get_images(top_dir, manifest):
+    """Returns a mapping from directories to sets of ``Image``s.
+
+    The paths to dirs are absolute.
+    """
+    images = {}
+    for variant in manifest.images:
+        for arch in manifest.images[variant]:
+            for image in manifest.images[variant][arch]:
+                path = os.path.dirname(os.path.join(top_dir, image.path))
+                images.setdefault((variant, arch, path), []).append(image)
+    return images
