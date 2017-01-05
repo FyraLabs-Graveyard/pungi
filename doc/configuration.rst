@@ -1255,10 +1255,17 @@ Example config
 
     osbs = {
         "^Server$": {
+            # required
             "url": "git://example.com/dockerfiles.git?#HEAD",
-            "name": "fedora-docker-base",
             "target": "f24-docker-candidate",
+
+            # optional
+            "name": "fedora-docker-base",
             "version": "24",
+            "repo": ["https://example.com/extra-repo.repo"],
+            "repo_from": ["Everything"],
+            # This will result in three repo urls being passed to the task.
+            # They will be in this order: Server, Everything, example.com/
         }
     }
 
