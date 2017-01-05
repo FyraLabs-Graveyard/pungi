@@ -7,7 +7,7 @@ Group:          Development/Tools
 License:        GPLv2
 URL:            https://fedorahosted.org/pungi
 Source0:        https://fedorahosted.org/pungi/attachment/wiki/%{version}/%{name}-%{version}.tar.bz2
-BuildRequires:  python-nose, python-nose-cov, python-mock
+BuildRequires:  python-nose, python-mock
 BuildRequires:  python-devel, python-setuptools, python2-productmd
 BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo_c
 BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
@@ -86,9 +86,8 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}-fedmsg-notification
 
 %check
+nosetests --exe
 ./tests/data/specs/build.sh
-python2 setup.py test
-nosetests --exe --with-cov --cov-report html --cov-config tox.ini
 cd tests && ./test_compose.sh
 
 %changelog
