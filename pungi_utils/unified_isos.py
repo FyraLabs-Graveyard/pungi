@@ -66,6 +66,7 @@ class UnifiedISO(object):
         self.linker = pungi.linker.Linker()
 
         temp_topdir = os.path.abspath(os.path.join(self.compose_path, "..", "work"))
+        makedirs(temp_topdir)
         self.temp_dir = tempfile.mkdtemp(prefix="unified_isos_", dir=temp_topdir)
 
         self.treeinfo = {}      # {arch/src: TreeInfo}
