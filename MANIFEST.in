@@ -11,4 +11,4 @@ include tests/*
 exclude tests/*.pyc
 include tests/data/*
 include tests/data/*/*
-recursive-include tests/fixtures *.json *.xml *.bz2 *.gz *.iso *.log MD5SUM SHA1SUM SHA256SUM treeinfo
+recursive-include tests/fixtures *.iso *.json *.log *.rpm *.xml *.bz2 *.gz MD5SUM SHA1SUM SHA256SUM .treeinfo
