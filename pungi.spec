@@ -5,8 +5,8 @@ Summary:        Distribution compose tool
 
 Group:          Development/Tools
 License:        GPLv2
-URL:            https://fedorahosted.org/pungi
-Source0:        https://fedorahosted.org/pungi/attachment/wiki/%{version}/%{name}-%{version}.tar.bz2
+URL:            https://pagure.io/pungi
+Source0:        https://pagure.io/releases/%{name}/%{name}-%{version}.tar.bz2
 BuildRequires:  python-nose, python-mock
 BuildRequires:  python-devel, python-setuptools, python2-productmd
 BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo_c
