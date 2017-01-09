@@ -14,7 +14,6 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import tempfile
 import os
 
 from kobo.shortcuts import run
@@ -70,7 +69,7 @@ def run_repoclosure(compose):
             cmd = repoclosure.get_repoclosure_cmd(repos=repos, lookaside=lookaside, arch=arches)
             # Use temp working directory directory as workaround for
             # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-            tmp_dir = tempfile.mkdtemp(prefix="repoclosure_")
+            tmp_dir = compose.mkdtemp(prefix="repoclosure_")
             try:
                 run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure-%s" % variant), show_cmd=True, can_fail=True, workdir=tmp_dir)
             finally:
@@ -93,7 +92,7 @@ def run_repoclosure(compose):
     cmd = repoclosure.get_repoclosure_cmd(repos=all_repos, arch=all_arches, builddeps=True)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    tmp_dir = tempfile.mkdtemp(prefix="repoclosure_")
+    tmp_dir = compose.mkdtemp(prefix="repoclosure_")
     try:
         run(cmd, logfile=compose.paths.log.log_file("global", "repoclosure-builddeps"), show_cmd=True, can_fail=True, workdir=tmp_dir)
     finally:

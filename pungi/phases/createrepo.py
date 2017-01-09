@@ -22,7 +22,6 @@ __all__ = (
 import os
 import glob
 import shutil
-import tempfile
 import threading
 
 from kobo.threads import ThreadPool, WorkerThread
@@ -204,7 +203,7 @@ def get_productids_from_scm(compose):
     msg = "Getting product certificates from SCM..."
     compose.log_info("[BEGIN] %s" % msg)
 
-    tmp_dir = tempfile.mkdtemp(prefix="pungi_")
+    tmp_dir = compose.mkdtemp(prefix="pungi_")
     get_dir_from_scm(product_id, tmp_dir)
 
     for arch in compose.get_arches():

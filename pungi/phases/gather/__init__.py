@@ -15,7 +15,6 @@
 
 
 import os
-import tempfile
 import shutil
 import json
 
@@ -334,7 +333,7 @@ def write_prepopulate_file(compose):
             scm_dict = os.path.join(compose.config_dir, os.path.basename(scm_dict))
 
         compose.log_debug(msg)
-        tmp_dir = tempfile.mkdtemp(prefix="prepopulate_file_")
+        tmp_dir = compose.mkdtemp(prefix="prepopulate_file_")
         get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
         shutil.copy2(os.path.join(tmp_dir, file_name), prepopulate_file)
         shutil.rmtree(tmp_dir)

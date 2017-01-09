@@ -18,7 +18,6 @@ import errno
 import os
 import time
 import pipes
-import tempfile
 import shutil
 import re
 
@@ -162,7 +161,7 @@ class BuildinstallPhase(PhaseBase):
                 volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
                 can_fail = self.compose.can_fail(variant, arch, 'buildinstall')
                 with failable(self.compose, can_fail, variant, arch, 'buildinstall'):
-                    tweak_buildinstall(buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
+                    tweak_buildinstall(self.compose, buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
                     link_boot_iso(self.compose, arch, variant, can_fail)
 
 
@@ -187,7 +186,7 @@ def get_kickstart_file(compose):
         kickstart_name = os.path.basename(scm_dict)
         scm_dict = os.path.join(compose.config_dir, scm_dict)
 
-    tmp_dir = tempfile.mkdtemp(prefix="buildinstall_kickstart_")
+    tmp_dir = compose.mkdtemp(prefix="buildinstall_kickstart_")
     get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
     src = os.path.join(tmp_dir, kickstart_name)
     shutil.copy2(src, kickstart_path)
@@ -199,10 +198,10 @@ def get_kickstart_file(compose):
 # * it's quite trivial to replace volids
 # * it's not easy to replace menu titles
 # * we probably need to get this into lorax
-def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=None):
+def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart_file=None):
     volid_escaped = volid.replace(" ", r"\x20").replace("\\", "\\\\")
     volid_escaped_2 = volid_escaped.replace("\\", "\\\\")
-    tmp_dir = tempfile.mkdtemp(prefix="tweak_buildinstall_")
+    tmp_dir = compose.mkdtemp(prefix="tweak_buildinstall_")
 
     # verify src
     if not os.path.isdir(src):
@@ -260,7 +259,7 @@ def tweak_buildinstall(src, dst, arch, variant, label, volid, kickstart_file=Non
     for image in images:
         if not os.path.isfile(image):
             continue
-        mount_tmp_dir = tempfile.mkdtemp(prefix="tweak_buildinstall")
+        mount_tmp_dir = compose.mkdtemp(prefix="tweak_buildinstall")
         # use guestmount to mount the image, which doesn't require root privileges
         # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
         cmd = ["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_tmp_dir]

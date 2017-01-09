@@ -347,13 +347,16 @@ class TestCopyFiles(PungiTestCase):
              mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
-            [mock.call(self.topdir + '/work/x86_64/buildinstall',
+            [mock.call(compose,
+                       self.topdir + '/work/x86_64/buildinstall',
                        self.topdir + '/compose/Server/x86_64/os',
                        'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall',
                        self.topdir + '/compose/Server/amd64/os',
                        'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall',
                        self.topdir + '/compose/Client/amd64/os',
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
@@ -389,13 +392,16 @@ class TestCopyFiles(PungiTestCase):
              mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
-            [mock.call(self.topdir + '/work/x86_64/buildinstall/Server',
+            [mock.call(compose,
+                       self.topdir + '/work/x86_64/buildinstall/Server',
                        self.topdir + '/compose/Server/x86_64/os',
                        'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall/Server',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall/Server',
                        self.topdir + '/compose/Server/amd64/os',
                        'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall/Client',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall/Client',
                        self.topdir + '/compose/Client/amd64/os',
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(
@@ -435,13 +441,16 @@ class TestCopyFiles(PungiTestCase):
              mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
-            [mock.call(self.topdir + '/work/x86_64/buildinstall/Server',
+            [mock.call(compose,
+                       self.topdir + '/work/x86_64/buildinstall/Server',
                        self.topdir + '/compose/Server/x86_64/os',
                        'x86_64', 'Server', '', 'Server.x86_64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall/Server',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall/Server',
                        self.topdir + '/compose/Server/amd64/os',
                        'amd64', 'Server', '', 'Server.amd64', 'kickstart'),
-             mock.call(self.topdir + '/work/amd64/buildinstall/Client',
+             mock.call(compose,
+                       self.topdir + '/work/amd64/buildinstall/Client',
                        self.topdir + '/compose/Client/amd64/os',
                        'amd64', 'Client', '', 'Client.amd64', 'kickstart')])
         self.assertItemsEqual(link_boot_iso.mock_calls, [])

@@ -217,6 +217,8 @@ class ComposeTestCase(unittest.TestCase):
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_without_filter(self, ci):
+        ci.return_value.compose.id = 'composeid'
+
         conf = ConfigWrapper(
             variants_file={'scm': 'file',
                            'repo': None,
@@ -258,6 +260,8 @@ class ComposeTestCase(unittest.TestCase):
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_with_arch_filter(self, ci):
+        ci.return_value.compose.id = 'composeid'
+
         conf = ConfigWrapper(
             variants_file={'scm': 'file',
                            'repo': None,
@@ -298,6 +302,7 @@ class ComposeTestCase(unittest.TestCase):
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_with_variant_filter(self, ci):
+        ci.return_value.compose.id = 'composeid'
         ci.return_value.compose.respin = 2
         ci.return_value.compose.date = '20160107'
         ci.return_value.compose.type = 'production'
@@ -334,6 +339,7 @@ class ComposeTestCase(unittest.TestCase):
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_get_variant_arches_with_both_filters(self, ci):
+        ci.return_value.compose.id = 'composeid'
         ci.return_value.compose.respin = 2
         ci.return_value.compose.date = '20160107'
         ci.return_value.compose.type = 'production'
@@ -378,6 +384,28 @@ class ComposeTestCase(unittest.TestCase):
              mock.call('Excluding variant Server-ResilientStorage: filtered by configuration.'),
              mock.call('Excluding variant Server-Gluster: filtered by configuration.')]
         )
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_mkdtemp(self, ci):
+        ci.return_value.compose.id = 'composeid'
+        conf = ConfigWrapper(
+            variants_file={'scm': 'file',
+                           'repo': None,
+                           'file': 'variants.xml'},
+            release_name='Test',
+            release_version='1.0',
+            release_short='test',
+            release_type='ga',
+            release_is_layered=False,
+            release_internal=False,
+            tree_variants=['Server', 'Client', 'Server-optional'],
+            tree_arches=['x86_64'],
+        )
+        compose = Compose(conf, self.tmp_dir)
+        d = compose.mkdtemp()
+        self.assertTrue(os.path.isdir(d))
+        d = compose.mkdtemp(prefix='tweak_buildinstall')
+        self.assertTrue(os.path.isdir(d))
 
 
 class StatusTest(unittest.TestCase):

@@ -38,7 +38,6 @@ run/install/product/pyanaconda/installclasses -> ../installclasses
 
 import os
 import fnmatch
-import tempfile
 import shutil
 import pipes
 
@@ -112,7 +111,7 @@ def create_product_img(compose, arch, variant):
 
     compose.log_info("[BEGIN] %s" % msg)
 
-    product_tmp = tempfile.mkdtemp(prefix="product_img_")
+    product_tmp = compose.mkdtemp(prefix="product_img_")
     install_class = compose.conf["productimg_install_class"].copy()
     install_class["file"] = install_class["file"] % {"variant_id": variant.id.lower()}
     install_dir = os.path.join(product_tmp, "installclasses")
@@ -120,7 +119,7 @@ def create_product_img(compose, arch, variant):
     get_file_from_scm(install_class, target_path=install_dir, logger=None)
 
     po_files = compose.conf["productimg_po_files"]
-    po_tmp = tempfile.mkdtemp(prefix="pofiles_")
+    po_tmp = compose.mkdtemp(prefix="pofiles_")
     get_dir_from_scm(po_files, po_tmp, logger=compose._logger)
     for po_file in os.listdir(po_tmp):
         if not po_file.endswith(".po"):
@@ -132,7 +131,7 @@ def create_product_img(compose, arch, variant):
 
     shutil.rmtree(po_tmp)
 
-    mount_tmp = tempfile.mkdtemp(prefix="product_img_mount_")
+    mount_tmp = compose.mkdtemp(prefix="product_img_mount_")
     cmds = [
         # allocate image
         "dd if=/dev/zero of=%s bs=1k count=5760" % pipes.quote(image),
@@ -186,8 +185,8 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
     # remove the original boot.iso (created during buildinstall) from the os dir
     os.remove(boot_iso)
 
-    tmp_dir = tempfile.mkdtemp(prefix="boot_iso_")
-    mount_dir = tempfile.mkdtemp(prefix="boot_iso_mount_")
+    tmp_dir = compose.mkdtemp(prefix="boot_iso_")
+    mount_dir = compose.mkdtemp(prefix="boot_iso_mount_")
 
     cmd = "mount -o loop %s %s" % (pipes.quote(buildinstall_boot_iso), pipes.quote(mount_dir))
     run(cmd, logfile=log_file, show_cmd=True)
@@ -244,7 +243,7 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
 
 
 def explode_anaconda(compose, arch, variant, package_sets):
-    tmp_dir = tempfile.mkdtemp(prefix="anaconda_")
+    tmp_dir = compose.mkdtemp(prefix="anaconda_")
     scm_dict = {
         "scm": "rpm",
         "repo": "anaconda.%s" % arch,

@@ -15,7 +15,6 @@
 
 
 import os
-import tempfile
 import shutil
 
 from kobo.shortcuts import run
@@ -78,7 +77,7 @@ def write_global_comps(compose):
             scm_dict = os.path.join(compose.config_dir, scm_dict)
 
         compose.log_debug(msg)
-        tmp_dir = tempfile.mkdtemp(prefix="comps_")
+        tmp_dir = compose.mkdtemp(prefix="comps_")
         get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
         shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
         shutil.rmtree(tmp_dir)

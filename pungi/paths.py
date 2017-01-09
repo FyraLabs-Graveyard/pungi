@@ -282,16 +282,17 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def tmp_dir(self, arch, variant=None, create_dir=True):
+    def tmp_dir(self, arch=None, variant=None, create_dir=True):
         """
         Examples:
+            work/global/tmp
             work/x86_64/tmp
             work/x86_64/tmp-Server
         """
         dir_name = "tmp"
         if variant:
             dir_name += "-%s" % variant.uid
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), dir_name)
+        path = os.path.join(self.topdir(arch=arch, create_dir=create_dir), dir_name)
         if create_dir:
             makedirs(path)
         return path

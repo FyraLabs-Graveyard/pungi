@@ -209,7 +209,7 @@ class Compose(kobo.log.LoggingBase):
                 scm_dict = os.path.join(self.config_dir, os.path.basename(scm_dict))
 
             self.log_debug(msg)
-            tmp_dir = tempfile.mkdtemp(prefix="variants_file_")
+            tmp_dir = self.mkdtemp(prefix="variants_file_")
             get_file_from_scm(scm_dict, tmp_dir, logger=self._logger)
             shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)
             shutil.rmtree(tmp_dir)
@@ -379,3 +379,11 @@ class Compose(kobo.log.LoggingBase):
             return '%s_%s' % (version, milestone)
 
         return version
+
+    def mkdtemp(self, arch=None, variant=None, suffix="", prefix="tmp"):
+        """
+        Create and return a unique temporary directory under dir of
+        <compose_topdir>/work/{global,<arch>}/tmp[-<variant>]/
+        """
+        path = os.path.join(self.paths.work.tmp_dir(arch=arch, variant=variant))
+        return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=path)

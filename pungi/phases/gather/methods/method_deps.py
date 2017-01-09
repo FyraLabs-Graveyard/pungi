@@ -15,7 +15,6 @@
 
 
 import os
-import tempfile
 
 from kobo.shortcuts import run
 
@@ -122,7 +121,7 @@ def resolve_deps(compose, arch, variant):
     cmd = pungi_wrapper.get_pungi_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid, selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch, full_archlist=True, greedy=greedy_method, cache_dir=cache_dir, lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    tmp_dir = tempfile.mkdtemp(prefix="pungi_")
+    tmp_dir = compose.mkdtemp(prefix="pungi_")
     try:
         run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
     finally:
