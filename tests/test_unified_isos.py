@@ -86,13 +86,20 @@ def get_productid_mapping(path):
 def get_repos_mapping(path):
     def _repo(variant, arch):
         return os.path.join(path, 'trees', arch, variant)
+
+    def _debug(variant, arch):
+        return os.path.join(path, 'trees', 'debug-' + arch, variant)
     return {
         'i386': {'Client': _repo('Client', 'i386')},
+        'debug-i386': {'Client': _debug('Client', 'i386')},
         's390x': {'Server': _repo('Server', 's390x')},
+        'debug-s390x': {'Server': _debug('Server', 's390x')},
         'src': {'Client': _repo('Client', 'src'),
                 'Server': _repo('Server', 'src')},
         'x86_64': {'Client': _repo('Client', 'x86_64'),
-                   'Server': _repo('Server', 'x86_64')}
+                   'Server': _repo('Server', 'x86_64')},
+        'debug-x86_64': {'Client': _debug('Client', 'x86_64'),
+                         'Server': _debug('Server', 'x86_64')}
     }
 
 
@@ -106,17 +113,21 @@ class TestLinkToTemp(PungiTestCase):
         self.isos.linker = mock.Mock()
 
     def _linkCall(self, variant, arch, file):
+        debuginfo = 'debuginfo' in file
+        srcdir = 'tree' if arch == 'src' else 'debug/tree' if debuginfo else 'os'
+        destdir = 'debug-' + arch if debuginfo else arch
         return mock.call(os.path.join(self.compose_path, variant,
                                       arch if arch != 'src' else 'source',
-                                      'tree' if arch == 'src' else 'os',
+                                      srcdir,
                                       'Packages', file[0].lower(), file),
-                         os.path.join(self.isos.temp_dir, 'trees', arch, variant, file))
+                         os.path.join(self.isos.temp_dir, 'trees', destdir, variant, file))
 
     def test_link_to_temp(self):
         self.isos.link_to_temp()
 
         self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['i386', 's390x', 'src', 'x86_64'])
+                              ['i386', 's390x', 'src', 'x86_64',
+                               'debug-i386', 'debug-s390x', 'debug-x86_64'])
         self.assertEqual(self.isos.comps,
                          get_comps_mapping(self.compose_path))
         self.assertEqual(self.isos.productid,
@@ -124,15 +135,20 @@ class TestLinkToTemp(PungiTestCase):
         self.assertEqual(self.isos.repos,
                          get_repos_mapping(self.isos.temp_dir))
 
-        self.assertItemsEqual(self.isos.linker.link.call_args_list,
-                              [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
-                               self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Client', 'i386', 'dummy-bash-4.2.37-6.i686.rpm'),
-                               self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
-                               self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm')])
+        self.assertItemsEqual(
+            self.isos.linker.link.call_args_list,
+            [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
+             self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-elinks-debuginfo-2.6-2.x86_64.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Client', 'i386', 'dummy-bash-4.2.37-6.i686.rpm'),
+             self._linkCall('Client', 'i386', 'dummy-bash-debuginfo-4.2.37-6.i686.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-debuginfo-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
+             self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm')])
 
     def test_link_to_temp_without_treefile(self):
         os.remove(os.path.join(self.compose_path, 'Client', 'i386', 'os', '.treeinfo'))
@@ -141,7 +157,8 @@ class TestLinkToTemp(PungiTestCase):
             self.isos.link_to_temp()
 
         self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['s390x', 'src', 'x86_64'])
+                              ['s390x', 'src', 'x86_64',
+                               'debug-s390x', 'debug-x86_64'])
         comps = get_comps_mapping(self.compose_path)
         comps.pop('i386')
         self.assertEqual(self.isos.comps, comps)
@@ -150,15 +167,22 @@ class TestLinkToTemp(PungiTestCase):
         self.assertEqual(self.isos.productid, productid)
         repos = get_repos_mapping(self.isos.temp_dir)
         repos.pop('i386')
+        repos.pop('debug-i386')
         self.assertEqual(self.isos.repos, repos)
 
-        self.assertItemsEqual(self.isos.linker.link.call_args_list,
-                              [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
-                               self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm')])
+        self.maxDiff = None
+
+        self.assertItemsEqual(
+            self.isos.linker.link.call_args_list,
+            [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
+             self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-elinks-debuginfo-2.6-2.x86_64.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-debuginfo-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm')])
 
     def test_link_to_temp_extra_file(self):
         gpl_file = touch(os.path.join(self.compose_path, 'Server', 'x86_64', 'os', 'GPL'))
@@ -166,7 +190,8 @@ class TestLinkToTemp(PungiTestCase):
         self.isos.link_to_temp()
 
         self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['i386', 's390x', 'src', 'x86_64'])
+                              ['i386', 's390x', 'src', 'x86_64',
+                               'debug-i386', 'debug-s390x', 'debug-x86_64'])
         self.assertEqual(self.isos.comps,
                          get_comps_mapping(self.compose_path))
         self.assertEqual(self.isos.productid,
@@ -174,17 +199,22 @@ class TestLinkToTemp(PungiTestCase):
         self.assertEqual(self.isos.repos,
                          get_repos_mapping(self.isos.temp_dir))
 
-        self.assertItemsEqual(self.isos.linker.link.call_args_list,
-                              [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
-                               self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
-                               self._linkCall('Client', 'i386', 'dummy-bash-4.2.37-6.i686.rpm'),
-                               self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
-                               self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
-                               self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
-                               mock.call(os.path.join(gpl_file),
-                                         os.path.join(self.isos.temp_dir, 'trees', 'x86_64', 'GPL'))])
+        self.assertItemsEqual(
+            self.isos.linker.link.call_args_list,
+            [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
+             self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-filesystem-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Server', 'x86_64', 'dummy-elinks-debuginfo-2.6-2.x86_64.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Server', 'src', 'dummy-filesystem-4.2.37-6.src.rpm'),
+             self._linkCall('Client', 'i386', 'dummy-bash-4.2.37-6.i686.rpm'),
+             self._linkCall('Client', 'i386', 'dummy-bash-debuginfo-4.2.37-6.i686.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'x86_64', 'dummy-bash-debuginfo-4.2.37-6.x86_64.rpm'),
+             self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
+             self._linkCall('Client', 'src', 'dummy-bash-4.2.37-6.src.rpm'),
+             mock.call(os.path.join(gpl_file),
+                       os.path.join(self.isos.temp_dir, 'trees', 'x86_64', 'GPL'))])
 
 
 class TestCreaterepo(PungiTestCase):
@@ -222,7 +252,11 @@ class TestCreaterepo(PungiTestCase):
              mock.call(('i386/Client', self.comps['i386']['Client']), show_cmd=True),
              mock.call(('s390x/Server', self.comps['s390x']['Server']), show_cmd=True),
              mock.call(('x86_64/Client', self.comps['x86_64']['Client']), show_cmd=True),
-             mock.call(('x86_64/Server', self.comps['x86_64']['Server']), show_cmd=True)]
+             mock.call(('x86_64/Server', self.comps['x86_64']['Server']), show_cmd=True),
+             mock.call(('debug-i386/Client', None), show_cmd=True),
+             mock.call(('debug-s390x/Server', None), show_cmd=True),
+             mock.call(('debug-x86_64/Client', None), show_cmd=True),
+             mock.call(('debug-x86_64/Server', None), show_cmd=True)]
         )
 
         checksums = {}
@@ -237,9 +271,12 @@ class TestCreaterepo(PungiTestCase):
         self.assertEqual(
             checksums,
             {'i386': ['Client/repodata/repomd.xml'],
+             'debug-i386': ['Client/repodata/repomd.xml'],
              's390x': ['Server/repodata/repomd.xml'],
+             'debug-s390x': ['Server/repodata/repomd.xml'],
              'src': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml'],
-             'x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml']}
+             'x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml'],
+             'debug-x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml']}
         )
 
     @mock.patch('pungi.wrappers.createrepo.CreaterepoWrapper')
@@ -257,9 +294,13 @@ class TestCreaterepo(PungiTestCase):
             [mock.call(('src/Client', None), show_cmd=True),
              mock.call(('src/Server', None), show_cmd=True),
              mock.call(('i386/Client', self.comps['i386']['Client']), show_cmd=True),
+             mock.call(('debug-i386/Client', None), show_cmd=True),
              mock.call(('s390x/Server', self.comps['s390x']['Server']), show_cmd=True),
+             mock.call(('debug-s390x/Server', None), show_cmd=True),
              mock.call(('x86_64/Client', self.comps['x86_64']['Client']), show_cmd=True),
+             mock.call(('debug-x86_64/Client', None), show_cmd=True),
              mock.call(('x86_64/Server', self.comps['x86_64']['Server']), show_cmd=True),
+             mock.call(('debug-x86_64/Server', None), show_cmd=True),
              mock.call(('x86_64/Server', os.path.join(self.isos.temp_dir,
                                                       'trees/x86_64/Server/repodata/productid'))),
              mock.call(('x86_64/Client', os.path.join(self.isos.temp_dir,
@@ -282,9 +323,12 @@ class TestCreaterepo(PungiTestCase):
         self.assertEqual(
             checksums,
             {'i386': ['Client/repodata/repomd.xml'],
+             'debug-i386': ['Client/repodata/repomd.xml'],
              's390x': ['Server/repodata/repomd.xml'],
+             'debug-s390x': ['Server/repodata/repomd.xml'],
              'src': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml'],
-             'x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml']}
+             'x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml'],
+             'debug-x86_64': ['Client/repodata/repomd.xml', 'Server/repodata/repomd.xml']}
         )
 
 
@@ -307,11 +351,17 @@ class TestDiscinfo(PungiTestCase):
             create_discinfo.call_args_list,
             [mock.call(os.path.join(self.isos.temp_dir, 'trees', 'i386', '.discinfo'),
                        'Dummy Product 1.0', 'i386'),
+             mock.call(os.path.join(self.isos.temp_dir, 'trees', 'debug-i386', '.discinfo'),
+                       'Dummy Product 1.0', 'i386'),
              mock.call(os.path.join(self.isos.temp_dir, 'trees', 's390x', '.discinfo'),
+                       'Dummy Product 1.0', 's390x'),
+             mock.call(os.path.join(self.isos.temp_dir, 'trees', 'debug-s390x', '.discinfo'),
                        'Dummy Product 1.0', 's390x'),
              mock.call(os.path.join(self.isos.temp_dir, 'trees', 'src', '.discinfo'),
                        'Dummy Product 1.0', 'src'),
              mock.call(os.path.join(self.isos.temp_dir, 'trees', 'x86_64', '.discinfo'),
+                       'Dummy Product 1.0', 'x86_64'),
+             mock.call(os.path.join(self.isos.temp_dir, 'trees', 'debug-x86_64', '.discinfo'),
                        'Dummy Product 1.0', 'x86_64')]
         )
 
@@ -353,7 +403,10 @@ class TestCreateiso(PungiTestCase):
         images = {}
         exts = [e + 'SUM' for e in exts]
         for arch in arches:
-            images[arch] = set(self._img(arch if arch != 'src' else 'source', exts))
+            file_arch = arch
+            if arch.startswith('debug-'):
+                file_arch = arch.split('-', 1)[-1] + '-debuginfo'
+            images[arch] = set(self._img(file_arch if arch != 'src' else 'source', exts))
         return images
 
     def assertResults(self, iso, run, arches, checksums):
@@ -361,7 +414,7 @@ class TestCreateiso(PungiTestCase):
             run.mock_calls,
             [mock.call(self.mkisofs_cmd),
              mock.call(iso.get_implantisomd5_cmd.return_value),
-             mock.call(iso.get_manifest_cmd.return_value)] * 2
+             mock.call(iso.get_manifest_cmd.return_value)] * len(arches)
         )
 
         self.assertEqual(
@@ -375,10 +428,12 @@ class TestCreateiso(PungiTestCase):
         for v in ('Client', 'Server'):
             for a in arches:
                 for image in manifest['payload']['images'][v]['x86_64']:
-                    if image.get('unified', False) and image['arch'] == a:
-                        arch = 'source' if image['arch'] == 'src' else image['arch']
-                        self.assertEqual(image['path'],
-                                         '{0}/{1}/iso/DP-1.0-20161013.t.4-{1}-dvd.iso'.format(v, arch))
+                    arch = iso_arch = 'source' if image['arch'] == 'src' else image['arch']
+                    if a.startswith('debug-'):
+                        iso_arch += '-debuginfo'
+                        a = a.split('-', 1)[1]
+                    path = '{0}/{1}/iso/DP-1.0-20161013.t.4-{1}-dvd.iso'.format(v, arch, iso_arch)
+                    if image.get('unified', False) and image['arch'] == a and image['path'] == path:
                         checksum_file_base = os.path.join(self.isos.temp_dir, 'iso',
                                                           arch, os.path.basename(image['path']))
                         for ch in checksums:
@@ -406,6 +461,21 @@ class TestCreateiso(PungiTestCase):
         self.isos.createiso()
 
         self.assertResults(iso, run, ['src', 'x86_64'], ['MD5', 'SHA1', 'SHA256'])
+
+    @mock.patch('pungi_utils.unified_isos.iso')
+    @mock.patch('pungi_utils.unified_isos.run')
+    def test_createiso_debuginfo(self, run, iso):
+        iso.get_mkisofs_cmd.side_effect = self.mock_gmc
+        iso.get_implanted_md5.return_value = 'beefcafebabedeadbeefcafebabedead'
+        iso.get_volume_id.return_value = 'VOLID'
+
+        self.isos.treeinfo = {'x86_64': self.isos.treeinfo['x86_64'],
+                              'debug-x86_64': self.isos.treeinfo['x86_64'],
+                              'src': self.isos.treeinfo['src']}
+
+        self.isos.createiso()
+
+        self.assertResults(iso, run, ['src', 'x86_64', 'debug-x86_64'], ['MD5', 'SHA1', 'SHA256'])
 
     @mock.patch('pungi_utils.unified_isos.iso')
     @mock.patch('pungi_utils.unified_isos.run')
@@ -449,9 +519,11 @@ class TestLinkToCompose(PungiTestCase):
         self.isos = unified_isos.UnifiedISO(self.compose_path)
         self.isos.linker = mock.Mock()
         self.binary = os.path.join(self.isos.temp_dir, 'isos', 'x86_64', 'binary.iso')
+        self.debug = os.path.join(self.isos.temp_dir, 'isos', 'x86_64', 'debug.iso')
         self.source = os.path.join(self.isos.temp_dir, 'isos', 'src', 'source.iso')
         self.isos.images = {
             'x86_64': set([self.binary]),
+            'debug-x86_64': set([self.debug]),
             'src': set([self.source]),
         }
         self.maxDiff = None
@@ -465,7 +537,9 @@ class TestLinkToCompose(PungiTestCase):
         self.assertItemsEqual(
             self.isos.linker.link.call_args_list,
             [mock.call(self.binary, self._iso('Client', 'x86_64', 'binary.iso')),
+             mock.call(self.debug, self._iso('Client', 'x86_64/debug', 'debug.iso')),
              mock.call(self.binary, self._iso('Server', 'x86_64', 'binary.iso')),
+             mock.call(self.debug, self._iso('Server', 'x86_64/debug', 'debug.iso')),
              mock.call(self.source, self._iso('Client', 'source', 'source.iso')),
              mock.call(self.source, self._iso('Server', 'source', 'source.iso'))]
         )

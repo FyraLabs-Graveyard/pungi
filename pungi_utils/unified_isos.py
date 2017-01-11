@@ -182,6 +182,18 @@ class UnifiedISO(object):
 
                 self._link_tree(tree_dir, variant, 'src')
 
+                # Debuginfo
+                print("Processing: {0}.{1} debuginfo".format(variant.uid, arch))
+                tree_dir = os.path.join(self.compose_path, variant.paths.debug_tree[arch])
+
+                debug_arch = 'debug-%s' % arch
+
+                # We don't have a .treeinfo for debuginfo trees. Let's just
+                # copy the one from binary tree.
+                self.treeinfo.setdefault(debug_arch, copy.deepcopy(self.treeinfo[arch]))
+
+                self._link_tree(tree_dir, variant, debug_arch)
+
     def createrepo(self):
         # remove old repomd.xml checksums from treeinfo
         for arch, ti in self.treeinfo.iteritems():
@@ -233,7 +245,7 @@ class UnifiedISO(object):
             description = "%s %s" % (ti.release.name, ti.release.version)
             if ti.release.is_layered:
                 description += " for %s %s" % (ti.base_product.name, ti.base_product.version)
-            create_discinfo(di_path, description, arch)
+            create_discinfo(di_path, description, arch.split('-', 1)[-1])
 
     def read_config(self):
         try:
@@ -248,8 +260,10 @@ class UnifiedISO(object):
         # create ISOs
         im = self.compose.images
 
-        for arch, ti in self.treeinfo.items():
-            source_dir = os.path.join(self.temp_dir, "trees", arch)
+        for typed_arch, ti in self.treeinfo.items():
+            source_dir = os.path.join(self.temp_dir, "trees", typed_arch)
+            arch = typed_arch.split('-', 1)[-1]
+            debuginfo = typed_arch.startswith('debug-')
 
             # XXX: HARDCODED
             disc_type = "dvd"
@@ -257,6 +271,8 @@ class UnifiedISO(object):
             iso_arch = arch
             if arch == "src":
                 iso_arch = "source"
+            elif debuginfo:
+                iso_arch = arch + '-debuginfo'
 
             iso_name = "%s-%s-%s.iso" % (self.ci.compose.id, iso_arch, disc_type)
             iso_dir = os.path.join(self.temp_dir, "iso", iso_arch)
@@ -266,6 +282,8 @@ class UnifiedISO(object):
 
             makedirs(iso_dir)
             volid = "%s %s %s" % (ti.release.short, ti.release.version, arch)
+            if debuginfo:
+                volid += " debuginfo"
 
             # create ISO
             run(iso.get_mkisofs_cmd(iso_path, [source_dir], volid=volid, exclude=["./lost+found"]))
@@ -294,15 +312,15 @@ class UnifiedISO(object):
             img.bootable = False
             img.unified = True
 
-            self.images.setdefault(arch, set()).add(iso_path)
-            self.images.setdefault(arch, set()).add(iso_path + ".manifest")
+            self.images.setdefault(typed_arch, set()).add(iso_path)
+            self.images.setdefault(typed_arch, set()).add(iso_path + ".manifest")
 
             for checksum_type, checksum in checksums.iteritems():
                 if not self.conf['media_checksum_one_file']:
                     checksum_path = dump_checksums(iso_dir, checksum_type,
                                                    {iso_name: checksum},
                                                    '%s.%sSUM' % (iso_name, checksum_type.upper()))
-                    self.images.setdefault(arch, set()).add(checksum_path)
+                    self.images.setdefault(typed_arch, set()).add(checksum_path)
 
                 img.add_checksum(self.compose_path, checksum_type=checksum_type, checksum_value=checksum)
 
@@ -318,6 +336,8 @@ class UnifiedISO(object):
                 all_arches = [arch]
 
             for tree_arch in all_arches:
+                if tree_arch.startswith('debug-'):
+                    continue
                 ti = self.treeinfo[tree_arch]
                 for variant_uid in ti.variants:
                     variant = ti.variants[variant_uid]
@@ -338,14 +358,16 @@ class UnifiedISO(object):
 
     def link_to_compose(self):
         for variant in self.ci.get_variants(recursive=False):
-            for arch in variant.arches | set(['src']):
+            for arch in variant.arches | set(['debug-' + a for a in variant.arches]) | set(['src']):
+                bare_arch = arch.split('-', 1)[-1]
                 if arch == 'src':
-                    path_type, dir = 'source_isos', 'source'
+                    dir = 'source'
+                elif arch.startswith('debug-'):
+                    dir = bare_arch + '/debug'
                 else:
-                    path_type, dir = 'isos', arch
+                    dir = bare_arch
                 default_path = os.path.join(variant.uid, dir, "iso")
-                isos = os.path.join(self.compose_path,
-                                    getattr(variant.paths, path_type).get(arch, default_path))
+                isos = os.path.join(self.compose_path, default_path)
                 makedirs(isos)
                 for image in self.images.get(arch, []):
                     dst = os.path.join(isos, os.path.basename(image))
