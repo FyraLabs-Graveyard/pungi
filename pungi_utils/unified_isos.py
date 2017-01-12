@@ -53,6 +53,9 @@ def ti_merge(one, two):
         one.variants.add(var)
 
 
+DEFAULT_CHECKSUMS = ['md5', 'sha1', 'sha256']
+
+
 class UnifiedISO(object):
     def __init__(self, compose_path, output_path=None):
         self.compose_path = os.path.abspath(compose_path)
@@ -252,7 +255,10 @@ class UnifiedISO(object):
             conf_dump = glob.glob(os.path.join(self.compose_path,
                                                '../logs/global/config-dump*.global.log'))[0]
         except IndexError:
-            raise RuntimeError('Config dump not found, can not generate checksums...')
+            print('Config dump not found, can not adhere to previous settings. '
+                  'Expect weird naming and checksums.',
+                  file=sys.stderr)
+            return {}
         with open(conf_dump) as f:
             return json.load(f)
 
@@ -292,7 +298,8 @@ class UnifiedISO(object):
             supported = True
             run(iso.get_implantisomd5_cmd(iso_path, supported))
 
-            checksums = compute_file_checksums(iso_path, self.conf['media_checksums'])
+            checksums = compute_file_checksums(
+                iso_path, self.conf.get('media_checksums', DEFAULT_CHECKSUMS))
 
             # write manifest file
             run(iso.get_manifest_cmd(iso_path))
@@ -316,7 +323,7 @@ class UnifiedISO(object):
             self.images.setdefault(typed_arch, set()).add(iso_path + ".manifest")
 
             for checksum_type, checksum in checksums.iteritems():
-                if not self.conf['media_checksum_one_file']:
+                if not self.conf.get('media_checksum_one_file', False):
                     checksum_path = dump_checksums(iso_dir, checksum_type,
                                                    {iso_name: checksum},
                                                    '%s.%sSUM' % (iso_name, checksum_type.upper()))
@@ -388,7 +395,7 @@ class UnifiedISO(object):
             'variant': variant,
             'arch': arch,
         }
-        base_name = self.conf['media_checksum_base_filename']
+        base_name = self.conf.get('media_checksum_base_filename', '')
         if base_name:
             base_name = (base_name % substs).format(**substs)
             base_name += '-'
@@ -398,6 +405,6 @@ class UnifiedISO(object):
         for (variant, arch, path), images in get_images(self.compose_path, self.compose.images).iteritems():
             base_checksum_name = self._get_base_filename(variant, arch)
             make_checksums(variant, arch, path, images,
-                           self.conf['media_checksums'],
+                           self.conf.get('media_checksums', DEFAULT_CHECKSUMS),
                            base_checksum_name,
-                           self.conf['media_checksum_one_file'])
+                           self.conf.get('media_checksum_one_file', False))
