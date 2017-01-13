@@ -530,15 +530,15 @@ class Gather(GatherBase):
                 self.finished_add_debug_packages[pkg] = []
                 continue
 
-            try:
-                debug_pkgs = self.finished_add_debug_packages[pkg]
-            except KeyError:
-                debug_pkgs = []
-                if pkg.sourcerpm:
-                    if self.is_native_package(pkg):
-                        debug_pkgs = self.native_debug_packages_cache.get(pkg.sourcerpm)
-                    else:
-                        debug_pkgs = self.multilib_debug_packages_cache.get(pkg.sourcerpm)
+            if pkg in self.finished_add_debug_packages:
+                continue
+
+            debug_pkgs = []
+            if pkg.sourcerpm:
+                if self.is_native_package(pkg):
+                    debug_pkgs = self.native_debug_packages_cache.get(pkg.sourcerpm)
+                else:
+                    debug_pkgs = self.multilib_debug_packages_cache.get(pkg.sourcerpm)
 
             if not debug_pkgs:
                 continue
