@@ -1155,11 +1155,12 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
     The configuration dict for each variant arch pair must have this key:
 
-    * ``source_repo_from`` -- (*str*) Name of variant serving as source
-      repository or a URL pointing the the repo.
+    * ``source_repo_from`` -- (*str|[str]*) Name of variant or a name list of
+      variants serving as source repositories.
 
     These keys are optional:
 
+    * ``repo`` -- (*str|[str]*) URL of a repo or a list of urls.
     * ``release`` -- (*str*) Release value to set for the installer image. Set
       to ``None`` to generate the value :ref:`automatically <auto_release>`.
     * ``failable`` -- (*[str]*) List of architectures for which this
@@ -1205,6 +1206,12 @@ Example config
                 ]
                 'template_repo': 'https://git.fedorahosted.org/git/spin-kickstarts.git',
                 'template_branch': 'f24',
+
+                # optional
+                "repo": [
+                    "https://example.com/extra-repo1.repo",
+                    "https://example.com/extra-repo2.repo",
+                ],
             }
         })
     ]

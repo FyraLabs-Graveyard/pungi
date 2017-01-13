@@ -8,6 +8,8 @@ import mock
 import os
 import sys
 
+from kobo.shortcuts import force_list
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from tests import helpers
@@ -70,21 +72,33 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(compose.im.add.mock_calls,
                          [mock.call('Everything', 'x86_64', image)])
 
-    def assertRunrootCall(self, koji, source, release, isfinal=False, extra=[]):
-        final = ['--isfinal'] if isfinal else []
+    def assertRunrootCall(self, koji, sources, release, isfinal=False, extra=[]):
+        lorax_cmd = [
+            'lorax',
+            '--product=Fedora',
+            '--version=Rawhide',
+            '--release=%s' % release,
+        ]
+
+        for s in force_list(sources):
+            lorax_cmd.append('--source=%s' % s)
+
+        lorax_cmd.append('--variant=Everything')
+        lorax_cmd.append('--nomacboot')
+
+        if isfinal:
+            lorax_cmd.append('--isfinal')
+
+        lorax_cmd.append('--volid=test-Everything-x86_64')
+
+        if extra:
+            lorax_cmd.extend(extra)
+
+        lorax_cmd.append(self.topdir + '/work/x86_64/Everything/ostree_installer')
+
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
-                                    ['lorax',
-                                     '--product=Fedora',
-                                     '--version=Rawhide',
-                                     '--release=%s' % release,
-                                     '--source=%s' % source,
-                                     '--variant=Everything',
-                                     '--nomacboot'] +
-                                    final +
-                                    ['--volid=test-Everything-x86_64'] +
-                                    extra +
-                                    [self.topdir + '/work/x86_64/Everything/ostree_installer'],
+                                    lorax_cmd,
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
                                     task_id=True, use_shell=True)])
@@ -177,6 +191,83 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
+
+    @mock.patch('kobo.shortcuts.run')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.phases.ostree_installer.iso')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_repo_key(self, KojiWrapper, link, iso,
+                               get_file_size, get_mtime, ImageCls, run):
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': 'Everything',
+            'release': '20160321.n.0',
+            'repo': [
+                'https://example.com/extra-repo1.repo',
+                'https://example.com/extra-repo2.repo',
+            ],
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        sources = [
+            'file://%s/compose/Everything/x86_64/os' % self.topdir,
+            'https://example.com/extra-repo1.repo',
+            'https://example.com/extra-repo2.repo'
+        ]
+
+        self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
+                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+
+    @mock.patch('kobo.shortcuts.run')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.phases.ostree_installer.iso')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_multiple_variant_repos(self, KojiWrapper, link, iso,
+                                             get_file_size, get_mtime, ImageCls, run):
+        pool = mock.Mock()
+        cfg = {
+            'source_repo_from': ['Everything', 'Server'],
+            'release': '20160321.n.0',
+            'repo': [
+                'https://example.com/extra-repo1.repo',
+                'https://example.com/extra-repo2.repo',
+            ],
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        sources = [
+            'file://%s/compose/Everything/x86_64/os' % self.topdir,
+            'file://%s/compose/Server/x86_64/os' % self.topdir,
+            'https://example.com/extra-repo1.repo',
+            'https://example.com/extra-repo2.repo'
+        ]
+
+        self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
+                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')

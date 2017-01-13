@@ -46,7 +46,10 @@ class OstreeInstallerThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('%s/ostree_installer' % arch)
 
-        source_repo = self._get_source_repo(compose, arch, config['source_repo_from'])
+        source_from_repos = [self._get_source_repo(compose, arch, v)
+                             for v in shortcuts.force_list(config['source_repo_from'])]
+        repos = shortcuts.force_list(config.pop('repo', []))
+        source_repos = source_from_repos + repos
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))
 
@@ -55,7 +58,7 @@ class OstreeInstallerThread(WorkerThread):
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
-        self._run_ostree_cmd(compose, variant, arch, config, source_repo, output_dir, volid)
+        self._run_ostree_cmd(compose, variant, arch, config, source_repos, output_dir, volid)
 
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)

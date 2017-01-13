@@ -713,7 +713,8 @@ def _make_schema():
             "ostree_installer": _variant_arch_mapping({
                 "type": "object",
                 "properties": {
-                    "source_repo_from": {"type": "string"},
+                    "repo": {"$ref": "#/definitions/strings"},
+                    "source_repo_from": {"$ref": "#/definitions/strings"},
                     "release": {"$ref": "#/definitions/optional_string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
                     "installpkgs": {"$ref": "#/definitions/list_of_strings"},
