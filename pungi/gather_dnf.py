@@ -15,6 +15,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+from itertools import count
 import logging
 
 import hawkey
@@ -705,66 +706,47 @@ class Gather(GatherBase):
         added = self.add_initial_packages(pattern_list)
         self._add_packages(added)
 
-        self.logger.debug("PREPOPULATE")
-        added = self.add_prepopulate_packages()
+        added = self.log_count('PREPOPULATE', self.add_prepopulate_packages)
         self._add_packages(added)
 
-        pass_num = 0
-        added = False
-        while 1:
-            if pass_num > 0 and not added:
-                break
-            pass_num += 1
+        for pass_num in count(1):
             self.logger.debug("PASS %s" % pass_num)
 
-            self.logger.debug("DEPS")
-            added = self.add_conditional_packages()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('CONDITIONAL DEPS', self.add_conditional_packages):
                 continue
 
             # resolve deps
-            self.logger.debug("DEPS")
-            added = self.add_binary_package_deps()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('BINARY DEPS', self.add_binary_package_deps):
                 continue
 
-            added = self.add_source_package_deps()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('SOURCE DEPS', self.add_source_package_deps):
                 continue
 
-            self.logger.debug("SOURCE PACKAGES")
-            added = self.add_source_packages()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('SOURCE PACKAGES', self.add_source_packages):
                 continue
 
-            self.logger.debug("DEBUG PACKAGES")
-            added = self.add_debug_packages()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('DEBUG PACKAGES', self.add_debug_packages):
                 continue
             # TODO: debug deps
 
-            self.logger.debug("FULLTREE")
-            added = self.add_fulltree_packages()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('FULLTREE', self.add_fulltree_packages):
                 continue
 
-            self.logger.debug("LANGPACKS")
-            added = self.add_langpack_packages(self.opts.langpacks)
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('LANGPACKS', self.add_langpack_packages, self.opts.langpacks):
                 continue
 
-            self.logger.debug("MULTILIB")
-            added = self.add_multilib_packages()
-            self.logger.debug("ADDED: %s" % bool(added))
-            if added:
+            if self.log_count('MULTILIB', self.add_multilib_packages):
                 continue
 
             # nothing added -> break depsolving cycle
             break
+
+    def log_count(self, msg, method, *args):
+        """
+        Print a message, run the function with given arguments and log length
+        of result.
+        """
+        self.logger.debug('%s', msg)
+        added = method(*args)
+        self.logger.debug('ADDED: %s', len(added))
+        return added
