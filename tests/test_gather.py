@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.join(HERE, '..'))
 os.environ['PATH'] = '%s:%s' % (BINDIR, os.environ['PATH'])
 
 from pungi.wrappers.pungi import PungiWrapper
+from pungi.dnf_wrapper import DnfWrapper, Conf
+from pungi.gather_dnf import Gather, GatherOptions
 
 
 def convert_pkg_map(data):
@@ -1597,6 +1599,134 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         with open(self.out, "r") as f:
             pkg_map = p.get_packages(f.read())
         return convert_pkg_map(pkg_map)
+
+
+def convert_dnf_packages(pkgs, flags):
+    convert_table = {
+        # Hawkey returns nosrc package as src
+        'dummy-AdobeReader_enu-9.5.1-1.src': 'dummy-AdobeReader_enu-9.5.1-1.nosrc',
+    }
+    result = set()
+    for p in pkgs:
+        name = str(p)
+        name = convert_table.get(name, name)
+        if 'lookaside' in flags.get(p, []):
+            # Package is coming from lookaside repo, we don't want those in
+            # output.
+            continue
+        result.add(name + '.rpm')
+    return sorted(result)
+
+
+class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
+    def setUp(self):
+        super(DNFDepsolvingTestCase, self).setUp()
+        self.get_langpacks = False
+
+        logger = logging.getLogger('gather_dnf')
+        if not logger.handlers:
+            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            console = logging.StreamHandler(sys.stdout)
+            console.setFormatter(formatter)
+            console.setLevel(logging.INFO)
+            logger.addHandler(console)
+
+        self.maxDiff = None
+
+    def go(self, packages, groups, lookaside=None, **kwargs):
+        arch = kwargs.pop('arch', 'x86_64')
+        if 'greedy' in kwargs:
+            kwargs['greedy_method'] = kwargs.pop('greedy')
+        if 'nodeps' in kwargs:
+            kwargs['resolve_deps'] = not kwargs.pop('nodeps')
+        if lookaside:
+            kwargs['lookaside_repos'] = ['lookaside']
+
+        self.dnf = self.dnf_instance(arch, lookaside=lookaside, persistdir=self.tmp_dir)
+
+        if self.get_langpacks:
+            kwargs['langpacks'] = self.dnf.comps_wrapper.get_langpacks()
+
+        groups = groups or []
+        exclude_groups = []
+        _, conditional_packages = self.dnf.comps_wrapper.get_comps_packages(groups, exclude_groups)
+        self.g = Gather(self.dnf, GatherOptions(**kwargs))
+        self.g.gather(packages, conditional_packages)
+
+        return {
+            'debuginfo': convert_dnf_packages(self.g.result_debug_packages,
+                                              self.g.result_package_flags),
+            'srpm': convert_dnf_packages(self.g.result_source_packages,
+                                         self.g.result_package_flags),
+            'rpm': convert_dnf_packages(self.g.result_binary_packages,
+                                        self.g.result_package_flags),
+        }
+
+    def dnf_instance(self, base_arch, exclude=None, lookaside=False, persistdir=None):
+        conf = Conf(base_arch)
+        conf.persistdir = persistdir
+        if exclude:
+            conf.exclude = exclude
+        dnf = DnfWrapper(conf)
+        if lookaside:
+            dnf.add_repo("lookaside", lookaside, lookaside=True)
+        dnf.add_repo("test-repo", self.repo)
+        dnf.fill_sack(load_system_repo=False, load_available_repos=True)
+        dnf.read_comps()
+        return dnf
+
+    def test_langpacks(self):
+        # TODO(lsedlar) refactor this to avoid redefining this test
+        self.get_langpacks = True
+        super(DNFDepsolvingTestCase, self).test_langpacks()
+
+    @unittest.skip('Not implemented yet')
+    def test_noarch_debuginfo(self):
+        """
+        Noarch packages do not pull in any debuginfo. Removing the check breaks
+        test_bash_multilib, because dummy-bash-doc.noarch ultimately drags in
+        dummy-bash-debuginfo.x86_64 as well.
+        """
+
+    @unittest.skip('Full does not pull in dummy-nscd.i686')
+    def test_bash_multilib_greedy(self):
+        pass
+
+    @unittest.skip('DNF code does not support NVR as input')
+    def test_bash_older(self):
+        pass
+
+    @unittest.skip('Misses dummy-nscd.i686')
+    def test_bash_multilib_filter_greedy(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_smtpdaemon_greedy_all_explicit_sendmail(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_smtpdaemon_greedy_all_explicit_postfix(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_requires_pre_post(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_multilib_exclude_pattern_does_not_match_noarch(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_input_by_wildcard(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_kernel_fulltree_excludes(self):
+        pass
+
+    @unittest.skip('Not implemented yet')
+    def test_bash_multilib_exclude_source(self):
+        pass
 
 
 if __name__ == "__main__":
