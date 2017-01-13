@@ -298,9 +298,11 @@ class Gather(GatherBase):
         exclude = set()
         for pattern in excludes:
             with Profiler("Gather.add_initial_packages():exclude"):
-                # TODO: debug, source
+                # TODO: debug
                 if pattern.endswith(".+"):
                     pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2])
+                elif pattern.endswith(".src"):
+                    pkgs = self.q_source_packages.filter(name__glob=pattern[:-4])
                 else:
                     pkgs = self.q_binary_packages.filter(name__glob=pattern)
 
@@ -313,6 +315,7 @@ class Gather(GatherBase):
             self.q_native_binary_packages = self.q_native_binary_packages.filter(pkg__neq=exclude).apply()
             self.q_multilib_binary_packages = self.q_multilib_binary_packages.filter(pkg__neq=exclude).apply()
             self.q_noarch_binary_packages = self.q_noarch_binary_packages.filter(pkg__neq=exclude).apply()
+            self.q_source_packages = self.q_source_packages.filter(pkg__neq=exclude).apply()
 
         self.init_query_cache()
 

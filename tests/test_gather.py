@@ -1724,10 +1724,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_kernel_fulltree_excludes(self):
         pass
 
-    @unittest.skip('Not implemented yet')
-    def test_bash_multilib_exclude_source(self):
-        pass
-
 
 if __name__ == "__main__":
     unittest.main()
