@@ -593,10 +593,13 @@ class Gather(GatherBase):
                     # fallback / default
                     pull_native = True
 
-                if pull_native:
-                    fulltree_pkgs = native_fulltree_pkgs
-                else:
-                    fulltree_pkgs = multilib_fulltree_pkgs
+                # We pull packages determined by `pull_native`, or everything
+                # if we're greedy
+                fulltree_pkgs = []
+                if pull_native or self.opts.greedy_method == 'all':
+                    fulltree_pkgs.extend(native_fulltree_pkgs)
+                if not pull_native or self.opts.greedy_method == 'all':
+                    fulltree_pkgs.extend(multilib_fulltree_pkgs)
 
                 # always pull all noarch subpackages
                 fulltree_pkgs += noarch_fulltree_pkgs

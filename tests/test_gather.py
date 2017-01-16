@@ -1688,16 +1688,8 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         dummy-bash-debuginfo.x86_64 as well.
         """
 
-    @unittest.skip('Full does not pull in dummy-nscd.i686')
-    def test_bash_multilib_greedy(self):
-        pass
-
     @unittest.skip('DNF code does not support NVR as input')
     def test_bash_older(self):
-        pass
-
-    @unittest.skip('Misses dummy-nscd.i686')
-    def test_bash_multilib_filter_greedy(self):
         pass
 
     @unittest.skip('Not implemented yet')
