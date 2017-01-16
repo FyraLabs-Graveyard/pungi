@@ -334,7 +334,7 @@ class Gather(GatherBase):
                 if pkgs:
                     added.update(pkgs)
                 else:
-                    self.logger.error("Doesn't match: %s" % pattern)
+                    self.logger.error("No package matches pattern %s" % pattern)
 
         for pkg in added:
             self._set_flag(pkg, "input")
