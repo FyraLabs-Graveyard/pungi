@@ -1253,7 +1253,8 @@ they are not scratch builds).
     A value for ``yum_repourls`` will be created automatically and point at a
     repository in the current compose. You can add extra repositories with
     ``repo`` key having a list of urls pointing to ``.repo`` files or
-    ``repo_from`` as a list of variants in current compose.
+    ``repo_from`` as a list of variants in current compose. ``gpgkey`` can be
+    specified to enable gpgcheck in repo files for variants.
 
 
 Example config
@@ -1273,6 +1274,7 @@ Example config
             "repo_from": ["Everything"],
             # This will result in three repo urls being passed to the task.
             # They will be in this order: Server, Everything, example.com/
+            "gpgkey": 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release',
         }
     }
 

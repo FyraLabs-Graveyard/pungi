@@ -831,6 +831,7 @@ def _make_schema():
                             "priority": {"type": "number"},
                             "repo": {"$ref": "#/definitions/strings"},
                             "repo_from": {"$ref": "#/definitions/strings"},
+                            "gpgkey": {"type": "string"},
                         },
                         "required": ["url", "target"]
                     }

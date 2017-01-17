@@ -55,7 +55,8 @@ class OSBSThread(WorkerThread):
         target = config.pop('target')
         priority = config.pop('priority', None)
         repos = shortcuts.force_list(config.pop('repo', []))
-        compose_repos = [self._get_repo(compose, v)
+        gpgkey = config.pop('gpgkey', None)
+        compose_repos = [self._get_repo(compose, v, gpgkey=gpgkey)
                          for v in [variant.uid] + shortcuts.force_list(
                              config.pop('repo_from', []))]
 
@@ -107,7 +108,7 @@ class OSBSThread(WorkerThread):
             self.pool.metadata.setdefault(
                 variant.uid, {}).setdefault(arch, []).append(data)
 
-    def _get_repo(self, compose, variant_uid):
+    def _get_repo(self, compose, variant_uid, gpgkey=None):
         """
         Write a .repo file pointing to current variant and return URL to the
         file.
@@ -123,11 +124,14 @@ class OSBSThread(WorkerThread):
         repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),
                                  'compose-rpms-%s.repo' % self.num)
 
+        gpgcheck = 1 if gpgkey else 0
         with open(repo_file, 'w') as f:
             f.write('[%s]\n' % compose.compose_id)
             f.write('name=Compose %s (RPMs)\n' % compose.compose_id)
             f.write('baseurl=%s\n' % translate_path(compose, os_tree))
             f.write('enabled=1\n')
-            f.write('gpgcheck=0\n')
+            f.write('gpgcheck=%s\n' % gpgcheck)
+            if gpgcheck:
+                f.write('gpgkey=%s\n' % gpgkey)
 
         return translate_path(compose, repo_file)

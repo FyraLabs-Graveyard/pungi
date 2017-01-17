@@ -194,12 +194,15 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 mock.call.koji_proxy.getBuild(54321),
                 mock.call.koji_proxy.listArchives(54321)])
 
-    def _assertRepoFile(self, variants=None):
+    def _assertRepoFile(self, variants=None, gpgkey=None):
         variants = variants or ['Server']
         for variant in variants:
             with open(self.topdir + '/work/global/tmp-%s/compose-rpms-1.repo' % variant) as f:
                 lines = f.read().split('\n')
                 self.assertIn('baseurl=http://root/compose/%s/$basearch/os' % variant, lines)
+                if gpgkey:
+                    self.assertIn('gpgcheck=1', lines)
+                    self.assertIn('gpgkey=%s' % gpgkey, lines)
 
     def _assertConfigCorrect(self, cfg):
         config = copy.deepcopy(self.compose.conf)
@@ -326,6 +329,26 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
         self._assertRepoFile(['Server', 'Everything', 'Client'])
+
+    @mock.patch('pungi.util.resolve_git_url')
+    @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
+    def test_run_with_gpgkey_enabled(self, KojiWrapper, resolve_git_url):
+        gpgkey = 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+            'name': 'my-name',
+            'version': '1.0',
+            'repo': ['http://pkgs.example.com/my.repo'],
+            'repo_from': ['Everything', 'Client'],
+            'gpgkey': gpgkey,
+        }
+        self._assertConfigCorrect(cfg)
+        self._setupMock(KojiWrapper, resolve_git_url)
+
+        self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
+
+        self._assertRepoFile(['Server', 'Everything', 'Client'], gpgkey=gpgkey)
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
