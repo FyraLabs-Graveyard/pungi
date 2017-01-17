@@ -1712,10 +1712,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_input_by_wildcard(self):
         pass
 
-    @unittest.skip('Not implemented yet')
-    def test_kernel_fulltree_excludes(self):
-        pass
-
 
 if __name__ == "__main__":
     unittest.main()

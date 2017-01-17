@@ -34,6 +34,9 @@ class GatherOptions(pungi.common.OptionsBase):
         # include all unused sub-packages of already included RPMs
         self.fulltree = False
 
+        # A set of packages for which fulltree does not apply.
+        self.fulltree_excludes = set()
+
         # include langpacks
         self.langpacks = []  # format: [{"package": "langpack-pattern-%s"}]
 
@@ -572,6 +575,10 @@ class Gather(GatherBase):
 
         for pkg in sorted(self.result_binary_packages):
             assert pkg is not None
+
+            if pkg.source_name in self.opts.fulltree_excludes:
+                self.logger.debug('No fulltree for %s due to exclude list', pkg)
+                continue
 
             try:
                 fulltree_pkgs = self.finished_add_fulltree_packages[pkg]
