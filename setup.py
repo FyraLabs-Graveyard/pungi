@@ -39,6 +39,7 @@ setup(
         'bin/pungi-config-validate',
         'bin/pungi-create-unified-isos',
         'bin/pungi-fedmsg-notification',
+        'bin/pungi-gather',
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
         'bin/pungi-patch-iso',
