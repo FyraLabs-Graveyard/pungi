@@ -37,8 +37,10 @@ def get_ref_from_treefile(treefile):
             try:
                 parsed = json.loads(f.read())
                 ref = parsed['ref']
-            except Exception:
-                pass
+            except Exception as e:
+                print('Unable to get ref from treefile: %s' % e)
+    else:
+        print('Unable to open treefile')
     return ref
 
 
@@ -48,6 +50,8 @@ def get_commitid_from_commitid_file(commitid_file):
     if os.path.isfile(commitid_file):
         with open(commitid_file, 'r') as f:
             commitid = f.read().replace('\n', '')
+    else:
+        print('Unable to find commitid file')
     return commitid
 
 

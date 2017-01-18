@@ -63,10 +63,13 @@ class Tree(OSTree):
         if self.extra_config:
             tag_ref = self.extra_config.get('tag_ref', True)
         if not tag_ref:
+            print('Not updating ref as configured')
             return
         ref = get_ref_from_treefile(self.treefile)
         commitid = get_commitid_from_commitid_file(self.commitid_file)
+        print('Ref: %r, Commit ID: %r' % (ref, commitid))
         if ref and commitid:
+            print('Updating ref')
             # Let's write the tag out ourselves
             heads_dir = os.path.join(self.repo, 'refs', 'heads')
             if not os.path.exists(heads_dir):
