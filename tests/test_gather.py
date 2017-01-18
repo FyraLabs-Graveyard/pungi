@@ -19,7 +19,7 @@ os.environ['PATH'] = '%s:%s' % (BINDIR, os.environ['PATH'])
 
 from pungi.wrappers.pungi import PungiWrapper
 from pungi.dnf_wrapper import DnfWrapper, Conf
-from pungi.gather_dnf import Gather, GatherOptions
+from pungi.gather_dnf import Gather, GatherOptions, PkgFlag
 
 
 def convert_pkg_map(data):
@@ -1610,7 +1610,7 @@ def convert_dnf_packages(pkgs, flags):
     for p in pkgs:
         name = str(p)
         name = convert_table.get(name, name)
-        if 'lookaside' in flags.get(p, []):
+        if PkgFlag.lookaside in flags.get(p, []):
             # Package is coming from lookaside repo, we don't want those in
             # output.
             continue

@@ -53,11 +53,12 @@ setup(
     ],
     test_suite      = "tests",
     install_requires = [
+        "enum34",
+        "jsonschema",
         "kobo",
         "lockfile",
         "lxml",
         "productmd",
-        "jsonschema",
         ],
     tests_require = [
         "mock",

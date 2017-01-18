@@ -14,6 +14,7 @@ BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
 BuildRequires:  yum => 3.4.3-28, createrepo >= 0.4.11
 BuildRequires:  gettext, git-core, cvs
 BuildRequires:  python-jsonschema
+BuildRequires:  python-enum34
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -38,6 +39,7 @@ Requires:       syslinux
 Requires:       git
 Requires:       python-jsonschema
 Requires:       libguestfs-tools-c
+Requires:       python-enum34
 
 BuildArch:      noarch
 

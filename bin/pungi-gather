@@ -138,7 +138,7 @@ def main():
 
 def _get_flags(gather_obj, pkg):
     flags = gather_obj.result_package_flags.get(pkg, [])
-    flags = "(%s)" % ",".join(sorted(flags))
+    flags = "(%s)" % ",".join(sorted(f.name for f in flags))
     return flags
 
 
