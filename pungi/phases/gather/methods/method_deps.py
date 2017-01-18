@@ -120,9 +120,13 @@ def resolve_deps(compose, arch, variant):
     cache_dir = compose.paths.work.pungi_cache_dir(arch, variant)
     # TODO: remove YUM code, fully migrate to DNF
     if compose.conf.get("dnf_gather", False):
-        cmd = pungi_wrapper.get_pungi_cmd_dnf(pungi_conf, destdir=tmp_dir, name=variant.uid, selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch, full_archlist=True, greedy=greedy_method, cache_dir=cache_dir, lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
+        get_cmd = pungi_wrapper.get_pungi_cmd_dnf
     else:
-        cmd = pungi_wrapper.get_pungi_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid, selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch, full_archlist=True, greedy=greedy_method, cache_dir=cache_dir, lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
+        get_cmd = pungi_wrapper.get_pungi_cmd
+    cmd = get_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid,
+                  selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch,
+                  full_archlist=True, greedy=greedy_method, cache_dir=cache_dir,
+                  lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     tmp_dir = compose.mkdtemp(prefix="pungi_")
