@@ -501,7 +501,29 @@ Options
     following build dependencies. Only use when ``gather_method = "deps"``.
 
 **greedy_method**
-    (*str*) -- see :doc:`gather`, recommended value: "build"
+    (*str*) -- This option controls how package requirements are satisfied in
+    case a particular ``Requires`` has multiple candidates.
+
+    * ``none`` -- the best packages is selected to satisfy the dependency and
+      only that one is pulled into the compose
+    * ``all`` -- packages that provide the symbol are pulled in
+    * ``build`` -- the best package is selected, and then all packages from the
+      same build that provide the symbol are pulled in
+
+    .. note::
+        As an example let's work with this situation: a package in the compose
+        has ``Requires: foo``. There are three packages with ``Provides: foo``:
+        ``pkg-a``, ``pkg-b-provider-1`` and ``pkg-b-provider-2``. The
+        ``pkg-b-*`` packages are build from the same source package. Best match
+        determines ``pkg-b-provider-1`` as best matching package.
+
+        * With ``greedy_method = "none"`` only ``pkg-b-provider-1`` will be
+          pulled in.
+        * With ``greedy_method = "all"`` all three packages will be
+          pulled in.
+        * With ``greedy_method = "build" ``pkg-b-provider-1`` and
+          ``pkg-b-provider-2`` will be pulled in.
+
 
 **multilib_methods** [deprecated]
     ([*str*]) -- use ``multilib`` instead to configure this per-variant
