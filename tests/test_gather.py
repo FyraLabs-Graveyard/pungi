@@ -1675,8 +1675,25 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         dnf.read_comps()
         return dnf
 
+    def assertFlags(self, nvra, expected_flags):
+        assert isinstance(nvra, str)
+        assert isinstance(expected_flags, list)
+        expected_flags = set(expected_flags)
+
+        found = False
+        for pkg, flags in self.g.result_package_flags.items():
+            if nvra == "%s-%s-%s.%s" % (pkg.name, pkg.version, pkg.release, pkg.arch):
+                self.assertEqual(
+                    flags, expected_flags,
+                    "pkg: %s; flags: %s; expected flags: %s" % (nvra, flags, expected_flags))
+                found = True
+        if not found:
+            flags = set()
+            self.assertEqual(
+                flags, expected_flags,
+                "pkg: %s; flags: %s; expected flags: %s" % (nvra, flags, expected_flags))
+
     def test_langpacks(self):
-        # TODO(lsedlar) refactor this to avoid redefining this test
         self.get_langpacks = True
         super(DNFDepsolvingTestCase, self).test_langpacks()
 
@@ -1712,6 +1729,13 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_input_by_wildcard(self):
         pass
 
+    def test_firefox_selfhosting_with_krb5_lookaside(self):
+        super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
+        self.assertFlags("dummy-krb5-1.10-5.x86_64", [PkgFlag.lookaside])
+        self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
+        self.assertFlags("dummy-krb5-libs-1.10-5.x86_64", [PkgFlag.lookaside])
+        self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside, PkgFlag.self_hosting])
+        self.assertFlags("dummy-krb5-debuginfo-1.10-5.x86_64", [PkgFlag.lookaside])
 
 if __name__ == "__main__":
     unittest.main()
