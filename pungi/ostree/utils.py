@@ -17,6 +17,7 @@
 import datetime
 import json
 import os
+import rpmUtils.arch
 
 from pungi.util import makedirs
 
@@ -29,14 +30,21 @@ def make_log_file(log_dir, filename):
     return os.path.join(log_dir, '%s.log' % filename)
 
 
-def get_ref_from_treefile(treefile):
-    """Return ref name by parsing the tree config file"""
+def get_ref_from_treefile(treefile, arch=None):
+    """
+    Return ref name by parsing the tree config file. Replacing ${basearch} with
+    the basearch of the architecture we are running on or of the passed in arch.
+    """
     ref = None
     if os.path.isfile(treefile):
         with open(treefile, 'r') as f:
             try:
                 parsed = json.loads(f.read())
-                ref = parsed['ref']
+                if arch is None:
+                    basearch = rpmUtils.arch.getBaseArch()
+                else:
+                    basearch = rpmUtils.arch.getBaseArch(arch)
+                ref = parsed['ref'].replace('${basearch}', basearch)
             except Exception as e:
                 print('Unable to get ref from treefile: %s' % e)
     else:
