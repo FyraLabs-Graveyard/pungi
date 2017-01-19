@@ -324,7 +324,7 @@ class Gather(GatherBase):
                     pkgs = self.q_binary_packages.filter(name__glob=pattern)
 
                 exclude.update(pkgs)
-                self.logger.debug("EXCLUDED: %s" % list(pkgs))
+                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
                 self.dnf._sack.add_excludes(pkgs)
 
         with Profiler("Gather.add_initial_packages():exclude-queries"):
