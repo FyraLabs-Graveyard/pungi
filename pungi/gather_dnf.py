@@ -321,6 +321,14 @@ class Gather(GatherBase):
                 self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
                 self.dnf._sack.add_excludes(pkgs)
 
+        for pattern in self.opts.multilib_blacklist:
+            with Profiler("Gather.add_initial_packages():exclude-multilib-blacklist"):
+                # TODO: does whitelist affect this in any way?
+                pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern, arch__neq='noarch')
+                exclude.update(pkgs)
+                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
+                self.dnf._sack.add_excludes(pkgs)
+
         with Profiler("Gather.add_initial_packages():exclude-queries"):
             self.q_binary_packages = self.q_binary_packages.filter(pkg__neq=exclude).apply()
             self.q_native_binary_packages = self.q_native_binary_packages.filter(pkg__neq=exclude).apply()
