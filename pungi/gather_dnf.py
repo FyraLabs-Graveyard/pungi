@@ -340,11 +340,20 @@ class Gather(GatherBase):
                     else:
                         pkgs = self.q_binary_packages.filter(name__glob=pattern).apply()
 
-                pkgs = self._get_best_package(pkgs)
-                if pkgs:
-                    added.update(pkgs)
-                else:
+                if not pkgs:
                     self.logger.error("No package matches pattern %s" % pattern)
+
+                # The pattern could have been a glob. In that case we want to
+                # group the packages by name and get best match in those
+                # smaller groups.
+                packages_by_name = {}
+                for po in pkgs:
+                    packages_by_name.setdefault(po.name, []).append(po)
+
+                for name, packages in packages_by_name.iteritems():
+                    pkgs = self._get_best_package(packages)
+                    if pkgs:
+                        added.update(pkgs)
 
         for pkg in added:
             self._set_flag(pkg, PkgFlag.input)
