@@ -688,30 +688,29 @@ class Gather(GatherBase):
         added = set()
 
         for pkg in sorted(self.result_binary_packages):
-            try:
-                self.finished_add_multilib_packages[pkg]
-            except KeyError:
+            if pkg in self.finished_add_multilib_packages:
+                continue
 
-                if pkg.arch in ("noarch", "src", "nosrc"):
-                    self.finished_add_multilib_packages[pkg] = None
-                    continue
+            if pkg.arch in ("noarch", "src", "nosrc"):
+                self.finished_add_multilib_packages[pkg] = None
+                continue
 
-                if pkg.arch in self.dnf.arch_wrapper.multilib_arches:
-                    self.finished_add_multilib_packages[pkg] = None
-                    continue
+            if pkg.arch in self.dnf.arch_wrapper.multilib_arches:
+                self.finished_add_multilib_packages[pkg] = None
+                continue
 
-                pkgs = self.q_multilib_binary_packages_cache.get(pkg.name, pkg.version, pkg.release)
-                pkgs = self._get_best_package(pkgs)
-                multilib_pkgs = []
-                for i in pkgs:
-                    is_multilib = self._multilib.is_multilib(i)
-                    if is_multilib:
-                        multilib_pkgs.append(i)
-                        added.add(i)
-                        self._set_flag(i, PkgFlag.multilib)
-                        self._add_packages([i])
-                        self.finished_add_multilib_packages[pkg] = i
-                        # TODO: ^^^ may get multiple results; i686, i586, etc.
+            pkgs = self.q_multilib_binary_packages_cache.get(pkg.name, pkg.version, pkg.release)
+            pkgs = self._get_best_package(pkgs)
+            multilib_pkgs = []
+            for i in pkgs:
+                is_multilib = self._multilib.is_multilib(i)
+                if is_multilib:
+                    multilib_pkgs.append(i)
+                    added.add(i)
+                    self._set_flag(i, PkgFlag.multilib)
+                    self._add_packages([i])
+                    self.finished_add_multilib_packages[pkg] = i
+                    # TODO: ^^^ may get multiple results; i686, i586, etc.
 
         return added
 
