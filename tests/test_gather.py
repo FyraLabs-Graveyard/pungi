@@ -1710,14 +1710,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         pass
 
     @unittest.skip('Not implemented yet')
-    def test_smtpdaemon_greedy_all_explicit_sendmail(self):
-        pass
-
-    @unittest.skip('Not implemented yet')
-    def test_smtpdaemon_greedy_all_explicit_postfix(self):
-        pass
-
-    @unittest.skip('Not implemented yet')
     def test_requires_pre_post(self):
         pass
 

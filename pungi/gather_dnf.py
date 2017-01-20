@@ -269,12 +269,6 @@ class Gather(GatherBase):
                 if i.repoid in self.opts.lookaside_repos:
                     self._set_flag(i, PkgFlag.lookaside)
 
-        for pkg in added:
-            if pkg is None:
-                continue
-            for prov in pkg.provides:
-                self.finished_get_package_deps_reqs.setdefault(str(prov), set()).add(pkg)
-
         self.result_binary_packages.update(added)
 
     def _get_package_deps(self, pkg):
