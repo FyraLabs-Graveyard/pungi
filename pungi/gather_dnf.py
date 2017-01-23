@@ -278,8 +278,14 @@ class Gather(GatherBase):
         assert pkg is not None
         result = set()
 
-        q = self.q_binary_packages.filter(provides=pkg.requires).apply()
-        for req in pkg.requires:
+        # DNF package has the _pre and _post attributes only if they are not
+        # empty.
+        requires = (pkg.requires +
+                    getattr(pkg, 'requires_pre', []) +
+                    getattr(pkg, 'requires_post', []))
+
+        q = self.q_binary_packages.filter(provides=requires).apply()
+        for req in requires:
             deps = self.finished_get_package_deps_reqs.setdefault(str(req), set())
             if deps:
                 result.update(deps)

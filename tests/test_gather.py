@@ -1710,10 +1710,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         pass
 
     @unittest.skip('Not implemented yet')
-    def test_requires_pre_post(self):
-        pass
-
-    @unittest.skip('Not implemented yet')
     def test_multilib_exclude_pattern_does_not_match_noarch(self):
         pass
 
