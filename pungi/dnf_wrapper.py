@@ -19,8 +19,6 @@
 
 from distutils.version import LooseVersion
 import os
-import shutil
-import tempfile
 
 import dnf
 
@@ -56,12 +54,6 @@ class DnfWrapper(dnf.Base):
         super(DnfWrapper, self).__init__(*args, **kwargs)
         self.arch_wrapper = ArchWrapper(self.conf.substitutions["arch"])
         self.comps_wrapper = CompsWrapper(self)
-        # use a custom cachedir, delete it after use
-        self.conf.cachedir = tempfile.mkdtemp(prefix="pungi_dnf_")
-
-    def __del__(self):
-        if self.conf.cachedir.startswith("/tmp/"):
-            shutil.rmtree(self.conf.cachedir)
 
     def add_repo(self, repoid, baseurl=None, mirrorlist=None, ignoregroups=False, lookaside=False):
         if "://" not in baseurl:

@@ -4,13 +4,12 @@
 
 import os
 import argparse
-import tempfile
-import shutil
 
 import pungi.ks
 from pungi.dnf_wrapper import DnfWrapper, Conf
 from pungi.gather_dnf import Gather, GatherOptions
 from pungi.profiler import Profiler
+from pungi.util import temp_dir
 
 
 def get_parser():
@@ -68,12 +67,13 @@ def get_parser():
     return parser
 
 
-def main():
+def main(persistdir, cachedir):
     parser = get_parser()
     ns = parser.parse_args()
 
     dnf_conf = Conf(ns.arch)
-    dnf_conf.persistdir = tempfile.mkdtemp()
+    dnf_conf.persistdir = persistdir
+    dnf_conf.cachedir = cachedir
     dnf_obj = DnfWrapper(dnf_conf)
 
     gather_opts = GatherOptions()
@@ -129,7 +129,6 @@ def main():
         packages.add("-%s" % i)
 
     g.gather(packages, conditional_packages)
-    shutil.rmtree(dnf_conf.persistdir)
 
     print_rpms(g)
     if ns.profiler:
@@ -162,4 +161,6 @@ def print_rpms(gather_obj):
 
 
 if __name__ == "__main__":
-    main()
+    with temp_dir(prefix='pungi_dnf_') as persistdir:
+        with temp_dir(prefix='pungi_dnf_cache_') as cachedir:
+            main(persistdir, cachedir)

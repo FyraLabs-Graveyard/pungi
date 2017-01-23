@@ -1621,6 +1621,7 @@ def convert_dnf_packages(pkgs, flags):
 class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def setUp(self):
         super(DNFDepsolvingTestCase, self).setUp()
+        self.cachedir = os.path.join(self.tmp_dir, 'pungi_dnf_cache')
         self.get_langpacks = False
 
         logger = logging.getLogger('gather_dnf')
@@ -1665,6 +1666,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def dnf_instance(self, base_arch, exclude=None, lookaside=False, persistdir=None):
         conf = Conf(base_arch)
         conf.persistdir = persistdir
+        conf.cachedir = self.cachedir
         if exclude:
             conf.exclude = exclude
         dnf = DnfWrapper(conf)
