@@ -619,6 +619,66 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertItemsEqual(phase.pool.queue_put.mock_calls,
                               [mock.call((compose, server_args))])
 
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_failable_star(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'image_build': {
+                '^Server$': [
+                    {
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'failable': ['*'],
+                        }
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+        compose.setup_optional()
+
+        self.assertValidConfig(compose.conf)
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+        server_args = {
+            "format": [('docker', 'tar.xz')],
+            "image_conf": {
+                'image-build': {
+                    'install_tree': self.topdir + '/compose/Server/$arch/os',
+                    'kickstart': 'fedora-docker-base.ks',
+                    'format': 'docker',
+                    'repo': self.topdir + '/compose/Server/$arch/os',
+                    'variant': compose.all_variants['Server'],
+                    'target': 'f24',
+                    'disk_size': 3,
+                    'name': 'Fedora-Docker-Base',
+                    'arches': 'amd64,x86_64',
+                    'version': 'Rawhide',
+                    'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                    'distro': 'Fedora-20',
+                    'can_fail': 'amd64,x86_64',
+                }
+            },
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
+            "relative_image_dir": 'Server/%(arch)s/images',
+            "link_type": 'hardlink-or-copy',
+            "scratch": False,
+        }
+        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
+                              [mock.call((compose, server_args))])
+
 
 class TestCreateImageBuildThread(PungiTestCase):
 

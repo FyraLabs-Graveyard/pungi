@@ -122,7 +122,7 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
 
                 can_fail = image_conf['image-build'].pop('failable', [])
                 if can_fail == ['*']:
-                    can_fail = image_conf['image-build']['arches']
+                    can_fail = image_conf['image-build']['arches'].split(',')
                 if can_fail:
                     image_conf['image-build']['can_fail'] = ','.join(sorted(can_fail))
 
