@@ -75,7 +75,7 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
     def _get_arches(self, image_conf, arches):
         if 'arches' in image_conf['image-build']:
             arches = set(image_conf['image-build'].get('arches', [])) & arches
-        return ','.join(sorted(arches))
+        return sorted(arches)
 
     def _set_release(self, image_conf):
         """If release is set explicitly to None, replace it with date and respin."""
@@ -122,9 +122,9 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
 
                 can_fail = image_conf['image-build'].pop('failable', [])
                 if can_fail == ['*']:
-                    can_fail = image_conf['image-build']['arches'].split(',')
+                    can_fail = image_conf['image-build']['arches']
                 if can_fail:
-                    image_conf['image-build']['can_fail'] = ','.join(sorted(can_fail))
+                    image_conf['image-build']['can_fail'] = sorted(can_fail)
 
                 cmd = {
                     "format": format,
@@ -162,8 +162,7 @@ class CreateImageBuildThread(WorkerThread):
             self.worker(num, compose, variant, subvariant, cmd)
 
     def worker(self, num, compose, variant, subvariant, cmd):
-        arches = cmd["image_conf"]["image-build"]['arches'].split(',')
-        failable_arches = self.failable_arches.split(',')
+        arches = cmd["image_conf"]["image-build"]['arches']
         dash_arches = '-'.join(arches)
         log_file = compose.paths.log.log_file(
             dash_arches,
@@ -180,6 +179,11 @@ class CreateImageBuildThread(WorkerThread):
         # writes conf file for koji image-build
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
             variant, dash_arches, cmd["conf_file"]))
+
+        # Join the arches into a single string. This is the value expected by
+        # koji config file.
+        cmd["image_conf"]["image-build"]['arches'] = ','.join(cmd["image_conf"]["image-build"]['arches'])
+
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
                                                     scratch=cmd['scratch'])
@@ -207,7 +211,7 @@ class CreateImageBuildThread(WorkerThread):
                         image_infos.append({'path': path, 'suffix': suffix, 'type': format, 'arch': arch})
                         break
 
-        if len(image_infos) != len(cmd['format']) * (len(arches) - len(failable_arches)):
+        if len(image_infos) != len(cmd['format']) * (len(arches) - len(self.failable_arches)):
             self.pool.log_error(
                 "Error in koji task %s. Expected to find same amount of images "
                 "as in suffixes attr in image-build (%s) for each arch (%s). Got '%s'." %
