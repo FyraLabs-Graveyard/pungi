@@ -372,25 +372,6 @@ class Gather(GatherBase):
         for pkg in added:
             self._set_flag(pkg, PkgFlag.input)
 
-        if self.opts.greedy_method == "build":
-            for pkg in added.copy():
-                with Profiler("Gather.add_initial_packages():greedy-build"):
-                    if pkg in self.q_native_binary_packages:
-                        greedy_build_packages = self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
-                    else:
-                        greedy_build_packages = self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
-                    greedy_build_packages += self.q_noarch_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
-
-                    for greedy_pkg in greedy_build_packages[:]:
-                        # filter out packages that don't provide package name
-                        provides = set([str(i).split(" ")[0] for i in greedy_pkg.provides])
-                        if pkg.name not in provides:
-                            greedy_build_packages.remove(greedy_pkg)
-
-                    for i in greedy_build_packages:
-                        self._set_flag(i, PkgFlag.input, PkgFlag.greedy_build)
-                        added.add(i)
-
         return added
 
     @Profiler("Gather.init_query_cache()")
