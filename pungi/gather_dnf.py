@@ -254,7 +254,7 @@ class Gather(GatherBase):
                 return [i for i in multilib_pkgs if i.sourcerpm == match.sourcerpm]
         return [match]
 
-    def _add_packages(self, packages, pulled_by=None):
+    def _add_packages(self, packages, pulled_by=None, reason=None):
         added = set()
         for i in packages:
             assert i is not None
@@ -263,6 +263,8 @@ class Gather(GatherBase):
                 pb = ""
                 if pulled_by:
                     pb = " (pulled by %s, repo: %s)" % (pulled_by, pulled_by.repo.id)
+                if reason:
+                    pb += " (%s)" % reason
                 self.logger.debug("Added package %s%s" % (i, pb))
                 self.result_binary_packages.add(i)
                 # lookaside
@@ -431,7 +433,7 @@ class Gather(GatherBase):
                 deps = self._get_package_deps(pkg)
                 for i in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg)
+                        self._add_packages([i], pulled_by=pkg, reason='binary-dep')
                         added.add(i)
                 self.finished_add_binary_package_deps[pkg] = deps
 
@@ -465,7 +467,7 @@ class Gather(GatherBase):
 
             for i in deps:
                 if i not in self.result_binary_packages:
-                    self._add_packages([i], pulled_by=pkg)
+                    self._add_packages([i], pulled_by=pkg, reason='cond-dep')
                     self._set_flag(pkg, PkgFlag.conditional)
                     added.add(i)
 
@@ -490,7 +492,7 @@ class Gather(GatherBase):
                 self.finished_add_source_package_deps[pkg] = deps
                 for i in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg)
+                        self._add_packages([i], pulled_by=pkg, reason='source-dep')
                         added.add(i)
                         self._set_flag(pkg, PkgFlag.self_hosting)
 
@@ -624,7 +626,7 @@ class Gather(GatherBase):
 
             for i in fulltree_pkgs:
                 if i not in self.result_binary_packages:
-                    self._add_packages([i])
+                    self._add_packages([i], reason='fulltree')
                     self._set_flag(i, PkgFlag.fulltree)
                     added.add(i)
 
@@ -681,7 +683,7 @@ class Gather(GatherBase):
                 langpack_pkgs.add(i)
                 self._set_flag(i, PkgFlag.langpack)
                 if i not in self.result_binary_packages:
-                    self._add_packages([i], pulled_by=pkg)
+                    self._add_packages([i], pulled_by=pkg, reason='langpack')
                     added.add(pkg)
             self.finished_add_langpack_packages[pkg] = langpack_pkgs
 
@@ -712,7 +714,7 @@ class Gather(GatherBase):
                     multilib_pkgs.append(i)
                     added.add(i)
                     self._set_flag(i, PkgFlag.multilib)
-                    self._add_packages([i])
+                    self._add_packages([i], reason='multilib')
                     self.finished_add_multilib_packages[pkg] = i
                     # TODO: ^^^ may get multiple results; i686, i586, etc.
 
@@ -727,7 +729,7 @@ class Gather(GatherBase):
         self._add_packages(added)
 
         added = self.log_count('PREPOPULATE', self.add_prepopulate_packages)
-        self._add_packages(added)
+        self._add_packages(added, reason='prepopulate')
 
         for pass_num in count(1):
             self.logger.debug("PASS %s" % pass_num)
