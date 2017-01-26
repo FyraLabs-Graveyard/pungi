@@ -288,7 +288,7 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
         }
         cmd = self.koji.get_live_media_cmd(opts)
         self.assertEqual(cmd,
-                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+                         ['custom-koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os', '--wait'])
 
     def test_get_live_media_cmd_full(self):
@@ -300,7 +300,7 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
         }
         cmd = self.koji.get_live_media_cmd(opts)
         self.assertEqual(cmd[:8],
-                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+                         ['custom-koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os'])
         self.assertItemsEqual(cmd[8:],
                               ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait',

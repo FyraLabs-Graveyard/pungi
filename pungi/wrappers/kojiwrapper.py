@@ -165,7 +165,7 @@ class KojiWrapper(object):
 
     def get_live_media_cmd(self, options, wait=True):
         # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
-        cmd = ['koji', 'spin-livemedia']
+        cmd = [self.executable, 'spin-livemedia']
 
         for key in ('name', 'version', 'target', 'arch', 'ksfile'):
             if key not in options:
