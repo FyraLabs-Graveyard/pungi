@@ -41,16 +41,18 @@ def get_repoclosure_cmd(arch=None, builddeps=False,
 
     repos = repos or {}
     for repo_id, repo_path in repos.iteritems():
-        if "://" not in repo_path:
-            repo_path = "file://%s" % os.path.abspath(repo_path)
-        cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
+        cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
         cmd.append("--repoid=%s" % repo_id)
 
     lookaside = lookaside or {}
     for repo_id, repo_path in lookaside.iteritems():
-        if "://" not in repo_path:
-            repo_path = "file://%s" % os.path.abspath(repo_path)
-        cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
+        cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
         cmd.append("--lookaside=%s" % repo_id)
 
     return cmd
+
+
+def _to_url(path):
+    if "://" not in path:
+        return "file://%s" % os.path.abspath(path)
+    return path
