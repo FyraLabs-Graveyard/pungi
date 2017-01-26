@@ -24,32 +24,25 @@ class RepoclosureWrapper(object):
     def __init__(self):
         self.actual_id = 0
 
-    def get_repoclosure_cmd(self, config=None, arch=None, basearch=None, builddeps=False,
-                            repos=None, lookaside=None, tempcache=False, quiet=False, newest=False, pkg=None, group=None):
+    def get_repoclosure_cmd(self, arch=None, builddeps=False,
+                            repos=None, lookaside=None):
 
         cmd = ["/usr/bin/repoclosure"]
+        # There are options that are not exposed here, because we don't need
+        # them. These are:
+        # --config
+        # --basearch
+        # --tempcache
+        # --quiet
+        # --newest
+        # --pkg
+        # --group
 
-        if config:
-            cmd.append("--config=%s" % config)
-
-        if arch:
-            for i in force_list(arch):
-                cmd.append("--arch=%s" % i)
-
-        if basearch:
-            cmd.append("--basearch=%s" % basearch)
+        for i in force_list(arch or []):
+            cmd.append("--arch=%s" % i)
 
         if builddeps:
             cmd.append("--builddeps")
-
-        if tempcache:
-            cmd.append("--tempcache")
-
-        if quiet:
-            cmd.append("--quiet")
-
-        if newest:
-            cmd.append("--newest")
 
         repos = repos or {}
         for repo_id, repo_path in repos.iteritems():
@@ -64,11 +57,5 @@ class RepoclosureWrapper(object):
                 repo_path = "file://%s" % os.path.abspath(repo_path)
             cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
             cmd.append("--lookaside=%s" % repo_id)
-
-        if pkg:
-            cmd.append("--pkg=%s" % pkg)
-
-        if group:
-            cmd.append("--group=%s" % group)
 
         return cmd
