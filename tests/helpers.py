@@ -30,6 +30,10 @@ class PungiTestCase(unittest.TestCase):
 
 
 class MockVariant(mock.Mock):
+    def __init__(self, *args, **kwargs):
+        super(MockVariant, self).__init__(*args, **kwargs)
+        self.parent = kwargs.get('parent', None)
+
     def __str__(self):
         return self.uid
 
