@@ -18,7 +18,7 @@ import os
 
 from kobo.shortcuts import run
 
-from pungi.wrappers.repoclosure import RepoclosureWrapper
+from pungi.wrappers import repoclosure
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import get_lookaside_repos
@@ -34,8 +34,6 @@ class TestPhase(PhaseBase):
 
 
 def run_repoclosure(compose):
-    repoclosure = RepoclosureWrapper()
-
     # TODO: Special handling for src packages (use repoclosure param builddeps)
 
     msg = "Running repoclosure"

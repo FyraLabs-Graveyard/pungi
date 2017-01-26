@@ -10,25 +10,19 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.wrappers import repoclosure
+from pungi.wrappers import repoclosure as rc
 
 
 class RepoclosureWrapperTestCase(unittest.TestCase):
     def test_minimal_command(self):
-        rc = repoclosure.RepoclosureWrapper()
-
         self.assertEqual(rc.get_repoclosure_cmd(),
                          ['/usr/bin/repoclosure'])
 
     def test_multiple_arches(self):
-        rc = repoclosure.RepoclosureWrapper()
-
         self.assertEqual(rc.get_repoclosure_cmd(arch=['x86_64', 'ppc64']),
                          ['/usr/bin/repoclosure', '--arch=x86_64', '--arch=ppc64'])
 
     def test_full_command(self):
-        rc = repoclosure.RepoclosureWrapper()
-
         repos = {'my-repo': '/mnt/koji/repo'}
         lookaside = {'fedora': 'http://kojipkgs.fp.o/repo'}
 
@@ -45,7 +39,6 @@ class RepoclosureWrapperTestCase(unittest.TestCase):
              '--lookaside=fedora'])
 
     def test_expand_repo(self):
-        rc = repoclosure.RepoclosureWrapper()
         repos = {
             'local': '/mnt/koji/repo',
             'remote': 'http://kojipkgs.fp.o/repo',
@@ -60,7 +53,6 @@ class RepoclosureWrapperTestCase(unittest.TestCase):
              '--repoid=remote'])
 
     def test_expand_lookaside(self):
-        rc = repoclosure.RepoclosureWrapper()
         repos = {
             'local': '/mnt/koji/repo',
             'remote': 'http://kojipkgs.fp.o/repo',

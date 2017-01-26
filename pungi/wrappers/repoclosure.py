@@ -19,43 +19,38 @@ import os
 from kobo.shortcuts import force_list
 
 
-class RepoclosureWrapper(object):
+def get_repoclosure_cmd(arch=None, builddeps=False,
+                        repos=None, lookaside=None):
 
-    def __init__(self):
-        self.actual_id = 0
+    cmd = ["/usr/bin/repoclosure"]
+    # There are options that are not exposed here, because we don't need
+    # them. These are:
+    # --config
+    # --basearch
+    # --tempcache
+    # --quiet
+    # --newest
+    # --pkg
+    # --group
 
-    def get_repoclosure_cmd(self, arch=None, builddeps=False,
-                            repos=None, lookaside=None):
+    for i in force_list(arch or []):
+        cmd.append("--arch=%s" % i)
 
-        cmd = ["/usr/bin/repoclosure"]
-        # There are options that are not exposed here, because we don't need
-        # them. These are:
-        # --config
-        # --basearch
-        # --tempcache
-        # --quiet
-        # --newest
-        # --pkg
-        # --group
+    if builddeps:
+        cmd.append("--builddeps")
 
-        for i in force_list(arch or []):
-            cmd.append("--arch=%s" % i)
+    repos = repos or {}
+    for repo_id, repo_path in repos.iteritems():
+        if "://" not in repo_path:
+            repo_path = "file://%s" % os.path.abspath(repo_path)
+        cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
+        cmd.append("--repoid=%s" % repo_id)
 
-        if builddeps:
-            cmd.append("--builddeps")
+    lookaside = lookaside or {}
+    for repo_id, repo_path in lookaside.iteritems():
+        if "://" not in repo_path:
+            repo_path = "file://%s" % os.path.abspath(repo_path)
+        cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
+        cmd.append("--lookaside=%s" % repo_id)
 
-        repos = repos or {}
-        for repo_id, repo_path in repos.iteritems():
-            if "://" not in repo_path:
-                repo_path = "file://%s" % os.path.abspath(repo_path)
-            cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
-            cmd.append("--repoid=%s" % repo_id)
-
-        lookaside = lookaside or {}
-        for repo_id, repo_path in lookaside.iteritems():
-            if "://" not in repo_path:
-                repo_path = "file://%s" % os.path.abspath(repo_path)
-            cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
-            cmd.append("--lookaside=%s" % repo_id)
-
-        return cmd
+    return cmd
