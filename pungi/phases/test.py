@@ -64,7 +64,8 @@ def run_repoclosure(compose):
                 for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
                     lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
 
-            cmd = repoclosure.get_repoclosure_cmd(repos=repos, lookaside=lookaside, arch=arches)
+            cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf['repoclosure_backend'],
+                                                  repos=repos, lookaside=lookaside, arch=arches)
             # Use temp working directory directory as workaround for
             # https://bugzilla.redhat.com/show_bug.cgi?id=795137
             tmp_dir = compose.mkdtemp(prefix="repoclosure_")
@@ -87,7 +88,11 @@ def run_repoclosure(compose):
     # In this case, it's an obvious bug in the test.
 
     # check BuildRequires (self-hosting)
-    cmd = repoclosure.get_repoclosure_cmd(repos=all_repos, arch=all_arches, builddeps=True)
+    try:
+        cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf['repoclosure_backend'],
+                                              repos=all_repos, arch=all_arches, builddeps=True)
+    except RuntimeError as exc:
+        compose.log_error('%s, skipping builddeps check...' % str(exc))
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     tmp_dir = compose.mkdtemp(prefix="repoclosure_")

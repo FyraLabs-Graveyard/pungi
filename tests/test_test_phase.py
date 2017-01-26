@@ -177,7 +177,7 @@ class TestRepoclosure(PungiTestCase):
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
-    def test_calls_repoclosure(self, mock_run, mock_grc):
+    def test_repoclosure_default_backend(self, mock_run, mock_grc):
         compose = DummyCompose(self.topdir, {})
         test_phase.run_repoclosure(compose)
         self.maxDiff = None
@@ -189,17 +189,43 @@ class TestRepoclosure(PungiTestCase):
 
         self.assertItemsEqual(
             mock_grc.call_args_list,
-            [mock.call(arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+            [mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Everything', 'amd64')),
-             mock.call(arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+             mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Client', 'amd64')),
-             mock.call(arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+             mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Server', 'amd64')),
-             mock.call(arch=['x86_64', 'noarch'], lookaside={},
+             mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Server', 'x86_64')),
-             mock.call(arch=['x86_64', 'noarch'], lookaside={},
+             mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Everything', 'x86_64')),
-             mock.call(arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
+             mock.call(backend='yum', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_dnf_backend(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {'repoclosure_backend': 'dnf'})
+        test_phase.run_repoclosure(compose)
+        self.maxDiff = None
+        all_repos = {}
+        for variant in compose.variants.itervalues():
+            for arch in variant.arches:
+                all_repos.update(self._get_repo(variant.uid, arch))
+            all_repos.update(self._get_repo(variant.uid, 'src', 'source/tree'))
+
+        self.assertItemsEqual(
+            mock_grc.call_args_list,
+            [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'amd64')),
+             mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Client', 'amd64')),
+             mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'amd64')),
+             mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'x86_64')),
+             mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'x86_64')),
+             mock.call(backend='dnf', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
 
 
 if __name__ == "__main__":

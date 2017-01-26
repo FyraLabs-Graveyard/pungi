@@ -389,5 +389,17 @@ class TestRegexValidation(ConfigTestCase):
             [])
 
 
+class RepoclosureTestCase(ConfigTestCase):
+    def test_invalid_backend(self):
+        cfg = load_config(
+            PKGSET_REPOS,
+            repoclosure_backend='fnd',  # Intentionally with a typo
+        )
+
+        self.assertValidation(
+            cfg,
+            ["Failed validation in repoclosure_backend: 'fnd' is not one of ['yum', 'dnf']"])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -19,19 +19,22 @@ import os
 from kobo.shortcuts import force_list
 
 
-def get_repoclosure_cmd(arch=None, builddeps=False,
+def get_repoclosure_cmd(backend='yum', arch=None, builddeps=False,
                         repos=None, lookaside=None):
+    if backend == 'dnf' and builddeps:
+        raise RuntimeError('dnf repoclosure does not support builddeps')
 
-    cmd = ["/usr/bin/repoclosure"]
+    cmds = {
+        'yum': {'cmd': ['/usr/bin/repoclosure'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
+        'dnf': {'cmd': ['dnf', 'repoclosure'], 'repoarg': '--repo=%s', 'lookaside': '--repo=%s'},
+    }
+    try:
+        cmd = cmds[backend]['cmd']
+    except KeyError:
+        raise RuntimeError('Unknown repoclosure backend: %s' % backend)
+
     # There are options that are not exposed here, because we don't need
-    # them. These are:
-    # --config
-    # --basearch
-    # --tempcache
-    # --quiet
-    # --newest
-    # --pkg
-    # --group
+    # them.
 
     for i in force_list(arch or []):
         cmd.append("--arch=%s" % i)
@@ -42,12 +45,17 @@ def get_repoclosure_cmd(arch=None, builddeps=False,
     repos = repos or {}
     for repo_id, repo_path in repos.iteritems():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
-        cmd.append("--repoid=%s" % repo_id)
+        cmd.append(cmds[backend]['repoarg'] % repo_id)
+        if backend == 'dnf':
+            # For dnf we want to add all repos with the --repo option (which
+            # enables only those and not any system repo), and the repos to
+            # check are also listed with the --check option.
+            cmd.append('--check=%s' % repo_id)
 
     lookaside = lookaside or {}
     for repo_id, repo_path in lookaside.iteritems():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
-        cmd.append("--lookaside=%s" % repo_id)
+        cmd.append(cmds[backend]['lookaside'] % repo_id)
 
     return cmd
 

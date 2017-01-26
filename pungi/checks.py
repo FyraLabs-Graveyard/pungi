@@ -468,6 +468,11 @@ def _make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "repoclosure_backend": {
+                "type": "string",
+                "default": "yum",
+                "enum": ["yum", "dnf"],
+            },
 
             "hashed_directories": {
                 "type": "boolean",
