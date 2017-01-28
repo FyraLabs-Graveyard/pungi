@@ -19,56 +19,48 @@ import os
 from kobo.shortcuts import force_list
 
 
-class RepoclosureWrapper(object):
+def get_repoclosure_cmd(backend='yum', arch=None, builddeps=False,
+                        repos=None, lookaside=None):
+    if backend == 'dnf' and builddeps:
+        raise RuntimeError('dnf repoclosure does not support builddeps')
 
-    def __init__(self):
-        self.actual_id = 0
+    cmds = {
+        'yum': {'cmd': ['/usr/bin/repoclosure'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
+        'dnf': {'cmd': ['dnf', 'repoclosure'], 'repoarg': '--repo=%s', 'lookaside': '--repo=%s'},
+    }
+    try:
+        cmd = cmds[backend]['cmd']
+    except KeyError:
+        raise RuntimeError('Unknown repoclosure backend: %s' % backend)
 
-    def get_repoclosure_cmd(self, config=None, arch=None, basearch=None, builddeps=False,
-                            repos=None, lookaside=None, tempcache=False, quiet=False, newest=False, pkg=None, group=None):
+    # There are options that are not exposed here, because we don't need
+    # them.
 
-        cmd = ["/usr/bin/repoclosure"]
+    for i in force_list(arch or []):
+        cmd.append("--arch=%s" % i)
 
-        if config:
-            cmd.append("--config=%s" % config)
+    if builddeps:
+        cmd.append("--builddeps")
 
-        if arch:
-            for i in force_list(arch):
-                cmd.append("--arch=%s" % i)
+    repos = repos or {}
+    for repo_id, repo_path in repos.iteritems():
+        cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
+        cmd.append(cmds[backend]['repoarg'] % repo_id)
+        if backend == 'dnf':
+            # For dnf we want to add all repos with the --repo option (which
+            # enables only those and not any system repo), and the repos to
+            # check are also listed with the --check option.
+            cmd.append('--check=%s' % repo_id)
 
-        if basearch:
-            cmd.append("--basearch=%s" % basearch)
+    lookaside = lookaside or {}
+    for repo_id, repo_path in lookaside.iteritems():
+        cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
+        cmd.append(cmds[backend]['lookaside'] % repo_id)
 
-        if builddeps:
-            cmd.append("--builddeps")
+    return cmd
 
-        if tempcache:
-            cmd.append("--tempcache")
 
-        if quiet:
-            cmd.append("--quiet")
-
-        if newest:
-            cmd.append("--newest")
-
-        repos = repos or {}
-        for repo_id, repo_path in repos.iteritems():
-            if "://" not in repo_path:
-                repo_path = "file://%s" % os.path.abspath(repo_path)
-            cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
-            cmd.append("--repoid=%s" % repo_id)
-
-        lookaside = lookaside or {}
-        for repo_id, repo_path in lookaside.iteritems():
-            if "://" not in repo_path:
-                repo_path = "file://%s" % os.path.abspath(repo_path)
-            cmd.append("--repofrompath=%s,%s" % (repo_id, repo_path))
-            cmd.append("--lookaside=%s" % repo_id)
-
-        if pkg:
-            cmd.append("--pkg=%s" % pkg)
-
-        if group:
-            cmd.append("--group=%s" % group)
-
-        return cmd
+def _to_url(path):
+    if "://" not in path:
+        return "file://%s" % os.path.abspath(path)
+    return path

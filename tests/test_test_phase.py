@@ -40,7 +40,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Failable deliverable must not raise')
 
     def test_correct_iso_does_not_raise(self):
@@ -51,7 +51,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Correct unbootable image must not raise')
 
     def test_incorrect_iso_raises(self):
@@ -87,7 +87,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Failable deliverable must not raise')
 
     def test_failable_bootable_iso_without_mbr_gpt_doesnt_raise(self):
@@ -100,7 +100,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Failable deliverable must not raise')
 
     def test_bootable_iso_with_mbr_does_not_raise(self):
@@ -111,7 +111,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Bootable image with MBR must not raise')
 
     def test_bootable_iso_with_gpt_does_not_raise(self):
@@ -122,7 +122,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Bootable image with GPT must not raise')
 
     def test_bootable_iso_with_mbr_and_gpt_does_not_raise(self):
@@ -133,7 +133,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Bootable image with MBR and GPT must not raise')
 
     def test_bootable_iso_with_el_torito_does_not_raise(self):
@@ -144,7 +144,7 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Bootable image with El Torito must not raise')
 
     def test_checks_with_optional_variant(self):
@@ -163,8 +163,69 @@ class TestCheckImageSanity(PungiTestCase):
 
         try:
             test_phase.check_image_sanity(compose)
-        except:
+        except Exception:
             self.fail('Checking optional variant must not raise')
+
+
+class TestRepoclosure(PungiTestCase):
+
+    def _get_repo(self, variant, arch, path=None):
+        path = path or arch + '/os'
+        return {
+            'repoclosure-%s.%s' % (variant, arch): self.topdir + '/compose/%s/%s' % (variant, path)
+        }
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_default_backend(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {})
+        test_phase.run_repoclosure(compose)
+        self.maxDiff = None
+        all_repos = {}
+        for variant in compose.variants.itervalues():
+            for arch in variant.arches:
+                all_repos.update(self._get_repo(variant.uid, arch))
+            all_repos.update(self._get_repo(variant.uid, 'src', 'source/tree'))
+
+        self.assertItemsEqual(
+            mock_grc.call_args_list,
+            [mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'amd64')),
+             mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Client', 'amd64')),
+             mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'amd64')),
+             mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'x86_64')),
+             mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'x86_64')),
+             mock.call(backend='yum', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_dnf_backend(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {'repoclosure_backend': 'dnf'})
+        test_phase.run_repoclosure(compose)
+        self.maxDiff = None
+        all_repos = {}
+        for variant in compose.variants.itervalues():
+            for arch in variant.arches:
+                all_repos.update(self._get_repo(variant.uid, arch))
+            all_repos.update(self._get_repo(variant.uid, 'src', 'source/tree'))
+
+        self.assertItemsEqual(
+            mock_grc.call_args_list,
+            [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'amd64')),
+             mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Client', 'amd64')),
+             mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'amd64')),
+             mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'x86_64')),
+             mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Everything', 'x86_64')),
+             mock.call(backend='dnf', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
 
 
 if __name__ == "__main__":

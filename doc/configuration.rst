@@ -152,6 +152,12 @@ Options
     ([*str*]) -- list of variants which should be included; if undefined, all
     variants from variants.xml will be included
 
+**repoclosure_backend**
+    (*str*) -- Select which tool should be used to run repoclosure over created
+    repositories. By default ``yum`` is used, but you can switch to ``dnf``.
+    Please note that when ``dnf`` is used, the build dependencies check is
+    skipped.
+
 
 Example
 -------
