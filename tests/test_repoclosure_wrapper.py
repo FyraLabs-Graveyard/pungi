@@ -36,13 +36,11 @@ class RepoclosureWrapperTestCase(unittest.TestCase):
         repos = {'my-repo': '/mnt/koji/repo'}
         lookaside = {'fedora': 'http://kojipkgs.fp.o/repo'}
 
-        cmd = rc.get_repoclosure_cmd(arch='x86_64', builddeps=True,
-                                     repos=repos, lookaside=lookaside)
+        cmd = rc.get_repoclosure_cmd(arch='x86_64', repos=repos, lookaside=lookaside)
         self.assertEqual(cmd[0], '/usr/bin/repoclosure')
         self.assertItemsEqual(
             cmd[1:],
             ['--arch=x86_64',
-             '--builddeps',
              '--repofrompath=my-repo,file:///mnt/koji/repo',
              '--repofrompath=fedora,http://kojipkgs.fp.o/repo',
              '--repoid=my-repo',

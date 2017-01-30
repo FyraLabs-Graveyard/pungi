@@ -19,11 +19,7 @@ import os
 from kobo.shortcuts import force_list
 
 
-def get_repoclosure_cmd(backend='yum', arch=None, builddeps=False,
-                        repos=None, lookaside=None):
-    if backend == 'dnf' and builddeps:
-        raise RuntimeError('dnf repoclosure does not support builddeps')
-
+def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
     cmds = {
         'yum': {'cmd': ['/usr/bin/repoclosure'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
         'dnf': {'cmd': ['dnf', 'repoclosure'], 'repoarg': '--repo=%s', 'lookaside': '--repo=%s'},
@@ -38,9 +34,6 @@ def get_repoclosure_cmd(backend='yum', arch=None, builddeps=False,
 
     for i in force_list(arch or []):
         cmd.append("--arch=%s" % i)
-
-    if builddeps:
-        cmd.append("--builddeps")
 
     repos = repos or {}
     for repo_id, repo_path in repos.iteritems():

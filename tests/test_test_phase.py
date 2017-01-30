@@ -198,8 +198,7 @@ class TestRepoclosure(PungiTestCase):
              mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Server', 'x86_64')),
              mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'x86_64')),
-             mock.call(backend='yum', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
+                       repos=self._get_repo('Everything', 'x86_64'))])
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
@@ -224,8 +223,7 @@ class TestRepoclosure(PungiTestCase):
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Server', 'x86_64')),
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'x86_64')),
-             mock.call(backend='dnf', arch={'x86_64', 'amd64', 'noarch'}, builddeps=True, repos=all_repos)])
+                       repos=self._get_repo('Everything', 'x86_64'))])
 
 
 if __name__ == "__main__":

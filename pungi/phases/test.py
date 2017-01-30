@@ -34,18 +34,13 @@ class TestPhase(PhaseBase):
 
 
 def run_repoclosure(compose):
-    # TODO: Special handling for src packages (use repoclosure param builddeps)
-
     msg = "Running repoclosure"
     compose.log_info("[BEGIN] %s" % msg)
 
     # Variant repos
-    all_repos = {}  # to be used as lookaside for the self-hosting check
-    all_arches = set()
     for arch in compose.get_arches():
         is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
-        all_arches.update(arches)
         for variant in compose.get_variants(arch=arch):
             if variant.is_empty:
                 continue
@@ -70,36 +65,10 @@ def run_repoclosure(compose):
             # https://bugzilla.redhat.com/show_bug.cgi?id=795137
             tmp_dir = compose.mkdtemp(prefix="repoclosure_")
             try:
-                run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure-%s" % variant), show_cmd=True, can_fail=True, workdir=tmp_dir)
+                run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure-%s" % variant),
+                    show_cmd=True, can_fail=True, workdir=tmp_dir)
             finally:
                 rmtree(tmp_dir)
-
-            all_repos.update(repos)
-            all_repos.update(lookaside)
-            repo_id = "repoclosure-%s.%s" % (variant.uid, "src")
-            repo_dir = compose.paths.compose.repository(arch="src", variant=variant)
-            all_repos[repo_id] = repo_dir
-
-    # A SRPM can be built on any arch and is always rebuilt before building on the target arch.
-    # This means the deps can't be always satisfied within one tree arch.
-    # As a workaround, let's run the self-hosting check across all repos.
-
-    # XXX: This doesn't solve a situation, when a noarch package is excluded due to ExcludeArch/ExclusiveArch and it's still required on that arch.
-    # In this case, it's an obvious bug in the test.
-
-    # check BuildRequires (self-hosting)
-    try:
-        cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf['repoclosure_backend'],
-                                              repos=all_repos, arch=all_arches, builddeps=True)
-    except RuntimeError as exc:
-        compose.log_error('%s, skipping builddeps check...' % str(exc))
-    # Use temp working directory directory as workaround for
-    # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    tmp_dir = compose.mkdtemp(prefix="repoclosure_")
-    try:
-        run(cmd, logfile=compose.paths.log.log_file("global", "repoclosure-builddeps"), show_cmd=True, can_fail=True, workdir=tmp_dir)
-    finally:
-        rmtree(tmp_dir)
 
     compose.log_info("[DONE ] %s" % msg)
 
