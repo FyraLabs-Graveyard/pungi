@@ -31,8 +31,6 @@ class KojiWrapper(object):
 
     def __init__(self, profile):
         self.profile = profile
-        # assumption: profile name equals executable name (it's a symlink -> koji)
-        self.executable = self.profile.replace("_", "-")
         with self.lock:
             self.koji_module = koji.get_profile_module(profile)
             session_opts = {}
@@ -61,8 +59,11 @@ class KojiWrapper(object):
         else:
             raise RuntimeError('Unsupported authentication type in Koji')
 
+    def _get_cmd(self, *args):
+        return ["koji", "--profile=%s" % self.profile] + list(args)
+
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True, new_chroot=False):
-        cmd = [self.executable, "runroot"]
+        cmd = self._get_cmd("runroot")
 
         if quiet:
             cmd.append("--quiet")
@@ -155,7 +156,7 @@ class KojiWrapper(object):
         cfg_parser.write(fd)
         fd.close()
 
-        cmd = [self.executable, sub_command, "--config=%s" % conf_file_dest]
+        cmd = self._get_cmd(sub_command, "--config=%s" % conf_file_dest)
         if wait:
             cmd.append("--wait")
         if scratch:
@@ -164,14 +165,8 @@ class KojiWrapper(object):
         return cmd
 
     def get_live_media_cmd(self, options, wait=True):
-        # Usage: koji --profile=<koji_profile> spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
-        cmd = ['koji']
-
-        if 'koji_profile' not in options:
-            raise ValueError('Expected options to have key "koji_profile"')
-        cmd.append('--profile=%s' % options['koji_profile'])
-
-        cmd.append('spin-livemedia')
+        # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
+        cmd = self._get_cmd('spin-livemedia')
 
         for key in ('name', 'version', 'target', 'arch', 'ksfile'):
             if key not in options:
@@ -216,7 +211,7 @@ class KojiWrapper(object):
         #  * version: YYYYMMDD[.n|.t].X
         #  * release: 1
 
-        cmd = [self.executable]
+        cmd = self._get_cmd()
 
         if image_type == "live":
             cmd.append("spin-livecd")
@@ -281,7 +276,7 @@ class KojiWrapper(object):
         """Tries to wait for a task to finish. On connection error it will
         retry with `watch-task` command.
         """
-        cmd = [self.executable, 'watch-task', str(task_id)]
+        cmd = self._get_cmd('watch-task', str(task_id))
         attempt = 0
 
         while True:

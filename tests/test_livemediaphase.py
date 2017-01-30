@@ -380,8 +380,7 @@ class TestLiveMediaPhase(PungiTestCase):
                         'failable': ['*'],
                     }
                 ]
-            },
-            'koji_profile': 'koji',
+            }
         })
         compose.setup_optional()
 
