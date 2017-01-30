@@ -284,11 +284,11 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
     def test_get_live_media_cmd_minimal(self):
         opts = {
             'name': 'name', 'version': '1', 'target': 'tgt', 'arch': 'x,y,z',
-            'ksfile': 'kickstart', 'install_tree': '/mnt/os'
+            'ksfile': 'kickstart', 'install_tree': '/mnt/os', 'koji_profile': 'koji',
         }
         cmd = self.koji.get_live_media_cmd(opts)
         self.assertEqual(cmd,
-                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+                         ['koji', '--profile=koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os', '--wait'])
 
     def test_get_live_media_cmd_full(self):
@@ -297,12 +297,13 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
             'ksfile': 'kickstart', 'install_tree': '/mnt/os', 'scratch': True,
             'repo': ['repo-1', 'repo-2'], 'skip_tag': True,
             'ksurl': 'git://example.com/ksurl.git', 'release': '20160222.1',
+            'koji_profile': 'koji',
         }
         cmd = self.koji.get_live_media_cmd(opts)
-        self.assertEqual(cmd[:8],
-                         ['koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
+        self.assertEqual(cmd[:9],
+                         ['koji', '--profile=koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os'])
-        self.assertItemsEqual(cmd[8:],
+        self.assertItemsEqual(cmd[9:],
                               ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait',
                                '--ksurl=git://example.com/ksurl.git', '--release=20160222.1'])
 
