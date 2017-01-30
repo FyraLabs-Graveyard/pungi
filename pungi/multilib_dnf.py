@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 
@@ -16,30 +15,35 @@
 
 
 import re
-import fnmatch
 
 
 RE_SONAME = re.compile(r"^.*\.so\.\d+.*$")
 
 
 class Multilib(object):
-    def __init__(self, sack, methods, blacklist=None, whitelist=None):
-        self.sack = sack
+    """This class decides whether a package should be multilib.
+
+    To use it, create an instance and call the ``is_multilib`` method on it.
+    The blacklist and whitelist in constructor should be sets of package names.
+
+    It may be more convenient to create the instance with the ``from_globs``
+    method that accepts a DNF sach and an iterable of globs that will be used
+    to find package names.
+    """
+    def __init__(self, methods, blacklist, whitelist):
         self.methods = {}
-        self.blacklist = blacklist or []
-        self.whitelist = whitelist or []
+        self.blacklist = blacklist
+        self.whitelist = whitelist
 
         for method in methods:
             self.methods[method] = getattr(self, "method_%s" % method)
 
-    def _match_one(self, pkg, pattern):
-        return fnmatch.fnmatch(pkg.name, pattern)
-
-    def _match_any(self, pkg, pattern_list):
-        for i in pattern_list:
-            if self._match_one(pkg, i):
-                return True
-        return False
+    @classmethod
+    def from_globs(cls, sack, methods, blacklist=None, whitelist=None):
+        """Create a Multilib instance with expanded blacklist and whitelist."""
+        return cls(methods,
+                   _expand_list(sack, blacklist or []),
+                   _expand_list(sack, whitelist or []))
 
     def method_none(self, pkg):
         return False
@@ -69,11 +73,16 @@ class Multilib(object):
         return False
 
     def is_multilib(self, pkg):
-        if self._match_any(pkg, self.blacklist):
+        if pkg.name in self.blacklist:
             return False
-        if self._match_any(pkg, self.whitelist):
+        if pkg.name in self.whitelist:
             return 'whitelist'
         for method, func in self.methods.iteritems():
             if func(pkg):
                 return method
         return False
+
+
+def _expand_list(sack, patterns):
+    """Find all package names that match any of the provided patterns."""
+    return set(pkg.name for pkg in sack.query().filter(name__glob=list(patterns)))

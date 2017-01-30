@@ -172,10 +172,11 @@ class Gather(GatherBase):
 
         self.opts = gather_options
         self.logger.debug("Gather received gather_options=%s" % gather_options.__dict__)
-        self._multilib = pungi.multilib_dnf.Multilib(self.dnf._sack,
-                                                     gather_options.multilib_methods,
-                                                     blacklist=self.opts.multilib_blacklist,
-                                                     whitelist=self.opts.multilib_whitelist)
+        self._multilib = pungi.multilib_dnf.Multilib.from_globs(
+            self.dnf._sack,
+            gather_options.multilib_methods,
+            blacklist=self.opts.multilib_blacklist,
+            whitelist=self.opts.multilib_whitelist)
 
         # already processed packages
         self.finished_add_binary_package_deps = {}      # {pkg: [deps]}
