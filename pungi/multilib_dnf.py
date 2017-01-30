@@ -55,9 +55,9 @@ class Multilib(object):
         for prov in pkg.provides:
             # TODO: split reldep to name/flag/value
             prov = str(prov).split(" ")[0]
-            if "-devel" in prov:
+            if prov.endswith("-devel"):
                 return True
-            if "-static" in prov:
+            if prov.endswith("-static"):
                 return True
         return False
 
