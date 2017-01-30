@@ -25,14 +25,12 @@ RE_SONAME = re.compile(r"^.*\.so\.\d+.*$")
 class Multilib(object):
     def __init__(self, sack, methods, blacklist=None, whitelist=None):
         self.sack = sack
-        self.methods = []
+        self.methods = {}
         self.blacklist = blacklist or []
         self.whitelist = whitelist or []
 
-        for i in methods:
-            name = "method_%s" % i
-            func = getattr(self, name)
-            self.methods.append(func)
+        for method in methods:
+            self.methods[method] = getattr(self, "method_%s" % method)
 
     def _match_one(self, pkg, pattern):
         return fnmatch.fnmatch(pkg.name, pattern)
@@ -74,8 +72,8 @@ class Multilib(object):
         if self._match_any(pkg, self.blacklist):
             return False
         if self._match_any(pkg, self.whitelist):
-            return True
-        for i in self.methods:
-            if i(pkg):
-                return True
+            return 'whitelist'
+        for method, func in self.methods.iteritems():
+            if func(pkg):
+                return method
         return False

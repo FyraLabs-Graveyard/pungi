@@ -714,7 +714,7 @@ class Gather(GatherBase):
                     multilib_pkgs.append(i)
                     added.add(i)
                     self._set_flag(i, PkgFlag.multilib)
-                    self._add_packages([i], reason='multilib')
+                    self._add_packages([i], reason='multilib:%s' % is_multilib)
                     self.finished_add_multilib_packages[pkg] = i
                     # TODO: ^^^ may get multiple results; i686, i586, etc.
 
