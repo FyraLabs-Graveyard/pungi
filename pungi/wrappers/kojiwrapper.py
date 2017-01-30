@@ -164,14 +164,19 @@ class KojiWrapper(object):
         return cmd
 
     def get_live_media_cmd(self, options, wait=True):
-        # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
-        cmd = ['koji', 'spin-livemedia']
+        # Usage: koji --profile=<koji_profile> spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
+        cmd = ['koji']
+
+        if 'koji_profile' not in options:
+            raise ValueError('Expected options to have key "koji_profile"')
+        cmd.append('--profile=%s' % options['koji_profile'])
+
+        cmd.append('spin-livemedia')
 
         for key in ('name', 'version', 'target', 'arch', 'ksfile'):
             if key not in options:
                 raise ValueError('Expected options to have key "%s"' % key)
             cmd.append(options[key])
-
         if 'install_tree' not in options:
             raise ValueError('Expected options to have key "install_tree"')
         cmd.append('--install-tree=%s' % options['install_tree'])
