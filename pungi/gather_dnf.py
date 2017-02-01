@@ -28,6 +28,11 @@ import pungi.multilib_dnf
 from pungi.profiler import Profiler
 
 
+def get_source_name(pkg):
+    # Workaround for rhbz#1418298
+    return pkg.sourcerpm.rsplit('-', 2)[0]
+
+
 class GatherOptions(pungi.common.OptionsBase):
     def __init__(self, **kwargs):
         super(GatherOptions, self).__init__()
@@ -590,7 +595,7 @@ class Gather(GatherBase):
         for pkg in sorted(self.result_binary_packages):
             assert pkg is not None
 
-            if pkg.source_name in self.opts.fulltree_excludes:
+            if get_source_name(pkg) in self.opts.fulltree_excludes:
                 self.logger.debug('No fulltree for %s due to exclude list', pkg)
                 continue
 
