@@ -1711,10 +1711,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_bash_older(self):
         pass
 
-    @unittest.skip('Not implemented yet')
-    def test_multilib_exclude_pattern_does_not_match_noarch(self):
-        pass
-
     def test_firefox_selfhosting_with_krb5_lookaside(self):
         super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
         self.assertFlags("dummy-krb5-1.10-5.x86_64", [PkgFlag.lookaside])

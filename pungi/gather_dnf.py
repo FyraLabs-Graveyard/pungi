@@ -325,7 +325,7 @@ class Gather(GatherBase):
             with Profiler("Gather.add_initial_packages():exclude"):
                 # TODO: debug
                 if pattern.endswith(".+"):
-                    pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2])
+                    pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2], arch__neq='noarch')
                 elif pattern.endswith(".src"):
                     pkgs = self.q_source_packages.filter(name__glob=pattern[:-4])
                 else:
