@@ -433,9 +433,7 @@ class Gather(GatherBase):
         for pkg in self.result_binary_packages.copy():
             assert pkg is not None
 
-            try:
-                deps = self.finished_add_binary_package_deps[pkg]
-            except KeyError:
+            if pkg not in self.finished_add_binary_package_deps:
                 deps = self._get_package_deps(pkg)
                 for i in deps:
                     if i not in self.result_binary_packages:
