@@ -550,29 +550,33 @@ class Gather(GatherBase):
         for pkg in self.result_binary_packages:
             assert pkg is not None
 
-            if self.is_noarch_package(pkg):
-                self.finished_add_debug_packages[pkg] = []
-                continue
-
             if pkg in self.finished_add_debug_packages:
                 continue
 
-            debug_pkgs = []
+            candidates = []
             if pkg.sourcerpm:
                 if self.is_native_package(pkg):
-                    debug_pkgs = self.native_debug_packages_cache.get(pkg.sourcerpm)
+                    candidates = self.native_debug_packages_cache.get(pkg.sourcerpm)
                 else:
-                    debug_pkgs = self.multilib_debug_packages_cache.get(pkg.sourcerpm)
+                    candidates = self.multilib_debug_packages_cache.get(pkg.sourcerpm)
 
-            if not debug_pkgs:
+            if not candidates:
                 continue
 
+            debug_pkgs = []
             lookaside = self._has_flag(pkg, PkgFlag.lookaside)
-            for i in debug_pkgs:
+            for i in candidates:
+                if pkg.arch == 'noarch' and i.arch != 'noarch':
+                    # If the package is noarch, we will only pull debuginfo if
+                    # it's noarch as well. This covers mingw use case, but
+                    # means we don't for example pull debuginfo just because of
+                    # -doc subpackage.
+                    continue
                 if lookaside:
                     self._set_flag(i, PkgFlag.lookaside)
                 if i not in self.result_debug_packages:
                     added.add(i)
+                    debug_pkgs.append(i)
 
             self.finished_add_debug_packages[pkg] = debug_pkgs
             self.result_debug_packages.update(debug_pkgs)

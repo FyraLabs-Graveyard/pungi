@@ -1699,14 +1699,6 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         self.get_langpacks = True
         super(DNFDepsolvingTestCase, self).test_langpacks()
 
-    @unittest.skip('Not implemented yet')
-    def test_noarch_debuginfo(self):
-        """
-        Noarch packages do not pull in any debuginfo. Removing the check breaks
-        test_bash_multilib, because dummy-bash-doc.noarch ultimately drags in
-        dummy-bash-debuginfo.x86_64 as well.
-        """
-
     @unittest.skip('DNF code does not support NVR as input')
     def test_bash_older(self):
         pass
