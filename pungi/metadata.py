@@ -256,11 +256,11 @@ def write_tree_info(compose, arch, variant, timestamp=None):
         addon.type = i.type
 
         os_tree = compose.paths.compose.os_tree(arch=arch, variant=i).rstrip("/") + "/"
-        addon.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
-        addon.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+        addon.paths.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+        addon.paths.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
         var.add(addon)
 
-        repomd_path = os.path.join(addon.repository, "repodata", "repomd.xml")
+        repomd_path = os.path.join(addon.paths.repository, "repodata", "repomd.xml")
         if os.path.isfile(repomd_path):
             ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
 
