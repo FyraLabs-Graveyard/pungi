@@ -19,7 +19,6 @@ from enum import Enum
 from itertools import count
 import logging
 
-import hawkey
 from kobo.rpmlib import parse_nvra
 
 import pungi.common
@@ -355,7 +354,7 @@ class Gather(GatherBase):
         for pattern in includes:
             with Profiler("Gather.add_initial_packages():include"):
                 if pattern == "system-release" and self.opts.greedy_method == "all":
-                    pkgs = self.q_binary_packages.filter(provides=hawkey.Reldep(self.dnf.sack, "system-release")).apply()
+                    pkgs = self.q_binary_packages.filter(provides="system-release").apply()
                 else:
                     if pattern.endswith(".+"):
                         pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2]).apply()
