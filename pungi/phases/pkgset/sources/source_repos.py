@@ -25,7 +25,7 @@ from pungi.util import makedirs, is_arch_multilib
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
-from pungi.phases.gather import get_prepopulate_packages
+from pungi.phases.gather import get_prepopulate_packages, get_additional_packages
 from pungi.linker import LinkerThread, LinkerPool
 
 
@@ -159,7 +159,8 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
 
     packages = []
     pkgs, grps = src(arch, variant)
-    for pkg_name, pkg_arch in pkgs:
+    additional_packages = get_additional_packages(compose, arch, None)
+    for pkg_name, pkg_arch in pkgs | additional_packages:
         if pkg_arch is None:
             packages.append(pkg_name)
         else:
