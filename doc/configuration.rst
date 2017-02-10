@@ -547,7 +547,6 @@ Options
      * ``none``
      * ``all``
      * ``runtime``
-     * ``file``
      * ``kernel``
      * ``yaboot``
 

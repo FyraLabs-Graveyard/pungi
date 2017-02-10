@@ -185,34 +185,6 @@ class RuntimeMultilibMethod(MultilibMethodBase):
         return False
 
 
-class FileMultilibMethod(MultilibMethodBase):
-    """explicitely defined whitelist and blacklist"""
-    name = "file"
-
-    def __init__(self, *args, **kwargs):
-        super(FileMultilibMethod, self).__init__(*args, **kwargs)
-        whitelist = kwargs.pop("whitelist", None)
-        blacklist = kwargs.pop("blacklist", None)
-        self.whitelist = self.read_file(whitelist)
-        self.blacklist = self.read_file(blacklist)
-
-    @staticmethod
-    def read_file(path):
-        if not path:
-            return []
-        result = [ i.strip() for i in open(path, "r") if not i.strip().startswith("#") ]
-        return result
-
-    def select(self, po):
-        for pattern in self.blacklist:
-            if fnmatch.fnmatch(po.name, pattern):
-                return False
-        for pattern in self.whitelist:
-            if fnmatch.fnmatch(po.name, pattern):
-                return False
-        return False
-
-
 class KernelMultilibMethod(MultilibMethodBase):
     """kernel and kernel-devel"""
     name = "kernel"
@@ -282,7 +254,7 @@ def init(config_path="/usr/share/pungi/multilib/"):
     if not config_path.endswith("/"):
         config_path += "/"
 
-    for cls in (AllMultilibMethod, DevelMultilibMethod, FileMultilibMethod, KernelMultilibMethod,
+    for cls in (AllMultilibMethod, DevelMultilibMethod, KernelMultilibMethod,
                 NoneMultilibMethod, RuntimeMultilibMethod, YabootMultilibMethod):
         method = cls(config_path)
         METHOD_MAP[method.name] = method
