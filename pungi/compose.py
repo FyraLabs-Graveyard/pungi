@@ -72,14 +72,13 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
         #         break
 
         # already_exists_callbacks fallback: does target compose_dir exist?
-        if not exists:
-            try:
-                os.makedirs(compose_dir)
-            except OSError as ex:
-                if ex.errno == errno.EEXIST:
-                    exists = True
-                else:
-                    raise
+        try:
+            os.makedirs(compose_dir)
+        except OSError as ex:
+            if ex.errno == errno.EEXIST:
+                exists = True
+            else:
+                raise
 
         if exists:
             ci.compose.respin += 1
