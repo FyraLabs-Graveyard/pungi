@@ -15,6 +15,7 @@ BuildRequires:  yum => 3.4.3-28, createrepo >= 0.4.11
 BuildRequires:  gettext, git-core, cvs
 BuildRequires:  python-jsonschema
 BuildRequires:  python-enum34
+BuildRequires:  python2-dnf
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -40,6 +41,7 @@ Requires:       git
 Requires:       python-jsonschema
 Requires:       libguestfs-tools-c
 Requires:       python-enum34
+Requires:       python2-dnf
 
 BuildArch:      noarch
 
@@ -76,6 +78,7 @@ rm -rf %{buildroot}
 %{python_sitelib}/%{name}-%{version}-py?.?.egg-info
 %{_bindir}/%{name}
 %{_bindir}/%{name}-koji
+%{_bindir}/%{name}-gather
 %{_bindir}/comps_filter
 %{_bindir}/%{name}-make-ostree
 %{_datadir}/%{name}
