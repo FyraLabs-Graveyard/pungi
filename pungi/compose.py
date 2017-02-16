@@ -134,7 +134,11 @@ class Compose(kobo.log.LoggingBase):
                 self.im.load(self.paths.compose.metadata("images.json"))
             except RuntimeError:
                 pass
+            # images.json doesn't exists
             except IOError:
+                pass
+            # images.json is not a valid json file, for example, it's an empty file
+            except ValueError:
                 pass
         self.im.compose.id = self.compose_id
         self.im.compose.type = self.compose_type
