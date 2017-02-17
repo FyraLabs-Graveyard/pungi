@@ -4,12 +4,9 @@
 from __future__ import print_function
 
 import argparse
-import contextlib
 import kobo.conf
 import os
-import shutil
 import sys
-import tempfile
 
 here = sys.path[0]
 if here != '/usr/bin':
@@ -20,6 +17,7 @@ import pungi.compose
 import pungi.checks
 import pungi.paths
 import pungi.phases
+import pungi.util
 
 
 class ValidationCompose(pungi.compose.Compose):
@@ -51,13 +49,6 @@ class ValidationCompose(pungi.compose.Compose):
     @property
     def compose_respin(self):
         return '0'
-
-
-@contextlib.contextmanager
-def in_temp_dir():
-    tempdir = tempfile.mkdtemp()
-    yield tempdir
-    shutil.rmtree(tempdir)
 
 
 def run(config, topdir, has_old):
@@ -112,7 +103,7 @@ def main(args=None):
                         help='indicate if pungi-koji will be run with --old-composes option')
     opts = parser.parse_args(args)
 
-    with in_temp_dir() as topdir:
+    with pungi.util.temp_dir() as topdir:
         errors = run(opts.config, topdir, opts.old_composes)
 
     for msg in errors:

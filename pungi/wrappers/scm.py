@@ -16,35 +16,19 @@ from __future__ import absolute_import
 
 
 import os
-import tempfile
 import shutil
 import pipes
 import glob
 import time
-import contextlib
 
 import kobo.log
 from kobo.shortcuts import run, force_list
-from pungi.util import explode_rpm_package, makedirs, copy_all
+from pungi.util import explode_rpm_package, makedirs, copy_all, temp_dir
 
 
 class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
-
-    @contextlib.contextmanager
-    def _temp_dir(self, tmp_dir=None):
-        if tmp_dir is not None:
-            makedirs(tmp_dir)
-        path = tempfile.mkdtemp(prefix="cvswrapper_", dir=tmp_dir)
-
-        yield path
-
-        self.log_debug("Removing %s" % path)
-        try:
-            shutil.rmtree(path)
-        except OSError as ex:
-            self.log_warning("Error removing %s: %s" % (path, ex))
 
     def retry_run(self, cmd, retries=5, timeout=60, **kwargs):
         """
@@ -96,7 +80,7 @@ class CvsWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+        with temp_dir(dir=tmp_dir) as tmp_dir:
             self.log_debug("Exporting directory %s from CVS %s (branch %s)..."
                            % (scm_dir, scm_root, scm_branch))
             self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir],
@@ -106,7 +90,7 @@ class CvsWrapper(ScmBase):
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+        with temp_dir(dir=tmp_dir) as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
             self.log_debug("Exporting file %s from CVS %s (branch %s)..." % (scm_file, scm_root, scm_branch))
             self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_file],
@@ -121,7 +105,7 @@ class GitWrapper(ScmBase):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "master"
 
-        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+        with temp_dir(dir=tmp_dir) as tmp_dir:
             if "://" not in scm_root:
                 scm_root = "file://%s" % scm_root
 
@@ -142,7 +126,7 @@ class GitWrapper(ScmBase):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "master"
 
-        with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+        with temp_dir(dir=tmp_dir) as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
 
             if "://" not in scm_root:
@@ -172,7 +156,7 @@ class RpmScmWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         for rpm in self._list_rpms(scm_root):
             scm_dir = scm_dir.lstrip("/")
-            with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            with temp_dir(dir=tmp_dir) as tmp_dir:
                 self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
                 explode_rpm_package(rpm, tmp_dir)
 
@@ -187,7 +171,7 @@ class RpmScmWrapper(ScmBase):
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
         for rpm in self._list_rpms(scm_root):
             scm_file = scm_file.lstrip("/")
-            with self._temp_dir(tmp_dir=tmp_dir) as tmp_dir:
+            with temp_dir(dir=tmp_dir) as tmp_dir:
                 self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
                 explode_rpm_package(rpm, tmp_dir)
 
@@ -256,10 +240,9 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
 
     files_copied = []
     for i in force_list(scm_file):
-        tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
-        scm.export_file(scm_repo, i, scm_branch=scm_branch, target_dir=tmp_dir)
-        files_copied += copy_all(tmp_dir, target_path)
-        shutil.rmtree(tmp_dir)
+        with temp_dir(prefix="scm_checkout_") as tmp_dir:
+            scm.export_file(scm_repo, i, scm_branch=scm_branch, target_dir=tmp_dir)
+            files_copied += copy_all(tmp_dir, target_path)
     return files_copied
 
 
@@ -306,8 +289,7 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
 
     scm = _get_wrapper(scm_type, logger=logger)
 
-    tmp_dir = tempfile.mkdtemp(prefix="scm_checkout_")
-    scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
-    files_copied = copy_all(tmp_dir, target_path)
-    shutil.rmtree(tmp_dir)
+    with temp_dir(prefix="scm_checkout_") as tmp_dir:
+        scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
+        files_copied = copy_all(tmp_dir, target_path)
     return files_copied

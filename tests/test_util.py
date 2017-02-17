@@ -406,5 +406,27 @@ class TestRecursiveFileList(unittest.TestCase):
         self.assertEqual(expected_files, actual_files)
 
 
+class TestTempFiles(unittest.TestCase):
+    def test_temp_dir_ok(self):
+        with util.temp_dir() as tmp:
+            self.assertTrue(os.path.isdir(tmp))
+        self.assertFalse(os.path.exists(tmp))
+
+    def test_temp_dir_fail(self):
+        with self.assertRaises(RuntimeError):
+            with util.temp_dir() as tmp:
+                self.assertTrue(os.path.isdir(tmp))
+                raise RuntimeError('BOOM')
+        self.assertFalse(os.path.exists(tmp))
+
+    def test_temp_dir_in_non_existing_dir(self):
+        with util.temp_dir() as playground:
+            root = os.path.join(playground, 'missing')
+            with util.temp_dir(dir=root) as tmp:
+                self.assertTrue(os.path.isdir(tmp))
+            self.assertTrue(os.path.isdir(root))
+            self.assertFalse(os.path.exists(tmp))
+
+
 if __name__ == "__main__":
     unittest.main()

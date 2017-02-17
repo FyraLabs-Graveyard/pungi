@@ -25,6 +25,7 @@ import re
 import urlparse
 import contextlib
 import traceback
+import tempfile
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -572,3 +573,22 @@ def levenshtein(a, b):
                             mat[j - 1][i - 1] + cost)
 
     return mat[len(b)][len(a)]
+
+
+@contextlib.contextmanager
+def temp_dir(log=None, *args, **kwargs):
+    """Create a temporary directory and ensure it's deleted."""
+    if kwargs.get('dir'):
+        # If we are supposed to create the temp dir in a particular location,
+        # ensure the location already exists.
+        makedirs(kwargs['dir'])
+    dir = tempfile.mkdtemp(*args, **kwargs)
+    try:
+        yield dir
+    finally:
+        try:
+            shutil.rmtree(dir)
+        except OSError as exc:
+            # Okay, we failed to delete temporary dir.
+            if log:
+                log.warning('Error removing %s: %s', dir, exc.strerror)
