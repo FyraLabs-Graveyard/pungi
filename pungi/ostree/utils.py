@@ -16,10 +16,18 @@
 
 import datetime
 import json
+import logging
 import os
 import rpmUtils.arch
 
 from pungi.util import makedirs
+
+
+ostree_utils_logger = logging.getLogger("ostree.utils")
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(message)s"))
+handler.setLevel(logging.DEBUG)
+ostree_utils_logger.addHandler(handler)
 
 
 def make_log_file(log_dir, filename):
@@ -30,7 +38,7 @@ def make_log_file(log_dir, filename):
     return os.path.join(log_dir, '%s.log' % filename)
 
 
-def get_ref_from_treefile(treefile, arch=None):
+def get_ref_from_treefile(treefile, arch=None, logger=ostree_utils_logger):
     """
     Return ref name by parsing the tree config file. Replacing ${basearch} with
     the basearch of the architecture we are running on or of the passed in arch.
@@ -46,20 +54,20 @@ def get_ref_from_treefile(treefile, arch=None):
                     basearch = rpmUtils.arch.getBaseArch(arch)
                 ref = parsed['ref'].replace('${basearch}', basearch)
             except Exception as e:
-                print('Unable to get ref from treefile: %s' % e)
+                logger.error('Unable to get ref from treefile: %s' % e)
     else:
-        print('Unable to open treefile')
+        logger.error('Unable to open treefile')
     return ref
 
 
-def get_commitid_from_commitid_file(commitid_file):
+def get_commitid_from_commitid_file(commitid_file, logger=ostree_utils_logger):
     """Return commit id which is read from the commitid file"""
     commitid = None
     if os.path.isfile(commitid_file):
         with open(commitid_file, 'r') as f:
             commitid = f.read().replace('\n', '')
     else:
-        print('Unable to find commitid file')
+        logger.error('Unable to find commitid file')
     return commitid
 
 

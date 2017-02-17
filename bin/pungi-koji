@@ -133,6 +133,12 @@ def main():
         dest="no_latest_link",
         help="don't create latest symbol link to this compose"
     )
+    parser.add_option(
+        "--quiet",
+        action="store_true",
+        default=False,
+        help="quiet mode, don't print log on screen"
+    )
 
     opts, args = parser.parse_args()
     import pungi.notifier
@@ -190,7 +196,8 @@ def main():
 
     logger = logging.getLogger("Pungi")
     logger.setLevel(logging.DEBUG)
-    kobo.log.add_stderr_logger(logger)
+    if not opts.quiet:
+        kobo.log.add_stderr_logger(logger)
 
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(opts.config)

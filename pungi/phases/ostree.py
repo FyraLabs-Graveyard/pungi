@@ -104,9 +104,11 @@ class OSTreeThread(WorkerThread):
                              extra_config_file=extra_config_file)
 
         if compose.notifier:
-            ref = get_ref_from_treefile(os.path.join(repodir, config['treefile']), arch)
+            ref = get_ref_from_treefile(os.path.join(repodir, config['treefile']),
+                                        arch, logger=self.pool._logger)
             # 'pungi-make-ostree tree' writes commitid to commitid.log in logdir
-            commitid = get_commitid_from_commitid_file(os.path.join(self.logdir, 'commitid.log'))
+            commitid = get_commitid_from_commitid_file(os.path.join(self.logdir, 'commitid.log'),
+                                                       logger=self.pool._logger)
             compose.notifier.send('ostree',
                                   variant=variant.uid,
                                   arch=arch,
