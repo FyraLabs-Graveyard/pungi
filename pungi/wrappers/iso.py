@@ -18,8 +18,10 @@ import os
 import sys
 import pipes
 from fnmatch import fnmatch
+import contextlib
 
 from kobo.shortcuts import force_list, relative_path, run
+from pungi import util
 
 
 # HACK: define cmp in python3
@@ -392,3 +394,20 @@ def cmp_graft_points(x, y):
         return 1
 
     return cmp(x, y)
+
+
+@contextlib.contextmanager
+def mount(image, logger=None):
+    """Mount an image and make sure it's unmounted.
+
+    The yielded path will only be valid in the with block and is removed once
+    the image is unmounted.
+    """
+    # use guestmount to mount the image, which doesn't require root privileges
+    # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
+    with util.temp_dir(prefix='iso-mount-') as mount_dir:
+        run(["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_dir])
+        try:
+            yield mount_dir
+        finally:
+            util.fusermount(mount_dir, logger=logger)

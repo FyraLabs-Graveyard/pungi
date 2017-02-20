@@ -27,7 +27,7 @@ from productmd.images import Image
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
-from pungi.util import get_file_size, get_mtime, failable, makedirs, fusermount
+from pungi.util import get_file_size, get_mtime, failable, makedirs
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
@@ -267,22 +267,15 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
     for image in images:
         if not os.path.isfile(image):
             continue
-        mount_tmp_dir = compose.mkdtemp(prefix="tweak_buildinstall")
-        # use guestmount to mount the image, which doesn't require root privileges
-        # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
-        cmd = ["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_tmp_dir]
-        run(cmd)
 
-        for config in BOOT_CONFIGS:
-            config_path = os.path.join(tmp_dir, config)
-            config_in_image = os.path.join(mount_tmp_dir, config)
+        with iso.mount(image, logger=compose._logger) as mount_tmp_dir:
+            for config in BOOT_CONFIGS:
+                config_path = os.path.join(tmp_dir, config)
+                config_in_image = os.path.join(mount_tmp_dir, config)
 
-            if os.path.isfile(config_in_image):
-                cmd = ["cp", "-v", "--remove-destination", config_path, config_in_image]
-                run(cmd)
-
-        fusermount(mount_tmp_dir)
-        shutil.rmtree(mount_tmp_dir)
+                if os.path.isfile(config_in_image):
+                    cmd = ["cp", "-v", "--remove-destination", config_path, config_in_image]
+                    run(cmd)
 
     # HACK: make buildinstall files world readable
     run("chmod -R a+rX %s" % pipes.quote(tmp_dir))

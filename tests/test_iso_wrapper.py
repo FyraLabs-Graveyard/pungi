@@ -37,3 +37,25 @@ class TestIsoUtils(unittest.TestCase):
         self.assertEqual(mock_run.call_args_list,
                          [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'])])
         self.assertGreater(len(logger.mock_calls), 0)
+
+    @mock.patch('pungi.util.run_unmount_cmd')
+    @mock.patch('pungi.wrappers.iso.run')
+    def test_mount_iso(self, mock_run, mock_unmount):
+        with iso.mount('dummy') as temp_dir:
+            self.assertTrue(os.path.isdir(temp_dir))
+        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_unmount.call_args_list), 1)
+        self.assertFalse(os.path.isdir(temp_dir))
+
+    @mock.patch('pungi.util.run_unmount_cmd')
+    @mock.patch('pungi.wrappers.iso.run')
+    def test_mount_iso_always_unmounts(self, mock_run, mock_unmount):
+        try:
+            with iso.mount('dummy') as temp_dir:
+                self.assertTrue(os.path.isdir(temp_dir))
+                raise RuntimeError()
+        except RuntimeError:
+            pass
+        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_unmount.call_args_list), 1)
+        self.assertFalse(os.path.isdir(temp_dir))
