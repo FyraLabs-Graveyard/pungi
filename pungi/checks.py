@@ -187,7 +187,7 @@ def validate(config):
     Undefined values for which a default value exists will be filled in.
     """
     schema = _make_schema()
-    DefaultValidator = _extend_with_default(jsonschema.Draft4Validator)
+    DefaultValidator = _extend_with_default_and_alias(jsonschema.Draft4Validator)
     validator = DefaultValidator(schema,
                                  {'array': (tuple, list),
                                   'regex': (str, unicode)})
@@ -235,20 +235,70 @@ UNKNOWN = 'WARNING: Unrecognized config option: {0}.'
 UNKNOWN_SUGGEST = 'WARNING: Unrecognized config option: {0}. Did you mean {1}?'
 
 
-def _extend_with_default(validator_class):
+def _extend_with_default_and_alias(validator_class):
     validate_properties = validator_class.VALIDATORS["properties"]
     validate_type = validator_class.VALIDATORS['type']
+    validate_required = validator_class.VALIDATORS['required']
+    validate_additional_properties = validator_class.VALIDATORS['additionalProperties']
 
-    def set_defaults(validator, properties, instance, schema):
+    def _replace_alias(properties, instance, schema):
+        """
+        If 'alias' is defined for a property, and the property is not present
+        in instance, add the property with value from the alias property to
+        instance before remove the alias property. If both the propery and its
+        alias are present, it will yield an error.
+        """
+        for property, subschema in properties.iteritems():
+            if "alias" in subschema:
+                if property in instance and subschema['alias'] in instance:
+                    # the order of validators is in random, so we remove the alias
+                    # property at the first time when it's found, then validators
+                    # won't raise the same error later.
+                    instance.pop(subschema['alias'])
+                    yield jsonschema.ValidationError(
+                        "%s is an alias of %s, only one can be used." % (
+                            subschema['alias'], property)
+                    )
+
+                if property not in instance and subschema['alias'] in instance:
+                    instance.setdefault(property, instance.pop(subschema['alias']))
+
+    def set_defaults_and_aliases(validator, properties, instance, schema):
         """
         Assign default values to options that have them defined and are not
-        specified.
+        specified. And if a property has 'alias' defined and the property is
+        not specified, look for the alias property and copy alias property's
+        value to that property before remove the alias property.
         """
         for property, subschema in properties.iteritems():
             if "default" in subschema and property not in instance:
                 instance.setdefault(property, subschema["default"])
 
+        for error in _replace_alias(properties, instance, schema):
+            yield error
+
         for error in validate_properties(validator, properties, instance, schema):
+            yield error
+
+    def ignore_alias_properties(validator, aP, instance, schema):
+        """
+        If there is a property has alias defined in schema, and the property is not
+        present in instance, set the property with the value of alias property,
+        remove alias property from instance.
+        """
+        properties = schema.get("properties", {})
+        for error in _replace_alias(properties, instance, schema):
+            yield error
+
+        for error in validate_additional_properties(validator, aP, instance, schema):
+            yield error
+
+    def validate_required_with_alias(validator, required, instance, schema):
+        properties = schema.get("properties", {})
+        for error in _replace_alias(properties, instance, schema):
+            yield error
+
+        for error in validate_required(validator, required, instance, schema):
             yield error
 
     def error_on_deprecated(validator, properties, instance, schema):
@@ -273,9 +323,11 @@ def _extend_with_default(validator_class):
                 yield error
 
     return jsonschema.validators.extend(
-        validator_class, {"properties": set_defaults,
+        validator_class, {"properties": set_defaults_and_aliases,
                           "deprecated": error_on_deprecated,
-                          "type": validate_regex_type},
+                          "type": validate_regex_type,
+                          "required": validate_required_with_alias,
+                          "additionalProperties": ignore_alias_properties},
     )
 
 
