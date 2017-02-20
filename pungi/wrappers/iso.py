@@ -195,11 +195,12 @@ def get_checkisomd5_cmd(iso_path, just_print=False):
     return cmd
 
 
-def get_implanted_md5(iso_path, logger=None):
+def get_checkisomd5_data(iso_path, logger=None):
     cmd = get_checkisomd5_cmd(iso_path, just_print=True)
     retcode, output = run(cmd)
-    line = output.splitlines()[0]
-    md5 = line.rsplit(":")[-1].strip()
+    items = [line.strip().rsplit(":", 1) for line in output.splitlines()]
+    items = dict([(k, v.strip()) for k, v in items])
+    md5 = items.get(iso_path, '')
     if len(md5) != 32:
         # We have seen cases where the command finished successfully, but
         # returned garbage value. We need to handle it, otherwise there would
@@ -210,7 +211,11 @@ def get_implanted_md5(iso_path, logger=None):
             logger.critical('Implanted MD5 in %s is not valid: %r', iso_path, md5)
             logger.critical('Ran command %r; exit code %r; output %r', cmd, retcode, output)
         return None
-    return md5
+    return items
+
+
+def get_implanted_md5(iso_path, logger=None):
+    return (get_checkisomd5_data(iso_path, logger=logger) or {}).get(iso_path)
 
 
 def get_isohybrid_cmd(iso_path, arch):
