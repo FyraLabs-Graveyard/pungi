@@ -13,7 +13,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases.buildinstall import BuildinstallPhase, BuildinstallThread, link_boot_iso
+from pungi.phases.buildinstall import (BuildinstallPhase, BuildinstallThread, link_boot_iso,
+                                       BOOT_CONFIGS, tweak_configs)
 from tests.helpers import DummyCompose, PungiTestCase, touch, boom
 
 
@@ -749,6 +750,34 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(self.compose.im.add.mock_calls,
                          [mock.call('Server', 'x86_64', image)])
 
+
+class TestTweakConfigs(PungiTestCase):
+
+    def test_tweak_configs(self):
+        configs = []
+        for cfg in BOOT_CONFIGS:
+            if 'yaboot' not in cfg:
+                configs.append(os.path.join(self.topdir, cfg))
+                touch(configs[-1], ':LABEL=baz')
+        tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'))
+        for cfg in configs:
+            with open(cfg) as f:
+                self.assertEqual(
+                    f.read().strip(),
+                    ':LABEL=new\\x20volid ks=hd:LABEL=new\\x20volid:/ks.cfg')
+
+    def test_tweak_configs_yaboot(self):
+        configs = []
+        for cfg in BOOT_CONFIGS:
+            if 'yaboot' in cfg:
+                configs.append(os.path.join(self.topdir, cfg))
+                touch(configs[-1], ':LABEL=baz')
+        tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'))
+        for cfg in configs:
+            with open(os.path.join(self.topdir, cfg)) as f:
+                self.assertEqual(
+                    f.read().strip(),
+                    ':LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg')
 
 if __name__ == "__main__":
     unittest.main()

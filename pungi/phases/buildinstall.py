@@ -194,13 +194,51 @@ def get_kickstart_file(compose):
     return kickstart_path
 
 
+BOOT_CONFIGS = [
+    "isolinux/isolinux.cfg",
+    "etc/yaboot.conf",
+    "ppc/ppc64/yaboot.conf",
+    "EFI/BOOT/BOOTX64.conf",
+    "EFI/BOOT/grub.cfg",
+]
+
+
+def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS):
+    volid_escaped = volid.replace(" ", r"\x20").replace("\\", "\\\\")
+    volid_escaped_2 = volid_escaped.replace("\\", "\\\\")
+    found_configs = []
+    for config in configs:
+        config_path = os.path.join(path, config)
+        if not os.path.exists(config_path):
+            continue
+        found_configs.append(config)
+
+        with open(config_path, "r") as f:
+            data = f.read()
+        os.unlink(config_path)  # break hadlink by removing file writing a new one
+
+        # double-escape volid in yaboot.conf
+        new_volid = volid_escaped_2 if 'yaboot' in config else volid_escaped
+
+        ks = (" ks=hd:LABEL=%s:/ks.cfg" % new_volid) if ks_file else ""
+
+        # pre-f18
+        data = re.sub(r":CDLABEL=[^ \n]*", r":CDLABEL=%s%s" % (new_volid, ks), data)
+        # f18+
+        data = re.sub(r":LABEL=[^ \n]*", r":LABEL=%s%s" % (new_volid, ks), data)
+        data = re.sub(r"(search .* -l) '[^'\n]*'", r"\1 '%s'" % volid, data)
+
+        with open(config_path, "w") as f:
+            f.write(data)
+
+    return found_configs
+
+
 # HACK: this is a hack!
 # * it's quite trivial to replace volids
 # * it's not easy to replace menu titles
 # * we probably need to get this into lorax
 def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart_file=None):
-    volid_escaped = volid.replace(" ", r"\x20").replace("\\", "\\\\")
-    volid_escaped_2 = volid_escaped.replace("\\", "\\\\")
     tmp_dir = compose.mkdtemp(prefix="tweak_buildinstall_")
 
     # verify src
@@ -219,39 +257,9 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
     cmd = "cp -av --remove-destination %s/* %s/" % (pipes.quote(src), pipes.quote(tmp_dir))
     run(cmd)
 
-    # tweak configs
-    configs = [
-        "isolinux/isolinux.cfg",
-        "etc/yaboot.conf",
-        "ppc/ppc64/yaboot.conf",
-        "EFI/BOOT/BOOTX64.conf",
-        "EFI/BOOT/grub.cfg",
-    ]
-    for config in configs:
-        config_path = os.path.join(tmp_dir, config)
-        if not os.path.exists(config_path):
-            continue
-
-        data = open(config_path, "r").read()
-        os.unlink(config_path)  # break hadlink by removing file writing a new one
-
-        new_volid = volid_escaped
-        if "yaboot" in config:
-            # double-escape volid in yaboot.conf
-            new_volid = volid_escaped_2
-
-        ks = ""
-        if kickstart_file:
-            shutil.copy2(kickstart_file, os.path.join(dst, "ks.cfg"))
-            ks = " ks=hd:LABEL=%s:/ks.cfg" % new_volid
-
-        # pre-f18
-        data = re.sub(r":CDLABEL=[^ \n]*", r":CDLABEL=%s%s" % (new_volid, ks), data)
-        # f18+
-        data = re.sub(r":LABEL=[^ \n]*", r":LABEL=%s%s" % (new_volid, ks), data)
-        data = re.sub(r"(search .* -l) '[^'\n]*'", r"\1 '%s'" % volid, data)
-
-        open(config_path, "w").write(data)
+    found_configs = tweak_configs(tmp_dir, volid, kickstart_file)
+    if kickstart_file and found_configs:
+        shutil.copy2(kickstart_file, os.path.join(dst, "ks.cfg"))
 
     images = [
         os.path.join(tmp_dir, "images", "efiboot.img"),
@@ -265,7 +273,7 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
         cmd = ["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_tmp_dir]
         run(cmd)
 
-        for config in configs:
+        for config in BOOT_CONFIGS:
             config_path = os.path.join(tmp_dir, config)
             config_in_image = os.path.join(mount_tmp_dir, config)
 
