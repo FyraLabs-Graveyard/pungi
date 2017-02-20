@@ -84,6 +84,7 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}-create-unified-isos
 %{_bindir}/%{name}-config-validate
 %{_bindir}/%{name}-fedmsg-notification
+%{_bindir}/%{name}-patch-iso
 
 %check
 nosetests --exe
