@@ -24,6 +24,7 @@ class TestInitPhase(PungiTestCase):
     def test_run(self, write_prepopulate, write_variant, create_comps, write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
+        compose.setup_optional()
         phase = init.InitPhase(compose)
         phase.run()
 
@@ -38,7 +39,8 @@ class TestInitPhase(PungiTestCase):
                                mock.call(compose, 'amd64', compose.variants['Server']),
                                mock.call(compose, 'amd64', compose.variants['Client']),
                                mock.call(compose, 'x86_64', compose.variants['Everything']),
-                               mock.call(compose, 'amd64', compose.variants['Everything'])])
+                               mock.call(compose, 'amd64', compose.variants['Everything']),
+                               mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
 
     @mock.patch('pungi.phases.init.copy_variant_comps')
     @mock.patch('pungi.phases.init.write_global_comps')

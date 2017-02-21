@@ -46,8 +46,11 @@ class InitPhase(PhaseBase):
             # write variant comps
             for variant in self.compose.get_variants():
                 for arch in variant.arches:
-                    if variant.groups:
-                        # The variant lists only some groups, run filter.
+                    if variant.groups or variant.type == 'optional':
+                        # The variant lists only some groups, run filter. Other
+                        # option is that it's optional variant, in which case
+                        # we want to filter everything (unless there was
+                        # explicit list in which case it will be used).
                         write_variant_comps(self.compose, arch, variant)
                     else:
                         # The variant does not mention any groups, copy
@@ -127,6 +130,8 @@ def write_variant_comps(compose, arch, variant):
 def copy_variant_comps(compose, arch, variant):
     global_comps = compose.paths.work.comps(arch="global")
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
+    msg = "Copying original comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
+    compose.log_debug(msg)
     shutil.copy(global_comps, comps_file)
 
 
