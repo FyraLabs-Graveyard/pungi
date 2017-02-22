@@ -47,7 +47,7 @@ class OstreeInstallerThread(WorkerThread):
         self.logdir = compose.paths.log.topdir('%s/ostree_installer' % arch)
 
         source_from_repos = [self._get_source_repo(compose, arch, v)
-                             for v in shortcuts.force_list(config['source_repo_from'])]
+                             for v in shortcuts.force_list(config['repo_from'])]
         repos = shortcuts.force_list(config.pop('repo', []))
         source_repos = source_from_repos + repos
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')

@@ -156,8 +156,8 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
-            "source_repo_from": "http://www.example.com/Server.repo",
-            "extra_source_repos": [
+            "repo_from": "http://www.example.com/Server.repo",
+            "repo": [
                 {
                     "name": "optional",
                     "baseurl": "http://example.com/repo/x86_64/optional",
@@ -230,8 +230,8 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
-            "source_repo_from": "http://www.example.com/Server.repo",
-            "extra_source_repos": [
+            "repo_from": "http://www.example.com/Server.repo",
+            "repo": [
                 {
                     "name": "optional",
                     "baseurl": "http://example.com/repo/x86_64/optional",

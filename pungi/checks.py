@@ -418,7 +418,10 @@ def _make_schema():
                     "name": {"type": "string"},
                     "subvariant": {"type": "string"},
                     "version": {"type": "string"},
-                    "additional_repos": {"$ref": "#/definitions/strings"},
+                    "repo": {
+                        "$ref": "#/definitions/strings",
+                        "alias": "additional_repos",
+                    },
                     "repo_from": {"$ref": "#/definitions/strings"},
                     "specfile": {"type": "string"},
                     "scratch": {"type": "boolean"},
@@ -764,8 +767,14 @@ def _make_schema():
                 "properties": {
                     "treefile": {"type": "string"},
                     "config_url": {"type": "string"},
-                    "source_repo_from": {"type": "string"},
-                    "extra_source_repos": {"$ref": "#/definitions/list_of_source_repo_dicts"},
+                    "repo_from": {
+                        "type": "string",
+                        "alias": "source_repo_from",
+                    },
+                    "repo": {
+                        "$ref": "#/definitions/list_of_source_repo_dicts",
+                        "alias": "extra_source_repos",
+                    },
                     "keep_original_sources": {"type": "boolean"},
                     "ostree_repo": {"type": "string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
@@ -774,7 +783,7 @@ def _make_schema():
                     "config_branch": {"type": "string"},
                     "tag_ref": {"type": "boolean"},
                 },
-                "required": ["treefile", "config_url", "source_repo_from", "ostree_repo"],
+                "required": ["treefile", "config_url", "repo_from", "ostree_repo"],
                 "additionalProperties": False,
             }),
 
@@ -782,7 +791,10 @@ def _make_schema():
                 "type": "object",
                 "properties": {
                     "repo": {"$ref": "#/definitions/strings"},
-                    "source_repo_from": {"$ref": "#/definitions/strings"},
+                    "repo_from": {
+                        "$ref": "#/definitions/strings",
+                        "alias": "source_repo_from",
+                    },
                     "release": {"$ref": "#/definitions/optional_string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
                     "installpkgs": {"$ref": "#/definitions/list_of_strings"},
@@ -794,7 +806,7 @@ def _make_schema():
                     "template_repo": {"type": "string"},
                     "template_branch": {"type": "string"},
                 },
-                "required": ["source_repo_from"],
+                "required": ["repo_from"],
                 "additionalProperties": False,
             }),
 

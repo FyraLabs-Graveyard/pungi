@@ -23,7 +23,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything', 'Server-optional'],
                         'release': None,
                     }
@@ -76,7 +76,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': 'Everything',
                         'release': None,
                     }
@@ -124,7 +124,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                         'release': None,
                     }
@@ -171,11 +171,11 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': [{
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                     }, {
                         'kickstart': 'another.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                     }]
                 })
@@ -244,7 +244,7 @@ class TestLiveImagesPhase(PungiTestCase):
                     'amd64': {
                         'kickstart': 'test.ks',
                         'ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                         'type': 'appliance',
                     }
@@ -299,7 +299,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                         'type': 'appliance',
                     }
@@ -354,7 +354,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                         'type': 'appliance',
                     }
@@ -406,7 +406,7 @@ class TestLiveImagesPhase(PungiTestCase):
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'additional_repos': ['http://example.com/repo/'],
+                        'repo': ['http://example.com/repo/'],
                         'repo_from': ['Everything'],
                         'release': None,
                     }

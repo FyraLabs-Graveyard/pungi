@@ -64,7 +64,7 @@ class LiveImagesPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                 self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
 
         # additional repos
-        repos.extend(data.get("additional_repos", []))
+        repos.extend(data.get("repo", []))
         repos.extend(self._get_extra_repos(arch, variant, force_list(data.get('repo_from', []))))
         return repos
 

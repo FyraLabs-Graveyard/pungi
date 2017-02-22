@@ -46,7 +46,7 @@ class OSTreeThread(WorkerThread):
                                                (arch, variant.uid, self.num))
         repodir = os.path.join(workdir, 'config_repo')
 
-        source_variant = compose.all_variants[config['source_repo_from']]
+        source_variant = compose.all_variants[config['repo_from']]
         source_repo = translate_path(compose,
                                      compose.paths.compose.repository('$basearch',
                                                                       source_variant,
@@ -54,10 +54,10 @@ class OSTreeThread(WorkerThread):
 
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
 
-        source_repos = [{'name': '%s-%s' % (compose.compose_id, config['source_repo_from']),
+        source_repos = [{'name': '%s-%s' % (compose.compose_id, config['repo_from']),
                          'baseurl': source_repo}]
 
-        extra_source_repos = config.get('extra_source_repos', None)
+        extra_source_repos = config.get('repo', None)
         if extra_source_repos:
             for extra in extra_source_repos:
                 baseurl = extra['baseurl']
@@ -77,9 +77,9 @@ class OSTreeThread(WorkerThread):
 
         # repos in configuration can have repo url set to variant UID,
         # update it to have the actual url that we just translated.
-        new_config.update({'source_repo_from': source_repo})
+        new_config.update({'repo_from': source_repo})
         if extra_source_repos:
-            new_config.update({'extra_source_repos': extra_source_repos})
+            new_config.update({'repo': extra_source_repos})
 
         # remove unnecessary (for 'pungi-make-ostree tree' script ) elements
         # from config, it doesn't hurt to have them, however remove them can

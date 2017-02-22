@@ -20,7 +20,7 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.phases.ostree_installer.ThreadPool')
     def test_run(self, ThreadPool):
-        cfg = mock.Mock()
+        cfg = helpers.IterableMock()
         compose = helpers.DummyCompose(self.topdir, {
             'ostree_installer': [
                 ('^Everything$', {'x86_64': cfg})
@@ -133,7 +133,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.compose.supported = False
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': '20160321.n.0',
         }
         koji = KojiWrapper.return_value
@@ -169,7 +169,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                  get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'http://example.com/repo/$arch/',
+            'repo_from': 'http://example.com/repo/$arch/',
             'release': '20160321.n.0',
         }
         koji = KojiWrapper.return_value
@@ -203,7 +203,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': '20160321.n.0',
             'repo': [
                 'https://example.com/extra-repo1.repo',
@@ -241,7 +241,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                              get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': ['Everything', 'Server'],
+            'repo_from': ['Everything', 'Server'],
             'release': '20160321.n.0',
             'repo': [
                 'https://example.com/extra-repo1.repo',
@@ -281,7 +281,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                                           get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': '20160321.n.0',
             'add_template': ['some-file.txt'],
         }
@@ -314,7 +314,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                  get_dir_from_scm):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': '20160321.n.0',
             'add_template': ['some_file.txt'],
             'add_arch_template': ['other_file.txt'],
@@ -362,7 +362,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                        get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': None,
             "installpkgs": ["fedora-productimg-atomic"],
             "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
@@ -423,7 +423,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                         get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': None,
             'failable': ['x86_64']
         }
@@ -449,7 +449,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'source_repo_from': 'Everything',
+            'repo_from': 'Everything',
             'release': None,
             'failable': ['*'],
         }
