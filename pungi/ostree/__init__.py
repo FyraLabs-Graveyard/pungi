@@ -15,6 +15,7 @@
 
 
 import argparse
+import logging
 
 from .tree import Tree
 from .installer import Installer
@@ -79,6 +80,9 @@ def main(args=None):
                             help='JSON file contains extra configurations')
 
     args = parser.parse_args(args)
+
+    logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+
     _class = args._class()
     _class.set_args(args)
     func = getattr(_class, args.func)

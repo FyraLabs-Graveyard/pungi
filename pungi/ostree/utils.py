@@ -23,13 +23,6 @@ import rpmUtils.arch
 from pungi.util import makedirs
 
 
-ostree_utils_logger = logging.getLogger("ostree.utils")
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter("%(message)s"))
-handler.setLevel(logging.DEBUG)
-ostree_utils_logger.addHandler(handler)
-
-
 def make_log_file(log_dir, filename):
     """Return path to log file with given name, if log_dir is set."""
     if not log_dir:
@@ -38,11 +31,12 @@ def make_log_file(log_dir, filename):
     return os.path.join(log_dir, '%s.log' % filename)
 
 
-def get_ref_from_treefile(treefile, arch=None, logger=ostree_utils_logger):
+def get_ref_from_treefile(treefile, arch=None, logger=None):
     """
     Return ref name by parsing the tree config file. Replacing ${basearch} with
     the basearch of the architecture we are running on or of the passed in arch.
     """
+    logger = logger or logging.getLogger(__name__)
     ref = None
     if os.path.isfile(treefile):
         with open(treefile, 'r') as f:
@@ -60,8 +54,9 @@ def get_ref_from_treefile(treefile, arch=None, logger=ostree_utils_logger):
     return ref
 
 
-def get_commitid_from_commitid_file(commitid_file, logger=ostree_utils_logger):
+def get_commitid_from_commitid_file(commitid_file, logger=None):
     """Return commit id which is read from the commitid file"""
+    logger = logger or logging.getLogger(__name__)
     commitid = None
     if os.path.isfile(commitid_file):
         with open(commitid_file, 'r') as f:
