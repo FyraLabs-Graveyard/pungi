@@ -90,7 +90,7 @@ class Tree(OSTree):
         if self.extra_config:
             self.extra_config = json.load(open(self.extra_config, 'r'))
             source_repo_from = self.extra_config.get('source_repo_from', None)
-            extra_source_repos = self.extra_config.get('extra_source_repos', None)
+            extra_source_repos = self.extra_config.get('extra_source_repos', [])
             keep_original_sources = self.extra_config.get('keep_original_sources', False)
             repos = extra_source_repos + [{'name': 'source_repo_from', 'baseurl': source_repo_from}]
             tweak_treeconf(self.treefile, source_repos=repos, keep_original_sources=keep_original_sources)
