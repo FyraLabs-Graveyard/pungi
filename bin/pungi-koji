@@ -194,7 +194,7 @@ def main():
 
     from pungi.compose import Compose
 
-    logger = logging.getLogger("Pungi")
+    logger = logging.getLogger("pungi")
     logger.setLevel(logging.DEBUG)
     if not opts.quiet:
         kobo.log.add_stderr_logger(logger)
