@@ -390,10 +390,12 @@ class BuildinstallThread(WorkerThread):
             runroot_tag = compose.conf["runroot_tag"]
 
             koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-            koji_cmd = koji_wrapper.get_runroot_cmd(runroot_tag, arch, cmd,
-                                                    channel=runroot_channel,
-                                                    use_shell=True, task_id=True,
-                                                    packages=packages, mounts=[compose.topdir])
+            koji_cmd = koji_wrapper.get_runroot_cmd(
+                runroot_tag, arch, cmd,
+                channel=runroot_channel,
+                use_shell=True, task_id=True,
+                packages=packages, mounts=[compose.topdir],
+                weight=compose.conf['runroot_weights'].get('buildinstall'))
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)

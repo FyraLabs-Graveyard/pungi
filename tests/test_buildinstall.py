@@ -467,6 +467,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
+            'runroot_weights': {'buildinstall': 123},
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
@@ -491,7 +492,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call('rrt', 'x86_64', cmd, channel=None,
                        use_shell=True, task_id=True,
-                       packages=['strace', 'lorax'], mounts=[self.topdir])])
+                       packages=['strace', 'lorax'], mounts=[self.topdir], weight=123)])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -533,7 +534,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call('rrt', 'x86_64', cmd, channel=None,
                        use_shell=True, task_id=True,
-                       packages=['strace', 'anaconda'], mounts=[self.topdir])])
+                       packages=['strace', 'anaconda'], mounts=[self.topdir], weight=None)])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,

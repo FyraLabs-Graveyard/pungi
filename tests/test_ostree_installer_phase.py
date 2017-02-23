@@ -72,7 +72,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(compose.im.add.mock_calls,
                          [mock.call('Everything', 'x86_64', image)])
 
-    def assertRunrootCall(self, koji, sources, release, isfinal=False, extra=[]):
+    def assertRunrootCall(self, koji, sources, release, isfinal=False, extra=[], weight=None):
         lorax_cmd = [
             'lorax',
             '--product=Fedora',
@@ -101,7 +101,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     lorax_cmd,
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
-                                    task_id=True, use_shell=True)])
+                                    task_id=True, use_shell=True, weight=weight)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/ostree_installer/runroot.log')])
@@ -377,6 +377,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
             ],
         }
+        self.compose.conf['runroot_weights'] = {'ostree_installer': 123}
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
             'task_id': 1234,
@@ -404,7 +405,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
                    '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
                    '--add-arch-template-var=ostree_osname=fedora-atomic',
                    '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
-                   '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir]
+                   '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir],
+            weight=123,
         )
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)

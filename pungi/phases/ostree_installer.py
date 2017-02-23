@@ -170,7 +170,8 @@ class OstreeInstallerThread(WorkerThread):
         koji_cmd = koji.get_runroot_cmd(runroot_tag, arch, cmd,
                                         channel=runroot_channel,
                                         use_shell=True, task_id=True,
-                                        packages=packages, mounts=[compose.topdir])
+                                        packages=packages, mounts=[compose.topdir],
+                                        weight=compose.conf['runroot_weights'].get('ostree_installer'))
         output = koji.run_runroot_cmd(koji_cmd, log_file=log_file)
         if output["retcode"] != 0:
             raise RuntimeError("Runroot task failed: %s. See %s for more details."

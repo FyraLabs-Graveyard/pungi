@@ -95,6 +95,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run(self, KojiWrapper, get_dir_from_scm):
         get_dir_from_scm.side_effect = self._dummy_config_repo
+        self.compose.conf['runroot_weights'] = {'ostree': 123}
 
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
@@ -118,7 +119,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      '--extra-config=%s/extra_config.json' % (self.topdir + '/work/ostree-1')],
                                     channel=None, mounts=[self.topdir, self.repo],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
-                                    task_id=True, use_shell=True, new_chroot=True)])
+                                    task_id=True, use_shell=True, new_chroot=True, weight=123)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
@@ -255,7 +256,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      '--update-summary'],
                                     channel=None, mounts=[self.topdir, self.repo],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
-                                    task_id=True, use_shell=True, new_chroot=True)])
+                                    task_id=True, use_shell=True, new_chroot=True, weight=None)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
@@ -290,7 +291,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                      '--extra-config=%s/work/ostree-1/extra_config.json' % self.topdir],
                                     channel=None, mounts=[self.topdir, self.repo],
                                     packages=['pungi', 'ostree', 'rpm-ostree'],
-                                    task_id=True, use_shell=True, new_chroot=True)])
+                                    task_id=True, use_shell=True, new_chroot=True, weight=None)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
                                     log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])

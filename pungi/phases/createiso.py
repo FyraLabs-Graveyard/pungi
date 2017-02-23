@@ -227,7 +227,9 @@ class CreateIsoThread(WorkerThread):
             koji_cmd = koji_wrapper.get_runroot_cmd(
                 runroot_tag, build_arch, cmd["cmd"],
                 channel=runroot_channel, use_shell=True, task_id=True,
-                packages=packages, mounts=mounts)
+                packages=packages, mounts=mounts,
+                weight=compose.conf['runroot_weights'].get('createiso')
+            )
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)

@@ -531,6 +531,17 @@ def _make_schema():
             "runroot_channel": {
                 "$ref": "#/definitions/optional_string",
             },
+            "runroot_weights": {
+                "type": "object",
+                "default": {},
+                "properties": {
+                    "buildinstall": {"type": "number"},
+                    "createiso": {"type": "number"},
+                    "ostree": {"type": "number"},
+                    "ostree_installer": {"type": "number"},
+                },
+                "additionalProperties": False,
+            },
             "createrepo_deltas": {
                 "type": "boolean",
                 "default": False,
@@ -969,7 +980,7 @@ CONFIG_DEPS = {
             (lambda x: x, ["koji_profile", "runroot_tag", "runroot_channel"]),
         ),
         "conflicts": (
-            (lambda x: not x, ["runroot_tag", "runroot_channel"]),
+            (lambda x: not x, ["runroot_tag", "runroot_channel", "runroot_weights"]),
         ),
     },
     "product_id": {

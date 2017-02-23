@@ -680,6 +680,17 @@ Options
 **runroot_tag**
     (*str*) -- name of koji **build** tag used for runroot
 
+**runroot_weights**
+    (*dict*) -- customize task weights for various runroot tasks. The values in
+    the mapping should be integers, the keys can be selected from the following
+    list. By default no weight is assigned and Koji picks the default one
+    according to policy.
+
+     * ``buildinstall``
+     * ``createiso``
+     * ``ostree``
+     * ``ostree_installer``
+
 
 Example
 -------

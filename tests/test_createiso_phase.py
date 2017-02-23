@@ -252,7 +252,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
                                     mounts=[self.topdir],
                                     packages=['coreutils', 'genisoimage', 'isomd5sum',
                                               'jigdo'],
-                                    task_id=True, use_shell=True)])
+                                    task_id=True, use_shell=True, weight=None)])
         self.assertEqual(
             run_runroot.call_args_list,
             [mock.call(get_runroot_cmd.return_value,
@@ -286,6 +286,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
             'create_jigdo': False,
+            'runroot_weights': {'createiso': 123},
         })
         cmd = {
             'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
@@ -316,7 +317,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
                          [mock.call('f25-build', 'x86_64', cmd['cmd'], channel=None,
                                     mounts=[self.topdir],
                                     packages=['coreutils', 'genisoimage', 'isomd5sum'],
-                                    task_id=True, use_shell=True)])
+                                    task_id=True, use_shell=True, weight=123)])
         self.assertEqual(
             run_runroot.call_args_list,
             [mock.call(get_runroot_cmd.return_value,
@@ -382,7 +383,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
                                     mounts=[self.topdir],
                                     packages=['coreutils', 'genisoimage', 'isomd5sum',
                                               'jigdo', 'lorax'],
-                                    task_id=True, use_shell=True)])
+                                    task_id=True, use_shell=True, weight=None)])
         self.assertEqual(
             run_runroot.call_args_list,
             [mock.call(get_runroot_cmd.return_value,
