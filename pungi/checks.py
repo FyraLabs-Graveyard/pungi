@@ -493,7 +493,7 @@ def _make_schema():
             },
             "gather_source": {
                 "type": "string",
-                "enum": ["json", "comps", "none"],
+                "enum": ["module", "json", "comps", "none"],
             },
             "gather_fulltree": {
                 "type": "boolean",
@@ -613,6 +613,10 @@ def _make_schema():
             "global_version": {"type": "string"},
             "global_target": {"type": "string"},
             "global_release": {"$ref": "#/definitions/optional_string"},
+
+            "pdc_url": {"type": "string"},
+            "pdc_develop": {"type": "boolean", "default": False},
+            "pdc_insecure": {"type": "boolean", "default": False},
 
             "koji_profile": {"type": "string"},
 

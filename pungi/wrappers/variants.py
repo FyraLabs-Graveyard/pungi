@@ -77,6 +77,7 @@ class VariantsXmlParser(object):
             "type": str(variant_node.attrib["type"]),
             "arches": [str(i) for i in variant_node.xpath("arches/arch/text()")],
             "groups": [],
+            "modules": [],
             "environments": [],
             "buildinstallpackages": [],
             "is_empty": bool(variant_node.attrib.get("is_empty", False)),
@@ -107,6 +108,15 @@ class VariantsXmlParser(object):
                     group["uservisible"] = self._is_true(uservisible)
 
                 variant_dict["groups"].append(group)
+
+        for modulelist_node in variant_node.xpath("modules"):
+            for module_node in modulelist_node.xpath("module"):
+                module = {
+                    "name": str(module_node.text),
+                    "glob": self._is_true(module_node.attrib.get("glob", "false"))
+                }
+
+                variant_dict["modules"].append(module)
 
         for environments_node in variant_node.xpath("environments"):
             for environment_node in environments_node.xpath("environment"):
@@ -198,9 +208,11 @@ class VariantsXmlParser(object):
 
 class Variant(object):
     def __init__(self, id, name, type, arches, groups, environments=None,
-                 buildinstallpackages=None, is_empty=False, parent=None):
+                 buildinstallpackages=None, is_empty=False, parent=None,
+                 modules=None):
 
         environments = environments or []
+        modules = modules or []
         buildinstallpackages = buildinstallpackages or []
 
         self.id = id
@@ -209,10 +221,15 @@ class Variant(object):
         self.arches = sorted(copy.deepcopy(arches))
         self.groups = sorted(copy.deepcopy(groups), lambda x, y: cmp(x["name"], y["name"]))
         self.environments = sorted(copy.deepcopy(environments), lambda x, y: cmp(x["name"], y["name"]))
+        self.modules = sorted(copy.deepcopy(modules),
+                              lambda x, y: cmp(x["name"], y["name"]))
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = parent
         self.is_empty = is_empty
+
+        self.pkgset = None
+        self.mmds = []
 
     def __getitem__(self, name):
         return self.variants[name]
@@ -272,6 +289,22 @@ class Variant(object):
             for group in variant.get_groups(arch=arch, types=types, recursive=recursive):
                 if group not in result:
                     result.append(group)
+        return result
+
+    def get_modules(self, arch=None, types=None, recursive=False):
+        """Return list of groups, default types is ["self"]"""
+
+        types = types or ["self"]
+        result = copy.deepcopy(self.modules)
+        for variant in self.get_variants(arch=arch, types=types,
+                                         recursive=recursive):
+            if variant == self:
+                # XXX
+                continue
+            for module in variant.get_modules(arch=arch, types=types,
+                                              recursive=recursive):
+                if module not in result:
+                    result.append(module)
         return result
 
     def get_variants(self, arch=None, types=None, recursive=False):
@@ -339,6 +372,8 @@ def main(argv):
             print("    ARCHES: %s" % ", ".join(sorted(i.arches)))
             for group in i.groups:
                 print("    GROUP:  %(name)-40s GLOB: %(glob)-5s DEFAULT: %(default)-5s USERVISIBLE: %(uservisible)-5s" % group)
+            for module in i.modules:
+                print("    MODULE:  %(name)-40s GLOB: %(glob)-5s DEFAULT: %(default)-5s USERVISIBLE: %(uservisible)-5s" % module)
             for env in i.environments:
                 print("    ENV:    %(name)-40s DISPLAY_ORDER: %(display_order)s" % env)
             print()

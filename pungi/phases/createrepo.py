@@ -181,6 +181,24 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             # this is a HACK to make CDN happy (dmach: at least I think, need to confirm with dgregor)
             shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
 
+    # call modifyrepo to inject modulemd if needed
+    if variant.mmds:
+        import yaml
+        modules = {"modules": []}
+        for mmd in variant.mmds:
+            modules["modules"].append(mmd.dumps())
+        tmp_dir = compose.mkdtemp(prefix="pungi_")
+        modules_path = os.path.join(tmp_dir, "modules.yaml")
+        with open(modules_path, "w") as outfile:
+            outfile.write(yaml.safe_dump(modules))
+        cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
+                                      modules_path, mdtype="modules",
+                                      compress_type="gz")
+        log_file = compose.paths.log.log_file(
+            arch, "modifyrepo-modules-%s" % variant)
+        run(cmd, logfile=log_file, show_cmd=True)
+        shutil.rmtree(tmp_dir)
+
     compose.log_info("[DONE ] %s" % msg)
 
 

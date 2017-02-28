@@ -148,15 +148,18 @@ class PackageSetBase(kobo.log.LoggingBase):
         seen_sourcerpms = set()
         # {Exclude,Exclusive}Arch must match *tree* arch + compatible native
         # arches (excluding multilib arches)
-        exclusivearch_list = get_valid_arches(primary_arch, multilib=False,
-                                              add_noarch=False, add_src=False)
+        if primary_arch:
+            exclusivearch_list = get_valid_arches(
+                primary_arch, multilib=False, add_noarch=False, add_src=False)
+        else:
+            exclusivearch_list = None
         for arch in arch_list:
             self.rpms_by_arch.setdefault(arch, [])
             for i in other.rpms_by_arch.get(arch, []):
                 if i.file_path in self.file_cache:
                     # TODO: test if it really works
                     continue
-                if arch == "noarch":
+                if exclusivearch_list and arch == "noarch":
                     if i.excludearch and set(i.excludearch) & set(exclusivearch_list):
                         self.log_debug("Excluding (EXCLUDEARCH: %s): %s"
                                        % (sorted(set(i.excludearch)), i.file_name))

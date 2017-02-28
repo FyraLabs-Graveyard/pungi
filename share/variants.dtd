@@ -1,6 +1,6 @@
 <!ELEMENT variants (ref*,variant*)>
 
-<!ELEMENT variant (release?,arches,groups?,environments*,variants*,buildinstallpackages?)?>
+<!ELEMENT variant (release?,arches,groups?,environments*,variants*,buildinstallpackages?,modules?)?>
 <!ATTLIST variant
     id CDATA #REQUIRED
     name CDATA #REQUIRED
@@ -25,6 +25,13 @@
     glob (true|false) #IMPLIED
     default (true|false) #IMPLIED
     uservisible (true|false) #IMPLIED
+>
+
+<!ELEMENT modules (module)+>
+
+<!ELEMENT module (#PCDATA)>
+<!ATTLIST module
+    glob (true|false) #IMPLIED
 >
 
 <!ELEMENT environments (environment)+>

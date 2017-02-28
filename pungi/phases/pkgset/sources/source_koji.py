@@ -28,6 +28,84 @@ from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, po
 
 import pungi.phases.pkgset.source
 
+try:
+    from pdc_client import PDCClient
+    import modulemd
+    WITH_MODULES = True
+except:
+    WITH_MODULES = False
+
+
+def get_pdc_client_session(compose):
+    if not WITH_MODULES:
+        compose.log_warning("pdc_client module is not installed, "
+                            "support for modules is disabled")
+        return None
+    try:
+        return PDCClient(
+            server=compose.conf['pdc_url'],
+            develop=compose.conf['pdc_develop'],
+            ssl_verify=not compose.conf['pdc_insecure'],
+        )
+    except KeyError:
+        return None
+
+
+def variant_dict_from_str(module_str):
+    module_info = {}
+
+    release_start = module_str.rfind('-')
+    module_info['variant_version'] = module_str[release_start+1:]
+    module_info['variant_id'] = module_str[:release_start]
+    module_info['variant_type'] = 'module'
+
+    return module_info
+
+
+def get_module(session, module_info, strict=False):
+    """
+    :param session : PDCClient instance
+    :param module_info: pdc variant_dict, str, mmd or module dict
+    :param strict: Normally this function returns None if no module can be
+           found.  If strict=True, then a ValueError is raised.
+
+    :return final list of module_info which pass repoclosure
+    """
+
+    module_info = variant_dict_from_str(module_info)
+
+    query = dict(
+        variant_id=module_info['variant_id'],
+        variant_version=module_info['variant_version'],
+    )
+    if module_info.get('variant_release'):
+        query['variant_release'] = module_info['variant_release']
+
+    retval = session['unreleasedvariants'](page_size=-1, **query)
+
+    # Error handling
+    if not retval:
+        if strict:
+            raise ValueError("Failed to find module in PDC %r" % query)
+        else:
+            return None
+
+    module = None
+    # If we specify 'variant_release', we expect only single module to be
+    # returned, but otherwise we have to pick the one with the highest
+    # release ourselves.
+    if 'variant_release' in query:
+        assert len(retval) <= 1, compose.log_error(
+            "More than one module returned from PDC: %s" % str(retval))
+        module = retval[0]
+    else:
+        module = retval[0]
+        for m in retval:
+            if int(m['variant_release']) > int(module['variant_release']):
+                module = m
+
+    return module
+
 
 class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
     enabled = True
@@ -44,9 +122,7 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
 
 def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     event_info = get_koji_event_info(compose, koji_wrapper)
-    tag_info = get_koji_tag_info(compose, koji_wrapper)
-
-    pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, tag_info, event_info)
+    pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
     package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
     package_sets["global"] = pkgset_global
 
@@ -58,32 +134,90 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     return package_sets
 
 
-def populate_global_pkgset(compose, koji_wrapper, path_prefix, compose_tag, event_id):
+def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     all_arches = set(["src"])
     for arch in compose.get_arches():
         is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib)
         all_arches.update(arches)
 
-    compose_tag = compose.conf["pkgset_koji_tag"]
+    # List of compose tags from which we create this compose
+    compose_tags = []
+
+    # List of compose_tags per variant
+    variant_tags = {}
+
+    session = get_pdc_client_session(compose)
+    for variant in compose.all_variants.values():
+        variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+            koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
+            arches=all_arches)
+        variant_tags[variant] = []
+
+        # Find out all modules in every variant and add their compose tags
+        # to compose_tags list.
+        if session:
+            for module in variant.get_modules():
+                pdc_module = get_module(session, module["name"])
+                mmd = modulemd.ModuleMetadata()
+                mmd.loads(pdc_module["modulemd"])
+                tag = pdc_module["koji_tag"]
+                variant.mmds.append(mmd)
+                variant_tags[variant].append(tag)
+                if tag not in compose_tags:
+                    compose_tags.append(tag)
+
+        if not variant_tags[variant]:
+            variant_tags[variant].append(compose.conf["pkgset_koji_tag"])
+
+    # In case we have no compose tag from module, use the default
+    # one from config.
+    if not compose_tags:
+        compose_tags.append(compose.conf["pkgset_koji_tag"])
+
     inherit = compose.conf["pkgset_koji_inherit"]
-    msg = "Populating the global package set from tag '%s'" % compose_tag
-    global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "pkgset_global.pickle")
+    global_pkgset_path = os.path.join(
+        compose.paths.work.topdir(arch="global"), "pkgset_global.pickle")
     if compose.DEBUG and os.path.isfile(global_pkgset_path):
+        msg = "Populating the global package set from tag '%s'" % compose_tags
         compose.log_warning("[SKIP ] %s" % msg)
-        pkgset = pickle.load(open(global_pkgset_path, "r"))
+        global_pkgset = pickle.load(open(global_pkgset_path, "r"))
     else:
-        compose.log_info(msg)
-        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(koji_wrapper, compose.conf["sigkeys"],
-                                                            logger=compose._logger, arches=all_arches)
-        pkgset.populate(compose_tag, event_id, inherit=inherit)
+        global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+            koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
+            arches=all_arches)
+        # Get package set for each compose tag and merge it to global package
+        # list. Also prepare per-variant pkgset, because we do not have list
+        # of binary RPMs in module definition - there is just list of SRPMs.
+        for compose_tag in compose_tags:
+            compose.log_info("Populating the global package set from tag "
+                             "'%s'" % compose_tag)
+            pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+                koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
+                arches=all_arches)
+            pkgset.populate(compose_tag, event_id, inherit=inherit)
+            for variant in compose.all_variants.values():
+                if compose_tag in variant_tags[variant]:
+                    # Optimization for case where we have just single compose
+                    # tag - we do not have to merge in this case...
+                    if len(compose_tags) == 1:
+                        variant.pkgset = pkgset
+                    else:
+                        variant.pkgset.merge(pkgset, None, list(all_arches))
+            # Optimization for case where we have just single compose
+            # tag - we do not have to merge in this case...
+            if len(compose_tags) == 1:
+                global_pkgset = pkgset
+            else:
+                global_pkgset.merge(pkgset, None, list(all_arches))
         with open(global_pkgset_path, 'w') as f:
-            f.write(pickle.dumps(pkgset))
+            f.write(pickle.dumps(global_pkgset))
 
     # write global package list
-    pkgset.save_file_list(compose.paths.work.package_list(arch="global"),
-                          remove_path_prefix=path_prefix)
-    return pkgset
+    global_pkgset.save_file_list(
+        compose.paths.work.package_list(arch="global"),
+        remove_path_prefix=path_prefix)
+    return global_pkgset
 
 
 def get_koji_event_info(compose, koji_wrapper):
@@ -105,23 +239,4 @@ def get_koji_event_info(compose, koji_wrapper):
         result = koji_proxy.getLastEvent()
         json.dump(result, open(event_file, "w"))
     compose.log_info("Koji event: %s" % result["id"])
-    return result
-
-
-def get_koji_tag_info(compose, koji_wrapper):
-    koji_proxy = koji_wrapper.koji_proxy
-    tag_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-tag")
-    msg = "Getting a koji tag info"
-    if compose.DEBUG and os.path.exists(tag_file):
-        compose.log_warning("[SKIP ] %s" % msg)
-        result = json.load(open(tag_file, "r"))
-    else:
-        compose.log_info(msg)
-        tag_name = compose.conf["pkgset_koji_tag"]
-        result = koji_proxy.getTag(tag_name)
-        if result is None:
-            raise ValueError("Unknown koji tag: %s" % tag_name)
-        result["name"] = tag_name
-        json.dump(result, open(tag_file, "w"))
-    compose.log_info("Koji compose tag: %(name)s (ID: %(id)s)" % result)
     return result
