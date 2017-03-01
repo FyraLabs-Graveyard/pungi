@@ -29,7 +29,7 @@ import ConfigParser
 from fnmatch import fnmatch
 
 import arch as arch_module
-import multilib
+import multilib_yum as multilib
 
 
 class ReentrantYumLock(object):

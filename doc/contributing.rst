@@ -6,8 +6,8 @@ Contributing to Pungi
 Set up development environment
 ==============================
 
-In order to work on *Pungi*, you should install *Fedora 23*. These packages
-will have to installed:
+In order to work on *Pungi*, you should install recent version of *Fedora*.
+These packages will have to installed:
 
  * createrepo
  * createrepo_c
@@ -26,6 +26,7 @@ will have to installed:
  * python-kickstart
  * python-lockfile
  * python-lxml
+ * python2-multilib
  * python-productmd
  * repoview
  * syslinux
@@ -49,7 +50,7 @@ packages above as they are used by calling an executable. ::
     $ for pkg in _selinux deltarpm _deltarpm krbV sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
     $ pip install https://github.com/release-engineering/kobo/archive/0.5.2.tar.gz
-    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile
+    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile python-multilib
 
 Now you should be able to run all existing tests.
 

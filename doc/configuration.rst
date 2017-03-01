@@ -536,9 +536,9 @@ Options
     changes the entire codebase doing dependency solving, so it can change the
     result in unpredictable ways.
 
-    Particularly the multilib testing is performed differently with much less
-    magic. Please refer to ``multilib`` option to see the differences.
-
+    Particularly the multilib work is performed differently by using
+    ``python-multilib`` library. Please refer to ``multilib`` option to see the
+    differences.
 
 **multilib_methods** [deprecated]
     ([*str*]) -- use ``multilib`` instead to configure this per-variant
@@ -555,13 +555,12 @@ Options
     Available methods are:
      * ``none`` -- no package matches this method
      * ``all`` -- all packages match this method
-     * ``runtime`` -- packages that provide something matching
-       ``*.so.[0-9]+.*`` will match. With ``yum`` backend installed files are
-       also looked at for a match with a hardcoded list of patterns.
+     * ``runtime`` -- packages that install some shared object file
+       (``*.so.*``) will match.
      * ``devel`` -- packages whose name ends with ``-devel`` or ``--static``
-       suffix will be matched or packages that provide something with such
-       suffix. With ``yum`` backend this method also uses a hardcoded blacklist
-       and whitelist.
+       suffix will be matched. When ``dnf`` is used, this method automatically
+       enables ``runtime`` method as well. With ``yum`` backend this method
+       also uses a hardcoded blacklist and whitelist.
      * ``kernel`` -- packages providing ``kernel`` or ``kernel-devel`` match
        this method (only in ``yum`` backend)
      * ``yaboot`` -- only ``yaboot`` package on ``ppc`` arch matches this (only

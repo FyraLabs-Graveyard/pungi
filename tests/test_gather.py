@@ -1009,17 +1009,18 @@ class DepsolvingBase(object):
             "dummy-ipw3945-kmod-debuginfo-1.2.0-4.20.x86_64.rpm",
         ])
 
-    def test_multilib_method_devel(self):
+    def test_multilib_method_devel_runtime(self):
         packages = [
             "dummy-lvm2-devel",
         ]
         pkg_map = self.go(packages, None, greedy="none", fulltree=False,
-                          multilib_methods=["devel"])
+                          multilib_methods=["devel", "runtime"])
 
         self.assertItemsEqual(pkg_map["rpm"], [
             "dummy-basesystem-10.0-6.noarch.rpm",
             "dummy-filesystem-4.2.37-6.x86_64.rpm",
             "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
             "dummy-glibc-common-2.14-5.x86_64.rpm",
             "dummy-lvm2-2.02.84-4.x86_64.rpm",
             "dummy-lvm2-devel-2.02.84-4.i686.rpm",          # Important
@@ -1035,6 +1036,8 @@ class DepsolvingBase(object):
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
             "dummy-lvm2-debuginfo-2.02.84-4.i686.rpm",
             "dummy-lvm2-debuginfo-2.02.84-4.x86_64.rpm",
         ])
@@ -1327,7 +1330,7 @@ class DepsolvingBase(object):
         packages = [
             "dummy-atlas-devel",
         ]
-        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel"],
+        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel", "runtime"],
                           fulltree=False, arch="x86_64")
 
         self.assertItemsEqual(pkg_map["rpm"], [
@@ -1345,7 +1348,7 @@ class DepsolvingBase(object):
         packages = [
             "dummy-atlas-devel.+",
         ]
-        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel"],
+        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel", "runtime"],
                           fulltree=False, arch="x86_64")
 
         self.assertItemsEqual(pkg_map["rpm"], [

@@ -13,11 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-
-import re
-
-
-RE_SONAME = re.compile(r"^.*\.so\.\d+.*$")
+from multilib import multilib
 
 
 class Multilib(object):
@@ -35,8 +31,15 @@ class Multilib(object):
         self.blacklist = blacklist
         self.whitelist = whitelist
 
+        self.all_methods = {
+            'none': multilib.NoMultilibMethod(None),
+            'all': multilib.AllMultilibMethod(None),
+            'devel': multilib.DevelMultilibMethod(None),
+            'runtime': multilib.RuntimeMultilibMethod(None),
+        }
+
         for method in methods:
-            self.methods[method] = getattr(self, "method_%s" % method)
+            self.methods[method] = self.all_methods[method]
 
     @classmethod
     def from_globs(cls, sack, methods, blacklist=None, whitelist=None):
@@ -45,40 +48,13 @@ class Multilib(object):
                    _expand_list(sack, blacklist or []),
                    _expand_list(sack, whitelist or []))
 
-    def method_none(self, pkg):
-        return False
-
-    def method_all(self, pkg):
-        return True
-
-    def method_devel(self, pkg):
-        if pkg.name.endswith("-devel"):
-            return True
-        if pkg.name.endswith("-static"):
-            return True
-        for prov in pkg.provides:
-            # TODO: split reldep to name/flag/value
-            prov = str(prov).split(" ")[0]
-            if prov.endswith("-devel"):
-                return True
-            if prov.endswith("-static"):
-                return True
-        return False
-
-    def method_runtime(self, pkg):
-        for prov in pkg.provides:
-            prov = str(prov)
-            if RE_SONAME.match(prov):
-                return True
-        return False
-
     def is_multilib(self, pkg):
         if pkg.name in self.blacklist:
             return False
         if pkg.name in self.whitelist:
             return 'whitelist'
-        for method, func in self.methods.iteritems():
-            if func(pkg):
+        for method, cls in self.methods.iteritems():
+            if cls.select(pkg):
                 return method
         return False
 
