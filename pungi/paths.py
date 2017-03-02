@@ -51,7 +51,6 @@ class Paths(object):
         paths_module_name = compose.conf.get("paths_module")
         if paths_module_name:
             # custom paths
-            compose.log_info("Using custom paths from module %s" % paths_module_name)
             paths_module = __import__(paths_module_name, globals(), locals(), ["LogPaths", "WorkPaths", "ComposePaths"])
             self.compose = paths_module.ComposePaths(compose)
             self.log = paths_module.LogPaths(compose)
