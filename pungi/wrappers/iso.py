@@ -19,7 +19,6 @@ import sys
 import pipes
 from fnmatch import fnmatch
 
-import kobo.log
 from kobo.shortcuts import force_list, relative_path, run
 
 
@@ -194,11 +193,22 @@ def get_checkisomd5_cmd(iso_path, just_print=False):
     return cmd
 
 
-def get_implanted_md5(iso_path):
+def get_implanted_md5(iso_path, logger=None):
     cmd = get_checkisomd5_cmd(iso_path, just_print=True)
     retcode, output = run(cmd)
     line = output.splitlines()[0]
-    return line.rsplit(":")[-1].strip()
+    md5 = line.rsplit(":")[-1].strip()
+    if len(md5) != 32:
+        # We have seen cases where the command finished successfully, but
+        # returned garbage value. We need to handle it, otherwise there would
+        # be a crash once we try to write image metadata.
+        # This only logs information about the problem and leaves the hash
+        # empty, which is valid from productmd point of view.
+        if logger:
+            logger.critical('Implanted MD5 in %s is not valid: %r', iso_path, md5)
+            logger.critical('Ran command %r; exit code %r; output %r', cmd, retcode, output)
+        return None
+    return md5
 
 
 def get_isohybrid_cmd(iso_path, arch):

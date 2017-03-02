@@ -261,7 +261,7 @@ class CreateIsoThread(WorkerThread):
         img.disc_count = cmd["disc_count"]
         img.bootable = cmd["bootable"]
         img.subvariant = variant.uid
-        img.implant_md5 = iso.get_implanted_md5(cmd["iso_path"])
+        img.implant_md5 = iso.get_implanted_md5(cmd["iso_path"], logger=compose._logger)
         setattr(img, 'can_fail', compose.can_fail(variant, arch, 'iso'))
         setattr(img, 'deliverable', 'iso')
         try:

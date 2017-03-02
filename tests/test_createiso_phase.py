@@ -258,7 +258,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             [mock.call(get_runroot_cmd.return_value,
                        log_file='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(iso.get_implanted_md5.call_args_list,
-                         [mock.call(cmd['iso_path'])])
+                         [mock.call(cmd['iso_path'], logger=compose._logger)])
         self.assertEqual(iso.get_volume_id.call_args_list,
                          [mock.call(cmd['iso_path'])])
 
@@ -323,7 +323,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             [mock.call(get_runroot_cmd.return_value,
                        log_file='%s/logs/src/createiso-image-name.src.log' % self.topdir)])
         self.assertEqual(iso.get_implanted_md5.call_args_list,
-                         [mock.call(cmd['iso_path'])])
+                         [mock.call(cmd['iso_path'], logger=compose._logger)])
         self.assertEqual(iso.get_volume_id.call_args_list,
                          [mock.call(cmd['iso_path'])])
 
@@ -389,7 +389,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             [mock.call(get_runroot_cmd.return_value,
                        log_file='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(iso.get_implanted_md5.call_args_list,
-                         [mock.call(cmd['iso_path'])])
+                         [mock.call(cmd['iso_path'], logger=compose._logger)])
         self.assertEqual(iso.get_volume_id.call_args_list,
                          [mock.call(cmd['iso_path'])])
 
@@ -552,7 +552,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
             [mock.call(cmd['cmd'], show_cmd=True,
                        logfile='%s/logs/x86_64/createiso-image-name.x86_64.log' % self.topdir)])
         self.assertEqual(iso.get_implanted_md5.call_args_list,
-                         [mock.call(cmd['iso_path'])])
+                         [mock.call(cmd['iso_path'], logger=compose._logger)])
         self.assertEqual(iso.get_volume_id.call_args_list,
                          [mock.call(cmd['iso_path'])])
 
