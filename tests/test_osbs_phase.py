@@ -147,6 +147,22 @@ METADATA = {
     }]}
 }
 
+SCRATCH_TASK_RESULT = {
+    'koji_builds': [],
+    'repositories': [
+        'registry.example.com:8888/rcm/buildroot:f24-docker-candidate-20160617141632',
+    ]
+}
+
+SCRATCH_METADATA = {
+    "Server": {'scratch': [{
+        "koji_task": 12345,
+        "repositories": [
+            'registry.example.com:8888/rcm/buildroot:f24-docker-candidate-20160617141632',
+        ]
+    }]}
+}
+
 
 class OSBSThreadTest(helpers.PungiTestCase):
 
@@ -161,38 +177,53 @@ class OSBSThreadTest(helpers.PungiTestCase):
             ]
         })
 
-    def _setupMock(self, KojiWrapper, resolve_git_url):
+    def _setupMock(self, KojiWrapper, resolve_git_url, scratch=False):
         resolve_git_url.return_value = 'git://example.com/repo?#BEEFCAFE'
         self.wrapper = KojiWrapper.return_value
         self.wrapper.koji_proxy.buildContainer.return_value = 12345
-        self.wrapper.koji_proxy.getTaskResult.return_value = TASK_RESULT
-        self.wrapper.koji_proxy.getBuild.return_value = BUILD_INFO
-        self.wrapper.koji_proxy.listArchives.return_value = ARCHIVES
+        if scratch:
+            self.wrapper.koji_proxy.getTaskResult.return_value = SCRATCH_TASK_RESULT
+        else:
+            self.wrapper.koji_proxy.getTaskResult.return_value = TASK_RESULT
+            self.wrapper.koji_proxy.getBuild.return_value = BUILD_INFO
+            self.wrapper.koji_proxy.listArchives.return_value = ARCHIVES
         self.wrapper.koji_proxy.getLatestBuilds.return_value = [mock.Mock(), mock.Mock()]
         self.wrapper.koji_proxy.getNextRelease.return_value = 3
         self.wrapper.watch_task.return_value = 0
 
-    def _assertCorrectMetadata(self):
+    def _assertCorrectMetadata(self, scratch=False):
         self.maxDiff = None
-        self.assertEqual(self.pool.metadata, METADATA)
+        if scratch:
+            metadata = copy.deepcopy(SCRATCH_METADATA)
+            metadata['Server']['scratch'][0]['compose_id'] = self.compose.compose_id
+            metadata['Server']['scratch'][0]['koji_task'] = 12345
+        else:
+            metadata = copy.deepcopy(METADATA)
+            metadata['Server']['x86_64'][0]['compose_id'] = self.compose.compose_id
+            metadata['Server']['x86_64'][0]['koji_task'] = 12345
+        self.assertEqual(self.pool.metadata, metadata)
 
-    def _assertCorrectCalls(self, opts, setupCalls=None):
+    def _assertCorrectCalls(self, opts, setupCalls=None, scratch=False):
         setupCalls = setupCalls or []
         options = {'yum_repourls': ['http://root/work/global/tmp-Server/compose-rpms-1.repo']}
+        if scratch:
+            options['scratch'] = True
         options.update(opts)
-        self.assertEqual(
-            self.wrapper.mock_calls,
-            [mock.call.login()] + setupCalls + [
-                mock.call.koji_proxy.buildContainer(
-                    'git://example.com/repo?#BEEFCAFE',
-                    'f24-docker-candidate',
-                    options,
-                    priority=None),
-                mock.call.watch_task(
-                    12345, self.topdir + '/logs/global/osbs/Server-1-watch-task.log'),
-                mock.call.koji_proxy.getTaskResult(12345),
-                mock.call.koji_proxy.getBuild(54321),
-                mock.call.koji_proxy.listArchives(54321)])
+        expect_calls = [mock.call.login()] + setupCalls
+        expect_calls.extend([
+            mock.call.koji_proxy.buildContainer(
+                'git://example.com/repo?#BEEFCAFE',
+                'f24-docker-candidate',
+                options,
+                priority=None),
+            mock.call.watch_task(
+                12345, self.topdir + '/logs/global/osbs/Server-1-watch-task.log'),
+            mock.call.koji_proxy.getTaskResult(12345)])
+
+        if not scratch:
+            expect_calls.extend([mock.call.koji_proxy.getBuild(54321),
+                                 mock.call.koji_proxy.listArchives(54321)])
+        self.assertEqual(self.wrapper.mock_calls, expect_calls)
 
     def _assertRepoFile(self, variants=None, gpgkey=None):
         variants = variants or ['Server']
@@ -414,19 +445,20 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_scratch_has_no_metadata(self, KojiWrapper, resolve_git_url):
+    def test_scratch_metadata(self, KojiWrapper, resolve_git_url):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
-            'target': 'fedora-24-docker-candidate',
+            'target': 'f24-docker-candidate',
             'scratch': True,
         }
+        self._setupMock(KojiWrapper, resolve_git_url, scratch=True)
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self.assertEqual(self.pool.metadata, {})
-
+        self._assertCorrectCalls({}, scratch=True)
+        self._assertCorrectMetadata(scratch=True)
+        self._assertRepoFile()
 
 if __name__ == '__main__':
     unittest.main()
