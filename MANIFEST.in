@@ -8,7 +8,8 @@ include share/*
 include share/multilib/*
 include doc/*
 include tests/*
-exclude tests/*.pyc
 include tests/data/*
-include tests/data/*/*
+include tests/data/specs/*
 recursive-include tests/fixtures *.iso *.json *.log *.rpm *.xml *.bz2 *.gz MD5SUM SHA1SUM SHA256SUM .treeinfo
+global-exclude *.py[co]
+global-exclude *~ *.sw? \#*\#
