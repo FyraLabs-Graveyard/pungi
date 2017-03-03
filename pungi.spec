@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.12
+Version:        4.1.13
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -91,6 +91,41 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Mar 03 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.13-1
+- Make MANIFEST.in stricter (qwan)
+- Remove one line of log print (qwan)
+- gather: Filter comps group on depsolving input of optional (lsedlar)
+- Enable customizing runroot task weight (lsedlar)
+- comps: Filter comps groups for optional variants (lsedlar)
+- Rename main logger (lsedlar)
+- ostree: Silence logger in tests (lsedlar)
+- ostree: Fix crash when extra repos are missing (lsedlar)
+- util: Add a utility for managing temporary files (lsedlar)
+- Add --quiet option to pungi-koji (qwan)
+- handle opening empty images.json while re-running pungi-koji in debug mode
+  (qwan)
+- minor change: remove an always true condition (qwan)
+- Refactor depsolving tests (lsedlar)
+- multilib: Remove FileMultilibMethod class (lsedlar)
+- pkgset: Use additional packages for initial pull (lsedlar)
+- metadata: Fix .treeinfo paths for addons (lsedlar)
+- koji_wrapper: Always use --profile option with koji (lsedlar)
+- add missing koji_profile from test compose setting (dennis)
+- use koji --profile when calling koji for livemedia (dennis)
+- repoclosure: Don't run build deps check (lsedlar)
+- repoclosure: add option to use dnf backend (lsedlar)
+- repoclosure: Add test for repoclosure in test phase (lsedlar)
+- repoclosure: Remove duplicated code (lsedlar)
+- repoclosure: Remove useless wrapper class (lsedlar)
+- repoclosure: Remove unused code (lsedlar)
+- repoclosure: Add a test for the wrapper (lsedlar)
+- image-build: Pass arches around as a list (lsedlar)
+- image-build: Expand arches for can_fail (lsedlar)
+- image_checksum: add file sizes to checksum files (qwan)
+- Add documentation and example for greedy_method (lsedlar)
+- replace ${basearch} when updating the ref (dennis)
+- Add some debugging about ref updating (puiterwijk)
+
 * Tue Jan 17 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.12-1
 - unified-iso: Fall back to default config (lsedlar)
 - osbs: optionally check GPG signatures (qwan)
