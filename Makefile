@@ -1,8 +1,8 @@
 .PHONY: all clean doc log test
 
 PKGNAME=pungi
-VERSION=$(shell rpm -q --qf "%{VERSION}\n" --specfile ${PKGNAME}.spec)
-RELEASE=$(shell rpm -q --qf "%{RELEASE}\n" --specfile ${PKGNAME}.spec)
+VERSION=$(shell rpm -q --qf "%{VERSION}\n" --specfile ${PKGNAME}.spec | head -n1)
+RELEASE=$(shell rpm -q --qf "%{RELEASE}\n" --specfile ${PKGNAME}.spec | head -n1)
 GITTAG=${PKGNAME}-$(VERSION)
 PKGRPMFLAGS=--define "_topdir ${PWD}" --define "_specdir ${PWD}" --define "_sourcedir ${PWD}/dist" --define "_srcrpmdir ${PWD}" --define "_rpmdir ${PWD}" --define "_builddir ${PWD}"
 
