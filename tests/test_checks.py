@@ -10,6 +10,8 @@ import os
 import sys
 import StringIO
 
+import kobo.conf
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pungi import checks
@@ -186,6 +188,169 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
         self.assertNotIn('createrepo_c', out.getvalue())
         self.assertTrue(result)
+
+
+class TestSchemaValidator(unittest.TestCase):
+    def _load_conf_from_string(self, string):
+        conf = kobo.conf.PyConfigParser()
+        conf.load_from_string(string)
+        return conf
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_property(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+            },
+            "additionalProperties": False,
+            "required": ["release_name"],
+        }
+        make_schema.return_value = schema
+
+        string = """
+        release_name = "dummy product"
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 0)
+        self.assertEqual(config.get("release_name", None), "dummy product")
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_alias_property(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+            },
+            "additionalProperties": False,
+        }
+        make_schema.return_value = schema
+
+        string = """
+        product_name = "dummy product"
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 0)
+        self.assertEqual(config.get("release_name", None), "dummy product")
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_required_is_missing(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+            },
+            "additionalProperties": False,
+            "required": ["release_name"],
+        }
+        make_schema.return_value = schema
+
+        string = """
+        name = "dummy product"
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Failed validation in : 'release_name' is a required property", errors)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("WARNING: Unrecognized config option: name.", warnings)
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_required_is_in_alias(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+            },
+            "additionalProperties": False,
+            "required": ["release_name"],
+        }
+        make_schema.return_value = schema
+
+        string = """
+        product_name = "dummy product"
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 0)
+        self.assertEqual(config.get("release_name", None), "dummy product")
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_redundant_alias(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+            },
+            "additionalProperties": False,
+            "required": ["release_name"],
+        }
+        make_schema.return_value = schema
+
+        string = """
+        product_name = "dummy product"
+        release_name = "dummy product"
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 1)
+        self.assertIn('Failed validation in : product_name is an alias of release_name, only one can be used.', errors)
+        self.assertEqual(len(warnings), 0)
+        self.assertEqual(config.get("release_name", None), "dummy product")
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_properties_in_deep(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {
+                "release_name": {"type": "string", "alias": "product_name"},
+                "keys": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "foophase": {
+                    "type": "object",
+                    "properties": {
+                        "repo": {"type": "string", "alias": "tree"},
+                    },
+                    "additionalProperties": False,
+                    "required": ["repo"],
+                },
+            },
+            "additionalProperties": False,
+            "required": ["release_name"],
+        }
+        make_schema.return_value = schema
+
+        string = """
+        product_name = "dummy product"
+        foophase = {
+            "tree": "http://www.exampe.com/os"
+        }
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 0)
+        self.assertEqual(config.get("release_name", None), "dummy product")
+        self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
 
 
 class TestUmask(unittest.TestCase):

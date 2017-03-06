@@ -38,6 +38,11 @@ class MockVariant(mock.Mock):
         return self.uid
 
 
+class IterableMock(mock.Mock):
+    def __iter__(self):
+        return iter([])
+
+
 class DummyCompose(object):
     def __init__(self, topdir, config):
         self.supported = True
