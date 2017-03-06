@@ -211,14 +211,6 @@ class CreateImageBuildThread(WorkerThread):
                         image_infos.append({'path': path, 'suffix': suffix, 'type': format, 'arch': arch})
                         break
 
-        if len(image_infos) != len(cmd['format']) * (len(arches) - len(self.failable_arches)):
-            self.pool.log_error(
-                "Error in koji task %s. Expected to find same amount of images "
-                "as in suffixes attr in image-build (%s) for each arch (%s). Got '%s'." %
-                (output["task_id"], len(cmd['format']),
-                 len(arches), len(image_infos)))
-            self.fail(compose, cmd)
-
         # The usecase here is that you can run koji image-build with multiple --format
         # It's ok to do it serialized since we're talking about max 2 images per single
         # image_build record
