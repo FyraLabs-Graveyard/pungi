@@ -75,38 +75,51 @@ class OSBSThread(WorkerThread):
             raise RuntimeError('OSBS: task %s failed: see %s for details'
                                % (task_id, log_file))
 
-        # Only real builds get the metadata.
-        if not config.get('scratch', False):
-            self._add_metadata(koji.koji_proxy, variant, task_id)
+        scratch = config.get('scratch', False)
+        self._add_metadata(koji.koji_proxy, variant, task_id, compose, scratch)
 
         self.pool.log_info('[DONE ] %s' % msg)
 
-    def _add_metadata(self, koji_proxy, variant, task_id):
+    def _add_metadata(self, koji_proxy, variant, task_id, compose, is_scratch):
         # Create metadata
-        result = koji_proxy.getTaskResult(task_id)
-        build_id = int(result['koji_builds'][0])
-        buildinfo = koji_proxy.getBuild(build_id)
-        archives = koji_proxy.listArchives(build_id)
-
         metadata = {
-            'name': buildinfo['name'],
-            'version': buildinfo['version'],
-            'release': buildinfo['release'],
-            'creation_time': buildinfo['creation_time'],
+            'compose_id': compose.compose_id,
+            'koji_task': task_id,
         }
-        for archive in archives:
-            data = {
-                'filename': archive['filename'],
-                'size': archive['size'],
-                'checksum': archive['checksum'],
-            }
-            data.update(archive['extra'])
-            data.update(metadata)
-            arch = archive['extra']['image']['arch']
-            self.pool.log_debug('Created Docker base image %s-%s-%s.%s' % (
-                metadata['name'], metadata['version'], metadata['release'], arch))
+
+        result = koji_proxy.getTaskResult(task_id)
+        if is_scratch:
+            metadata.update({
+                'repositories': result['repositories'],
+            })
+            # add a fake arch of 'scratch', so we can construct the metadata
+            # in same data structure as real builds.
             self.pool.metadata.setdefault(
-                variant.uid, {}).setdefault(arch, []).append(data)
+                variant.uid, {}).setdefault('scratch', []).append(metadata)
+        else:
+            build_id = int(result['koji_builds'][0])
+            buildinfo = koji_proxy.getBuild(build_id)
+            archives = koji_proxy.listArchives(build_id)
+
+            metadata.update({
+                'name': buildinfo['name'],
+                'version': buildinfo['version'],
+                'release': buildinfo['release'],
+                'creation_time': buildinfo['creation_time'],
+            })
+            for archive in archives:
+                data = {
+                    'filename': archive['filename'],
+                    'size': archive['size'],
+                    'checksum': archive['checksum'],
+                }
+                data.update(archive['extra'])
+                data.update(metadata)
+                arch = archive['extra']['image']['arch']
+                self.pool.log_debug('Created Docker base image %s-%s-%s.%s' % (
+                    metadata['name'], metadata['version'], metadata['release'], arch))
+                self.pool.metadata.setdefault(
+                    variant.uid, {}).setdefault(arch, []).append(data)
 
     def _get_repo(self, compose, variant_uid, gpgkey=None):
         """
