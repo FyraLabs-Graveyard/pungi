@@ -119,10 +119,11 @@ def resolve_deps(compose, arch, variant):
     tmp_dir = compose.paths.work.tmp_dir(arch, variant)
     cache_dir = compose.paths.work.pungi_cache_dir(arch, variant)
     # TODO: remove YUM code, fully migrate to DNF
-    if compose.conf.get("dnf_gather", False):
-        get_cmd = pungi_wrapper.get_pungi_cmd_dnf
-    else:
-        get_cmd = pungi_wrapper.get_pungi_cmd
+    backends = {
+        'yum': pungi_wrapper.get_pungi_cmd,
+        'dnf': pungi_wrapper.get_pungi_cmd_dnf,
+    }
+    get_cmd = backends[compose.conf['gather_backend']]
     cmd = get_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid,
                   selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch,
                   full_archlist=True, greedy=greedy_method, cache_dir=cache_dir,
