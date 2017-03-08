@@ -183,6 +183,8 @@ class CreateImageBuildThread(WorkerThread):
         # Join the arches into a single string. This is the value expected by
         # koji config file.
         cmd["image_conf"]["image-build"]['arches'] = ','.join(cmd["image_conf"]["image-build"]['arches'])
+        if 'can_fail' in cmd["image_conf"]["image-build"]:
+            cmd["image_conf"]["image-build"]['can_fail'] = ','.join(cmd["image_conf"]["image-build"]['can_fail'])
 
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
