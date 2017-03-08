@@ -26,6 +26,7 @@ import urlparse
 import contextlib
 import traceback
 import tempfile
+import time
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -592,3 +593,22 @@ def temp_dir(log=None, *args, **kwargs):
             # Okay, we failed to delete temporary dir.
             if log:
                 log.warning('Error removing %s: %s', dir, exc.strerror)
+
+
+def run_unmount_cmd(cmd, max_retries=10):
+    """Attempt to run the command to unmount an image.
+
+    If the command fails and stderr complains about device being busy, try
+    again. We will do up to ``max_retries`` attemps with increasing pauses.
+    """
+    for i in xrange(max_retries):
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        if proc.returncode == 0:
+            # We were successful
+            return
+        if 'Device or resource busy' not in err:
+            raise RuntimeError('Unhandled error when running %r: %r' % (cmd, err))
+        time.sleep(i)
+    # Still busy, there's something wrong.
+    raise RuntimeError('Failed to run %r: Device or resource busy.' % cmd)

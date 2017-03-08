@@ -27,7 +27,7 @@ from productmd.images import Image
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
-from pungi.util import get_file_size, get_mtime, failable, makedirs
+from pungi.util import get_file_size, get_mtime, failable, makedirs, run_unmount_cmd
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
@@ -273,8 +273,7 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
                 cmd = ["cp", "-v", "--remove-destination", config_path, config_in_image]
                 run(cmd)
 
-        cmd = ["fusermount", "-u", mount_tmp_dir]
-        run(cmd)
+        run_unmount_cmd(["fusermount", "-u", mount_tmp_dir])
         shutil.rmtree(mount_tmp_dir)
 
     # HACK: make buildinstall files world readable

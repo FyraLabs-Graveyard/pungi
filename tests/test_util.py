@@ -10,6 +10,7 @@ except ImportError:
     import unittest
 import tempfile
 import shutil
+import subprocess
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -426,6 +427,61 @@ class TestTempFiles(unittest.TestCase):
                 self.assertTrue(os.path.isdir(tmp))
             self.assertTrue(os.path.isdir(root))
             self.assertFalse(os.path.exists(tmp))
+
+
+class TestUnmountCmd(unittest.TestCase):
+
+    def _fakeProc(self, ret, err):
+        proc = mock.Mock(returncode=ret)
+        proc.communicate.return_value = ('', err)
+        return proc
+
+    @mock.patch('subprocess.Popen')
+    def test_unmount_cmd_success(self, mockPopen):
+        cmd = 'unmount'
+        mockPopen.side_effect = [self._fakeProc(0, '')]
+        util.run_unmount_cmd(cmd)
+        self.assertEqual(mockPopen.call_args_list,
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)])
+
+    @mock.patch('subprocess.Popen')
+    def test_unmount_cmd_fail_other_reason(self, mockPopen):
+        cmd = 'unmount'
+        mockPopen.side_effect = [self._fakeProc(1, 'It is broken')]
+        with self.assertRaises(RuntimeError) as ctx:
+            util.run_unmount_cmd(cmd)
+        self.assertEqual(str(ctx.exception),
+                         "Unhandled error when running 'unmount': 'It is broken'")
+        self.assertEqual(mockPopen.call_args_list,
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)])
+
+    @mock.patch('time.sleep')
+    @mock.patch('subprocess.Popen')
+    def test_unmount_cmd_fail_then_retry(self, mockPopen, mock_sleep):
+        cmd = 'unmount'
+        mockPopen.side_effect = [self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(0, '')]
+        util.run_unmount_cmd(cmd)
+        self.assertEqual(mockPopen.call_args_list,
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)] * 3)
+        self.assertEqual(mock_sleep.call_args_list,
+                         [mock.call(0), mock.call(1)])
+
+    @mock.patch('time.sleep')
+    @mock.patch('subprocess.Popen')
+    def test_unmount_cmd_fail_then_retry_and_fail(self, mockPopen, mock_sleep):
+        cmd = 'unmount'
+        mockPopen.side_effect = [self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(1, 'Device or resource busy')]
+        with self.assertRaises(RuntimeError) as ctx:
+            util.run_unmount_cmd(cmd, max_retries=3)
+        self.assertEqual(mockPopen.call_args_list,
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)] * 3)
+        self.assertEqual(mock_sleep.call_args_list,
+                         [mock.call(0), mock.call(1), mock.call(2)])
+        self.assertEqual(str(ctx.exception), "Failed to run 'unmount': Device or resource busy.")
 
 
 if __name__ == "__main__":
