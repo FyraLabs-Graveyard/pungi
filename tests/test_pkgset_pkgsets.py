@@ -248,7 +248,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
         self.assertRegexpMatches(str(ctx.exception),
-                                 r'^RPM .+ not found for sigs: .+ Paths checked: .+$')
+                                 r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
     def test_can_not_find_any_package(self):
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
@@ -261,7 +261,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
         self.assertRegexpMatches(str(ctx.exception),
-                                 r'^RPM .+ not found for sigs: .+ Paths checked: .+$')
+                                 r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
 
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)

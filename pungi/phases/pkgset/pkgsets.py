@@ -48,6 +48,8 @@ class ReaderThread(WorkerThread):
                                             % (num, self.pool.queue_total))
 
         rpm_path = self.pool.package_set.get_package_path(item)
+        if rpm_path is None:
+            return
         rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
         self.pool.package_set.rpms_by_arch.setdefault(rpm_obj.arch, []).append(rpm_obj)
 
@@ -72,6 +74,8 @@ class PackageSetBase(kobo.log.LoggingBase):
         self.arches = arches
         self.rpms_by_arch = {}
         self.srpms_by_name = {}
+        # RPMs not found for specified sigkeys
+        self._invalid_sigkey_rpms = []
 
     def __getitem__(self, name):
         return self.file_cache[name]
@@ -118,6 +122,12 @@ class PackageSetBase(kobo.log.LoggingBase):
         rpm_pool.start()
         rpm_pool.stop()
         self.log_debug("Package set: worker threads stopped (RPMs)")
+
+        if self._invalid_sigkey_rpms:
+            raise RuntimeError(
+                "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
+                    self.sigkey_ordering,
+                    '\n'.join([rpminfo['name'] for rpminfo in self._invalid_sigkey_rpms])))
 
         return self.rpms_by_arch
 
@@ -247,8 +257,10 @@ class KojiPackageSet(PackageSetBase):
             if os.path.isfile(rpm_path):
                 return rpm_path
 
-        raise RuntimeError("RPM %s not found for sigs: %s. Paths checked: %s"
-                           % (rpm_info, self.sigkey_ordering, paths))
+        self._invalid_sigkey_rpms.append(rpm_info)
+        self.log_error("RPM %s not found for sigs: %s. Paths checked: %s"
+                       % (rpm_info, self.sigkey_ordering, paths))
+        return None
 
     def populate(self, tag, event=None, inherit=True):
         result_rpms = []
