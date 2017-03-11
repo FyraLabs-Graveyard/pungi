@@ -358,8 +358,9 @@ Createrepo Settings
 Options
 -------
 
-**createrepo_checksum** [mandatory]
-    (*str*) -- specify checksum type for createrepo; expected values: sha256, sha
+**createrepo_checksum**
+    (*str*) -- specify checksum type for createrepo; expected values: sha256, sha.
+    Defaults to sha256.
 
 **createrepo_c** = True
     (*bool*) -- use createrepo_c (True) or legacy createrepo (False)
@@ -387,7 +388,7 @@ Example
 -------
 ::
 
-    createrepo_checksum = "sha256"
+    createrepo_checksum = "sha"
 
 
 Package Set Settings

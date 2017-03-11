@@ -517,6 +517,7 @@ def _make_schema():
             },
             "createrepo_checksum": {
                 "type": "string",
+                "default": "sha256",
                 "enum": ["sha", "sha256"],
             },
             "createrepo_use_xz": {
@@ -965,7 +966,7 @@ def _make_schema():
 
         "required": ["release_name", "release_short", "release_version",
                      "release_is_layered",
-                     "variants_file", "sigkeys", "createrepo_checksum",
+                     "variants_file", "sigkeys",
                      "runroot", "pkgset_source",
                      "gather_source", "gather_method"],
         "additionalProperties": False,
