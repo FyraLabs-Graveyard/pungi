@@ -93,7 +93,7 @@ class UnifiedISO(object):
                 shutil.rmtree(self.temp_dir)
 
     def _link_tree(self, dir, variant, arch):
-        blacklist_files = [".treeinfo", ".discinfo", "boot.iso", "media.repo"]
+        blacklist_files = [".treeinfo", ".discinfo", "boot.iso", "media.repo", "extra_files.json"]
         blacklist_dirs = ["repodata"]
 
         for root, dirs, files in os.walk(dir):
