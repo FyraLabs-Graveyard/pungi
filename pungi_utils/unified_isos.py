@@ -114,7 +114,12 @@ class UnifiedISO(object):
                     new_path = os.path.join(self.temp_dir, "trees", arch, old_relpath)
 
                 makedirs(os.path.dirname(new_path))
-                self.linker.link(old_path, new_path)
+                try:
+                    self.linker.link(old_path, new_path)
+                except OSError as exc:
+                    print("Failed to link %s to %s: %s" % (old_path, new_path, exc.strerror),
+                          file=sys.stderr)
+                    raise
 
     def link_to_temp(self):
         # copy files to new location; change RPM location to $variant_uid
