@@ -58,12 +58,12 @@ class OstreeInstallerThread(WorkerThread):
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
-        self._run_ostree_cmd(compose, variant, arch, config, source_repos, output_dir, volid)
+        task_id = self._run_ostree_cmd(compose, variant, arch, config, source_repos, output_dir, volid)
 
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
-        self.pool.log_info('[DONE ] %s' % msg)
+        self.pool.log_info('[DONE ] %s, (task id: %s)' % (msg, task_id))
 
     def _get_source_repo(self, compose, arch, source):
         """
@@ -176,3 +176,4 @@ class OstreeInstallerThread(WorkerThread):
         if output["retcode"] != 0:
             raise RuntimeError("Runroot task failed: %s. See %s for more details."
                                % (output["task_id"], log_file))
+        return output['task_id']
