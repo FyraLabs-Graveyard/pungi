@@ -595,11 +595,19 @@ def temp_dir(log=None, *args, **kwargs):
                 log.warning('Error removing %s: %s', dir, exc.strerror)
 
 
-def run_unmount_cmd(cmd, max_retries=10):
+def fusermount(path, **kwargs):
+    """Run fusermount -u on a given path."""
+    run_unmount_cmd(['fusermount', '-u', path], path=path, **kwargs)
+
+
+def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     """Attempt to run the command to unmount an image.
 
     If the command fails and stderr complains about device being busy, try
     again. We will do up to ``max_retries`` attemps with increasing pauses.
+
+    If both path and logger are specified, more debugging information will be
+    printed in case of failure.
     """
     for i in xrange(max_retries):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -611,4 +619,19 @@ def run_unmount_cmd(cmd, max_retries=10):
             raise RuntimeError('Unhandled error when running %r: %r' % (cmd, err))
         time.sleep(i)
     # Still busy, there's something wrong.
+    if path and logger:
+        commands = [
+            ['ls', '-lA', path],
+            ['fuser', '-vm', path],
+            ['lsof', '+D', path],
+        ]
+        for c in commands:
+            try:
+                proc = subprocess.Popen(c, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                out, _ = proc.communicate()
+                logger.debug('`%s` exited with %s and following output:\n%s',
+                             ' '.join(c), proc.returncode, out)
+            except OSError:
+                logger.debug('`%s` command not available for debugging',
+                             ' '.join(c))
     raise RuntimeError('Failed to run %r: Device or resource busy.' % cmd)

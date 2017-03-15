@@ -431,9 +431,9 @@ class TestTempFiles(unittest.TestCase):
 
 class TestUnmountCmd(unittest.TestCase):
 
-    def _fakeProc(self, ret, err):
+    def _fakeProc(self, ret, err='', out=''):
         proc = mock.Mock(returncode=ret)
-        proc.communicate.return_value = ('', err)
+        proc.communicate.return_value = (out, err)
         return proc
 
     @mock.patch('subprocess.Popen')
@@ -482,6 +482,41 @@ class TestUnmountCmd(unittest.TestCase):
         self.assertEqual(mock_sleep.call_args_list,
                          [mock.call(0), mock.call(1), mock.call(2)])
         self.assertEqual(str(ctx.exception), "Failed to run 'unmount': Device or resource busy.")
+
+    @mock.patch('time.sleep')
+    @mock.patch('subprocess.Popen')
+    def test_fusermount_fail_then_retry_and_fail_with_debug(self, mockPopen, mock_sleep):
+        logger = mock.Mock()
+        mockPopen.side_effect = [self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(1, 'Device or resource busy'),
+                                 self._fakeProc(0, out='list of files'),
+                                 self._fakeProc(0, out='It is very busy'),
+                                 self._fakeProc(1, out='lsof output')]
+        with self.assertRaises(RuntimeError) as ctx:
+            util.fusermount('/path', max_retries=3, logger=logger)
+        cmd = ['fusermount', '-u', '/path']
+        expected = [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
+                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
+                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
+                    mock.call(['ls', '-lA', '/path'],
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE),
+                    mock.call(['fuser', '-vm', '/path'],
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE),
+                    mock.call(['lsof', '+D', '/path'],
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE)]
+        self.assertEqual(mockPopen.call_args_list, expected)
+        self.assertEqual(mock_sleep.call_args_list,
+                         [mock.call(0), mock.call(1), mock.call(2)])
+        self.assertEqual(str(ctx.exception),
+                         "Failed to run ['fusermount', '-u', '/path']: Device or resource busy.")
+        self.assertEqual(logger.mock_calls,
+                         [mock.call.debug('`%s` exited with %s and following output:\n%s',
+                                          'ls -lA /path', 0, 'list of files'),
+                          mock.call.debug('`%s` exited with %s and following output:\n%s',
+                                          'fuser -vm /path', 0, 'It is very busy'),
+                          mock.call.debug('`%s` exited with %s and following output:\n%s',
+                                          'lsof +D /path', 1, 'lsof output')])
 
 
 if __name__ == "__main__":
