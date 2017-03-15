@@ -44,7 +44,7 @@ class OstreeInstallerThread(WorkerThread):
     def worker(self, compose, variant, arch, config):
         msg = 'Ostree phase for variant %s, arch %s' % (variant.uid, arch)
         self.pool.log_info('[BEGIN] %s' % msg)
-        self.logdir = compose.paths.log.topdir('%s/ostree_installer' % arch)
+        self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
 
         source_from_repos = [self._get_source_repo(compose, arch, v)
                              for v in shortcuts.force_list(config['repo_from'])]

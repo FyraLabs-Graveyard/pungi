@@ -16,6 +16,9 @@ from tests import helpers
 from pungi.phases import ostree_installer as ostree
 
 
+LOG_PATH = 'logs/x86_64/Everything/ostree_installer-1'
+
+
 class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.phases.ostree_installer.ThreadPool')
@@ -104,7 +107,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     task_id=True, use_shell=True, weight=weight)])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file=self.topdir + '/logs/x86_64/ostree_installer/runroot.log')])
+                                    log_file='%s/%s/runroot.log' % (self.topdir, LOG_PATH))])
 
     def assertIsoLinked(self, link, get_file_size, get_mtime, final_iso_path):
         self.assertEqual(link.call_args_list,
@@ -153,7 +156,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertRunrootCall(koji,
                                'file://%s/compose/Everything/x86_64/os' % self.topdir,
                                cfg['release'],
-                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+                               extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -187,7 +190,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(koji, 'http://example.com/repo/x86_64/', cfg['release'], isfinal=True,
-                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+                               extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -228,7 +231,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
-                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+                               extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -267,7 +270,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
-                               extra=['--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+                               extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
 
     @mock.patch('kobo.shortcuts.run')
     @mock.patch('productmd.images.Image')
@@ -346,7 +349,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                isfinal=True,
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
                                       '--add-arch-template=%s/other_file.txt' % templ_dir,
-                                      '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir])
+                                      '--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(run)
@@ -405,7 +408,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                    '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
                    '--add-arch-template-var=ostree_osname=fedora-atomic',
                    '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
-                   '--logfile=%s/logs/x86_64/ostree_installer/lorax.log' % self.topdir],
+                   '--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)],
             weight=123,
         )
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
@@ -465,8 +468,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
         pool._logger.info.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
-            mock.call('Runroot task failed: 1234. See %s/logs/x86_64/ostree_installer/runroot.log for more details.'
-                      % self.topdir)
+            mock.call('Runroot task failed: 1234. See %s/%s/runroot.log for more details.'
+                      % (self.topdir, LOG_PATH))
         ])
 
 
