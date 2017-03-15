@@ -188,4 +188,4 @@ class LiveMediaThread(WorkerThread):
             setattr(img, 'deliverable', 'live-media')
             compose.im.add(variant=variant.uid, arch=image_info['arch'], image=img)
 
-        self.pool.log_info('[DONE ] %s' % msg)
+        self.pool.log_info('[DONE ] %s (task id: %s)' % (msg, output['task_id']))
