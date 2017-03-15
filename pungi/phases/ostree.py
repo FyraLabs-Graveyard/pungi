@@ -100,8 +100,8 @@ class OSTreeThread(WorkerThread):
         # mount it.
         util.makedirs(config['ostree_repo'])
 
-        self._run_ostree_cmd(compose, variant, arch, config, repodir,
-                             extra_config_file=extra_config_file)
+        task_id = self._run_ostree_cmd(compose, variant, arch, config, repodir,
+                                       extra_config_file=extra_config_file)
 
         if compose.notifier:
             ref = get_ref_from_treefile(os.path.join(repodir, config['treefile']),
@@ -115,7 +115,7 @@ class OSTreeThread(WorkerThread):
                                   ref=ref,
                                   commitid=commitid)
 
-        self.pool.log_info('[DONE ] %s' % msg)
+        self.pool.log_info('[DONE ] %s (task id: %s)' % (msg, task_id))
 
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo, extra_config_file=None):
         cmd = [
@@ -153,6 +153,7 @@ class OSTreeThread(WorkerThread):
         if output["retcode"] != 0:
             raise RuntimeError("Runroot task failed: %s. See %s for more details."
                                % (output["task_id"], log_file))
+        return output['task_id']
 
     def _clone_repo(self, repodir, url, branch):
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
