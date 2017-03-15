@@ -230,7 +230,7 @@ class CreateLiveImageThread(WorkerThread):
 
         self._add_to_images(compose, variant, subvariant, arch, cmd['type'], self._get_format(image_path), destination)
 
-        self.pool.log_info("[DONE ] %s" % msg)
+        self.pool.log_info("[DONE ] %s (task id: %s)" % (msg, output['task_id']))
 
     def _add_to_images(self, compose, variant, subvariant, arch, type, format, path):
         """Adds the image to images.json"""
