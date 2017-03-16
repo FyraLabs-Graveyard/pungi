@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import copy
 import os
 import time
 import json
@@ -168,7 +169,18 @@ def write_compose_info(compose):
     compose.log_info("[BEGIN] %s" % msg)
 
     path = compose.paths.compose.metadata("composeinfo.json")
-    ci.dump(path)
+    # make a copy of composeinfo and modify the copy
+    # if any path in variant paths doesn't exist or just an empty
+    # dir, set it to None, then it won't be dumped.
+    ci_copy = copy.deepcopy(ci)
+    for variant in ci_copy.variants.variants.values():
+        for field in variant.paths._fields:
+            field_paths = getattr(variant.paths, field)
+            for arch, dirpath in field_paths.iteritems():
+                dirpath = os.path.join(compose.paths.compose.topdir(), dirpath)
+                if not (os.path.isdir(dirpath) and os.listdir(dirpath)):
+                    field_paths[arch] = None
+    ci_copy.dump(path)
 
     compose.log_info("[DONE ] %s" % msg)
 

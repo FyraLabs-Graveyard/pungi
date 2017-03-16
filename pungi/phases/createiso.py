@@ -66,6 +66,8 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
 
         commands = []
         for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"]):
+            if variant.is_empty:
+                continue
             for arch in variant.arches + ["src"]:
                 skip_iso = get_arch_variant_data(self.compose.conf, "createiso_skip", arch, variant)
                 if skip_iso == [True]:

@@ -75,6 +75,8 @@ class GatherPhase(PhaseBase):
 
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch):
+                if variant.is_empty:
+                    continue
                 link_files(self.compose, arch, variant,
                            pkg_map[arch][variant.uid],
                            self.pkgset_phase.package_sets,
