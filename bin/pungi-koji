@@ -134,6 +134,13 @@ def main():
         help="don't create latest symbol link to this compose"
     )
     parser.add_option(
+        "--latest-link-status",
+        metavar="STATUS",
+        action="append",
+        default=[],
+        help="only create latest symbol link to this compose when compose status matches specified status",
+    )
+    parser.add_option(
         "--quiet",
         action="store_true",
         default=False,
@@ -181,6 +188,7 @@ def main():
     opts.config = os.path.abspath(opts.config)
 
     create_latest_link = not opts.no_latest_link
+    latest_link_status = opts.latest_link_status or None
 
     import kobo.conf
     import kobo.log
@@ -234,13 +242,13 @@ def main():
     notifier.compose = compose
     COMPOSE = compose
     try:
-        run_compose(compose, create_latest_link)
+        run_compose(compose, create_latest_link=create_latest_link, latest_link_status=latest_link_status)
     except Exception, ex:
         compose.log_error("Compose run failed: %s" % ex)
         raise
 
 
-def run_compose(compose, create_latest_link=True):
+def run_compose(compose, create_latest_link=True, latest_link_status=None):
     import pungi.phases
     import pungi.metadata
 
@@ -414,8 +422,21 @@ def run_compose(compose, create_latest_link=True):
     test_phase.start()
     test_phase.stop()
 
+    compose.write_status("FINISHED")
+    latest_link = False
     if create_latest_link:
-        # create a latest symlink
+        if latest_link_status is None:
+            # create latest symbol link by default if latest_link_status is not specified
+            latest_link = True
+        else:
+            latest_link_status = [s.upper() for s in latest_link_status]
+            if compose.get_status() in [s.upper() for s in latest_link_status]:
+                latest_link = True
+            else:
+                compose.log_warning("Compose status (%s) doesn't match with specified latest-link-status (%s), not create latest link."
+                                    % (compose.get_status(), str(latest_link_status)))
+
+    if latest_link:
         compose_dir = os.path.basename(compose.topdir)
         if len(compose.conf["release_version"].split(".")) == 1:
             symlink_name = "latest-%s-%s" % (compose.conf["release_short"], compose.conf["release_version"])
@@ -436,7 +457,6 @@ def run_compose(compose, create_latest_link=True):
             compose.log_error("Couldn't create latest symlink: %s" % ex)
 
     compose.log_info("Compose finished: %s" % compose.topdir)
-    compose.write_status("FINISHED")
 
 
 if __name__ == "__main__":
