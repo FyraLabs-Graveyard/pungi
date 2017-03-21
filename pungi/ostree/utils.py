@@ -18,8 +18,8 @@ import datetime
 import json
 import logging
 import os
-import rpmUtils.arch
 
+from pungi.arch_utils import getBaseArch
 from pungi.util import makedirs
 
 
@@ -43,9 +43,9 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
             try:
                 parsed = json.loads(f.read())
                 if arch is None:
-                    basearch = rpmUtils.arch.getBaseArch()
+                    basearch = getBaseArch()
                 else:
-                    basearch = rpmUtils.arch.getBaseArch(arch)
+                    basearch = getBaseArch(arch)
                 ref = parsed['ref'].replace('${basearch}', basearch)
             except Exception as e:
                 logger.error('Unable to get ref from treefile: %s' % e)

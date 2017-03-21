@@ -46,7 +46,7 @@ PyPI or from tarball. You will still need to install all of the non-Python
 packages above as they are used by calling an executable. ::
 
     $ mkvirtualenv pungienv
-    $ for pkg in koji rpm rpmUtils pykickstart selinux createrepo yum urlgrabber; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in koji rpm pykickstart selinux createrepo yum urlgrabber; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ for pkg in _selinux deltarpm _deltarpm krbV sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
     $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile python-multilib kobo

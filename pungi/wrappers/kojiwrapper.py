@@ -22,11 +22,11 @@ import threading
 import contextlib
 
 import koji
-import rpmUtils.arch
 from kobo.shortcuts import run
 from ConfigParser import ConfigParser
 
 from .. import util
+from ..arch_utils import getBaseArch
 
 
 class KojiWrapper(object):
@@ -100,7 +100,7 @@ class KojiWrapper(object):
         cmd.append(target)
 
         # i686 -> i386 etc.
-        arch = rpmUtils.arch.getBaseArch(arch)
+        arch = getBaseArch(arch)
         cmd.append(arch)
 
         if isinstance(command, list):
@@ -280,7 +280,7 @@ class KojiWrapper(object):
         cmd.append(target)
 
         # i686 -> i386 etc.
-        arch = rpmUtils.arch.getBaseArch(arch)
+        arch = getBaseArch(arch)
         cmd.append(arch)
 
         cmd.append(ks_file)

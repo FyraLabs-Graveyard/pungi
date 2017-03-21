@@ -17,11 +17,10 @@
 import os
 import sys
 import time
-import yum
 
 from ConfigParser import SafeConfigParser
 
-
+from .arch_utils import getBaseArch
 # In development, `here` will point to the bin/ directory with scripts.
 here = sys.path[0]
 MULTILIBCONF = (os.path.join(os.path.dirname(__file__), '..', 'share', 'multilib')
@@ -47,7 +46,7 @@ class Config(SafeConfigParser):
         self.set('pungi', 'product_path', 'Packages')
         self.set('pungi', 'cachedir', '/var/cache/pungi')
         self.set('pungi', 'compress_type', 'xz')
-        self.set('pungi', 'arch', yum.rpmUtils.arch.getBaseArch())
+        self.set('pungi', 'arch', getBaseArch())
         self.set('pungi', 'family', 'Fedora')
         self.set('pungi', 'iso_basename', 'Fedora')
         self.set('pungi', 'version', time.strftime('%Y%m%d', time.localtime()))

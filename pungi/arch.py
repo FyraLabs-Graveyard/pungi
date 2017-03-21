@@ -13,9 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-
-import rpmUtils.arch
-
+from .arch_utils import arches as ALL_ARCHES
+from .arch_utils import getBaseArch, getMultiArchInfo, getArchList
 
 TREE_ARCH_YUM_ARCH_MAP = {
     "i386": "athlon",
@@ -27,13 +26,13 @@ TREE_ARCH_YUM_ARCH_MAP = {
 
 
 def tree_arch_to_yum_arch(tree_arch):
-    # this is basically an opposite to rpmUtils.arch.getBaseArch()
+    # this is basically an opposite to pungi.arch_utils.getBaseArch()
     yum_arch = TREE_ARCH_YUM_ARCH_MAP.get(tree_arch, tree_arch)
     return yum_arch
 
 
 def get_multilib_arch(yum_arch):
-    arch_info = rpmUtils.arch.getMultiArchInfo(yum_arch)
+    arch_info = getMultiArchInfo(yum_arch)
     if arch_info is None:
         return None
     return arch_info[0]
@@ -44,14 +43,14 @@ def get_valid_multilib_arches(tree_arch):
     multilib_arch = get_multilib_arch(yum_arch)
     if not multilib_arch:
         return []
-    return [i for i in rpmUtils.arch.getArchList(multilib_arch) if i not in ("noarch", "src")]
+    return [i for i in getArchList(multilib_arch) if i not in ("noarch", "src")]
 
 
 def get_valid_arches(tree_arch, multilib=True, add_noarch=True, add_src=False):
     result = []
 
     yum_arch = tree_arch_to_yum_arch(tree_arch)
-    for arch in rpmUtils.arch.getArchList(yum_arch):
+    for arch in getArchList(yum_arch):
         if arch not in result:
             result.append(arch)
 
@@ -70,7 +69,7 @@ def get_valid_arches(tree_arch, multilib=True, add_noarch=True, add_src=False):
 
 
 def get_compatible_arches(arch, multilib=False):
-    tree_arch = rpmUtils.arch.getBaseArch(arch)
+    tree_arch = getBaseArch(arch)
     compatible_arches = get_valid_arches(tree_arch, multilib=multilib)
     return compatible_arches
 
@@ -78,7 +77,7 @@ def get_compatible_arches(arch, multilib=False):
 def is_valid_arch(arch):
     if arch in ("noarch", "src", "nosrc"):
         return True
-    if arch in rpmUtils.arch.arches:
+    if arch in ALL_ARCHES:
         return True
     return False
 

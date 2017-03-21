@@ -56,7 +56,7 @@ class MockArchModule(object):
         return ARCHES[yum_arch]
 
 
-@mock.patch('rpmUtils.arch', MockArchModule)
+@mock.patch('pungi.arch_utils', MockArchModule)
 class TestArch(unittest.TestCase):
 
     def test_i386(self):
