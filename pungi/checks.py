@@ -35,6 +35,7 @@ When a new config option is added, the schema must be updated (see the
 ``CONFIG_DEPS`` mapping.
 """
 
+import contextlib
 import os.path
 import platform
 import jsonschema
@@ -196,6 +197,10 @@ def validate(config):
     for error in validator.iter_errors(config):
         if isinstance(error, ConfigDeprecation):
             warnings.append(REMOVED.format('.'.join(error.path), error.message))
+        elif isinstance(error, ConfigOptionWarning):
+            warnings.append(error.message)
+        elif isinstance(error, ConfigOptionError):
+            errors.append(error.message)
         elif not error.path and error.validator == 'additionalProperties':
             allowed_keys = set(error.schema['properties'].keys())
             used_keys = set(error.instance.keys())
@@ -241,62 +246,61 @@ def _extend_with_default_and_alias(validator_class):
     validate_required = validator_class.VALIDATORS['required']
     validate_additional_properties = validator_class.VALIDATORS['additionalProperties']
 
-    def _replace_alias(properties, instance, schema):
+    @contextlib.contextmanager
+    def _hook_errors(properties, instance, schema):
         """
-        If 'alias' is defined for a property, and the property is not present
-        in instance, add the property with value from the alias property to
-        instance before remove the alias property. If both the propery and its
-        alias are present, it will yield an error.
+        Hook the instance and yield errors and warnings.
         """
+        errors = []
         for property, subschema in properties.iteritems():
+            # update instance for alias option
+            # If alias option for the property is present and property is not specified,
+            # update the property in instance with value from alias option.
             if "alias" in subschema:
-                if property in instance and subschema['alias'] in instance:
-                    # the order of validators is in random, so we remove the alias
-                    # property at the first time when it's found, then validators
-                    # won't raise the same error later.
-                    instance.pop(subschema['alias'])
-                    yield jsonschema.ValidationError(
-                        "%s is an alias of %s, only one can be used." % (
-                            subschema['alias'], property)
-                    )
+                if subschema['alias'] in instance:
+                    msg = "WARNING: Config option '%s' is deprecated and now an alias to '%s', " \
+                          "please use '%s' instead. " \
+                          "In:\n%s" % (subschema['alias'], property, property, instance)
+                    errors.append(ConfigOptionWarning(msg))
+                    if property in instance:
+                        msg = "ERROR: Config option '%s' is an alias of '%s', only one can be used. In:\n%s" \
+                              % (subschema['alias'], property, instance)
+                        errors.append(ConfigOptionError(msg))
+                        instance.pop(subschema['alias'])
+                    else:
+                        instance.setdefault(property, instance.pop(subschema['alias']))
+        yield errors
 
-                if property not in instance and subschema['alias'] in instance:
-                    instance.setdefault(property, instance.pop(subschema['alias']))
-
-    def set_defaults_and_aliases(validator, properties, instance, schema):
+    def _set_defaults(validator, properties, instance, schema):
         """
         Assign default values to options that have them defined and are not
-        specified. And if a property has 'alias' defined and the property is
-        not specified, look for the alias property and copy alias property's
-        value to that property before remove the alias property.
+        specified.
         """
         for property, subschema in properties.iteritems():
             if "default" in subschema and property not in instance:
                 instance.setdefault(property, subschema["default"])
 
-        for error in _replace_alias(properties, instance, schema):
-            yield error
+        with _hook_errors(properties, instance, schema) as errors:
+            for error in errors:
+                yield error
 
         for error in validate_properties(validator, properties, instance, schema):
             yield error
 
-    def ignore_alias_properties(validator, aP, instance, schema):
-        """
-        If there is a property has alias defined in schema, and the property is not
-        present in instance, set the property with the value of alias property,
-        remove alias property from instance.
-        """
+    def _validate_additional_properties(validator, aP, instance, schema):
         properties = schema.get("properties", {})
-        for error in _replace_alias(properties, instance, schema):
-            yield error
+        with _hook_errors(properties, instance, schema) as errors:
+            for error in errors:
+                yield error
 
         for error in validate_additional_properties(validator, aP, instance, schema):
             yield error
 
-    def validate_required_with_alias(validator, required, instance, schema):
+    def _validate_required(validator, required, instance, schema):
         properties = schema.get("properties", {})
-        for error in _replace_alias(properties, instance, schema):
-            yield error
+        with _hook_errors(properties, instance, schema) as errors:
+            for error in errors:
+                yield error
 
         for error in validate_required(validator, required, instance, schema):
             yield error
@@ -323,15 +327,23 @@ def _extend_with_default_and_alias(validator_class):
                 yield error
 
     return jsonschema.validators.extend(
-        validator_class, {"properties": set_defaults_and_aliases,
+        validator_class, {"properties": _set_defaults,
                           "deprecated": error_on_deprecated,
                           "type": validate_regex_type,
-                          "required": validate_required_with_alias,
-                          "additionalProperties": ignore_alias_properties},
+                          "required": _validate_required,
+                          "additionalProperties": _validate_additional_properties},
     )
 
 
 class ConfigDeprecation(jsonschema.exceptions.ValidationError):
+    pass
+
+
+class ConfigOptionWarning(jsonschema.exceptions.ValidationError):
+    pass
+
+
+class ConfigOptionError(jsonschema.exceptions.ValidationError):
     pass
 
 

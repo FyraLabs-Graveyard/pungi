@@ -238,7 +238,8 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
-        self.assertEqual(len(warnings), 0)
+        self.assertEqual(len(warnings), 1)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks._make_schema')
@@ -285,7 +286,8 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
-        self.assertEqual(len(warnings), 0)
+        self.assertEqual(len(warnings), 1)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks._make_schema')
@@ -309,8 +311,9 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 1)
-        self.assertIn('Failed validation in : product_name is an alias of release_name, only one can be used.', errors)
-        self.assertEqual(len(warnings), 0)
+        self.assertRegexpMatches(errors[0], r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*")
+        self.assertEqual(len(warnings), 1)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks._make_schema')
@@ -348,7 +351,9 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
-        self.assertEqual(len(warnings), 0)
+        self.assertEqual(len(warnings), 2)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
+        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
 

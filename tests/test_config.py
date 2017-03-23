@@ -273,7 +273,7 @@ class OstreeConfigTestCase(ConfigTestCase):
                     "x86_64": {
                         "treefile": "fedora-atomic-docker-host.json",
                         "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
-                        "source_repo_from": "Everything",
+                        "repo_from": "Everything",
                         "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/"
                     }
                 })
@@ -298,7 +298,7 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
             ostree_installer=[
                 ("^Atomic$", {
                     "x86_64": {
-                        "source_repo_from": "Everything",
+                        "repo_from": "Everything",
                         "release": None,
                         "installpkgs": ["fedora-productimg-atomic"],
                         "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
@@ -326,7 +326,7 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
             ostree_installer=[
                 ("^Atomic$", {
                     "x86_64": {
-                        "source_repo_from": "Everything",
+                        "repo_from": "Everything",
                         "release": None,
                         "installpkgs": ["fedora-productimg-atomic"],
                         "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
