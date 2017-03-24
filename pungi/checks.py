@@ -40,6 +40,7 @@ import os.path
 import platform
 import jsonschema
 import re
+from kobo.shortcuts import force_list
 
 from . import util
 
@@ -263,12 +264,34 @@ def _extend_with_default_and_alias(validator_class):
                           "In:\n%s" % (subschema['alias'], property, property, instance)
                     errors.append(ConfigOptionWarning(msg))
                     if property in instance:
-                        msg = "ERROR: Config option '%s' is an alias of '%s', only one can be used. In:\n%s" \
-                              % (subschema['alias'], property, instance)
+                        msg = "ERROR: Config option '%s' is an alias of '%s', only one can be used." \
+                              % (subschema['alias'], property)
                         errors.append(ConfigOptionError(msg))
                         instance.pop(subschema['alias'])
                     else:
                         instance.setdefault(property, instance.pop(subschema['alias']))
+            # update instance for append option
+            # If append is defined in schema, append values from append options to property. If property
+            # is not present in instance, set it to empty list, and append the values from append options.
+            # Note: property's schema must support a list of values.
+            if "append" in subschema:
+                appends = force_list(subschema['append'])
+                for append in appends:
+                    if append in instance:
+                        msg = "WARNING: Config option '%s' is deprecated, its value will be appended to option '%s'. " \
+                              "In:\n%s" % (append, property, instance)
+                        errors.append(ConfigOptionWarning(msg))
+                        if property in instance:
+                            msg = "WARNING: Value from config option '%s' is now appended to option '%s'." \
+                                  % (append, property)
+                            errors.append(ConfigOptionWarning(msg))
+                            instance[property] = force_list(instance[property])
+                            instance[property].extend(force_list(instance.pop(append)))
+                        else:
+                            msg = "WARNING: Config option '%s' is not found, but '%s' is specified, value from '%s' " \
+                                  "is now added as '%s'." % (property, append, append, property)
+                            errors.append(ConfigOptionWarning(msg))
+                            instance[property] = instance.pop(append)
         yield errors
 
     def _set_defaults(validator, properties, instance, schema):

@@ -357,6 +357,130 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
 
+    @mock.patch('pungi.checks._make_schema')
+    def test_append_option(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "definitions": {
+                "list_of_strings": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "strings": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"$ref": "#/definitions/list_of_strings"},
+                    ]
+                },
+            },
+            "properties": {
+                "release_name": {"type": "string"},
+                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"}
+            },
+            "additionalProperties": False,
+        }
+        make_schema.return_value = schema
+
+        string = """
+        release_name = "dummy product"
+        repo = "http://url/to/repo"
+        repo_from = 'Server'
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 2)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegexpMatches(warnings[1], r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'")
+        self.assertEqual(config.get("release_name", None), "dummy product")
+        self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_append_to_nonexist_option(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "definitions": {
+                "list_of_strings": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "strings": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"$ref": "#/definitions/list_of_strings"},
+                    ]
+                },
+            },
+            "properties": {
+                "release_name": {"type": "string"},
+                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"}
+            },
+            "additionalProperties": False,
+        }
+        make_schema.return_value = schema
+
+        string = """
+        release_name = "dummy product"
+        repo_from = ['http://url/to/repo', 'Server']
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 2)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
+        self.assertEqual(config.get("release_name", None), "dummy product")
+        self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_multiple_appends(self, make_schema):
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "definitions": {
+                "list_of_strings": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "strings": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"$ref": "#/definitions/list_of_strings"},
+                    ]
+                },
+            },
+            "properties": {
+                "release_name": {"type": "string"},
+                "repo": {
+                    "$ref": "#/definitions/strings",
+                    "append": ["repo_from", "source_repo_from"]
+                }
+            },
+            "additionalProperties": False,
+        }
+        make_schema.return_value = schema
+
+        string = """
+        release_name = "dummy product"
+        repo_from = ['http://url/to/repo', 'Server']
+        source_repo_from = 'Client'
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 4)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
+        self.assertRegexpMatches(warnings[2], r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'")
+        self.assertRegexpMatches(warnings[3], r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.")
+        self.assertEqual(config.get("release_name", None), "dummy product")
+        self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server", "Client"])
+
 
 class TestUmask(unittest.TestCase):
     def setUp(self):
