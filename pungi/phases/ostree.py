@@ -8,7 +8,7 @@ from kobo.threads import ThreadPool, WorkerThread
 from .base import ConfigGuardedPhase
 from .. import util
 from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
-from ..paths import translate_path
+from ..util import translate_path
 from ..wrappers import kojiwrapper, scm
 
 

@@ -8,7 +8,6 @@ from kobo import shortcuts
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
 from ..wrappers import kojiwrapper
-from ..paths import translate_path
 
 
 class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
@@ -141,10 +140,10 @@ class OSBSThread(WorkerThread):
         with open(repo_file, 'w') as f:
             f.write('[%s]\n' % compose.compose_id)
             f.write('name=Compose %s (RPMs)\n' % compose.compose_id)
-            f.write('baseurl=%s\n' % translate_path(compose, os_tree))
+            f.write('baseurl=%s\n' % util.translate_path(compose, os_tree))
             f.write('enabled=1\n')
             f.write('gpgcheck=%s\n' % gpgcheck)
             if gpgcheck:
                 f.write('gpgkey=%s\n' % gpgkey)
 
-        return translate_path(compose, repo_file)
+        return util.translate_path(compose, repo_file)

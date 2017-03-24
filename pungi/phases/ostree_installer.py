@@ -9,8 +9,7 @@ from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
-from ..paths import translate_path
-from ..util import get_volid
+from ..util import get_volid, translate_path
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 

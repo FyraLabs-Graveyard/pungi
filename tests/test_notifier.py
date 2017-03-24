@@ -13,7 +13,7 @@ from pungi.notifier import PungiNotifier
 
 
 class TestNotifier(unittest.TestCase):
-    @mock.patch('pungi.paths.translate_path')
+    @mock.patch('pungi.util.translate_path')
     @mock.patch('kobo.shortcuts.run')
     def test_invokes_script(self, run, translate_path):
         compose = mock.Mock(
@@ -73,7 +73,7 @@ class TestNotifier(unittest.TestCase):
         n.send('cmd', foo='bar', baz='quux')
         self.assertFalse(run.called)
 
-    @mock.patch('pungi.paths.translate_path')
+    @mock.patch('pungi.util.translate_path')
     @mock.patch('kobo.shortcuts.run')
     def test_logs_warning_on_failure(self, run, translate_path):
         compose = mock.Mock(

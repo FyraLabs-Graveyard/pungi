@@ -15,7 +15,7 @@
 import json
 import threading
 
-import pungi.paths
+import pungi.util
 
 from kobo import shortcuts
 
@@ -39,7 +39,7 @@ class PungiNotifier(object):
         data.setdefault('compose_id', self.compose.compose_id)
 
         # Publish where in the world this compose will end up living
-        location = pungi.paths.translate_path(
+        location = pungi.util.translate_path(
             self.compose, self.compose.paths.compose.topdir())
         data.setdefault('location', location)
 

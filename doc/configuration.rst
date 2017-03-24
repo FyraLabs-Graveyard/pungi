@@ -1405,7 +1405,7 @@ Example usage
 -------------
 ::
 
-    >>> from pungi.paths import translate_paths
+    >>> from pungi.util import translate_paths
     >>> print translate_paths(compose_object_with_mapping, "/mnt/a/c/somefile")
     http://b/dir/c/somefile
 

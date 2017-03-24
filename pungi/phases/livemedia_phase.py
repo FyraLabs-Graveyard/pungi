@@ -5,9 +5,9 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
+from pungi.util import translate_path
 from pungi.phases.base import ConfigGuardedPhase, ImageConfigMixin, PhaseLoggerMixin
 from pungi.linker import Linker
-from pungi.paths import translate_path
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from kobo.threads import ThreadPool, WorkerThread
 from productmd.images import Image

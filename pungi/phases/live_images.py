@@ -28,7 +28,7 @@ from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
 from pungi.phases import base
 from pungi.util import get_arch_variant_data, makedirs, get_mtime, get_file_size, failable
-from pungi.paths import translate_path
+from pungi.util import translate_path
 
 
 # HACK: define cmp in python3

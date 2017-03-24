@@ -25,27 +25,6 @@ import os
 from pungi.util import makedirs
 
 
-def translate_path(compose, path):
-    """
-    @param compose - required for access to config
-    @param path
-    """
-    normpath = os.path.normpath(path)
-    mapping = compose.conf["translate_paths"]
-
-    for prefix, newvalue in mapping:
-        prefix = os.path.normpath(prefix)
-        # Strip trailing slashes: the prefix has them stripped by `normpath`.
-        newvalue = newvalue.rstrip('/')
-        if normpath.startswith(prefix):
-            # We can't call os.path.normpath on result since it is not actually
-            # a path - http:// would get changed to  http:/ and so on.
-            # Only the first occurance should be replaced.
-            return normpath.replace(prefix, newvalue, 1)
-
-    return normpath
-
-
 class Paths(object):
     def __init__(self, compose):
         paths_module_name = compose.conf.get("paths_module")
