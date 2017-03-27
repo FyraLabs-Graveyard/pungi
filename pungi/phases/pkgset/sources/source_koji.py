@@ -77,6 +77,7 @@ def get_module(session, module_info, strict=False):
     query = dict(
         variant_id=module_info['variant_id'],
         variant_version=module_info['variant_version'],
+        active=True,
     )
     if module_info.get('variant_release'):
         query['variant_release'] = module_info['variant_release']
