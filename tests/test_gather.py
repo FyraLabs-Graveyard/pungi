@@ -18,8 +18,12 @@ sys.path.insert(0, os.path.join(HERE, '..'))
 os.environ['PATH'] = '%s:%s' % (BINDIR, os.environ['PATH'])
 
 from pungi.wrappers.pungi import PungiWrapper
-from pungi.dnf_wrapper import DnfWrapper, Conf
-from pungi.gather_dnf import Gather, GatherOptions, PkgFlag
+try:
+    from pungi.dnf_wrapper import DnfWrapper, Conf
+    from pungi.gather_dnf import Gather, GatherOptions, PkgFlag
+    HAS_DNF = True
+except ImportError:
+    HAS_DNF = False
 
 
 def convert_pkg_map(data):
@@ -1621,6 +1625,7 @@ def convert_dnf_packages(pkgs, flags):
     return sorted(result)
 
 
+@unittest.skipUnless(HAS_DNF, 'Dependencies are not available')
 class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def setUp(self):
         super(DNFDepsolvingTestCase, self).setUp()
