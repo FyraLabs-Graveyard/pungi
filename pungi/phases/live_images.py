@@ -28,7 +28,7 @@ from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
 from pungi.phases import base
 from pungi.util import get_arch_variant_data, makedirs, get_mtime, get_file_size, failable
-from pungi.util import translate_path
+from pungi.util import get_repo_urls
 
 
 # HACK: define cmp in python3
@@ -44,29 +44,12 @@ class LiveImagesPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
         super(LiveImagesPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
 
-    def _get_extra_repos(self, arch, variant, extras):
-        repo = []
-        for extra in extras:
-            v = self.compose.all_variants.get(extra)
-            if not v:
-                raise RuntimeError(
-                    'There is no variant %s to get repo from when building live image for %s.'
-                    % (extra, variant.uid))
-            repo.append(translate_path(
-                self.compose, self.compose.paths.compose.repository(arch, v, create_dir=False)))
-
-        return repo
-
     def _get_repos(self, arch, variant, data):
         repos = []
         if not variant.is_empty:
-            repos.append(translate_path(
-                self.compose, self.compose.paths.compose.repository(arch, variant, create_dir=False)))
-
-        # additional repos
-        repos.extend(data.get("repo", []))
-        repos.extend(self._get_extra_repos(arch, variant, force_list(data.get('repo_from', []))))
-        return repos
+            repos.append(variant.uid)
+        repos.extend(force_list(data.get('repo', [])))
+        return get_repo_urls(self.compose, repos, arch=arch)
 
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to")

@@ -53,13 +53,11 @@ class OSBSThread(WorkerThread):
         source = util.resolve_git_url(config.pop('url'))
         target = config.pop('target')
         priority = config.pop('priority', None)
-        repos = shortcuts.force_list(config.pop('repo', []))
         gpgkey = config.pop('gpgkey', None)
-        compose_repos = [self._get_repo(compose, v, gpgkey=gpgkey)
-                         for v in [variant.uid] + shortcuts.force_list(
-                             config.pop('repo_from', []))]
+        repos = [self._get_repo(compose, v, gpgkey=gpgkey)
+                 for v in [variant.uid] + shortcuts.force_list(config.pop('repo', []))]
 
-        config['yum_repourls'] = compose_repos + repos
+        config['yum_repourls'] = repos
 
         task_id = koji.koji_proxy.buildContainer(source, target, config,
                                                  priority=priority)
@@ -120,17 +118,21 @@ class OSBSThread(WorkerThread):
                 self.pool.metadata.setdefault(
                     variant.uid, {}).setdefault(arch, []).append(data)
 
-    def _get_repo(self, compose, variant_uid, gpgkey=None):
+    def _get_repo(self, compose, repo, gpgkey=None):
         """
-        Write a .repo file pointing to current variant and return URL to the
-        file.
+        Return repo file URL of repo, if repo contains "://", it's already
+        a URL of repo file. Or it's a variant UID, then write a .repo file
+        pointing to current variant and return the URL to .repo file.
         """
+        if "://" in repo:
+            return repo
+
         try:
-            variant = compose.all_variants[variant_uid]
+            variant = compose.all_variants[repo]
         except KeyError:
             raise RuntimeError(
                 'There is no variant %s to get repo from to pass to OSBS.'
-                % (variant_uid))
+                % (repo))
         os_tree = compose.paths.compose.os_tree('$basearch', variant,
                                                 create_dir=False)
         repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),

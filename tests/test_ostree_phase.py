@@ -51,7 +51,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.repo = os.path.join(self.topdir, 'place/for/atomic')
         os.makedirs(os.path.join(self.repo, 'refs', 'heads'))
         self.cfg = {
-            'repo_from': 'Everything',
+            'repo': 'Everything',
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
@@ -305,8 +305,8 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
         cfg = {
-            'repo_from': 'Everything',
             'repo': [
+                'Everything',
                 {
                     'name': 'repo_a',
                     'baseurl': 'http://url/to/repo/a',
@@ -333,9 +333,10 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertTrue(os.path.isfile(extra_config_file))
         extra_config = json.load(open(extra_config_file, 'r'))
         self.assertTrue(extra_config.get('keep_original_sources', False))
-        self.assertEqual(extra_config.get('repo_from', None), 'http://example.com/Everything/$basearch/os')
         self.assertEqual(len(extra_config.get('repo', [])), len(cfg['repo']))
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/Server/$basearch/os')
+        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://url/to/repo/a')
+        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/Everything/$basearch/os')
 
 if __name__ == '__main__':
     unittest.main()

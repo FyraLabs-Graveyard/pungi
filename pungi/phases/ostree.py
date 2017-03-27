@@ -3,12 +3,13 @@
 import copy
 import json
 import os
+from kobo import shortcuts
 from kobo.threads import ThreadPool, WorkerThread
 
 from .base import ConfigGuardedPhase
 from .. import util
 from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
-from ..util import translate_path
+from ..util import get_repo_dicts
 from ..wrappers import kojiwrapper, scm
 
 
@@ -45,41 +46,16 @@ class OSTreeThread(WorkerThread):
         self.logdir = compose.paths.log.topdir('%s/%s/ostree-%d' %
                                                (arch, variant.uid, self.num))
         repodir = os.path.join(workdir, 'config_repo')
-
-        source_variant = compose.all_variants[config['repo_from']]
-        source_repo = translate_path(compose,
-                                     compose.paths.compose.repository('$basearch',
-                                                                      source_variant,
-                                                                      create_dir=False))
-
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
 
-        source_repos = [{'name': '%s-%s' % (compose.compose_id, config['repo_from']),
-                         'baseurl': source_repo}]
-
-        extra_source_repos = config.get('repo', None)
-        if extra_source_repos:
-            for extra in extra_source_repos:
-                baseurl = extra['baseurl']
-                if "://" not in baseurl:
-                    # it's variant UID, translate to url
-                    variant = compose.variants[baseurl]
-                    url = translate_path(compose,
-                                         compose.paths.compose.repository('$basearch',
-                                                                          variant,
-                                                                          create_dir=False))
-                    extra['baseurl'] = url
-
-            source_repos = source_repos + extra_source_repos
+        repos = get_repo_dicts(compose, shortcuts.force_list(config['repo']))
 
         # copy the original config and update before save to a json file
         new_config = copy.copy(config)
 
         # repos in configuration can have repo url set to variant UID,
         # update it to have the actual url that we just translated.
-        new_config.update({'repo_from': source_repo})
-        if extra_source_repos:
-            new_config.update({'repo': extra_source_repos})
+        new_config.update({'repo': repos})
 
         # remove unnecessary (for 'pungi-make-ostree tree' script ) elements
         # from config, it doesn't hurt to have them, however remove them can
@@ -88,13 +64,11 @@ class OSTreeThread(WorkerThread):
                   'failable', 'version', 'update_summary']:
             new_config.pop(k, None)
 
-        extra_config_file = None
-        if new_config:
-            # write a json file to save the configuration, so 'pungi-make-ostree tree'
-            # can take use of it
-            extra_config_file = os.path.join(workdir, 'extra_config.json')
-            with open(extra_config_file, 'w') as f:
-                json.dump(new_config, f, indent=4)
+        # write a json file to save the configuration, so 'pungi-make-ostree tree'
+        # can take use of it
+        extra_config_file = os.path.join(workdir, 'extra_config.json')
+        with open(extra_config_file, 'w') as f:
+            json.dump(new_config, f, indent=4)
 
         # Ensure target directory exists, otherwise Koji task will fail to
         # mount it.

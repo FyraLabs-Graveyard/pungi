@@ -6,7 +6,7 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
-from pungi.util import translate_path
+from pungi.util import translate_path, get_repo_urls
 from pungi.phases import base
 from pungi.linker import Linker
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -49,28 +49,15 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
     def _get_repo(self, image_conf, variant):
         """
         Get a comma separated list of repos. First included are those
-        explicitly listed in config, followed by repos from other variants,
-        finally followed by repo for current variant.
-
-        The `repo_from` key is removed from the dict (if present).
+        explicitly listed in config, followed by by repo for current variant
+        if it's not included in the list already.
         """
-        repo = shortcuts.force_list(image_conf.get('repo', []))
+        repos = shortcuts.force_list(image_conf.get('repo', []))
 
-        extras = shortcuts.force_list(image_conf.pop('repo_from', []))
-        if not variant.is_empty:
-            extras.append(variant.uid)
+        if not variant.is_empty and variant.uid not in repos:
+            repos.append(variant.uid)
 
-        for extra in extras:
-            v = self.compose.all_variants.get(extra)
-            if not v:
-                raise RuntimeError(
-                    'There is no variant %s to get repo from when building image for %s.'
-                    % (extra, variant.uid))
-            repo.append(translate_path(
-                self.compose,
-                self.compose.paths.compose.os_tree('$arch', v, create_dir=False)))
-
-        return ",".join(repo)
+        return ",".join(get_repo_urls(self.compose, repos, arch='$arch'))
 
     def _get_arches(self, image_conf, arches):
         if 'arches' in image_conf['image-build']:

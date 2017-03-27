@@ -23,7 +23,7 @@ class OSBSPhaseTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.phases.osbs.ThreadPool')
     def test_run(self, ThreadPool):
-        cfg = mock.Mock()
+        cfg = helpers.IterableMock()
         compose = helpers.DummyCompose(self.topdir, {
             'osbs': {'^Everything$': cfg}
         })
@@ -310,8 +310,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'target': 'f24-docker-candidate',
             'name': 'my-name',
             'version': '1.0',
-            'repo': 'http://pkgs.example.com/my.repo',
-            'repo_from': 'Everything',
+            'repo': ['Everything', 'http://pkgs.example.com/my.repo']
         }
         self._setupMock(KojiWrapper, resolve_git_url)
         self._assertConfigCorrect(cfg)
@@ -339,8 +338,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'target': 'f24-docker-candidate',
             'name': 'my-name',
             'version': '1.0',
-            'repo': ['http://pkgs.example.com/my.repo'],
-            'repo_from': ['Everything', 'Client'],
+            'repo': ['Everything', 'Client', 'http://pkgs.example.com/my.repo'],
         }
         self._assertConfigCorrect(cfg)
         self._setupMock(KojiWrapper, resolve_git_url)
@@ -370,8 +368,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'target': 'f24-docker-candidate',
             'name': 'my-name',
             'version': '1.0',
-            'repo': ['http://pkgs.example.com/my.repo'],
-            'repo_from': ['Everything', 'Client'],
+            'repo': ['Everything', 'Client', 'http://pkgs.example.com/my.repo'],
             'gpgkey': gpgkey,
         }
         self._assertConfigCorrect(cfg)
@@ -389,7 +386,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'target': 'f24-docker-candidate',
             'name': 'my-name',
             'version': '1.0',
-            'repo_from': 'Gold',
+            'repo': 'Gold',
         }
         self._assertConfigCorrect(cfg)
         self._setupMock(KojiWrapper, resolve_git_url)

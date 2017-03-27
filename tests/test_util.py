@@ -540,5 +540,107 @@ class TranslatePathTestCase(unittest.TestCase):
         self.assertEqual(ret, '/mnt/fedora_koji/compose/rawhide/XYZ')
 
 
+class GetRepoFuncsTestCase(unittest.TestCase):
+    @mock.patch('pungi.compose.ComposeInfo')
+    def setUp(self, ci):
+        self.tmp_dir = tempfile.mkdtemp()
+        conf = {
+            'translate_paths': [(self.tmp_dir, 'http://example.com')]
+        }
+        ci.return_value.compose.respin = 0
+        ci.return_value.compose.id = 'RHEL-8.0-20180101.n.0'
+        ci.return_value.compose.date = '20160101'
+        ci.return_value.compose.type = 'nightly'
+        ci.return_value.compose.type_suffix = '.n'
+        ci.return_value.compose.label = 'RC-1.0'
+        ci.return_value.compose.label_major_version = '1'
+
+        compose_dir = os.path.join(self.tmp_dir, ci.return_value.compose.id)
+        self.compose = compose.Compose(conf, compose_dir)
+        server_variant = mock.Mock(uid='Server', type='variant')
+        client_variant = mock.Mock(uid='Client', type='variant')
+        self.compose.all_variants = {
+            'Server': server_variant,
+            'Client': client_variant,
+        }
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_get_repo_url_from_normal_url(self):
+        url = util.get_repo_url(self.compose, 'http://example.com/repo')
+        self.assertEqual(url, 'http://example.com/repo')
+
+    def test_get_repo_url_from_variant_uid(self):
+        url = util.get_repo_url(self.compose, 'Server')
+        self.assertEqual(url, 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os')
+
+    def test_get_repo_url_from_repo_dict(self):
+        repo = {'baseurl': 'http://example.com/repo'}
+        url = util.get_repo_url(self.compose, repo)
+        self.assertEqual(url, 'http://example.com/repo')
+
+        repo = {'baseurl': 'Server'}
+        url = util.get_repo_url(self.compose, repo)
+        self.assertEqual(url, 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os')
+
+    def test_get_repo_urls(self):
+        repos = [
+            'http://example.com/repo',
+            'Server',
+            {'baseurl': 'Client'},
+            {'baseurl': 'ftp://example.com/linux/repo'},
+        ]
+
+        expect = [
+            'http://example.com/repo',
+            'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os',
+            'http://example.com/RHEL-8.0-20180101.n.0/compose/Client/$basearch/os',
+            'ftp://example.com/linux/repo',
+        ]
+
+        self.assertEqual(util.get_repo_urls(self.compose, repos), expect)
+
+    def test_get_repo_dict_from_normal_url(self):
+        repo_dict = util.get_repo_dict(self.compose, 'http://example.com/repo')
+        expect = {'name': 'http:__example.com_repo', 'baseurl': 'http://example.com/repo'}
+        self.assertEqual(repo_dict, expect)
+
+    def test_get_repo_dict_from_variant_uid(self):
+        repo_dict = util.get_repo_dict(self.compose, 'Server')
+        expect = {
+            'name': "%s-%s" % (self.compose.compose_id, 'Server'),
+            'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os',
+        }
+        self.assertEqual(repo_dict, expect)
+
+    def test_get_repo_dict_from_repo_dict(self):
+        repo = {'baseurl': 'Server'}
+        expect = {
+            'name': '%s-%s' % (self.compose.compose_id, 'Server'),
+            'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os'
+        }
+        repo_dict = util.get_repo_dict(self.compose, repo)
+        self.assertEqual(repo_dict, expect)
+
+    def test_get_repo_dicts(self):
+        repos = [
+            'http://example.com/repo',
+            'Server',
+            {'baseurl': 'Client'},
+            {'baseurl': 'ftp://example.com/linux/repo'},
+            {'name': 'testrepo', 'baseurl': 'ftp://example.com/linux/repo'},
+        ]
+        expect = [
+            {'name': 'http:__example.com_repo', 'baseurl': 'http://example.com/repo'},
+            {'name': '%s-%s' % (self.compose.compose_id, 'Server'), 'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os'},
+            {'name': '%s-%s' % (self.compose.compose_id, 'Client'), 'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Client/$basearch/os'},
+            {'name': 'ftp:__example.com_linux_repo', 'baseurl': 'ftp://example.com/linux/repo'},
+            {'name': 'testrepo', 'baseurl': 'ftp://example.com/linux/repo'},
+        ]
+        repos = util.get_repo_dicts(self.compose, repos)
+        self.assertEqual(repos, expect)
+
+
 if __name__ == "__main__":
     unittest.main()

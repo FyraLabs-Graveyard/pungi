@@ -156,8 +156,11 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
-            "repo_from": "http://www.example.com/Server.repo",
             "repo": [
+                {
+                    "name": "server",
+                    "baseurl": "http://www.example.com/Server/repo",
+                },
                 {
                     "name": "optional",
                     "baseurl": "http://example.com/repo/x86_64/optional",
@@ -180,14 +183,14 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
             '--extra-config=%s' % extra_config_file,
         ])
 
-        source_repo_from_name = "source_repo_from-%s" % timestamp
-        source_repo_from_repo = os.path.join(configdir, "%s.repo" % source_repo_from_name)
-        self.assertTrue(os.path.isfile(source_repo_from_repo))
-        with open(source_repo_from_repo, 'r') as f:
+        server_repo_name = "server-%s" % timestamp
+        server_repo = os.path.join(configdir, "%s.repo" % server_repo_name)
+        self.assertTrue(os.path.isfile(server_repo))
+        with open(server_repo, 'r') as f:
             content = f.read()
-            self.assertIn("[%s]" % source_repo_from_name, content)
-            self.assertIn("name=%s" % source_repo_from_name, content)
-            self.assertIn("baseurl=http://www.example.com/Server.repo", content)
+            self.assertIn("[%s]" % server_repo_name, content)
+            self.assertIn("name=%s" % server_repo_name, content)
+            self.assertIn("baseurl=http://www.example.com/Server/repo", content)
             self.assertIn("gpgcheck=0", content)
 
         optional_repo_name = "optional-%s" % timestamp
@@ -213,7 +216,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         treeconf = json.load(open(treefile, 'r'))
         repos = treeconf['repos']
         self.assertEqual(len(repos), 3)
-        for name in [source_repo_from_name, optional_repo_name, extra_repo_name]:
+        for name in [server_repo_name, optional_repo_name, extra_repo_name]:
             self.assertIn(name, repos)
 
     @mock.patch('pungi.ostree.utils.datetime')
@@ -230,8 +233,11 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
-            "repo_from": "http://www.example.com/Server.repo",
             "repo": [
+                {
+                    "name": "server",
+                    "baseurl": "http://www.example.com/Server/repo",
+                },
                 {
                     "name": "optional",
                     "baseurl": "http://example.com/repo/x86_64/optional",
@@ -255,7 +261,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
             '--extra-config=%s' % extra_config_file,
         ])
 
-        source_repo_from_name = "source_repo_from-%s" % timestamp
+        server_repo_name = "server-%s" % timestamp
         optional_repo_name = "optional-%s" % timestamp
         extra_repo_name = "extra-%s" % timestamp
 
@@ -263,7 +269,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         repos = treeconf['repos']
         self.assertEqual(len(repos), 6)
         for name in ['fedora-rawhide', 'fedora-24', 'fedora-23',
-                     source_repo_from_name, optional_repo_name, extra_repo_name]:
+                     server_repo_name, optional_repo_name, extra_repo_name]:
             self.assertIn(name, repos)
 
 

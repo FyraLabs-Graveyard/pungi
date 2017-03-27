@@ -17,6 +17,7 @@
 import subprocess
 import os
 import shutil
+import string
 import sys
 import hashlib
 import errno
@@ -658,3 +659,105 @@ def translate_path(compose, path):
             return normpath.replace(prefix, newvalue, 1)
 
     return normpath
+
+
+def get_repo_url(compose, repo, arch='$basearch'):
+    """
+    Convert repo to repo URL.
+
+    @param compose - required for access to variants
+    @param repo - string or a dict which at least contains 'baseurl' key
+    @param arch - string to be used as arch in repo url
+    """
+    if isinstance(repo, dict):
+        try:
+            repo = repo['baseurl']
+        except KeyError:
+            raise RuntimeError('Baseurl is required in repo dict %s' % str(repo))
+    if '://' not in repo:
+        # this is a variant name
+        v = compose.all_variants.get(repo)
+        if not v:
+            raise RuntimeError('There is no variant %s to get repo from.' % repo)
+        repo = translate_path(compose, compose.paths.compose.repository(arch, v, create_dir=False))
+    return repo
+
+
+def get_repo_urls(compose, repos, arch='$basearch'):
+    """
+    Convert repos to a list of repo URLs.
+
+    @param compose - required for access to variants
+    @param repos - list of string or dict, if item is a dict, key 'baseurl' is required
+    @param arch - string to be used as arch in repo url
+    """
+    urls = []
+    for repo in repos:
+        repo = get_repo_url(compose, repo, arch=arch)
+        urls.append(repo)
+    return urls
+
+
+def _translate_url_to_repo_id(url):
+    """
+    Translate url to valid repo id by replacing any invalid char to '_'.
+    """
+    _REPOID_CHARS = string.ascii_letters + string.digits + '-_.:'
+    return ''.join([s if s in list(_REPOID_CHARS) else '_' for s in url])
+
+
+def get_repo_dict(compose, repo, arch='$basearch'):
+    """
+    Convert repo to a dict of repo options.
+
+    If repo is a string, translate it to repo url if necessary (when it's
+    not a url), and set it as 'baseurl' in result dict, also generate
+    a repo id/name as 'name' key in result dict.
+    If repo is a dict, translate value of 'baseurl' key to url if necessary,
+    if 'name' key is missing in the dict, generate one for it.
+
+    @param compose - required for access to variants
+    @param repo - A string or dict, if it is a dict, key 'baseurl' is required
+    @param arch - string to be used as arch in repo url
+    """
+    repo_dict = {}
+    if isinstance(repo, dict):
+        url = repo['baseurl']
+        name = repo.get('name', None)
+        if '://' in url:
+            if name is None:
+                name = _translate_url_to_repo_id(url)
+        else:
+            # url is variant uid
+            if name is None:
+                name = '%s-%s' % (compose.compose_id, url)
+            url = get_repo_url(compose, url, arch=arch)
+        repo['name'] = name
+        repo['baseurl'] = url
+        return repo
+    else:
+        # repo is normal url or variant uid
+        repo_dict = {}
+        if '://' in repo:
+            repo_dict['name'] = _translate_url_to_repo_id(repo)
+            repo_dict['baseurl'] = repo
+        else:
+            repo_dict['name'] = '%s-%s' % (compose.compose_id, repo)
+            repo_dict['baseurl'] = get_repo_url(compose, repo)
+
+    return repo_dict
+
+
+def get_repo_dicts(compose, repos, arch='$basearch'):
+    """
+    Convert repos to a list of repo dicts.
+
+    @param compose - required for access to variants
+    @param repo - A list of string or dict, if item is a dict, key 'baseurl' is required
+    @param arch - string to be used as arch in repo url
+    """
+    repo_dicts = []
+    for repo in repos:
+        repo_dict = get_repo_dict(compose, repo, arch=arch)
+        repo_dicts.append(repo_dict)
+    return repo_dicts

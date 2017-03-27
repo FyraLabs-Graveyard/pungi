@@ -353,7 +353,7 @@ class TestLiveMediaPhase(PungiTestCase):
 
         phase = LiveMediaPhase(compose)
 
-        with self.assertRaisesRegexp(RuntimeError, r'no.+Missing.+when building.+Server'):
+        with self.assertRaisesRegexp(RuntimeError, r'There is no variant Missing to get repo from.'):
             phase.run()
 
     @mock.patch('pungi.util.resolve_git_url')

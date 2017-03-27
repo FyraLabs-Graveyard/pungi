@@ -410,25 +410,41 @@ def _make_schema():
                 ]
             },
 
-            "source_repo_dict": {
+            "repo_dict": {
                 "type": "object",
                 "properties": {
                     "name": {"type": "string"},
                     "baseurl": {"type": "string"},
                     "exclude": {"type": "string"},
-                    "gpgcheck": {"type": "boolean"},
+                    "gpgcheck": {"type": "string"},
+                    "enabled": {"type": "string"},
                 },
                 "additionalProperties": False,
+                "required": ["baseurl"],
+            },
+
+            "repo": {
+                "anyOf": [
+                    {"type": "string"},
+                    {"$ref": "#/definitions/repo_dict"},
+                ]
+            },
+
+            "list_of_repos": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/repo"},
+            },
+
+            "repos": {
+                "anyOf": [
+                    {"$ref": "#/definitions/repo"},
+                    {"$ref": "#/definitions/list_of_repos"},
+                ]
             },
 
             "list_of_strings": {
                 "type": "array",
                 "items": {"type": "string"},
-            },
-
-            "list_of_source_repo_dicts": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/source_repo_dict"},
             },
 
             "strings": {
@@ -454,10 +470,10 @@ def _make_schema():
                     "subvariant": {"type": "string"},
                     "version": {"type": "string"},
                     "repo": {
-                        "$ref": "#/definitions/strings",
+                        "$ref": "#/definitions/repos",
                         "alias": "additional_repos",
+                        "append": "repo_from",
                     },
-                    "repo_from": {"$ref": "#/definitions/strings"},
                     "specfile": {"type": "string"},
                     "scratch": {"type": "boolean"},
                     "type": {"type": "string"},
@@ -792,8 +808,10 @@ def _make_schema():
                                 "name": {"type": "string"},
                                 "subvariant": {"type": "string"},
                                 "title": {"type": "string"},
-                                "repo": {"$ref": "#/definitions/strings"},
-                                "repo_from": {"$ref": "#/definitions/strings"},
+                                "repo": {
+                                    "$ref": "#/definitions/repos",
+                                    "append": "repo_from",
+                                },
                                 "target": {"type": "string"},
                                 "arches": {"$ref": "#/definitions/list_of_strings"},
                                 "failable": {"$ref": "#/definitions/list_of_strings"},
@@ -812,13 +830,10 @@ def _make_schema():
                 "properties": {
                     "treefile": {"type": "string"},
                     "config_url": {"type": "string"},
-                    "repo_from": {
-                        "type": "string",
-                        "alias": "source_repo_from",
-                    },
                     "repo": {
-                        "$ref": "#/definitions/list_of_source_repo_dicts",
+                        "$ref": "#/definitions/repos",
                         "alias": "extra_source_repos",
+                        "append": ["repo_from", "source_repo_from"],
                     },
                     "keep_original_sources": {"type": "boolean"},
                     "ostree_repo": {"type": "string"},
@@ -828,17 +843,16 @@ def _make_schema():
                     "config_branch": {"type": "string"},
                     "tag_ref": {"type": "boolean"},
                 },
-                "required": ["treefile", "config_url", "repo_from", "ostree_repo"],
+                "required": ["treefile", "config_url", "repo", "ostree_repo"],
                 "additionalProperties": False,
             }),
 
             "ostree_installer": _variant_arch_mapping({
                 "type": "object",
                 "properties": {
-                    "repo": {"$ref": "#/definitions/strings"},
-                    "repo_from": {
-                        "$ref": "#/definitions/strings",
-                        "alias": "source_repo_from",
+                    "repo": {
+                        "$ref": "#/definitions/repos",
+                        "append": ["repo_from", "source_repo_from"],
                     },
                     "release": {"$ref": "#/definitions/optional_string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
@@ -851,7 +865,7 @@ def _make_schema():
                     "template_repo": {"type": "string"},
                     "template_branch": {"type": "string"},
                 },
-                "required": ["repo_from"],
+                "required": ["repo"],
                 "additionalProperties": False,
             }),
 
@@ -887,7 +901,10 @@ def _make_schema():
                                         "name": {"type": "string"},
                                         "kickstart": {"type": "string"},
                                         "arches": {"$ref": "#/definitions/list_of_strings"},
-                                        "repo_from": {"$ref": "#/definitions/strings"},
+                                        "repo": {
+                                            "$ref": "#/definitions/repos",
+                                            "append": "repo_from",
+                                        },
                                         "install_tree_from": {"type": "string"},
                                         "subvariant": {"type": "string"},
                                         "format": {"$ref": "#/definitions/string_tuples"},
@@ -954,8 +971,10 @@ def _make_schema():
                             "version": {"type": "string"},
                             "scratch": {"type": "boolean"},
                             "priority": {"type": "number"},
-                            "repo": {"$ref": "#/definitions/strings"},
-                            "repo_from": {"$ref": "#/definitions/strings"},
+                            "repo": {
+                                "$ref": "#/definitions/repos",
+                                "append": "repo_from",
+                            },
                             "gpgkey": {"type": "string"},
                         },
                         "required": ["url", "target"]

@@ -9,7 +9,7 @@ from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
-from ..util import get_volid, translate_path
+from ..util import get_volid, get_repo_urls
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
@@ -45,10 +45,8 @@ class OstreeInstallerThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
 
-        source_from_repos = [self._get_source_repo(compose, arch, v)
-                             for v in shortcuts.force_list(config['repo_from'])]
-        repos = shortcuts.force_list(config.pop('repo', []))
-        source_repos = source_from_repos + repos
+        repos = get_repo_urls(compose, shortcuts.force_list(config['repo']), arch=arch)
+        repos = [url.replace('$arch', arch) for url in repos]
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))
 
@@ -57,24 +55,12 @@ class OstreeInstallerThread(WorkerThread):
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
-        task_id = self._run_ostree_cmd(compose, variant, arch, config, source_repos, output_dir, volid)
+        task_id = self._run_ostree_cmd(compose, variant, arch, config, repos, output_dir, volid)
 
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
         self.pool.log_info('[DONE ] %s, (task id: %s)' % (msg, task_id))
-
-    def _get_source_repo(self, compose, arch, source):
-        """
-        If `source` is a URL, return it as-is (possibly replacing $arch with
-        actual arch. Otherwise treat is a a variant name and return path to
-        repo in that variant.
-        """
-        if '://' in source:
-            return source.replace('$arch', arch)
-        source_variant = compose.all_variants[source]
-        return translate_path(
-            compose, compose.paths.compose.repository(arch, source_variant, create_dir=False))
 
     def _clone_templates(self, url, branch='master'):
         if not url:
