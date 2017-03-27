@@ -186,7 +186,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         import yaml
         modules = {"modules": []}
         for mmd in variant.mmds:
-            modules["modules"].append(mmd.dumps())
+            modules["modules"].append(yaml.safe_load(mmd.dumps()))
         tmp_dir = compose.mkdtemp(prefix="pungi_")
         modules_path = os.path.join(tmp_dir, "modules.yaml")
         with open(modules_path, "w") as outfile:
