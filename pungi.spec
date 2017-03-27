@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.13
+Version:        4.1.14
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -100,6 +100,33 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Mar 27 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.14-1
+- Not create empty skeleton dirs for empty variants (qwan)
+- Query only active modules in PDC. (jkaluza)
+- Save modules metadata as full yaml object (jkaluza)
+- Implement DNF based depsolving (dmach, mmraka, lsedlar)
+- Add support for modular composes (jkaluza)
+- Add a script for modifying ISO images (lsedlar)
+- iso-wrapper: Add utility for mounting images (lsedlar)
+- buildinstall: Move tweaking configs into a function (lsedlar)
+- image-build: Correctly write can_fail option (lsedlar)
+- pungi-koji: new cmd option '--latest-link-status' (qwan)
+- Print task ID for successful tasks (lsedlar)
+- ostree-installer: Fix logging directory (lsedlar)
+- buildinstall: Print debug info if unmount fails (lsedlar)
+- pkgset: report all unsigned packages (qwan)
+- default createrepo_checksum to sha256 (qwan)
+- unified-iso: Log better error when linking fails (lsedlar)
+- unified-iso: Blacklist extra files metadata (lsedlar)
+- buildinstall: Retry unmounting image (lsedlar)
+- Remove indices from documentation (lsedlar)
+- iso-wrapper: Handle wrong implant md5 (lsedlar)
+- image-build: Remove check for number of images (lsedlar)
+- Extract only first version from specfile (lsedlar)
+- consolidate repo option names (qwan)
+- checks: extend validator with 'alias' (qwan)
+- osbs: write manifest for scratch osbs (qwan)
+
 * Fri Mar 03 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.13-1
 - Make MANIFEST.in stricter (qwan)
 - Remove one line of log print (qwan)
