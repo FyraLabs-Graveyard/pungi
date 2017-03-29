@@ -37,7 +37,6 @@ from .wrappers import kojiwrapper
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
     """Run a command and log the output.  Error out if we get something on stderr"""
 
-
     logger.info("Running %s" % subprocess.list2cmdline(command))
 
     p1 = subprocess.Popen(command, cwd=rundir, stdout=output, stderr=error, universal_newlines=True, env=env,
@@ -50,7 +49,8 @@ def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=
     if p1.returncode != 0:
         logger.error("Got an error from %s" % command[0])
         logger.error(err)
-        raise OSError, "Got an error (%d) from %s: %s" % (p1.returncode, command[0], err)
+        raise OSError("Got an error (%d) from %s: %s" % (p1.returncode, command[0], err))
+
 
 def _link(local, target, logger, force=False):
     """Simple function to link or copy a package, removing target optionally."""
@@ -58,7 +58,7 @@ def _link(local, target, logger, force=False):
     if os.path.exists(target) and force:
         os.remove(target)
 
-    #check for broken links
+    # check for broken links
     if force and os.path.islink(target):
         if not os.path.exists(os.readlink(target)):
             os.remove(target)
@@ -66,12 +66,13 @@ def _link(local, target, logger, force=False):
     try:
         os.link(local, target)
     except OSError, e:
-        if e.errno != 18: # EXDEV
+        if e.errno != 18:  # EXDEV
             logger.error('Got an error linking from cache: %s' % e)
-            raise OSError, e
+            raise OSError(e)
 
         # Can't hardlink cross file systems
         shutil.copy2(local, target)
+
 
 def _ensuredir(target, logger, force=False, clean=False):
     """Ensure that a directory exists, if it already exists, only continue
@@ -110,6 +111,7 @@ def _ensuredir(target, logger, force=False, clean=False):
             sys.stderr(message)
         sys.exit(1)
 
+
 def _doCheckSum(path, hash, logger):
     """Generate a checksum hash from a provided path.
     Return a string of type:hash"""
@@ -131,9 +133,9 @@ def _doCheckSum(path, hash, logger):
     # Loop through the file reading chunks at a time as to not
     # put the entire file in memory.  That would suck for DVDs
     while True:
-        chunk = myfile.read(8192) # magic number!  Taking suggestions for better blocksize
+        chunk = myfile.read(8192)  # magic number!  Taking suggestions for better blocksize
         if not chunk:
-            break # we're done with the file
+            break  # we're done with the file
         sum.update(chunk)
     myfile.close()
 
