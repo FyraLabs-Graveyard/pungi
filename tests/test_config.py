@@ -274,7 +274,8 @@ class OstreeConfigTestCase(ConfigTestCase):
                         "treefile": "fedora-atomic-docker-host.json",
                         "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
                         "repo": "Everything",
-                        "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/"
+                        "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
+                        "version": '!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN',
                     }
                 })
             ]

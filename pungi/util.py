@@ -761,3 +761,12 @@ def get_repo_dicts(compose, repos, arch='$basearch'):
         repo_dict = get_repo_dict(compose, repo, arch=arch)
         repo_dicts.append(repo_dict)
     return repo_dicts
+
+
+def version_generator(compose, gen):
+    """If ``gen`` is a known generator, create a value. Otherwise return
+       the argument value unchanged.
+    """
+    if gen == '!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN':
+        return '%s.%s' % (compose.image_version, compose.image_release)
+    return gen

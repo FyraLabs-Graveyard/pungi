@@ -298,6 +298,41 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_generated_versioning_metadata(self, KojiWrapper, get_dir_from_scm):
+        self.cfg['version'] = '!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN'
+
+        get_dir_from_scm.side_effect = self._dummy_config_repo
+
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
+
+        t = ostree.OSTreeThread(self.pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
+
+        self.assertEqual(get_dir_from_scm.call_args_list,
+                         [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
+                                     'branch': 'f24', 'dir': '.'},
+                                    self.topdir + '/work/ostree-1/config_repo', logger=self.pool._logger)])
+        self.assertEqual(koji.get_runroot_cmd.call_args_list,
+                         [mock.call('rrt', 'x86_64',
+                                    ['pungi-make-ostree',
+                                     'tree',
+                                     '--repo=%s' % self.repo,
+                                     '--log-dir=%s/logs/x86_64/Everything/ostree-1' % self.topdir,
+                                     '--treefile=%s/fedora-atomic-docker-host.json' % (
+                                         self.topdir + '/work/ostree-1/config_repo'),
+                                     '--version=25.20151203.t.0',
+                                     '--extra-config=%s/work/ostree-1/extra_config.json' % self.topdir],
+                                    channel=None, mounts=[self.topdir, self.repo],
+                                    packages=['pungi', 'ostree', 'rpm-ostree'],
+                                    task_id=True, use_shell=True, new_chroot=True, weight=None)])
+        self.assertEqual(koji.run_runroot_cmd.call_args_list,
+                         [mock.call(koji.get_runroot_cmd.return_value,
+                                    log_file=self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log')])
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_write_extra_config_file(self, KojiWrapper, get_dir_from_scm):
         get_dir_from_scm.side_effect = self._dummy_config_repo
 

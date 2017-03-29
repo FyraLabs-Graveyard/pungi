@@ -100,7 +100,7 @@ class OSTreeThread(WorkerThread):
             '--treefile=%s' % os.path.join(config_repo, config['treefile']),
         ]
 
-        version = config.get('version', None)
+        version = util.version_generator(compose, config.get('version'))
         if version:
             cmd.append('--version=%s' % version)
 
