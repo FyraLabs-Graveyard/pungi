@@ -37,13 +37,18 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
         #     "debuginfo": [],
         # }
 
-        write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_set=package_sets[arch], fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
+        write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
+                           multilib_whitelist, multilib_blacklist, package_set=package_sets[arch],
+                           fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
         result = resolve_deps(self.compose, arch, variant)
         check_deps(self.compose, arch, variant)
         return result
 
 
-def write_pungi_config(compose, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, repos=None, comps_repo=None, package_set=None, fulltree_excludes=None, prepopulate=None):
+def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
+                       multilib_whitelist, multilib_blacklist, repos=None,
+                       comps_repo=None, package_set=None, fulltree_excludes=None,
+                       prepopulate=None):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
@@ -77,7 +82,17 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         else:
             filter_packages_str.append(pkg_name)
 
-    pungi_wrapper.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str, exclude_packages=filter_packages_str, comps_repo=comps_repo, lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes, multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist, prepopulate=prepopulate)
+    if not groups and not packages_str and not prepopulate:
+        raise RuntimeError(
+            'No packages included in %s.%s (no comps groups, no input packages, no prepopulate)'
+            % (variant.uid, arch))
+
+    pungi_wrapper.write_kickstart(
+        ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
+        exclude_packages=filter_packages_str, comps_repo=comps_repo,
+        lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes,
+        multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist,
+        prepopulate=prepopulate)
 
 
 def resolve_deps(compose, arch, variant):
