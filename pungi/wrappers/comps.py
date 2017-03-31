@@ -333,6 +333,17 @@ class CompsWrapper(object):
                 if key in to_remove:
                     del self.comps._groups[key]
 
+        # Sanity check to report warnings on unused group_dicts
+        unmatched = set()
+        for group_dict in group_dicts:
+            matcher = fnmatch.fnmatch if group_dict["glob"] else lambda x, y: x == y
+            for group_obj in self.comps.groups:
+                if matcher(group_obj.groupid, group_dict["name"]):
+                    break
+            else:
+                unmatched.add(group_dict["name"])
+        return unmatched
+
     def filter_packages(self, pkglist):
         rv = []
         for group_obj in self.comps.get_groups():

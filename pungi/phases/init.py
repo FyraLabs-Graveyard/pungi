@@ -100,6 +100,9 @@ def write_arch_comps(compose, arch):
          compose.paths.work.comps(arch="global")])
 
 
+UNMATCHED_GROUP_MSG = 'Variant %s.%s requires comps group %s which does not match anything in input comps file'
+
+
 def write_variant_comps(compose, arch, variant):
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
     msg = "Writing comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
@@ -121,7 +124,9 @@ def write_variant_comps(compose, arch, variant):
          "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
 
     comps = CompsWrapper(comps_file)
-    comps.filter_groups(variant.groups)
+    unmatched = comps.filter_groups(variant.groups)
+    for grp in unmatched:
+        compose.log_warning(UNMATCHED_GROUP_MSG % (variant.uid, arch, grp))
     if compose.conf["comps_filter_environments"]:
         comps.filter_environments(variant.environments)
     comps.write_comps()
