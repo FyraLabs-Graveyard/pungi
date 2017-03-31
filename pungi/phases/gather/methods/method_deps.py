@@ -38,16 +38,24 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
         # }
 
         write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
-                           multilib_whitelist, multilib_blacklist, package_set=package_sets[arch],
+                           multilib_whitelist, multilib_blacklist,
                            fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
         result = resolve_deps(self.compose, arch, variant)
         check_deps(self.compose, arch, variant)
         return result
 
 
+def _format_packages(pkgs):
+    """Sort packages and merge name with arch."""
+    for pkg_name, pkg_arch in sorted(pkgs):
+        if pkg_arch:
+            yield '%s.%s' % (pkg_name, pkg_arch)
+        else:
+            yield pkg_name
+
+
 def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
-                       multilib_whitelist, multilib_blacklist, repos=None,
-                       comps_repo=None, package_set=None, fulltree_excludes=None,
+                       multilib_whitelist, multilib_blacklist, fulltree_excludes=None,
                        prepopulate=None):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
@@ -60,27 +68,14 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     compose.log_info(msg)
 
-    if not repos:
-        repo_path = compose.paths.work.arch_repo(arch=arch)
-        repos = {"pungi-repo": repo_path}
+    repos = {"pungi-repo": compose.paths.work.arch_repo(arch=arch)}
 
     lookaside_repos = {}
     for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
         lookaside_repos["lookaside-repo-%s" % i] = repo_url
 
-    packages_str = []
-    for pkg_name, pkg_arch in sorted(packages):
-        if pkg_arch:
-            packages_str.append("%s.%s" % (pkg_name, pkg_arch))
-        else:
-            packages_str.append(pkg_name)
-
-    filter_packages_str = []
-    for pkg_name, pkg_arch in sorted(filter_packages):
-        if pkg_arch:
-            filter_packages_str.append("%s.%s" % (pkg_name, pkg_arch))
-        else:
-            filter_packages_str.append(pkg_name)
+    packages_str = list(_format_packages(packages))
+    filter_packages_str = list(_format_packages(filter_packages))
 
     if not groups and not packages_str and not prepopulate:
         raise RuntimeError(
@@ -89,7 +84,7 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
-        exclude_packages=filter_packages_str, comps_repo=comps_repo,
+        exclude_packages=filter_packages_str,
         lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes,
         multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist,
         prepopulate=prepopulate)
