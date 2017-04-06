@@ -126,7 +126,11 @@ class UnifiedISO(object):
         for variant in self.ci.get_variants(recursive=False):
             for arch in variant.arches:
                 print("Processing: {0}.{1}".format(variant.uid, arch))
-                tree_dir = os.path.join(self.compose_path, variant.paths.os_tree[arch])
+                try:
+                    tree_dir = os.path.join(self.compose_path, variant.paths.os_tree[arch])
+                except KeyError:
+                    # The path in metadata is missing: no content there
+                    continue
 
                 ti = productmd.treeinfo.TreeInfo()
                 try:
