@@ -321,7 +321,7 @@ class UnifiedISO(object):
             img.arch = arch
 
             # XXX: HARDCODED
-            img.type = "dvd"
+            img.type = "dvd" if not debuginfo else 'dvd-debuginfo'
             img.format = "iso"
             img.disc_number = 1
             img.disc_count = 1
