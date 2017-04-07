@@ -6,7 +6,7 @@ import time
 from kobo import shortcuts
 
 from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
-from pungi.util import translate_path, get_repo_urls
+from pungi.util import translate_path, get_repo_urls, version_generator
 from pungi.phases import base
 from pungi.linker import Linker
 from pungi.wrappers.kojiwrapper import KojiWrapper
@@ -66,8 +66,9 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
 
     def _set_release(self, image_conf):
         """If release is set explicitly to None, replace it with date and respin."""
-        if 'release' in image_conf and image_conf['release'] is None:
-            image_conf['release'] = self.compose.image_release
+        if 'release' in image_conf:
+            image_conf['release'] = (version_generator(self.compose, image_conf['release']) or
+                                     self.compose.image_release)
 
     def run(self):
         for variant in self.compose.get_variants():

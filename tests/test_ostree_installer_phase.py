@@ -362,6 +362,67 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.ostree_installer.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_with_explicitly_generated_release(self, KojiWrapper, link, iso,
+                                                   get_file_size, get_mtime, ImageCls, run):
+        pool = mock.Mock()
+        cfg = {
+            'repo': 'Everything',
+            'release': '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN',
+            "installpkgs": ["fedora-productimg-atomic"],
+            "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
+            "add_template_var": [
+                "ostree_osname=fedora-atomic",
+                "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+            ],
+            "add_arch_template": ["/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"],
+            "add_arch_template_var": [
+                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "ostree_osname=fedora-atomic",
+                "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+            ],
+        }
+        self.compose.conf['runroot_weights'] = {'ostree_installer': 123}
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        self.assertRunrootCall(
+            koji,
+            'file://%s/compose/Everything/x86_64/os' % self.topdir,
+            '20151203.t.0',
+            isfinal=True,
+            extra=['--installpkgs=fedora-productimg-atomic',
+                   '--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl',
+                   '--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl',
+                   '--add-template-var=ostree_osname=fedora-atomic',
+                   '--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
+                   '--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/',
+                   '--add-arch-template-var=ostree_osname=fedora-atomic',
+                   '--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host',
+                   '--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)],
+            weight=123,
+        )
+        self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
+        self.assertImageAdded(self.compose, ImageCls, iso)
+        self.assertAllCopied(run)
+
+    @mock.patch('kobo.shortcuts.run')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.phases.ostree_installer.iso')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_with_implicit_release(self, KojiWrapper, link, iso,
                                        get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()

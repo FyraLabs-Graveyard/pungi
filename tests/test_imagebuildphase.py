@@ -112,7 +112,7 @@ class TestImageBuildPhase(PungiTestCase):
     def test_image_build_phase_global_options(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'image_build_ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-            'image_build_release': None,
+            'image_build_release': '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN',
             'image_build_target': 'f24',
             'image_build_version': 'Rawhide',
             'image_build': {
@@ -171,7 +171,7 @@ class TestImageBuildPhase(PungiTestCase):
     def test_image_build_phase_missing_version(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'image_build_ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
-            'image_build_release': None,
+            'image_build_release': '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN',
             'image_build_target': 'f24',
             'image_build': {
                 '^Server$': [
@@ -460,6 +460,44 @@ class TestImageBuildPhase(PungiTestCase):
                             'disk_size': 3,
                             'arches': ['x86_64'],
                             'release': None,
+                        }
+                    }
+                ]
+            },
+            'koji_profile': 'koji',
+        })
+
+        self.assertValidConfig(compose.conf)
+
+        phase = ImageBuildPhase(compose)
+
+        phase.run()
+
+        # assert at least one thread was started
+        self.assertTrue(phase.pool.add.called)
+
+        self.assertTrue(phase.pool.queue_put.called_once)
+        args, kwargs = phase.pool.queue_put.call_args
+        self.assertEqual(args[0][1].get('image_conf', {}).get('image-build', {}).get('release'),
+                         '20151203.t.0')
+
+    @mock.patch('pungi.phases.image_build.ThreadPool')
+    def test_image_build_create_release_with_explicit_config(self, ThreadPool):
+        compose = DummyCompose(self.topdir, {
+            'image_build': {
+                '^Server$': [
+                    {
+                        'image-build': {
+                            'format': [('docker', 'tar.xz')],
+                            'name': 'Fedora-Docker-Base',
+                            'target': 'f24',
+                            'version': 'Rawhide',
+                            'ksurl': 'git://git.fedorahosted.org/git/spin-kickstarts.git',
+                            'kickstart': "fedora-docker-base.ks",
+                            'distro': 'Fedora-20',
+                            'disk_size': 3,
+                            'arches': ['x86_64'],
+                            'release': '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN',
                         }
                     }
                 ]

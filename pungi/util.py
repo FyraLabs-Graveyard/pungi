@@ -769,4 +769,8 @@ def version_generator(compose, gen):
     """
     if gen == '!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN':
         return '%s.%s' % (compose.image_version, compose.image_release)
+    if gen == '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN':
+        return compose.image_release
+    if gen and gen[0] == '!':
+        raise RuntimeError("Unknown version generator '%s'" % gen)
     return gen

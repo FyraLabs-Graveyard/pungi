@@ -112,15 +112,15 @@ class ImageConfigMixin(object):
 
     def get_release(self, cfg):
         """
-        If release is set explicitly to None, replace it with date and respin.
-        Uses configuration passed as argument, phase specific settings and
-        global settings.
+        If release is set to a magic string (or explicitly to None -
+        deprecated), replace it with a generated value. Uses configuration
+        passed as argument, phase specific settings and global settings.
         """
         for key, conf in [('release', cfg),
                           ('%s_release' % self.name, self.compose.conf),
                           ('global_release', self.compose.conf)]:
             if key in conf:
-                return conf[key] or self.compose.image_release
+                return util.version_generator(self.compose, conf[key]) or self.compose.image_release
         return None
 
     def get_ksurl(self, cfg):

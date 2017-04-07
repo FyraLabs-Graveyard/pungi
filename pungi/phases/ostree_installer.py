@@ -9,7 +9,7 @@ from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
-from ..util import get_volid, get_repo_urls
+from ..util import get_volid, get_repo_urls, version_generator
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
@@ -70,8 +70,8 @@ class OstreeInstallerThread(WorkerThread):
                              self.template_dir, logger=self.pool._logger)
 
     def _get_release(self, compose, config):
-        if 'release' in config and config['release'] is None:
-            return compose.image_release
+        if 'release' in config:
+            return version_generator(compose, config['release']) or compose.image_release
         return config.get('release', None)
 
     def _copy_image(self, compose, variant, arch, filename, output_dir):

@@ -642,5 +642,23 @@ class GetRepoFuncsTestCase(unittest.TestCase):
         self.assertEqual(repos, expect)
 
 
+class TestVersionGenerator(unittest.TestCase):
+    def test_unknown_generator(self):
+        compose = mock.Mock()
+        with self.assertRaises(RuntimeError) as ctx:
+            util.version_generator(compose, '!GIMME_VERSION')
+
+        self.assertEqual(str(ctx.exception),
+                         "Unknown version generator '!GIMME_VERSION'")
+
+    def test_passthrough_value(self):
+        compose = mock.Mock()
+        self.assertEqual(util.version_generator(compose, '1.2.3'), '1.2.3')
+
+    def test_passthrough_none(self):
+        compose = mock.Mock()
+        self.assertEqual(util.version_generator(compose, None), None)
+
+
 if __name__ == "__main__":
     unittest.main()
