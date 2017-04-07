@@ -871,6 +871,31 @@ Example
     ]
 
 
+.. _auto-version:
+
+Automatic generation of version and release
+===========================================
+
+Version and release values for certain artifacts can be generated automatically
+based on release version, compose label, date, type and respin. This can be
+used to shorten the config and keep it the same for multiple uses.
+
++----------------------------+-------------------+--------------+------------------+
+| Compose ID                 | Label             | Version      | Release          |
++============================+===================+==============+==================+
+| ``F-Rawhide-20170406.n.0`` | ``-``             | ``Rawhide``  | ``20170406.n.0`` |
++----------------------------+-------------------+--------------+------------------+
+| ``F-26-20170329.1``        | ``Alpha-1.6``     | ``26_Alpha`` | ``1.6``          |
++----------------------------+-------------------+--------------+------------------+
+| ``F-Atomic-25-20170407.0`` | ``RC-20170407.0`` | ``25``       | ``20170407.0``   |
++----------------------------+-------------------+--------------+------------------+
+| ``F-Atomic-25-20170407.0`` | ``-``             | ``25``       | ``20170407.0``   |
++----------------------------+-------------------+--------------+------------------+
+
+All non-``RC`` milestones from label get appended to the version. For release
+either label is used or date, type and respin.
+
+
 Common options for Live Images, Live Media and Image Build
 ==========================================================
 
@@ -896,22 +921,16 @@ Target is specified by these settings. For live images refer to ``live_target``.
  * ``live_media_target``
  * ``image_build_target``
 
-.. _auto_version:
-
 Version is specified by these options. If no version is set, a default value
-will be provided based on product version. If label is used (and is not
-``RC``), the milestone will be appended to the version with an underscore.
+will be provided according to :ref:`automatic versioning <auto-version>`.
 
  * ``global_version`` -- global fallback setting
  * ``live_media_version``
  * ``image_build_version``
  * ``live_images_version``
 
-.. _auto_release:
-
 Release is specified by these options. If set explicitly to ``None``, a value
-will be generated based on compose label, and when compose label is not
-provided; date, compose type and respin will be used.
+will be generated according to :ref:`automatic versioning <auto-version>`.
 
  * ``global_release`` -- global fallback setting
  * ``live_media_release``
@@ -983,8 +1002,8 @@ Live Media Settings
       * ``ksversion`` (*str*)
       * ``scratch`` (*bool*)
       * ``release`` (*str*) -- a string with the release, or explicit ``None``
-        for automatically generating one. See :ref:`common options
-        <auto_release>` for details.
+        for automatically generating one. See :ref:`automatic versioning
+        <auto-version>` for details.
       * ``skip_tag`` (*bool*)
       * ``repo`` (*str|[str]*) -- repos specified by URL or variant UID
       * ``title`` (*str*)
@@ -1036,7 +1055,7 @@ Image Build Settings
     currently built variant will be added as well.
 
     If you explicitly set ``release`` to ``None``, it will be replaced with
-    a value generated as described in :ref:`common options <auto_release>`.
+    a value generated as described in :ref:`automatic versioning <auto-version>`.
 
     Please don't set ``install_tree``. This gets automatically set by *pungi*
     based on current variant. You can use ``install_tree_from`` key to use
@@ -1157,6 +1176,9 @@ a new commit.
     * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
       Defaults to ``False``.
     * ``version`` -- (*str*) Version string to be added as versioning metadata.
+      If this option is set to ``!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN``,
+      a value will be generated automatically as ``$VERSION.$RELEASE``.
+      :ref:`See how those values are created <auto-version>`.
     * ``tag_ref`` -- (*bool*, default ``True``) If set to ``False``, a git
       reference will not be created.
 
@@ -1186,7 +1208,8 @@ Example config
                 "keep_original_sources": True,
                 "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
                 "update_summary": True,
-                "version": "24"
+                # Automatically generate a reasonable version
+                "version": "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN",
             }
         })
     ]
@@ -1208,7 +1231,7 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
     * ``repo`` -- (*str|[str]*) repos specified by URL or variant UID
     * ``release`` -- (*str*) Release value to set for the installer image. Set
-      to ``None`` to generate the value :ref:`automatically <auto_release>`.
+      to ``None`` to generate the value :ref:`automatically <auto-version>`.
     * ``failable`` -- (*[str]*) List of architectures for which this
       deliverable is not release blocking.
 
