@@ -30,7 +30,7 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import find_old_compose
+from ..util import find_old_compose, temp_dir
 
 import productmd.rpms
 
@@ -187,17 +187,16 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         modules = {"modules": []}
         for mmd in variant.mmds:
             modules["modules"].append(yaml.safe_load(mmd.dumps()))
-        tmp_dir = compose.mkdtemp(prefix="pungi_")
-        modules_path = os.path.join(tmp_dir, "modules.yaml")
-        with open(modules_path, "w") as outfile:
-            outfile.write(yaml.safe_dump(modules))
-        cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
-                                      modules_path, mdtype="modules",
-                                      compress_type="gz")
-        log_file = compose.paths.log.log_file(
-            arch, "modifyrepo-modules-%s" % variant)
-        run(cmd, logfile=log_file, show_cmd=True)
-        shutil.rmtree(tmp_dir)
+        with temp_dir() as tmp_dir:
+            modules_path = os.path.join(tmp_dir, "modules.yaml")
+            with open(modules_path, "w") as outfile:
+                outfile.write(yaml.safe_dump(modules))
+            cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
+                                        modules_path, mdtype="modules",
+                                        compress_type="gz")
+            log_file = compose.paths.log.log_file(
+                arch, "modifyrepo-modules-%s" % variant)
+            run(cmd, logfile=log_file, show_cmd=True)
 
     compose.log_info("[DONE ] %s" % msg)
 
