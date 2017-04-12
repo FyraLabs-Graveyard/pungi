@@ -53,10 +53,9 @@ class CompsWrapper(object):
             comps_obj = self.generate_comps()
         if not target_file:
             target_file = self.comps_file
-        stream = open(target_file, "w")
-        # comps_obj.writexml(stream, addindent="  ", newl="\n") # no encoding -> use toprettyxml()
-        stream.write(comps_obj.toprettyxml(indent="  ", encoding="UTF-8"))
-        stream.close()
+
+        with open(target_file, "w") as stream:
+            stream.write(comps_obj.toprettyxml(indent="  ", encoding="UTF-8"))
 
     def generate_comps(self):
         impl = xml.dom.minidom.getDOMImplementation()
@@ -109,20 +108,11 @@ class CompsWrapper(object):
                     group_node.appendChild(node)
 
             node = doc.createElement("default")
-
-            if group.default:
-                node.appendChild(doc.createTextNode("true"))
-            else:
-                node.appendChild(doc.createTextNode("false"))
+            node.appendChild(doc.createTextNode("true" if group.default else "false"))
             group_node.appendChild(node)
 
             node = doc.createElement("uservisible")
-
-            if group.user_visible:
-                node.appendChild(doc.createTextNode("true"))
-            else:
-                node.appendChild(doc.createTextNode("false"))
-
+            node.appendChild(doc.createTextNode("true" if group.user_visible else "false"))
             group_node.appendChild(node)
 
             if group.langonly:
@@ -187,7 +177,7 @@ class CompsWrapper(object):
 
             if category.display_order is not None:
                 display_node = doc.createElement("display_order")
-                display_node.appendChild(doc.createTextNode("%s" % category.display_order))
+                display_node.appendChild(doc.createTextNode(str(category.display_order)))
                 cat_node.appendChild(display_node)
 
             grouplist_node = doc.createElement("grouplist")
