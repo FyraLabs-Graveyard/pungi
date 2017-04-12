@@ -77,45 +77,12 @@ class CompsWrapper(object):
             group_node = doc.createElement("group")
             msg_elem.appendChild(group_node)
 
-            id_node = doc.createElement("id")
-            id_node.appendChild(doc.createTextNode(group.id))
-            group_node.appendChild(id_node)
-
-            name_node = doc.createElement("name")
-            name_node.appendChild(doc.createTextNode(group.name))
-            group_node.appendChild(name_node)
-
-            for lang in sorted(group.name_by_lang):
-                text = group.name_by_lang[lang]
-                node = doc.createElement("name")
-                node.setAttribute("xml:lang", lang)
-                node.appendChild(doc.createTextNode(text))
-                group_node.appendChild(node)
-
-            node = doc.createElement("description")
-            group_node.appendChild(node)
-            if group.desc and group.desc != "":
-                node.appendChild(doc.createTextNode(group.desc))
-
-                for lang in sorted(group.desc_by_lang):
-                    text = group.desc_by_lang[lang]
-                    node = doc.createElement("description")
-                    node.setAttribute("xml:lang", lang)
-                    node.appendChild(doc.createTextNode(text))
-                    group_node.appendChild(node)
-
-            node = doc.createElement("default")
-            node.appendChild(doc.createTextNode("true" if group.default else "false"))
-            group_node.appendChild(node)
-
-            node = doc.createElement("uservisible")
-            node.appendChild(doc.createTextNode("true" if group.uservisible else "false"))
-            group_node.appendChild(node)
+            append_common_info(doc, group_node, group, force_description=True)
+            append_bool(doc, group_node, "default", group.default)
+            append_bool(doc, group_node, "uservisible", group.uservisible)
 
             if group.lang_only:
-                node = doc.createElement("langonly")
-                node.appendChild(doc.createTextNode(group.lang_only))
-                group_node.appendChild(node)
+                append(doc, group_node, "langonly", group.lang_only)
 
             packagelist = doc.createElement("packagelist")
 
@@ -125,10 +92,7 @@ class CompsWrapper(object):
 
             for type_name in TYPE_MAPPING.values():
                 for package in sorted(packages_by_type[type_name], key=attrgetter('name')):
-                    node = doc.createElement("packagereq")
-                    node.appendChild(doc.createTextNode(package.name))
-                    node.setAttribute("type", type_name)
-                    packagelist.appendChild(node)
+                    node = append(doc, packagelist, "packagereq", package.name, type=type_name)
                     if type_name == "conditional":
                         node.setAttribute("requires", pkg.requires)
 
@@ -141,114 +105,36 @@ class CompsWrapper(object):
             cat_node = doc.createElement("category")
             msg_elem.appendChild(cat_node)
 
-            id_node = doc.createElement("id")
-            id_node.appendChild(doc.createTextNode(category.id))
-            cat_node.appendChild(id_node)
-
-            name_node = doc.createElement("name")
-            name_node.appendChild(doc.createTextNode(category.name))
-            cat_node.appendChild(name_node)
-
-            for lang in sorted(category.name_by_lang):
-                text = category.name_by_lang[lang]
-                node = doc.createElement("name")
-                node.setAttribute("xml:lang", lang)
-                node.appendChild(doc.createTextNode(text))
-                cat_node.appendChild(node)
-
-            if category.desc and category.desc != "":
-                node = doc.createElement("description")
-                node.appendChild(doc.createTextNode(category.desc))
-                cat_node.appendChild(node)
-
-                for lang in sorted(category.desc_by_lang):
-                    text = category.desc_by_lang[lang]
-                    node = doc.createElement("description")
-                    node.setAttribute("xml:lang", lang)
-                    node.appendChild(doc.createTextNode(text))
-                    cat_node.appendChild(node)
+            append_common_info(doc, cat_node, category)
 
             if category.display_order is not None:
-                display_node = doc.createElement("display_order")
-                display_node.appendChild(doc.createTextNode(str(category.display_order)))
-                cat_node.appendChild(display_node)
+                append(doc, cat_node, "display_order", str(category.display_order))
 
-            grouplist_node = doc.createElement("grouplist")
-            groupids = sorted(groups)
+            append_grouplist(doc, cat_node, groups)
 
-            for groupid in groupids:
-                node = doc.createElement("groupid")
-                node.appendChild(doc.createTextNode(groupid))
-                grouplist_node.appendChild(node)
+        for environment in sorted(self.comps.environments, key=attrgetter('id')):
+            groups = set(x.name for x in environment.group_ids) & set(self.get_comps_groups())
+            if not groups:
+                continue
+            env_node = doc.createElement("environment")
+            msg_elem.appendChild(env_node)
 
-            cat_node.appendChild(grouplist_node)
+            append_common_info(doc, env_node, environment)
 
-        environments = sorted(self.comps.environments, key=attrgetter('id'))
-        if environments:
-            for environment in environments:
-                groups = set(x.name for x in environment.group_ids) & set(self.get_comps_groups())
-                if not groups:
-                    continue
-                env_node = doc.createElement("environment")
-                msg_elem.appendChild(env_node)
+            if environment.display_order is not None:
+                append(doc, env_node, "display_order", str(environment.display_order))
 
-                id_node = doc.createElement("id")
-                id_node.appendChild(doc.createTextNode(environment.id))
-                env_node.appendChild(id_node)
+            append_grouplist(doc, env_node, groups)
 
-                name_node = doc.createElement("name")
-                name_node.appendChild(doc.createTextNode(environment.name))
-                env_node.appendChild(name_node)
-
-                for lang in sorted(environment.name_by_lang):
-                    text = environment.name_by_lang[lang]
-                    node = doc.createElement("name")
-                    node.setAttribute("xml:lang", lang)
-                    node.appendChild(doc.createTextNode(text))
-                    env_node.appendChild(node)
-
-                if environment.desc:
-                    node = doc.createElement("description")
-                    node.appendChild(doc.createTextNode(environment.desc))
-                    env_node.appendChild(node)
-
-                    for lang in sorted(environment.desc_by_lang):
-                        text = environment.desc_by_lang[lang]
-                        node = doc.createElement("description")
-                        node.setAttribute("xml:lang", lang)
-                        node.appendChild(doc.createTextNode(text))
-                        env_node.appendChild(node)
-
-                if environment.display_order is not None:
-                    display_node = doc.createElement("display_order")
-                    display_node.appendChild(doc.createTextNode("%s" % environment.display_order))
-                    env_node.appendChild(display_node)
-
-                grouplist_node = doc.createElement("grouplist")
-                groupids = sorted(groups)
-                for groupid in groupids:
-                    node = doc.createElement("groupid")
-                    node.appendChild(doc.createTextNode(groupid))
-                    grouplist_node.appendChild(node)
-                env_node.appendChild(grouplist_node)
-
-                if environment.option_ids:
-                    optionlist_node = doc.createElement("optionlist")
-                    for optionid in sorted(x.name for x in environment.option_ids):
-                        node = doc.createElement("groupid")
-                        node.appendChild(doc.createTextNode(optionid))
-                        optionlist_node.appendChild(node)
-                    env_node.appendChild(optionlist_node)
+            if environment.option_ids:
+                append_grouplist(doc, env_node, (x.name for x in environment.option_ids), "optionlist")
 
         if self.comps.langpacks:
             lang_node = doc.createElement("langpacks")
             msg_elem.appendChild(lang_node)
 
             for name in sorted(self.comps.langpacks):
-                match_node = doc.createElement("match")
-                match_node.setAttribute("name", name)
-                match_node.setAttribute("install", self.comps.langpacks[name])
-                lang_node.appendChild(match_node)
+                append(doc, lang_node, "match", name=name, install=self.comps.langpacks[name])
 
         return doc
 
@@ -279,14 +165,10 @@ class CompsWrapper(object):
         to_remove = []
         for group_obj in self.comps.groups:
             for group_dict in group_dicts:
-                if group_dict["glob"]:
-                    if fnmatch.fnmatch(group_obj.id, group_dict["name"]):
-                        self._tweak_group(group_obj, group_dict)
-                        break
-                else:
-                    if group_obj.id == group_dict["name"]:
-                        self._tweak_group(group_obj, group_dict)
-                        break
+                matcher = fnmatch.fnmatch if group_dict["glob"] else lambda x, y: x == y
+                if matcher(group_obj.id, group_dict["name"]):
+                    self._tweak_group(group_obj, group_dict)
+                    break
             else:
                 to_remove.append(group_obj)
 
@@ -322,3 +204,46 @@ class CompsWrapper(object):
 
         for env in to_remove:
             self.comps.environments.remove(env)
+
+
+def append(doc, parent, elem, content=None, lang=None, **kwargs):
+    """Create a new DOM element and append it to parent."""
+    node = doc.createElement(elem)
+    if content:
+        node.appendChild(doc.createTextNode(content))
+    if lang:
+        node.setAttribute("xml:lang", lang)
+    for attr, value in kwargs.iteritems():
+        node.setAttribute(attr, value)
+    parent.appendChild(node)
+    return node
+
+
+def append_grouplist(doc, parent, groups, elem="grouplist"):
+    grouplist_node = doc.createElement(elem)
+    for groupid in sorted(groups):
+        append(doc, grouplist_node, "groupid", groupid)
+    parent.appendChild(grouplist_node)
+
+
+def append_common_info(doc, parent, obj, force_description=False):
+    """Add id, name and description (with translations)."""
+    append(doc, parent, "id", obj.id)
+    append(doc, parent, "name", obj.name)
+
+    for lang in sorted(obj.name_by_lang):
+        text = obj.name_by_lang[lang]
+        append(doc, parent, "name", text, lang=lang)
+
+    if obj.desc or force_description:
+        append(doc, parent, "description", obj.desc or '')
+
+        for lang in sorted(obj.desc_by_lang):
+            text = obj.desc_by_lang[lang]
+            append(doc, parent, "description", text, lang=lang)
+
+
+def append_bool(doc, parent, elem, value):
+    node = doc.createElement(elem)
+    node.appendChild(doc.createTextNode("true" if value else "false"))
+    parent.appendChild(node)
