@@ -19,7 +19,7 @@ Get a package list based on modulemd metadata loaded in pkgset phase.
 """
 
 
-from pungi.wrappers.comps import CompsWrapper
+import pungi.arch
 import pungi.phases.gather.source
 import kobo.rpmlib
 
@@ -31,9 +31,13 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         groups = set()
         packages = set()
 
+        compatible_arches = pungi.arch.get_compatible_arches(arch)
+
         if variant is not None and variant.modules:
-            rpms = variant.pkgset.rpms_by_arch[arch] + \
-                variant.pkgset.rpms_by_arch["noarch"]
+            rpms = sum([
+                variant.pkgset.rpms_by_arch.get(a, [])
+                for a in compatible_arches
+            ], [])
             for rpm_obj in rpms:
                 for mmd in variant.mmds:
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
