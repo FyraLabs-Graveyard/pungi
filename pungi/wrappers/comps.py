@@ -283,7 +283,7 @@ class CompsWrapper(object):
         if group_dict["default"] is not None:
             group_obj.default = group_dict["default"]
         if group_dict["uservisible"] is not None:
-            group_obj.uservisible = group_dict["uservisible"]
+            group_obj.user_visible = group_dict["uservisible"]
 
     def _tweak_env(self, env_obj, env_dict):
         if env_dict["display_order"] is not None:
