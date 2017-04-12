@@ -46,5 +46,5 @@ class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
             comps.filter_groups(variant.groups)
 
         for i in comps.get_comps_groups():
-            groups.add(i.groupid)
+            groups.add(i)
         return set(), groups

@@ -45,7 +45,8 @@ class CompsWrapper(object):
         self.comps_file = comps_file
 
     def get_comps_groups(self):
-        return self.comps.get_groups()
+        """Return a list of group IDs."""
+        return [group.groupid for group in self.comps.get_groups()]
 
     def write_comps(self, comps_obj=None, target_file=None):
         if not comps_obj:
