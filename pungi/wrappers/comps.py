@@ -14,10 +14,12 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import sys
+import collections
+from operator import attrgetter
 import fnmatch
+import libcomps
+import sys
 import xml.dom.minidom
-import yum.comps
 
 
 if sys.version_info[:2] < (2, 7):
@@ -36,17 +38,25 @@ if sys.version_info[:2] < (2, 7):
     xml.dom.minidom.Element = Element
 
 
+TYPE_MAPPING = collections.OrderedDict([
+    (libcomps.PACKAGE_TYPE_MANDATORY, 'mandatory'),
+    (libcomps.PACKAGE_TYPE_DEFAULT, 'default'),
+    (libcomps.PACKAGE_TYPE_OPTIONAL, 'optional'),
+    (libcomps.PACKAGE_TYPE_CONDITIONAL, 'conditional'),
+])
+
+
 class CompsWrapper(object):
     """Class for reading and retreiving information from comps XML files"""
 
     def __init__(self, comps_file):
-        self.comps = yum.comps.Comps()
-        self.comps.add(comps_file)
+        self.comps = libcomps.Comps()
+        self.comps.fromxml_f(comps_file)
         self.comps_file = comps_file
 
     def get_comps_groups(self):
         """Return a list of group IDs."""
-        return [group.groupid for group in self.comps.get_groups()]
+        return [group.id for group in self.comps.groups]
 
     def write_comps(self, comps_obj=None, target_file=None):
         if not comps_obj:
@@ -63,31 +73,20 @@ class CompsWrapper(object):
         doc = impl.createDocument(None, "comps", doctype)
         msg_elem = doc.documentElement
 
-        groups = {}
-        for group_obj in self.comps.get_groups():
-            groupid = group_obj.groupid
-            groups[groupid] = {"group_obj": group_obj}
-
-        group_names = groups.keys()
-        group_names.sort()
-        for group_key in group_names:
-            group = groups[group_key]["group_obj"]
+        for group in sorted(self.comps.groups, key=attrgetter('id')):
             group_node = doc.createElement("group")
             msg_elem.appendChild(group_node)
 
             id_node = doc.createElement("id")
-            id_node.appendChild(doc.createTextNode(group.groupid))
+            id_node.appendChild(doc.createTextNode(group.id))
             group_node.appendChild(id_node)
 
             name_node = doc.createElement("name")
             name_node.appendChild(doc.createTextNode(group.name))
             group_node.appendChild(name_node)
 
-            langs = group.translated_name.keys()
-            langs.sort()
-
-            for lang in langs:
-                text = group.translated_name[lang].decode("UTF-8")
+            for lang in sorted(group.name_by_lang):
+                text = group.name_by_lang[lang]
                 node = doc.createElement("name")
                 node.setAttribute("xml:lang", lang)
                 node.appendChild(doc.createTextNode(text))
@@ -95,13 +94,11 @@ class CompsWrapper(object):
 
             node = doc.createElement("description")
             group_node.appendChild(node)
-            if group.description and group.description != "":
-                node.appendChild(doc.createTextNode(group.description))
-                langs = group.translated_description.keys()
-                langs.sort()
+            if group.desc and group.desc != "":
+                node.appendChild(doc.createTextNode(group.desc))
 
-                for lang in langs:
-                    text = group.translated_description[lang].decode("UTF-8")
+                for lang in sorted(group.desc_by_lang):
+                    text = group.desc_by_lang[lang]
                     node = doc.createElement("description")
                     node.setAttribute("xml:lang", lang)
                     node.appendChild(doc.createTextNode(text))
@@ -112,64 +109,60 @@ class CompsWrapper(object):
             group_node.appendChild(node)
 
             node = doc.createElement("uservisible")
-            node.appendChild(doc.createTextNode("true" if group.user_visible else "false"))
+            node.appendChild(doc.createTextNode("true" if group.uservisible else "false"))
             group_node.appendChild(node)
 
-            if group.langonly:
+            if group.lang_only:
                 node = doc.createElement("langonly")
-                node.appendChild(doc.createTextNode(group.langonly))
+                node.appendChild(doc.createTextNode(group.lang_only))
                 group_node.appendChild(node)
 
             packagelist = doc.createElement("packagelist")
 
-            for package_type in ("mandatory", "default", "optional", "conditional"):
-                packages = getattr(group, package_type + "_packages").keys()
-                packages.sort()
-                for package in packages:
+            packages_by_type = collections.defaultdict(list)
+            for pkg in group.packages:
+                packages_by_type[TYPE_MAPPING[pkg.type]].append(pkg)
+
+            for type_name in TYPE_MAPPING.values():
+                for package in sorted(packages_by_type[type_name], key=attrgetter('name')):
                     node = doc.createElement("packagereq")
-                    node.appendChild(doc.createTextNode(package))
-                    node.setAttribute("type", package_type)
+                    node.appendChild(doc.createTextNode(package.name))
+                    node.setAttribute("type", type_name)
                     packagelist.appendChild(node)
-                    if package_type == "conditional":
-                        node.setAttribute("requires", group.conditional_packages[package])
+                    if type_name == "conditional":
+                        node.setAttribute("requires", pkg.requires)
 
             group_node.appendChild(packagelist)
 
-        categories = self.comps.get_categories()
-        for category in categories:
-            groups = set(category.groups) & set([i.groupid for i in self.comps.get_groups()])
+        for category in self.comps.categories:
+            groups = set(x.name for x in category.group_ids) & set(self.get_comps_groups())
             if not groups:
                 continue
             cat_node = doc.createElement("category")
             msg_elem.appendChild(cat_node)
 
             id_node = doc.createElement("id")
-            id_node.appendChild(doc.createTextNode(category.categoryid))
+            id_node.appendChild(doc.createTextNode(category.id))
             cat_node.appendChild(id_node)
 
             name_node = doc.createElement("name")
             name_node.appendChild(doc.createTextNode(category.name))
             cat_node.appendChild(name_node)
 
-            langs = category.translated_name.keys()
-            langs.sort()
-
-            for lang in langs:
-                text = category.translated_name[lang].decode("UTF-8")
+            for lang in sorted(category.name_by_lang):
+                text = category.name_by_lang[lang]
                 node = doc.createElement("name")
                 node.setAttribute("xml:lang", lang)
                 node.appendChild(doc.createTextNode(text))
                 cat_node.appendChild(node)
 
-            if category.description and category.description != "":
+            if category.desc and category.desc != "":
                 node = doc.createElement("description")
-                node.appendChild(doc.createTextNode(category.description))
+                node.appendChild(doc.createTextNode(category.desc))
                 cat_node.appendChild(node)
-                langs = category.translated_description.keys()
-                langs.sort()
 
-                for lang in langs:
-                    text = category.translated_description[lang].decode("UTF-8")
+                for lang in sorted(category.desc_by_lang):
+                    text = category.desc_by_lang[lang]
                     node = doc.createElement("description")
                     node.setAttribute("xml:lang", lang)
                     node.appendChild(doc.createTextNode(text))
@@ -190,44 +183,37 @@ class CompsWrapper(object):
 
             cat_node.appendChild(grouplist_node)
 
-        # XXX
-        environments = self.comps.get_environments()
+        environments = sorted(self.comps.environments, key=attrgetter('id'))
         if environments:
             for environment in environments:
-                groups = set(environment.groups) & set([i.groupid for i in self.comps.get_groups()])
+                groups = set(x.name for x in environment.group_ids) & set(self.get_comps_groups())
                 if not groups:
                     continue
                 env_node = doc.createElement("environment")
                 msg_elem.appendChild(env_node)
 
                 id_node = doc.createElement("id")
-                id_node.appendChild(doc.createTextNode(environment.environmentid))
+                id_node.appendChild(doc.createTextNode(environment.id))
                 env_node.appendChild(id_node)
 
                 name_node = doc.createElement("name")
                 name_node.appendChild(doc.createTextNode(environment.name))
                 env_node.appendChild(name_node)
 
-                langs = environment.translated_name.keys()
-                langs.sort()
-
-                for lang in langs:
-                    text = environment.translated_name[lang].decode("UTF-8")
+                for lang in sorted(environment.name_by_lang):
+                    text = environment.name_by_lang[lang]
                     node = doc.createElement("name")
                     node.setAttribute("xml:lang", lang)
                     node.appendChild(doc.createTextNode(text))
                     env_node.appendChild(node)
 
-                if environment.description:
+                if environment.desc:
                     node = doc.createElement("description")
-                    node.appendChild(doc.createTextNode(environment.description))
+                    node.appendChild(doc.createTextNode(environment.desc))
                     env_node.appendChild(node)
 
-                    langs = environment.translated_description.keys()
-                    langs.sort()
-
-                    for lang in langs:
-                        text = environment.translated_description[lang].decode("UTF-8")
+                    for lang in sorted(environment.desc_by_lang):
+                        text = environment.desc_by_lang[lang]
                         node = doc.createElement("description")
                         node.setAttribute("xml:lang", lang)
                         node.appendChild(doc.createTextNode(text))
@@ -246,26 +232,23 @@ class CompsWrapper(object):
                     grouplist_node.appendChild(node)
                 env_node.appendChild(grouplist_node)
 
-                optionids = sorted(environment.options)
-                if optionids:
+                if environment.option_ids:
                     optionlist_node = doc.createElement("optionlist")
-                    for optionid in optionids:
+                    for optionid in sorted(x.name for x in environment.option_ids):
                         node = doc.createElement("groupid")
                         node.appendChild(doc.createTextNode(optionid))
                         optionlist_node.appendChild(node)
                     env_node.appendChild(optionlist_node)
 
-        # XXX
-        langpacks = self.comps.get_langpacks()
-        if langpacks:
+        if self.comps.langpacks:
             lang_node = doc.createElement("langpacks")
             msg_elem.appendChild(lang_node)
 
-        for langpack in sorted(langpacks, key=lambda x: x['name']):
-            match_node = doc.createElement("match")
-            match_node.setAttribute("name", langpack["name"])
-            match_node.setAttribute("install", langpack["install"])
-            lang_node.appendChild(match_node)
+            for name in sorted(self.comps.langpacks):
+                match_node = doc.createElement("match")
+                match_node.setAttribute("name", name)
+                match_node.setAttribute("install", self.comps.langpacks[name])
+                lang_node.appendChild(match_node)
 
         return doc
 
@@ -273,7 +256,7 @@ class CompsWrapper(object):
         if group_dict["default"] is not None:
             group_obj.default = group_dict["default"]
         if group_dict["uservisible"] is not None:
-            group_obj.user_visible = group_dict["uservisible"]
+            group_obj.uservisible = group_dict["uservisible"]
 
     def _tweak_env(self, env_obj, env_dict):
         if env_dict["display_order"] is not None:
@@ -282,7 +265,7 @@ class CompsWrapper(object):
             # write actual display order back to env_dict
             env_dict["display_order"] = env_obj.display_order
         # write group list back to env_dict
-        env_dict["groups"] = env_obj.groups[:]
+        env_dict["groups"] = [g.name for g in env_obj.group_ids]
 
     def filter_groups(self, group_dicts):
         """Filter groups according to group definitions in group_dicts.
@@ -295,33 +278,27 @@ class CompsWrapper(object):
         """
         to_remove = []
         for group_obj in self.comps.groups:
-            found = False
             for group_dict in group_dicts:
                 if group_dict["glob"]:
-                    if fnmatch.fnmatch(group_obj.groupid, group_dict["name"]):
-                        found = True
+                    if fnmatch.fnmatch(group_obj.id, group_dict["name"]):
                         self._tweak_group(group_obj, group_dict)
                         break
                 else:
-                    if group_obj.groupid == group_dict["name"]:
+                    if group_obj.id == group_dict["name"]:
                         self._tweak_group(group_obj, group_dict)
-                        found = True
                         break
+            else:
+                to_remove.append(group_obj)
 
-            if not found:
-                to_remove.append(group_obj.groupid)
-
-        if to_remove:
-            for key, value in self.comps._groups.items():
-                if key in to_remove:
-                    del self.comps._groups[key]
+        for group in to_remove:
+            self.comps.groups.remove(group)
 
         # Sanity check to report warnings on unused group_dicts
         unmatched = set()
         for group_dict in group_dicts:
             matcher = fnmatch.fnmatch if group_dict["glob"] else lambda x, y: x == y
             for group_obj in self.comps.groups:
-                if matcher(group_obj.groupid, group_dict["name"]):
+                if matcher(group_obj.id, group_dict["name"]):
                     break
             else:
                 unmatched.add(group_dict["name"])
@@ -336,17 +313,12 @@ class CompsWrapper(object):
         """
         to_remove = []
         for env_obj in self.comps.environments:
-            found = False
             for env_dict in env_dicts:
-                if env_obj.environmentid == env_dict["name"]:
+                if env_obj.id == env_dict["name"]:
                     self._tweak_env(env_obj, env_dict)
-                    found = True
                     break
+            else:
+                to_remove.append(env_obj)
 
-            if not found:
-                to_remove.append(env_obj.environmentid)
-
-        if to_remove:
-            for key, value in self.comps._environments.items():
-                if key in to_remove:
-                    del self.comps._environments[key]
+        for env in to_remove:
+            self.comps.environments.remove(env)

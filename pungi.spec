@@ -17,6 +17,7 @@ BuildRequires:  python-jsonschema
 BuildRequires:  python-enum34
 BuildRequires:  python2-dnf
 BuildRequires:  python2-multilib
+BuildRequires:  python2-libcomps
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -44,6 +45,7 @@ Requires:       libguestfs-tools-c
 Requires:       python-enum34
 Requires:       python2-dnf
 Requires:       python2-multilib
+Requires:       python2-libcomps
 
 BuildArch:      noarch
 
