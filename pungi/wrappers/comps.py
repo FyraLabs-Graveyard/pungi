@@ -44,14 +44,6 @@ class CompsWrapper(object):
         self.comps.add(comps_file)
         self.comps_file = comps_file
 
-    def get_comps_packages(self):
-        """Returns a dictionary containing all packages in comps"""
-
-        packages = set()
-        for group in self.comps.get_groups():
-            packages.update(group.packages)
-        return list(packages)
-
     def get_comps_groups(self):
         return self.comps.get_groups()
 
@@ -344,44 +336,6 @@ class CompsWrapper(object):
                 unmatched.add(group_dict["name"])
         return unmatched
 
-    def filter_packages(self, pkglist):
-        rv = []
-        for group_obj in self.comps.get_groups():
-            for package_type in ("mandatory", "default", "optional", "conditional"):
-                group_pkgs = getattr(group_obj, "%s_packages" % package_type)
-                pkg_names = group_pkgs.keys()
-                pkg_names.sort()
-                for pkg in pkg_names:
-                    if pkg not in pkglist:
-                        rv.append((pkg, group_obj.name))
-                        del group_pkgs[pkg]
-        rv.sort()
-        return rv
-
-    def filter_categories(self, catlist=None, include_empty=False):
-        rv = []
-        if catlist is not None:
-            for categoryobj in self.comps.get_categories():
-                if categoryobj.categoryid not in catlist:
-                    rv.append(categoryobj.categoryid)
-                    del self.comps._categories[categoryobj.categoryid]
-        if not include_empty:
-            comps_groups = [group.groupid for group in self.comps.get_groups()]
-            for categoryobj in self.comps.get_categories():
-                matched = False
-                groupids = categoryobj.groups
-                groupids.sort()
-                for groupid in groupids:
-                    if groupid not in comps_groups:
-                        del categoryobj._groups[groupid]
-                    else:
-                        matched = True
-                if not matched:
-                    rv.append(categoryobj.categoryid)
-                    del self.comps._categories[categoryobj.categoryid]
-        rv.sort()
-        return rv
-
     def filter_environments(self, env_dicts):
         """Filter environments according to group definitions in group_dicts.
         env_dicts = [{
@@ -405,33 +359,3 @@ class CompsWrapper(object):
             for key, value in self.comps._environments.items():
                 if key in to_remove:
                     del self.comps._environments[key]
-
-    def injectpackages(self, pkglist):
-        def getgroup(pkgname):
-            if pkgname.endswith("-devel"):
-                return "compat-arch-development"
-            elif pkgname.endswith("libs"):
-                return "compat-arch-libs"
-            else:
-                return "compat-arch-support"
-
-        groups_dict = {}
-        for group_obj in self.comps.get_groups():
-            groupid = group_obj.groupid
-            groups_dict[groupid] = {"group_obj": group_obj}
-
-        pkggroup_dict = {
-            "compat-arch-development": [],
-            "compat-arch-libs": [],
-            "compat-arch-support": [],
-        }
-
-        for pkgname in pkglist:
-            group = getgroup(pkgname)
-            pkggroup_dict[group].append(pkgname)
-
-        for group_obj in self.comps.get_groups():
-            groupid = group_obj.groupid
-            for pkg in pkggroup_dict[groupid]:
-                if pkg not in group_obj.packages:
-                    group_obj.default_packages[pkg] = 1
