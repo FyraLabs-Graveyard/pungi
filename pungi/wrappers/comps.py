@@ -261,7 +261,7 @@ class CompsWrapper(object):
             lang_node = doc.createElement("langpacks")
             msg_elem.appendChild(lang_node)
 
-        for langpack in langpacks:
+        for langpack in sorted(langpacks, key=lambda x: x['name']):
             match_node = doc.createElement("match")
             match_node.setAttribute("name", langpack["name"])
             match_node.setAttribute("install", langpack["install"])

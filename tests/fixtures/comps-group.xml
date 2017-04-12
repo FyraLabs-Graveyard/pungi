@@ -84,6 +84,7 @@
     <match install="autocorr-%s" name="autocorr-en"/>
     <match install="calligra-l10n-%s" name="calligra-core"/>
     <match install="childsplay-alphabet_sounds_%s" name="childsplay"/>
+    <match install="dummy-release-notes-%s" name="dummy-release-notes"/>
     <match install="eclipse-nls-%s" name="eclipse-platform"/>
     <match install="firefox-langpack-%s" name="firefox"/>
     <match install="gcompris-sound-%s" name="gcompris"/>
@@ -100,6 +101,5 @@
     <match install="openoffice.org-langpack-%s" name="openoffice.org-core"/>
     <match install="tesseract-langpack-%s" name="tesseract"/>
     <match install="tkgate-%s" name="tkgate"/>
-    <match install="dummy-release-notes-%s" name="dummy-release-notes"/>
   </langpacks>
 </comps>
