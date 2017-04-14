@@ -16,7 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pungi import checks
 
-
 class CheckDependenciesTestCase(unittest.TestCase):
 
     def dont_find(self, paths):
@@ -480,6 +479,56 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertRegexpMatches(warnings[3], r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server", "Client"])
+
+    @mock.patch('pungi.checks._make_schema')
+    def test_anyof_validator_not_raise_our_warnings_as_error(self, make_schema):
+        # https://pagure.io/pungi/issue/598
+        schema = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "definitions": {
+                "live_image_config": {
+                    "type": "object",
+                    "properties": {
+                        "repo": {
+                            "type": "string",
+                            "append": "repo_from",
+                        },
+                    },
+                },
+            },
+            "properties": {
+                "live_images": checks._variant_arch_mapping({
+                    "anyOf": [
+                        {"$ref": "#/definitions/live_image_config"},
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/live_image_config"
+                            }
+                        }
+                    ]
+                }),
+            },
+        }
+        make_schema.return_value = schema
+
+        string = """
+        live_images = [
+            ('^Spins$', {
+                'armhfp': {
+                    'repo_from': 'Everything',
+            }}),
+        ]
+        """
+        config = self._load_conf_from_string(string)
+        errors, warnings = checks.validate(config)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(warnings), 2)
+        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*")
+        self.assertEqual(config.get("live_images")[0][1]['armhfp']['repo'], 'Everything')
 
 
 class TestUmask(unittest.TestCase):

@@ -349,12 +349,35 @@ def _extend_with_default_and_alias(validator_class):
             for error in validate_type(validator, properties, instance, schema):
                 yield error
 
+    def _validate_any_of(validator, anyOf, instance, schema):
+        """
+        Overwrite jsonschema's anyOf validator to not yield ValidationError when
+        ConfigOptionWarning is found.
+        """
+        all_errors = []
+
+        for index, subschema in enumerate(anyOf):
+            errs = list(validator.descend(instance, subschema, schema_path=index))
+            warnings = [err for err in errs if isinstance(err, ConfigOptionWarning)]
+            errors = [err for err in errs if err not in warnings]
+            if not errors:
+                for warning in warnings:
+                    yield warning
+                break
+            all_errors.extend(errors)
+        else:
+            yield jsonschema.ValidationError(
+                "%r is not valid under any of the given schemas" % (instance,),
+                context=all_errors,
+            )
+
     return jsonschema.validators.extend(
         validator_class, {"properties": _set_defaults,
                           "deprecated": error_on_deprecated,
                           "type": validate_regex_type,
                           "required": _validate_required,
-                          "additionalProperties": _validate_additional_properties},
+                          "additionalProperties": _validate_additional_properties,
+                          "anyOf": _validate_any_of},
     )
 
 
