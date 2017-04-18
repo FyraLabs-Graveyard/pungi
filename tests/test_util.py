@@ -158,6 +158,28 @@ class TestVolumeIdGenerator(unittest.TestCase):
 
             self.assertEqual(volid, expected)
 
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_volid_too_long(self, ci):
+        conf = {
+            'release_short': 'rel_short2',
+            'release_version': '6.0',
+            'release_is_layered': False,
+            'image_volid_formats': [
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',   # 34 chars
+                'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',    # 33 chars
+            ],
+            'image_volid_layered_product_formats': [],
+            'volume_id_substitutions': {},
+        }
+        variant = mock.Mock(uid='Server', type='variant')
+        c = compose.Compose(conf, self.tmp_dir)
+
+        with self.assertRaises(ValueError) as ctx:
+            util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
+
+        self.assertIn('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', str(ctx.exception))
+        self.assertIn('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', str(ctx.exception))
+
 
 class TestFindOldCompose(unittest.TestCase):
     def setUp(self):

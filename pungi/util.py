@@ -366,6 +366,7 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
     else:
         all_products = products
 
+    tried = set()
     for i in all_products:
         if not variant_uid and "%(variant)s" in i:
             continue
@@ -384,9 +385,11 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         volid = _apply_substitutions(compose, volid)
         if len(volid) <= 32:
             break
+        tried.add(volid)
 
     if volid and len(volid) > 32:
-        raise ValueError("Could not create volume ID <= 32 characters")
+        raise ValueError("Could not create volume ID longer than 32 bytes, options are %r",
+                         sorted(tried, key=len))
 
     if volid and escape_spaces:
         volid = volid.replace(" ", r"\x20")
