@@ -257,6 +257,10 @@ def resolve_git_url(url):
     _, output = run(['git', 'ls-remote', baseurl, ref])
 
     lines = [line for line in output.split('\n') if line]
+    if len(lines) == 0:
+        # Branch does not exist in remote repo
+        raise RuntimeError('Failed to resolve %s: ref does not exist in remote repo'
+                           % url)
     if len(lines) != 1:
         # This should never happen. HEAD can not match multiple commits in a
         # single repo, and there can not be a repo without a HEAD.

@@ -81,6 +81,17 @@ class TestGitRefResolver(unittest.TestCase):
         run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
         self.assertEqual(url, 'git+https://git.example.com/repo.git#CAFEBABE')
 
+    @mock.patch('pungi.util.run')
+    def test_resolve_no_branch_in_remote(self, run):
+        run.return_value = (0, '')
+
+        with self.assertRaises(RuntimeError) as ctx:
+            util.resolve_git_url('https://git.example.com/repo.git?somedir#origin/my-branch')
+
+        run.assert_called_once_with(
+            ['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/my-branch'])
+        self.assertIn('ref does not exist in remote repo', str(ctx.exception))
+
 
 class TestGetVariantData(unittest.TestCase):
     def test_get_simple(self):
