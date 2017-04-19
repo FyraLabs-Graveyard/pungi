@@ -1334,8 +1334,9 @@ Media Checksums Settings
 ========================
 
 **media_checksums**
-    (*list*) -- list of checksum types to compute, allowed values are ``md5``,
-    ``sha1`` and ``sha256``
+    (*list*) -- list of checksum types to compute, allowed values are anything
+    supported by Python's ``hashlib`` module (see `documentation for details
+    <https://docs.python.org/2/library/hashlib.html>`_).
 
 **media_checksum_one_file**
     (*bool*) -- when ``True``, only one ``CHECKSUM`` file will be created per
