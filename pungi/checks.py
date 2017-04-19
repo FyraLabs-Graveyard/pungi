@@ -597,7 +597,7 @@ def _make_schema():
             "createrepo_checksum": {
                 "type": "string",
                 "default": "sha256",
-                "enum": ["sha", "sha256"],
+                "enum": ["sha", "sha256", "sha512"],
             },
             "createrepo_use_xz": {
                 "type": "boolean",
