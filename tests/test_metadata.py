@@ -200,6 +200,53 @@ class TestWriteExtraFiles(helpers.PungiTestCase):
         self.assertEqual(expected_metadata['header'], actual_metadata['header'])
         self.assertEqual(expected_metadata['data'], actual_metadata['data'])
 
+    def test_write_extra_files_multiple_checksums(self):
+        """Assert metadata is written to the proper location with valid data"""
+        self.maxDiff = None
+        mock_logger = mock.Mock()
+        files = ['file1', 'file2', 'subdir/file3']
+        expected_metadata = {
+            u'header': {u'version': u'1.0'},
+            u'data': [
+                {
+                    u'file': u'file1',
+                    u'checksums': {
+                        u'md5': u'5149d403009a139c7e085405ef762e1a',
+                        u'sha256': u'ecdc5536f73bdae8816f0ea40726ef5e9b810d914493075903bb90623d97b1d8'
+                    },
+                    u'size': 6,
+                },
+                {
+                    u'file': u'file2',
+                    u'checksums': {
+                        u'md5': u'3d709e89c8ce201e3c928eb917989aef',
+                        u'sha256': u'67ee5478eaadb034ba59944eb977797b49ca6aa8d3574587f36ebcbeeb65f70e'
+                    },
+                    u'size': 6,
+                },
+                {
+                    u'file': u'subdir/file3',
+                    u'checksums': {
+                        u'md5': u'1ed02b5cf7fd8626f854e9ef3fee8694',
+                        u'sha256': u'52f9f0e467e33da811330cad085fdb4eaa7abcb9ebfe6001e0f5910da678be51'
+                    },
+                    u'size': 13,
+                },
+            ]
+        }
+        tree_dir = os.path.join(self.topdir, 'compose', 'Server', 'x86_64', 'os')
+        for f in files:
+            helpers.touch(os.path.join(tree_dir, f), f + '\n')
+
+        metadata_file = metadata.write_extra_files(tree_dir, files,
+                                                   checksum_type=['md5', 'sha256'],
+                                                   logger=mock_logger)
+        with open(metadata_file) as metadata_fd:
+            actual_metadata = json.load(metadata_fd)
+
+        self.assertEqual(expected_metadata['header'], actual_metadata['header'])
+        self.assertEqual(expected_metadata['data'], actual_metadata['data'])
+
     def test_write_extra_files_missing_file(self):
         """Assert metadata is written to the proper location with valid data"""
         mock_logger = mock.Mock()

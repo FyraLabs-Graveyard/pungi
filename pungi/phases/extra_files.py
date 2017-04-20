@@ -47,7 +47,8 @@ class ExtraFilesPhase(ConfigGuardedPhase):
                                           % (arch, variant.uid))
 
 
-def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type='sha256'):
+def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type=None):
+    checksum_type = checksum_type or compose.conf['media_checksums']
     var_dict = {
         "arch": arch,
         "variant_id": variant.id,

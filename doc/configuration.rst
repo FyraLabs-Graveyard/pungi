@@ -764,7 +764,8 @@ Example
 Extra Files Metadata
 --------------------
 If extra files are specified a metadata file, ``extra_files.json``, is placed
-in the os/ directory and media. This metadata file is in the format:
+in the ``os/`` directory and media. The checksums generated are determined by
+``media_checksums`` option. This metadata file is in the format:
 
 ::
 
