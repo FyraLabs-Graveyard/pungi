@@ -645,7 +645,7 @@ class Pungi(PungiBase):
                 continue
             self.resolved_deps[req] = None
 
-        for add in added:
+        for add in sorted(added):
             self.get_package_deps(add)
         return added
 
