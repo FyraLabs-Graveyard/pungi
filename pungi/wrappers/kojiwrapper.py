@@ -19,11 +19,14 @@ import pipes
 import re
 import time
 import threading
+import contextlib
 
 import koji
 import rpmUtils.arch
 from kobo.shortcuts import run
 from ConfigParser import ConfigParser
+
+from .. import util
 
 
 class KojiWrapper(object):
@@ -109,6 +112,19 @@ class KojiWrapper(object):
 
         return cmd
 
+    @contextlib.contextmanager
+    def get_runroot_env(self):
+        """Get environment variables for running a koji command.
+
+        If we are authenticated with a keytab, we need a fresh credentials
+        cache to avoid possible race condition.
+        """
+        if getattr(self.koji_module.config, 'keytab', None):
+            with util.temp_dir(prefix='krb_ccache') as tempdir:
+                yield {'KRB5CCNAME': 'DIR:%s' % tempdir}
+        else:
+            yield {}
+
     def run_runroot_cmd(self, command, log_file=None):
         """
         Run koji runroot command and wait for results.
@@ -117,7 +133,8 @@ class KojiWrapper(object):
         contains the id, it will be captured and returned.
         """
         task_id = None
-        retcode, output = run(command, can_fail=True, logfile=log_file, show_cmd=True)
+        with self.get_runroot_env() as env:
+            retcode, output = run(command, can_fail=True, logfile=log_file, show_cmd=True, env=env)
         if "--task-id" in command:
             first_line = output.splitlines()[0]
             if re.match(r'^\d+$', first_line):

@@ -16,6 +16,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
 
 
+class DumbMock(object):
+    def __init__(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+
 class KojiWrapperBaseTestCase(unittest.TestCase):
     def setUp(self):
         _, self.tmpfile = tempfile.mkstemp()
@@ -24,10 +30,9 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
             koji.krb_login = mock.Mock()
             koji.get_profile_module = mock.Mock(
                 return_value=mock.Mock(
-                    config=mock.Mock(
+                    config=DumbMock(
+                        server='koji.example.com',
                         authtype='kerberos',
-                        principal='testprincipal',
-                        keytab='testkeytab',
                         krb_rdns=False,
                         cert=''),
                     pathinfo=mock.Mock(
@@ -46,6 +51,8 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
 
 class KojiWrapperTest(KojiWrapperBaseTestCase):
     def test_krb_login_krb(self):
+        self.koji.koji_module.config.keytab = 'testkeytab'
+        self.koji.koji_module.config.principal = 'testprincipal'
         self.assertEqual(self.koji.koji_module.config.krb_rdns, False)
         self.koji.login()
         self.koji.koji_proxy.krb_login.assert_called_with('testprincipal',
@@ -382,6 +389,10 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
 
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(cmd, can_fail=True, env={}, logfile=None, show_cmd=True)]
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_with_task_id(self, run):
@@ -391,6 +402,10 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
 
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(cmd, can_fail=True, env={}, logfile=None, show_cmd=True)]
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_with_task_id_and_fail(self, run):
@@ -400,6 +415,10 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
 
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': None})
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(cmd, can_fail=True, env={}, logfile=None, show_cmd=True)]
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_with_task_id_and_fail_but_emit_id(self, run):
@@ -409,6 +428,29 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
 
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 12345})
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(cmd, can_fail=True, env={}, logfile=None, show_cmd=True)]
+        )
+
+    @mock.patch('shutil.rmtree')
+    @mock.patch('tempfile.mkdtemp')
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_run_runroot_cmd_with_keytab(self, run, mkdtemp, rmtree):
+        # We mock rmtree to avoid deleing something we did not create.
+        mkdtemp.return_value = '/tmp/foo'
+        self.koji.koji_module.config.keytab = 'foo'
+        cmd = ['koji', 'runroot']
+        output = 'Output ...'
+        run.return_value = (0, output)
+
+        result = self.koji.run_runroot_cmd(cmd)
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(cmd, can_fail=True, env={'KRB5CCNAME': 'DIR:/tmp/foo'},
+                       logfile=None, show_cmd=True)]
+        )
 
 
 class RunBlockingCmdTest(KojiWrapperBaseTestCase):
