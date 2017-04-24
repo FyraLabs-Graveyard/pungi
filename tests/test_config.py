@@ -250,6 +250,7 @@ class OSBSConfigTestCase(ConfigTestCase):
             osbs={"^Server$": {
                 'url': 'http://example.com',
                 'target': 'f25-build',
+                'git_branch': 'f25',
             }}
         )
 

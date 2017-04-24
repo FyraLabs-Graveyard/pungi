@@ -1291,6 +1291,11 @@ they are not scratch builds).
     * ``url`` -- (*str*) URL pointing to a Git repository with ``Dockerfile``.
       Please see :ref:`git-urls` section for more details.
     * ``target`` -- (*str*) A Koji target to build the image for.
+    * ``git_branch`` -- (*str*) A branch in SCM for the ``Dockerfile``. This is
+      required by OSBS to avoid race conditions when multiple builds from the
+      same repo are submitted at the same time. Please note that ``url`` should
+      contain the branch or tag name as well, so that it can be resolved to a
+      particular commit hash.
 
     Optionally you can specify ``failable``. If it has a truthy value, failure
     to create the image will not abort the whole compose.
@@ -1319,6 +1324,7 @@ Example config
             # required
             "url": "git://example.com/dockerfiles.git?#HEAD",
             "target": "f24-docker-candidate",
+            "git_branch": "f24-docker",
 
             # optional
             "name": "fedora-docker-base",

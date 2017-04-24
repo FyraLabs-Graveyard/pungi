@@ -999,8 +999,9 @@ def _make_schema():
                                 "append": "repo_from",
                             },
                             "gpgkey": {"type": "string"},
+                            "git_branch": {"type": "string"},
                         },
-                        "required": ["url", "target"]
+                        "required": ["url", "target", "git_branch"]
                     }
                 },
                 "additionalProperties": False,

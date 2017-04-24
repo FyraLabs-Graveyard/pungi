@@ -257,13 +257,14 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
         }
         self._setupMock(KojiWrapper, resolve_git_url)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self._assertCorrectCalls({})
+        self._assertCorrectCalls({'git_branch': 'f24-docker'})
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
@@ -273,6 +274,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'failable': ['*']
         }
         self._setupMock(KojiWrapper, resolve_git_url)
@@ -280,7 +282,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self._assertCorrectCalls({})
+        self._assertCorrectCalls({'git_branch': 'f24-docker'})
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
@@ -290,6 +292,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
         }
@@ -298,7 +301,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self._assertCorrectCalls({'name': 'my-name', 'version': '1.0'})
+        self._assertCorrectCalls({'name': 'my-name', 'version': '1.0', 'git_branch': 'f24-docker'})
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
@@ -308,6 +311,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
             'repo': ['Everything', 'http://pkgs.example.com/my.repo']
@@ -320,6 +324,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         options = {
             'name': 'my-name',
             'version': '1.0',
+            'git_branch': 'f24-docker',
             'yum_repourls': [
                 'http://root/work/global/tmp-Server/compose-rpms-1.repo',
                 'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
@@ -336,6 +341,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
             'repo': ['Everything', 'Client', 'http://pkgs.example.com/my.repo'],
@@ -348,6 +354,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         options = {
             'name': 'my-name',
             'version': '1.0',
+            'git_branch': 'f24-docker',
             'yum_repourls': [
                 'http://root/work/global/tmp-Server/compose-rpms-1.repo',
                 'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
@@ -366,6 +373,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
             'repo': ['Everything', 'Client', 'http://pkgs.example.com/my.repo'],
@@ -384,6 +392,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
             'repo': 'Gold',
@@ -399,6 +408,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
     def test_run_with_missing_url(self):
         cfg = {
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
         }
         self._assertConfigMissing(cfg, 'url')
@@ -406,9 +416,17 @@ class OSBSThreadTest(helpers.PungiTestCase):
     def test_run_with_missing_target(self):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
+            'git_branch': 'f24-docker',
             'name': 'my-name',
         }
         self._assertConfigMissing(cfg, 'target')
+
+    def test_run_with_missing_git_branch(self):
+        cfg = {
+            'url': 'git://example.com/repo?#HEAD',
+            'target': 'f24-docker-candidate',
+        }
+        self._assertConfigMissing(cfg, 'git_branch')
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
@@ -416,6 +434,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'fedora-24-docker-candidate',
+            'git_branch': 'f24-docker',
         }
         self._assertConfigCorrect(cfg)
         self._setupMock(KojiWrapper, resolve_git_url)
@@ -432,6 +451,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'fedora-24-docker-candidate',
+            'git_branch': 'f24-docker',
             'failable': ['*']
         }
         self._assertConfigCorrect(cfg)
@@ -446,6 +466,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         cfg = {
             'url': 'git://example.com/repo?#HEAD',
             'target': 'f24-docker-candidate',
+            'git_branch': 'f24-docker',
             'scratch': True,
         }
         self._setupMock(KojiWrapper, resolve_git_url, scratch=True)
@@ -453,7 +474,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self._assertCorrectCalls({}, scratch=True)
+        self._assertCorrectCalls({'git_branch': 'f24-docker'}, scratch=True)
         self._assertCorrectMetadata(scratch=True)
         self._assertRepoFile()
 
