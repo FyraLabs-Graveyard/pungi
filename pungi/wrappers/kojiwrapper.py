@@ -466,3 +466,25 @@ class KojiWrapper(object):
     def get_build_nvrs(self, task_id):
         builds = self.koji_proxy.listBuilds(taskID=task_id)
         return [build.get("nvr") for build in builds if build.get("nvr")]
+
+
+def get_buildroot_rpms(compose, task_id):
+    """Get build root RPMs - either from runroot or local"""
+    result = []
+    if task_id:
+        # runroot
+        koji = KojiWrapper(compose.conf['koji_profile'])
+        buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
+        buildroot_info = buildroot_infos[-1]
+        data = koji.koji_proxy.listRPMs(componentBuildrootID=buildroot_info["id"])
+        for rpm_info in data:
+            fmt = "%(nvr)s.%(arch)s"
+            result.append(fmt % rpm_info)
+    else:
+        # local
+        retcode, output = run("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'")
+        for i in output.splitlines():
+            if not i:
+                continue
+            result.append(i)
+    return sorted(result)

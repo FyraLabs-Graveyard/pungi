@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
 
 
 class KojiWrapperBaseTestCase(unittest.TestCase):
@@ -523,6 +523,144 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
                                     can_fail=True, logfile=None)])
         self.assertEqual(sleep.mock_calls, [mock.call(i * 10) for i in range(1, 2)])
+
+
+RPM_QA_QF_OUTPUT = """
+cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch
+libmount-2.28-1.fc23.x86_64
+ed-1.10-5.fc23.x86_64
+kbd-2.0.2-8.fc23.x86_64
+coreutils-8.24-6.fc23.x86_64
+"""
+
+BUILDROOT_LIST = [
+    {'arch': 'x86_64',
+     'br_type': 0,
+     'cg_id': None,
+     'cg_name': None,
+     'cg_version': None,
+     'container_arch': 'x86_64',
+     'container_type': 'chroot',
+     'create_event_id': 15862222,
+     'create_event_time': '2016-04-28 02:37:00.949772',
+     'create_ts': 1461811020.94977,
+     'extra': None,
+     'host_arch': None,
+     'host_id': 99,
+     'host_name': 'buildhw-01.phx2.fedoraproject.org',
+     'host_os': None,
+     'id': 5458481,
+     'repo_create_event_id': 15861452,
+     'repo_create_event_time': '2016-04-28 00:02:40.639317',
+     'repo_id': 599173,
+     'repo_state': 1,
+     'retire_event_id': 15862276,
+     'retire_event_time': '2016-04-28 02:58:07.109387',
+     'retire_ts': 1461812287.10939,
+     'state': 3,
+     'tag_id': 315,
+     'tag_name': 'f24-build',
+     'task_id': 13831904}
+]
+
+RPM_LIST = [
+    {'arch': 'noarch',
+     'build_id': 756072,
+     'buildroot_id': 5398084,
+     'buildtime': 1461100903,
+     'component_buildroot_id': 5458481,
+     'epoch': None,
+     'external_repo_id': 0,
+     'external_repo_name': 'INTERNAL',
+     'extra': None,
+     'id': 7614370,
+     'is_update': True,
+     'metadata_only': False,
+     'name': 'python3-kickstart',
+     'nvr': 'python3-kickstart-2.25-2.fc24',
+     'payloadhash': '403723502d27e43955036d2dcd1b09e0',
+     'release': '2.fc24',
+     'size': 366038,
+     'version': '2.25'},
+    {'arch': 'x86_64',
+     'build_id': 756276,
+     'buildroot_id': 5405310,
+     'buildtime': 1461165155,
+     'component_buildroot_id': 5458481,
+     'epoch': None,
+     'external_repo_id': 0,
+     'external_repo_name': 'INTERNAL',
+     'extra': None,
+     'id': 7615629,
+     'is_update': False,
+     'metadata_only': False,
+     'name': 'binutils',
+     'nvr': 'binutils-2.26-18.fc24',
+     'payloadhash': '8ef08c8a64c52787d3559424e5f51d9d',
+     'release': '18.fc24',
+     'size': 6172094,
+     'version': '2.26'},
+    {'arch': 'x86_64',
+     'build_id': 756616,
+     'buildroot_id': 5412029,
+     'buildtime': 1461252071,
+     'component_buildroot_id': 5458481,
+     'epoch': None,
+     'external_repo_id': 0,
+     'external_repo_name': 'INTERNAL',
+     'extra': None,
+     'id': 7619636,
+     'is_update': False,
+     'metadata_only': False,
+     'name': 'kernel-headers',
+     'nvr': 'kernel-headers-4.5.2-301.fc24',
+     'payloadhash': '11c6d70580c8f0c202c28bc6b0fa98cc',
+     'release': '301.fc24',
+     'size': 1060138,
+     'version': '4.5.2'}
+]
+
+
+class TestGetBuildrootRPMs(unittest.TestCase):
+
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_get_from_koji(self, KojiWrapper):
+        compose = mock.Mock(conf={
+            'koji_profile': 'koji',
+        })
+
+        KojiWrapper.return_value.koji_proxy.listBuildroots.return_value = BUILDROOT_LIST
+        KojiWrapper.return_value.koji_proxy.listRPMs.return_value = RPM_LIST
+
+        rpms = get_buildroot_rpms(compose, 1234)
+
+        self.assertEqual(KojiWrapper.call_args_list,
+                         [mock.call('koji')])
+        self.assertEqual(KojiWrapper.return_value.mock_calls,
+                         [mock.call.koji_proxy.listBuildroots(taskID=1234),
+                          mock.call.koji_proxy.listRPMs(componentBuildrootID=5458481)])
+
+        self.assertItemsEqual(rpms, [
+            'python3-kickstart-2.25-2.fc24.noarch',
+            'binutils-2.26-18.fc24.x86_64',
+            'kernel-headers-4.5.2-301.fc24.x86_64'
+        ])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_get_local(self, mock_run):
+        compose = mock.Mock()
+
+        mock_run.return_value = (0, RPM_QA_QF_OUTPUT)
+
+        rpms = get_buildroot_rpms(compose, None)
+
+        self.assertItemsEqual(rpms, [
+            'cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch',
+            'libmount-2.28-1.fc23.x86_64',
+            'ed-1.10-5.fc23.x86_64',
+            'kbd-2.0.2-8.fc23.x86_64',
+            'coreutils-8.24-6.fc23.x86_64',
+        ])
 
 
 if __name__ == "__main__":

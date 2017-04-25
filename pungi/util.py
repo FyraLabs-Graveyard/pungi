@@ -32,8 +32,6 @@ import time
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
 
-from .wrappers import kojiwrapper
-
 
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
     """Run a command and log the output.  Error out if we get something on stderr"""
@@ -308,29 +306,6 @@ def get_variant_data(conf, var_name, variant):
             result.extend(conf_data)
         else:
             result.append(conf_data)
-    return result
-
-
-def get_buildroot_rpms(compose, task_id):
-    """Get build root RPMs - either from runroot or local"""
-    result = []
-    if task_id:
-        # runroot
-        koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
-        buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
-        buildroot_info = buildroot_infos[-1]
-        data = koji.koji_proxy.listRPMs(componentBuildrootID=buildroot_info["id"])
-        for rpm_info in data:
-            fmt = "%(nvr)s.%(arch)s"
-            result.append(fmt % rpm_info)
-    else:
-        # local
-        retcode, output = run("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'")
-        for i in output.splitlines():
-            if not i:
-                continue
-            result.append(i)
-    result.sort()
     return result
 
 

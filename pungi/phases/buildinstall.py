@@ -26,10 +26,10 @@ from kobo.shortcuts import run
 from productmd.images import Image
 
 from pungi.arch import get_valid_arches
-from pungi.util import get_buildroot_rpms, get_volid, get_arch_variant_data
+from pungi.util import get_volid, get_arch_variant_data
 from pungi.util import get_file_size, get_mtime, failable, makedirs
 from pungi.wrappers.lorax import LoraxWrapper
-from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers.kojiwrapper import get_buildroot_rpms, KojiWrapper
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.phases.base import PhaseBase
