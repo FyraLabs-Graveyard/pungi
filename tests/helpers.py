@@ -30,13 +30,18 @@ class PungiTestCase(unittest.TestCase):
 
 
 class MockVariant(mock.Mock):
-    def __init__(self, *args, **kwargs):
-        super(MockVariant, self).__init__(*args, **kwargs)
+    def __init__(self, is_empty=False, *args, **kwargs):
+        super(MockVariant, self).__init__(*args, is_empty=is_empty, **kwargs)
         self.parent = kwargs.get('parent', None)
         self.mmds = []
+        self.variants = {}
 
     def __str__(self):
         return self.uid
+
+    def get_variants(self, arch=None, types=None):
+        return [v for v in self.variants.values()
+                if (not arch or arch in v.arches) and (not types or v.type in types)]
 
 
 class IterableMock(mock.Mock):
@@ -71,11 +76,11 @@ class DummyCompose(object):
         self._logger = mock.Mock()
         self.variants = {
             'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
-                                  type='variant', is_empty=False),
+                                  type='variant'),
             'Client': MockVariant(uid='Client', arches=['amd64'],
-                                  type='variant', is_empty=False),
+                                  type='variant'),
             'Everything': MockVariant(uid='Everything', arches=['x86_64', 'amd64'],
-                                      type='variant', is_empty=False),
+                                      type='variant'),
         }
         self.all_variants = self.variants.copy()
 
@@ -99,12 +104,19 @@ class DummyCompose(object):
 
     def setup_optional(self):
         self.all_variants['Server-optional'] = MockVariant(
-            uid='Server-optional', arches=['x86_64'], type='optional', is_empty=False)
+            uid='Server-optional', arches=['x86_64'], type='optional')
         self.all_variants['Server-optional'].parent = self.variants['Server']
-        self.variants['Server'].variants = {'optional': self.all_variants['Server-optional']}
+        self.variants['Server'].variants['optional'] = self.all_variants['Server-optional']
+
+    def setup_addon(self):
+        self.all_variants['Server-HA'] = MockVariant(
+            uid='Server-HA', arches=['x86_64'], type='addon', is_empty=False)
+        self.all_variants['Server-HA'].parent = self.variants['Server']
+        self.variants['Server'].variants['HA'] = self.all_variants['Server-HA']
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in self.all_variants.values() if not arch or arch in v.arches]
+        return [v for v in self.all_variants.values()
+                if (not arch or arch in v.arches) and (not types or v.type in types)]
 
     def can_fail(self, variant, arch, deliverable):
         failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
