@@ -13,6 +13,7 @@ except ImportError:
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases import gather
+from pungi.phases.gather import _mk_pkg_map
 from tests import helpers
 
 
@@ -34,16 +35,7 @@ class MockPkg(object):
         return self.nvr
 
 
-def _mk_pkg_map(rpm=None, srpm=None, debuginfo=None, iterable_class=list):
-    return {
-        "rpm": rpm or iterable_class(),
-        "srpm": srpm or iterable_class(),
-        "debuginfo": debuginfo or iterable_class(),
-    }
-
-
 def _join(a, *rest):
-    """Join package maps by appending."""
     res = copy.deepcopy(a)
     for b in rest:
         for key in res:
@@ -378,16 +370,14 @@ class TestTrimPackages(unittest.TestCase):
     def test_remove_package_explicitly(self):
         to_remove = {'path': '/build/required-1.0.0-1.x86_64.rpm', 'flags': ['input']}
         to_keep = {'path': '/build/empty-1.0.0-1.x86_64.rpm', 'flags': []}
-        pkg_map = {
-            'rpm': [to_remove, to_keep]
-        }
+        pkg_map = _mk_pkg_map([to_remove, to_keep])
         addon_pkgs, moved_to_parent, removed_pkgs = gather.trim_packages(
             self.compose, 'x86_64', self.addon, pkg_map, remove_pkgs={'rpm': ['required']})
 
-        self.assertEqual(removed_pkgs, {'rpm': [to_remove]})
-        self.assertEqual(addon_pkgs, {'rpm': set(['empty'])})
-        self.assertEqual(moved_to_parent, {'rpm': []})
-        self.assertEqual(pkg_map, {'rpm': [to_keep]})
+        self.assertEqual(removed_pkgs, _mk_pkg_map([to_remove]))
+        self.assertEqual(addon_pkgs, _mk_pkg_map(set(['empty']), iterable_class=set))
+        self.assertEqual(moved_to_parent, _mk_pkg_map())
+        self.assertEqual(pkg_map, _mk_pkg_map([to_keep]))
 
     def test_remove_package_present_in_parent(self):
         # packages present in parent will be removed from addon
@@ -397,39 +387,39 @@ class TestTrimPackages(unittest.TestCase):
             ]
         }
         to_remove = {'path': '/build/wanted-1.0.0-1.x86_64.rpm', 'flags': []}
-        pkg_map = {'rpm': [to_remove]}
+        pkg_map = _mk_pkg_map([to_remove])
         addon_pkgs, moved_to_parent, removed_pkgs = gather.trim_packages(
             self.compose, 'x86_64', self.addon, pkg_map, parent_pkgs=parent_pkgs)
 
-        self.assertEqual(removed_pkgs, {'rpm': [to_remove]})
-        self.assertEqual(addon_pkgs, {'rpm': set()})
-        self.assertEqual(moved_to_parent, {'rpm': []})
-        self.assertEqual(pkg_map, {'rpm': []})
+        self.assertEqual(removed_pkgs, _mk_pkg_map([to_remove]))
+        self.assertEqual(addon_pkgs, _mk_pkg_map(iterable_class=set))
+        self.assertEqual(moved_to_parent, _mk_pkg_map())
+        self.assertEqual(pkg_map, _mk_pkg_map())
 
     def test_move_package_to_parent(self):
         # fulltree-exclude packages in addon only will move to parent
         to_move = {'path': '/build/wanted-1.0.0-1.x86_64.rpm', 'flags': ['fulltree-exclude']}
-        pkg_map = {'rpm': [to_move]}
+        pkg_map = _mk_pkg_map([to_move])
         addon_pkgs, moved_to_parent, removed_pkgs = gather.trim_packages(
             self.compose, 'x86_64', self.addon, pkg_map, parent_pkgs={'rpm': []})
 
-        self.assertEqual(removed_pkgs, {'rpm': []})
-        self.assertEqual(addon_pkgs, {'rpm': set()})
-        self.assertEqual(moved_to_parent, {'rpm': [to_move]})
-        self.assertEqual(pkg_map, {'rpm': []})
+        self.assertEqual(removed_pkgs, _mk_pkg_map())
+        self.assertEqual(addon_pkgs, _mk_pkg_map(iterable_class=set))
+        self.assertEqual(moved_to_parent, _mk_pkg_map([to_move]))
+        self.assertEqual(pkg_map, _mk_pkg_map())
 
     def test_keep_explicit_input_in_addon(self):
         # fulltree-exclude packages explictly in addon will be kept in addon
         parent_pkgs = {'rpm': []}
         pkg = {'path': '/build/wanted-1.0.0-1.x86_64.rpm', 'flags': ['fulltree-exclude', 'input']}
-        pkg_map = {'rpm': [pkg]}
+        pkg_map = _mk_pkg_map([pkg])
         addon_pkgs, moved_to_parent, removed_pkgs = gather.trim_packages(
             self.compose, 'x86_64', self.addon, pkg_map, parent_pkgs=parent_pkgs)
 
-        self.assertEqual(removed_pkgs, {'rpm': []})
-        self.assertEqual(addon_pkgs, {'rpm': set(['wanted'])})
-        self.assertEqual(moved_to_parent, {'rpm': []})
-        self.assertEqual(pkg_map, {'rpm': [pkg]})
+        self.assertEqual(removed_pkgs, _mk_pkg_map())
+        self.assertEqual(addon_pkgs, _mk_pkg_map(set(['wanted']), iterable_class=set))
+        self.assertEqual(moved_to_parent, _mk_pkg_map())
+        self.assertEqual(pkg_map, _mk_pkg_map([pkg]))
 
 
 class TestWritePackages(helpers.PungiTestCase):

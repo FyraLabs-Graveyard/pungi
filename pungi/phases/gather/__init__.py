@@ -61,10 +61,6 @@ class GatherPhase(PhaseBase):
         self.manifest.compose.date = self.compose.compose_date
         self.manifest.compose.respin = self.compose.compose_respin
 
-    @staticmethod
-    def check_deps():
-        pass
-
     def _write_manifest(self):
         self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
         self.manifest.dump(self.manifest_file)
@@ -87,12 +83,21 @@ class GatherPhase(PhaseBase):
         super(GatherPhase, self).stop()
 
 
-def get_parent_pkgs(arch, variant, result_dict):
-    result = {
-        "rpm": set(),
-        "srpm": set(),
-        "debuginfo": set(),
+def _mk_pkg_map(rpm=None, srpm=None, debuginfo=None, iterable_class=list):
+    return {
+        "rpm": rpm or iterable_class(),
+        "srpm": srpm or iterable_class(),
+        "debuginfo": debuginfo or iterable_class(),
     }
+
+
+def get_parent_pkgs(arch, variant, result_dict):
+    """Find packages for parent variant (if any).
+
+    :param result_dict: already known packages; a mapping from arch to variant uid
+                        to package type to a list of dicts with path to package
+    """
+    result = _mk_pkg_map(iterable_class=set)
     if variant.parent is None:
         return result
     for pkg_type, pkgs in result_dict.get(arch, {}).get(variant.parent.uid, {}).iteritems():
@@ -103,7 +108,7 @@ def get_parent_pkgs(arch, variant, result_dict):
 
 
 def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None):
-    # multilib is per-arch, common for all variants
+    # multilib white/black-list is per-arch, common for all variants
     multilib_whitelist = get_multilib_whitelist(compose, arch)
     multilib_blacklist = get_multilib_blacklist(compose, arch)
     GatherMethod = get_gather_method(compose.conf["gather_method"])
@@ -112,11 +117,7 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
 
     if variant.is_empty:
         compose.log_info("[SKIP ] %s" % msg)
-        return {
-            "rpm": [],
-            "srpm": [],
-            "debuginfo": [],
-        }
+        return _mk_pkg_map()
 
     compose.log_info("[BEGIN] %s" % msg)
 
@@ -125,32 +126,54 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     fulltree_excludes = fulltree_excludes or set()
 
     method = GatherMethod(compose)
-    pkg_map = method(arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_sets, fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
+    pkg_map = method(arch, variant, packages, groups, filter_packages,
+                     multilib_whitelist, multilib_blacklist, package_sets,
+                     fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
 
     compose.log_info("[DONE ] %s" % msg)
     return pkg_map
 
 
 def write_packages(compose, arch, variant, pkg_map, path_prefix):
+    """Write a list of packages to a file (one per package type).
+
+    If any path begins with ``path_prefix``, this prefix will be stripped.
+    """
     msg = "Writing package list (arch: %s, variant: %s)" % (arch, variant)
     compose.log_info("[BEGIN] %s" % msg)
 
     for pkg_type, pkgs in pkg_map.iteritems():
         file_name = compose.paths.work.package_list(arch=arch, variant=variant, pkg_type=pkg_type)
-        pkg_list = open(file_name, "w")
-        for pkg in pkgs:
-            # TODO: flags?
-            pkg_path = pkg["path"]
-            if pkg_path.startswith(path_prefix):
-                pkg_path = pkg_path[len(path_prefix):]
-            pkg_list.write("%s\n" % pkg_path)
-        pkg_list.close()
+        with open(file_name, "w") as pkg_list:
+            for pkg in pkgs:
+                # TODO: flags?
+                pkg_path = pkg["path"]
+                if pkg_path.startswith(path_prefix):
+                    pkg_path = pkg_path[len(path_prefix):]
+                pkg_list.write("%s\n" % pkg_path)
 
     compose.log_info("[DONE ] %s" % msg)
 
 
 def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs=None):
-    """Remove parent variant's packages from pkg_map <-- it gets modified in this function"""
+    """Remove parent variant's packages from pkg_map <-- it gets modified in this function
+
+    There are three cases where changes may happen:
+
+     * If a package is mentioned explicitly in ``remove_pkgs``, it will be
+       removed from the addon. Sources and debuginfo are not removed from
+       layered-products though.
+     * If a packages is present in parent, it will be removed from addon
+       unconditionally.
+     * A package in addon that is not present in parent and has
+       ``fulltree-exclude`` flag will be moved to parent (unless it's
+       explicitly included into the addon).
+
+    :param parent_pkgs: mapping from pkg_type to a list of tuples (name, arch)
+                        of packages present in parent variant
+    :param remove_pkgs: mapping from pkg_type to a list of package names to be
+                        removed from the variant
+    """
     # TODO: remove debuginfo and srpm leftovers
 
     if not variant.parent:
@@ -162,13 +185,10 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
     remove_pkgs = remove_pkgs or {}
     parent_pkgs = parent_pkgs or {}
 
-    addon_pkgs = {}
-    move_to_parent_pkgs = {}
-    removed_pkgs = {}
+    addon_pkgs = _mk_pkg_map(iterable_class=set)
+    move_to_parent_pkgs = _mk_pkg_map()
+    removed_pkgs = _mk_pkg_map()
     for pkg_type, pkgs in pkg_map.iteritems():
-        addon_pkgs.setdefault(pkg_type, set())
-        move_to_parent_pkgs.setdefault(pkg_type, [])
-        removed_pkgs.setdefault(pkg_type, [])
 
         new_pkgs = []
         for pkg in pkgs:
@@ -186,16 +206,15 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
                     # keep addon SRPMs in layered products in order not to violate GPL.
                     # The same applies on debuginfo availability.
                     continue
-                compose.log_warning("Removed addon package (arch: %s, variant: %s): %s: %s" % (arch, variant, pkg_type, pkg_path))
+                compose.log_warning("Removed addon package (arch: %s, variant: %s): %s: %s" % (
+                    arch, variant, pkg_type, pkg_path))
                 removed_pkgs[pkg_type].append(pkg)
             elif key not in parent_pkgs.get(pkg_type, set()):
-                if "input" in pkg["flags"]:
-                    new_pkgs.append(pkg)
-                    addon_pkgs[pkg_type].add(nvra["name"])
-                elif "fulltree-exclude" in pkg["flags"]:
-                    # if a package wasn't explicitly included ('input') in an addon,
-                    # move it to parent variant (cannot move it to optional, because addons can't depend on optional)
-                    # this is a workaround for not having $addon-optional
+                if "fulltree-exclude" in pkg["flags"] and "input" not in pkg["flags"]:
+                    # If a package wasn't explicitly included ('input') in an
+                    # addon, move it to parent variant (cannot move it to
+                    # optional, because addons can't depend on optional). This
+                    # is a workaround for not having $addon-optional.
                     move_to_parent_pkgs[pkg_type].append(pkg)
                 else:
                     new_pkgs.append(pkg)
@@ -203,108 +222,78 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
             else:
                 removed_pkgs[pkg_type].append(pkg)
 
-        pkgs[:] = new_pkgs
-        compose.log_info("Removed packages (arch: %s, variant: %s): %s: %s" % (arch, variant, pkg_type, len(removed_pkgs[pkg_type])))
-        compose.log_info("Moved to parent (arch: %s, variant: %s): %s: %s" % (arch, variant, pkg_type, len(move_to_parent_pkgs[pkg_type])))
+        pkg_map[pkg_type] = new_pkgs
+        compose.log_info("Removed packages (arch: %s, variant: %s): %s: %s" % (
+            arch, variant, pkg_type, len(removed_pkgs[pkg_type])))
+        compose.log_info("Moved to parent (arch: %s, variant: %s): %s: %s" % (
+            arch, variant, pkg_type, len(move_to_parent_pkgs[pkg_type])))
 
     compose.log_info("[DONE ] %s" % msg)
     return addon_pkgs, move_to_parent_pkgs, removed_pkgs
 
 
+def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltree=False):
+    """Run gathering on all arches of all variants of given type.
+
+    If ``exclude_fulltree`` is set, all source packages from parent variants
+    will be added to fulltree excludes for the processed variants.
+    """
+    for arch in compose.get_arches():
+        for variant in compose.get_variants(arch=arch, types=[variant_type]):
+            fulltree_excludes = set()
+            if exclude_fulltree:
+                for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:
+                    fulltree_excludes.add(pkg_name)
+            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
+            result.setdefault(arch, {})[variant.uid] = pkg_map
+
+
+def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_parent=True):
+    """Trim all varians of given type.
+
+    Returns a map of all packages included in these variants.
+    """
+    all_included_packages = {}
+    for arch in compose.get_arches():
+        for variant in compose.get_variants(arch=arch, types=[variant_type]):
+            pkg_map = result[arch][variant.uid]
+            parent_pkgs = get_parent_pkgs(arch, variant, result)
+            included_packages, move_to_parent_pkgs, removed_pkgs = trim_packages(
+                compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=remove_pkgs)
+
+            # update all_addon_pkgs
+            for pkg_type, pkgs in included_packages.iteritems():
+                all_included_packages.setdefault(pkg_type, set()).update(pkgs)
+
+            if move_to_parent:
+                # move packages to parent
+                parent_pkg_map = result[arch][variant.parent.uid]
+                for pkg_type, pkgs in move_to_parent_pkgs.iteritems():
+                    for pkg in pkgs:
+                        compose.log_debug("Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s"
+                                          % (arch, variant.uid, pkg_type, os.path.basename(pkg["path"])))
+                        if pkg not in parent_pkg_map[pkg_type]:
+                            parent_pkg_map[pkg_type].append(pkg)
+    return all_included_packages
+
+
 def gather_wrapper(compose, package_sets, path_prefix):
     result = {}
 
-    # gather packages: variants
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["variant"]):
-            fulltree_excludes = set()
-            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
-            result.setdefault(arch, {})[variant.uid] = pkg_map
+    _gather_variants(result, compose, 'variant', package_sets)
+    _gather_variants(result, compose, 'addon', package_sets, exclude_fulltree=True)
+    _gather_variants(result, compose, 'layered-product', package_sets, exclude_fulltree=True)
+    _gather_variants(result, compose, 'optional', package_sets)
 
-    # gather packages: addons
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["addon"]):
-            fulltree_excludes = set()
-            for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:
-                fulltree_excludes.add(pkg_name)
-            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
-            result.setdefault(arch, {})[variant.uid] = pkg_map
-
-    # gather packages: layered-products
-    # NOTE: the same code as for addons
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["layered-product"]):
-            fulltree_excludes = set()
-            for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:
-                fulltree_excludes.add(pkg_name)
-            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
-            result.setdefault(arch, {})[variant.uid] = pkg_map
-
-    # gather packages: optional
-    # NOTE: the same code as for variants
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["optional"]):
-            fulltree_excludes = set()
-            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
-            result.setdefault(arch, {})[variant.uid] = pkg_map
-
-    # trim packages: addons
-    all_addon_pkgs = {}
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["addon"]):
-            pkg_map = result[arch][variant.uid]
-            parent_pkgs = get_parent_pkgs(arch, variant, result)
-            addon_pkgs, move_to_parent_pkgs, removed_pkgs = trim_packages(compose, arch, variant, pkg_map, parent_pkgs)
-
-            # update all_addon_pkgs
-            for pkg_type, pkgs in addon_pkgs.iteritems():
-                all_addon_pkgs.setdefault(pkg_type, set()).update(pkgs)
-
-            # move packages to parent
-            parent_pkg_map = result[arch][variant.parent.uid]
-            for pkg_type, pkgs in move_to_parent_pkgs.iteritems():
-                for pkg in pkgs:
-                    compose.log_debug("Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s" % (arch, variant.uid, pkg_type, os.path.basename(pkg["path"])))
-                    if pkg not in parent_pkg_map[pkg_type]:
-                        parent_pkg_map[pkg_type].append(pkg)
-
-    # trim packages: layered-products
-    all_lp_pkgs = {}
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["layered-product"]):
-            pkg_map = result[arch][variant.uid]
-            parent_pkgs = get_parent_pkgs(arch, variant, result)
-            lp_pkgs, move_to_parent_pkgs, removed_pkgs = trim_packages(compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=all_addon_pkgs)
-
-            # update all_addon_pkgs
-            for pkg_type, pkgs in lp_pkgs.iteritems():
-                all_lp_pkgs.setdefault(pkg_type, set()).update(pkgs)
-
-            # move packages to parent
-            # XXX: do we really want this?
-            parent_pkg_map = result[arch][variant.parent.uid]
-            for pkg_type, pkgs in move_to_parent_pkgs.iteritems():
-                for pkg in pkgs:
-                    compose.log_debug("Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s" % (arch, variant.uid, pkg_type, os.path.basename(pkg["path"])))
-                    if pkg not in parent_pkg_map[pkg_type]:
-                        parent_pkg_map[pkg_type].append(pkg)
+    all_addon_pkgs = _trim_variants(result, compose, 'addon')
+    # TODO do we really want to move packages to parent here?
+    all_lp_pkgs = _trim_variants(result, compose, 'layered-product', remove_pkgs=all_addon_pkgs)
 
     # merge all_addon_pkgs with all_lp_pkgs
     for pkg_type in set(all_addon_pkgs.keys()) | set(all_lp_pkgs.keys()):
         all_addon_pkgs.setdefault(pkg_type, set()).update(all_lp_pkgs.get(pkg_type, set()))
 
-    # trim packages: variants
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["optional"]):
-            pkg_map = result[arch][variant.uid]
-            addon_pkgs, move_to_parent_pkgs, removed_pkgs = trim_packages(compose, arch, variant, pkg_map, remove_pkgs=all_addon_pkgs)
-
-    # trim packages: optional
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=["optional"]):
-            pkg_map = result[arch][variant.uid]
-            parent_pkgs = get_parent_pkgs(arch, variant, result)
-            addon_pkgs, move_to_parent_pkgs, removed_pkgs = trim_packages(compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=all_addon_pkgs)
+    _trim_variants(result, compose, 'optional', remove_pkgs=all_addon_pkgs, move_to_parent=False)
 
     # write packages (package lists) for all variants
     for arch in compose.get_arches():
@@ -316,6 +305,11 @@ def gather_wrapper(compose, package_sets, path_prefix):
 
 
 def write_prepopulate_file(compose):
+    """Download prepopulate file according to configuration.
+
+    It is stored in a location where ``get_prepopulate_packages`` function
+    expects.
+    """
     if 'gather_prepopulate' not in compose.conf:
         return
 
@@ -342,19 +336,22 @@ def write_prepopulate_file(compose):
 
 
 def get_prepopulate_packages(compose, arch, variant):
+    """Read prepopulate file and return list of packages for given tree.
+
+    If ``variant`` is ``None``, all variants in the file are considered. The
+    result of this function is a set of strings of format
+    ``package_name.arch``.
+    """
     result = set()
 
     prepopulate_file = os.path.join(compose.paths.work.topdir(arch="global"), "prepopulate.json")
     if not os.path.isfile(prepopulate_file):
         return result
 
-    prepopulate_data = json.load(open(prepopulate_file, "r"))
+    with open(prepopulate_file, "r") as f:
+        prepopulate_data = json.load(f)
 
-    if variant:
-        variants = [variant.uid]
-    else:
-        # ALL variants
-        variants = prepopulate_data.keys()
+    variants = [variant.uid] if variant else prepopulate_data.keys()
 
     for var in variants:
         for build, packages in prepopulate_data.get(var, {}).get(arch, {}).iteritems():
@@ -400,16 +397,27 @@ def get_lookaside_repos(compose, arch, variant):
 
 
 def get_variant_packages(compose, arch, variant, package_sets=None):
+    """Find inputs for depsolving of variant.arch combination.
+
+    Returns a triple: a list of input packages, a list of input comps groups
+    and a list of packages to be filtered out of the variant.
+
+    For addons and layered products the inputs of parent variant are added as
+    well. For optional it's parent and all its addons and layered products.
+
+    The filtered packages are never inherited from parent.
+
+    When system-release packages should be filtered, the ``package_sets``
+    argument is required.
+    """
     GatherSource = get_gather_source(compose.conf["gather_source"])
     source = GatherSource(compose)
     packages, groups = source(arch, variant)
-#    if compose.conf["gather_source"] == "comps":
-#        packages = set()
     filter_packages = set()
 
-    # no variant -> no parent -> we have everything we need
-    # doesn't make sense to do any package filtering
     if variant is None:
+        # no variant -> no parent -> we have everything we need
+        # doesn't make sense to do any package filtering
         return packages, groups, filter_packages
 
     packages |= get_additional_packages(compose, arch, variant)
@@ -421,21 +429,19 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
         packages |= system_release_packages
         filter_packages |= system_release_filter_packages
 
-    # if the variant is "optional", include all groups and packages
-    # from the main "variant" and all "addons"
     if variant.type == "optional":
-        for var in variant.parent.get_variants(arch=arch, types=["self", "variant", "addon", "layered-product"]):
-            var_packages, var_groups, var_filter_packages = get_variant_packages(compose, arch, var, package_sets=package_sets)
+        for var in variant.parent.get_variants(
+                arch=arch, types=["self", "variant", "addon", "layered-product"]):
+            var_packages, var_groups, _ = get_variant_packages(
+                compose, arch, var, package_sets=package_sets)
             packages |= var_packages
             groups |= var_groups
-            # we don't always want automatical inheritance of filtered packages from parent to child variants
-            # filter_packages |= var_filter_packages
 
     if variant.type in ["addon", "layered-product"]:
-        var_packages, var_groups, var_filter_packages = get_variant_packages(compose, arch, variant.parent, package_sets=package_sets)
+        var_packages, var_groups, _ = get_variant_packages(
+            compose, arch, variant.parent, package_sets=package_sets)
         packages |= var_packages
         groups |= var_groups
-        # filter_packages |= var_filter_packages
 
     return packages, groups, filter_packages
 
