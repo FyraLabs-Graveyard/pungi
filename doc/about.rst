@@ -2,6 +2,10 @@
  About Pungi
 =============
 
+.. figure:: pungi_snake-sm-dark.png
+    :align: right
+    :alt: Pungi Logo
+
 *Pungi* is a distribution compose tool.
 
 Composes are release snapshots that contain release deliverables such as:
