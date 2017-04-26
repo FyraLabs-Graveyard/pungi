@@ -259,7 +259,7 @@ class Gather(GatherBase):
                 return [i for i in multilib_pkgs if i.sourcerpm == match.sourcerpm]
         return [match]
 
-    def _add_packages(self, packages, pulled_by=None, reason=None):
+    def _add_packages(self, packages, pulled_by=None, req=None, reason=None):
         added = set()
         for i in packages:
             assert i is not None
@@ -268,6 +268,8 @@ class Gather(GatherBase):
                 pb = ""
                 if pulled_by:
                     pb = " (pulled by %s, repo: %s)" % (pulled_by, pulled_by.repo.id)
+                if req:
+                    pb += " (Requires: %s)" % req
                 if reason:
                     pb += " (%s)" % reason
                 self.logger.debug("Added package %s%s" % (i, pb))
@@ -279,8 +281,11 @@ class Gather(GatherBase):
         self.result_binary_packages.update(added)
 
     def _get_package_deps(self, pkg):
-        """
-        Return all direct (1st level) deps for a package.
+        """Return all direct (1st level) deps for a package.
+
+        The return value is a set of tuples (pkg, reldep). Each package is
+        tagged with the particular reldep that pulled it in. Requires_pre and
+        _post are not distinguished.
         """
         assert pkg is not None
         result = set()
@@ -295,7 +300,7 @@ class Gather(GatherBase):
         for req in requires:
             deps = self.finished_get_package_deps_reqs.setdefault(str(req), set())
             if deps:
-                result.update(deps)
+                result.update((dep, req) for dep in deps)
                 continue
 
             # TODO: need query also debuginfo
@@ -303,7 +308,7 @@ class Gather(GatherBase):
             if deps:
                 deps = self._get_best_package(deps, req=req)
                 self.finished_get_package_deps_reqs[str(req)].update(deps)
-                result.update(deps)
+                result.update((dep, req) for dep in deps)
 
         return result
 
@@ -434,9 +439,9 @@ class Gather(GatherBase):
 
             if pkg not in self.finished_add_binary_package_deps:
                 deps = self._get_package_deps(pkg)
-                for i in deps:
+                for i, req in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg, reason='binary-dep')
+                        self._add_packages([i], pulled_by=pkg, req=req, reason='binary-dep')
                         added.add(i)
                 self.finished_add_binary_package_deps[pkg] = deps
 
@@ -492,10 +497,10 @@ class Gather(GatherBase):
                 deps = self.finished_add_source_package_deps[pkg]
             except KeyError:
                 deps = self._get_package_deps(pkg)
-                self.finished_add_source_package_deps[pkg] = deps
-                for i in deps:
+                self.finished_add_source_package_deps[pkg] = set(dep for (dep, req) in deps)
+                for i, req in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg, reason='source-dep')
+                        self._add_packages([i], pulled_by=pkg, req=req, reason='source-dep')
                         added.add(i)
                         self._set_flag(pkg, PkgFlag.self_hosting)
 
