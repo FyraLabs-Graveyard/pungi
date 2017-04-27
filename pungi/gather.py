@@ -99,6 +99,31 @@ class MyConfigParser(ConfigParser.ConfigParser):
         return optionstr
 
 
+FLAGS = {
+    'EQ': '=',
+    'GE': '>=',
+    'LE': '<=',
+    'GT': '>',
+    'LT': '<',
+}
+
+
+class Req(object):
+    """A wrapper for a tuple representing a Requires tag.
+
+    Only useful for formatting the value into a human readable string.
+    """
+    def __init__(self, req):
+        self.r, self.f, self.v = req
+
+    def __str__(self):
+        if self.f and self.v:
+            flag = FLAGS.get(self.f, '??')
+            version = '%s:%s-%s' % self.v
+            return '%s %s %s' % (self.r, flag, version)
+        return self.r
+
+
 class PungiBase(object):
     """The base Pungi class.  Set up config items and logging here"""
 
@@ -636,7 +661,8 @@ class Pungi(PungiBase):
 
                 for dep in deps:
                     if dep not in added:
-                        msg = 'Added %s.%s (repo: %s) for %s.%s' % (dep.name, dep.arch, dep.repoid, po.name, po.arch)
+                        msg = 'Added %s.%s (repo: %s) for %s.%s (Requires: %s)' % (
+                            dep.name, dep.arch, dep.repoid, po.name, po.arch, Req(req))
                         self.add_package(dep, msg)
                         added.add(dep)
 
