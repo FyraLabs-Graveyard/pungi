@@ -2,6 +2,10 @@
  About Pungi
 =============
 
+.. figure:: pungi_snake-sm-dark.png
+    :align: right
+    :alt: Pungi Logo
+
 *Pungi* is a distribution compose tool.
 
 Composes are release snapshots that contain release deliverables such as:
@@ -40,3 +44,19 @@ Links
 - Upstream GIT: https://pagure.io/pungi/
 - Issue tracker: https://pagure.io/pungi/issues
 - Questions can be asked on *#fedora-releng* IRC channel on FreeNode
+
+
+Origin of name
+==============
+
+The name *Pungi* comes from the instrument used to charm snakes. *Anaconda*
+being the software Pungi was manipulating, and anaconda being a snake, led to
+the referential naming.
+
+The first name, which was suggested by Seth Vidal, was *FIST*, *Fedora
+Installation <Something> Tool*. That name was quickly discarded and replaced
+with Pungi.
+
+There was also a bit of an inside joke that when said aloud, it could sound
+like punji, which is `a sharpened stick at the bottom of a
+trap <https://en.wikipedia.org/wiki/Punji_stick>`_. Kind of like software…
