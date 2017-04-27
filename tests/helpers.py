@@ -10,7 +10,7 @@ import tempfile
 import shutil
 import errno
 
-from pungi.util import get_arch_variant_data, makedirs
+from pungi.util import get_arch_variant_data
 from pungi import paths, checks
 
 
@@ -117,9 +117,7 @@ class DummyCompose(object):
         return sorted(result)
 
     def mkdtemp(self, suffix="", prefix="tmp"):
-        tmpdir = os.path.join('/tmp', "tmp_" + self.compose_id)
-        makedirs(tmpdir)
-        return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=tmpdir)
+        return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=self.topdir)
 
 
 def touch(path, content=None):
