@@ -52,7 +52,7 @@ class ScmBase(kobo.log.LoggingBase):
 
 
 class FileWrapper(ScmBase):
-    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
         self.log_debug("Exporting directory %s from current working directory..."
                        % (scm_dir))
         if scm_root:
@@ -63,7 +63,7 @@ class FileWrapper(ScmBase):
         for i in dirs:
             copy_all(i, target_dir)
 
-    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
         self.log_debug("Exporting file %s from current working directory..."
@@ -77,35 +77,35 @@ class FileWrapper(ScmBase):
 
 
 class CvsWrapper(ScmBase):
-    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        with temp_dir(dir=tmp_dir) as tmp_dir:
+        with temp_dir() as tmp_dir:
             self.log_debug("Exporting directory %s from CVS %s (branch %s)..."
                            % (scm_dir, scm_root, scm_branch))
             self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir],
-                           workdir=tmp_dir, show_cmd=True, logfile=log_file)
+                           workdir=tmp_dir, show_cmd=True)
             copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
-    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "HEAD"
-        with temp_dir(dir=tmp_dir) as tmp_dir:
+        with temp_dir() as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
             self.log_debug("Exporting file %s from CVS %s (branch %s)..." % (scm_file, scm_root, scm_branch))
             self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_file],
-                           workdir=tmp_dir, show_cmd=True, logfile=log_file)
+                           workdir=tmp_dir, show_cmd=True)
 
             makedirs(target_dir)
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
 class GitWrapper(ScmBase):
-    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "master"
 
-        with temp_dir(dir=tmp_dir) as tmp_dir:
+        with temp_dir() as tmp_dir:
             if "://" not in scm_root:
                 scm_root = "file://%s" % scm_root
 
@@ -118,15 +118,15 @@ class GitWrapper(ScmBase):
             if scm_root.startswith("http"):
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
                        % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
-            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
+            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
 
             copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
-    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         scm_file = scm_file.lstrip("/")
         scm_branch = scm_branch or "master"
 
-        with temp_dir(dir=tmp_dir) as tmp_dir:
+        with temp_dir() as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
 
             if "://" not in scm_root:
@@ -141,7 +141,7 @@ class GitWrapper(ScmBase):
             if scm_root.startswith("http"):
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
                        % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
-            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True, logfile=log_file)
+            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
 
             makedirs(target_dir)
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
@@ -153,10 +153,10 @@ class RpmScmWrapper(ScmBase):
             for rpm in glob.glob(pat):
                 yield rpm
 
-    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
         for rpm in self._list_rpms(scm_root):
             scm_dir = scm_dir.lstrip("/")
-            with temp_dir(dir=tmp_dir) as tmp_dir:
+            with temp_dir() as tmp_dir:
                 self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
                 explode_rpm_package(rpm, tmp_dir)
 
@@ -168,10 +168,10 @@ class RpmScmWrapper(ScmBase):
                     run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)),
                                           pipes.quote(target_dir)))
 
-    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None, tmp_dir=None, log_file=None):
+    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         for rpm in self._list_rpms(scm_root):
             scm_file = scm_file.lstrip("/")
-            with temp_dir(dir=tmp_dir) as tmp_dir:
+            with temp_dir() as tmp_dir:
                 self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
                 explode_rpm_package(rpm, tmp_dir)
 
