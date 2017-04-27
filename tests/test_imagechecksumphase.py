@@ -242,7 +242,6 @@ class TestImageChecksumPhase(PungiTestCase):
 
 class TestChecksums(unittest.TestCase):
     def setUp(self):
-        _, name = tempfile.mkstemp()
         self.tmp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -265,7 +264,6 @@ class TestChecksums(unittest.TestCase):
 
 class TestDumpFilesizes(unittest.TestCase):
     def setUp(self):
-        _, name = tempfile.mkstemp()
         self.tmp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
