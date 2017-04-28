@@ -277,13 +277,6 @@ class TestGetSystemRelease(unittest.TestCase):
         self.addon = helpers.MockVariant(uid='Server-HA', arches=['x86_64'],
                                          type='addon', parent=self.variant)
 
-    def test_no_variant(self):
-        # TODO remove this code
-        self.assertEqual(
-            gather.get_system_release_packages(self.compose, 'x86_64', None, mock.Mock()),
-            (set(), set())
-        )
-
     def test_no_package_set(self):
         self.assertEqual(
             gather.get_system_release_packages(self.compose, 'x86_64',

@@ -450,10 +450,6 @@ def get_system_release_packages(compose, arch, variant, package_sets):
     packages = set()
     filter_packages = set()
 
-    if not variant:
-        # include all system-release-* (gathering for a package superset)
-        return packages, filter_packages
-
     if not package_sets or not package_sets.get(arch, None):
         return packages, filter_packages
 
