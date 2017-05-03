@@ -235,9 +235,8 @@ class Compose(kobo.log.LoggingBase):
 
     def get_variants(self, types=None, arch=None):
         result = []
-        types = types or ["variant", "optional", "addon", "layered-product"]
         for i in self.variants.itervalues():
-            if i.type in types and (not arch or arch in i.arches):
+            if (not types or i.type in types) and (not arch or arch in i.arches):
                 result.append(i)
             result.extend(i.get_variants(types=types, arch=arch))
         return sorted(set(result))
