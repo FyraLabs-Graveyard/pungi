@@ -200,9 +200,6 @@ class VariantsXmlParser(object):
                 continue
             result[variant.id] = variant
 
-        for variant_node in self.tree.xpath("/variants/variant[not(@type='variant' or @type='addon' or @type='layered-product')]"):
-            raise RuntimeError("Invalid variant type at the top-level: %s" % variant_node.attrib["type"])
-
         return result
 
 
