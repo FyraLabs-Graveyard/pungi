@@ -96,8 +96,7 @@ def get_module(session, module_info, strict=False):
     # returned, but otherwise we have to pick the one with the highest
     # release ourselves.
     if 'variant_release' in query:
-        assert len(retval) <= 1, compose.log_error(
-            "More than one module returned from PDC: %s" % str(retval))
+        assert len(retval) <= 1, "More than one module returned from PDC: %s" % retval
         module = retval[0]
     else:
         module = retval[0]
