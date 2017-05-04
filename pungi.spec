@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.14
+Version:        4.1.15
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -102,6 +102,58 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu May 04 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.15-1
+- pkgset: Remove use of undefined variable (lsedlar)
+- Store RPM artifacts in resulting repository in modulemd metadata. (jkaluza)
+- variants: Remove redundant check (lsedlar)
+- compose: Stop duplicating variant types (lsedlar)
+- gather: Remove handling of impossible state (lsedlar)
+- gather: Clean up code (lsedlar)
+- gather: Add tests for gather phase (lsedlar)
+- scm-wrapper: Remove unused arguments (lsedlar)
+- tests: Avoid creating unused temporary files (lsedlar)
+- tests: Clean up persistent temporary data (lsedlar)
+- docs: Add a logo on the About page (lsedlar)
+- docs: Document origin of the name (lsedlar)
+- gather-dnf: Log exact Requires pulling a package in (lsedlar)
+- gather: Print specific Requires which pulls a package in (lsedlar)
+- gather: Process dependencies sorted (lsedlar)
+- koji-wrapper: Run koji runroot with fresh credentials cache (lsedlar)
+- util: Move get_buildroot_rpms to koji wrapper (lsedlar)
+- osbs: Make git_branch required option (lsedlar)
+- docs: Update createrepo_checksum allowed values (lsedlar)
+- extra-files: Allow configuring used checksums (lsedlar)
+- doc: Document options for media checksums (lsedlar)
+- config: Add sha512 as valid createrepo checksum (lsedlar)
+- util: Report better error on resolving non-existing branch (lsedlar)
+- util: Show choices for volid if all are too long (lsedlar)
+- checks: Fix anyOf validator yield ValidationError on ConfigOptionWarning
+  (qwan)
+- comps-wrapper: Reduce duplication in code (lsedlar)
+- comps-wrapper: Port to libcomps (lsedlar)
+- comps-wrapper: Sort langpacks by name (lsedlar)
+- comps-wrapper: Minor code cleanup (lsedlar)
+- comps-wrapper: Add tests (lsedlar)
+- comps-wrapper: Fix uservisible not being modifiable (lsedlar)
+- comps-wrapper: Return IDs instead of yum.comps.Group (lsedlar)
+- comps-wrapper: Remove unused code (lsedlar)
+- Be explicit about generating release for images (lsedlar)
+- docs: Add examples for generated versions (lsedlar)
+- ostree: Autogenerate a version (lsedlar)
+- Expand compatible arches when gathering from modules. (rbean)
+- gather: Clean up method deps (lsedlar)
+- gather: Report error if there is no input (lsedlar)
+- init: Warn when variants mentions non-existing comps group (lsedlar)
+- Fix createrepo issue for modular compose when multiple threads tried to use
+  the same tmp directory. (jkaluza)
+- unified-iso: Use different type for debuginfo iso (lsedlar)
+- unified-iso: Handle missing paths in metadata (lsedlar)
+- unify repo and repo_from options (qwan)
+- Fix some PEP8 errors in util.py (qwan)
+- move translate_path from paths.py to util.py (qwan)
+- checks.py: support 'append' option (qwan)
+- checks.py: show warning message for alias option (qwan)
+
 * Mon Mar 27 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.14-1
 - Not create empty skeleton dirs for empty variants (qwan)
 - Query only active modules in PDC. (jkaluza)
