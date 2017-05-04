@@ -227,6 +227,7 @@ class Variant(object):
 
         self.pkgset = None
         self.mmds = []
+        self.arch_mmds = {}
 
     def __getitem__(self, name):
         return self.variants[name]

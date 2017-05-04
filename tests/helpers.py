@@ -34,6 +34,7 @@ class MockVariant(mock.Mock):
         super(MockVariant, self).__init__(*args, is_empty=is_empty, **kwargs)
         self.parent = kwargs.get('parent', None)
         self.mmds = []
+        self.arch_mmds = {}
         self.variants = {}
 
     def __str__(self):

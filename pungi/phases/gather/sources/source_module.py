@@ -28,21 +28,36 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
     def __call__(self, arch, variant):
+        import yaml
+
         groups = set()
         packages = set()
 
         compatible_arches = pungi.arch.get_compatible_arches(arch)
 
         if variant is not None and variant.modules:
+            variant.arch_mmds.setdefault(arch, {})
+
             rpms = sum([
                 variant.pkgset.rpms_by_arch.get(a, [])
                 for a in compatible_arches
             ], [])
             for rpm_obj in rpms:
                 for mmd in variant.mmds:
+                    # Generate architecture specific modulemd metadata
+                    # with list of artifacts only for this architecture.
+                    if mmd.name not in variant.arch_mmds[arch]:
+                        arch_mmd = yaml.safe_load(mmd.dumps())
+                        arch_mmd["data"]["artifacts"] = {"rpms": []}
+                        variant.arch_mmds[arch][mmd.name] = arch_mmd
+                    else:
+                        arch_mmd = variant.arch_mmds[arch][mmd.name]
+
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
                     if (srpm in mmd.components.rpms.keys() and
                             rpm_obj.name not in mmd.filter.rpms):
                         packages.add((rpm_obj.name, None))
+                        arch_mmd["data"]["artifacts"]["rpms"].append(
+                            str(rpm_obj.nevra))
 
         return packages, groups

@@ -23,6 +23,7 @@ import os
 import glob
 import shutil
 import threading
+import copy
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
@@ -119,6 +120,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     compose.log_info("[BEGIN] %s" % msg)
 
     rpms = set()
+    rpm_nevras = set()
 
     # read rpms from metadata rather than guessing it by scanning filesystem
     manifest_file = compose.paths.compose.metadata("rpms.json")
@@ -129,12 +131,13 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         if arch is not None and arch != rpms_arch:
             continue
         for srpm_data in data.itervalues():
-            for rpm_data in srpm_data.itervalues():
+            for rpm_nevra, rpm_data in srpm_data.iteritems():
                 if types[pkg_type][0] != rpm_data['category']:
                     continue
                 path = os.path.join(compose.topdir, "compose", rpm_data["path"])
                 rel_path = relative_path(path, repo_dir.rstrip("/") + "/")
                 rpms.add(rel_path)
+                rpm_nevras.add(str(rpm_nevra))
 
     file_list = compose.paths.work.repo_package_list(arch, variant, pkg_type)
     with open(file_list, 'w') as f:
@@ -182,15 +185,22 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
 
     # call modifyrepo to inject modulemd if needed
-    if variant.mmds:
+    if arch in variant.arch_mmds:
         import yaml
-        modules = {"modules": []}
-        for mmd in variant.mmds:
-            modules["modules"].append(yaml.safe_load(mmd.dumps()))
+        modules = []
+        for mmd in variant.arch_mmds[arch].itervalues():
+            # Create copy of architecture specific mmd to filter out packages
+            # which are not part of this particular repo.
+            repo_mmd = copy.deepcopy(mmd)
+            repo_mmd["data"]["artifacts"]["rpms"] = [
+                rpm_nevra for rpm_nevra in repo_mmd["data"]["artifacts"]["rpms"]
+                if rpm_nevra in rpm_nevras]
+            modules.append(repo_mmd)
+
         with temp_dir() as tmp_dir:
             modules_path = os.path.join(tmp_dir, "modules.yaml")
             with open(modules_path, "w") as outfile:
-                outfile.write(yaml.safe_dump(modules))
+                outfile.write(yaml.dump_all(modules, explicit_start=True))
             cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
                                         modules_path, mdtype="modules",
                                         compress_type="gz")
