@@ -463,7 +463,22 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None)])
+                              [mock.call('cmd', can_fail=True, logfile=None, env={})])
+
+    @mock.patch('pungi.util.temp_dir')
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_with_keytab(self, run, temp_dir):
+        temp_dir.return_value.__enter__.return_value = '/tmp/foo'
+        self.koji.koji_module.config.keytab = 'foo'
+        output = 'Created task: 1234\nHello\n'
+        run.return_value = (0, output)
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
+        self.assertItemsEqual(run.mock_calls,
+                              [mock.call('cmd', can_fail=True, logfile=None,
+                                         env={'KRB5CCNAME': 'DIR:/tmp/foo'})])
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_with_log(self, run):
@@ -474,7 +489,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile='logfile')])
+                              [mock.call('cmd', can_fail=True, logfile='logfile', env={})])
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_fail_with_task_id(self, run):
@@ -485,7 +500,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 1234})
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None)])
+                              [mock.call('cmd', can_fail=True, logfile=None, env={})])
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_fail_without_task_id(self, run):
@@ -496,7 +511,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
             self.koji.run_blocking_cmd('cmd')
 
         self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None)])
+                              [mock.call('cmd', can_fail=True, logfile=None, env={})])
         self.assertIn('Could not find task ID', str(ctx.exception))
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
@@ -509,7 +524,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
-                         [mock.call('cmd', can_fail=True, logfile=None),
+                         [mock.call('cmd', can_fail=True, logfile=None, env={}),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
                                     can_fail=True, logfile=None)])
 
@@ -523,7 +538,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 1, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
-                         [mock.call('cmd', can_fail=True, logfile=None),
+                         [mock.call('cmd', can_fail=True, logfile=None, env={}),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
                                     can_fail=True, logfile=None)])
 
@@ -538,7 +553,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
         self.assertEqual(run.mock_calls,
-                         [mock.call('cmd', can_fail=True, logfile=None),
+                         [mock.call('cmd', can_fail=True, logfile=None, env={}),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
                                     can_fail=True, logfile=None),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
@@ -559,7 +574,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
 
         self.assertIn('Failed to wait', str(ctx.exception))
         self.assertEqual(run.mock_calls,
-                         [mock.call('cmd', can_fail=True, logfile=None),
+                         [mock.call('cmd', can_fail=True, logfile=None, env={}),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
                                     can_fail=True, logfile=None),
                           mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],

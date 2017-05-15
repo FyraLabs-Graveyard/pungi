@@ -113,7 +113,7 @@ class KojiWrapper(object):
         return cmd
 
     @contextlib.contextmanager
-    def get_runroot_env(self):
+    def get_koji_cmd_env(self):
         """Get environment variables for running a koji command.
 
         If we are authenticated with a keytab, we need a fresh credentials
@@ -133,7 +133,7 @@ class KojiWrapper(object):
         contains the id, it will be captured and returned.
         """
         task_id = None
-        with self.get_runroot_env() as env:
+        with self.get_koji_cmd_env() as env:
             retcode, output = run(command, can_fail=True, logfile=log_file, show_cmd=True, env=env)
         if "--task-id" in command:
             first_line = output.splitlines()[0]
@@ -316,7 +316,8 @@ class KojiWrapper(object):
         its exit code and parsed task id. This method will block until the
         command finishes.
         """
-        retcode, output = run(command, can_fail=True, logfile=log_file)
+        with self.get_koji_cmd_env() as env:
+            retcode, output = run(command, can_fail=True, logfile=log_file, env=env)
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
