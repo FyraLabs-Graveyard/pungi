@@ -18,3 +18,4 @@ Contents:
     configuration
     messaging
     phases
+    gathering

@@ -47,7 +47,7 @@ Gather
 This phase uses data collected by ``pkgset`` phase and figures out what
 packages should be in each variant. The basic mapping can come from comps file,
 a JSON mapping or ``additional_packages`` config option. This inputs can then
-be enriched by adding all dependencies.
+be enriched by adding all dependencies. See :doc:`gathering` for details.
 
 Once the mapping is finalized, the packages are linked to appropriate places
 and the ``rpms.json`` manifest is created.
