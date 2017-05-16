@@ -411,7 +411,15 @@ def mount(image, logger=None):
     # use guestmount to mount the image, which doesn't require root privileges
     # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
     with util.temp_dir(prefix='iso-mount-') as mount_dir:
-        run(["LIBGUESTFS_BACKEND=direct", "guestmount", "-a", image, "-m", "/dev/sda", mount_dir])
+        env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
+        cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
+        ret, out = run(cmd, env=env, can_fail=True)
+        if ret != 0:
+            # The mount command failed, something is wrong. Log the output and raise an exception.
+            if logger:
+                logger.log_error('Command %s exited with %s and output:\n%s'
+                                 % (cmd, ret, out))
+            raise RuntimeError('Failed to mount %s' % image)
         try:
             yield mount_dir
         finally:

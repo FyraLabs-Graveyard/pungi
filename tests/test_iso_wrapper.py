@@ -41,6 +41,7 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch('pungi.util.run_unmount_cmd')
     @mock.patch('pungi.wrappers.iso.run')
     def test_mount_iso(self, mock_run, mock_unmount):
+        mock_run.return_value = (0, '')
         with iso.mount('dummy') as temp_dir:
             self.assertTrue(os.path.isdir(temp_dir))
         self.assertEqual(len(mock_run.call_args_list), 1)
@@ -50,6 +51,7 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch('pungi.util.run_unmount_cmd')
     @mock.patch('pungi.wrappers.iso.run')
     def test_mount_iso_always_unmounts(self, mock_run, mock_unmount):
+        mock_run.return_value = (0, '')
         try:
             with iso.mount('dummy') as temp_dir:
                 self.assertTrue(os.path.isdir(temp_dir))
@@ -59,3 +61,15 @@ class TestIsoUtils(unittest.TestCase):
         self.assertEqual(len(mock_run.call_args_list), 1)
         self.assertEqual(len(mock_unmount.call_args_list), 1)
         self.assertFalse(os.path.isdir(temp_dir))
+
+    @mock.patch('pungi.util.run_unmount_cmd')
+    @mock.patch('pungi.wrappers.iso.run')
+    def test_mount_iso_raises_on_error(self, mock_run, mock_unmount):
+        log = mock.Mock()
+        mock_run.return_value = (1, 'Boom')
+        with self.assertRaises(RuntimeError):
+            with iso.mount('dummy', logger=log) as temp_dir:
+                self.assertTrue(os.path.isdir(temp_dir))
+        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_unmount.call_args_list), 0)
+        self.assertEqual(len(log.mock_calls), 1)
