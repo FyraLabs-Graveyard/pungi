@@ -66,6 +66,19 @@ def get_commitid_from_commitid_file(commitid_file, logger=None):
     return commitid
 
 
+def _write_repofile(path, name, repo):
+    """Write a .repo file with given data."""
+    with open(path, 'w') as f:
+        f.write("[%s]\n" % name)
+        f.write("name=%s\n" % name)
+        f.write("baseurl=%s\n" % repo['baseurl'])
+        exclude = repo.get('exclude', None)
+        if exclude:
+            f.write("exclude=%s\n" % exclude)
+        gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
+        f.write("gpgcheck=%s\n" % gpgcheck)
+
+
 def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False):
     """
     Update tree config file by adding new repos, and remove existing repos
@@ -86,15 +99,7 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False):
     if source_repos:
         for repo in source_repos:
             name = "%s-%s" % (repo['name'], time)
-            with open("%s/%s.repo" % (treeconf_dir, name), 'w') as f:
-                f.write("[%s]\n" % name)
-                f.write("name=%s\n" % name)
-                f.write("baseurl=%s\n" % repo['baseurl'])
-                exclude = repo.get('exclude', None)
-                if exclude:
-                    f.write("exclude=%s\n" % exclude)
-                gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
-                f.write("gpgcheck=%s\n" % gpgcheck)
+            _write_repofile("%s/%s.repo" % (treeconf_dir, name), name, repo)
             repos.append(name)
 
     original_repos = treeconf_content.get('repos', [])
