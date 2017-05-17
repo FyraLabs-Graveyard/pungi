@@ -606,6 +606,9 @@ class Pungi(PungiBase):
         """Add the dependencies for a given package to the
            transaction info"""
         added = set()
+        if po.repoid in self.lookaside_repos:
+            # Don't resolve deps for stuff in lookaside.
+            return added
         if po in self.completed_depsolve:
             return added
         self.completed_depsolve.add(po)
@@ -1111,6 +1114,9 @@ class Pungi(PungiBase):
 
         added = set()
         for srpm_po in srpms:
+            if srpm_po.repoid in self.lookaside_repos:
+                # Don't run fulltree on packages in lookaside
+                continue
             include_native = False
             include_multilib = False
             has_native = False

@@ -289,6 +289,10 @@ class Gather(GatherBase):
         assert pkg is not None
         result = set()
 
+        if pkg.repoid in self.opts.lookaside_repos:
+            # Don't resolve deps for stuff in lookaside.
+            return result
+
         # DNF package has the _pre and _post attributes only if they are not
         # empty.
         requires = (pkg.requires +
