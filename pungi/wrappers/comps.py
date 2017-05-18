@@ -91,8 +91,8 @@ class CompsWrapper(object):
                 packages_by_type[TYPE_MAPPING[pkg.type]].append(pkg)
 
             for type_name in TYPE_MAPPING.values():
-                for package in sorted(packages_by_type[type_name], key=attrgetter('name')):
-                    node = append(doc, packagelist, "packagereq", package.name, type=type_name)
+                for pkg in sorted(packages_by_type[type_name], key=attrgetter('name')):
+                    node = append(doc, packagelist, "packagereq", pkg.name, type=type_name)
                     if type_name == "conditional":
                         node.setAttribute("requires", pkg.requires)
 
