@@ -19,36 +19,25 @@ import os
 import shutil
 import pipes
 import glob
-import time
 
 import kobo.log
 from kobo.shortcuts import run, force_list
-from pungi.util import explode_rpm_package, makedirs, copy_all, temp_dir
+from pungi.util import (explode_rpm_package, makedirs, copy_all, temp_dir,
+                        retry)
 
 
 class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
 
-    def retry_run(self, cmd, retries=5, timeout=60, **kwargs):
+    @retry(interval=60, timeout=300, wait_on=RuntimeError)
+    def retry_run(self, cmd, **kwargs):
         """
         @param cmd - cmd passed to kobo.shortcuts.run()
-        @param retries=5 - attempt to execute n times
-        @param timeout=60 - seconds before next try
         @param **kwargs - args passed to kobo.shortcuts.run()
         """
 
-        for n in range(1, retries + 1):
-            try:
-                self.log_debug("Retrying execution %s/%s of '%s'" % (n, retries, cmd))
-                return run(cmd, **kwargs)
-            except RuntimeError as ex:
-                if n == retries:
-                    raise ex
-                self.log_debug("Waiting %s seconds to retry execution of '%s'" % (timeout, cmd))
-                time.sleep(timeout)
-
-        raise RuntimeError("Something went wrong during execution of '%s'" % cmd)
+        return run(cmd, **kwargs)
 
 
 class FileWrapper(ScmBase):

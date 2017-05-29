@@ -21,7 +21,7 @@ import json
 import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
-from pungi.util import is_arch_multilib
+from pungi.util import is_arch_multilib, retry
 
 from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
 
@@ -62,6 +62,7 @@ def variant_dict_from_str(module_str):
     return module_info
 
 
+@retry(wait_on=IOError)
 def get_module(session, module_info, strict=False):
     """
     :param session : PDCClient instance

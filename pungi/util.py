@@ -28,6 +28,7 @@ import contextlib
 import traceback
 import tempfile
 import time
+import functools
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -756,3 +757,22 @@ def version_generator(compose, gen):
     if gen and gen[0] == '!':
         raise RuntimeError("Unknown version generator '%s'" % gen)
     return gen
+
+
+def retry(timeout=120, interval=30, wait_on=Exception):
+    """ A decorator that allows to retry a section of code until success or
+        timeout.
+    """
+    def wrapper(function):
+        @functools.wraps(function)
+        def inner(*args, **kwargs):
+            start = time.time()
+            while True:
+                if (time.time() - start) >= timeout:
+                    raise  # This re-raises the last exception.
+                try:
+                    return function(*args, **kwargs)
+                except wait_on:
+                    time.sleep(interval)
+        return inner
+    return wrapper
