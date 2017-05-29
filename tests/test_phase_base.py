@@ -8,8 +8,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.phases import base
-from tests.helpers import DummyCompose, PungiTestCase
+from pungi.phases import run_all, base
+from tests.helpers import DummyCompose, PungiTestCase, boom
 
 
 class Phase1(base.ImageConfigMixin, base.PhaseBase):
@@ -67,6 +67,51 @@ class ImageConfigMixinTestCase(PungiTestCase):
                          'git://example.com/more.git?#RES3')
 
         self.assertEqual(resolve_git_url.num, 3, 'Resolver was not called three times')
+
+
+class TestRunAll(unittest.TestCase):
+    def assertFinalized(self, p):
+        self.assertEqual(p.mock_calls, [mock.call.start(), mock.call.stop()])
+
+    def test_calls_stop(self):
+        p1 = mock.Mock()
+        p2 = mock.Mock()
+
+        run_all([p1, p2])
+
+        self.assertFinalized(p1)
+        self.assertFinalized(p2)
+
+    def test_calls_stop_on_failure(self):
+        p1 = mock.Mock()
+        p2 = mock.Mock()
+        p3 = mock.Mock()
+
+        p2.stop.side_effect = boom
+
+        with self.assertRaises(Exception) as ctx:
+            run_all([p1, p2, p3])
+
+        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertFinalized(p1)
+        self.assertFinalized(p2)
+        self.assertFinalized(p3)
+
+    def test_multiple_fail(self):
+        p1 = mock.Mock(name='p1')
+        p2 = mock.Mock(name='p2')
+        p3 = mock.Mock(name='p3')
+
+        p2.stop.side_effect = boom
+        p3.stop.side_effect = boom
+
+        with self.assertRaises(Exception) as ctx:
+            run_all([p1, p2, p3])
+
+        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertFinalized(p1)
+        self.assertFinalized(p2)
+        self.assertFinalized(p3)
 
 
 if __name__ == "__main__":

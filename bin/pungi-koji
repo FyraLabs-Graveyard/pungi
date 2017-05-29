@@ -354,25 +354,25 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     pkgset_phase.start()
     pkgset_phase.stop()
 
-    # BUILDINSTALL phase - start
+    # BUILDINSTALL phase - start, we can run gathering, extra files and
+    # createrepo while buildinstall is in progress.
     buildinstall_phase.start()
 
-    # GATHER phase
-    gather_phase.start()
-    gather_phase.stop()
+    # If any of the following three phases fail, we must ensure that
+    # buildinstall is stopped. Otherwise the whole process will hang.
+    try:
+        gather_phase.start()
+        gather_phase.stop()
 
-    # EXTRA_FILES phase
-    extrafiles_phase.start()
-    extrafiles_phase.stop()
+        extrafiles_phase.start()
+        extrafiles_phase.stop()
 
-    # CREATEREPO phase
-    createrepo_phase.start()
-    createrepo_phase.stop()
+        createrepo_phase.start()
+        createrepo_phase.stop()
 
-    # BUILDINSTALL phase
-    # must finish before PRODUCTIMG
-    # must finish before CREATEISO
-    buildinstall_phase.stop()
+    finally:
+        buildinstall_phase.stop()
+
     if not buildinstall_phase.skip():
         buildinstall_phase.copy_files()
 
@@ -396,20 +396,12 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
             timestamp = pungi.metadata.write_discinfo(compose, arch, variant)
             pungi.metadata.write_media_repo(compose, arch, variant, timestamp)
 
-    # CREATEISO and LIVEIMAGES phases
-    createiso_phase.start()
-    liveimages_phase.start()
-    image_build_phase.start()
-    livemedia_phase.start()
-    ostree_installer_phase.start()
-    osbs_phase.start()
-
-    createiso_phase.stop()
-    liveimages_phase.stop()
-    image_build_phase.stop()
-    livemedia_phase.stop()
-    ostree_installer_phase.stop()
-    osbs_phase.stop()
+    # Start all phases for image artifacts
+    pungi.phases.run_all([createiso_phase,
+                          liveimages_phase,
+                          image_build_phase,
+                          ostree_installer_phase,
+                          osbs_phase])
 
     image_checksum_phase.start()
     image_checksum_phase.stop()

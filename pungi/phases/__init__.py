@@ -31,3 +31,21 @@ from .livemedia_phase import LiveMediaPhase  # noqa
 from .ostree import OSTreePhase  # noqa
 from .ostree_installer import OstreeInstallerPhase  # noqa
 from .osbs import OSBSPhase  # noqa
+
+
+def run_all(phases):
+    """Start and stop all given phases and make them run in parallel.
+
+    This function makes sure that even if one of the phases fails and raises an
+    exception, all the phases will still be correctly stopped.
+
+    If multiple phases fail, a exception from one of them will be raised, but
+    there are no guarantees which one it will be.
+    """
+    if not phases:
+        return
+    phases[0].start()
+    try:
+        run_all(phases[1:])
+    finally:
+        phases[0].stop()
