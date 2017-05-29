@@ -439,7 +439,7 @@ def _make_schema():
                     "name": {"type": "string"},
                     "baseurl": {"type": "string"},
                     "exclude": {"type": "string"},
-                    "gpgcheck": {"type": "string"},
+                    "gpgcheck": {"type": "boolean"},
                     "enabled": {"type": "string"},
                 },
                 "additionalProperties": False,
