@@ -162,6 +162,14 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 pdc_module = get_module(session, module["name"])
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
+
+                # Add RPMs from PDC response to modulemd, so we can track
+                # what RPM is in which module later in gather phase.
+                for rpm_nevra in pdc_module["rpms"]:
+                    if rpm_nevra.endswith(".rpm"):
+                        rpm_nevra = rpm_nevra[:-len(".rpm")]
+                    mmd.artifacts.add_rpm(str(rpm_nevra))
+
                 tag = pdc_module["koji_tag"]
                 variant.mmds.append(mmd)
                 variant_tags[variant].append(tag)
