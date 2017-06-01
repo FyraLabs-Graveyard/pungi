@@ -88,6 +88,11 @@ class CompsWrapper(object):
 
             packages_by_type = collections.defaultdict(list)
             for pkg in group.packages:
+                if pkg.type == libcomps.PACKAGE_TYPE_UNKNOWN:
+                    raise RuntimeError(
+                        'Failed to process comps file. Package %s in group %s has unknown type'
+                        % (pkg.name, group.id))
+
                 packages_by_type[TYPE_MAPPING[pkg.type]].append(pkg)
 
             for type_name in TYPE_MAPPING.values():

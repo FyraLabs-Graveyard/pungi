@@ -19,6 +19,7 @@ COMPS_FILE = os.path.join(FIXTURE_DIR, 'comps.xml')
 COMPS_FORMATTED_FILE = os.path.join(FIXTURE_DIR, 'comps-formatted.xml')
 COMPS_GROUP_FILE = os.path.join(FIXTURE_DIR, 'comps-group.xml')
 COMPS_ENVIRONMENT_FILE = os.path.join(FIXTURE_DIR, 'comps-env.xml')
+COMPS_FILE_WITH_TYPO = os.path.join(FIXTURE_DIR, 'comps-typo.xml')
 
 
 class CompsWrapperTest(unittest.TestCase):
@@ -77,3 +78,11 @@ class CompsWrapperTest(unittest.TestCase):
         ]
         comps.filter_environments(groups)
         self.assertEqual(groups, [{"name": "minimal", "display_order": 99, "groups": ["core"]}])
+
+    def test_report_typo_in_package_type(self):
+        comps = CompsWrapper(COMPS_FILE_WITH_TYPO)
+        with self.assertRaises(RuntimeError) as ctx:
+            comps.write_comps(target_file=self.file.name)
+        self.assertIn(
+            'Package dummy-bash in group core has unknown type',
+            str(ctx.exception))
