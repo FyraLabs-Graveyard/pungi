@@ -253,7 +253,7 @@ def resolve_git_url(url):
     scheme = r.scheme.replace('git+', '')
 
     baseurl = urlparse.urlunsplit((scheme, r.netloc, r.path, '', ''))
-    _, output = run(['git', 'ls-remote', baseurl, ref])
+    _, output = git_ls_remote(baseurl, ref)
 
     lines = [line for line in output.split('\n') if line]
     if len(lines) == 0:
@@ -776,3 +776,8 @@ def retry(timeout=120, interval=30, wait_on=Exception):
                     time.sleep(interval)
         return inner
     return wrapper
+
+
+@retry(wait_on=RuntimeError)
+def git_ls_remote(baseurl, ref):
+    return run(['git', 'ls-remote', baseurl, ref])
