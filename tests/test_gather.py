@@ -617,7 +617,6 @@ class DepsolvingBase(object):
         self.assertNotIn("dummy-krb5-1.10-5.src.rpm", pkg_map["srpm"])
 
         self.assertItemsEqual(pkg_map["rpm"], [
-            "dummy-bash-4.2.37-6.x86_64.rpm",
             "dummy-basesystem-10.0-6.noarch.rpm",
             "dummy-filesystem-4.2.37-6.x86_64.rpm",
             "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
@@ -626,7 +625,6 @@ class DepsolvingBase(object):
             "Dummy-xulrunner-16.0.1-1.x86_64.rpm",
         ])
         self.assertItemsEqual(pkg_map["srpm"], [
-            "dummy-bash-4.2.37-6.src.rpm",
             "dummy-basesystem-10.0-6.src.rpm",
             "dummy-filesystem-4.2.37-6.src.rpm",
             "Dummy-firefox-16.0.1-1.src.rpm",
@@ -634,7 +632,6 @@ class DepsolvingBase(object):
             "Dummy-xulrunner-16.0.1-1.src.rpm",
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
-            "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
             "Dummy-firefox-debuginfo-16.0.1-1.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
@@ -1713,10 +1710,8 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 
     def test_firefox_selfhosting_with_krb5_lookaside(self):
         super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
-        self.assertFlags("dummy-krb5-1.10-5.x86_64", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
-        self.assertFlags("dummy-krb5-libs-1.10-5.x86_64", [PkgFlag.lookaside])
-        self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside, PkgFlag.self_hosting])
+        self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-debuginfo-1.10-5.x86_64", [PkgFlag.lookaside])
 
 if __name__ == "__main__":
