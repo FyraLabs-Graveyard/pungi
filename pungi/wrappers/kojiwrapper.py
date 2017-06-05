@@ -121,9 +121,11 @@ class KojiWrapper(object):
         """
         if getattr(self.koji_module.config, 'keytab', None):
             with util.temp_dir(prefix='krb_ccache') as tempdir:
-                yield {'KRB5CCNAME': 'DIR:%s' % tempdir}
+                env = os.environ.copy()
+                env['KRB5CCNAME'] = 'DIR:%s' % tempdir
+                yield env
         else:
-            yield {}
+            yield None
 
     def run_runroot_cmd(self, command, log_file=None):
         """
