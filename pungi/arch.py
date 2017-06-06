@@ -91,3 +91,18 @@ def split_name_arch(name_arch):
     else:
         name, arch = name_arch, None
     return name, arch
+
+
+def is_excluded(package, arches, logger=None):
+    """Check if package is excluded from given architectures."""
+    if (package.excludearch and set(package.excludearch) & set(arches)):
+        if logger:
+            logger.debug("Excluding (EXCLUDEARCH: %s): %s"
+                         % (sorted(set(package.excludearch)), package.file_name))
+        return True
+    if (package.exclusivearch and not (set(package.exclusivearch) & set(arches))):
+        if logger:
+            logger.debug("Excluding (EXCLUSIVEARCH: %s): %s"
+                         % (sorted(set(package.exclusivearch)), package.file_name))
+        return True
+    return False

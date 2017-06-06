@@ -118,5 +118,24 @@ class TestArch(unittest.TestCase):
         self.assertEqual(get_valid_multilib_arches("x86_64"), ['athlon', 'i686', 'i586', 'i486', 'i386'])
 
 
+class TestExclusiveExcludeArch(unittest.TestCase):
+    def test_no_exclude(self):
+        pkg = mock.Mock(excludearch=[], exclusivearch=[], file_name='pkg.rpm')
+        self.assertFalse(is_excluded(pkg, ['x86_64']))
+
+    def test_exclude_arch(self):
+        log = mock.Mock()
+        pkg = mock.Mock(excludearch=['x86_64'], exclusivearch=[], file_name='pkg.rpm')
+        self.assertTrue(is_excluded(pkg, ['x86_64'], logger=log))
+        self.assertEqual(log.mock_calls,
+                         [mock.call.debug("Excluding (EXCLUDEARCH: ['x86_64']): pkg.rpm")])
+
+    def test_exclusive_arch(self):
+        log = mock.Mock()
+        pkg = mock.Mock(excludearch=[], exclusivearch=['aarch64'], file_name='pkg.rpm')
+        self.assertTrue(is_excluded(pkg, ['x86_64'], logger=log))
+        self.assertEqual(log.mock_calls,
+                         [mock.call.debug("Excluding (EXCLUSIVEARCH: ['aarch64']): pkg.rpm")])
+
 if __name__ == "__main__":
     unittest.main()

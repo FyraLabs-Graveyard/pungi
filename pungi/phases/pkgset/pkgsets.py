@@ -30,7 +30,7 @@ from kobo.threads import WorkerThread, ThreadPool
 
 import pungi.wrappers.kojiwrapper
 from pungi.util import pkg_is_srpm
-from pungi.arch import get_valid_arches
+from pungi.arch import get_valid_arches, is_excluded
 
 
 class ReaderPool(ThreadPool):
@@ -160,13 +160,7 @@ class PackageSetBase(kobo.log.LoggingBase):
                     # TODO: test if it really works
                     continue
                 if exclusivearch_list and arch == "noarch":
-                    if i.excludearch and set(i.excludearch) & set(exclusivearch_list):
-                        self.log_debug("Excluding (EXCLUDEARCH: %s): %s"
-                                       % (sorted(set(i.excludearch)), i.file_name))
-                        continue
-                    if i.exclusivearch and not (set(i.exclusivearch) & set(exclusivearch_list)):
-                        self.log_debug("Excluding (EXCLUSIVEARCH: %s): %s"
-                                       % (sorted(set(i.exclusivearch)), i.file_name))
+                    if is_excluded(i, exclusivearch_list, logger=self._logger):
                         continue
 
                 if arch in ("nosrc", "src"):
