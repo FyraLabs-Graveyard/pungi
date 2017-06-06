@@ -46,6 +46,15 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 for a in compatible_arches
             ], [])
             for rpm_obj in rpms:
+                # Skip the RPM if it is excluded on this arch or exclusive
+                # for different arch.
+                if (rpm_obj.excludearch and
+                        set(rpm_obj.excludearch) & set(compatible_arches)):
+                    continue
+                if (rpm_obj.exclusivearch and not
+                        (set(rpm_obj.exclusivearch) & set(compatible_arches))):
+                    continue
+
                 for mmd in variant.mmds:
                     mmd_id = "%s-%s" % (mmd.name, mmd.stream)
                     # Generate architecture specific modulemd metadata
