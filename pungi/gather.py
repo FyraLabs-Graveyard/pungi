@@ -1211,11 +1211,10 @@ class Pungi(PungiBase):
         """Cycle through the list of package objects and
            download them from their respective repos."""
 
-        downloads = []
-        for pkg in polist:
-            downloads.append('%s.%s' % (pkg.name, pkg.arch))
-            downloads.sort()
-        self.logger.info("Download list: %s" % downloads)
+        for pkg in sorted(polist):
+            repo = self.ayum.repos.getRepo(pkg.repoid)
+            self.logger.info("Downloading %s.%s from %s",
+                             pkg.name, pkg.arch, repo.baseurl or repo.mirrorlist)
 
         pkgdir = os.path.join(self.config.get('pungi', 'destdir'),
                               self.config.get('pungi', 'version'),
