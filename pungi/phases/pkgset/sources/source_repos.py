@@ -68,7 +68,7 @@ def get_pkgset_from_repos(compose):
 
         pungi = PungiWrapper()
         pungi_conf = compose.paths.work.pungi_conf(arch=arch)
-        pungi_log = compose.paths.log.log_file(arch, "fooo")
+        pungi_log = compose.paths.log.log_file(arch, "pkgset_source")
         pungi_dir = compose.paths.work.pungi_download_dir(arch)
         cmd = pungi.get_pungi_cmd(pungi_conf, destdir=pungi_dir, name="FOO", selfhosting=True, fulltree=True, multilib_methods=["all"], nodownload=False, full_archlist=True, arch=arch, cache_dir=compose.paths.work.pungi_cache_dir(arch=arch))
         cmd.append("--force")
