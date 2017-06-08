@@ -14,5 +14,6 @@ Contents:
     about
     contributing
     testing
+    format
     configuration
     messaging
