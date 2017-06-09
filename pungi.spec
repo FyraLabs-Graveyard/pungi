@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.15
+Version:        4.1.16
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -102,6 +102,26 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Jun 09 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.16-1
+- Fix changelog generator script (lsedlar)
+- util: Retry resolving git branches (lsedlar)
+- arch: Move exclu(de|sive)arch check to a function (lsedlar)
+- gather-source: Check arch in module source (jkaluza)
+- koji-wrapper: Stop mangling env variables (lsedlar)
+- Ensure all phases are stopped (lsedlar)
+- comps-wrapper: Report unknown package types (lsedlar)
+- Generate proper modular metadata when there are different versions of the
+  same package in the variant (jkaluza)
+- checks: Make gpgkey a boolean option (lsedlar)
+- ostree: Refactor writing repo file (lsedlar)
+- iso-wrapper: Capture debug information for mounting (lsedlar)
+- comps-wrapper: Fix crash on conditional packages (lsedlar)
+- gather: Don't resolve dependencies in lookaside (lsedlar)
+- koji-wrapper: Run all blocking commands with fresh ccache (lsedlar)
+- Add @retry decorator and use it to retry connection on PDC on IOError and in
+  SCM's retry_run. (jkaluza)
+- Remove shebang from non-executable files (lsedlar)
+
 * Thu May 04 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.15-1
 - pkgset: Remove use of undefined variable (lsedlar)
 - Store RPM artifacts in resulting repository in modulemd metadata. (jkaluza)
