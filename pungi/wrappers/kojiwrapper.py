@@ -354,6 +354,11 @@ class KojiWrapper(object):
             if child_task['method'] not in ['createImage', 'createLiveMedia', 'createAppliance']:
                 continue
 
+            if child_task['state'] != koji.TASK_STATES['CLOSED']:
+                # The subtask is failed, which can happen with the can_fail
+                # option. Let's ignore it then.
+                continue
+
             is_scratch = child_task['request'][-1].get('scratch', False)
             task_result = self.koji_proxy.getTaskResult(child_task['id'])
 
