@@ -63,7 +63,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
                     if (srpm in mmd.components.rpms.keys() and
-                            rpm_obj.name not in mmd.filter.rpms):
+                            rpm_obj.name not in mmd.filter.rpms and
+                            rpm_obj.nevra in mmd.artifacts.rpms):
                         packages.add((rpm_obj.name, None))
                         added_rpms.setdefault(mmd_id, [])
                         added_rpms[mmd_id].append(str(rpm_obj.nevra))

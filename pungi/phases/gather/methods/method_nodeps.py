@@ -18,6 +18,7 @@ import pungi.arch
 from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
 
 import pungi.phases.gather.method
+from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 
 
 class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
@@ -43,10 +44,14 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             pkg = global_pkgset[i]
             if not pkg_is_rpm(pkg):
                 continue
-            for pkg_name, pkg_arch in packages:
+            for gathered_pkg, pkg_arch in packages:
                 if pkg.arch not in valid_arches:
                     continue
-                if pkg.name != pkg_name:
+                if (type(gathered_pkg) in [str, unicode]
+                        and pkg.name != gathered_pkg):
+                    continue
+                elif (type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
+                      and pkg.nevra != gathered_pkg.nevra):
                     continue
                 if pkg_arch is not None and pkg.arch != pkg_arch:
                     continue

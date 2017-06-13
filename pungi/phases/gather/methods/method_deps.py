@@ -17,6 +17,7 @@
 import os
 
 from kobo.shortcuts import run
+from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 
 from pungi.util import rmtree, get_arch_variant_data
 from pungi.wrappers.pungi import PungiWrapper
@@ -47,7 +48,11 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
 
 def _format_packages(pkgs):
     """Sort packages and merge name with arch."""
-    for pkg_name, pkg_arch in sorted(pkgs):
+    for pkg, pkg_arch in sorted(pkgs):
+        if type(pkg) in [SimpleRpmWrapper, RpmWrapper]:
+            pkg_name = pkg.name
+        else:
+            pkg_name = pkg
         if pkg_arch:
             yield '%s.%s' % (pkg_name, pkg_arch)
         else:
