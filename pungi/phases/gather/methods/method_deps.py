@@ -102,7 +102,8 @@ def resolve_deps(compose, arch, variant):
     msg = "Running pungi (arch: %s, variant: %s)" % (arch, variant)
     if compose.DEBUG and os.path.exists(pungi_log):
         compose.log_warning("[SKIP ] %s" % msg)
-        return pungi_wrapper.get_packages(open(pungi_log, "r").read())
+        with open(pungi_log, "r") as f:
+            return pungi_wrapper.get_packages(f)
 
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant)
@@ -150,7 +151,9 @@ def resolve_deps(compose, arch, variant):
         run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
     finally:
         rmtree(tmp_dir)
-    result = pungi_wrapper.get_packages(open(pungi_log, "r").read())
+
+    with open(pungi_log, "r") as f:
+        result = pungi_wrapper.get_packages(f)
 
     compose.log_info("[DONE ] %s" % msg)
     return result
@@ -162,7 +165,8 @@ def check_deps(compose, arch, variant):
 
     pungi_wrapper = PungiWrapper()
     pungi_log = compose.paths.work.pungi_log(arch, variant)
-    missing_deps = pungi_wrapper.get_missing_deps(open(pungi_log, "r").read())
+    with open(pungi_log, "r") as f:
+        missing_deps = pungi_wrapper.get_missing_deps(f)
     if missing_deps:
         for pkg in sorted(missing_deps):
             compose.log_error("Unresolved dependencies in package %s: %s" % (pkg, sorted(missing_deps[pkg])))

@@ -200,11 +200,10 @@ class PungiWrapper(object):
 
         return cmd
 
-    def get_packages(self, output):
-        global PACKAGES_RE
+    def get_packages(self, f):
         result = dict(((i, []) for i in PACKAGES_RE))
 
-        for line in output.splitlines():
+        for line in f:
             for file_type, pattern in PACKAGES_RE.iteritems():
                 match = pattern.match(line)
                 if match:
@@ -222,11 +221,10 @@ class PungiWrapper(object):
 
         return result
 
-    def get_missing_deps(self, output):
-        global UNRESOLVED_DEPENDENCY_RE
+    def get_missing_deps(self, f):
         result = {}
 
-        for line in output.splitlines():
+        for line in f:
             match = UNRESOLVED_DEPENDENCY_RE.match(line)
             if match:
                 result.setdefault(match.group(2), set()).add(match.group(1))
