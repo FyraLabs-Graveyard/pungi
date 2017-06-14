@@ -259,7 +259,13 @@ class KojiPackageSet(PackageSetBase):
                        % (rpm_info, self.sigkey_ordering, paths))
         return None
 
-    def populate(self, tag, event=None, inherit=True):
+    def populate(self, tag, event=None, inherit=True, logfile=None):
+        """Populate the package set with packages from given tag.
+
+        :param event: the Koji event to query at (or latest if not given)
+        :param inherit: whether to enable tag inheritance
+        :param logfile: path to file where package source tags should be logged
+        """
         result_rpms = []
         result_srpms = []
 
@@ -288,5 +294,14 @@ class KojiPackageSet(PackageSetBase):
             else:
                 result_rpms.append((rpm_info, build_info))
         result = self.read_packages(result_rpms, result_srpms)
+
+        # Create a log with package NEVRAs and the tag they are coming from
+        if logfile:
+            with open(logfile, 'w') as f:
+                for rpm in rpms:
+                    build = builds_by_id[rpm['build_id']]
+                    f.write('{name}-{ep}:{version}-{release}.{arch}: {tag} [{tag_id}]\n'.format(
+                        tag=build['tag_name'], tag_id=build['tag_id'], ep=rpm['epoch'] or 0, **rpm))
+
         self.log_info("[DONE ] %s" % msg)
         return result

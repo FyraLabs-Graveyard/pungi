@@ -204,7 +204,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
                 arches=all_arches)
-            pkgset.populate(compose_tag, event_id, inherit=inherit)
+            # Create a filename for log with package-to-tag mapping. The tag
+            # name is included in filename, so any slashes in it are replaced
+            # with underscores just to be safe.
+            logfile = compose.paths.log.log_file(
+                None, 'packages_from_%s' % compose_tag.replace('/', '_'))
+            pkgset.populate(compose_tag, event_id, inherit=inherit, logfile=logfile)
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:
                     # Optimization for case where we have just single compose

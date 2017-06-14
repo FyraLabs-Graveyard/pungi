@@ -81,6 +81,7 @@ class TestGetKojiEvent(helpers.PungiTestCase):
         with open(self.event_file) as f:
             self.assertEqual(json.load(f), EVENT_INFO)
 
+
 class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     def setUp(self):
         super(TestPopulateGlobalPkgset, self).setUp()
@@ -106,7 +107,8 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.assertIs(pkgset, orig_pkgset)
         self.assertEqual(
             pkgset.mock_calls,
-            [mock.call.populate('f25', 123456, inherit=True),
+            [mock.call.populate('f25', 123456, inherit=True,
+                                logfile=self.topdir + '/logs/global/packages_from_f25.global.log'),
              mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
                                       remove_path_prefix='/prefix')])
         self.assertItemsEqual(pickle_dumps.call_args_list,

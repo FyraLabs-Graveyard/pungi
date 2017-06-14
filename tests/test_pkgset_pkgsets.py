@@ -167,7 +167,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
 
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None])
 
-        result = pkgset.populate('f25')
+        result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
 
         self.assertEqual(
             self.koji_wrapper.koji_proxy.mock_calls,
@@ -181,6 +181,18 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                                          'rpms/bash-debuginfo@4.3.42@4.fc24@i686'],
                                 'x86_64': ['rpms/bash@4.3.42@4.fc24@x86_64',
                                            'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64']})
+
+        self.maxDiff = None
+        with open(self.topdir + '/pkgset.log') as f:
+            self.assertEqual(
+                sorted(f.read().strip().splitlines()),
+                sorted(['pungi-0:4.1.3-3.fc25.noarch: f25 [335]',
+                        'pungi-0:4.1.3-3.fc25.src: f25 [335]',
+                        'bash-0:4.3.42-4.fc24.i686: f25 [335]',
+                        'bash-0:4.3.42-4.fc24.x86_64: f25 [335]',
+                        'bash-0:4.3.42-4.fc24.src: f25 [335]',
+                        'bash-debuginfo-0:4.3.42-4.fc24.i686: f25 [335]',
+                        'bash-debuginfo-0:4.3.42-4.fc24.x86_64: f25 [335]']))
 
     def test_only_one_arch(self):
         self._touch_files([
