@@ -127,7 +127,7 @@ class OstreeInstallerThread(WorkerThread):
 
     def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir, volid):
         lorax_wrapper = lorax.LoraxWrapper()
-        cmd = lorax_wrapper.get_lorax_cmd(
+        lorax_cmd = lorax_wrapper.get_lorax_cmd(
             compose.conf['release_name'],
             compose.conf["release_version"],
             self._get_release(compose, config),
@@ -145,6 +145,8 @@ class OstreeInstallerThread(WorkerThread):
             is_final=compose.supported,
             log_dir=self.logdir,
         )
+        cmd = 'rm -rf %s && %s' % (pipes.quote(output_dir),
+                                   ' '.join([pipes.quote(x) for x in lorax_cmd]))
 
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
