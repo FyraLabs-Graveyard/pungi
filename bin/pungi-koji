@@ -400,6 +400,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     pungi.phases.run_all([createiso_phase,
                           liveimages_phase,
                           image_build_phase,
+                          livemedia_phase,
                           ostree_installer_phase,
                           osbs_phase])
 
