@@ -2,7 +2,7 @@
  About Pungi
 =============
 
-.. figure:: pungi_snake-sm-dark.png
+.. figure:: _static/pungi_snake-sm-dark.png
     :align: right
     :alt: Pungi Logo
 

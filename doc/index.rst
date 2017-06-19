@@ -17,3 +17,4 @@ Contents:
     format
     configuration
     messaging
+    phases
