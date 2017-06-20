@@ -97,11 +97,12 @@ class OstreeThreadTest(helpers.PungiTestCase):
         if extra:
             lorax_cmd.extend(extra)
 
-        lorax_cmd.append(self.topdir + '/work/x86_64/Everything/ostree_installer')
+        outdir = self.topdir + '/work/x86_64/Everything/ostree_installer'
+        lorax_cmd.append(outdir)
 
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
-                                    lorax_cmd,
+                                    'rm -rf %s && %s' % (outdir, ' '.join(lorax_cmd)),
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
                                     task_id=True, use_shell=True, weight=weight)])
