@@ -17,6 +17,7 @@
 import os
 import cPickle as pickle
 import json
+import re
 
 import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
@@ -52,11 +53,29 @@ def get_pdc_client_session(compose):
 
 
 def variant_dict_from_str(module_str):
-    module_info = {}
+    """
+    Method which parses module NVR string, defined in a variants file and returns
+    a module info dictionary instead.
 
-    release_start = module_str.rfind('-')
-    module_info['variant_version'] = module_str[release_start+1:]
-    module_info['variant_id'] = module_str[:release_start]
+    Attributes:
+        module_str: string, the NV(R) of module defined in a variants file.
+    """
+
+    module_info = {}
+    # The regex is matching a string which should represent the release number
+    # of a module. The release number is in format: "%Y%m%d%H%M%S"
+    release_regex = re.compile("^(\d){14}$")
+
+    section_start = module_str.rfind('-')
+    module_str_first_part = module_str[section_start+1:]
+    if release_regex.match(module_str_first_part):
+        module_info['variant_release'] = module_str_first_part
+        module_str = module_str[:section_start]
+        section_start = module_str.rfind('-')
+        module_info['variant_version'] = module_str[section_start+1:]
+    else:
+        module_info['variant_version'] = module_str_first_part
+    module_info['variant_id'] = module_str[:section_start]
     module_info['variant_type'] = 'module'
 
     return module_info

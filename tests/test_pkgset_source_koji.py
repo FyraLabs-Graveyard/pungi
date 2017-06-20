@@ -6,6 +6,7 @@ import os
 import sys
 import unittest
 import json
+import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -196,6 +197,29 @@ class TestSourceKoji(helpers.PungiTestCase):
         self.assertEqual(path_prefix, '/prefix/')
         self.assertItemsEqual(KojiWrapper.mock_calls,
                               [mock.call('koji')])
+
+
+class TestCorrectNVR(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(TestCorrectNVR, self).setUp()
+        self.nv = "base-runtime-f26"
+        self.nvr = "base-runtime-f26-20170502134116"
+        self.release_regex = re.compile("^(\d){14}$")
+
+    def test_nv(self):
+        module_info = source_koji.variant_dict_from_str(self.nv)
+        expectedKeys = ["variant_version", "variant_id", "variant_type"]
+        self.assertItemsEqual(module_info.keys(), expectedKeys)
+
+    def test_nvr(self):
+        module_info = source_koji.variant_dict_from_str(self.nvr)
+        expectedKeys = ["variant_version", "variant_id", "variant_type", "variant_release"]
+        self.assertItemsEqual(module_info.keys(), expectedKeys)
+
+    def test_correct_release(self):
+        module_info = source_koji.variant_dict_from_str(self.nvr)
+        self.assertIsNotNone(self.release_regex.match(module_info["variant_release"]))
 
 
 if __name__ == "__main__":
