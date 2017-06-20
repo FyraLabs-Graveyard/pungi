@@ -49,8 +49,7 @@ packages above as they are used by calling an executable. ::
     $ for pkg in koji rpm rpmUtils pykickstart selinux createrepo yum urlgrabber; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ for pkg in _selinux deltarpm _deltarpm krbV sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install https://github.com/release-engineering/kobo/archive/0.5.2.tar.gz
-    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile python-multilib
+    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile python-multilib kobo
 
 Now you should be able to run all existing tests.
 
