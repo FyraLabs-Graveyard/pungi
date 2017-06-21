@@ -16,6 +16,7 @@
 
 import pungi.arch
 from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
+from pungi.wrappers.comps import CompsWrapper
 
 import pungi.phases.gather.method
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
@@ -24,13 +25,18 @@ from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
 
-    def __call__(self, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_sets, path_prefix=None, fulltree_excludes=None, prepopulate=None):
+    def __call__(self, arch, variant, pkgs, groups, filter_packages,
+                 multilib_whitelist, multilib_blacklist, package_sets,
+                 path_prefix=None, fulltree_excludes=None, prepopulate=None):
         global_pkgset = package_sets["global"]
         result = {
             "rpm": [],
             "srpm": [],
             "debuginfo": [],
         }
+
+        group_packages = expand_groups(self.compose, arch, groups)
+        packages = pkgs | group_packages
 
         seen_rpms = {}
         seen_srpms = {}
@@ -89,3 +95,19 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             })
 
         return result
+
+
+def expand_groups(compose, arch, groups):
+    """Read comps file filtered for given architecture and return all packages
+    in given groups.
+
+    :returns: A set of tuples (pkg_name, arch)
+    """
+    comps_file = compose.paths.work.comps(arch, create_dir=False)
+    comps = CompsWrapper(comps_file)
+    packages = set()
+
+    for group in groups:
+        packages.update([(pkg, arch) for pkg in comps.get_packages(group)])
+
+    return packages

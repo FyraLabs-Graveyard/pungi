@@ -58,6 +58,13 @@ class CompsWrapper(object):
         """Return a list of group IDs."""
         return [group.id for group in self.comps.groups]
 
+    def get_packages(self, group):
+        """Return list of package names in given group."""
+        for grp in self.comps.groups:
+            if grp.id == group:
+                return [pkg.name for pkg in grp.packages]
+        raise KeyError('No such group %r' % group)
+
     def write_comps(self, comps_obj=None, target_file=None):
         if not comps_obj:
             comps_obj = self.generate_comps()

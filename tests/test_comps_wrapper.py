@@ -41,6 +41,17 @@ class CompsWrapperTest(unittest.TestCase):
             comps.get_comps_groups(),
             ['core', 'standard', 'text-internet', 'firefox', 'resilient-storage', 'basic-desktop'])
 
+    def test_get_packages(self):
+        comps = CompsWrapper(COMPS_FILE)
+        self.assertItemsEqual(
+            comps.get_packages('text-internet'),
+            {'dummy-elinks', 'dummy-tftp'})
+
+    def test_get_packages_for_non_existing_group(self):
+        comps = CompsWrapper(COMPS_FILE)
+        with self.assertRaises(KeyError):
+            comps.get_packages('foo')
+
     def test_write_comps(self):
         comps = CompsWrapper(COMPS_FILE)
         comps.write_comps(target_file=self.file.name)
