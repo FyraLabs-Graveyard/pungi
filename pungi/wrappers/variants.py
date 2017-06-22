@@ -346,36 +346,3 @@ class Variant(object):
     def get_optional(self, arch=None):
         """Return all 'optional' child variants. No recursion."""
         return self.get_variants(arch=arch, types=["optional"], recursive=False)
-
-
-def main(argv):
-    import optparse
-
-    parser = optparse.OptionParser("%prog <variants.xml>")
-    opts, args = parser.parse_args(argv)
-
-    if len(args) != 1:
-        parser.error("Please provide a <variants.xml> file.")
-
-    file_path = args[0]
-    try:
-        file_obj = open(file_path, "r")
-    except Exception as ex:
-        print(str(ex), file=sys.stderr)
-        sys.exit(1)
-
-    for top_level_variant in list(VariantsXmlParser(file_obj).parse().values()):
-        for i in top_level_variant.get_variants(types=["self", "variant", "addon", "layered-product", "optional"], recursive=True):
-            print("ID: %-30s NAME: %-40s TYPE: %-12s UID: %s" % (i.id, i.name, i.type, i))
-            print("    ARCHES: %s" % ", ".join(sorted(i.arches)))
-            for group in i.groups:
-                print("    GROUP:  %(name)-40s GLOB: %(glob)-5s DEFAULT: %(default)-5s USERVISIBLE: %(uservisible)-5s" % group)
-            for module in i.modules:
-                print("    MODULE:  %(name)-40s GLOB: %(glob)-5s DEFAULT: %(default)-5s USERVISIBLE: %(uservisible)-5s" % module)
-            for env in i.environments:
-                print("    ENV:    %(name)-40s DISPLAY_ORDER: %(display_order)s" % env)
-            print()
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
