@@ -4,7 +4,7 @@
 
 import sys
 import fnmatch
-import optparse
+import argparse
 import lxml.etree
 import re
 from io import StringIO
@@ -151,30 +151,35 @@ class CompsFilter(object):
 
 
 def main():
-    parser = optparse.OptionParser("%prog [options] <comps.xml>")
-    parser.add_option("--output", help="redirect output to a file")
-    parser.add_option("--arch", help="filter groups and packagews according to an arch")
-    parser.add_option("--arch-only-groups", default=False, action="store_true", help="keep only arch groups, remove the rest")
-    parser.add_option("--arch-only-packages", default=False, action="store_true", help="keep only arch packages, remove the rest")
-    parser.add_option("--remove-categories", default=False, action="store_true", help="remove all categories")
-    parser.add_option("--remove-langpacks", default=False, action="store_true", help="remove the langpacks section")
-    parser.add_option("--remove-translations", default=False, action="store_true", help="remove all translations")
-    parser.add_option("--remove-environments", default=False, action="store_true", help="remove all environment sections")
-    parser.add_option("--keep-empty-group", default=[], action="append", metavar="[GROUPID]", help="keep groups even if they are empty")
-    parser.add_option("--no-cleanup", default=False, action="store_true", help="don't remove empty groups and categories")
-    parser.add_option("--no-reindent", default=False, action="store_true", help="don't re-indent the output")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", help="redirect output to a file")
+    parser.add_argument("--arch", help="filter groups and packagews according to an arch")
+    parser.add_argument("--arch-only-groups", default=False, action="store_true",
+                        help="keep only arch groups, remove the rest")
+    parser.add_argument("--arch-only-packages", default=False, action="store_true",
+                        help="keep only arch packages, remove the rest")
+    parser.add_argument("--remove-categories", default=False, action="store_true",
+                        help="remove all categories")
+    parser.add_argument("--remove-langpacks", default=False, action="store_true",
+                        help="remove the langpacks section")
+    parser.add_argument("--remove-translations", default=False, action="store_true",
+                        help="remove all translations")
+    parser.add_argument("--remove-environments", default=False, action="store_true",
+                        help="remove all environment sections")
+    parser.add_argument("--keep-empty-group", default=[], action="append", metavar="GROUPID",
+                        help="keep groups even if they are empty")
+    parser.add_argument("--no-cleanup", default=False, action="store_true",
+                        help="don't remove empty groups and categories")
+    parser.add_argument("--no-reindent", default=False, action="store_true",
+                        help="don't re-indent the output")
+    parser.add_argument("comps_file", metavar='COMPS_FILE')
 
-    opts, args = parser.parse_args()
-
-    if len(args) != 1:
-        parser.error("please specify exactly one comps file")
-
-    comps_file = args[0]
+    opts = parser.parse_args()
 
     if opts.arch is None:
         parser.error("please specify arch")
 
-    file_obj = open(comps_file, "r")
+    file_obj = open(opts.comps_file, "r")
     f = CompsFilter(file_obj, reindent=not opts.no_reindent)
     f.filter_packages(opts.arch, opts.arch_only_packages)
     f.filter_groups(opts.arch, opts.arch_only_groups)
