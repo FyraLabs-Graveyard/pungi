@@ -4,7 +4,7 @@
 
 import os
 import sys
-import optparse
+import argparse
 import logging
 import locale
 import datetime
@@ -31,29 +31,35 @@ COMPOSE = None
 def main():
     global COMPOSE
 
-    parser = optparse.OptionParser()
-    parser.add_option(
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         "--target-dir",
         metavar="PATH",
         help="a compose is created under this directory",
     )
-    parser.add_option(
+    group.add_argument(
+        "--compose-dir",
+        metavar="PATH",
+        help="reuse an existing compose directory (DANGEROUS!)",
+    )
+    parser.add_argument(
         "--label",
         help="specify compose label (example: Snapshot-1.0); required for production composes"
     )
-    parser.add_option(
+    parser.add_argument(
         "--no-label",
         action="store_true",
         default=False,
         help="make a production compose without label"
     )
-    parser.add_option(
+    parser.add_argument(
         "--supported",
         action="store_true",
         default=False,
         help="set supported flag on media (automatically on for 'RC-x.y' labels)"
     )
-    parser.add_option(
+    parser.add_argument(
         "--old-composes",
         metavar="PATH",
         dest="old_composes",
@@ -61,93 +67,89 @@ def main():
         action="append",
         help="Path to directory with old composes. Reuse an existing repodata from the most recent compose.",
     )
-    parser.add_option(
-        "--compose-dir",
-        metavar="PATH",
-        help="reuse an existing compose directory (DANGEROUS!)",
-    )
-    parser.add_option(
+    parser.add_argument(
         "--debug-mode",
         action="store_true",
         default=False,
         help="run pungi in DEBUG mode (DANGEROUS!)",
     )
-    parser.add_option(
+    parser.add_argument(
         "--config",
-        help="Config file"
+        help="Config file",
+        required=True
     )
-    parser.add_option(
+    parser.add_argument(
         "--skip-phase",
         metavar="PHASE",
         action="append",
         default=[],
         help="skip a compose phase",
     )
-    parser.add_option(
+    parser.add_argument(
         "--just-phase",
         metavar="PHASE",
         action="append",
         default=[],
         help="run only a specified compose phase",
     )
-    parser.add_option(
+    parser.add_argument(
         "--nightly",
         action="store_const",
         const="nightly",
         dest="compose_type",
         help="make a nightly compose",
     )
-    parser.add_option(
+    parser.add_argument(
         "--test",
         action="store_const",
         const="test",
         dest="compose_type",
         help="make a test compose",
     )
-    parser.add_option(
+    parser.add_argument(
         "--ci",
         action="store_const",
         const="ci",
         dest="compose_type",
         help="make a CI compose",
     )
-    parser.add_option(
+    parser.add_argument(
         "--koji-event",
         metavar="ID",
-        type="int",
+        type=int,
         help="specify a koji event for populating package set",
     )
-    parser.add_option(
+    parser.add_argument(
         "--version",
         action="store_true",
         help="output version information and exit",
     )
-    parser.add_option(
+    parser.add_argument(
         "--notification-script",
         help="script for sending progress notification messages"
     )
-    parser.add_option(
+    parser.add_argument(
         "--no-latest-link",
         action="store_true",
         default=False,
         dest="no_latest_link",
         help="don't create latest symbol link to this compose"
     )
-    parser.add_option(
+    parser.add_argument(
         "--latest-link-status",
         metavar="STATUS",
         action="append",
         default=[],
         help="only create latest symbol link to this compose when compose status matches specified status",
     )
-    parser.add_option(
+    parser.add_argument(
         "--quiet",
         action="store_true",
         default=False,
         help="quiet mode, don't print log on screen"
     )
 
-    opts, args = parser.parse_args()
+    opts = parser.parse_args()
     import pungi.notifier
     notifier = pungi.notifier.PungiNotifier(opts.notification_script)
 
@@ -164,12 +166,6 @@ def main():
         print("pungi %s" % get_full_version())
         sys.exit(0)
 
-    if opts.target_dir and opts.compose_dir:
-        abort("cannot specify --target-dir and --compose-dir at once")
-
-    if not opts.target_dir and not opts.compose_dir:
-        abort("please specify a target directory")
-
     if opts.target_dir and not opts.compose_dir:
         opts.target_dir = os.path.abspath(opts.target_dir)
         if not os.path.isdir(opts.target_dir):
@@ -183,8 +179,6 @@ def main():
     if compose_type == "production" and not opts.label and not opts.no_label:
         abort("must specify label for a production compose")
 
-    if not opts.config:
-        abort("please specify a config")
     opts.config = os.path.abspath(opts.config)
 
     create_latest_link = not opts.no_latest_link
