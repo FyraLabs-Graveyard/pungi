@@ -112,7 +112,10 @@ class GatherBase(object):
         self.dnf = dnf_obj
 
         q = self._query
-        q = q.filter(latest_per_arch=True).apply()
+        # We can not filter only latest packages yet, because we need to apply
+        # excludes only to main repos and not lookaside. Filtering latest here
+        # makes that impossible as it could remove older versions from
+        # lookaside.
 
         # source packages
         self.q_source_packages = q.filter(arch=self.dnf.arch_wrapper.source_arches).apply()
@@ -324,6 +327,58 @@ class Gather(GatherBase):
 
         return result
 
+    def _filter_queue(self, queue, exclude):
+        """Given an name of a queue (stored as attribute in `self`), exclude
+        all given packages and keep only the latest per package name and arch.
+        """
+        setattr(self, queue, getattr(self, queue).filter(pkg__neq=exclude).latest().apply())
+
+    @Profiler("Gather._apply_excludes()")
+    def _apply_excludes(self, excludes):
+        """Exclude packages from all queues. An excluded package will no longer
+        be visible in the depsolving process (as if it was not in the repo in
+        the first place).
+
+        All packages matching patterns in `excludes` argument are removed, plus
+        anything matched by multilib blacklist. Finally only latest versions of
+        each package (per arch) is preserved in the queue.
+        """
+        exclude = set()
+        for pattern in excludes:
+            with Profiler("Gather._apply_excludes():exclude"):
+                # TODO: debug
+                if pattern.endswith(".+"):
+                    pkgs = self.q_multilib_binary_packages.filter(
+                        name__glob=pattern[:-2], arch__neq='noarch',
+                        reponame__neq=self.opts.lookaside_repos)
+                elif pattern.endswith(".src"):
+                    pkgs = self.q_source_packages.filter(
+                        name__glob=pattern[:-4],
+                        reponame__neq=self.opts.lookaside_repos)
+                else:
+                    pkgs = self.q_binary_packages.filter(
+                        name__glob=pattern,
+                        reponame__neq=self.opts.lookaside_repos)
+
+                exclude.update(pkgs)
+                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
+                self.dnf._sack.add_excludes(pkgs)
+
+        for pattern in self.opts.multilib_blacklist:
+            with Profiler("Gather._apply_excludes():exclude-multilib-blacklist"):
+                # TODO: does whitelist affect this in any way?
+                pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern, arch__neq='noarch')
+                exclude.update(pkgs)
+                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
+                self.dnf._sack.add_excludes(pkgs)
+
+        with Profiler("Gather._apply_excludes():exclude-queries"):
+            self._filter_queue('q_binary_packages', exclude)
+            self._filter_queue('q_native_binary_packages', exclude)
+            self._filter_queue('q_multilib_binary_packages', exclude)
+            self._filter_queue('q_noarch_binary_packages', exclude)
+            self._filter_queue('q_source_packages', exclude)
+
     @Profiler("Gather.add_initial_packages()")
     def add_initial_packages(self, pattern_list):
         added = set()
@@ -336,36 +391,7 @@ class Gather(GatherBase):
             else:
                 includes.append(pattern)
 
-        exclude = set()
-        for pattern in excludes:
-            with Profiler("Gather.add_initial_packages():exclude"):
-                # TODO: debug
-                if pattern.endswith(".+"):
-                    pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2], arch__neq='noarch')
-                elif pattern.endswith(".src"):
-                    pkgs = self.q_source_packages.filter(name__glob=pattern[:-4])
-                else:
-                    pkgs = self.q_binary_packages.filter(name__glob=pattern)
-
-                exclude.update(pkgs)
-                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
-                self.dnf._sack.add_excludes(pkgs)
-
-        for pattern in self.opts.multilib_blacklist:
-            with Profiler("Gather.add_initial_packages():exclude-multilib-blacklist"):
-                # TODO: does whitelist affect this in any way?
-                pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern, arch__neq='noarch')
-                exclude.update(pkgs)
-                self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
-                self.dnf._sack.add_excludes(pkgs)
-
-        with Profiler("Gather.add_initial_packages():exclude-queries"):
-            self.q_binary_packages = self.q_binary_packages.filter(pkg__neq=exclude).apply()
-            self.q_native_binary_packages = self.q_native_binary_packages.filter(pkg__neq=exclude).apply()
-            self.q_multilib_binary_packages = self.q_multilib_binary_packages.filter(pkg__neq=exclude).apply()
-            self.q_noarch_binary_packages = self.q_noarch_binary_packages.filter(pkg__neq=exclude).apply()
-            self.q_source_packages = self.q_source_packages.filter(pkg__neq=exclude).apply()
-
+        self._apply_excludes(excludes)
         self.init_query_cache()
 
         for pattern in includes:
