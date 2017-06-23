@@ -509,6 +509,25 @@ def _make_schema():
                 "type": "object",
             },
 
+            "osbs_config": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string"},
+                    "target": {"type": "string"},
+                    "name": {"type": "string"},
+                    "version": {"type": "string"},
+                    "scratch": {"type": "boolean"},
+                    "priority": {"type": "number"},
+                    "repo": {
+                        "$ref": "#/definitions/repos",
+                        "append": "repo_from",
+                    },
+                    "gpgkey": {"type": "string"},
+                    "git_branch": {"type": "string"},
+                },
+                "required": ["url", "target", "git_branch"]
+            },
+
             "string_tuples": {
                 "type": "array",
                 "items": {
@@ -986,23 +1005,16 @@ def _make_schema():
                     # format does not let us validate it as there is no regular
                     # expression to describe all regular expressions.
                     ".+": {
-                        "type": "object",
-                        "properties": {
-                            "url": {"type": "string"},
-                            "target": {"type": "string"},
-                            "name": {"type": "string"},
-                            "version": {"type": "string"},
-                            "scratch": {"type": "boolean"},
-                            "priority": {"type": "number"},
-                            "repo": {
-                                "$ref": "#/definitions/repos",
-                                "append": "repo_from",
+                        "anyOf": [
+                            {"$ref": "#/definitions/osbs_config"},
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/osbs_config",
+                                },
                             },
-                            "gpgkey": {"type": "string"},
-                            "git_branch": {"type": "string"},
-                        },
-                        "required": ["url", "target", "git_branch"]
-                    }
+                        ],
+                    },
                 },
                 "additionalProperties": False,
             },

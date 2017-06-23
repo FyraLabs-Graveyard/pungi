@@ -248,7 +248,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             '^Server$': cfg
         }
         self.assertEqual(
-            (['Failed validation in osbs.^Server$: \'%s\' is a required property' % key], []),
+            (['Failed validation in osbs.^Server$: %r is not valid under any of the given schemas' % cfg], []),
             checks.validate(config))
 
     @mock.patch('pungi.util.resolve_git_url')
