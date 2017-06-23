@@ -319,6 +319,8 @@ class Gather(GatherBase):
                 deps = self._get_best_package(deps, req=req)
                 self.finished_get_package_deps_reqs[str(req)].update(deps)
                 result.update((dep, req) for dep in deps)
+            else:
+                self.logger.warn("Unresolvable dependency %s in %s.%s" % (req, pkg.name, pkg.arch))
 
         return result
 
