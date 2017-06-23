@@ -520,6 +520,9 @@ class Pungi(PungiBase):
         for pkg in exactmatched + matched:
             if pkg.arch == "src":
                 continue
+            if pkg.repoid in self.lookaside_repos:
+                # Don't exclude packages from lookaside
+                continue
 
             found = None
             for pattern in excluded_list:
@@ -544,6 +547,9 @@ class Pungi(PungiBase):
             if pkg.arch == "src":
                 continue
             if pkg.arch not in self.valid_multilib_arches:
+                continue
+            if pkg.repoid in self.lookaside_repos:
+                # Don't exclude packages from lookaside
                 continue
 
             found = None
