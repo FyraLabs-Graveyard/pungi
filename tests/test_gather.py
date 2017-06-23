@@ -646,6 +646,52 @@ class DepsolvingBase(object):
             "Dummy-xulrunner-debuginfo-16.0.1-1.x86_64.rpm",
         ])
 
+    def test_old_dep_in_lookaside_is_not_pulled_in(self):
+        # main repo:
+        #   dummy-cockpit-docker-141-1 depends on dummy-cockpit-system
+        #   dummy-cockpit-system-141-1
+        # lookaside:
+        #   dummy-cockpit-system-138-1
+        #
+        # By default newer version should be pulled in.
+        self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/cockpit")
+        self.lookaside = os.path.join(os.path.dirname(__file__),
+                                      "fixtures/repos/cockpit-lookaside")
+        packages = [
+            'dummy-cockpit-docker',
+        ]
+        pkg_map = self.go(packages, None, lookaside=self.lookaside)
+
+        self.assertEqual(self.broken_deps, {})
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-cockpit-docker-141-1.noarch.rpm",
+            "dummy-cockpit-system-141-1.noarch.rpm",
+        ])
+
+    def test_does_not_exclude_from_lookaside(self):
+        # main repo:
+        #   dummy-cockpit-docker-141-1 depends on dummy-cockpit-system
+        #   dummy-cockpit-system-141-1
+        # lookaside:
+        #   dummy-cockpit-system-138-1
+        #
+        # The -system package is excluded and the dependency should be
+        # satisfied by the older version in lookaside. No broken dependencies
+        # should be reported.
+        self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/cockpit")
+        self.lookaside = os.path.join(os.path.dirname(__file__),
+                                      "fixtures/repos/cockpit-lookaside")
+        packages = [
+            'dummy-cockpit-docker',
+            '-dummy-cockpit-system',
+        ]
+        pkg_map = self.go(packages, None, lookaside=self.lookaside)
+
+        self.assertEqual(self.broken_deps, {})
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-cockpit-docker-141-1.noarch.rpm",
+        ])
+
     def test_firefox_fulltree(self):
         packages = [
             "Dummy-firefox",
