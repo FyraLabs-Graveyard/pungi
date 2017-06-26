@@ -25,14 +25,6 @@ from .utils import (make_log_file, tweak_treeconf,
 
 
 class Tree(OSTree):
-    def _init_repo(self):
-        """If the ostree repo does not exist, initialize it."""
-        log_file = make_log_file(self.logdir, 'init-ostree-repo')
-        if not os.path.isdir(self.repo) or not os.listdir(self.repo):
-            makedirs(self.repo)
-            shortcuts.run(['ostree', 'init', '--repo=%s' % self.repo, '--mode=archive-z2'],
-                          show_cmd=True, stdout=True, logfile=log_file)
-
     def _make_tree(self):
         """Compose OSTree tree"""
         log_file = make_log_file(self.logdir, 'create-ostree-repo')
@@ -95,7 +87,6 @@ class Tree(OSTree):
 
         self.commitid_file = make_log_file(self.logdir, 'commitid')
 
-        self._init_repo()
         self._make_tree()
         self._update_ref()
         if self.update_summary:
