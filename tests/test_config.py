@@ -65,6 +65,14 @@ class PkgsetConfigTestCase(ConfigTestCase):
             [checks.REQUIRES.format('pkgset_source', 'koji', 'pkgset_koji_tag'),
              checks.CONFLICTS.format('pkgset_source', 'koji', 'pkgset_repos')])
 
+    def test_pkgset_multiple_koji_tags(self):
+        cfg = load_config(
+            pkgset_source='koji',
+            pkgset_koji_tag=['f25', 'f25-extra'],
+            pkgset_koji_inherit=False,
+        )
+        self.assertValidation(cfg)
+
 
 class ReleaseConfigTestCase(ConfigTestCase):
     def test_layered_without_base_product(self):

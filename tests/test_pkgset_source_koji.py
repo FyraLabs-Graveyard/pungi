@@ -117,6 +117,36 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
+    @mock.patch('cPickle.dumps')
+    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
+    def test_populate_with_multiple_koji_tags(self, KojiPackageSet, pickle_dumps):
+        self.compose = helpers.DummyCompose(self.topdir, {
+            'pkgset_koji_tag': ['f25', 'f25-extra'],
+            'sigkeys': mock.Mock(),
+        })
+        self.compose.DEBUG = False
+
+        pickle_dumps.return_value = 'DATA'
+
+        orig_pkgset = KojiPackageSet.return_value
+
+        pkgset = source_koji.populate_global_pkgset(
+            self.compose, self.koji_wrapper, '/prefix', 123456)
+
+        self.assertIs(pkgset, orig_pkgset)
+        pkgset.assert_has_calls([mock.call.populate('f25', 123456, inherit=True,
+                                                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log')])
+        pkgset.assert_has_calls([mock.call.populate('f25-extra', 123456, inherit=True,
+                                                    logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log')])
+        pkgset.assert_has_calls([mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
+                                                          remove_path_prefix='/prefix')])
+        # for each tag, call pkgset.merge once for each variant and once for global pkgset
+        self.assertEqual(pkgset.merge.call_count, 2 * (len(self.compose.all_variants.values()) + 1))
+        self.assertItemsEqual(pickle_dumps.call_args_list,
+                              [mock.call(orig_pkgset)])
+        with open(self.pkgset_path) as f:
+            self.assertEqual(f.read(), 'DATA')
+
     @mock.patch('cPickle.load')
     def test_populate_in_debug_mode(self, pickle_load):
         helpers.touch(self.pkgset_path, 'DATA')

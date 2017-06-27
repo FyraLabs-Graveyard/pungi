@@ -18,6 +18,7 @@ import os
 import cPickle as pickle
 import json
 import re
+from kobo.shortcuts import force_list
 
 import pungi.wrappers.kojiwrapper
 import pungi.phases.pkgset.pkgsets
@@ -196,12 +197,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                     compose_tags.append(tag)
 
         if not variant_tags[variant]:
-            variant_tags[variant].append(compose.conf["pkgset_koji_tag"])
+            variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     # In case we have no compose tag from module, use the default
     # one from config.
     if not compose_tags:
-        compose_tags.append(compose.conf["pkgset_koji_tag"])
+        compose_tags.extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     inherit = compose.conf["pkgset_koji_inherit"]
     global_pkgset_path = os.path.join(

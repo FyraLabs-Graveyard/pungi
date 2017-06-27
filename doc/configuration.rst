@@ -405,7 +405,7 @@ Options
     (*str*) -- "koji" (any koji instance) or "repos" (arbitrary yum repositories)
 
 **pkgset_koji_tag** [mandatory]
-    (*str*) -- tag to read package set from
+    (*str|[str]*) -- tag(s) to read package set from
 
 **pkgset_koji_inherit** = True
     (*bool*) -- inherit builds from parent tags; we can turn it off only if we
