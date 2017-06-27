@@ -44,9 +44,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.maxDiff = None
         self.assertItemsEqual(
             run.call_args_list,
-            [mock.call(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
-             mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
                         '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
@@ -67,9 +65,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.maxDiff = None
         self.assertItemsEqual(
             run.call_args_list,
-            [mock.call(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
-             mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
                         '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
@@ -110,9 +106,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.maxDiff = None
         self.assertItemsEqual(
             run.call_args_list,
-            [mock.call(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
-             mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True),
@@ -134,9 +128,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.maxDiff = None
         self.assertItemsEqual(
             run.call_args_list,
-            [mock.call(['ostree', 'init', '--repo=%s' % repo, '--mode=archive-z2'],
-                       logfile=self.topdir + '/logs/Atomic/init-ostree-repo.log', show_cmd=True, stdout=True),
-             mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         '--add-metadata-string=version=24',
                         self.topdir + '/fedora-atomic-docker-host.json'],
