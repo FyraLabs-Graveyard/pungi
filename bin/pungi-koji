@@ -126,6 +126,8 @@ def main():
     )
     parser.add_argument(
         "--notification-script",
+        action="append",
+        default=[],
         help="script for sending progress notification messages"
     )
     parser.add_argument(

@@ -12,7 +12,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+from datetime import datetime
 import json
+import os
 import threading
 
 import pungi.util
@@ -27,8 +29,8 @@ class PungiNotifier(object):
     script fails, a warning will be logged, but the compose process will not be
     interrupted.
     """
-    def __init__(self, cmd):
-        self.cmd = cmd
+    def __init__(self, cmds):
+        self.cmds = cmds
         self.lock = threading.Lock()
         self.compose = None
 
@@ -53,7 +55,7 @@ class PungiNotifier(object):
         Unless you specify it manually, a ``compose_id`` key with appropriate
         value will be automatically added.
         """
-        if not self.cmd:
+        if not self.cmds:
             return
 
         self._update_args(kwargs)
@@ -62,14 +64,29 @@ class PungiNotifier(object):
             workdir = self.compose.paths.compose.topdir()
 
         with self.lock:
+            for cmd in self.cmds:
+                self._run_script(cmd, msg, workdir, kwargs)
+
+    def _run_script(self, cmd, msg, workdir, kwargs):
+        """Run a single notification script with proper logging."""
+        logfile = None
+        if self.compose:
+            self.compose.log_debug("Notification: %r %r, %r" % (
+                cmd, msg, kwargs))
+            logfile = os.path.join(
+                self.compose.paths.log.topdir(),
+                'notifications',
+                'notification-%s.log' % datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
+            )
+            pungi.util.makedirs(os.path.dirname(logfile))
+
+        ret, _ = shortcuts.run((cmd, msg),
+                               stdin_data=json.dumps(kwargs),
+                               can_fail=True,
+                               workdir=workdir,
+                               return_stdout=False,
+                               show_cmd=True,
+                               logfile=logfile)
+        if ret != 0:
             if self.compose:
-                self.compose.log_debug("Notification: %r %r, %r" % (
-                    self.cmd, msg, kwargs))
-            ret, _ = shortcuts.run((self.cmd, msg),
-                                   stdin_data=json.dumps(kwargs),
-                                   can_fail=True,
-                                   workdir=workdir,
-                                   return_stdout=False)
-            if ret != 0:
-                if self.compose:
-                    self.compose.log_warning('Failed to invoke notification script.')
+                self.compose.log_warning('Failed to invoke notification script.')
