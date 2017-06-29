@@ -7,7 +7,6 @@ import fnmatch
 import argparse
 import lxml.etree
 import re
-from io import StringIO
 
 
 class CompsFilter(object):
@@ -78,14 +77,11 @@ class CompsFilter(object):
         for group in self.tree.xpath("/comps/group"):
             if not group.xpath("packagelist/packagereq"):
                 group_id = group.xpath("id/text()")[0]
-                found = False
                 for pattern in keep_empty:
                     if fnmatch.fnmatch(group_id, pattern):
-                        found = True
                         break
-                if found:
-                    continue
-                group.getparent().remove(group)
+                else:
+                    group.getparent().remove(group)
 
     def remove_empty_categories(self):
         """
@@ -148,20 +144,12 @@ class CompsFilter(object):
         self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
         file_obj.write("\n")
 
-    def pprint(self):
-        self.write(sys.stdout)
-
-    def xml(self):
-        io = StringIO()
-        self.write(io)
-        io.seek(0)
-        return io.read()
-
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", help="redirect output to a file")
-    parser.add_argument("--arch", help="filter groups and packagews according to an arch")
+    parser.add_argument("--arch", required=True,
+                        help="filter groups and packages according to an arch")
     parser.add_argument("--arch-only-groups", default=False, action="store_true",
                         help="keep only arch groups, remove the rest")
     parser.add_argument("--arch-only-packages", default=False, action="store_true",
@@ -185,9 +173,6 @@ def main():
     parser.add_argument("comps_file", metavar='COMPS_FILE')
 
     opts = parser.parse_args()
-
-    if opts.arch is None:
-        parser.error("please specify arch")
 
     file_obj = open(opts.comps_file, "r")
     f = CompsFilter(file_obj, reindent=not opts.no_reindent)
@@ -214,11 +199,7 @@ def main():
     if opts.remove_environments:
         f.remove_environments()
 
-    if opts.output:
-        out = open(opts.output, "w")
-        f.write(out)
-    else:
-        f.pprint()
+    f.write(open(opts.output, 'w') if opts.output else sys.stdout)
 
 
 if __name__ == "__main__":
