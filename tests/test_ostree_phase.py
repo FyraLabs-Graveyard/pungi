@@ -170,6 +170,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         get_dir_from_scm.side_effect = self._dummy_config_repo
 
         self.compose.notifier = mock.Mock()
+        self.compose.conf['translate_paths'] = [(self.topdir, 'http://example.com/')]
 
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(
@@ -186,7 +187,9 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     variant='Everything',
                                     arch='x86_64',
                                     ref='fedora-atomic/25/x86_64',
-                                    commitid='fca3465861a')])
+                                    commitid='fca3465861a',
+                                    repo_path='http://example.com/place/for/atomic',
+                                    local_repo_path=self.repo)])
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
@@ -208,7 +211,9 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     variant='Everything',
                                     arch='x86_64',
                                     ref='fedora-atomic/25/x86_64',
-                                    commitid=None)])
+                                    commitid=None,
+                                    repo_path=self.repo,
+                                    local_repo_path=self.repo)])
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')

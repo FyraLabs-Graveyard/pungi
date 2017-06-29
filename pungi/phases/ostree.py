@@ -9,7 +9,7 @@ from kobo.threads import ThreadPool, WorkerThread
 from .base import ConfigGuardedPhase
 from .. import util
 from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
-from ..util import get_repo_dicts
+from ..util import get_repo_dicts, translate_path
 from ..wrappers import kojiwrapper, scm
 
 
@@ -87,7 +87,9 @@ class OSTreeThread(WorkerThread):
                                   variant=variant.uid,
                                   arch=arch,
                                   ref=ref,
-                                  commitid=commitid)
+                                  commitid=commitid,
+                                  repo_path=translate_path(compose, config['ostree_repo']),
+                                  local_repo_path=config['ostree_repo'])
 
         self.pool.log_info('[DONE ] %s (task id: %s)' % (msg, task_id))
 
