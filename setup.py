@@ -43,6 +43,7 @@ setup(
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
         'bin/pungi-patch-iso',
+        'bin/pungi-wait-for-signed-ostree-handler',
 
         'contrib/yum-dnf-compare/pungi-compare-depsolving',
     ],

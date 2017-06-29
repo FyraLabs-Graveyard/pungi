@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+import argparse
+import datetime
+import json
+import os
+import sys
+import time
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('cmd')
+    opts = parser.parse_args()
+
+    if opts.cmd != 'ostree':
+        # Not an announcement of new ostree commit, nothing to do.
+        sys.exit()
+
+    try:
+        data = json.load(sys.stdin)
+    except ValueError:
+        print('Failed to decode data', file=sys.stderr)
+        sys.exit(1)
+
+    repo = data['local_repo_path']
+    commit = data['commitid']
+    path = '%s/objects/%s/%s.commitmeta' % (repo, commit[:2], commit[2:])
+
+    while not os.path.exists(path):
+        print('%s: Commit not signed yet, waiting...'
+              % datetime.datetime.utcnow())
+        time.sleep(5)
+
+    print('Found signature.')
