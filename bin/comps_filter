@@ -52,6 +52,14 @@ class CompsFilter(object):
         """
         self._filter_elements_by_arch("/comps/group", arch, only_arch)
 
+    def filter_environments(self, arch, only_arch=False):
+        """
+        Filter environments according to arch.
+        If only_arch is set, then only environments for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/environment", arch, only_arch)
+
     def filter_category_groups(self):
         """
         Remove undefined groups from categories.
@@ -158,6 +166,8 @@ def main():
                         help="keep only arch groups, remove the rest")
     parser.add_argument("--arch-only-packages", default=False, action="store_true",
                         help="keep only arch packages, remove the rest")
+    parser.add_argument("--arch-only-environments", default=False, action="store_true",
+                        help="keep only arch environments, remove the rest")
     parser.add_argument("--remove-categories", default=False, action="store_true",
                         help="remove all categories")
     parser.add_argument("--remove-langpacks", default=False, action="store_true",
@@ -183,6 +193,7 @@ def main():
     f = CompsFilter(file_obj, reindent=not opts.no_reindent)
     f.filter_packages(opts.arch, opts.arch_only_packages)
     f.filter_groups(opts.arch, opts.arch_only_groups)
+    f.filter_environments(opts.arch, opts.arch_only_environments)
 
     if not opts.no_cleanup:
         f.remove_empty_groups(keep_empty=opts.keep_empty_group)
