@@ -24,6 +24,7 @@ import glob
 import shutil
 import threading
 import copy
+import errno
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
@@ -231,7 +232,13 @@ def get_productids_from_scm(compose):
     compose.log_info("[BEGIN] %s" % msg)
 
     tmp_dir = compose.mkdtemp(prefix="pungi_")
-    get_dir_from_scm(product_id, tmp_dir)
+    try:
+        get_dir_from_scm(product_id, tmp_dir)
+    except OSError as e:
+        if e.errno == errno.ENOENT and product_id_allow_missing:
+            compose.log_warning("No product IDs in %s" % product_id)
+            return
+        raise
 
     for arch in compose.get_arches():
         for variant in compose.get_variants(arch=arch):
