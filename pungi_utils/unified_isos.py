@@ -248,6 +248,7 @@ class UnifiedISO(object):
         for arch, ti in self.treeinfo.iteritems():
             print("Writing treeinfo: {0}".format(arch))
             ti_path = os.path.join(self.temp_dir, "trees", arch, ".treeinfo")
+            makedirs(os.path.dirname(ti_path))
             ti.dump(ti_path)
 
     def discinfo(self):
