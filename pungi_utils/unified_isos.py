@@ -27,14 +27,14 @@ import productmd
 import productmd.compose
 import productmd.images
 import productmd.treeinfo
-from kobo.shortcuts import run, compute_file_checksums
+from kobo.shortcuts import run
 
 import pungi.linker
 import pungi.wrappers.createrepo
 from pungi.util import makedirs
 from pungi.compose_metadata.discinfo import write_discinfo as create_discinfo
 from pungi.wrappers import iso
-from pungi.phases.image_checksum import dump_checksums, get_images, make_checksums
+from pungi.phases.image_checksum import make_checksums
 
 
 def ti_merge(one, two):
@@ -88,9 +88,13 @@ class UnifiedISO(object):
             self.createiso()
             self.link_to_compose()
             self.update_checksums()
+            self.dump_manifest()
         finally:
             if delete_temp:
                 shutil.rmtree(self.temp_dir)
+
+    def dump_manifest(self):
+        self.compose.images.dump(os.path.join(self.compose_path, 'metadata', 'images.json'))
 
     def _link_tree(self, dir, variant, arch):
         blacklist_files = [".treeinfo", ".discinfo", "boot.iso", "media.repo", "extra_files.json"]
@@ -308,9 +312,6 @@ class UnifiedISO(object):
             supported = True
             run(iso.get_implantisomd5_cmd(iso_path, supported))
 
-            checksums = compute_file_checksums(
-                iso_path, self.conf.get('media_checksums', DEFAULT_CHECKSUMS))
-
             # write manifest file
             run(iso.get_manifest_cmd(iso_path))
 
@@ -331,15 +332,6 @@ class UnifiedISO(object):
 
             self.images.setdefault(typed_arch, set()).add(iso_path)
             self.images.setdefault(typed_arch, set()).add(iso_path + ".manifest")
-
-            for checksum_type, checksum in checksums.iteritems():
-                if not self.conf.get('media_checksum_one_file', False):
-                    checksum_path = dump_checksums(iso_dir, checksum_type,
-                                                   {iso_name: checksum},
-                                                   '%s.%sSUM' % (iso_name, checksum_type.upper()))
-                    self.images.setdefault(typed_arch, set()).add(checksum_path)
-
-                img.add_checksum(self.compose_path, checksum_type=checksum_type, checksum_value=checksum)
 
             img.implant_md5 = iso.get_implanted_md5(iso_path)
             try:
@@ -365,13 +357,15 @@ class UnifiedISO(object):
                     variant_img.subvariant = variant.id
                     paths_attr = 'isos' if arch != 'src' else 'source_isos'
                     paths = getattr(self.ci.variants[variant.uid].paths, paths_attr)
+                    path = paths.get(tree_arch, os.path.join(variant.uid, tree_arch, "iso"))
+                    if variant_img.type == 'dvd-debuginfo':
+                        prefix, isodir = path.rsplit('/', 1)
+                        path = os.path.join(prefix, 'debug', isodir)
                     variant_img.path = os.path.join(
-                        paths.get(tree_arch, os.path.join(variant.uid, tree_arch, "iso")),
+                        path,
                         os.path.basename(img.path)
                     )
                     im.add(variant.uid, tree_arch, variant_img)
-
-        im.dump(os.path.join(self.compose_path, 'metadata', 'images.json'))
 
     def link_to_compose(self):
         for variant in self.ci.get_variants(recursive=False):
@@ -412,9 +406,7 @@ class UnifiedISO(object):
         return base_name
 
     def update_checksums(self):
-        for (variant, arch, path), images in get_images(self.compose_path, self.compose.images).iteritems():
-            base_checksum_name = self._get_base_filename(variant, arch)
-            make_checksums(variant, arch, path, images,
-                           self.conf.get('media_checksums', DEFAULT_CHECKSUMS),
-                           base_checksum_name,
-                           self.conf.get('media_checksum_one_file', False))
+        make_checksums(self.compose_path, self.compose.images,
+                       self.conf.get('media_checksums', DEFAULT_CHECKSUMS),
+                       self.conf.get('media_checksum_one_file', False),
+                       self._get_base_filename)

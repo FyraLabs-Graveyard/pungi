@@ -2,6 +2,7 @@
 
 import os
 from kobo import shortcuts
+from collections import defaultdict
 
 from .base import PhaseBase
 from ..util import get_format_substs, get_file_size
@@ -69,15 +70,10 @@ class ImageChecksumPhase(PhaseBase):
 
     def run(self):
         topdir = self.compose.paths.compose.topdir()
-        for (variant, arch, path), images in get_images(topdir, self.compose.im).iteritems():
-            base_checksum_name = self._get_base_filename(variant, arch)
-            make_checksums(variant, arch, path, images,
-                           self.checksums, base_checksum_name, self.one_file)
+        make_checksums(topdir, self.compose.im, self.checksums, self.one_file, self._get_base_filename)
 
 
-def make_checksums(variant, arch, path, images, checksum_types, base_checksum_name, one_file):
-    checksums = {}
-    filesizes = {}
+def _compute_checksums(results, variant, arch, path, images, checksum_types, base_checksum_name, one_file):
     for image in images:
         filename = os.path.basename(image.path)
         full_path = os.path.join(path, filename)
@@ -85,63 +81,45 @@ def make_checksums(variant, arch, path, images, checksum_types, base_checksum_na
             continue
 
         filesize = image.size or get_file_size(full_path)
-        filesizes[filename] = filesize
 
         digests = shortcuts.compute_file_checksums(full_path, checksum_types)
         for checksum, digest in digests.iteritems():
-            checksums.setdefault(checksum, {})[filename] = digest
+            # Update metadata with the checksum
             image.add_checksum(None, checksum, digest)
+            # If not turned of, create the file-specific checksum file
             if not one_file:
-                checksum_filename = '%s.%sSUM' % (filename, checksum.upper())
-                dump_filesizes(path, {filename: filesize}, checksum_filename)
-                dump_checksums(path, checksum,
-                               {filename: digest},
-                               checksum_filename)
+                checksum_filename = os.path.join(path, '%s.%sSUM' % (filename, checksum.upper()))
+                results[checksum_filename].add((filename, filesize, checksum, digest))
 
-    if not checksums:
-        return
+            if one_file:
+                checksum_filename = os.path.join(path, base_checksum_name + 'CHECKSUM')
+            else:
+                checksum_filename = os.path.join(path, '%s%sSUM' % (base_checksum_name, checksum.upper()))
 
-    if one_file:
-        checksum_filename = base_checksum_name + 'CHECKSUM'
-        dump_filesizes(path, filesizes, checksum_filename)
-        dump_checksums(path, checksum_types[0],
-                       checksums[checksum_types[0]],
-                       checksum_filename)
-    else:
-        for checksum in checksums:
-            checksum_filename = '%s%sSUM' % (base_checksum_name, checksum.upper())
-            dump_filesizes(path, filesizes, checksum_filename)
-            dump_checksums(path, checksum,
-                           checksums[checksum],
-                           checksum_filename)
+            results[checksum_filename].add((filename, filesize, checksum, digest))
 
 
-def dump_filesizes(dir, filesizes, filename):
-    """Write filesizes to file with comment lines.
+def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen):
+    results = defaultdict(set)
+    for (variant, arch, path), images in get_images(topdir, im).iteritems():
+        base_checksum_name = base_checksum_name_gen(variant, arch)
+        _compute_checksums(results, variant, arch, path, images,
+                           checksum_types, base_checksum_name, one_file)
 
-    :param dir: where to put the file
-    :param filesizes: mapping from filenames to filesizes
-    :param filename: what to call the file
-    """
-    filesize_file = os.path.join(dir, filename)
-    with open(filesize_file, 'a') as f:
-        for file, filesize in filesizes.iteritems():
-            f.write('# %s: %s bytes\n' % (file, filesize))
+    for file in results:
+        dump_checksums(file, results[file])
 
 
-def dump_checksums(dir, alg, checksums, filename):
+def dump_checksums(checksum_file, data):
     """Write checksums to file.
 
-    :param dir: where to put the file
-    :param alg: which method was used
-    :param checksums: mapping from filenames to checksums
-    :param filename: what to call the file
+    :param checksum_file: where to write the checksums
+    :param data: an iterable of tuples (filename, filesize, checksum_type, hash)
     """
-    checksum_file = os.path.join(dir, filename)
-    with open(checksum_file, 'a') as f:
-        for file, checksum in checksums.iteritems():
-            f.write('%s (%s) = %s\n' % (alg.upper(), file, checksum))
-    return checksum_file
+    with open(checksum_file, 'w') as f:
+        for filename, filesize, alg, checksum in sorted(data):
+            f.write('# %s: %s bytes\n' % (filename, filesize))
+            f.write('%s (%s) = %s\n' % (alg.upper(), filename, checksum))
 
 
 def get_images(top_dir, manifest):

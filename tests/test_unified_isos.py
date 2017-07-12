@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import mock
 import os
 import shutil
@@ -36,6 +35,14 @@ class TestUnifiedIsos(PungiTestCase):
         self.assertRegexpMatches(isos.temp_dir,
                                  '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
 
+    def test_dump_manifest(self):
+        compose_path = os.path.join(self.topdir, COMPOSE_ID, 'compose')
+        isos = unified_isos.UnifiedISO(compose_path)
+        isos.compose._images = mock.Mock()
+        isos.dump_manifest()
+        self.assertEqual(isos.compose._images.mock_calls,
+                         [mock.call.dump(compose_path + '/metadata/images.json')])
+
 
 class TestCreate(PungiTestCase):
     def setUp(self):
@@ -47,7 +54,7 @@ class TestCreate(PungiTestCase):
 
     def test_create_method(self):
         methods = ('link_to_temp', 'createrepo', 'discinfo', 'createiso',
-                   'link_to_compose', 'update_checksums')
+                   'link_to_compose', 'update_checksums', 'dump_manifest')
         for attr in methods:
             setattr(self.isos, attr, mock.Mock())
 
@@ -391,25 +398,22 @@ class TestCreateiso(PungiTestCase):
         self.mkisofs_cmd = self.mkisofs_cmd or mock.Mock(name='mkisofs cmd')
         return self.mkisofs_cmd
 
-    def _img(self, arch, exts):
-        exts = ['manifest'] + exts
+    def _img(self, arch):
         base_path = os.path.join(self.isos.temp_dir, 'iso', arch,
                                  u'DP-1.0-20161013.t.4-%s-dvd.iso' % arch)
         yield base_path
-        for ext in exts:
-            yield base_path + '.' + ext
+        yield base_path + '.manifest'
 
-    def _imgs(self, arches, exts):
+    def _imgs(self, arches):
         images = {}
-        exts = [e + 'SUM' for e in exts]
         for arch in arches:
             file_arch = arch
             if arch.startswith('debug-'):
                 file_arch = arch.split('-', 1)[-1] + '-debuginfo'
-            images[arch] = set(self._img(file_arch if arch != 'src' else 'source', exts))
+            images[arch] = set(self._img(file_arch if arch != 'src' else 'source'))
         return images
 
-    def assertResults(self, iso, run, arches, checksums):
+    def assertResults(self, iso, run, arches):
         self.assertEqual(
             run.mock_calls,
             [mock.call(self.mkisofs_cmd),
@@ -417,33 +421,19 @@ class TestCreateiso(PungiTestCase):
              mock.call(iso.get_manifest_cmd.return_value)] * len(arches)
         )
 
-        self.assertEqual(
-            self.isos.images,
-            self._imgs(arches, checksums),
-        )
+        self.assertEqual(self.isos.images, self._imgs(arches))
 
-        with open(os.path.join(self.compose_path, 'metadata', 'images.json')) as f:
-            manifest = json.load(f)
+        images = self.isos.compose.images
 
         for v in ('Client', 'Server'):
             for a in arches:
-                for image in manifest['payload']['images'][v]['x86_64']:
-                    arch = iso_arch = 'source' if image['arch'] == 'src' else image['arch']
+                for image in images[v]['x86_64']:
+                    arch = iso_arch = 'source' if image.arch == 'src' else image.arch
                     if a.startswith('debug-'):
                         iso_arch += '-debuginfo'
                         a = a.split('-', 1)[1]
                     path = '{0}/{1}/iso/DP-1.0-20161013.t.4-{1}-dvd.iso'.format(v, arch, iso_arch)
-                    if image.get('unified', False) and image['arch'] == a and image['path'] == path:
-                        checksum_file_base = os.path.join(self.isos.temp_dir, 'iso',
-                                                          arch, os.path.basename(image['path']))
-                        for ch in checksums:
-                            fp = '%s.%sSUM' % (checksum_file_base, ch)
-                            with open(fp) as f:
-                                self.assertEqual(
-                                    f.read(),
-                                    '%s (%s) = %s\n' % (ch, os.path.basename(image['path']),
-                                                        CHECKSUMS[ch])
-                                )
+                    if image.unified and image.arch == a and image.path == path:
                         break
                 else:
                     self.fail('Image for %s.%s missing' % (v, a))
@@ -460,7 +450,7 @@ class TestCreateiso(PungiTestCase):
 
         self.isos.createiso()
 
-        self.assertResults(iso, run, ['src', 'x86_64'], ['MD5', 'SHA1', 'SHA256'])
+        self.assertResults(iso, run, ['src', 'x86_64'])
 
     @mock.patch('pungi_utils.unified_isos.iso')
     @mock.patch('pungi_utils.unified_isos.run')
@@ -475,39 +465,7 @@ class TestCreateiso(PungiTestCase):
 
         self.isos.createiso()
 
-        self.assertResults(iso, run, ['src', 'x86_64', 'debug-x86_64'], ['MD5', 'SHA1', 'SHA256'])
-
-    @mock.patch('pungi_utils.unified_isos.iso')
-    @mock.patch('pungi_utils.unified_isos.run')
-    def test_createiso_checksum_one_file(self, run, iso):
-        iso.get_mkisofs_cmd.side_effect = self.mock_gmc
-        iso.get_implanted_md5.return_value = 'beefcafebabedeadbeefcafebabedead'
-        iso.get_volume_id.return_value = 'VOLID'
-
-        self.isos.conf['media_checksum_one_file'] = True
-
-        self.isos.treeinfo = {'x86_64': self.isos.treeinfo['x86_64'],
-                              'src': self.isos.treeinfo['src']}
-
-        self.isos.createiso()
-
-        self.assertResults(iso, run, ['src', 'x86_64'], [])
-
-    @mock.patch('pungi_utils.unified_isos.iso')
-    @mock.patch('pungi_utils.unified_isos.run')
-    def test_createiso_single_checksum(self, run, iso):
-        iso.get_mkisofs_cmd.side_effect = self.mock_gmc
-        iso.get_implanted_md5.return_value = 'beefcafebabedeadbeefcafebabedead'
-        iso.get_volume_id.return_value = 'VOLID'
-
-        self.isos.conf['media_checksums'] = ['sha256']
-
-        self.isos.treeinfo = {'x86_64': self.isos.treeinfo['x86_64'],
-                              'src': self.isos.treeinfo['src']}
-
-        self.isos.createiso()
-
-        self.assertResults(iso, run, ['src', 'x86_64'], ['SHA256'])
+        self.assertResults(iso, run, ['src', 'x86_64', 'debug-x86_64'])
 
 
 class TestLinkToCompose(PungiTestCase):
@@ -575,15 +533,9 @@ class TestUpdateChecksums(PungiTestCase):
         self.isos.update_checksums()
         self.assertItemsEqual(
             mmc.call_args_list,
-            [self._call('Client', 'i386'),
-             self._call('Client', 'x86_64'),
-             self._call('Server', 's390x'),
-             self._call('Server', 'x86_64'),
-             self._call('Client', 'i386', source=True),
-             self._call('Client', 'x86_64', source=True),
-             self._call('Server', 's390x', source=True),
-             self._call('Server', 'x86_64', source=True)]
-        )
+            [mock.call(self.compose_path, self.isos.compose.images,
+                       unified_isos.DEFAULT_CHECKSUMS, False,
+                       self.isos._get_base_filename)])
 
     @mock.patch('pungi_utils.unified_isos.make_checksums')
     def test_update_checksums_one_file(self, mmc):
@@ -591,28 +543,11 @@ class TestUpdateChecksums(PungiTestCase):
         self.isos.update_checksums()
         self.assertItemsEqual(
             mmc.call_args_list,
-            [self._call('Client', 'i386', one_file=True),
-             self._call('Client', 'x86_64', one_file=True),
-             self._call('Server', 's390x', one_file=True),
-             self._call('Server', 'x86_64', one_file=True),
-             self._call('Client', 'i386', source=True, one_file=True),
-             self._call('Client', 'x86_64', source=True, one_file=True),
-             self._call('Server', 's390x', source=True, one_file=True),
-             self._call('Server', 'x86_64', source=True, one_file=True)]
-        )
+            [mock.call(self.compose_path, self.isos.compose.images,
+                       unified_isos.DEFAULT_CHECKSUMS, True,
+                       self.isos._get_base_filename)])
 
-    @mock.patch('pungi_utils.unified_isos.make_checksums')
-    def test_update_checksums_basename(self, mmc):
+    def test_get_base_filename(self):
         self.isos.conf['media_checksum_base_filename'] = '{variant}-{arch}'
-        self.isos.update_checksums()
-        self.assertItemsEqual(
-            mmc.call_args_list,
-            [self._call('Client', 'i386', basename='Client-i386-'),
-             self._call('Client', 'x86_64', basename='Client-x86_64-'),
-             self._call('Server', 's390x', basename='Server-s390x-'),
-             self._call('Server', 'x86_64', basename='Server-x86_64-'),
-             self._call('Client', 'i386', source=True, basename='Client-i386-'),
-             self._call('Client', 'x86_64', source=True, basename='Client-x86_64-'),
-             self._call('Server', 's390x', source=True, basename='Server-s390x-'),
-             self._call('Server', 'x86_64', source=True, basename='Server-x86_64-')]
-        )
+        self.assertEqual(self.isos._get_base_filename('Client', 'x86_64'),
+                         'Client-x86_64-')
