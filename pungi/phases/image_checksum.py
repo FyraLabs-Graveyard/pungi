@@ -73,7 +73,8 @@ class ImageChecksumPhase(PhaseBase):
         make_checksums(topdir, self.compose.im, self.checksums, self.one_file, self._get_base_filename)
 
 
-def _compute_checksums(results, variant, arch, path, images, checksum_types, base_checksum_name, one_file):
+def _compute_checksums(results, cache, variant, arch, path, images,
+                       checksum_types, base_checksum_name, one_file):
     for image in images:
         filename = os.path.basename(image.path)
         full_path = os.path.join(path, filename)
@@ -82,7 +83,12 @@ def _compute_checksums(results, variant, arch, path, images, checksum_types, bas
 
         filesize = image.size or get_file_size(full_path)
 
-        digests = shortcuts.compute_file_checksums(full_path, checksum_types)
+        if full_path not in cache:
+            # Source ISO is listed under each binary architecture. There's no
+            # point in checksumming it twice, so we can just remember the
+            # digest from first run..
+            cache[full_path] = shortcuts.compute_file_checksums(full_path, checksum_types)
+        digests = cache[full_path]
         for checksum, digest in digests.iteritems():
             # Update metadata with the checksum
             image.add_checksum(None, checksum, digest)
@@ -101,9 +107,10 @@ def _compute_checksums(results, variant, arch, path, images, checksum_types, bas
 
 def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen):
     results = defaultdict(set)
+    cache = {}
     for (variant, arch, path), images in get_images(topdir, im).iteritems():
         base_checksum_name = base_checksum_name_gen(variant, arch)
-        _compute_checksums(results, variant, arch, path, images,
+        _compute_checksums(results, cache, variant, arch, path, images,
                            checksum_types, base_checksum_name, one_file)
 
     for file in results:
