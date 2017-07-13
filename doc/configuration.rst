@@ -367,7 +367,7 @@ Options
 
 **createrepo_deltas** = False
     (*bool*) -- generate delta RPMs against an older compose. This needs to be
-    used together with `--old-composes`` command line argument.
+    used together with ``--old-composes`` command line argument.
 
 **createrepo_use_xz** = False
     (*bool*) -- whether to pass ``--xz`` to the createrepo command. This will
@@ -497,7 +497,8 @@ Options
     (*str*) -- from where to read initial package list; expected values: "comps", "none"
 
 **gather_method** [mandatory]
-    (*str*) -- "deps", "nodeps"
+    (*str*) -- Options are ``deps`` and ``nodeps``. Specifies whether package
+    dependencies should be pulled in as well.
 
 **gather_fulltree** = False
     (*bool*) -- When set to ``True`` all RPMs built from an SRPM will always be
