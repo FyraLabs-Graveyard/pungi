@@ -93,7 +93,6 @@ def create_variant_repo(compose, arch, variant, pkg_type):
 
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
-    createrepo_deltas = compose.conf["createrepo_deltas"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_arch = compose.paths.work.arch_repo(arch='global' if pkg_type == 'srpm' else arch)
 
@@ -145,20 +144,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         for rel_path in sorted(rpms):
             f.write("%s\n" % rel_path)
 
-    old_packages_dir = None
-    if createrepo_deltas:
-        old_compose_path = find_old_compose(
-            compose.old_composes,
-            compose.ci_base.release.short,
-            compose.ci_base.release.version,
-            compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
-            compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None
-        )
-        if not old_compose_path:
-            compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
-        else:
-            rel_dir = relative_path(repo_dir, compose.topdir.rstrip('/') + '/')
-            old_packages_dir = os.path.join(old_compose_path, rel_dir)
+    old_package_dirs = _get_old_package_dirs(compose, repo_dir)
 
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
@@ -166,8 +152,9 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True,
                                   pkglist=file_list, outputdir=repo_dir, workers=3,
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
-                                  checksum=createrepo_checksum, deltas=createrepo_deltas,
-                                  oldpackagedirs=old_packages_dir,
+                                  checksum=createrepo_checksum,
+                                  deltas=compose.conf['createrepo_deltas'],
+                                  oldpackagedirs=old_package_dirs,
                                   use_xz=compose.conf['createrepo_use_xz'])
     log_file = compose.paths.log.log_file(arch, "createrepo-%s.%s" % (variant, pkg_type))
     run(cmd, logfile=log_file, show_cmd=True)
@@ -262,3 +249,43 @@ def get_productids_from_scm(compose):
 
     shutil.rmtree(tmp_dir)
     compose.log_info("[DONE ] %s" % msg)
+
+
+def _get_old_package_dirs(compose, repo_dir):
+    """Given a compose and a path to a repo in it, try to find corresponging
+    repo in an older compose and return a list of paths to directories with
+    packages in it.
+    """
+    if not compose.conf['createrepo_deltas']:
+        return None
+    old_compose_path = find_old_compose(
+        compose.old_composes,
+        compose.ci_base.release.short,
+        compose.ci_base.release.version,
+        compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
+        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None
+    )
+    if not old_compose_path:
+        compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
+        return None
+    rel_dir = relative_path(repo_dir, compose.topdir.rstrip('/') + '/')
+    old_package_dirs = os.path.join(old_compose_path, rel_dir, 'Packages')
+    if compose.conf['hashed_directories']:
+        old_package_dirs = _find_package_dirs(old_package_dirs)
+    return old_package_dirs
+
+
+def _find_package_dirs(base):
+    """Assuming the packages are in directories hashed by first letter, find
+    all the buckets in given base.
+    """
+    buckets = set()
+    try:
+        for subdir in os.listdir(base):
+            bucket = os.path.join(base, subdir)
+            if os.path.isdir(bucket):
+                buckets.add(bucket)
+    except OSError:
+        # The directory does not exist, so no drpms for you!
+        pass
+    return sorted(buckets)
