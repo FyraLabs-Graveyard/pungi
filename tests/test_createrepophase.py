@@ -308,7 +308,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
+                       update_md_path=None, deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages',
                        use_xz=False)])
         self.assertItemsEqual(
@@ -348,7 +348,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
+                       update_md_path=None, deltas=True,
                        oldpackagedirs=[
                            self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/a',
                            self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/b',
@@ -423,7 +423,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/global/repo', deltas=True,
+                       update_md_path=None, deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/source/tree/Packages',
                        use_xz=False)])
         self.assertItemsEqual(
@@ -460,7 +460,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
+                       update_md_path=None, deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/debug/tree/Packages',
                        use_xz=False)])
         self.assertItemsEqual(

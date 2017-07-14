@@ -145,6 +145,11 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             f.write("%s\n" % rel_path)
 
     old_package_dirs = _get_old_package_dirs(compose, repo_dir)
+    if old_package_dirs:
+        # If we are creating deltas, we can not reuse existing metadata, as
+        # that would stop deltas from being created.
+        # This seems to only affect createrepo_c though.
+        repo_dir_arch = None
 
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
