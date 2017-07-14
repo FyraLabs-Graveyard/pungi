@@ -388,6 +388,14 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
                      base_product_short=None, base_product_version=None):
     composes = []
 
+    def _sortable(compose_id):
+        """Convert ID to tuple where respin is an integer for proper sorting."""
+        try:
+            prefix, respin = compose_id.rsplit('.', 1)
+            return (prefix, int(respin))
+        except Exception:
+            return compose_id
+
     for compose_dir in force_list(old_compose_dirs):
         if not os.path.isdir(compose_dir):
             continue
@@ -419,7 +427,7 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
             try:
                 with open(status_path, 'r') as f:
                     if f.read().strip() in ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED"):
-                        composes.append((i, os.path.abspath(path)))
+                        composes.append((_sortable(i), os.path.abspath(path)))
             except:
                 continue
 

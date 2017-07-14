@@ -228,6 +228,12 @@ class TestFindOldCompose(unittest.TestCase):
         old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.1')
 
+    def test_find_latest_with_two_digit_respin(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.9/STATUS', 'FINISHED')
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.10/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160228.n.10')
+
     def test_finds_ignores_other_files(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0', 'not a compose')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS/file', 'also not a compose')
