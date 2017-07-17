@@ -5,7 +5,7 @@ Phases
 
 Each invocation of ``punji-koji`` consists of a set of phases.
 
-.. image:: _static/phases.svg
+.. image:: _static/phases.png
    :alt: phase diagram
 
 Most of the phases run sequentially (left-to-right in the diagram), but there
