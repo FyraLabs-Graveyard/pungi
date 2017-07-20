@@ -65,7 +65,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     if (srpm in mmd.components.rpms.keys() and
                             rpm_obj.name not in mmd.filter.rpms and
                             rpm_obj.nevra in mmd.artifacts.rpms):
-                        packages.add((rpm_obj.name, None))
+                        packages.add((rpm_obj, None))
                         added_rpms.setdefault(mmd_id, [])
                         added_rpms[mmd_id].append(str(rpm_obj.nevra))
 
