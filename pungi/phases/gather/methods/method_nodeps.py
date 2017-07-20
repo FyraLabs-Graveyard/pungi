@@ -103,6 +103,10 @@ def expand_groups(compose, arch, groups):
 
     :returns: A set of tuples (pkg_name, arch)
     """
+    if not groups:
+        # No groups, nothing to do (this also covers case when there is no
+        # comps file.
+        return set()
     comps_file = compose.paths.work.comps(arch, create_dir=False)
     comps = CompsWrapper(comps_file)
     packages = set()
