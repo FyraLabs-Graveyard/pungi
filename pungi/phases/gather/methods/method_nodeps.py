@@ -50,9 +50,9 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             pkg = global_pkgset[i]
             if not pkg_is_rpm(pkg):
                 continue
+            if pkg.arch not in valid_arches:
+                continue
             for gathered_pkg, pkg_arch in packages:
-                if pkg.arch not in valid_arches:
-                    continue
                 if (type(gathered_pkg) in [str, unicode]
                         and pkg.name != gathered_pkg):
                     continue
@@ -86,8 +86,12 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 continue
             if pkg.sourcerpm not in seen_srpms:
                 continue
-            if not set(compatible_arches[pkg.arch]) & set(seen_srpms[pkg.sourcerpm]):
-                # this handles stuff like i386 debuginfo in a i686 package
+            pkg_arches = set(compatible_arches[pkg.arch]) - set(['noarch'])
+            seen_arches = set(seen_srpms[pkg.sourcerpm]) - set(['noarch'])
+            if not (pkg_arches & seen_arches):
+                # We only want to pull in a debuginfo if we have a binary
+                # package for a compatible arch. Noarch packages should not
+                # pull debuginfo (they would pull in all architectures).
                 continue
             result["debuginfo"].append({
                 "path": pkg.file_path,
