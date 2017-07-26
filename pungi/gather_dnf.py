@@ -26,7 +26,7 @@ import pungi.multilib_dnf
 from pungi.profiler import Profiler
 
 # Globs for package name that should match all debuginfo packages
-DEBUG_GLOBS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource", "*-debugsource-*"]
+DEBUG_GLOBS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
 
 
 def get_source_name(pkg):
