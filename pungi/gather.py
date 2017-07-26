@@ -66,10 +66,6 @@ def yumlocked(method):
     return wrapper
 
 
-def is_debug(po):
-    return "debuginfo" in po.name or "debugsource" in po.name
-
-
 def is_source(po):
     if po.arch in ("src", "nosrc"):
         return True
@@ -83,7 +79,7 @@ def is_noarch(po):
 
 
 def is_package(po):
-    if is_debug(po):
+    if pungi.util.pkg_is_debug(po):
         return False
     if is_source(po):
         return False
@@ -444,7 +440,7 @@ class Pungi(PungiBase):
         self.sourcerpm_arch_map.setdefault(po.sourcerpm, set()).add(po.arch)
 
     def add_debuginfo(self, po, msg=None):
-        if not is_debug(po):
+        if not pungi.util.pkg_is_debug(po):
             raise ValueError("Not a debuginfog package: %s" % po)
         if msg:
             self.logger.info(msg)
@@ -1172,7 +1168,7 @@ class Pungi(PungiBase):
 
         added = set()
         for po in self.all_pkgs:
-            if not is_debug(po):
+            if not pungi.util.pkg_is_debug(po):
                 continue
 
             if po.sourcerpm not in self.sourcerpm_arch_map:
