@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import fnmatch
 import subprocess
 import os
 import shutil
@@ -33,6 +34,8 @@ import functools
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
 
+# Patterns that match all names of debuginfo packages
+DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
 
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
     """Run a command and log the output.  Error out if we get something on stderr"""
@@ -190,14 +193,17 @@ def pkg_is_srpm(pkg_obj):
 def pkg_is_debug(pkg_obj):
     if pkg_is_srpm(pkg_obj):
         return False
+
     if isinstance(pkg_obj, str):
         # string
-        if "-debuginfo" in pkg_obj or '-debugsource' in pkg_obj:
-            return True
+        name = pkg_obj
     else:
-        # package object
-        if "-debuginfo" in pkg_obj.name or '-debugsource' in pkg_obj.name:
+        name = pkg_obj.name
+
+    for pattern in DEBUG_PATTERNS:
+        if fnmatch.fnmatch(name, pattern):
             return True
+
     return False
 
 
