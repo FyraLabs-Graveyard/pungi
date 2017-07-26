@@ -67,9 +67,7 @@ def yumlocked(method):
 
 
 def is_debug(po):
-    if "debuginfo" in po.name:
-        return True
-    return False
+    return "debuginfo" in po.name or "debugsource" in po.name
 
 
 def is_source(po):

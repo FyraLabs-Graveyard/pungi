@@ -192,11 +192,11 @@ def pkg_is_debug(pkg_obj):
         return False
     if isinstance(pkg_obj, str):
         # string
-        if "-debuginfo" in pkg_obj:
+        if "-debuginfo" in pkg_obj or '-debugsource' in pkg_obj:
             return True
     else:
         # package object
-        if "-debuginfo" in pkg_obj.name:
+        if "-debuginfo" in pkg_obj.name or '-debugsource' in pkg_obj.name:
             return True
     return False
 

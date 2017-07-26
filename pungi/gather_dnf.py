@@ -25,6 +25,9 @@ import pungi.dnf_wrapper
 import pungi.multilib_dnf
 from pungi.profiler import Profiler
 
+# Globs for package name that should match all debuginfo packages
+DEBUG_GLOBS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource", "*-debugsource-*"]
+
 
 def get_source_name(pkg):
     # Workaround for rhbz#1418298
@@ -120,7 +123,7 @@ class GatherBase(object):
         q_multilib = q.difference(q_native).union(q_noarch).apply()
 
         # debug packages
-        self.q_debug_packages = q.filter(name__glob=["*-debuginfo", "*-debuginfo-*"]).apply()
+        self.q_debug_packages = q.filter(name__glob=DEBUG_GLOBS).apply()
         self.q_native_debug_packages = self.q_debug_packages.intersection(q_native)
         self.q_multilib_debug_packages = self.q_debug_packages.intersection(q_multilib)
 
