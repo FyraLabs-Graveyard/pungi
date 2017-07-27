@@ -2,16 +2,18 @@
 
 set -e
 
-PYTHONPATH=$(pwd)/../:$PYTHONPATH
-PATH=$(pwd)/../bin:$PATH
+HERE=$(dirname "$0")
+
+PYTHONPATH=$HERE/../:$PYTHONPATH
+PATH=$HERE/../bin:$PATH
 export PYTHONPATH PATH
 
 mkdir -p _composes
 
 pungi-koji \
---target-dir=_composes \
---old-composes=_composes \
---config=data/dummy-pungi.conf \
+--target-dir="$HERE/_composes" \
+--old-composes="$HERE/_composes" \
+--config="$HERE/data/dummy-pungi.conf" \
 --test "$@"
 
 # Run this to create unified ISOs for the just created compose
