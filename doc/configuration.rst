@@ -152,6 +152,18 @@ Options
     ([*str*]) -- list of variants which should be included; if undefined, all
     variants from variants.xml will be included
 
+**repoclosure_strictness**
+    (*list*) -- variant/arch mapping describing how repoclosure should run.
+    Possible values are
+
+     * ``off`` -- do not run repoclosure
+     * ``lenient`` -- (default) run repoclosure and write results to logs, but
+       detected errors are only reported in logs
+     * ``fatal`` -- abort compose when any issue is detected
+
+    When multiple blocks in the mapping match a variant/arch combination, the
+    last value will win.
+
 **repoclosure_backend**
     (*str*) -- Select which tool should be used to run repoclosure over created
     repositories. By default ``yum`` is used, but you can switch to ``dnf``.
@@ -189,6 +201,13 @@ Example
 
     tree_arches = ["x86_64"]
     tree_variants = ["Server"]
+
+    repoclosure_strictness = [
+        # Make repoclosure failures fatal for compose on all variants …
+        ('^.*$', {'*': 'fatal'}),
+        # … except for Everything where it should not run at all.
+        ('^Everything$', {'*': 'off'})
+    ]
 
 
 Image Naming

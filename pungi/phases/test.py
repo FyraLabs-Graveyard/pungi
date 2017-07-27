@@ -22,7 +22,7 @@ from pungi.wrappers import repoclosure
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import get_lookaside_repos
-from pungi.util import is_arch_multilib, failable, temp_dir
+from pungi.util import is_arch_multilib, failable, temp_dir, get_arch_variant_data
 
 
 class TestPhase(PhaseBase):
@@ -44,6 +44,11 @@ def run_repoclosure(compose):
         for variant in compose.get_variants(arch=arch):
             if variant.is_empty:
                 continue
+
+            conf = get_arch_variant_data(compose.conf, 'repoclosure_strictness', arch, variant)
+            if conf and conf[-1] == 'off':
+                continue
+
             lookaside = {}
             if variant.parent:
                 repo_id = "repoclosure-%s.%s" % (variant.parent.uid, arch)
@@ -72,7 +77,11 @@ def run_repoclosure(compose):
                     run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure-%s" % variant),
                         workdir=tmp_dir)
                 except RuntimeError as exc:
-                    compose.log_warning('Repoclosure failed for %s.%s\n%s' % (variant.uid, arch, exc))
+                    if conf and conf[-1] == 'fatal':
+                        raise
+                    else:
+                        compose.log_warning('Repoclosure failed for %s.%s\n%s'
+                                            % (variant.uid, arch, exc))
 
     compose.log_info("[DONE ] %s" % msg)
 

@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pungi.phases.test as test_phase
-from tests.helpers import DummyCompose, PungiTestCase, touch
+from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
 
 PAD = '\0' * 100
@@ -169,6 +169,10 @@ class TestCheckImageSanity(PungiTestCase):
 
 class TestRepoclosure(PungiTestCase):
 
+    def setUp(self):
+        super(TestRepoclosure, self).setUp()
+        self.maxDiff = None
+
     def _get_repo(self, variant, arch, path=None):
         path = path or arch + '/os'
         return {
@@ -177,15 +181,19 @@ class TestRepoclosure(PungiTestCase):
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_skip_if_disabled(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {
+            'repoclosure_strictness': [('^.*$', {'*': 'off'})]
+        })
+        test_phase.run_repoclosure(compose)
+
+        self.assertItemsEqual(mock_grc.call_args_list, [])
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
     def test_repoclosure_default_backend(self, mock_run, mock_grc):
         compose = DummyCompose(self.topdir, {})
         test_phase.run_repoclosure(compose)
-        self.maxDiff = None
-        all_repos = {}
-        for variant in compose.variants.itervalues():
-            for arch in variant.arches:
-                all_repos.update(self._get_repo(variant.uid, arch))
-            all_repos.update(self._get_repo(variant.uid, 'src', 'source/tree'))
 
         self.assertItemsEqual(
             mock_grc.call_args_list,
@@ -205,12 +213,6 @@ class TestRepoclosure(PungiTestCase):
     def test_repoclosure_dnf_backend(self, mock_run, mock_grc):
         compose = DummyCompose(self.topdir, {'repoclosure_backend': 'dnf'})
         test_phase.run_repoclosure(compose)
-        self.maxDiff = None
-        all_repos = {}
-        for variant in compose.variants.itervalues():
-            for arch in variant.arches:
-                all_repos.update(self._get_repo(variant.uid, arch))
-            all_repos.update(self._get_repo(variant.uid, 'src', 'source/tree'))
 
         self.assertItemsEqual(
             mock_grc.call_args_list,
@@ -224,6 +226,52 @@ class TestRepoclosure(PungiTestCase):
                        repos=self._get_repo('Server', 'x86_64')),
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Everything', 'x86_64'))])
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_report_error(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {
+            'repoclosure_strictness': [('^.*$', {'*': 'fatal'})]
+        })
+        mock_run.side_effect = mk_boom(cls=RuntimeError)
+
+        with self.assertRaises(RuntimeError):
+            test_phase.run_repoclosure(compose)
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_overwrite_options_creates_correct_commands(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {
+            'repoclosure_backend': 'dnf',
+            'repoclosure_strictness': [
+                ('^.*$', {'*': 'off'}),
+                ('^Server$', {'*': 'fatal'}),
+            ]
+        })
+        test_phase.run_repoclosure(compose)
+
+        self.assertItemsEqual(
+            mock_grc.call_args_list,
+            [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'amd64')),
+             mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
+                       repos=self._get_repo('Server', 'x86_64')),
+             ])
+
+    @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
+    @mock.patch('pungi.phases.test.run')
+    def test_repoclosure_uses_correct_behaviour(self, mock_run, mock_grc):
+        compose = DummyCompose(self.topdir, {
+            'repoclosure_backend': 'dnf',
+            'repoclosure_strictness': [
+                ('^.*$', {'*': 'off'}),
+                ('^Server$', {'*': 'fatal'}),
+            ]
+        })
+        mock_run.side_effect = mk_boom(cls=RuntimeError)
+
+        with self.assertRaises(RuntimeError):
+            test_phase.run_repoclosure(compose)
 
 
 if __name__ == "__main__":

@@ -159,6 +159,12 @@ def boom(*args, **kwargs):
     raise Exception('BOOM')
 
 
+def mk_boom(cls=Exception, msg='BOOM'):
+    def b(*args, **kwargs):
+        raise cls(msg)
+    return b
+
+
 PKGSET_REPOS = dict(
     pkgset_source='repos',
     pkgset_repos={},

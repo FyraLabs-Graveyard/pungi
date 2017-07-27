@@ -622,6 +622,11 @@ def _make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "repoclosure_strictness": _variant_arch_mapping({
+                "type": "string",
+                "default": "lenient",
+                "enum": ["off", "lenient", "fatal"],
+            }),
             "repoclosure_backend": {
                 "type": "string",
                 "default": "yum",

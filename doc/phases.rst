@@ -141,9 +141,10 @@ Test
 
 This phase is supposed to run some sanity checks on the finished compose.
 
-The first test is to run ``repoclosure`` on each repository. However, even if
-it fails, the compose will still be considered a success. The actual error has
-to be looked up in the compose logs directory.
+The first test is to run ``repoclosure`` on each repository. By default errors
+are only reported in the log, the compose will still be considered a success.
+The actual error has to be looked up in the compose logs directory.
+Configuration allows customizing this.
 
 The other test is to check all images listed the metadata and verify that they
 look sane. For ISO files headers are checked to verify the format is correct,
