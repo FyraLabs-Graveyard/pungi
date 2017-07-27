@@ -21,6 +21,14 @@ Group:          Development/Debug
 A dummy bash-debuginfo package
 
 
+%package debugsource
+Summary:        A dummy bash-debugsource package
+Group:          Development/Debug
+
+%description debugsource
+A dummy bash-debugsource package
+
+
 %package doc
 Summary:        A dummy bash-doc package
 BuildArch:      noarch
@@ -49,6 +57,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %files debuginfo
+%files debugsource
 %files doc
 
 
