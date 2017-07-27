@@ -144,6 +144,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.ppc64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.ppc64.rpm",
             "dummy-glibc-debuginfo-2.14-5.ppc.rpm",
             "dummy-glibc-debuginfo-2.14-5.ppc64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.ppc.rpm",
@@ -190,6 +191,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
         ])
@@ -219,6 +221,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.s390x.rpm",
+            "dummy-bash-debugsource-4.2.37-6.s390x.rpm",
             "dummy-glibc-debuginfo-2.14-5.s390x.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.s390x.rpm",
         ])
@@ -252,7 +255,9 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -598,6 +603,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "Dummy-firefox-debuginfo-16.0.1-1.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",          # Important
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",   # Important
@@ -709,6 +715,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "Dummy-firefox-debuginfo-16.0.1-1.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
@@ -775,6 +782,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -832,6 +840,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -862,6 +871,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -896,7 +906,9 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -930,6 +942,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             # "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             # "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -966,6 +979,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
@@ -1237,6 +1251,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
         ])
 
     def test_bash_fulltree_nodeps(self):
@@ -1258,6 +1273,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+            "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
         ])
 
     def test_lookaside_empty(self):
@@ -1441,6 +1457,7 @@ class DepsolvingBase(object):
         ])
         self.assertItemsEqual(pkg_map["debuginfo"], [
             "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
             "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",

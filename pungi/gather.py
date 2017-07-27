@@ -424,7 +424,7 @@ class Pungi(PungiBase):
     def _filtersrcdebug(self, po):
         """Filter out package objects that are of 'src' arch."""
 
-        if po.arch == 'src' or 'debuginfo' in po.name:
+        if po.arch == 'src' or pungi.util.pkg_is_debug(po):
             return False
 
         return True
