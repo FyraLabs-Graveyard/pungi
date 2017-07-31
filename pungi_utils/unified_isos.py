@@ -76,7 +76,6 @@ class UnifiedISO(object):
         self.repos = {}         # {arch/src: {variant: new_path}
         self.comps = {}         # {arch/src: {variant: old_path}
         self.productid = {}     # {arch/stc: {variant: old_path}
-        self.images = {}        # {arch/src: [*.iso, *.iso.{md5,sha1,sha256}sum]}
         self.conf = self.read_config()
 
     def create(self, delete_temp=True):
@@ -86,7 +85,6 @@ class UnifiedISO(object):
             self.createrepo()
             self.discinfo()
             self.createiso()
-            self.link_to_compose()
             self.update_checksums()
             self.dump_manifest()
         finally:
@@ -330,9 +328,6 @@ class UnifiedISO(object):
             img.bootable = False
             img.unified = True
 
-            self.images.setdefault(typed_arch, set()).add(iso_path)
-            self.images.setdefault(typed_arch, set()).add(iso_path + ".manifest")
-
             img.implant_md5 = iso.get_implanted_md5(iso_path)
             try:
                 img.volume_id = iso.get_volume_id(iso_path)
@@ -367,23 +362,11 @@ class UnifiedISO(object):
                     )
                     im.add(variant.uid, tree_arch, variant_img)
 
-    def link_to_compose(self):
-        for variant in self.ci.get_variants(recursive=False):
-            for arch in variant.arches | set(['debug-' + a for a in variant.arches]) | set(['src']):
-                bare_arch = arch.split('-', 1)[-1]
-                if arch == 'src':
-                    dir = 'source'
-                elif arch.startswith('debug-'):
-                    dir = bare_arch + '/debug'
-                else:
-                    dir = bare_arch
-                default_path = os.path.join(variant.uid, dir, "iso")
-                isos = os.path.join(self.compose_path, default_path)
-                makedirs(isos)
-                for image in self.images.get(arch, []):
-                    dst = os.path.join(isos, os.path.basename(image))
-                    print("Linking {0} -> {1}".format(image, dst))
-                    self.linker.link(image, dst)
+                    dst = os.path.join(self.compose_path, variant_img.path)
+                    print("Linking {0} -> {1}".format(iso_path, dst))
+                    makedirs(os.path.dirname(dst))
+                    self.linker.link(iso_path, dst)
+                    self.linker.link(iso_path + '.manifest', dst + '.manifest')
 
     def _get_base_filename(self, variant, arch):
         substs = {

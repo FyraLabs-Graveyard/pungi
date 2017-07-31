@@ -54,7 +54,7 @@ class TestCreate(PungiTestCase):
 
     def test_create_method(self):
         methods = ('link_to_temp', 'createrepo', 'discinfo', 'createiso',
-                   'link_to_compose', 'update_checksums', 'dump_manifest')
+                   'update_checksums', 'dump_manifest')
         for attr in methods:
             setattr(self.isos, attr, mock.Mock())
 
@@ -390,28 +390,25 @@ class TestCreateiso(PungiTestCase):
         self.isos.linker = mock.Mock()
         # TODO mock treeinfo and use mappings for other data
         self.isos.link_to_temp()
+        # Reset linker to only mock calls from createiso method.
+        self.isos.linker = mock.Mock()
         self.maxDiff = None
         self.mkisofs_cmd = None
+
+        self.binary_fn = 'DP-1.0-20161013.t.4-x86_64-dvd.iso'
+        self.binary = os.path.join(self.isos.temp_dir, 'iso', 'x86_64', self.binary_fn)
+        self.source_fn = 'DP-1.0-20161013.t.4-source-dvd.iso'
+        self.source = os.path.join(self.isos.temp_dir, 'iso', 'source', self.source_fn)
+        self.debug_fn = 'DP-1.0-20161013.t.4-x86_64-debuginfo-dvd.iso'
+        self.debug = os.path.join(self.isos.temp_dir, 'iso', 'x86_64-debuginfo', self.debug_fn)
 
     def mock_gmc(self, path, *args, **kwargs):
         touch(path, 'ISO FILE\n')
         self.mkisofs_cmd = self.mkisofs_cmd or mock.Mock(name='mkisofs cmd')
         return self.mkisofs_cmd
 
-    def _img(self, arch):
-        base_path = os.path.join(self.isos.temp_dir, 'iso', arch,
-                                 u'DP-1.0-20161013.t.4-%s-dvd.iso' % arch)
-        yield base_path
-        yield base_path + '.manifest'
-
-    def _imgs(self, arches):
-        images = {}
-        for arch in arches:
-            file_arch = arch
-            if arch.startswith('debug-'):
-                file_arch = arch.split('-', 1)[-1] + '-debuginfo'
-            images[arch] = set(self._img(file_arch if arch != 'src' else 'source'))
-        return images
+    def _iso(self, variant, arch, name):
+        return os.path.join(self.compose_path, variant, arch, 'iso', name)
 
     def assertResults(self, iso, run, arches):
         self.assertEqual(
@@ -420,8 +417,6 @@ class TestCreateiso(PungiTestCase):
              mock.call(iso.get_implantisomd5_cmd.return_value),
              mock.call(iso.get_manifest_cmd.return_value)] * len(arches)
         )
-
-        self.assertEqual(self.isos.images, self._imgs(arches))
 
         images = self.isos.compose.images
 
@@ -437,6 +432,25 @@ class TestCreateiso(PungiTestCase):
                         break
                 else:
                     self.fail('Image for %s.%s missing' % (v, a))
+
+        expected = [
+            mock.call(self.binary, self._iso('Client', 'x86_64', self.binary_fn)),
+            mock.call(self.binary + '.manifest', self._iso('Client', 'x86_64', self.binary_fn + '.manifest')),
+            mock.call(self.binary, self._iso('Server', 'x86_64', self.binary_fn)),
+            mock.call(self.binary + '.manifest', self._iso('Server', 'x86_64', self.binary_fn + '.manifest')),
+            mock.call(self.source, self._iso('Client', 'source', self.source_fn)),
+            mock.call(self.source + '.manifest', self._iso('Client', 'source', self.source_fn + '.manifest')),
+            mock.call(self.source, self._iso('Server', 'source', self.source_fn)),
+            mock.call(self.source + '.manifest', self._iso('Server', 'source', self.source_fn + '.manifest')),
+        ]
+        if 'debug-x86_64' in arches:
+            expected.extend([
+                mock.call(self.debug, self._iso('Client', 'x86_64/debug', self.debug_fn)),
+                mock.call(self.debug + '.manifest', self._iso('Client', 'x86_64/debug', self.debug_fn + '.manifest')),
+                mock.call(self.debug, self._iso('Server', 'x86_64/debug', self.debug_fn)),
+                mock.call(self.debug + '.manifest', self._iso('Server', 'x86_64/debug', self.debug_fn + '.manifest')),
+            ])
+        self.assertItemsEqual(self.isos.linker.link.call_args_list, expected)
 
     @mock.patch('pungi_utils.unified_isos.iso')
     @mock.patch('pungi_utils.unified_isos.run')
@@ -466,41 +480,6 @@ class TestCreateiso(PungiTestCase):
         self.isos.createiso()
 
         self.assertResults(iso, run, ['src', 'x86_64', 'debug-x86_64'])
-
-
-class TestLinkToCompose(PungiTestCase):
-    def setUp(self):
-        super(TestLinkToCompose, self).setUp()
-        shutil.copytree(os.path.join(FIXTURE_DIR, COMPOSE_ID),
-                        os.path.join(self.topdir, COMPOSE_ID))
-        self.compose_path = os.path.join(self.topdir, COMPOSE_ID, 'compose')
-        self.isos = unified_isos.UnifiedISO(self.compose_path)
-        self.isos.linker = mock.Mock()
-        self.binary = os.path.join(self.isos.temp_dir, 'isos', 'x86_64', 'binary.iso')
-        self.debug = os.path.join(self.isos.temp_dir, 'isos', 'x86_64', 'debug.iso')
-        self.source = os.path.join(self.isos.temp_dir, 'isos', 'src', 'source.iso')
-        self.isos.images = {
-            'x86_64': set([self.binary]),
-            'debug-x86_64': set([self.debug]),
-            'src': set([self.source]),
-        }
-        self.maxDiff = None
-
-    def _iso(self, variant, arch, name):
-        return os.path.join(self.compose_path, variant, arch, 'iso', name)
-
-    def test_link_to_compose(self):
-        self.isos.link_to_compose()
-
-        self.assertItemsEqual(
-            self.isos.linker.link.call_args_list,
-            [mock.call(self.binary, self._iso('Client', 'x86_64', 'binary.iso')),
-             mock.call(self.debug, self._iso('Client', 'x86_64/debug', 'debug.iso')),
-             mock.call(self.binary, self._iso('Server', 'x86_64', 'binary.iso')),
-             mock.call(self.debug, self._iso('Server', 'x86_64/debug', 'debug.iso')),
-             mock.call(self.source, self._iso('Client', 'source', 'source.iso')),
-             mock.call(self.source, self._iso('Server', 'source', 'source.iso'))]
-        )
 
 
 class MockImage(mock.Mock):
