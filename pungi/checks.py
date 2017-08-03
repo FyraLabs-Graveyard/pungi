@@ -454,29 +454,14 @@ def make_schema():
                 ]
             },
 
-            "list_of_repos": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/repo"},
-            },
-
-            "repos": {
-                "anyOf": [
-                    {"$ref": "#/definitions/repo"},
-                    {"$ref": "#/definitions/list_of_repos"},
-                ]
-            },
+            "repos": _one_or_list({"$ref": "#/definitions/repo"}),
 
             "list_of_strings": {
                 "type": "array",
                 "items": {"type": "string"},
             },
 
-            "strings": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"$ref": "#/definitions/list_of_strings"},
-                ]
-            },
+            "strings": _one_or_list({"type": "string"}),
 
             "optional_string": {
                 "anyOf": [
@@ -921,17 +906,9 @@ def make_schema():
                 "additionalProperties": False,
             }),
 
-            "live_images": _variant_arch_mapping({
-                "anyOf": [
-                    {"$ref": "#/definitions/live_image_config"},
-                    {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/live_image_config"
-                        }
-                    }
-                ]
-            }),
+            "live_images": _variant_arch_mapping(
+                _one_or_list({"$ref": "#/definitions/live_image_config"})
+            ),
 
             "image_build": {
                 "type": "object",
@@ -1014,17 +991,7 @@ def make_schema():
                     # Warning: this pattern is a variant uid regex, but the
                     # format does not let us validate it as there is no regular
                     # expression to describe all regular expressions.
-                    ".+": {
-                        "anyOf": [
-                            {"$ref": "#/definitions/osbs_config"},
-                            {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/osbs_config",
-                                },
-                            },
-                        ],
-                    },
+                    ".+": _one_or_list({"$ref": "#/definitions/osbs_config"}),
                 },
                 "additionalProperties": False,
             },
@@ -1099,6 +1066,19 @@ def _variant_arch_mapping(value):
             "minItems": 2,
         },
         "default": []
+    }
+
+
+def _one_or_list(value):
+    """Require either `value` or a list of `value`s."""
+    return {
+        "anyOf": [
+            value,
+            {
+                "type": "array",
+                "items": value,
+            },
+        ],
     }
 
 
