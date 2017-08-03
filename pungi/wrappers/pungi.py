@@ -202,8 +202,10 @@ class PungiWrapper(object):
 
         return cmd
 
-    def get_packages(self, f):
-        result = dict(((i, []) for i in PACKAGES_RE))
+    def parse_log(self, f):
+        packages = dict(((i, []) for i in PACKAGES_RE))
+        broken_deps = {}
+        missing_comps = set()
 
         for line in f:
             for file_type, pattern in PACKAGES_RE.iteritems():
@@ -216,30 +218,18 @@ class PungiWrapper(object):
                     flags = match.groupdict()["flags"] or ""
                     flags = sorted([i.strip() for i in flags.split(",") if i.strip()])
                     item["flags"] = flags
-                    result[file_type].append(item)
+                    packages[file_type].append(item)
                     break
 
-        # no packages are filtered
-
-        return result
-
-    def get_missing_comps_packages(self, f):
-        result = set()
-        for line in f:
             match = MISSING_COMPS_PACKAGE_RE.match(line)
             if match:
-                result.add(match.group(1))
-        return result
+                missing_comps.add(match.group(1))
 
-    def get_missing_deps(self, f):
-        result = {}
-
-        for line in f:
             match = UNRESOLVED_DEPENDENCY_RE.match(line)
             if match:
-                result.setdefault(match.group(2), set()).add(match.group(1))
+                broken_deps.setdefault(match.group(2), set()).add(match.group(1))
 
-        return result
+        return packages, broken_deps, missing_comps
 
     def run_pungi(self, ks_file, destdir, name, selfhosting=False, fulltree=False,
                   greedy='', cache_dir=None, arch='', multilib_methods=[],

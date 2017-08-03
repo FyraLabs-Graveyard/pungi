@@ -19,7 +19,7 @@ from pungi.wrappers.pungi import PungiWrapper
 def read_rpms(fn):
     pw = PungiWrapper()
     with open(fn, "r") as f:
-        data = pw.get_packages(f)
+        data, _, _ = pw.parse_log(f)
     result = set()
     for i in data["rpm"]:
         nvra = parse_nvra(i["path"])

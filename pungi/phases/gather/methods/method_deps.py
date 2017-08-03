@@ -41,8 +41,8 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
         write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
                            multilib_whitelist, multilib_blacklist,
                            fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
-        result = resolve_deps(self.compose, arch, variant)
-        check_deps(self.compose, arch, variant)
+        result, missing_deps = resolve_deps(self.compose, arch, variant)
+        check_deps(self.compose, arch, variant, missing_deps)
         return result
 
 
@@ -103,7 +103,8 @@ def resolve_deps(compose, arch, variant):
     if compose.DEBUG and os.path.exists(pungi_log):
         compose.log_warning("[SKIP ] %s" % msg)
         with open(pungi_log, "r") as f:
-            return pungi_wrapper.get_packages(f)
+            res, broken_deps, _ = pungi_wrapper.parse_log(f)
+            return res, broken_deps
 
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant)
@@ -153,9 +154,7 @@ def resolve_deps(compose, arch, variant):
         rmtree(tmp_dir)
 
     with open(pungi_log, "r") as f:
-        result = pungi_wrapper.get_packages(f)
-        f.seek(0)
-        missing_comps_pkgs = pungi_wrapper.get_missing_comps_packages(f)
+        packages, broken_deps, missing_comps_pkgs = pungi_wrapper.parse_log(f)
 
     if missing_comps_pkgs:
         msg = ("Packages mentioned in comps do not exist for %s.%s: %s"
@@ -165,17 +164,13 @@ def resolve_deps(compose, arch, variant):
             raise RuntimeError(msg)
 
     compose.log_info("[DONE ] %s" % msg)
-    return result
+    return packages, broken_deps
 
 
-def check_deps(compose, arch, variant):
+def check_deps(compose, arch, variant, missing_deps):
     if not compose.conf["check_deps"]:
         return
 
-    pungi_wrapper = PungiWrapper()
-    pungi_log = compose.paths.work.pungi_log(arch, variant)
-    with open(pungi_log, "r") as f:
-        missing_deps = pungi_wrapper.get_missing_deps(f)
     if missing_deps:
         for pkg in sorted(missing_deps):
             compose.log_error("Unresolved dependencies in package %s: %s" % (pkg, sorted(missing_deps[pkg])))

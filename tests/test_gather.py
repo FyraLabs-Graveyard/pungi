@@ -1618,7 +1618,7 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 
         p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
         with open(self.out, "r") as f:
-            pkg_map = p.get_packages(f)
+            pkg_map, _, _ = p.parse_log(f)
         return convert_pkg_map(pkg_map)
 
 
