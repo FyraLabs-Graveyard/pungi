@@ -1158,15 +1158,16 @@ Example
 OSTree Settings
 ===============
 
-The ``ostree`` phase of *Pungi* can create ostree repositories. This is done by
-running ``rpm-ostree compose`` in a Koji runroot environment. The ostree
-repository itself is not part of the compose and should be located in another
-directory. Any new packages in the compose will be added to the repository with
-a new commit.
+The ``ostree`` phase of *Pungi* can create and update ostree repositories. This
+is done by running ``rpm-ostree compose`` in a Koji runroot environment. The
+ostree repository itself is not part of the compose and should be located in
+another directory. Any new packages in the compose will be added to the
+repository with a new commit.
 
 **ostree**
-    (*dict*) -- a variant/arch mapping of configuration. The format should be
-    ``[(variant_uid_regex, {arch|*: config_dict})]``.
+    (*dict*) -- a mapping of configuration for each. The format should be
+    ``{variant_uid_regex: config_dict}``. It is possible to use a list of
+    configuration dicts as well.
 
     The configuration dict for each variant arch pair must have these keys:
 
@@ -1183,6 +1184,9 @@ a new commit.
       be removed from the tree config file.
     * ``config_branch`` -- (*str*) Git branch of the repo to use. Defaults to
       ``master``.
+    * ``arches`` -- (*[str]*) List of architectures for which to update ostree.
+      There will be one task per architecture. By default all architectures in
+      the variant are used.
     * ``failable`` -- (*[str]*) List of architectures for which this
       deliverable is not release blocking.
     * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
@@ -1206,25 +1210,25 @@ Example config
 --------------
 ::
 
-    ostree = [
-        ("^Atomic$", {
-            "x86_64": {
-                "treefile": "fedora-atomic-docker-host.json",
-                "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
-                "repo": [
-                    "Server",
-                    "http://example.com/repo/x86_64/os",
-                    {"baseurl": "Everything"},
-                    {"baseurl": "http://example.com/linux/repo", "exclude": "systemd-container"},
-                ],
-                "keep_original_sources": True,
-                "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
-                "update_summary": True,
-                # Automatically generate a reasonable version
-                "version": "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN",
-            }
-        })
-    ]
+    ostree = {
+        "^Atomic$": {
+            "treefile": "fedora-atomic-docker-host.json",
+            "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
+            "repo": [
+                "Server",
+                "http://example.com/repo/x86_64/os",
+                {"baseurl": "Everything"},
+                {"baseurl": "http://example.com/linux/repo", "exclude": "systemd-container"},
+            ],
+            "keep_original_sources": True,
+            "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
+            "update_summary": True,
+            # Automatically generate a reasonable version
+            "version": "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN",
+            # Only run this for x86_64 even if Atomic has more arches
+            "arches": ["x86_64"],
+        }
+    }
 
 
 Ostree Installer Settings

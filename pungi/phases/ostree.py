@@ -20,12 +20,22 @@ class OSTreePhase(ConfigGuardedPhase):
         super(OSTreePhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
 
+    def _enqueue(self, variant, arch, conf):
+        self.pool.add(OSTreeThread(self.pool))
+        self.pool.queue_put((self.compose, variant, arch, conf))
+
     def run(self):
-        for variant in self.compose.get_variants():
-            for arch in variant.arches:
-                for conf in util.get_arch_variant_data(self.compose.conf, self.name, arch, variant):
-                    self.pool.add(OSTreeThread(self.pool))
-                    self.pool.queue_put((self.compose, variant, arch, conf))
+        if isinstance(self.compose.conf.get(self.name), dict):
+            for variant in self.compose.get_variants():
+                for conf in util.get_variant_data(self.compose.conf, self.name, variant):
+                    for arch in conf.get('arches', []) or variant.arches:
+                        self._enqueue(variant, arch, conf)
+        else:
+            # Legacy code path to support original configuration.
+            for variant in self.compose.get_variants():
+                for arch in variant.arches:
+                    for conf in util.get_arch_variant_data(self.compose.conf, self.name, arch, variant):
+                        self._enqueue(variant, arch, conf)
 
         self.pool.start()
 

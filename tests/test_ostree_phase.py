@@ -43,6 +43,63 @@ class OSTreePhaseTest(helpers.PungiTestCase):
         phase = ostree.OSTreePhase(compose)
         self.assertTrue(phase.skip())
 
+    @mock.patch('pungi.phases.ostree.ThreadPool')
+    def test_run_with_simple_config(self, ThreadPool):
+        cfg = helpers.IterableMock(get=lambda x, y: None)
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree': {
+                '^Everything$': cfg
+            }
+        })
+
+        pool = ThreadPool.return_value
+
+        phase = ostree.OSTreePhase(compose)
+        phase.run()
+
+        self.assertEqual(len(pool.add.call_args_list), 2)
+        self.assertEqual(pool.queue_put.call_args_list,
+                         [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg)),
+                          mock.call((compose, compose.variants['Everything'], 'amd64', cfg))])
+
+    @mock.patch('pungi.phases.ostree.ThreadPool')
+    def test_run_with_simple_config_limit_arches(self, ThreadPool):
+        cfg = helpers.IterableMock(get=lambda x, y: ['x86_64'])
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree': {
+                '^Everything$': cfg
+            }
+        })
+
+        pool = ThreadPool.return_value
+
+        phase = ostree.OSTreePhase(compose)
+        phase.run()
+
+        self.assertEqual(len(pool.add.call_args_list), 1)
+        self.assertEqual(pool.queue_put.call_args_list,
+                         [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg))])
+
+    @mock.patch('pungi.phases.ostree.ThreadPool')
+    def test_run_with_simple_config_limit_arches_two_blocks(self, ThreadPool):
+        cfg1 = helpers.IterableMock(get=lambda x, y: ['x86_64'])
+        cfg2 = helpers.IterableMock(get=lambda x, y: ['s390x'])
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree': {
+                '^Everything$': [cfg1, cfg2],
+            }
+        })
+
+        pool = ThreadPool.return_value
+
+        phase = ostree.OSTreePhase(compose)
+        phase.run()
+
+        self.assertEqual(len(pool.add.call_args_list), 2)
+        self.assertEqual(pool.queue_put.call_args_list,
+                         [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg1)),
+                          mock.call((compose, compose.variants['Everything'], 's390x', cfg2))])
+
 
 class OSTreeThreadTest(helpers.PungiTestCase):
 

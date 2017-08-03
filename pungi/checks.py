@@ -862,27 +862,63 @@ def make_schema():
                 "additionalProperties": False,
             },
 
-            "ostree": _variant_arch_mapping({
-                "type": "object",
-                "properties": {
-                    "treefile": {"type": "string"},
-                    "config_url": {"type": "string"},
-                    "repo": {
-                        "$ref": "#/definitions/repos",
-                        "alias": "extra_source_repos",
-                        "append": ["repo_from", "source_repo_from"],
+            "ostree": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "patternProperties": {
+                            # Warning: this pattern is a variant uid regex, but the
+                            # format does not let us validate it as there is no regular
+                            # expression to describe all regular expressions.
+                            ".+": _one_or_list({
+                                "type": "object",
+                                "properties": {
+                                    "treefile": {"type": "string"},
+                                    "config_url": {"type": "string"},
+                                    "repo": {
+                                        "$ref": "#/definitions/repos",
+                                        "alias": "extra_source_repos",
+                                        "append": ["repo_from", "source_repo_from"],
+                                    },
+                                    "keep_original_sources": {"type": "boolean"},
+                                    "ostree_repo": {"type": "string"},
+                                    "arches": {"$ref": "#/definitions/list_of_strings"},
+                                    "failable": {"$ref": "#/definitions/list_of_strings"},
+                                    "update_summary": {"type": "boolean"},
+                                    "version": {"type": "string"},
+                                    "config_branch": {"type": "string"},
+                                    "tag_ref": {"type": "boolean"},
+                                },
+                                "required": ["treefile", "config_url", "repo", "ostree_repo"],
+                                "additionalProperties": False,
+                            }),
+                        },
+                        "additionalProperties": False,
                     },
-                    "keep_original_sources": {"type": "boolean"},
-                    "ostree_repo": {"type": "string"},
-                    "failable": {"$ref": "#/definitions/list_of_strings"},
-                    "update_summary": {"type": "boolean"},
-                    "version": {"type": "string"},
-                    "config_branch": {"type": "string"},
-                    "tag_ref": {"type": "boolean"},
-                },
-                "required": ["treefile", "config_url", "repo", "ostree_repo"],
-                "additionalProperties": False,
-            }),
+                    # Deprecated in favour of the dict version above.
+                    _variant_arch_mapping({
+                        "type": "object",
+                        "properties": {
+                            "treefile": {"type": "string"},
+                            "config_url": {"type": "string"},
+                            "repo": {
+                                "$ref": "#/definitions/repos",
+                                "alias": "extra_source_repos",
+                                "append": ["repo_from", "source_repo_from"],
+                            },
+                            "keep_original_sources": {"type": "boolean"},
+                            "ostree_repo": {"type": "string"},
+                            "failable": {"$ref": "#/definitions/list_of_strings"},
+                            "update_summary": {"type": "boolean"},
+                            "version": {"type": "string"},
+                            "config_branch": {"type": "string"},
+                            "tag_ref": {"type": "boolean"},
+                        },
+                        "required": ["treefile", "config_url", "repo", "ostree_repo"],
+                        "additionalProperties": False,
+                    }),
+                ]
+            },
 
             "ostree_installer": _variant_arch_mapping({
                 "type": "object",
