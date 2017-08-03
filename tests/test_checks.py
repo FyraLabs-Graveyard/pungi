@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pungi import checks
 
+
 class CheckDependenciesTestCase(unittest.TestCase):
 
     def dont_find(self, paths):
@@ -195,7 +196,7 @@ class TestSchemaValidator(unittest.TestCase):
         conf.load_from_string(string)
         return conf
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_property(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -218,7 +219,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 0)
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_alias_property(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -241,7 +242,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_required_is_missing(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -265,7 +266,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("WARNING: Unrecognized config option: name.", warnings)
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_required_is_in_alias(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -289,7 +290,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_redundant_alias(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -315,7 +316,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_properties_in_deep(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -356,7 +357,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_append_option(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -396,7 +397,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_append_to_nonexist_option(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -435,7 +436,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_multiple_appends(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -480,7 +481,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server", "Client"])
 
-    @mock.patch('pungi.checks._make_schema')
+    @mock.patch('pungi.checks.make_schema')
     def test_anyof_validator_not_raise_our_warnings_as_error(self, make_schema):
         # https://pagure.io/pungi/issue/598
         schema = {

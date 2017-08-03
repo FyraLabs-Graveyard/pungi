@@ -31,7 +31,7 @@ outline of the process:
 3. Extra validation can happen in ``validate()`` method of any phase.
 
 When a new config option is added, the schema must be updated (see the
-``_make_schema`` function). The dependencies should be encoded into
+``make_schema`` function). The dependencies should be encoded into
 ``CONFIG_DEPS`` mapping.
 """
 
@@ -188,7 +188,7 @@ def validate(config):
 
     Undefined values for which a default value exists will be filled in.
     """
-    schema = _make_schema()
+    schema = make_schema()
     DefaultValidator = _extend_with_default_and_alias(jsonschema.Draft4Validator)
     validator = DefaultValidator(schema,
                                  {'array': (tuple, list),
@@ -393,7 +393,7 @@ class ConfigOptionError(jsonschema.exceptions.ValidationError):
     pass
 
 
-def _make_schema():
+def make_schema():
     return {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Pungi Configuration",

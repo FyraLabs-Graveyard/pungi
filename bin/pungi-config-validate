@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import argparse
+import json
 import kobo.conf
 import os
 import sys
@@ -95,8 +96,18 @@ def run(config, topdir, has_old):
     return errors
 
 
+class DumpSchemaAction(argparse.Action):
+    def __call__(self, parser, ns, values, option_string=None):
+        json.dump(pungi.checks.make_schema(), sys.stdout,
+                  sort_keys=True, indent=4)
+        print('')
+        sys.exit(0)
+
+
 def main(args=None):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dump-schema', nargs=0, action=DumpSchemaAction,
+                        help='print JSON Schema of configuration and exit')
     parser.add_argument('config', metavar='CONFIG',
                         help='configuration file to validate')
     parser.add_argument('--old-composes', action='store_true',
