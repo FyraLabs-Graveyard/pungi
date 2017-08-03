@@ -575,6 +575,10 @@ def _make_schema():
                 "type": "boolean",
                 "default": True
             },
+            "require_all_comps_packages": {
+                "type": "boolean",
+                "default": False,
+            },
             "bootable": {
                 "type": "boolean",
                 "default": False

@@ -29,6 +29,8 @@ PACKAGES_RE = {
 
 UNRESOLVED_DEPENDENCY_RE = re.compile(r"^.*Unresolvable dependency (.+) in ([^ ]+).*$")
 
+MISSING_COMPS_PACKAGE_RE = re.compile(r"^.*Could not find a match for (.+) in any configured repo")
+
 
 class PungiWrapper(object):
 
@@ -219,6 +221,14 @@ class PungiWrapper(object):
 
         # no packages are filtered
 
+        return result
+
+    def get_missing_comps_packages(self, f):
+        result = set()
+        for line in f:
+            match = MISSING_COMPS_PACKAGE_RE.match(line)
+            if match:
+                result.add(match.group(1))
         return result
 
     def get_missing_deps(self, f):

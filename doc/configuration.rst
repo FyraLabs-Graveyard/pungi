@@ -627,6 +627,11 @@ Options
     (*bool*) -- Set to ``False`` if you don't want the compose to abort when
     some package has broken dependencies.
 
+**require_all_comps_packages** = False
+    (*bool*) -- Set to ``True`` to abort compose when package mentioned in
+    comps file can not be found in the package set. When disabled (the default,
+    such cases are still reported as warnings in the log.
+
 **gather_source_mapping**
     (*str*) -- Only use when ``gather_source = "json"``. The value should be a
     path to JSON file with following mapping: ``{variant: {arch: {rpm_name:
