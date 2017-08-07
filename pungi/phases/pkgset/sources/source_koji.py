@@ -83,12 +83,10 @@ def variant_dict_from_str(module_str):
 
 
 @retry(wait_on=IOError)
-def get_module(session, module_info, strict=False):
+def get_module(session, module_info):
     """
     :param session : PDCClient instance
     :param module_info: pdc variant_dict, str, mmd or module dict
-    :param strict: Normally this function returns None if no module can be
-           found.  If strict=True, then a ValueError is raised.
 
     :return final list of module_info which pass repoclosure
     """
@@ -105,12 +103,9 @@ def get_module(session, module_info, strict=False):
 
     retval = session['unreleasedvariants'](page_size=-1, **query)
 
-    # Error handling
+    # Error reporting
     if not retval:
-        if strict:
-            raise ValueError("Failed to find module in PDC %r" % query)
-        else:
-            return None
+        raise ValueError("Failed to find module in PDC %r" % query)
 
     module = None
     # If we specify 'variant_release', we expect only single module to be
@@ -179,7 +174,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         # to compose_tags list.
         if session:
             for module in variant.get_modules():
-                pdc_module = get_module(session, module["name"], strict=True)
+                pdc_module = get_module(session, module["name"])
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
 
