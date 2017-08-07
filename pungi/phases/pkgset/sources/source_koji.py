@@ -179,7 +179,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         # to compose_tags list.
         if session:
             for module in variant.get_modules():
-                pdc_module = get_module(session, module["name"])
+                pdc_module = get_module(session, module["name"], strict=True)
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
 
