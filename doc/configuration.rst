@@ -127,10 +127,12 @@ Options
 -------
 
 **comps_file** [mandatory]
-    (*scm_dict*, *str* or None) -- reference to comps XML file with installation groups
+    (:ref:`scm_dict <scm_support>`, *str* or None) -- reference to comps XML
+    file with installation groups
 
 **variants_file** [mandatory]
-    (*scm_dict* or *str*) -- reference to variants XML file that defines release variants and architectures
+    (:ref:`scm_dict <scm_support>` or *str*) -- reference to variants XML file
+    that defines release variants and architectures
 
 **failable_deliverables** [optional]
     (*list*) -- list which deliverables on which variant and architecture can
@@ -393,9 +395,9 @@ Options
     cause the SQLite databases to be compressed with xz.
 
 **product_id** = None
-    (*scm_dict*) -- If specified, it should point to a directory with
-    certificates ``<variant_uid>-<arch>-*.pem``. This certificate will be
-    injected into the repository.
+    (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
+    directory with certificates ``<variant_uid>-<arch>-*.pem``. This
+    certificate will be injected into the repository.
 
 **product_id_allow_missing** = False
     (*bool*) -- When ``product_id`` is used and a certificate for some variant
@@ -469,8 +471,8 @@ Options
       * ``nomacboot`` -- *bool* (default ``True``)
       * ``noupgrade`` -- *bool* (default ``True``)
 **buildinstall_kickstart**
-    (*scm_dict*) -- If specified, this kickstart file will be copied into each
-    file and pointed to in boot configuration.
+    (:ref:`scm_dict <scm_support>`) -- If specified, this kickstart file will
+    be copied into each file and pointed to in boot configuration.
 
 Example
 -------
@@ -600,10 +602,10 @@ Options
     one system release package. In such case, set this option to ``False``.
 
 **gather_prepopulate** = None
-    (*scm_dict*) -- If specified, you can use this to add additional packages.
-    The format of the file pointed to by this option is a JSON mapping
-    ``{variant_uid: {arch: {build: [package]}}}``. Packages added through this
-    option can not be removed by ``filter_packages``.
+    (:ref:`scm_dict <scm_support>`) -- If specified, you can use this to add
+    additional packages. The format of the file pointed to by this option is a
+    JSON mapping ``{variant_uid: {arch: {build: [package]}}}``. Packages added
+    through this option can not be removed by ``filter_packages``.
 
 **multilib_blacklist**
     (*dict*) -- multilib blacklist; format: ``{arch|*: [package_globs]}``. The
@@ -751,7 +753,10 @@ Options
 -------
 
 **extra_files**
-    (*list*) -- references to external files to be placed in os/ directory and media; format: [(variant_uid_regex, {arch|*: [scm_dicts]})]
+    (*list*) -- references to external files to be placed in os/ directory and
+    media; format: ``[(variant_uid_regex, {arch|*: [scm_dict]})]``. See
+    :ref:`scm_support` for details. If the dict specifies a ``target`` key, an
+    additional subdirectory will be used.
 
 
 Example
@@ -827,10 +832,11 @@ Options
     (*bool*) -- create product images; requires bootable=True
 
 **productimg_install_class**
-    (*scm_dict*, *str*) -- reference to install class **file**
+    (:ref:`scm_dict <scm_support>`, *str*) -- reference to install class **file**
 
 **productimg_po_files**
-    (*scm_dict*, *str*) -- reference to a **directory** with po files for install class translations
+    (:ref:`scm_dict <scm_support>`, *str*) -- reference to a **directory** with
+    po files for install class translations
 
 
 Example

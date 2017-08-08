@@ -16,6 +16,7 @@ Contents:
     testing
     format
     configuration
+    scm_support
     messaging
     phases
     gathering
