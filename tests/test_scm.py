@@ -109,8 +109,9 @@ class GitSCMTestCase(SCMBaseTest):
         commands = []
 
         def process(cmd, workdir=None, **kwargs):
-            fname = cmd.split('|')[0].strip().split(' ')[-1]
-            touch(os.path.join(workdir, fname))
+            if cmd.startswith('/usr/bin/git'):
+                fname = cmd.split('|')[0].strip().split(' ')[-1]
+                touch(os.path.join(workdir, fname))
             commands.append(cmd)
 
         run.side_effect = process
@@ -123,6 +124,76 @@ class GitSCMTestCase(SCMBaseTest):
         self.assertEqual(
             commands,
             ['/usr/bin/git archive --remote=git://example.com/git/repo.git master some_file.txt | tar xf -'])
+
+    @mock.patch('pungi.wrappers.scm.run')
+    def test_get_file_generated_by_command_via_git(self, run):
+        commands = []
+
+        def process(cmd, workdir=None, **kwargs):
+            if cmd.startswith('/usr/bin/git'):
+                checkout = cmd.split(' ')[-1]
+                touch(os.path.join(checkout, 'some_file.txt'))
+            commands.append(cmd)
+            return 0, ''
+
+        run.side_effect = process
+
+        retval = scm.get_file_from_scm({'scm': 'git',
+                                        'repo': 'git://example.com/git/repo.git',
+                                        'file': 'some_file.txt',
+                                        'command': 'make'},
+                                       self.destdir)
+        self.assertStructure(retval, ['some_file.txt'])
+        self.assertRegexpMatches(
+            commands[0],
+            r'/usr/bin/git clone --depth 1 --branch=master git://example.com/git/repo.git /tmp/.+')
+        self.assertEqual(commands[1:], ['make'])
+
+    @mock.patch('pungi.wrappers.scm.run')
+    def test_get_file_and_fail_to_generate(self, run):
+        commands = []
+
+        def process(cmd, workdir=None, **kwargs):
+            if cmd.startswith('/usr/bin/git'):
+                checkout = cmd.split(' ')[-1]
+                touch(os.path.join(checkout, 'some_file.txt'))
+            commands.append(cmd)
+            return len(commands), 'output'
+
+        run.side_effect = process
+
+        with self.assertRaises(RuntimeError) as ctx:
+            scm.get_file_from_scm({'scm': 'git',
+                                   'repo': 'git://example.com/git/repo.git',
+                                   'file': 'some_file.txt',
+                                   'command': 'make'},
+                                  self.destdir)
+
+        self.assertEqual(str(ctx.exception), "'make' failed with exit code 2")
+
+    @mock.patch('pungi.wrappers.scm.run')
+    def test_get_file_generated_by_command_via_https(self, run):
+        commands = []
+
+        def process(cmd, workdir=None, **kwargs):
+            if cmd.startswith('/usr/bin/git'):
+                checkout = cmd.split(' ')[-1]
+                touch(os.path.join(checkout, 'some_file.txt'))
+            commands.append(cmd)
+            return 0, ''
+
+        run.side_effect = process
+
+        retval = scm.get_file_from_scm({'scm': 'git',
+                                        'repo': 'https://example.com/git/repo.git',
+                                        'file': 'some_file.txt',
+                                        'command': 'make'},
+                                       self.destdir)
+        self.assertStructure(retval, ['some_file.txt'])
+        self.assertRegexpMatches(
+            commands[0],
+            r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
+        self.assertEqual(commands[1:], ['make'])
 
     @mock.patch('pungi.wrappers.scm.run')
     def test_get_file_via_https(self, run):
@@ -169,6 +240,32 @@ class GitSCMTestCase(SCMBaseTest):
             ['/usr/bin/git archive --remote=git://example.com/git/repo.git master subdir | tar xf -'])
 
     @mock.patch('pungi.wrappers.scm.run')
+    def test_get_dir_via_git_and_generate(self, run):
+        commands = []
+
+        def process(cmd, workdir=None, **kwargs):
+            if cmd.startswith('/usr/bin/git'):
+                checkout = cmd.split(' ')[-1]
+                touch(os.path.join(checkout, 'subdir', 'first'))
+                touch(os.path.join(checkout, 'subdir', 'second'))
+            commands.append(cmd)
+            return 0, ''
+
+        run.side_effect = process
+
+        retval = scm.get_dir_from_scm({'scm': 'git',
+                                       'repo': 'git://example.com/git/repo.git',
+                                       'dir': 'subdir',
+                                       'command': 'make'},
+                                      self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
+
+        self.assertRegexpMatches(
+            commands[0],
+            r'/usr/bin/git clone --depth 1 --branch=master git://example.com/git/repo.git /tmp/.+')
+        self.assertEqual(commands[1:], ['make'])
+
+    @mock.patch('pungi.wrappers.scm.run')
     def test_get_dir_via_https(self, run):
         commands = []
 
@@ -189,6 +286,32 @@ class GitSCMTestCase(SCMBaseTest):
         self.assertRegexpMatches(
             commands[0],
             r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
+
+    @mock.patch('pungi.wrappers.scm.run')
+    def test_get_dir_via_https_and_generate(self, run):
+        commands = []
+
+        def process(cmd, workdir=None, **kwargs):
+            if cmd.startswith('/usr/bin/git'):
+                checkout = cmd.split(' ')[-1]
+                touch(os.path.join(checkout, 'subdir', 'first'))
+                touch(os.path.join(checkout, 'subdir', 'second'))
+            commands.append(cmd)
+            return 0, ''
+
+        run.side_effect = process
+
+        retval = scm.get_dir_from_scm({'scm': 'git',
+                                       'repo': 'https://example.com/git/repo.git',
+                                       'dir': 'subdir',
+                                       'command': 'make'},
+                                      self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
+
+        self.assertRegexpMatches(
+            commands[0],
+            r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
+        self.assertEqual(commands[1:], ['make'])
 
 
 class RpmSCMTestCase(SCMBaseTest):

@@ -27,8 +27,9 @@ from pungi.util import (explode_rpm_package, makedirs, copy_all, temp_dir,
 
 
 class ScmBase(kobo.log.LoggingBase):
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, command=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
+        self.command = command
 
     @retry(interval=60, timeout=300, wait_on=RuntimeError)
     def retry_run(self, cmd, **kwargs):
@@ -38,6 +39,15 @@ class ScmBase(kobo.log.LoggingBase):
         """
 
         return run(cmd, **kwargs)
+
+    def run_process_command(self, cwd):
+        if self.command:
+            self.log_debug('Running "%s"' % self.command)
+            retcode, output = run(self.command, workdir=cwd, can_fail=True)
+            if retcode != 0:
+                self.log_error('Output was: "%s"' % output)
+                raise RuntimeError('%r failed with exit code %s'
+                                   % (self.command, retcode))
 
 
 class FileWrapper(ScmBase):
@@ -104,10 +114,11 @@ class GitWrapper(ScmBase):
                    % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_dir)))
             # git archive is not supported by http/https
             # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-            if scm_root.startswith("http"):
+            if scm_root.startswith("http") or self.command:
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
                        % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
             self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
+            self.run_process_command(tmp_dir)
 
             copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
@@ -127,10 +138,11 @@ class GitWrapper(ScmBase):
                    % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_file)))
             # git archive is not supported by http/https
             # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-            if scm_root.startswith("http"):
+            if scm_root.startswith("http") or self.command:
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
                        % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
             self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
+            self.run_process_command(tmp_dir)
 
             makedirs(target_dir)
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
@@ -219,13 +231,15 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
         scm_repo = None
         scm_file = os.path.abspath(scm_dict)
         scm_branch = None
+        command = None
     else:
         scm_type = scm_dict["scm"]
         scm_repo = scm_dict["repo"]
         scm_file = scm_dict["file"]
         scm_branch = scm_dict.get("branch", None)
+        command = scm_dict.get('command')
 
-    scm = _get_wrapper(scm_type, logger=logger)
+    scm = _get_wrapper(scm_type, logger=logger, command=command)
 
     files_copied = []
     for i in force_list(scm_file):
@@ -270,13 +284,15 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
         scm_repo = None
         scm_dir = os.path.abspath(scm_dict)
         scm_branch = None
+        command = None
     else:
         scm_type = scm_dict["scm"]
         scm_repo = scm_dict.get("repo", None)
         scm_dir = scm_dict["dir"]
         scm_branch = scm_dict.get("branch", None)
+        command = scm_dict.get("command")
 
-    scm = _get_wrapper(scm_type, logger=logger)
+    scm = _get_wrapper(scm_type, logger=logger, command=command)
 
     with temp_dir(prefix="scm_checkout_") as tmp_dir:
         scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)

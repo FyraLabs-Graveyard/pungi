@@ -422,6 +422,7 @@ def _make_schema():
                     "branch": {"$ref": "#/definitions/optional_string"},
                     "file": {"type": "string"},
                     "dir": {"type": "string"},
+                    "command": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
