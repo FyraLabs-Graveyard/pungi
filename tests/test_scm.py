@@ -18,7 +18,31 @@ from pungi.wrappers import scm
 from tests.helpers import touch
 
 
-class FileSCMTestCase(unittest.TestCase):
+class SCMBaseTest(unittest.TestCase):
+    def setUp(self):
+        self.destdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.destdir)
+
+    def assertStructure(self, returned, expected):
+        # Check we returned the correct files
+        self.assertItemsEqual(returned, expected)
+
+        # Each file must exist
+        for f in expected:
+            self.assertTrue(os.path.isfile(os.path.join(self.destdir, f)))
+
+        # Only expected files should exist
+        found = []
+        for root, dirs, files in os.walk(self.destdir):
+            for f in files:
+                p = os.path.relpath(os.path.join(root, f), self.destdir)
+                found.append(p)
+        self.assertItemsEqual(expected, found)
+
+
+class FileSCMTestCase(SCMBaseTest):
     def setUp(self):
         """
         Prepares a source structure and destination directory.
@@ -29,48 +53,36 @@ class FileSCMTestCase(unittest.TestCase):
              +- first
              +- second
         """
+        super(FileSCMTestCase, self).setUp()
         self.srcdir = tempfile.mkdtemp()
-        self.destdir = tempfile.mkdtemp()
         touch(os.path.join(self.srcdir, 'in_root'))
         touch(os.path.join(self.srcdir, 'subdir', 'first'))
         touch(os.path.join(self.srcdir, 'subdir', 'second'))
 
     def tearDown(self):
+        super(FileSCMTestCase, self).tearDown()
         shutil.rmtree(self.srcdir)
-        shutil.rmtree(self.destdir)
 
     def test_get_file_by_name(self):
         file = os.path.join(self.srcdir, 'in_root')
-        scm.get_file_from_scm(file, self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['in_root'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'in_root')))
+        retval = scm.get_file_from_scm(file, self.destdir)
+        self.assertStructure(retval, ['in_root'])
 
     def test_get_file_by_dict(self):
-        scm.get_file_from_scm({'scm': 'file',
-                               'repo': None,
-                               'file': os.path.join(self.srcdir, 'subdir', 'first')},
-                              self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
+        retval = scm.get_file_from_scm({
+            'scm': 'file', 'repo': None, 'file': os.path.join(self.srcdir, 'subdir', 'first')},
+            self.destdir)
+        self.assertStructure(retval, ['first'])
 
     def test_get_dir_by_name(self):
-        scm.get_dir_from_scm(os.path.join(self.srcdir, 'subdir'), self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first', 'second'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
+        retval = scm.get_dir_from_scm(os.path.join(self.srcdir, 'subdir'), self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
 
     def test_get_dir_by_dict(self):
-        scm.get_dir_from_scm({'scm': 'file',
-                              'repo': None,
-                              'dir': os.path.join(self.srcdir, 'subdir')},
-                             self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first', 'second'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
+        retval = scm.get_dir_from_scm(
+            {'scm': 'file', 'repo': None, 'dir': os.path.join(self.srcdir, 'subdir')},
+            self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
 
     def test_get_missing_file(self):
         with self.assertRaises(RuntimeError) as ctx:
@@ -91,13 +103,7 @@ class FileSCMTestCase(unittest.TestCase):
         self.assertIn('No directories matched', str(ctx.exception))
 
 
-class GitSCMTestCase(unittest.TestCase):
-    def setUp(self):
-        self.destdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.destdir)
-
+class GitSCMTestCase(SCMBaseTest):
     @mock.patch('pungi.wrappers.scm.run')
     def test_get_file(self, run):
         commands = []
@@ -109,13 +115,11 @@ class GitSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_file_from_scm({'scm': 'git',
-                               'repo': 'git://example.com/git/repo.git',
-                               'file': 'some_file.txt'},
-                              self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some_file.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some_file.txt')))
+        retval = scm.get_file_from_scm({'scm': 'git',
+                                        'repo': 'git://example.com/git/repo.git',
+                                        'file': 'some_file.txt'},
+                                       self.destdir)
+        self.assertStructure(retval, ['some_file.txt'])
         self.assertEqual(
             commands,
             ['/usr/bin/git archive --remote=git://example.com/git/repo.git master some_file.txt | tar xf -'])
@@ -132,13 +136,11 @@ class GitSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_file_from_scm({'scm': 'git',
-                               'repo': 'https://example.com/git/repo.git',
-                               'file': 'some_file.txt'},
-                              self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some_file.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some_file.txt')))
+        retval = scm.get_file_from_scm({'scm': 'git',
+                                        'repo': 'https://example.com/git/repo.git',
+                                        'file': 'some_file.txt'},
+                                       self.destdir)
+        self.assertStructure(retval, ['some_file.txt'])
         self.assertEqual(1, len(commands))
         self.assertRegexpMatches(
             commands[0],
@@ -156,14 +158,11 @@ class GitSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_dir_from_scm({'scm': 'git',
-                              'repo': 'git://example.com/git/repo.git',
-                              'dir': 'subdir'},
-                             self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first', 'second'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
+        retval = scm.get_dir_from_scm({'scm': 'git',
+                                       'repo': 'git://example.com/git/repo.git',
+                                       'dir': 'subdir'},
+                                      self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
 
         self.assertEqual(
             commands,
@@ -181,24 +180,21 @@ class GitSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_dir_from_scm({'scm': 'git',
-                              'repo': 'https://example.com/git/repo.git',
-                              'dir': 'subdir'},
-                             self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first', 'second'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
+        retval = scm.get_dir_from_scm({'scm': 'git',
+                                       'repo': 'https://example.com/git/repo.git',
+                                       'dir': 'subdir'},
+                                      self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
 
         self.assertRegexpMatches(
             commands[0],
             r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
 
 
-class RpmSCMTestCase(unittest.TestCase):
+class RpmSCMTestCase(SCMBaseTest):
     def setUp(self):
+        super(RpmSCMTestCase, self).setUp()
         self.tmpdir = tempfile.mkdtemp()
-        self.destdir = tempfile.mkdtemp()
         self.exploded = set()
         self.rpms = [self.tmpdir + '/whatever.rpm', self.tmpdir + '/another.rpm']
         self.numbered = [self.tmpdir + x for x in ['/one1.rpm', '/one2.rpm', '/two1.rpm', '/two2.rpm']]
@@ -206,8 +202,8 @@ class RpmSCMTestCase(unittest.TestCase):
             touch(rpm)
 
     def tearDown(self):
+        super(RpmSCMTestCase, self).tearDown()
         shutil.rmtree(self.tmpdir)
-        shutil.rmtree(self.destdir)
 
     def _explode_rpm(self, path, dest):
         self.exploded.add(path)
@@ -226,139 +222,99 @@ class RpmSCMTestCase(unittest.TestCase):
     def test_get_file(self, explode):
         explode.side_effect = self._explode_rpm
 
-        scm.get_file_from_scm({'scm': 'rpm',
-                               'repo': self.rpms[0],
-                               'file': 'some-file.txt'},
-                              self.destdir)
+        retval = scm.get_file_from_scm(
+            {'scm': 'rpm', 'repo': self.rpms[0], 'file': 'some-file.txt'},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some-file.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file.txt')))
+        self.assertStructure(retval, ['some-file.txt'])
         self.assertItemsEqual(self.exploded, [self.rpms[0]])
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_more_files(self, explode):
         explode.side_effect = self._explode_rpm
 
-        scm.get_file_from_scm({'scm': 'rpm',
-                               'repo': self.rpms[0],
-                               'file': ['some-file.txt', 'subdir/foo.txt']},
-                              self.destdir)
+        retval = scm.get_file_from_scm(
+            {'scm': 'rpm', 'repo': self.rpms[0],
+             'file': ['some-file.txt', 'subdir/foo.txt']},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some-file.txt', 'foo.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo.txt')))
+        self.assertStructure(retval, ['some-file.txt', 'foo.txt'])
         self.assertItemsEqual(self.exploded, [self.rpms[0]])
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_whole_dir(self, explode):
         explode.side_effect = self._explode_rpm
 
-        scm.get_dir_from_scm({'scm': 'rpm',
-                              'repo': self.rpms[0],
-                              'dir': 'subdir'},
-                             self.destdir)
+        retval = scm.get_dir_from_scm(
+            {'scm': 'rpm', 'repo': self.rpms[0], 'dir': 'subdir'},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['subdir'])
-        self.assertTrue(os.path.isdir(os.path.join(self.destdir, 'subdir')))
-        self.assertItemsEqual(os.listdir(os.path.join(self.destdir, 'subdir')),
-                              ['foo.txt', 'bar.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'subdir', 'foo.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'subdir', 'bar.txt')))
+        self.assertStructure(retval, ['subdir/foo.txt', 'subdir/bar.txt'])
         self.assertItemsEqual(self.exploded, [self.rpms[0]])
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_contents(self, explode):
         explode.side_effect = self._explode_rpm
 
-        scm.get_dir_from_scm({'scm': 'rpm',
-                              'repo': self.rpms[0],
-                              'dir': 'subdir/'},
-                             self.destdir)
+        retval = scm.get_dir_from_scm(
+            {'scm': 'rpm', 'repo': self.rpms[0], 'dir': 'subdir/'},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['foo.txt', 'bar.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'bar.txt')))
+        self.assertStructure(retval, ['foo.txt', 'bar.txt'])
         self.assertItemsEqual(self.exploded, [self.rpms[0]])
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_files_from_two_rpms(self, explode):
         explode.side_effect = self._explode_multiple
 
-        scm.get_file_from_scm({'scm': 'rpm',
-                               'repo': self.rpms,
-                               'file': ['some-file-1.txt', 'some-file-2.txt']},
-                              self.destdir)
+        retval = scm.get_file_from_scm(
+            {'scm': 'rpm', 'repo': self.rpms,
+             'file': ['some-file-1.txt', 'some-file-2.txt']},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some-file-1.txt', 'some-file-2.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-1.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-2.txt')))
+        self.assertStructure(retval, ['some-file-1.txt', 'some-file-2.txt'])
         self.assertItemsEqual(self.exploded, self.rpms)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_files_from_glob_rpms(self, explode):
         explode.side_effect = self._explode_multiple
 
-        scm.get_file_from_scm({'scm': 'rpm',
-                               'repo': [self.tmpdir + '/one*.rpm', self.tmpdir + '/two*.rpm'],
-                               'file': 'some-file-*.txt'},
-                              self.destdir)
+        retval = scm.get_file_from_scm(
+            {'scm': 'rpm', 'file': 'some-file-*.txt',
+             'repo': [self.tmpdir + '/one*.rpm', self.tmpdir + '/two*.rpm']},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some-file-1.txt', 'some-file-2.txt', 'some-file-3.txt', 'some-file-4.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-1.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-2.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-3.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some-file-4.txt')))
+        self.assertStructure(retval,
+                             ['some-file-1.txt', 'some-file-2.txt', 'some-file-3.txt', 'some-file-4.txt'])
         self.assertItemsEqual(self.exploded, self.numbered)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_from_two_rpms(self, explode):
         explode.side_effect = self._explode_multiple
 
-        scm.get_dir_from_scm({'scm': 'rpm',
-                              'repo': self.rpms,
-                              'dir': 'common'},
-                             self.destdir)
+        retval = scm.get_dir_from_scm({'scm': 'rpm',
+                                       'repo': self.rpms,
+                                       'dir': 'common'},
+                                      self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['common'])
-        self.assertTrue(os.path.isdir(os.path.join(self.destdir, 'common')))
-        self.assertItemsEqual(os.listdir(os.path.join(self.destdir, 'common')),
-                              ['foo-1.txt', 'foo-2.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'common', 'foo-1.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'common', 'foo-2.txt')))
+        self.assertStructure(retval, ['common/foo-1.txt', 'common/foo-2.txt'])
         self.assertItemsEqual(self.exploded, self.rpms)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_from_glob_rpms(self, explode):
         explode.side_effect = self._explode_multiple
 
-        scm.get_dir_from_scm({'scm': 'rpm',
-                              'repo': [self.tmpdir + '/one*.rpm', self.tmpdir + '/two*.rpm'],
-                              'dir': 'common/'},
-                             self.destdir)
+        retval = scm.get_dir_from_scm(
+            {'scm': 'rpm', 'dir': 'common/',
+             'repo': [self.tmpdir + '/one*.rpm', self.tmpdir + '/two*.rpm']},
+            self.destdir)
 
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['foo-1.txt', 'foo-2.txt', 'foo-3.txt', 'foo-4.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo-1.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo-2.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo-3.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'foo-4.txt')))
+        self.assertStructure(retval,
+                             ['foo-1.txt', 'foo-2.txt', 'foo-3.txt', 'foo-4.txt'])
         self.assertItemsEqual(self.exploded, self.numbered)
 
 
-class CvsSCMTestCase(unittest.TestCase):
-    def setUp(self):
-        self.destdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.destdir)
-
+class CvsSCMTestCase(SCMBaseTest):
     @mock.patch('pungi.wrappers.scm.run')
     def test_get_file(self, run):
         commands = []
@@ -370,13 +326,11 @@ class CvsSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_file_from_scm({'scm': 'cvs',
-                               'repo': 'http://example.com/cvs',
-                               'file': 'some_file.txt'},
-                              self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['some_file.txt'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'some_file.txt')))
+        retval = scm.get_file_from_scm({'scm': 'cvs',
+                                        'repo': 'http://example.com/cvs',
+                                        'file': 'some_file.txt'},
+                                       self.destdir)
+        self.assertStructure(retval, ['some_file.txt'])
         self.assertEqual(
             commands,
             ['/usr/bin/cvs -q -d http://example.com/cvs export -r HEAD some_file.txt'])
@@ -393,14 +347,11 @@ class CvsSCMTestCase(unittest.TestCase):
 
         run.side_effect = process
 
-        scm.get_dir_from_scm({'scm': 'cvs',
-                              'repo': 'http://example.com/cvs',
-                              'dir': 'subdir'},
-                             self.destdir)
-        self.assertItemsEqual(os.listdir(self.destdir),
-                              ['first', 'second'])
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'first')))
-        self.assertTrue(os.path.isfile(os.path.join(self.destdir, 'second')))
+        retval = scm.get_dir_from_scm({'scm': 'cvs',
+                                       'repo': 'http://example.com/cvs',
+                                       'dir': 'subdir'},
+                                      self.destdir)
+        self.assertStructure(retval, ['first', 'second'])
 
         self.assertEqual(
             commands,
