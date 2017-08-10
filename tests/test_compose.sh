@@ -2,7 +2,7 @@
 
 set -e
 
-HERE=$(dirname "$0")
+HERE=$(realpath "$(dirname "$0")")
 
 PYTHONPATH=$HERE/../:$PYTHONPATH
 PATH=$HERE/../bin:$PATH
