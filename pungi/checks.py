@@ -107,30 +107,11 @@ tools = [
     ("cvs", "/usr/bin/cvs", None),
 ]
 
-imports = [
-    ("kobo", "kobo"),
-    ("kobo-rpmlib", "kobo.rpmlib"),
-    ("python-lxml", "lxml"),
-    ("koji", "koji"),
-    ("python-productmd", "productmd"),
-    ("python-kickstart", "pykickstart.parser"),
-    ("libselinux-python", "selinux"),
-]
-
 
 def check(conf):
     """Check runtime environment and report errors about missing dependencies."""
     fail = False
 
-    # Check python modules
-    for package, module in imports:
-        try:
-            __import__(module)
-        except ImportError:
-            print("Module '%s' doesn't exist. Install package '%s'." % (module, package))
-            fail = True
-
-    # Check tools
     for package, path, test_if_required in tools:
         if test_if_required and not test_if_required(conf):
             # The config says this file is not required, so we won't even check it.
