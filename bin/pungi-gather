@@ -137,7 +137,7 @@ def main(persistdir, cachedir):
 
 def _get_flags(gather_obj, pkg):
     flags = gather_obj.result_package_flags.get(pkg, [])
-    flags = "(%s)" % ",".join(sorted(f.name for f in flags))
+    flags = "(%s)" % ",".join(sorted(f.name.replace('_', '-') for f in flags))
     return flags
 
 

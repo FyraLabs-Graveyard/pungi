@@ -101,6 +101,7 @@ class PkgFlag(Enum):
     fulltree = 64
     multilib = 128
     langpack = 256
+    fulltree_exclude = 512
 
 
 class GatherBase(object):
@@ -277,6 +278,8 @@ class Gather(GatherBase):
                 # lookaside
                 if i.repoid in self.opts.lookaside_repos:
                     self._set_flag(i, PkgFlag.lookaside)
+                if i.sourcerpm.rsplit('-', 2)[0] in self.opts.fulltree_excludes:
+                    self._set_flag(i, PkgFlag.fulltree_exclude)
 
         self.result_binary_packages.update(added)
 
