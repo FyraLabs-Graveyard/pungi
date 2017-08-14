@@ -226,7 +226,7 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
         >>> get_file_from_scm(scm_dict, target_path)
         ['/tmp/path/share/variants.dtd']
     """
-    if isinstance(scm_dict, str):
+    if isinstance(scm_dict, basestring):
         scm_type = "file"
         scm_repo = None
         scm_file = os.path.abspath(scm_dict)
@@ -279,7 +279,7 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
         >>> get_dir_from_scm(scm_dict, target_path)
         ['/tmp/path/share/variants.dtd', '/tmp/path/share/rawhide-fedora.ks', ...]
     """
-    if isinstance(scm_dict, str):
+    if isinstance(scm_dict, basestring):
         scm_type = "file"
         scm_repo = None
         scm_dir = os.path.abspath(scm_dict)
