@@ -17,12 +17,15 @@
 from enum import Enum
 from itertools import count
 import logging
+import os
 
 from kobo.rpmlib import parse_nvra
 
 import pungi.common
 import pungi.dnf_wrapper
 import pungi.multilib_dnf
+import pungi.util
+from pungi.linker import Linker
 from pungi.profiler import Profiler
 from pungi.util import DEBUG_PATTERNS
 
@@ -781,6 +784,22 @@ class Gather(GatherBase):
 
             # nothing added -> break depsolving cycle
             break
+
+    def download(self, destdir):
+        pkglist = (self.result_binary_packages | self.result_debug_packages | self.result_source_packages)
+        self.dnf.download_packages(pkglist)
+        linker = Linker(logger=self.logger)
+
+        for pkg in pkglist:
+            basename = os.path.basename(pkg.relativepath)
+            target = os.path.join(destdir, basename)
+
+            # Link downloaded package in (or link package from file repo)
+            try:
+                linker.hardlink(pkg.localPkg(), target)
+            except:
+                self.logger.error("Unable to link %s from the yum cache." % pkg.name)
+                raise
 
     def log_count(self, msg, method, *args):
         """

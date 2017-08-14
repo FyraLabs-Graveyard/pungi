@@ -28,6 +28,11 @@ def get_parser():
         required=True,
         help="path to kickstart config file",
     )
+    parser.add_argument(
+        "--download-to",
+        metavar='PATH',
+        help="download packages to given directory instead of just printing paths",
+    )
 
     group = parser.add_argument_group("Repository options")
     group.add_argument(
@@ -130,7 +135,10 @@ def main(persistdir, cachedir):
 
     g.gather(packages, conditional_packages)
 
-    print_rpms(g)
+    if ns.download_to:
+        g.download(ns.download_to)
+    else:
+        print_rpms(g)
     if ns.profiler:
         Profiler.print_results()
 

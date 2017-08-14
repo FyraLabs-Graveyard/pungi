@@ -70,8 +70,18 @@ def get_pkgset_from_repos(compose):
         pungi_conf = compose.paths.work.pungi_conf(arch=arch)
         pungi_log = compose.paths.log.log_file(arch, "pkgset_source")
         pungi_dir = compose.paths.work.pungi_download_dir(arch)
-        cmd = pungi.get_pungi_cmd(pungi_conf, destdir=pungi_dir, name="FOO", selfhosting=True, fulltree=True, multilib_methods=["all"], nodownload=False, full_archlist=True, arch=arch, cache_dir=compose.paths.work.pungi_cache_dir(arch=arch))
-        cmd.append("--force")
+
+        backends = {
+            'yum': pungi.get_pungi_cmd,
+            'dnf': pungi.get_pungi_cmd_dnf,
+        }
+        get_cmd = backends[compose.conf['gather_backend']]
+        cmd = get_cmd(pungi_conf, destdir=pungi_dir, name="FOO",
+                      selfhosting=True, fulltree=True, multilib_methods=["all"],
+                      nodownload=False, full_archlist=True, arch=arch,
+                      cache_dir=compose.paths.work.pungi_cache_dir(arch=arch))
+        if compose.conf['gather_backend'] == 'yum':
+            cmd.append("--force")
 
         # TODO: runroot
         run(cmd, logfile=pungi_log, show_cmd=True, stdout=False)

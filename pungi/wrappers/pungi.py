@@ -192,6 +192,9 @@ class PungiWrapper(object):
         if arch:
             cmd.append("--arch=%s" % arch)
 
+        if not nodownload:
+            cmd.append("--download-to=%s" % destdir)
+
         if multilib_methods:
             for i in multilib_methods:
                 cmd.append("--multilib=%s" % i)
