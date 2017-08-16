@@ -157,11 +157,11 @@ def resolve_deps(compose, arch, variant):
         packages, broken_deps, missing_comps_pkgs = pungi_wrapper.parse_log(f)
 
     if missing_comps_pkgs:
-        msg = ("Packages mentioned in comps do not exist for %s.%s: %s"
-               % (variant.uid, arch, ", ".join(sorted(missing_comps_pkgs))))
-        compose.log_warning(msg)
+        log_msg = ("Packages mentioned in comps do not exist for %s.%s: %s"
+                   % (variant.uid, arch, ", ".join(sorted(missing_comps_pkgs))))
+        compose.log_warning(log_msg)
         if compose.conf['require_all_comps_packages']:
-            raise RuntimeError(msg)
+            raise RuntimeError(log_msg)
 
     compose.log_info("[DONE ] %s" % msg)
     return packages, broken_deps
