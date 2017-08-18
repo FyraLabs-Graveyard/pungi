@@ -138,6 +138,18 @@ class TestGetVariantData(unittest.TestCase):
         result = util.get_variant_data({}, 'foo', mock.Mock(uid='Client'))
         self.assertItemsEqual(result, [])
 
+    def test_get_save_pattern(self):
+        conf = {
+            'foo': {
+                '^Client$': 1,
+                '^NotClient$': 2,
+            }
+        }
+        patterns = set()
+        result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Client'), keys=patterns)
+        self.assertEqual(result, [1])
+        self.assertEqual(patterns, set(['^Client$']))
+
 
 class TestVolumeIdGenerator(unittest.TestCase):
     def setUp(self):

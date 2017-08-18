@@ -20,7 +20,7 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
 
     def run(self):
         for variant in self.compose.get_variants():
-            for conf in util.get_variant_data(self.compose.conf, self.name, variant):
+            for conf in self.get_config_block(variant):
                 self.pool.add(OSBSThread(self.pool))
                 self.pool.queue_put((self.compose, variant, conf))
 

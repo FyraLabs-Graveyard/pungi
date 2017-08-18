@@ -5,7 +5,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import get_variant_data, makedirs, get_mtime, get_file_size, failable
+from pungi.util import makedirs, get_mtime, get_file_size, failable
 from pungi.util import translate_path, get_repo_urls, version_generator
 from pungi.phases import base
 from pungi.linker import Linker
@@ -74,7 +74,7 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
         for variant in self.compose.get_variants():
             arches = set([x for x in variant.arches if x != 'src'])
 
-            for image_conf in get_variant_data(self.compose.conf, self.name, variant):
+            for image_conf in self.get_config_block(variant):
                 # We will modify the data, so we need to make a copy to
                 # prevent problems in next iteration where the original
                 # value is needed.

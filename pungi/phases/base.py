@@ -26,6 +26,10 @@ class PhaseBase(object):
         self.finished = False
         self._skipped = False
 
+        # A set of config patterns that were actually used. Starts as None, and
+        # when config is queried the variable turns into a set of patterns.
+        self.used_patterns = None
+
     def validate(self):
         pass
 
@@ -59,6 +63,41 @@ class PhaseBase(object):
         self.compose.notifier.send('phase-start', phase_name=self.name)
         self.run()
 
+    def get_config_block(self, variant, arch=None):
+        """In config for current phase, find a block corresponding to given
+        variant and arch. The arch should be given if and only if the config
+        uses variant/arch mapping.
+        """
+        self.used_patterns = self.used_patterns or set()
+        if arch is not None:
+            return util.get_arch_variant_data(self.compose.conf, self.name,
+                                              arch, variant, keys=self.used_patterns)
+        else:
+            return util.get_variant_data(self.compose.conf, self.name,
+                                         variant, keys=self.used_patterns)
+
+    def get_all_patterns(self):
+        """Get all variant patterns from config file for this phase."""
+        if isinstance(self.compose.conf.get(self.name), dict):
+            return set(self.compose.conf.get(self.name, {}).keys())
+        else:
+            return set(x[0] for x in self.compose.conf.get(self.name, []))
+
+    def report_unused_patterns(self):
+        """Log warning about unused parts of the config.
+
+        This is not technically an error, but can help debug when something
+        expected is missing.
+        """
+        all_patterns = self.get_all_patterns()
+        unused_patterns = all_patterns - self.used_patterns
+        if unused_patterns:
+            self.compose.log_warning(
+                '[%s] Patterns in config do not match any variant: %s'
+                % (self.name.upper(), ', '.join(sorted(unused_patterns))))
+            self.compose.log_info(
+                'Note that variants can be excluded in configuration file')
+
     def stop(self):
         if self.finished:
             return
@@ -66,6 +105,9 @@ class PhaseBase(object):
             self.pool.stop()
         self.finished = True
         self.compose.log_info("[DONE ] %s" % self.msg)
+        if self.used_patterns is not None:
+            # We only want to report this if the config was actually queried.
+            self.report_unused_patterns()
         self.compose.notifier.send('phase-stop', phase_name=self.name)
 
     def run(self):

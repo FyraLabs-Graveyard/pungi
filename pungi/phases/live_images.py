@@ -27,7 +27,7 @@ from productmd.images import Image
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
 from pungi.phases import base
-from pungi.util import get_arch_variant_data, makedirs, get_mtime, get_file_size, failable
+from pungi.util import makedirs, get_mtime, get_file_size, failable
 from pungi.util import get_repo_urls
 
 
@@ -57,7 +57,7 @@ class LiveImagesPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
 
         for variant in self.compose.all_variants.values():
             for arch in variant.arches + ["src"]:
-                for data in get_arch_variant_data(self.compose.conf, self.name, arch, variant):
+                for data in self.get_config_block(variant, arch):
                     subvariant = data.get('subvariant', variant.uid)
                     type = data.get('type', 'live')
 

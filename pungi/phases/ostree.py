@@ -27,14 +27,14 @@ class OSTreePhase(ConfigGuardedPhase):
     def run(self):
         if isinstance(self.compose.conf.get(self.name), dict):
             for variant in self.compose.get_variants():
-                for conf in util.get_variant_data(self.compose.conf, self.name, variant):
+                for conf in self.get_config_block(variant):
                     for arch in conf.get('arches', []) or variant.arches:
                         self._enqueue(variant, arch, conf)
         else:
             # Legacy code path to support original configuration.
             for variant in self.compose.get_variants():
                 for arch in variant.arches:
-                    for conf in util.get_arch_variant_data(self.compose.conf, self.name, arch, variant):
+                    for conf in self.get_config_block(variant, arch):
                         self._enqueue(variant, arch, conf)
 
         self.pool.start()

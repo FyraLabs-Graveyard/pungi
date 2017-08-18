@@ -23,7 +23,7 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     def run(self):
         for variant in self.compose.get_variants():
             for arch in variant.arches:
-                for conf in util.get_arch_variant_data(self.compose.conf, self.name, arch, variant):
+                for conf in self.get_config_block(variant, arch):
                     self.pool.add(OstreeInstallerThread(self.pool))
                     self.pool.queue_put((self.compose, variant, arch, conf))
 

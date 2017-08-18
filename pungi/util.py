@@ -208,7 +208,7 @@ def pkg_is_debug(pkg_obj):
 
 
 # fomat: [(variant_uid_regex, {arch|*: [data]})]
-def get_arch_variant_data(conf, var_name, arch, variant):
+def get_arch_variant_data(conf, var_name, arch, variant, keys=None):
     result = []
     for conf_variant, conf_data in conf.get(var_name, []):
         if variant is not None and not re.match(conf_variant, variant.uid):
@@ -219,6 +219,8 @@ def get_arch_variant_data(conf, var_name, arch, variant):
             if conf_arch == "*" and arch == "src":
                 # src is excluded from '*' and needs to be explicitly added to the mapping
                 continue
+            if keys is not None:
+                keys.add(conf_variant)
             if isinstance(conf_data[conf_arch], list):
                 result.extend(conf_data[conf_arch])
             else:
@@ -295,7 +297,7 @@ def get_arch_data(conf, var_name, arch):
     return result
 
 
-def get_variant_data(conf, var_name, variant):
+def get_variant_data(conf, var_name, variant, keys=None):
     """Get configuration for variant.
 
     Expected config format is a mapping from variant_uid regexes to lists of
@@ -303,12 +305,15 @@ def get_variant_data(conf, var_name, variant):
 
     :param var_name: name of configuration key with which to work
     :param variant: Variant object for which to get configuration
+    :param keys: A set to which a used pattern from config will be added (optional)
     :rtype: a list of values
     """
     result = []
     for conf_variant, conf_data in conf.get(var_name, {}).iteritems():
         if not re.match(conf_variant, variant.uid):
             continue
+        if keys is not None:
+            keys.add(conf_variant)
         if isinstance(conf_data, list):
             result.extend(conf_data)
         else:
