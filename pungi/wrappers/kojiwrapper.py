@@ -41,6 +41,7 @@ class KojiWrapper(object):
                         'max_retries', 'retry_interval', 'anon_retry',
                         'offline_retry', 'offline_retry_interval',
                         'debug', 'debug_xmlrpc', 'krb_rdns',
+                        'serverca',
                         'use_fast_upload'):
                 value = getattr(self.koji_module.config, key, None)
                 if value is not None:
