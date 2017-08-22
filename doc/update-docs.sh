@@ -3,6 +3,8 @@
 # Copyright (C) 2015 Red Hat, Inc.
 # SPDX-License-Identifier:      GPL-2.0
 
+set -e
+
 git clone https://pagure.io/pungi.git /tmp/pungi
 pushd /tmp/pungi/doc
 make html
