@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 
 import os
 import sys
@@ -213,10 +214,10 @@ def main():
     pungi.checks.check_umask(logger)
     errors, warnings = pungi.checks.validate(conf)
     for warning in warnings:
-        print >>sys.stderr, warning
+        print(warning, file=sys.stderr)
     if errors:
         for error in errors:
-            print >>sys.stderr, error
+            print(error, file=sys.stderr)
         fail_to_start('Config validation failed', errors=errors)
         sys.exit(1)
 

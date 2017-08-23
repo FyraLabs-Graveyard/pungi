@@ -35,6 +35,8 @@ When a new config option is added, the schema must be updated (see the
 ``CONFIG_DEPS`` mapping.
 """
 
+from __future__ import print_function
+
 import contextlib
 import os.path
 import platform
@@ -63,9 +65,8 @@ def is_isohybrid_needed(conf):
     if runroot and not _will_productimg_run(conf):
         return False
     if platform.machine() not in ('x86_64', 'i686', 'i386'):
-        msg = ('Not checking for /usr/bin/isohybrid due to current architecture. '
-               'Expect failures in productimg phase.')
-        print msg
+        print('Not checking for /usr/bin/isohybrid due to current architecture. '
+              'Expect failures in productimg phase.')
         return False
     return True
 

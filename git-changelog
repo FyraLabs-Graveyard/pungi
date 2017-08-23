@@ -20,6 +20,8 @@
 # Author: David Cantrell <dcantrell@redhat.com>
 # Author: Brian C. Lane <bcl@redhat.com>
 
+from __future__ import print_function
+
 import subprocess
 import textwrap
 from argparse import ArgumentParser
@@ -93,7 +95,7 @@ def main():
     args = parser.parse_args()
 
     cl = ChangeLog(args.name, args.version)
-    print cl.formatLog()
+    print(cl.formatLog())
 
 if __name__ == "__main__":
     main()

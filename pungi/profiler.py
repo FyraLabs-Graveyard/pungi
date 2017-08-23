@@ -36,6 +36,8 @@ To print profiling data, run:
 Profiler.print_results()
 """
 
+from __future__ import print_function
+
 
 import functools
 import time
@@ -65,8 +67,8 @@ class Profiler(object):
 
     @classmethod
     def print_results(cls):
-        print "Profiling results:"
+        print("Profiling results:")
         results = cls._data.items()
         results.sort(lambda x, y: cmp(x[1]["time"], y[1]["time"]), reverse=True)
         for name, data in results:
-            print "  %6.2f %5d %s" % (data["time"], data["calls"], name)
+            print("  %6.2f %5d %s" % (data["time"], data["calls"], name))

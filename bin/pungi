@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import os
 import selinux
 import sys
@@ -38,18 +40,18 @@ def main():
 
     # You must be this high to ride if you're going to do root tasks
     if os.geteuid() != 0 and (opts.do_all or opts.do_buildinstall):
-        print >> sys.stderr, "You must run pungi as root"
+        print("You must run pungi as root", file=sys.stderr)
         return 1
 
     if opts.do_all or opts.do_buildinstall:
         try:
             enforcing = selinux.security_getenforce()
         except:
-            print >> sys.stdout, "INFO: selinux disabled"
+            print("INFO: selinux disabled")
             enforcing = False
         if enforcing:
-            print >> sys.stdout, "WARNING: SELinux is enforcing.  This may lead to a compose with selinux disabled."
-            print >> sys.stdout, "Consider running with setenforce 0."
+            print("WARNING: SELinux is enforcing.  This may lead to a compose with selinux disabled.")
+            print("Consider running with setenforce 0.")
 
     # Set up the kickstart parser and pass in the kickstart file we were handed
     ksparser = pungi.ks.get_ksparser(ks_path=opts.config)
@@ -70,19 +72,21 @@ def main():
         try:
             os.makedirs(config.get('pungi', 'destdir'))
         except OSError:
-            print >> sys.stderr, "Error: Cannot create destination dir %s" % config.get('pungi', 'destdir')
+            print("Error: Cannot create destination dir %s" % config.get('pungi', 'destdir'),
+                  file=sys.stderr)
             sys.exit(1)
     else:
-        print >> sys.stdout, "Warning: Reusing existing destination directory."
+        print("Warning: Reusing existing destination directory.")
 
     if not os.path.exists(config.get('pungi', 'workdirbase')):
         try:
             os.makedirs(config.get('pungi', 'workdirbase'))
         except OSError:
-            print >> sys.stderr, "Error: Cannot create working base dir %s" % config.get('pungi', 'workdirbase')
+            print("Error: Cannot create working base dir %s" % config.get('pungi', 'workdirbase'),
+                  file=sys.stderr)
             sys.exit(1)
     else:
-        print >> sys.stdout, "Warning: Reusing existing working base directory."
+        print("Warning: Reusing existing working base directory.")
 
     cachedir = config.get('pungi', 'cachedir')
 
@@ -90,7 +94,7 @@ def main():
         try:
             os.makedirs(cachedir)
         except OSError:
-            print >> sys.stderr, "Error: Cannot create cache dir %s" % cachedir
+            print("Error: Cannot create cache dir %s" % cachedir, file=sys.stderr)
             sys.exit(1)
 
     # Set debuginfo flag
@@ -172,11 +176,11 @@ def main():
                     else:
                         mypungi.downloadSRPMs()
 
-                print "RPM size:       %s MiB" % (mypungi.size_packages() / 1024 ** 2)
+                print("RPM size:       %s MiB" % (mypungi.size_packages() / 1024 ** 2))
                 if not opts.nodebuginfo:
-                    print "DEBUGINFO size: %s MiB" % (mypungi.size_debuginfo() / 1024 ** 2)
+                    print("DEBUGINFO size: %s MiB" % (mypungi.size_debuginfo() / 1024 ** 2))
                 if not opts.nosource:
-                    print "SRPM size:      %s MiB" % (mypungi.size_srpms() / 1024 ** 2)
+                    print("SRPM size:      %s MiB" % (mypungi.size_srpms() / 1024 ** 2))
 
     # Furthermore (but without the yumlock...)
     if not opts.sourceisos:
@@ -202,7 +206,7 @@ def main():
         if opts.do_all or opts.do_createiso:
             mypungi.doCreateIsos()
 
-    print "All done!"
+    print("All done!")
 
 if __name__ == '__main__':
     from argparse import ArgumentParser, Action

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 
 import os
 import argparse
@@ -159,13 +160,13 @@ def _get_url(pkg):
 
 def print_rpms(gather_obj):
     for pkg in sorted(gather_obj.result_binary_packages):
-        print "RPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
+        print("RPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
 
     for pkg in sorted(gather_obj.result_debug_packages):
-        print "DEBUGINFO%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
+        print("DEBUGINFO%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
 
     for pkg in sorted(gather_obj.result_source_packages):
-        print "SRPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg))
+        print("SRPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
 
 
 if __name__ == "__main__":
