@@ -141,7 +141,7 @@ def touch(path, content=None):
         os.makedirs(os.path.dirname(path))
     except OSError:
         pass
-    with open(path, 'w') as f:
+    with open(path, 'wb') as f:
         f.write(content)
     return path
 

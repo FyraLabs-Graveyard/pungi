@@ -142,7 +142,7 @@ class CompsFilter(object):
 
     def write(self, file_obj):
         self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
-        file_obj.write("\n")
+        file_obj.write(b"\n")
 
 
 def main():
@@ -174,8 +174,8 @@ def main():
 
     opts = parser.parse_args()
 
-    file_obj = open(opts.comps_file, "r")
-    f = CompsFilter(file_obj, reindent=not opts.no_reindent)
+    with open(opts.comps_file, "rb") as file_obj:
+        f = CompsFilter(file_obj, reindent=not opts.no_reindent)
     f.filter_packages(opts.arch, opts.arch_only_packages)
     f.filter_groups(opts.arch, opts.arch_only_groups)
     f.filter_environments(opts.arch, opts.arch_only_environments)
@@ -199,7 +199,7 @@ def main():
     if opts.remove_environments:
         f.remove_environments()
 
-    f.write(open(opts.output, 'w') if opts.output else sys.stdout)
+    f.write(open(opts.output, 'wb') if opts.output else sys.stdout)
 
 
 if __name__ == "__main__":

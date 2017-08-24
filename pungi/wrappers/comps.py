@@ -71,7 +71,7 @@ class CompsWrapper(object):
         if not target_file:
             target_file = self.comps_file
 
-        with open(target_file, "w") as stream:
+        with open(target_file, "wb") as stream:
             stream.write(comps_obj.toprettyxml(indent="  ", encoding="UTF-8"))
 
     def generate_comps(self):

@@ -205,7 +205,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     if compose.DEBUG and os.path.isfile(global_pkgset_path):
         msg = "Populating the global package set from tag '%s'" % compose_tags
         compose.log_warning("[SKIP ] %s" % msg)
-        global_pkgset = pickle.load(open(global_pkgset_path, "r"))
+        with open(global_pkgset_path, "rb") as f:
+            global_pkgset = pickle.load(f)
     else:
         global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
@@ -239,8 +240,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 global_pkgset = pkgset
             else:
                 global_pkgset.merge(pkgset, None, list(all_arches))
-        with open(global_pkgset_path, 'w') as f:
-            f.write(pickle.dumps(global_pkgset))
+        with open(global_pkgset_path, 'wb') as f:
+            data = pickle.dumps(global_pkgset)
+            f.write(data)
 
     # write global package list
     global_pkgset.save_file_list(
