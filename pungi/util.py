@@ -68,7 +68,7 @@ def _link(local, target, logger, force=False):
 
     try:
         os.link(local, target)
-    except OSError, e:
+    except OSError as e:
         if e.errno != 18:  # EXDEV
             logger.error('Got an error linking from cache: %s' % e)
             raise OSError(e)
@@ -129,7 +129,7 @@ def _doCheckSum(path, hash, logger):
     # Try to open the file, using binary flag.
     try:
         myfile = open(path, 'rb')
-    except IOError, e:
+    except IOError as e:
         logger.error("Could not open file %s: %s" % (path, e))
         return False
 

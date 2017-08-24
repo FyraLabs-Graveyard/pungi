@@ -238,11 +238,7 @@ def main():
                       notifier=notifier)
     notifier.compose = compose
     COMPOSE = compose
-    try:
-        run_compose(compose, create_latest_link=create_latest_link, latest_link_status=latest_link_status)
-    except Exception, ex:
-        compose.log_error("Compose run failed: %s" % ex)
-        raise
+    run_compose(compose, create_latest_link=create_latest_link, latest_link_status=latest_link_status)
 
 
 def run_compose(compose, create_latest_link=True, latest_link_status=None):
@@ -455,7 +451,7 @@ if __name__ == "__main__":
     except (Exception, KeyboardInterrupt) as ex:
         if COMPOSE:
             tb_path = COMPOSE.paths.log.log_file("global", "traceback")
-            COMPOSE.log_error("Exception: %s" % ex)
+            COMPOSE.log_error("Compose run failed: %s" % ex)
             COMPOSE.log_error("Extended traceback in: %s" % tb_path)
             COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)
             COMPOSE.write_status("DOOMED")

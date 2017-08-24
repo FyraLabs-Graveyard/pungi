@@ -663,7 +663,7 @@ class Pungi(PungiBase):
                         self.add_package(dep, msg)
                         added.add(dep)
 
-            except (yum.Errors.InstallError, yum.Errors.YumBaseError), ex:
+            except (yum.Errors.InstallError, yum.Errors.YumBaseError) as ex:
                 self.logger.warn("Unresolvable dependency %s in %s.%s (repo: %s)" % (r, po.name, po.arch, po.repoid))
                 continue
             self.resolved_deps[req] = None
