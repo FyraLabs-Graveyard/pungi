@@ -43,6 +43,7 @@ import platform
 import jsonschema
 import re
 from kobo.shortcuts import force_list
+from productmd.composeinfo import COMPOSE_TYPES
 
 from . import util
 
@@ -522,6 +523,11 @@ def make_schema():
             "release_is_layered": {"type": "boolean"},
             "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
+
+            "compose_type": {
+                "type": "string",
+                "enum": COMPOSE_TYPES,
+            },
 
             "base_product_name": {"type": "string"},
             "base_product_short": {"type": "string"},

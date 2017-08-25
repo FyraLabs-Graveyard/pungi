@@ -172,6 +172,9 @@ Options
     Please note that when ``dnf`` is used, the build dependencies check is
     skipped.
 
+**compose_type**
+    (*str*) -- Allows to set default compose type. Type set via a command-line
+    option overwrites this.
 
 Example
 -------

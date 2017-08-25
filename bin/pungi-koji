@@ -115,6 +115,13 @@ def main():
         help="make a CI compose",
     )
     parser.add_argument(
+        "--production",
+        action="store_const",
+        const="production",
+        dest="compose_type",
+        help="make production compose (default unless config specifies otherwise)",
+    )
+    parser.add_argument(
         "--koji-event",
         metavar="ID",
         type=int,
@@ -178,10 +185,6 @@ def main():
         if not os.path.isdir(opts.compose_dir):
             abort("The compose directory does not exist or is not a directory: %s" % opts.compose_dir)
 
-    compose_type = opts.compose_type or "production"
-    if compose_type == "production" and not opts.label and not opts.no_label:
-        abort("must specify label for a production compose")
-
     opts.config = os.path.abspath(opts.config)
 
     create_latest_link = not opts.no_latest_link
@@ -206,6 +209,10 @@ def main():
 
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(opts.config)
+
+    compose_type = opts.compose_type or conf.get('compose_type', 'production')
+    if compose_type == "production" and not opts.label and not opts.no_label:
+        abort("must specify label for a production compose")
 
     # check if all requirements are met
     import pungi.checks
