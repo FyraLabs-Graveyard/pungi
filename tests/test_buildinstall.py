@@ -339,6 +339,7 @@ class TestCopyFiles(PungiTestCase):
         get_kickstart_file.return_value = 'kickstart'
 
         phase = BuildinstallPhase(compose)
+        phase.pool.finished_tasks = set([(None, 'x86_64'), (None, 'amd64')])
         phase.copy_files()
 
         self.assertItemsEqual(
@@ -369,6 +370,22 @@ class TestCopyFiles(PungiTestCase):
     @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
     @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_copy_files_buildinstall_failed_task(self, get_volid, tweak_buildinstall, link_boot_iso):
+        compose = BuildInstallCompose(self.topdir, {
+            'buildinstall_method': 'buildinstall'
+        })
+
+        phase = BuildinstallPhase(compose)
+        phase.pool.finished_tasks = set()
+        phase.copy_files()
+
+        self.assertItemsEqual(get_volid.mock_calls, [])
+        self.assertItemsEqual(tweak_buildinstall.mock_calls, [])
+        self.assertItemsEqual(link_boot_iso.mock_calls, [])
+
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
     @mock.patch('os.listdir')
     @mock.patch('os.path.isdir')
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
@@ -384,6 +401,7 @@ class TestCopyFiles(PungiTestCase):
         get_kickstart_file.return_value = 'kickstart'
 
         phase = BuildinstallPhase(compose)
+        phase.pool.finished_tasks = set([('Server', 'x86_64'), ('Server', 'amd64'), ('Client', 'amd64')])
         phase.copy_files()
 
         self.assertItemsEqual(
@@ -414,6 +432,22 @@ class TestCopyFiles(PungiTestCase):
     @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
     @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_copy_files_lorax_failed_task(self, get_volid, tweak_buildinstall, link_boot_iso):
+        compose = BuildInstallCompose(self.topdir, {
+            'buildinstall_method': 'lorax'
+        })
+
+        phase = BuildinstallPhase(compose)
+        phase.pool.finished_tasks = set()
+        phase.copy_files()
+
+        self.assertItemsEqual(get_volid.mock_calls, [])
+        self.assertItemsEqual(tweak_buildinstall.mock_calls, [])
+        self.assertItemsEqual(link_boot_iso.mock_calls, [])
+
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
     @mock.patch('os.listdir')
     @mock.patch('os.path.isdir')
     @mock.patch('pungi.phases.buildinstall.get_kickstart_file')
@@ -433,6 +467,7 @@ class TestCopyFiles(PungiTestCase):
         tweak_buildinstall.side_effect = boom
 
         phase = BuildinstallPhase(compose)
+        phase.pool.finished_tasks = set([('Server', 'x86_64'), ('Server', 'amd64'), ('Client', 'amd64')])
         phase.copy_files()
 
         self.assertItemsEqual(
@@ -459,6 +494,11 @@ class TestCopyFiles(PungiTestCase):
 
 class BuildinstallThreadTestCase(PungiTestCase):
 
+    def setUp(self):
+        super(BuildinstallThreadTestCase, self).setUp()
+        self.pool = mock.Mock(finished_tasks=set())
+        self.cmd = mock.Mock()
+
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
@@ -472,8 +512,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
-        pool = mock.Mock()
-        cmd = mock.Mock()
 
         get_runroot_cmd = KojiWrapperMock.return_value.get_runroot_cmd
 
@@ -484,14 +522,14 @@ class BuildinstallThreadTestCase(PungiTestCase):
             'task_id': 1234,
         }
 
-        t = BuildinstallThread(pool)
+        t = BuildinstallThread(self.pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
+            t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
         self.assertItemsEqual(
             get_runroot_cmd.mock_calls,
-            [mock.call('rrt', 'x86_64', cmd, channel=None,
+            [mock.call('rrt', 'x86_64', self.cmd, channel=None,
                        use_shell=True, task_id=True,
                        packages=['strace', 'lorax'], mounts=[self.topdir], weight=123)])
         self.assertItemsEqual(
@@ -501,6 +539,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
+        self.assertItemsEqual(self.pool.finished_tasks, [('Server', 'x86_64')])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -514,8 +553,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
-        pool = mock.Mock()
-        cmd = mock.Mock()
 
         get_runroot_cmd = KojiWrapperMock.return_value.get_runroot_cmd
 
@@ -526,14 +563,14 @@ class BuildinstallThreadTestCase(PungiTestCase):
             'task_id': 1234,
         }
 
-        t = BuildinstallThread(pool)
+        t = BuildinstallThread(self.pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', None, cmd), 0)
+            t.process((compose, 'x86_64', None, self.cmd), 0)
 
         self.assertItemsEqual(
             get_runroot_cmd.mock_calls,
-            [mock.call('rrt', 'x86_64', cmd, channel=None,
+            [mock.call('rrt', 'x86_64', self.cmd, channel=None,
                        use_shell=True, task_id=True,
                        packages=['strace', 'anaconda'], mounts=[self.topdir], weight=None)])
         self.assertItemsEqual(
@@ -543,6 +580,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         with open(self.topdir + '/logs/x86_64/buildinstall-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
+        self.assertItemsEqual(self.pool.finished_tasks, [(None, 'x86_64')])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -559,8 +597,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
-        pool = mock.Mock()
-        cmd = mock.Mock()
 
         run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
         run_runroot_cmd.return_value = {
@@ -569,16 +605,17 @@ class BuildinstallThreadTestCase(PungiTestCase):
             'task_id': 1234,
         }
 
-        t = BuildinstallThread(pool)
+        t = BuildinstallThread(self.pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', None, cmd), 0)
+            t.process((compose, 'x86_64', None, self.cmd), 0)
 
         compose._logger.info.assert_has_calls([
             mock.call('[FAIL] Buildinstall (variant None, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details.'
                       % self.topdir)
         ])
+        self.assertItemsEqual(self.pool.finished_tasks, [])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -595,8 +632,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
-        pool = mock.Mock()
-        cmd = mock.Mock()
 
         run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
         run_runroot_cmd.return_value = {
@@ -605,15 +640,16 @@ class BuildinstallThreadTestCase(PungiTestCase):
             'task_id': 1234,
         }
 
-        t = BuildinstallThread(pool)
+        t = BuildinstallThread(self.pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
+            t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
         compose._logger.info.assert_has_calls([
             mock.call('[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])
+        self.assertItemsEqual(self.pool.finished_tasks, [])
 
     @mock.patch('pungi.phases.buildinstall.KojiWrapper')
     @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
@@ -630,20 +666,19 @@ class BuildinstallThreadTestCase(PungiTestCase):
         })
 
         get_buildroot_rpms.return_value = ['bash', 'zsh']
-        pool = mock.Mock()
-        cmd = mock.Mock()
 
         dummy_file = os.path.join(self.topdir, 'work/x86_64/buildinstall/Server/dummy')
         touch(os.path.join(dummy_file))
 
-        t = BuildinstallThread(pool)
+        t = BuildinstallThread(self.pool)
 
         with mock.patch('time.sleep'):
-            t.process((compose, 'x86_64', compose.variants['Server'], cmd), 0)
+            t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
         self.assertEqual(0, len(run.mock_calls))
 
         self.assertTrue(os.path.exists(dummy_file))
+        self.assertItemsEqual(self.pool.finished_tasks, [])
 
 
 class TestSymlinkIso(PungiTestCase):

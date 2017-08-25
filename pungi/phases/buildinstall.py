@@ -41,6 +41,9 @@ class BuildinstallPhase(PhaseBase):
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
+        # A set of (variant_uid, arch) pairs that completed successfully. This
+        # is needed to skip copying files for failed tasks.
+        self.pool.finished_tasks = set()
 
     def skip(self):
         if PhaseBase.skip(self):
@@ -138,18 +141,25 @@ class BuildinstallPhase(PhaseBase):
         buildinstall_method = self.compose.conf["buildinstall_method"]
         disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
+        used_lorax = buildinstall_method == 'lorax'
+
         # copy buildinstall files to the 'os' dir
         kickstart_file = get_kickstart_file(self.compose)
         for arch in self.compose.get_arches():
             for variant in self.compose.get_variants(arch=arch, types=["self", "variant"]):
                 if variant.is_empty:
                     continue
+                if (variant.uid if used_lorax else None, arch) not in self.pool.finished_tasks:
+                    self.compose.log_debug(
+                        'Buildinstall: skipping copying files for %s.%s due to failed runroot task'
+                        % (variant.uid, arch))
+                    continue
 
                 buildinstall_dir = self.compose.paths.work.buildinstall_dir(arch)
 
                 # Lorax runs per-variant, so we need to tweak the source path
                 # to include variant.
-                if buildinstall_method == 'lorax':
+                if used_lorax:
                     buildinstall_dir = os.path.join(buildinstall_dir, variant.uid)
 
                 if not os.path.isdir(buildinstall_dir) or not os.listdir(buildinstall_dir):
@@ -415,4 +425,5 @@ class BuildinstallThread(WorkerThread):
         rpms = get_buildroot_rpms(compose, task_id)
         open(log_file, "w").write("\n".join(rpms))
 
+        self.pool.finished_tasks.add((variant.uid if variant else None, arch))
         self.pool.log_info("[DONE ] %s" % msg)
