@@ -61,6 +61,7 @@ setup(
         "lockfile",
         "lxml",
         "productmd",
+        "six",
         ],
     tests_require = [
         "mock",

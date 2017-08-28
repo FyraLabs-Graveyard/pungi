@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import pipes
+import six
 from collections import namedtuple
 
 from .wrappers import iso
@@ -27,7 +28,7 @@ def quote(str):
 
 def emit(f, cmd):
     """Print line of shell code into the stream."""
-    if isinstance(cmd, basestring):
+    if isinstance(cmd, six.string_types):
         print(cmd, file=f)
     else:
         print(' '.join([quote(x) for x in cmd]), file=f)

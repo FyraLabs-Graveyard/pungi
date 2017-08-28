@@ -40,8 +40,9 @@ from __future__ import print_function
 import contextlib
 import os.path
 import platform
-import jsonschema
 import re
+import jsonschema
+import six
 from kobo.shortcuts import force_list
 from productmd.composeinfo import COMPOSE_TYPES
 
