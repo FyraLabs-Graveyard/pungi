@@ -400,6 +400,7 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_source_with_deltas(self, CreaterepoWrapperCls, run):
+        # This should not actually create deltas, only binary repos do.
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': True,
@@ -423,9 +424,8 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=None, deltas=True,
-                       oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/source/tree/Packages',
-                       use_xz=False)])
+                       update_md_path=self.topdir + '/work/global/repo',
+                       deltas=False, oldpackagedirs=None, use_xz=False)])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -437,6 +437,7 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_debug_with_deltas(self, CreaterepoWrapperCls, run):
+        # This should not actually create deltas, only binary repos do.
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': True,
@@ -460,9 +461,8 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=None, deltas=True,
-                       oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/debug/tree/Packages',
-                       use_xz=False)])
+                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       deltas=False, oldpackagedirs=None, use_xz=False)])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])

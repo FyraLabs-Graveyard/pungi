@@ -119,6 +119,9 @@ def create_variant_repo(compose, arch, variant, pkg_type):
 
     compose.log_info("[BEGIN] %s" % msg)
 
+    # We only want delta RPMs for binary repos.
+    with_deltas = compose.conf['createrepo_deltas'] and pkg_type == 'rpm'
+
     rpms = set()
     rpm_nevras = set()
 
@@ -144,7 +147,8 @@ def create_variant_repo(compose, arch, variant, pkg_type):
         for rel_path in sorted(rpms):
             f.write("%s\n" % rel_path)
 
-    old_package_dirs = _get_old_package_dirs(compose, repo_dir)
+    # Only find last compose when we actually want delta RPMs.
+    old_package_dirs = _get_old_package_dirs(compose, repo_dir) if with_deltas else None
     if old_package_dirs:
         # If we are creating deltas, we can not reuse existing metadata, as
         # that would stop deltas from being created.
@@ -158,7 +162,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
                                   pkglist=file_list, outputdir=repo_dir, workers=3,
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
                                   checksum=createrepo_checksum,
-                                  deltas=compose.conf['createrepo_deltas'],
+                                  deltas=with_deltas,
                                   oldpackagedirs=old_package_dirs,
                                   use_xz=compose.conf['createrepo_use_xz'])
     log_file = compose.paths.log.log_file(arch, "createrepo-%s.%s" % (variant, pkg_type))
