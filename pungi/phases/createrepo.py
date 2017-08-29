@@ -272,7 +272,8 @@ def _get_old_package_dirs(compose, repo_dir):
         compose.ci_base.release.short,
         compose.ci_base.release.version,
         compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
-        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None
+        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
+        allowed_statuses=['FINISHED', 'FINISHED_INCOMPLETE'],
     )
     if not old_compose_path:
         compose.log_info("No suitable old compose found in: %s" % compose.old_composes)

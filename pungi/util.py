@@ -396,7 +396,9 @@ def get_file_size(path):
 
 
 def find_old_compose(old_compose_dirs, release_short, release_version,
-                     base_product_short=None, base_product_version=None):
+                     base_product_short=None, base_product_version=None,
+                     allowed_statuses=None):
+    allowed_statuses = allowed_statuses or ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED")
     composes = []
 
     def _sortable(compose_id):
@@ -437,7 +439,7 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
 
             try:
                 with open(status_path, 'r') as f:
-                    if f.read().strip() in ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED"):
+                    if f.read().strip() in allowed_statuses:
                         composes.append((_sortable(i), os.path.abspath(path)))
             except:
                 continue

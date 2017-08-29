@@ -233,6 +233,12 @@ class TestFindOldCompose(unittest.TestCase):
         old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
         self.assertIsNone(old)
 
+    def test_only_considers_allowed_status(self):
+        touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide',
+                                    allowed_statuses=['DOOMED'])
+        self.assertIsNone(old)
+
     def test_finds_latest(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS', 'DOOMED')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
