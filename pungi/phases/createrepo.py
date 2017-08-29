@@ -32,7 +32,7 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import find_old_compose, temp_dir
+from ..util import find_old_compose, temp_dir, get_arch_variant_data
 
 import productmd.rpms
 
@@ -55,7 +55,7 @@ class CreaterepoPhase(PhaseBase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        if not self.compose.old_composes and self.compose.conf['createrepo_deltas']:
+        if not self.compose.old_composes and self.compose.conf.get('createrepo_deltas'):
             errors.append('Can not generate deltas without old compose')
 
         if errors:
@@ -120,7 +120,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     compose.log_info("[BEGIN] %s" % msg)
 
     # We only want delta RPMs for binary repos.
-    with_deltas = compose.conf['createrepo_deltas'] and pkg_type == 'rpm'
+    with_deltas = pkg_type == 'rpm' and _has_deltas(compose, variant, arch)
 
     rpms = set()
     rpm_nevras = set()
@@ -298,3 +298,11 @@ def _find_package_dirs(base):
         # The directory does not exist, so no drpms for you!
         pass
     return sorted(buckets)
+
+
+def _has_deltas(compose, variant, arch):
+    """Check if delta RPMs are enabled for given variant and architecture."""
+    key = 'createrepo_deltas'
+    if isinstance(compose.conf.get(key), bool):
+        return compose.conf[key]
+    return any(get_arch_variant_data(compose.conf, key, arch, variant))

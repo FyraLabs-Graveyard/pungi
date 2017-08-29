@@ -681,8 +681,14 @@ def make_schema():
                 "additionalProperties": False,
             },
             "createrepo_deltas": {
-                "type": "boolean",
-                "default": False,
+                "anyOf": [
+                    # Deprecated in favour of more granular settings.
+                    {
+                        "type": "boolean",
+                        "default": False,
+                    },
+                    _variant_arch_mapping({"type": "boolean"})
+                ]
             },
 
             "buildinstall_method": {

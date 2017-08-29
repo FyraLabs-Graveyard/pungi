@@ -390,8 +390,10 @@ Options
     (*bool*) -- use createrepo_c (True) or legacy createrepo (False)
 
 **createrepo_deltas** = False
-    (*bool*) -- generate delta RPMs against an older compose. This needs to be
-    used together with ``--old-composes`` command line argument.
+    (*list*) -- generate delta RPMs against an older compose. This needs to be
+    used together with ``--old-composes`` command line argument. The value
+    should be a mapping of variants and architectures that should enable
+    creating delta RPMs. Source and debuginfo repos never have deltas.
 
 **createrepo_use_xz** = False
     (*bool*) -- whether to pass ``--xz`` to the createrepo command. This will
@@ -413,6 +415,12 @@ Example
 ::
 
     createrepo_checksum = "sha"
+    createrepo_deltas = [
+        # All arches for Everything should have deltas.
+        ('^Everything$', {'*': True}),
+        # Also Server.x86_64 should have them (but not on other arches).
+        ('^Server$', {'x86_64': True}),
+    ]
 
 
 Package Set Settings
