@@ -46,6 +46,9 @@ class MockVariant(mock.Mock):
         return [v for v in list(self.variants.values())
                 if (not arch or arch in v.arches) and (not types or v.type in types)]
 
+    def get_modules(self, arch=None, types=None):
+        return []
+
 
 class IterableMock(mock.Mock):
     def __iter__(self):

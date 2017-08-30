@@ -219,12 +219,15 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
             arches=all_arches)
         variant_tags[variant] = []
-
+        pdc_module_file = os.path.join(compose.paths.work.topdir(arch="global"),
+                                       "pdc-module-%s.json" % variant.uid)
+        pdc_modules = []
         # Find out all modules in every variant and add their compose tags
         # to compose_tags list.
         if session:
             for module in variant.get_modules():
                 pdc_module = get_module(compose, session, module["name"])
+                pdc_modules.append(pdc_module)
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
 
@@ -248,7 +251,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 variant_tags[variant].append(tag)
                 if tag not in compose_tags:
                     compose_tags.append(tag)
-
+        if pdc_modules:
+            with open(pdc_module_file, 'w') as f:
+                json.dump(pdc_modules, f)
         if not variant_tags[variant]:
             variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
