@@ -302,17 +302,23 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def image_build_conf(self, variant, image_name, image_type, create_dir=True):
+    def image_build_conf(self, variant, image_name, image_type, arches=None, create_dir=True):
         """
         @param variant
         @param image-name
         @param image-type (e.g docker)
+        @param arches
         @param create_dir=True
 
         Examples:
             work/image-build/Server/docker_rhel-server-docker.cfg
+            work/image-build/Server/docker_rhel-server-docker_x86_64.cfg
+            work/image-build/Server/docker_rhel-server-docker_x86_64-ppc64le.cfg
         """
-        path = os.path.join(self.image_build_dir(variant), "%s_%s.cfg" % (image_type, image_name))
+        path = os.path.join(self.image_build_dir(variant), "%s_%s" % (image_type, image_name))
+        if arches is not None:
+            path = "%s_%s" % (path, '-'.join(list(arches)))
+        path = "%s.cfg" % path
         return path
 
 

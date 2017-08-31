@@ -73,7 +73,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'can_fail': ['x86_64'],
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Client/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Client/docker_Fedora-Docker-Base_amd64.cfg',
             "image_dir": self.topdir + '/compose/Client/%(arch)s/images',
             "relative_image_dir": 'Client/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -98,7 +98,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'can_fail': ['x86_64'],
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_amd64-x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -158,7 +158,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'release': '20151203.t.0',
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_amd64-x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -214,7 +214,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'release': '20151203.t.0',
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_amd64-x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -311,7 +311,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -375,7 +375,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -436,7 +436,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'distro': 'Fedora-20',
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -648,7 +648,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'can_fail': ['x86_64'],
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server-optional/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server-optional/docker_Fedora-Docker-Base_x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server-optional/%(arch)s/images',
             "relative_image_dir": 'Server-optional/%(arch)s/images',
             "link_type": 'hardlink-or-copy',
@@ -708,7 +708,7 @@ class TestImageBuildPhase(PungiTestCase):
                     'can_fail': ['amd64', 'x86_64'],
                 }
             },
-            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base.cfg',
+            "conf_file": self.topdir + '/work/image-build/Server/docker_Fedora-Docker-Base_amd64-x86_64.cfg',
             "image_dir": self.topdir + '/compose/Server/%(arch)s/images',
             "relative_image_dir": 'Server/%(arch)s/images',
             "link_type": 'hardlink-or-copy',

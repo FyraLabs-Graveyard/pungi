@@ -120,7 +120,8 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                     "conf_file": self.compose.paths.work.image_build_conf(
                         image_conf["image-build"]['variant'],
                         image_name=image_conf["image-build"]['name'],
-                        image_type=image_conf["image-build"]['format'].replace(",", "-")
+                        image_type=image_conf["image-build"]['format'].replace(",", "-"),
+                        arches=image_conf["image-build"]['arches'],
                     ),
                     "image_dir": self.compose.paths.compose.image_dir(variant),
                     "relative_image_dir": self.compose.paths.compose.image_dir(
