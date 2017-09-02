@@ -582,6 +582,10 @@ def make_schema():
                 "enum": ["yum", "dnf"],
                 "default": "yum",
             },
+            "gather_profiler": {
+                "type": "boolean",
+                "default": False,
+            },
 
             "pkgset_source": {
                 "type": "string",

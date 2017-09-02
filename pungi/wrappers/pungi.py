@@ -109,7 +109,7 @@ class PungiWrapper(object):
 
         kickstart.close()
 
-    def get_pungi_cmd(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None):
+    def get_pungi_cmd(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None, profiler=False):
         cmd = ["pungi"]
 
         # Gather stage
@@ -169,7 +169,7 @@ class PungiWrapper(object):
 
         return cmd
 
-    def get_pungi_cmd_dnf(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None):
+    def get_pungi_cmd_dnf(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None, profiler=False):
         cmd = ["pungi-gather"]
 
         # path to a kickstart file
@@ -202,6 +202,9 @@ class PungiWrapper(object):
         if lookaside_repos:
             for i in lookaside_repos:
                 cmd.append("--lookaside=%s" % i)
+
+        if profiler:
+            cmd.append("--profiler")
 
         return cmd
 

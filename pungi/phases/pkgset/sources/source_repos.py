@@ -45,6 +45,8 @@ def get_pkgset_from_repos(compose):
     # TODO: noarch hack - secondary arches, use x86_64 noarch where possible
     flist = []
 
+    profiler = compose.conf["gather_profiler"]
+
     link_type = compose.conf["link_type"]
     pool = LinkerPool(link_type, logger=compose._logger)
     for i in range(10):
@@ -79,7 +81,8 @@ def get_pkgset_from_repos(compose):
         cmd = get_cmd(pungi_conf, destdir=pungi_dir, name="FOO",
                       selfhosting=True, fulltree=True, multilib_methods=["all"],
                       nodownload=False, full_archlist=True, arch=arch,
-                      cache_dir=compose.paths.work.pungi_cache_dir(arch=arch))
+                      cache_dir=compose.paths.work.pungi_cache_dir(arch=arch),
+                      profiler=profiler)
         if compose.conf['gather_backend'] == 'yum':
             cmd.append("--force")
 

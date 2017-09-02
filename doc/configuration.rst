@@ -650,6 +650,11 @@ Options
     path to JSON file with following mapping: ``{variant: {arch: {rpm_name:
     [rpm_arch|None]}}}``.
 
+**gather_profiler** = False
+    (*bool*) -- When set to ``True`` the gather tool will produce additional
+    performance profiling information at the end of its logs.  Only takes
+    effect when ``gather_backend = "dnf"``.
+
 
 Example
 -------

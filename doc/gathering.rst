@@ -67,3 +67,10 @@ Some configuration options are overridden for particular variant types.
    +-----------+--------------+--------------+
    | optional  | enabled      | enabled      |
    +-----------+--------------+--------------+
+
+
+Profiling
+=========
+
+Profiling data on the ``pungi-gather`` tool can be enabled by setting the
+``gather_profiler`` configuration option to ``True``.

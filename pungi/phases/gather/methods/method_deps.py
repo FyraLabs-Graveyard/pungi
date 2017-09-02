@@ -117,6 +117,9 @@ def resolve_deps(compose, arch, variant):
     fulltree = compose.conf["gather_fulltree"]
     selfhosting = compose.conf["gather_selfhosting"]
 
+    # profiling
+    profiler = compose.conf["gather_profiler"]
+
     # optional
     if variant.type == "optional":
         fulltree = True
@@ -144,7 +147,8 @@ def resolve_deps(compose, arch, variant):
     cmd = get_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid,
                   selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch,
                   full_archlist=True, greedy=greedy_method, cache_dir=cache_dir,
-                  lookaside_repos=lookaside_repos, multilib_methods=multilib_methods)
+                  lookaside_repos=lookaside_repos, multilib_methods=multilib_methods,
+                  profiler=profiler)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     tmp_dir = compose.mkdtemp(prefix="pungi_")
