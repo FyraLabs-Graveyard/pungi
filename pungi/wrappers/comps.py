@@ -225,7 +225,7 @@ def append(doc, parent, elem, content=None, lang=None, **kwargs):
         node.appendChild(doc.createTextNode(content))
     if lang:
         node.setAttribute("xml:lang", lang)
-    for attr, value in kwargs.iteritems():
+    for attr, value in kwargs.items():
         node.setAttribute(attr, value)
     parent.appendChild(node)
     return node

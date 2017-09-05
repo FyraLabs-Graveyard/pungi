@@ -6,7 +6,7 @@ import mock
 
 import os
 import sys
-import StringIO
+from six.moves import StringIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -19,7 +19,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
     def setUp(self):
         super(CreateIsoScriptTest, self).setUp()
         self.outdir = os.path.join(self.topdir, 'isos')
-        self.out = StringIO.StringIO()
+        self.out = StringIO()
         self.maxDiff = None
 
     def assertScript(self, cmds):

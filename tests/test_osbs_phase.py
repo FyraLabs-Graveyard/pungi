@@ -443,7 +443,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         with self.assertRaises(RuntimeError) as ctx:
             self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-        self.assertRegexpMatches(str(ctx.exception), r"task 12345 failed: see .+ for details")
+        self.assertRegex(str(ctx.exception), r"task 12345 failed: see .+ for details")
 
     @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')

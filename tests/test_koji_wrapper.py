@@ -18,7 +18,7 @@ from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
 
 class DumbMock(object):
     def __init__(self, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
 

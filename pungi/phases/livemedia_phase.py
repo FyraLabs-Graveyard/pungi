@@ -134,7 +134,7 @@ class LiveMediaThread(WorkerThread):
 
         paths = koji_wrapper.get_image_paths(output['task_id'])
 
-        for arch, paths in paths.iteritems():
+        for arch, paths in paths.items():
             for path in paths:
                 if path.endswith('.iso'):
                     image_infos.append({'path': path, 'arch': arch})

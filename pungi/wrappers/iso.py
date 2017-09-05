@@ -19,6 +19,7 @@ import sys
 import pipes
 from fnmatch import fnmatch
 import contextlib
+from functools import cmp_to_key
 
 from kobo.shortcuts import force_list, relative_path, run
 from pungi import util
@@ -340,7 +341,7 @@ def write_graft_points(file_name, h, exclude=None):
         seen_dirs.add(dn)
 
     f = open(file_name, "w")
-    for i in sorted(result, cmp=cmp_graft_points):
+    for i in sorted(result, key=cmp_to_key(cmp_graft_points)):
         # make sure all files required for boot come first,
         # otherwise there may be problems with booting (large LBA address, etc.)
         found = False

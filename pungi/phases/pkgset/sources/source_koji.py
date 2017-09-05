@@ -15,7 +15,7 @@
 
 
 import os
-import cPickle as pickle
+from six.moves import cPickle as pickle
 import json
 import re
 from kobo.shortcuts import force_list

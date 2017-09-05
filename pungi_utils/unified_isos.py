@@ -220,7 +220,7 @@ class UnifiedISO(object):
 
     def createrepo(self):
         # remove old repomd.xml checksums from treeinfo
-        for arch, ti in self.treeinfo.iteritems():
+        for arch, ti in self.treeinfo.items():
             print("Removing old repomd.xml checksums from treeinfo: {0}".format(arch))
             for i in ti.checksums.checksums.keys():
                 if "repomd.xml" in i:
@@ -257,7 +257,7 @@ class UnifiedISO(object):
                 ti.checksums.add(os.path.relpath(repomd_path, tree_dir), 'sha256', root_dir=tree_dir)
 
         # write treeinfo
-        for arch, ti in self.treeinfo.iteritems():
+        for arch, ti in self.treeinfo.items():
             print("Writing treeinfo: {0}".format(arch))
             ti_path = os.path.join(self.temp_dir, "trees", arch, ".treeinfo")
             makedirs(os.path.dirname(ti_path))
@@ -265,7 +265,7 @@ class UnifiedISO(object):
 
     def discinfo(self):
         # write discinfo and media repo
-        for arch, ti in self.treeinfo.iteritems():
+        for arch, ti in self.treeinfo.items():
             di_path = os.path.join(self.temp_dir, "trees", arch, ".discinfo")
             description = "%s %s" % (ti.release.name, ti.release.version)
             if ti.release.is_layered:

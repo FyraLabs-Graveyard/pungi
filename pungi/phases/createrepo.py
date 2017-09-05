@@ -130,11 +130,11 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     manifest = productmd.rpms.Rpms()
     manifest.load(manifest_file)
 
-    for rpms_arch, data in manifest.rpms.get(variant.uid, {}).iteritems():
+    for rpms_arch, data in manifest.rpms.get(variant.uid, {}).items():
         if arch is not None and arch != rpms_arch:
             continue
-        for srpm_data in data.itervalues():
-            for rpm_nevra, rpm_data in srpm_data.iteritems():
+        for srpm_data in data.values():
+            for rpm_nevra, rpm_data in srpm_data.items():
                 if types[pkg_type][0] != rpm_data['category']:
                     continue
                 path = os.path.join(compose.topdir, "compose", rpm_data["path"])
@@ -185,7 +185,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     if arch in variant.arch_mmds:
         import yaml
         modules = []
-        for mmd in variant.arch_mmds[arch].itervalues():
+        for mmd in variant.arch_mmds[arch].values():
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
             repo_mmd = copy.deepcopy(mmd)

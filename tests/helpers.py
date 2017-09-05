@@ -10,6 +10,7 @@ import tempfile
 import shutil
 import errno
 import imp
+import six
 
 from pungi.util import get_arch_variant_data
 from pungi import paths, checks
@@ -42,7 +43,7 @@ class MockVariant(mock.Mock):
         return self.uid
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in self.variants.values()
+        return [v for v in list(self.variants.values())
                 if (not arch or arch in v.arches) and (not types or v.type in types)]
 
 
@@ -117,7 +118,7 @@ class DummyCompose(object):
         self.variants['Server'].variants['HA'] = self.all_variants['Server-HA']
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in self.all_variants.values()
+        return [v for v in list(self.all_variants.values())
                 if (not arch or arch in v.arches) and (not types or v.type in types)]
 
     def can_fail(self, variant, arch, deliverable):
@@ -126,7 +127,7 @@ class DummyCompose(object):
 
     def get_arches(self):
         result = set()
-        for variant in self.variants.itervalues():
+        for variant in list(self.variants.values()):
             result |= set(variant.arches)
         return sorted(result)
 
@@ -142,6 +143,8 @@ def touch(path, content=None):
         os.makedirs(os.path.dirname(path))
     except OSError:
         pass
+    if not isinstance(content, six.binary_type):
+        content = content.encode()
     with open(path, 'wb') as f:
         f.write(content)
     return path

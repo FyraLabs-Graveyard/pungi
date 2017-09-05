@@ -89,7 +89,7 @@ def _compute_checksums(results, cache, variant, arch, path, images,
             # digest from first run..
             cache[full_path] = shortcuts.compute_file_checksums(full_path, checksum_types)
         digests = cache[full_path]
-        for checksum, digest in digests.iteritems():
+        for checksum, digest in digests.items():
             # Update metadata with the checksum
             image.add_checksum(None, checksum, digest)
             # If not turned of, create the file-specific checksum file
@@ -112,7 +112,7 @@ def _compute_checksums(results, cache, variant, arch, path, images,
 def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen):
     results = defaultdict(set)
     cache = {}
-    for (variant, arch, path), images in get_images(topdir, im).iteritems():
+    for (variant, arch, path), images in get_images(topdir, im).items():
         _compute_checksums(results, cache, variant, arch, path, images,
                            checksum_types, base_checksum_name_gen, one_file)
 

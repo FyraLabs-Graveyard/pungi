@@ -15,7 +15,7 @@
 
 
 import os
-import cPickle as pickle
+from six.moves import cPickle as pickle
 
 from kobo.shortcuts import run
 

@@ -194,7 +194,7 @@ class CreateImageBuildThread(WorkerThread):
 
         paths = koji_wrapper.get_image_paths(output["task_id"])
 
-        for arch, paths in paths.iteritems():
+        for arch, paths in paths.items():
             for path in paths:
                 # format is list of tuples [('qcow2', '.qcow2'), ('raw-xz', 'raw.xz'),]
                 for format, suffix in cmd['format']:

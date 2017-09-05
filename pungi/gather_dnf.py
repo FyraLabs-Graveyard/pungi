@@ -242,12 +242,12 @@ class Gather(GatherBase):
 
         # return package with shortest name, alphabetically ordered
         result = list(result)
-        result.sort(lambda x, y: cmp(x.name, y.name))
-        result.sort(lambda x, y: cmp(len(x.name), len(y.name)))
+        result.sort(key=lambda x: x.name)
+        result.sort(key=lambda x: len(x.name))
 
         # best arch
         arches = self.dnf.arch_wrapper.all_arches
-        result.sort(lambda x, y: cmp(arches.index(x.arch), arches.index(y.arch)))
+        result.sort(key=lambda x: arches.index(x.arch))
         match = result[0]
 
         if self.opts.greedy_method == "build" and req:
@@ -405,7 +405,7 @@ class Gather(GatherBase):
                 for po in pkgs:
                     packages_by_name.setdefault(po.name, []).append(po)
 
-                for name, packages in packages_by_name.iteritems():
+                for name, packages in packages_by_name.items():
                     pkgs = self._get_best_package(packages)
                     if pkgs:
                         added.update(pkgs)

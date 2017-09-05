@@ -8,6 +8,7 @@ except ImportError:
     import unittest
 
 import os
+import six
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -391,11 +392,10 @@ class TestRegexValidation(ConfigTestCase):
         cfg = load_config(PKGSET_REPOS,
                           multilib=[('^*$', {'*': []})])
 
-        self.assertValidation(
-            cfg,
-            ['Failed validation in multilib.0.0: incorrect regular '
-             'expression: nothing to repeat'],
-            [])
+        msg = 'Failed validation in multilib.0.0: incorrect regular expression: nothing to repeat'
+        if six.PY3:
+            msg += ' at position 1'
+        self.assertValidation(cfg, [msg], [])
 
 
 class RepoclosureTestCase(ConfigTestCase):

@@ -236,7 +236,7 @@ class Compose(kobo.log.LoggingBase):
 
     def get_variants(self, types=None, arch=None):
         result = []
-        for i in self.variants.itervalues():
+        for i in self.variants.values():
             if (not types or i.type in types) and (not arch or arch in i.arches):
                 result.append(i)
             result.extend(i.get_variants(types=types, arch=arch))
@@ -257,7 +257,7 @@ class Compose(kobo.log.LoggingBase):
         return self._status_file
 
     def _log_failed_deliverables(self):
-        for kind, data in self.failed_deliverables.iteritems():
+        for kind, data in self.failed_deliverables.items():
             for variant, arch, subvariant in data:
                 self.log_info('Failed %s on variant <%s>, arch <%s>, subvariant <%s>.'
                               % (kind, variant, arch, subvariant))

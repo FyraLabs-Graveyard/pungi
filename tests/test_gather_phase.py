@@ -34,6 +34,9 @@ class MockPkg(object):
     def __repr__(self):
         return self.nvr
 
+    def __lt__(self, another):
+        return self.nvr < another.nvr
+
 
 def _join(a, *rest):
     res = copy.deepcopy(a)

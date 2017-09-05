@@ -23,8 +23,8 @@ class PkgsetPhase(PhaseBase):
 
     def run(self):
         pkgset_source = "PkgsetSource%s" % self.compose.conf["pkgset_source"]
-        from source import PkgsetSourceContainer
-        import sources
+        from .source import PkgsetSourceContainer
+        from . import sources
         PkgsetSourceContainer.register_module(sources)
         container = PkgsetSourceContainer()
         SourceClass = container[pkgset_source]

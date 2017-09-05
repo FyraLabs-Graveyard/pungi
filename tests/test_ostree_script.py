@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
 import mock
 
 import os
@@ -360,6 +359,3 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
                                           '--add-arch-template-var=ostree_repo=http://www.example.com/ostree',
                                           '--rootfs-size=None',
                                           self.output])])
-
-if __name__ == '__main__':
-    unittest.main()

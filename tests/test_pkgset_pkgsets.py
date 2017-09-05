@@ -121,7 +121,7 @@ class FakePool(object):
 
 class PkgsetCompareMixin(object):
     def assertPkgsetEqual(self, actual, expected):
-        for k, v1 in expected.iteritems():
+        for k, v1 in expected.items():
             self.assertIn(k, actual)
             v2 = actual.pop(k)
             self.assertItemsEqual(v1, v2)
@@ -148,7 +148,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             helpers.touch(os.path.join(self.topdir, filename))
 
     def assertPkgsetEqual(self, actual, expected):
-        for k, v1 in expected.iteritems():
+        for k, v1 in expected.items():
             self.assertIn(k, actual)
             v2 = actual.pop(k)
             self.assertItemsEqual(v1, v2)
@@ -259,8 +259,8 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
-        self.assertRegexpMatches(str(ctx.exception),
-                                 r'^RPM\(s\) not found for sigs: .+Check log for details.+')
+        self.assertRegex(str(ctx.exception),
+                         r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
     def test_can_not_find_any_package(self):
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
@@ -272,8 +272,8 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
-        self.assertRegexpMatches(str(ctx.exception),
-                                 r'^RPM\(s\) not found for sigs: .+Check log for details.+')
+        self.assertRegex(str(ctx.exception),
+                         r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
     def test_packages_attribute(self):
         self._touch_files([

@@ -31,6 +31,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         pool = ThreadPool.return_value
 
         phase = createiso.CreateisoPhase(compose)
+        phase.logger = mock.Mock()
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 0)
@@ -88,6 +89,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         pool = ThreadPool.return_value
 
         phase = createiso.CreateisoPhase(compose)
+        phase.logger = mock.Mock()
         phase.run()
 
         self.assertEqual(prepare_iso.call_args_list,
@@ -151,6 +153,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         pool = ThreadPool.return_value
 
         phase = createiso.CreateisoPhase(compose)
+        phase.logger = mock.Mock()
         phase.run()
 
         self.assertItemsEqual(
@@ -633,7 +636,7 @@ class DummySize(object):
         self.sizes = sizes
 
     def __call__(self, path):
-        for fragment, size in self.sizes.iteritems():
+        for fragment, size in self.sizes.items():
             if fragment in path:
                 return size
         return 0

@@ -50,7 +50,7 @@ class PungiWrapper(object):
         kickstart = open(ks_path, "w")
 
         # repos
-        for repo_name, repo_url in repos.items() + lookaside_repos.items():
+        for repo_name, repo_url in list(repos.items()) + list(lookaside_repos.items()):
             if "://" not in repo_url:
                 repo_url = "file://" + os.path.abspath(repo_url)
             repo_str = "repo --name=%s --baseurl=%s" % (repo_name, repo_url)
@@ -214,7 +214,7 @@ class PungiWrapper(object):
         missing_comps = set()
 
         for line in f:
-            for file_type, pattern in PACKAGES_RE.iteritems():
+            for file_type, pattern in PACKAGES_RE.items():
                 match = pattern.match(line)
                 if match:
                     item = {}

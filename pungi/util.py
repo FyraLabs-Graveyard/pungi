@@ -24,12 +24,12 @@ import hashlib
 import errno
 import pipes
 import re
-import urlparse
 import contextlib
 import traceback
 import tempfile
 import time
 import functools
+from six.moves import urllib, range
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -251,7 +251,7 @@ def resolve_git_url(url):
     Raises RuntimeError if there was an error. Most likely cause is failure to
     run git command.
     """
-    r = urlparse.urlsplit(url)
+    r = urllib.parse.urlsplit(url)
     ref = _get_git_ref(r.fragment)
     if not ref:
         return url
@@ -260,7 +260,7 @@ def resolve_git_url(url):
     # the final result must use original scheme.
     scheme = r.scheme.replace('git+', '')
 
-    baseurl = urlparse.urlunsplit((scheme, r.netloc, r.path, '', ''))
+    baseurl = urllib.parse.urlunsplit((scheme, r.netloc, r.path, '', ''))
     _, output = git_ls_remote(baseurl, ref)
 
     lines = [line for line in output.split('\n') if line]
@@ -274,9 +274,9 @@ def resolve_git_url(url):
         raise RuntimeError('Failed to resolve %s', url)
 
     fragment = lines[0].split()[0]
-    result = urlparse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
+    result = urllib.parse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
     if '?#' in url:
-        # The urlparse library drops empty query string. This hack puts it back in.
+        # The urllib library drops empty query string. This hack puts it back in.
         result = result.replace('#', '?#')
     return result
 
@@ -309,7 +309,7 @@ def get_variant_data(conf, var_name, variant, keys=None):
     :rtype: a list of values
     """
     result = []
-    for conf_variant, conf_data in conf.get(var_name, {}).iteritems():
+    for conf_variant, conf_data in conf.get(var_name, {}).items():
         if not re.match(conf_variant, variant.uid):
             continue
         if keys is not None:
@@ -322,7 +322,7 @@ def get_variant_data(conf, var_name, variant, keys=None):
 
 
 def _apply_substitutions(compose, volid):
-    for k, v in compose.conf['volume_id_substitutions'].iteritems():
+    for k, v in compose.conf['volume_id_substitutions'].items():
         volid = volid.replace(k, v)
     return volid
 
@@ -565,16 +565,16 @@ def recursive_file_list(directory):
 
 def levenshtein(a, b):
     """Compute Levenshtein edit distance between two strings."""
-    mat = [[0 for _ in xrange(len(a) + 1)] for _ in xrange(len(b) + 1)]
+    mat = [[0 for _ in range(len(a) + 1)] for _ in range(len(b) + 1)]
 
-    for i in xrange(len(a) + 1):
+    for i in range(len(a) + 1):
         mat[0][i] = i
 
-    for j in xrange(len(b) + 1):
+    for j in range(len(b) + 1):
         mat[j][0] = j
 
-    for j in xrange(1, len(b) + 1):
-        for i in xrange(1, len(a) + 1):
+    for j in range(1, len(b) + 1):
+        for i in range(1, len(a) + 1):
             cost = 0 if a[i - 1] == b[j - 1] else 1
             mat[j][i] = min(mat[j - 1][i] + 1,
                             mat[j][i - 1] + 1,
@@ -616,7 +616,7 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     If both path and logger are specified, more debugging information will be
     printed in case of failure.
     """
-    for i in xrange(max_retries):
+    for i in range(max_retries):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if proc.returncode == 0:

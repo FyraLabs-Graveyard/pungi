@@ -840,5 +840,6 @@ class TestTweakConfigs(PungiTestCase):
                     f.read().strip(),
                     ':LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg')
 
+
 if __name__ == "__main__":
     unittest.main()

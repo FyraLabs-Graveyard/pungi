@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 try:
@@ -59,7 +58,3 @@ class LoraxWrapperTest(unittest.TestCase):
                                '--add-arch-template-var=va1', '--add-arch-template-var=va2',
                                '--logfile=/tmp/lorax.log',
                                '/mnt/output_dir'])
-
-
-if __name__ == "__main__":
-    unittest.main()

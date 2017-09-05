@@ -13,7 +13,7 @@ def get_full_version():
     if os.path.isdir(os.path.join(location, '.git')):
         import subprocess
         proc = subprocess.Popen(['git', '--git-dir=%s/.git' % location, 'describe', '--tags'],
-                                stdout=subprocess.PIPE)
+                                stdout=subprocess.PIPE, universal_newlines=True)
         output, _ = proc.communicate()
         return re.sub(r'-1.fc\d\d?', '', output.strip().replace('pungi-', ''))
     else:

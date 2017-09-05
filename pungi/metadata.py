@@ -176,7 +176,7 @@ def write_compose_info(compose):
     for variant in ci_copy.variants.variants.values():
         for field in variant.paths._fields:
             field_paths = getattr(variant.paths, field)
-            for arch, dirpath in field_paths.iteritems():
+            for arch, dirpath in field_paths.items():
                 dirpath = os.path.join(compose.paths.compose.topdir(), dirpath)
                 if not (os.path.isdir(dirpath) and os.listdir(dirpath)):
                     field_paths[arch] = None

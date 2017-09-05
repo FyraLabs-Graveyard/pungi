@@ -94,11 +94,11 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.koji_wrapper = mock.Mock()
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
 
-    @mock.patch('cPickle.dumps')
+    @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     def test_populate(self, KojiPackageSet, pickle_dumps):
 
-        pickle_dumps.return_value = 'DATA'
+        pickle_dumps.return_value = b'DATA'
 
         orig_pkgset = KojiPackageSet.return_value
 
@@ -117,7 +117,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
-    @mock.patch('cPickle.dumps')
+    @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     def test_populate_with_multiple_koji_tags(self, KojiPackageSet, pickle_dumps):
         self.compose = helpers.DummyCompose(self.topdir, {
@@ -126,7 +126,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         })
         self.compose.DEBUG = False
 
-        pickle_dumps.return_value = 'DATA'
+        pickle_dumps.return_value = b'DATA'
 
         orig_pkgset = KojiPackageSet.return_value
 
@@ -147,7 +147,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
-    @mock.patch('cPickle.load')
+    @mock.patch('six.moves.cPickle.load')
     def test_populate_in_debug_mode(self, pickle_load):
         helpers.touch(self.pkgset_path, 'DATA')
         self.compose.DEBUG = True
@@ -167,7 +167,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
             [mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
                                       remove_path_prefix='/prefix')])
 
-    @mock.patch('cPickle.dumps')
+    @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.populate')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.save_file_list')
     def test_populate_packages_to_gather(self, save_file_list, popuplate,
@@ -182,7 +182,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
             ]
         })
         self.compose.DEBUG = False
-        pickle_dumps.return_value = 'DATA'
+        pickle_dumps.return_value = b'DATA'
 
         pkgset = source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, '/prefix', 123456)

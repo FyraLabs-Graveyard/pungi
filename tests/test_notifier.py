@@ -6,7 +6,10 @@ import json
 import mock
 import os
 import sys
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

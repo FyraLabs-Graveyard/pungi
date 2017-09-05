@@ -23,7 +23,7 @@ import contextlib
 
 import koji
 from kobo.shortcuts import run
-from ConfigParser import ConfigParser
+from six.moves import configparser
 
 from .. import util
 from ..arch_utils import getBaseArch
@@ -166,10 +166,10 @@ class KojiWrapper(object):
         # The minimum set of options
         min_options = ("name", "version", "target", "install_tree", "arches", "format", "kickstart", "ksurl", "distro")
         assert set(min_options).issubset(set(config_options['image-build'].keys())), "image-build requires at least %s got '%s'" % (", ".join(min_options), config_options)
-        cfg_parser = ConfigParser()
-        for section, opts in config_options.iteritems():
+        cfg_parser = configparser.ConfigParser()
+        for section, opts in config_options.items():
             cfg_parser.add_section(section)
-            for option, value in opts.iteritems():
+            for option, value in opts.items():
                 cfg_parser.set(section, option, value)
 
         fd = open(conf_file_dest, "w")

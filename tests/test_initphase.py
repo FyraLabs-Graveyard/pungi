@@ -83,8 +83,8 @@ class TestInitPhase(PungiTestCase):
         phase = init.InitPhase(compose)
         phase.run()
 
-        self.assertEqual(write_global.mock_calls, [])
-        self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
         self.assertItemsEqual(write_arch.mock_calls, [])
         self.assertItemsEqual(create_comps.mock_calls, [])
         self.assertItemsEqual(write_variant.mock_calls, [])

@@ -31,7 +31,7 @@ from pungi.arch import split_name_arch, get_compatible_arches
 
 def get_gather_source(name):
     import pungi.phases.gather.sources
-    from source import GatherSourceContainer
+    from .source import GatherSourceContainer
     GatherSourceContainer.register_module(pungi.phases.gather.sources)
     container = GatherSourceContainer()
     return container["GatherSource%s" % name]
@@ -39,7 +39,7 @@ def get_gather_source(name):
 
 def get_gather_method(name):
     import pungi.phases.gather.methods
-    from method import GatherMethodContainer
+    from .method import GatherMethodContainer
     GatherMethodContainer.register_module(pungi.phases.gather.methods)
     container = GatherMethodContainer()
     return container["GatherMethod%s" % name]
@@ -100,7 +100,7 @@ def get_parent_pkgs(arch, variant, result_dict):
     result = _mk_pkg_map(iterable_class=set)
     if variant.parent is None:
         return result
-    for pkg_type, pkgs in result_dict.get(arch, {}).get(variant.parent.uid, {}).iteritems():
+    for pkg_type, pkgs in result_dict.get(arch, {}).get(variant.parent.uid, {}).items():
         for pkg in pkgs:
             nvra = parse_nvra(pkg["path"])
             result[pkg_type].add((nvra["name"], nvra["arch"]))
@@ -142,7 +142,7 @@ def write_packages(compose, arch, variant, pkg_map, path_prefix):
     msg = "Writing package list (arch: %s, variant: %s)" % (arch, variant)
     compose.log_info("[BEGIN] %s" % msg)
 
-    for pkg_type, pkgs in pkg_map.iteritems():
+    for pkg_type, pkgs in pkg_map.items():
         file_name = compose.paths.work.package_list(arch=arch, variant=variant, pkg_type=pkg_type)
         with open(file_name, "w") as pkg_list:
             for pkg in pkgs:
@@ -188,7 +188,7 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
     addon_pkgs = _mk_pkg_map(iterable_class=set)
     move_to_parent_pkgs = _mk_pkg_map()
     removed_pkgs = _mk_pkg_map()
-    for pkg_type, pkgs in pkg_map.iteritems():
+    for pkg_type, pkgs in pkg_map.items():
 
         new_pkgs = []
         for pkg in pkgs:
@@ -262,13 +262,13 @@ def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_pare
                 compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=remove_pkgs)
 
             # update all_addon_pkgs
-            for pkg_type, pkgs in included_packages.iteritems():
+            for pkg_type, pkgs in included_packages.items():
                 all_included_packages.setdefault(pkg_type, set()).update(pkgs)
 
             if move_to_parent:
                 # move packages to parent
                 parent_pkg_map = result[arch][variant.parent.uid]
-                for pkg_type, pkgs in move_to_parent_pkgs.iteritems():
+                for pkg_type, pkgs in move_to_parent_pkgs.items():
                     for pkg in pkgs:
                         compose.log_debug("Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s"
                                           % (arch, variant.uid, pkg_type, os.path.basename(pkg["path"])))
@@ -355,7 +355,7 @@ def get_prepopulate_packages(compose, arch, variant, include_arch=True):
     variants = [variant.uid] if variant else prepopulate_data.keys()
 
     for var in variants:
-        for build, packages in prepopulate_data.get(var, {}).get(arch, {}).iteritems():
+        for build, packages in prepopulate_data.get(var, {}).get(arch, {}).items():
             for i in packages:
                 pkg_name, pkg_arch = split_name_arch(i)
                 if pkg_arch not in get_compatible_arches(arch, multilib=True):

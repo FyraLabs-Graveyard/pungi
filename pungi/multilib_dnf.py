@@ -53,7 +53,7 @@ class Multilib(object):
             return False
         if pkg.name in self.whitelist:
             return 'whitelist'
-        for method, cls in self.methods.iteritems():
+        for method, cls in self.methods.items():
             if cls.select(pkg):
                 return method
         return False

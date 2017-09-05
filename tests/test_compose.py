@@ -234,9 +234,9 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir)
         compose.read_variants()
 
-        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants.values()),
                          ['Client', 'Crashy', 'Live', 'Server'])
-        self.assertEqual(sorted([v.uid for v in compose.variants['Server'].variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants['Server'].variants.values()),
                          ['Server-Gluster', 'Server-ResilientStorage', 'Server-optional'])
         self.assertItemsEqual(compose.variants['Client'].arches,
                               ['i386', 'x86_64'])
@@ -278,9 +278,9 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir)
         compose.read_variants()
 
-        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants.values()),
                          ['Client', 'Live', 'Server'])
-        self.assertEqual(sorted([v.uid for v in compose.variants['Server'].variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants['Server'].variants.values()),
                          ['Server-Gluster', 'Server-ResilientStorage', 'Server-optional'])
         self.assertItemsEqual(compose.variants['Client'].arches,
                               ['x86_64'])
@@ -324,7 +324,7 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir)
         compose.read_variants()
 
-        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants.values()),
                          ['Client', 'Server'])
         self.assertItemsEqual(compose.variants['Client'].arches,
                               ['i386', 'x86_64'])
@@ -364,7 +364,7 @@ class ComposeTestCase(unittest.TestCase):
         compose = Compose(conf, self.tmp_dir, logger=logger)
         compose.read_variants()
 
-        self.assertEqual(sorted([v.uid for v in compose.variants.itervalues()]),
+        self.assertEqual(sorted(v.uid for v in compose.variants.values()),
                          ['Client', 'Server'])
         self.assertItemsEqual(compose.variants['Client'].arches,
                               ['x86_64'])

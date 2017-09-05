@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
@@ -8,7 +7,7 @@ except ImportError:
     import unittest
 import os
 import sys
-import StringIO
+from six import StringIO
 
 import kobo.conf
 
@@ -26,7 +25,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         def custom_exists(path):
             return False
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = custom_exists
                 result = checks.check({})
@@ -35,7 +34,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         self.assertFalse(result)
 
     def test_all_deps_ok(self):
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('platform.machine') as machine:
                 machine.return_value = 'x86_64'
                 with mock.patch('os.path.exists') as exists:
@@ -50,7 +49,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'create_jigdo': False
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('platform.machine') as machine:
                 machine.return_value = 'x86_64'
                 with mock.patch('os.path.exists') as exists:
@@ -67,7 +66,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
                 result = checks.check(conf)
@@ -81,7 +80,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
                 result = checks.check(conf)
@@ -96,14 +95,14 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('platform.machine') as machine:
                 machine.return_value = 'armhfp'
                 with mock.patch('os.path.exists') as exists:
                     exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
                     result = checks.check(conf)
 
-        self.assertRegexpMatches(out.getvalue(), r'^Not checking.*Expect failures.*$')
+        self.assertRegex(out.getvalue(), r'^Not checking.*Expect failures.*$')
         self.assertTrue(result)
 
     def test_isohybrid_not_needed_in_runroot(self):
@@ -111,7 +110,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
                 result = checks.check(conf)
@@ -124,7 +123,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'runroot': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
                 result = checks.check(conf)
@@ -139,7 +138,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'bootable': True,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
                 result = checks.check(conf)
@@ -148,7 +147,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         self.assertFalse(result)
 
     def test_requires_modifyrepo(self):
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/modifyrepo'])
                 result = checks.check({})
@@ -157,7 +156,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         self.assertFalse(result)
 
     def test_requires_createrepo_c(self):
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
                 result = checks.check({})
@@ -170,7 +169,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
             'createrepo_c': False,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as out:
+        with mock.patch('sys.stdout', new_callable=StringIO) as out:
             with mock.patch('os.path.exists') as exists:
                 exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
                 result = checks.check(conf)
@@ -228,7 +227,7 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks.make_schema')
@@ -276,7 +275,7 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks.make_schema')
@@ -300,9 +299,9 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 1)
-        self.assertRegexpMatches(errors[0], r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*")
+        self.assertRegex(errors[0], r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*")
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
 
     @mock.patch('pungi.checks.make_schema')
@@ -341,8 +340,8 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
+        self.assertRegex(warnings[0], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
+        self.assertRegex(warnings[1], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
 
@@ -381,8 +380,8 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegex(warnings[1], r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
@@ -420,8 +419,8 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegex(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
@@ -463,10 +462,10 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 4)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
-        self.assertRegexpMatches(warnings[2], r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'")
-        self.assertRegexpMatches(warnings[3], r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegex(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
+        self.assertRegex(warnings[2], r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'")
+        self.assertRegex(warnings[3], r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.")
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server", "Client"])
 
@@ -516,8 +515,8 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*")
+        self.assertRegex(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
+        self.assertRegex(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*")
         self.assertEqual(config.get("live_images")[0][1]['armhfp']['repo'], 'Everything')
 
 
@@ -550,7 +549,3 @@ class TestUmask(unittest.TestCase):
             [mock.call.warning('Unusually strict umask detected (0%03o), '
                                'expect files with broken permissions.', 0o044)]
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -9,6 +9,7 @@ except ImportError:
 import os
 import tempfile
 import shutil
+import six
 import sys
 import logging
 
@@ -26,6 +27,11 @@ try:
     HAS_DNF = True
 except ImportError:
     HAS_DNF = False
+
+if six.PY2:
+    HAS_YUM = True
+else:
+    HAS_YUM = False
 
 
 def convert_pkg_map(data):
@@ -1627,6 +1633,7 @@ class DepsolvingBase(object):
         ])
 
 
+@unittest.skipUnless(HAS_YUM, 'YUM only available on Python 2')
 class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 
     def setUp(self):
@@ -1789,6 +1796,3 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-debuginfo-1.10-5.x86_64", [PkgFlag.lookaside])
-
-if __name__ == "__main__":
-    unittest.main()

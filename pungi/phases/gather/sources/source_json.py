@@ -48,12 +48,12 @@ class GatherSourceJson(pungi.phases.gather.source.GatherSourceBase):
         if variant is None:
             # get all packages for all variants
             for variant_uid in mapping:
-                for pkg_name, pkg_arches in mapping[variant_uid][arch].iteritems():
+                for pkg_name, pkg_arches in mapping[variant_uid][arch].items():
                     for pkg_arch in pkg_arches:
                         packages.add((pkg_name, pkg_arch))
         else:
             # get packages for a particular variant
-            for pkg_name, pkg_arches in mapping[variant.uid][arch].iteritems():
+            for pkg_name, pkg_arches in mapping[variant.uid][arch].items():
                 for pkg_arch in pkg_arches:
                     packages.add((pkg_name, pkg_arch))
         return packages, set()

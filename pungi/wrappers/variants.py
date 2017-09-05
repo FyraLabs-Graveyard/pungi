@@ -15,15 +15,9 @@
 
 from __future__ import print_function
 import os
-import sys
 import copy
 import lxml.etree
-
-
-# HACK: define cmp in python3
-if sys.version_info[0] == 3:
-    def cmp(a, b):
-        return (a > b) - (a < b)
+from functools import total_ordering
 
 
 def get_variants_dtd(logger=None):
@@ -203,6 +197,7 @@ class VariantsXmlParser(object):
         return result
 
 
+@total_ordering
 class Variant(object):
     def __init__(self, id, name, type, arches, groups, environments=None,
                  buildinstallpackages=None, is_empty=False, parent=None,
@@ -216,10 +211,9 @@ class Variant(object):
         self.name = name
         self.type = type
         self.arches = sorted(copy.deepcopy(arches))
-        self.groups = sorted(copy.deepcopy(groups), lambda x, y: cmp(x["name"], y["name"]))
-        self.environments = sorted(copy.deepcopy(environments), lambda x, y: cmp(x["name"], y["name"]))
-        self.modules = sorted(copy.deepcopy(modules),
-                              lambda x, y: cmp(x["name"], y["name"]))
+        self.groups = sorted(copy.deepcopy(groups), key=lambda x: x["name"])
+        self.environments = sorted(copy.deepcopy(environments), key=lambda x: x["name"])
+        self.modules = sorted(copy.deepcopy(modules), key=lambda x: x["name"])
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = parent
@@ -238,19 +232,18 @@ class Variant(object):
     def __repr__(self):
         return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(self)
 
-    def __cmp__(self, other):
-        # variant < addon, layered-product < optional
-        if self.type == other.type:
-            return cmp(self.uid, other.uid)
-        if self.type == "variant":
-            return -1
-        if other.type == "variant":
-            return 1
-        if self.type == "optional":
-            return 1
-        if other.type == "optional":
-            return -1
-        return cmp(self.uid, other.uid)
+    def __eq__(self, other):
+        return self.type == other.type and self.uid == other.uid
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        ORDERING = {'variant': 0, 'addon': 1, 'layered-product': 1, 'optional': 2}
+        return (ORDERING[self.type], self.uid) < (ORDERING[other.type], other.uid)
+
+    def __hash__(self):
+        return hash((self.type, self.uid))
 
     @property
     def uid(self):

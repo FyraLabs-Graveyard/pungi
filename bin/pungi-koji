@@ -11,7 +11,6 @@ import locale
 import datetime
 import getpass
 import socket
-import time
 import pipes
 import json
 
@@ -475,7 +474,7 @@ if __name__ == "__main__":
             COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)
             COMPOSE.write_status("DOOMED")
             import kobo.tback
-            with open(tb_path, "w") as f:
+            with open(tb_path, "wb") as f:
                 f.write(kobo.tback.Traceback().get_traceback())
         else:
             print("Exception: %s" % ex)

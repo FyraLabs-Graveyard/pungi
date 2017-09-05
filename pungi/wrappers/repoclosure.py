@@ -36,7 +36,7 @@ def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
         cmd.append("--arch=%s" % i)
 
     repos = repos or {}
-    for repo_id, repo_path in repos.iteritems():
+    for repo_id, repo_path in repos.items():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
         cmd.append(cmds[backend]['repoarg'] % repo_id)
         if backend == 'dnf':
@@ -46,7 +46,7 @@ def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
             cmd.append('--check=%s' % repo_id)
 
     lookaside = lookaside or {}
-    for repo_id, repo_path in lookaside.iteritems():
+    for repo_id, repo_path in lookaside.items():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
         cmd.append(cmds[backend]['lookaside'] % repo_id)
 

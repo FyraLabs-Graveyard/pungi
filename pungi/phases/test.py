@@ -109,7 +109,7 @@ def check(compose, variant, arch, image):
     can_fail = getattr(image, 'can_fail', False)
     with failable(compose, can_fail, variant, arch, deliverable,
                   subvariant=image.subvariant):
-        with open(path) as f:
+        with open(path, 'rb') as f:
             iso = is_iso(f)
             if image.format == 'iso' and not iso:
                 raise RuntimeError('%s does not look like an ISO file' % path)
@@ -132,16 +132,16 @@ def _check_magic(f, offset, bytes):
 
 
 def is_iso(f):
-    return _check_magic(f, 0x8001, 'CD001')
+    return _check_magic(f, 0x8001, b'CD001')
 
 
 def has_mbr(f):
-    return _check_magic(f, 0x1fe, '\x55\xAA')
+    return _check_magic(f, 0x1fe, b'\x55\xAA')
 
 
 def has_gpt(f):
-    return _check_magic(f, 0x200, 'EFI PART')
+    return _check_magic(f, 0x200, b'EFI PART')
 
 
 def has_eltorito(f):
-    return _check_magic(f, 0x8801, 'CD001\1EL TORITO SPECIFICATION')
+    return _check_magic(f, 0x8801, b'CD001\1EL TORITO SPECIFICATION')

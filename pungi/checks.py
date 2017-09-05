@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; version 2 of the License.
@@ -152,7 +151,7 @@ def _validate_requires(schema, conf, valid_options):
     def has_default(x):
         return schema['properties'].get(x, {}).get('default') == conf[x]
 
-    for name, opt in valid_options.iteritems():
+    for name, opt in valid_options.items():
         value = conf.get(name)
 
         errors.extend(_check_dep(name, value, opt.get('conflicts', []),
@@ -178,7 +177,7 @@ def validate(config):
     DefaultValidator = _extend_with_default_and_alias(jsonschema.Draft4Validator)
     validator = DefaultValidator(schema,
                                  {'array': (tuple, list),
-                                  'regex': (str, unicode)})
+                                  'regex': six.string_types})
     errors = []
     warnings = []
     for error in validator.iter_errors(config):
@@ -239,7 +238,7 @@ def _extend_with_default_and_alias(validator_class):
         Hook the instance and yield errors and warnings.
         """
         errors = []
-        for property, subschema in properties.iteritems():
+        for property, subschema in properties.items():
             # update instance for alias option
             # If alias option for the property is present and property is not specified,
             # update the property in instance with value from alias option.
@@ -285,7 +284,7 @@ def _extend_with_default_and_alias(validator_class):
         Assign default values to options that have them defined and are not
         specified.
         """
-        for property, subschema in properties.iteritems():
+        for property, subschema in properties.items():
             if "default" in subschema and property not in instance:
                 instance.setdefault(property, subschema["default"])
 

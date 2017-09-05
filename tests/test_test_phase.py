@@ -17,12 +17,12 @@ import pungi.phases.test as test_phase
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
 
-PAD = '\0' * 100
-UNBOOTABLE_ISO = ('\0' * 0x8001) + 'CD001' + PAD
-ISO_WITH_MBR = ('\0' * 0x1fe) + '\x55\xAA' + ('\0' * 0x7e01) + 'CD001' + PAD
-ISO_WITH_GPT = ('\0' * 0x200) + 'EFI PART' + ('\0' * 0x7df9) + 'CD001' + PAD
-ISO_WITH_MBR_AND_GPT = ('\0' * 0x1fe) + '\x55\xAAEFI PART' + ('\0' * 0x7df9) + 'CD001' + PAD
-ISO_WITH_TORITO = ('\0' * 0x8001) + 'CD001' + ('\0' * 0x7fa) + '\0CD001\1EL TORITO SPECIFICATION' + PAD
+PAD = b'\0' * 100
+UNBOOTABLE_ISO = (b'\0' * 0x8001) + b'CD001' + PAD
+ISO_WITH_MBR = (b'\0' * 0x1fe) + b'\x55\xAA' + (b'\0' * 0x7e01) + b'CD001' + PAD
+ISO_WITH_GPT = (b'\0' * 0x200) + b'EFI PART' + (b'\0' * 0x7df9) + b'CD001' + PAD
+ISO_WITH_MBR_AND_GPT = (b'\0' * 0x1fe) + b'\x55\xAAEFI PART' + (b'\0' * 0x7df9) + b'CD001' + PAD
+ISO_WITH_TORITO = (b'\0' * 0x8001) + b'CD001' + (b'\0' * 0x7fa) + b'\0CD001\1EL TORITO SPECIFICATION' + PAD
 
 
 class TestCheckImageSanity(PungiTestCase):
@@ -187,7 +187,7 @@ class TestRepoclosure(PungiTestCase):
         })
         test_phase.run_repoclosure(compose)
 
-        self.assertItemsEqual(mock_grc.call_args_list, [])
+        self.assertEqual(mock_grc.call_args_list, [])
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')

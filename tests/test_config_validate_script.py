@@ -1,8 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
-import unittest
 import mock
 import os
 import subprocess
@@ -27,9 +25,6 @@ class ConfigValidateScriptTest(helpers.PungiTestCase):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
+        self.assertEqual(b'', stdout)
+        self.assertEqual(b'', stderr)
         self.assertEqual(0, p.returncode)
-        self.assertEqual('', stdout)
-        self.assertEqual('', stderr)
-
-if __name__ == '__main__':
-    unittest.main()
