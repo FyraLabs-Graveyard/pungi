@@ -69,6 +69,6 @@ class Profiler(object):
     def print_results(cls):
         print("Profiling results:")
         results = cls._data.items()
-        results.sort(lambda x, y: cmp(x[1]["time"], y[1]["time"]), reverse=True)
+        results = sorted(results, key=lambda x: x[1]["time"], reverse=True)
         for name, data in results:
             print("  %6.2f %5d %s" % (data["time"], data["calls"], name))
