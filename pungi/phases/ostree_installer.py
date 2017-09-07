@@ -20,6 +20,25 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         super(OstreeInstallerPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
 
+    def validate(self):
+        errors = []
+        try:
+            super(OstreeInstallerPhase, self).validate()
+        except ValueError as exc:
+            errors = exc.message.split('\n')
+
+        for variant in self.compose.get_variants():
+            for arch in variant.arches:
+                conf = util.get_arch_variant_data(self.compose.conf, self.name,
+                                                  arch, variant)
+                if conf and not variant.is_empty:
+                    errors.append('Can not generate ostree installer for %s.%s: '
+                                  'it has buildinstall running already and the '
+                                  'files would clash.' % (variant.uid, arch))
+
+        if errors:
+            raise ValueError('\n'.join(errors))
+
     def run(self):
         for variant in self.compose.get_variants():
             for arch in variant.arches:

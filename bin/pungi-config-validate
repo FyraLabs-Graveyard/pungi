@@ -5,20 +5,24 @@ from __future__ import print_function
 
 import argparse
 import json
-import kobo.conf
 import os
 import sys
+
+import kobo.conf
+import six
 
 here = sys.path[0]
 if here != '/usr/bin':
     # Git checkout
     sys.path[0] = os.path.dirname(here)
 
-import pungi.compose
 import pungi.checks
+import pungi.compose
 import pungi.paths
 import pungi.phases
+import pungi.wrappers.scm
 import pungi.util
+from pungi.wrappers.variants import VariantsXmlParser
 
 
 class ValidationCompose(pungi.compose.Compose):
@@ -30,6 +34,7 @@ class ValidationCompose(pungi.compose.Compose):
         self.skip_phases = []
         self.has_old_composes = has_old
         self.paths = pungi.paths.Paths(self)
+        self.variants = {}
 
     @property
     def old_composes(self):
@@ -52,6 +57,20 @@ class ValidationCompose(pungi.compose.Compose):
         return '0'
 
 
+def read_variants(compose, config):
+    with pungi.util.temp_dir() as tmp_dir:
+        scm_dict = compose.conf["variants_file"]
+        if isinstance(scm_dict, six.string_types) and scm_dict[0] != '/':
+            config_dir = os.path.dirname(config)
+            scm_dict = os.path.join(config_dir, scm_dict)
+        files = pungi.wrappers.scm.get_file_from_scm(scm_dict, tmp_dir)
+        tree_arches = compose.conf.get("tree_arches")
+        tree_variants = compose.conf.get("tree_variants")
+        with open(os.path.join(tmp_dir, files[0]), "r") as file_obj:
+            parser = VariantsXmlParser(file_obj, tree_arches, tree_variants)
+            compose.variants = parser.parse()
+
+
 def run(config, topdir, has_old):
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(config)
@@ -63,6 +82,11 @@ def run(config, topdir, has_old):
         sys.exit(1)
 
     compose = ValidationCompose(conf, has_old, topdir)
+    try:
+        read_variants(compose, config)
+    except:
+        # Failed to read variants, no big deal.
+        pass
 
     pkgset_phase = pungi.phases.PkgsetPhase(compose)
     phases = [
