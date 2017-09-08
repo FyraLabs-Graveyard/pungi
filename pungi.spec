@@ -25,7 +25,7 @@ Requires:       yum => 3.4.3-28
 Requires:       lorax >= 22.1
 Requires:       repoview
 Requires:       python-lockfile
-Requires:       kobo
+Requires:       kobo >= 0.6
 Requires:       kobo-rpmlib
 Requires:       python-productmd
 Requires:       python-kickstart

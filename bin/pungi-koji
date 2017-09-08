@@ -265,8 +265,10 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
 
     # dump the config file
     date_str = datetime.datetime.strftime(datetime.datetime.now(), "%F_%X").replace(":", "-")
-    config_dump = compose.paths.log.log_file("global", "config-copy_%s" % date_str)
-    open(config_dump, "w").write(open(compose.conf._open_file, 'r').read())
+    for config_file in compose.conf.opened_files:
+        config_dump = compose.paths.log.log_file("global", "config-copy_%s_%s"
+                                                 % (os.path.basename(config_file), date_str))
+        open(config_dump, "w").write(open(config_file, 'r').read())
     config_dump_full = compose.paths.log.log_file("global", "config-dump_%s" % date_str)
     with open(config_dump_full, "w") as f:
         json.dump(compose.conf, f, sort_keys=True, indent=4)
