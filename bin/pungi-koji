@@ -11,6 +11,7 @@ import locale
 import datetime
 import getpass
 import socket
+import time
 import pipes
 import json
 
@@ -261,6 +262,9 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.log_info("Working directory: %s" % os.getcwd())
     compose.log_info("Command line: %s" % " ".join([pipes.quote(arg) for arg in sys.argv]))
     compose.log_info("Compose top directory: %s" % compose.topdir)
+    is_dst = time.daylight and time.localtime().tm_isdst > 0
+    compose.log_info("Current timezone offset: %s"
+                     % time.altzone if is_dst else time.timezone)
     compose.read_variants()
 
     # dump the config file
