@@ -12,6 +12,8 @@ import shutil
 import sys
 import logging
 
+from six.moves import cStringIO
+
 HERE = os.path.dirname(__file__)
 BINDIR = (os.path.join(HERE, '..', 'bin'))
 sys.path.insert(0, os.path.join(HERE, '..'))
@@ -1618,7 +1620,7 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 
         p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
         with open(self.out, "r") as f:
-            pkg_map, _, _ = p.parse_log(f)
+            pkg_map, self.broken_deps, _ = p.parse_log(f)
         return convert_pkg_map(pkg_map)
 
 
@@ -1674,7 +1676,18 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         exclude_groups = []
         _, conditional_packages = self.dnf.comps_wrapper.get_comps_packages(groups, exclude_groups)
         self.g = Gather(self.dnf, GatherOptions(**kwargs))
+
+        self.g.logger.handlers = [h for h in self.g.logger.handlers
+                                  if h.name != 'capture-logs']
+        log_output = cStringIO()
+        handler = logging.StreamHandler(log_output)
+        handler.name = 'capture-logs'
+        handler.setLevel(logging.WARNING)
+        self.g.logger.addHandler(handler)
+
         self.g.gather(packages, conditional_packages)
+        log_output.seek(0)
+        _, self.broken_deps, _ = PungiWrapper().parse_log(log_output)
 
         return {
             'debuginfo': convert_dnf_packages(self.g.result_debug_packages,
