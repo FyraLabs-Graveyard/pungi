@@ -802,3 +802,12 @@ def retry(timeout=120, interval=30, wait_on=Exception):
 @retry(wait_on=RuntimeError)
 def git_ls_remote(baseurl, ref):
     return run(['git', 'ls-remote', baseurl, ref])
+
+
+def get_tz_offset():
+    """Return a string describing current local timezone offset."""
+    is_dst = time.daylight and time.localtime().tm_isdst > 0
+    offset = time.altzone if is_dst else time.timezone
+    hours = offset / 3600
+    minutes = (offset / 60) % 60
+    return "%+03d:%02d" % (hours, minutes)

@@ -591,5 +591,35 @@ class TestVersionGenerator(unittest.TestCase):
         self.assertEqual(util.version_generator(compose, None), None)
 
 
+class TestTZOffset(unittest.TestCase):
+    @mock.patch('time.daylight', new=False)
+    @mock.patch('time.altzone', new=7200)
+    @mock.patch('time.timezone', new=3600)
+    @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
+    def test_zone_without_dst(self):
+        self.assertEqual(util.get_tz_offset(), "+01:00")
+
+    @mock.patch('time.daylight', new=True)
+    @mock.patch('time.altzone', new=7200)
+    @mock.patch('time.timezone', new=3600)
+    @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
+    def test_with_active_dst(self):
+        self.assertEqual(util.get_tz_offset(), "+01:00")
+
+    @mock.patch('time.daylight', new=True)
+    @mock.patch('time.altzone', new=9000)
+    @mock.patch('time.timezone', new=3600)
+    @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=1))
+    def test_with_inactive_dst(self):
+        self.assertEqual(util.get_tz_offset(), "+02:30")
+
+    @mock.patch('time.daylight', new=False)
+    @mock.patch('time.altzone', new=0)
+    @mock.patch('time.timezone', new=0)
+    @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
+    def test_utc(self):
+        self.assertEqual(util.get_tz_offset(), "+00:00")
+
+
 if __name__ == "__main__":
     unittest.main()
