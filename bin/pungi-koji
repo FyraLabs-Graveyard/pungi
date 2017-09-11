@@ -130,7 +130,8 @@ def main():
     )
     parser.add_argument(
         "--version",
-        action="store_true",
+        action="version",
+        version=get_full_version(),
         help="output version information and exit",
     )
     parser.add_argument(
@@ -172,10 +173,6 @@ def main():
     def abort(msg):
         fail_to_start(msg)
         parser.error(msg)
-
-    if opts.version:
-        print("pungi %s" % get_full_version())
-        sys.exit(0)
 
     if opts.target_dir and not opts.compose_dir:
         opts.target_dir = os.path.abspath(opts.target_dir)

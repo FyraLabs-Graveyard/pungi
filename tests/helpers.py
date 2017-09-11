@@ -9,6 +9,7 @@ except ImportError:
 import tempfile
 import shutil
 import errno
+import imp
 
 from pungi.util import get_arch_variant_data
 from pungi import paths, checks
@@ -190,3 +191,7 @@ def load_config(data={}, **kwargs):
     conf.update(data)
     conf.update(kwargs)
     return conf
+
+
+def load_bin(name):
+    return imp.load_source('pungi_cli_fake_' + name, os.path.dirname(__file__) + "/../bin/" + name)
