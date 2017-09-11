@@ -154,15 +154,6 @@ class GatherBase(object):
             return True
         return False
 
-    def is_multilib_package(self, pkg):
-        if pkg.arch in self.dnf.arch_wrapper.source_arches:
-            return False
-        if pkg.arch == "noarch":
-            return False
-        if pkg.arch in self.dnf.arch_wrapper.multilib_arches:
-            return True
-        return False
-
 
 class Gather(GatherBase):
     def __init__(self, dnf_obj, gather_options, logger=None):
