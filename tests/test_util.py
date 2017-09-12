@@ -597,18 +597,18 @@ class TestTZOffset(unittest.TestCase):
     @mock.patch('time.timezone', new=3600)
     @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
     def test_zone_without_dst(self):
-        self.assertEqual(util.get_tz_offset(), "+01:00")
+        self.assertEqual(util.get_tz_offset(), "-01:00")
 
     @mock.patch('time.daylight', new=True)
     @mock.patch('time.altzone', new=7200)
     @mock.patch('time.timezone', new=3600)
     @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
     def test_with_active_dst(self):
-        self.assertEqual(util.get_tz_offset(), "+01:00")
+        self.assertEqual(util.get_tz_offset(), "-01:00")
 
     @mock.patch('time.daylight', new=True)
-    @mock.patch('time.altzone', new=9000)
-    @mock.patch('time.timezone', new=3600)
+    @mock.patch('time.altzone', new=-9000)
+    @mock.patch('time.timezone', new=-3600)
     @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=1))
     def test_with_inactive_dst(self):
         self.assertEqual(util.get_tz_offset(), "+02:30")

@@ -807,7 +807,10 @@ def git_ls_remote(baseurl, ref):
 def get_tz_offset():
     """Return a string describing current local timezone offset."""
     is_dst = time.daylight and time.localtime().tm_isdst > 0
-    offset = time.altzone if is_dst else time.timezone
+    # We need to negate the value: the values are in seconds west of UTC, but
+    # ISO 8601 wants the offset to be negative for times behind UTC (i.e. to
+    # the west).
+    offset = -(time.altzone if is_dst else time.timezone)
     hours = offset / 3600
     minutes = (offset / 60) % 60
     return "%+03d:%02d" % (hours, minutes)
