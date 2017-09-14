@@ -603,9 +603,15 @@ Options
     (*list*) -- additional packages to be included in a variant and
     architecture; format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
+    The packages specified here are matched against RPM names, not any other
+    provides in the package not the name of source package.
+
 **filter_packages**
     (*list*) -- packages to be excluded from a variant and architecture;
     format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
+
+    The packages specified here are matched against RPM names, not any other
+    provides in the package not the name of source package.
 
 **filter_system_release_packages**
     (*bool*) -- for each variant, figure out the best system release package

@@ -12,6 +12,10 @@ The inputs for gathering are defined by the ``gather_source`` option. It
 provides a list of package names, comps groups names and a list of packages
 that should be filtered out.
 
+.. note::
+   The inputs for both explicit package list and comps file are interpreted as
+   RPM names, not any arbitrary provides nor source package name.
+
 Next, ``gather_method`` defines how the list is processed. For ``nodeps``, the
 results from source are used pretty much as is [#]_. For ``deps`` method, a
 process will be launched to figure out what dependencies are needed and those
