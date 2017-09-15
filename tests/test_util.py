@@ -29,7 +29,8 @@ class TestGitRefResolver(unittest.TestCase):
         url = util.resolve_git_url('https://git.example.com/repo.git?somedir#HEAD')
 
         self.assertEqual(url, 'https://git.example.com/repo.git?somedir#CAFEBABE')
-        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
+                                    universal_newlines=True)
 
     @mock.patch('pungi.util.run')
     def test_successful_resolve_branch(self, run):
@@ -38,7 +39,8 @@ class TestGitRefResolver(unittest.TestCase):
         url = util.resolve_git_url('https://git.example.com/repo.git?somedir#origin/f24')
 
         self.assertEqual(url, 'https://git.example.com/repo.git?somedir#CAFEBABE')
-        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/f24'])
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/f24'],
+                                    universal_newlines=True)
 
     @mock.patch('pungi.util.run')
     def test_resolve_missing_spec(self, run):
@@ -61,7 +63,8 @@ class TestGitRefResolver(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             util.resolve_git_url('https://git.example.com/repo.git?somedir#HEAD')
 
-        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
+                                    universal_newlines=True)
 
     @mock.patch('pungi.util.run')
     def test_resolve_keep_empty_query_string(self, run):
@@ -69,7 +72,8 @@ class TestGitRefResolver(unittest.TestCase):
 
         url = util.resolve_git_url('https://git.example.com/repo.git?#HEAD')
 
-        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
+                                    universal_newlines=True)
         self.assertEqual(url, 'https://git.example.com/repo.git?#CAFEBABE')
 
     @mock.patch('pungi.util.run')
@@ -78,7 +82,8 @@ class TestGitRefResolver(unittest.TestCase):
 
         url = util.resolve_git_url('git+https://git.example.com/repo.git#HEAD')
 
-        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])
+        run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
+                                    universal_newlines=True)
         self.assertEqual(url, 'git+https://git.example.com/repo.git#CAFEBABE')
 
     @mock.patch('pungi.util.run')
@@ -89,7 +94,8 @@ class TestGitRefResolver(unittest.TestCase):
             util.resolve_git_url('https://git.example.com/repo.git?somedir#origin/my-branch')
 
         run.assert_called_once_with(
-            ['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/my-branch'])
+            ['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/my-branch'],
+            universal_newlines=True)
         self.assertIn('ref does not exist in remote repo', str(ctx.exception))
 
     @mock.patch('time.sleep')
@@ -102,7 +108,8 @@ class TestGitRefResolver(unittest.TestCase):
         self.assertEqual(url, 'https://git.example.com/repo.git?somedir#CAFEBABE')
         self.assertEqual(sleep.call_args_list, [mock.call(30)])
         self.assertEqual(run.call_args_list,
-                         [mock.call(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'])] * 2)
+                         [mock.call(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
+                                    universal_newlines=True)] * 2)
 
 
 class TestGetVariantData(unittest.TestCase):
@@ -373,7 +380,8 @@ class TestUnmountCmd(unittest.TestCase):
         mockPopen.side_effect = [self._fakeProc(0, '')]
         util.run_unmount_cmd(cmd)
         self.assertEqual(mockPopen.call_args_list,
-                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)])
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    universal_newlines=True)])
 
     @mock.patch('subprocess.Popen')
     def test_unmount_cmd_fail_other_reason(self, mockPopen):
@@ -384,7 +392,8 @@ class TestUnmountCmd(unittest.TestCase):
         self.assertEqual(str(ctx.exception),
                          "Unhandled error when running 'unmount': 'It is broken'")
         self.assertEqual(mockPopen.call_args_list,
-                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)])
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    universal_newlines=True)])
 
     @mock.patch('time.sleep')
     @mock.patch('subprocess.Popen')
@@ -395,7 +404,8 @@ class TestUnmountCmd(unittest.TestCase):
                                  self._fakeProc(0, '')]
         util.run_unmount_cmd(cmd)
         self.assertEqual(mockPopen.call_args_list,
-                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)] * 3)
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    universal_newlines=True)] * 3)
         self.assertEqual(mock_sleep.call_args_list,
                          [mock.call(0), mock.call(1)])
 
@@ -409,7 +419,8 @@ class TestUnmountCmd(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             util.run_unmount_cmd(cmd, max_retries=3)
         self.assertEqual(mockPopen.call_args_list,
-                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)] * 3)
+                         [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    universal_newlines=True)] * 3)
         self.assertEqual(mock_sleep.call_args_list,
                          [mock.call(0), mock.call(1), mock.call(2)])
         self.assertEqual(str(ctx.exception), "Failed to run 'unmount': Device or resource busy.")
@@ -427,15 +438,21 @@ class TestUnmountCmd(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             util.fusermount('/path', max_retries=3, logger=logger)
         cmd = ['fusermount', '-u', '/path']
-        expected = [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
-                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
-                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE),
+        expected = [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                              universal_newlines=True),
+                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                              universal_newlines=True),
+                    mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                              universal_newlines=True),
                     mock.call(['ls', '-lA', '/path'],
-                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE),
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                              universal_newlines=True),
                     mock.call(['fuser', '-vm', '/path'],
-                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE),
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                              universal_newlines=True),
                     mock.call(['lsof', '+D', '/path'],
-                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE)]
+                              stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                              universal_newlines=True)]
         self.assertEqual(mockPopen.call_args_list, expected)
         self.assertEqual(mock_sleep.call_args_list,
                          [mock.call(0), mock.call(1), mock.call(2)])

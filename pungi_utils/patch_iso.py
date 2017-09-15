@@ -28,7 +28,7 @@ from pungi.wrappers import iso
 
 def sh(log, cmd, *args, **kwargs):
     log.info('Running: %s', ' '.join(quote(x) for x in cmd))
-    ret, out = shortcuts.run(cmd, *args, **kwargs)
+    ret, out = shortcuts.run(cmd, *args, universal_newlines=True, **kwargs)
     if out:
         log.debug('%s', out)
     return ret, out
@@ -36,7 +36,8 @@ def sh(log, cmd, *args, **kwargs):
 
 def get_lorax_dir(default='/usr/share/lorax'):
     try:
-        _, out = shortcuts.run(['python3', '-c' 'import pylorax; print(pylorax.find_templates())'])
+        _, out = shortcuts.run(['python3', '-c' 'import pylorax; print(pylorax.find_templates())'],
+                               universal_newlines=True)
         return out.strip()
     except Exception:
         return default

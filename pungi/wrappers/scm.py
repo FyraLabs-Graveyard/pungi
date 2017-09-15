@@ -44,7 +44,8 @@ class ScmBase(kobo.log.LoggingBase):
     def run_process_command(self, cwd):
         if self.command:
             self.log_debug('Running "%s"' % self.command)
-            retcode, output = run(self.command, workdir=cwd, can_fail=True)
+            retcode, output = run(self.command, workdir=cwd, can_fail=True,
+                                  universal_newlines=True)
             if retcode != 0:
                 self.log_error('Output was: "%s"' % output)
                 raise RuntimeError('%r failed with exit code %s'

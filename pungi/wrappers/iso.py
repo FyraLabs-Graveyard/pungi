@@ -198,7 +198,7 @@ def get_checkisomd5_cmd(iso_path, just_print=False):
 
 def get_checkisomd5_data(iso_path, logger=None):
     cmd = get_checkisomd5_cmd(iso_path, just_print=True)
-    retcode, output = run(cmd)
+    retcode, output = run(cmd, universal_newlines=True)
     items = [line.strip().rsplit(":", 1) for line in output.splitlines()]
     items = dict([(k, v.strip()) for k, v in items])
     md5 = items.get(iso_path, '')
@@ -235,7 +235,7 @@ def get_manifest_cmd(iso_name):
 
 def get_volume_id(path):
     cmd = ["isoinfo", "-d", "-i", path]
-    retcode, output = run(cmd)
+    retcode, output = run(cmd, universal_newlines=True)
 
     for line in output.splitlines():
         line = line.strip()
@@ -414,7 +414,7 @@ def mount(image, logger=None):
     with util.temp_dir(prefix='iso-mount-') as mount_dir:
         env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
         cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
-        ret, out = run(cmd, env=env, can_fail=True)
+        ret, out = run(cmd, env=env, can_fail=True, universal_newlines=True)
         if ret != 0:
             # The mount command failed, something is wrong. Log the output and raise an exception.
             if logger:

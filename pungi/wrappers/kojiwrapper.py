@@ -137,7 +137,8 @@ class KojiWrapper(object):
         """
         task_id = None
         with self.get_koji_cmd_env() as env:
-            retcode, output = run(command, can_fail=True, logfile=log_file, show_cmd=True, env=env)
+            retcode, output = run(command, can_fail=True, logfile=log_file,
+                                  show_cmd=True, env=env, universal_newlines=True)
         if "--task-id" in command:
             first_line = output.splitlines()[0]
             if re.match(r'^\d+$', first_line):
@@ -300,7 +301,7 @@ class KojiWrapper(object):
         attempt = 0
 
         while True:
-            retcode, output = run(cmd, can_fail=True, logfile=logfile)
+            retcode, output = run(cmd, can_fail=True, logfile=logfile, universal_newlines=True)
 
             if retcode == 0 or not self._has_connection_error(output):
                 # Task finished for reason other than connection error.
@@ -320,7 +321,8 @@ class KojiWrapper(object):
         command finishes.
         """
         with self.get_koji_cmd_env() as env:
-            retcode, output = run(command, can_fail=True, logfile=log_file, env=env)
+            retcode, output = run(command, can_fail=True, logfile=log_file,
+                                  env=env, universal_newlines=True)
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
@@ -508,7 +510,8 @@ def get_buildroot_rpms(compose, task_id):
             result.append(fmt % rpm_info)
     else:
         # local
-        retcode, output = run("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'")
+        retcode, output = run("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                              universal_newlines=True)
         for i in output.splitlines():
             if not i:
                 continue

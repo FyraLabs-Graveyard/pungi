@@ -39,7 +39,7 @@ class TestSh(unittest.TestCase):
         log = mock.Mock()
         patch_iso.sh(log, ['ls'], foo='bar')
         self.assertEqual(mock_run.call_args_list,
-                         [mock.call(['ls'], foo='bar')])
+                         [mock.call(['ls'], foo='bar', universal_newlines=True)])
         self.assertEqual(log.info.call_args_list,
                          [mock.call('Running: %s', 'ls')])
         self.assertEqual(log.debug.call_args_list,

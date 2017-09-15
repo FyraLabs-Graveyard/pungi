@@ -617,7 +617,8 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     printed in case of failure.
     """
     for i in range(max_retries):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True)
         out, err = proc.communicate()
         if proc.returncode == 0:
             # We were successful
@@ -634,7 +635,8 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
         ]
         for c in commands:
             try:
-                proc = subprocess.Popen(c, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                proc = subprocess.Popen(c, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        universal_newlines=True)
                 out, _ = proc.communicate()
                 logger.debug('`%s` exited with %s and following output:\n%s',
                              ' '.join(c), proc.returncode, out)
@@ -801,7 +803,7 @@ def retry(timeout=120, interval=30, wait_on=Exception):
 
 @retry(wait_on=RuntimeError)
 def git_ls_remote(baseurl, ref):
-    return run(['git', 'ls-remote', baseurl, ref])
+    return run(['git', 'ls-remote', baseurl, ref], universal_newlines=True)
 
 
 def get_tz_offset():

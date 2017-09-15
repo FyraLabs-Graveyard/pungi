@@ -26,7 +26,8 @@ class TestIsoUtils(unittest.TestCase):
         self.assertEqual(iso.get_implanted_md5('dummy.iso', logger=logger),
                          '31ff3e405e26ad01c63b62f6b11d30f6')
         self.assertEqual(mock_run.call_args_list,
-                         [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'])])
+                         [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'],
+                                    universal_newlines=True)])
         self.assertEqual(logger.mock_calls, [])
 
     @mock.patch('pungi.wrappers.iso.run')
@@ -35,7 +36,8 @@ class TestIsoUtils(unittest.TestCase):
         logger = mock.Mock()
         self.assertIsNone(iso.get_implanted_md5('dummy.iso', logger=logger))
         self.assertEqual(mock_run.call_args_list,
-                         [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'])])
+                         [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'],
+                                    universal_newlines=True)])
         self.assertGreater(len(logger.mock_calls), 0)
 
     @mock.patch('pungi.util.run_unmount_cmd')
