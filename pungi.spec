@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.18
+Version:        4.1.19
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -105,6 +105,34 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Sep 18 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.19-1
+- docs: Mention how input package list are interpreted (lsedlar)
+- Fix pungi-koji --version (dowang)
+- profiler: Fix sorting on Python 3 (lsedlar)
+- util: Fix timezone offset (lsedlar)
+- gather(dnf): Remove dead code (lsedlar)
+- gather(dnf): Don't exclude packages from lookaside (lsedlar)
+- gather(yum): Don't exclude packages from lookaside (lsedlar)
+- gather: Add tests for excluding packages from lookaside (lsedlar)
+- gather: Capture broken deps in test (lsedlar)
+- gather-dnf: Warn about unresolvable dependencies (lsedlar)
+- Fix formatting timezone offset (lsedlar)
+- Add timezone info into logs (lsedlar)
+- log: save imported config files too (qwan)
+- ostree-installer: Only run on empty variants (lsedlar)
+- Allow extracting profiling information from pungi-gather. (rbean)
+- createrepo: Only consider successful compose for deltas (lsedlar)
+- createrepo: Allow selecting variants for delta RPMs (lsedlar)
+- createrepo: Only create delta RPMs for binary repos (lsedlar)
+- image-build: add arch name(s) in image config file name (qwan)
+- Check for correct string class (lsedlar)
+- Open files as binary where needed (lsedlar)
+- buildinstall: No copy if task fails (lsedlar)
+- config: Allow setting default compose type (lsedlar)
+- Use Py3-compatible exception handling (lsedlar)
+- Use Python 3 print function (lsedlar)
+- docs: Abort update script on error (lsedlar)
+
 * Mon Aug 21 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.18-1
 - KojiWrapper: include serverca in session_opts (otaylor)
 - Report warning when config sections are not used (lsedlar)
