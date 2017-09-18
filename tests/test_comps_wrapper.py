@@ -27,10 +27,10 @@ class CompsWrapperTest(unittest.TestCase):
         self.file = tempfile.NamedTemporaryFile(prefix='comps-wrapper-test-')
 
     def assertFilesEqual(self, fn1, fn2):
-        with open(fn1) as f1:
-            lines1 = f1.read().splitlines()
-        with open(fn2) as f2:
-            lines2 = f2.read().splitlines()
+        with open(fn1, 'rb') as f1:
+            lines1 = f1.read().decode('utf-8').splitlines()
+        with open(fn2, 'rb') as f2:
+            lines2 = f2.read().decode('utf-8').splitlines()
         diff = '\n'.join(difflib.unified_diff(lines1, lines2,
                                               fromfile='EXPECTED', tofile='ACTUAL'))
         self.assertEqual(diff, '', 'Files differ:\n' + diff)
