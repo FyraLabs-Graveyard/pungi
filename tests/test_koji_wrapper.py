@@ -83,6 +83,7 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                     'ksurl': 'git://example.com/ks.git',
                     'distro': 'test-distro',
                     'release': '20160222.0',
+                    'disk_size': 4,
                 }
             },
             self.tmpfile
@@ -105,7 +106,8 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                                'kickstart = test-kickstart',
                                'ksurl = git://example.com/ks.git',
                                'distro = test-distro',
-                               'release = 20160222.0'])
+                               'release = 20160222.0',
+                               'disk_size = 4'])
 
     def test_get_image_paths(self):
 

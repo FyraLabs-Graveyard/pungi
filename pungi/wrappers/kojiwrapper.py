@@ -23,6 +23,7 @@ import contextlib
 
 import koji
 from kobo.shortcuts import run
+import six
 from six.moves import configparser
 
 from .. import util
@@ -171,6 +172,9 @@ class KojiWrapper(object):
         for section, opts in config_options.items():
             cfg_parser.add_section(section)
             for option, value in opts.items():
+                if not isinstance(value, six.string_types):
+                    # Python 3 configparser will reject non-string values.
+                    value = str(value)
                 cfg_parser.set(section, option, value)
 
         fd = open(conf_file_dest, "w")
