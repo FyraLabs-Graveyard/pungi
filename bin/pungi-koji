@@ -381,9 +381,8 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     ostree_phase.start()
     ostree_phase.stop()
 
-    # PRODUCTIMG phase
-    productimg_phase.start()
-    productimg_phase.stop()
+    pungi.phases.run_all([productimg_phase,
+                          ostree_installer_phase])
 
     # write treeinfo before ISOs are created
     for variant in compose.get_variants():
@@ -403,7 +402,6 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
                           liveimages_phase,
                           image_build_phase,
                           livemedia_phase,
-                          ostree_installer_phase,
                           osbs_phase])
 
     image_checksum_phase.start()
