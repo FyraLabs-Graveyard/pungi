@@ -17,9 +17,9 @@ from __future__ import absolute_import
 
 import os
 import shutil
-import pipes
 import glob
 import six
+from six.moves import shlex_quote
 
 import kobo.log
 from kobo.shortcuts import run, force_list
@@ -113,12 +113,12 @@ class GitWrapper(ScmBase):
             self.log_debug("Exporting directory %s from git %s (branch %s)..."
                            % (scm_dir, scm_root, scm_branch))
             cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
-                   % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_dir)))
+                   % (shlex_quote(scm_root), shlex_quote(scm_branch), shlex_quote(scm_dir)))
             # git archive is not supported by http/https
             # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
             if scm_root.startswith("http") or self.command:
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
-                       % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
+                       % (shlex_quote(scm_branch), shlex_quote(scm_root), shlex_quote(tmp_dir)))
             self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
             self.run_process_command(tmp_dir)
 
@@ -137,12 +137,12 @@ class GitWrapper(ScmBase):
             self.log_debug("Exporting file %s from git %s (branch %s)..."
                            % (scm_file, scm_root, scm_branch))
             cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
-                   % (pipes.quote(scm_root), pipes.quote(scm_branch), pipes.quote(scm_file)))
+                   % (shlex_quote(scm_root), shlex_quote(scm_branch), shlex_quote(scm_file)))
             # git archive is not supported by http/https
             # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
             if scm_root.startswith("http") or self.command:
                 cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
-                       % (pipes.quote(scm_branch), pipes.quote(scm_root), pipes.quote(tmp_dir)))
+                       % (shlex_quote(scm_branch), shlex_quote(scm_root), shlex_quote(tmp_dir)))
             self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
             self.run_process_command(tmp_dir)
 
@@ -168,8 +168,8 @@ class RpmScmWrapper(ScmBase):
                 if scm_dir.endswith("/"):
                     copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
                 else:
-                    run("cp -a %s %s/" % (pipes.quote(os.path.join(tmp_dir, scm_dir)),
-                                          pipes.quote(target_dir)))
+                    run("cp -a %s %s/" % (shlex_quote(os.path.join(tmp_dir, scm_dir)),
+                                          shlex_quote(target_dir)))
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         for rpm in self._list_rpms(scm_root):

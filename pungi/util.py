@@ -22,14 +22,13 @@ import string
 import sys
 import hashlib
 import errno
-import pipes
 import re
 import contextlib
 import traceback
 import tempfile
 import time
 import functools
-from six.moves import urllib, range
+from six.moves import urllib, range, shlex_quote
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
@@ -166,7 +165,7 @@ def explode_rpm_package(pkg_path, target_dir):
     """Explode a rpm package into target_dir."""
     pkg_path = os.path.abspath(pkg_path)
     makedirs(target_dir)
-    run("rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % pipes.quote(pkg_path), workdir=target_dir)
+    run("rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % shlex_quote(pkg_path), workdir=target_dir)
 
 
 def pkg_is_rpm(pkg_obj):

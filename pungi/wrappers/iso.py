@@ -16,10 +16,10 @@
 
 import os
 import sys
-import pipes
 from fnmatch import fnmatch
 import contextlib
 from functools import cmp_to_key
+from six.moves import shlex_quote
 
 from kobo.shortcuts import force_list, relative_path, run
 from pungi import util
@@ -230,7 +230,8 @@ def get_isohybrid_cmd(iso_path, arch):
 
 
 def get_manifest_cmd(iso_name):
-    return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (pipes.quote(iso_name), pipes.quote(iso_name))
+    return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (
+        shlex_quote(iso_name), shlex_quote(iso_name))
 
 
 def get_volume_id(path):

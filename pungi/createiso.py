@@ -3,9 +3,9 @@
 from __future__ import print_function
 
 import os
-import pipes
 import six
 from collections import namedtuple
+from six.moves import shlex_quote
 
 from .wrappers import iso
 from .wrappers.jigdo import JigdoWrapper
@@ -22,8 +22,8 @@ def quote(str):
     expanded.
     """
     if str.startswith('$TEMPLATE'):
-        return '$TEMPLATE%s' % pipes.quote(str.replace('$TEMPLATE', '', 1))
-    return pipes.quote(str)
+        return '$TEMPLATE%s' % shlex_quote(str.replace('$TEMPLATE', '', 1))
+    return shlex_quote(str)
 
 
 def emit(f, cmd):

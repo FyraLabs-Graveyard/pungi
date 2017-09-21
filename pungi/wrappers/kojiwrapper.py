@@ -15,7 +15,6 @@
 
 
 import os
-import pipes
 import re
 import time
 import threading
@@ -24,7 +23,7 @@ import contextlib
 import koji
 from kobo.shortcuts import run
 import six
-from six.moves import configparser
+from six.moves import configparser, shlex_quote
 
 from .. import util
 from ..arch_utils import getBaseArch
@@ -106,7 +105,7 @@ class KojiWrapper(object):
         cmd.append(arch)
 
         if isinstance(command, list):
-            command = " ".join([pipes.quote(i) for i in command])
+            command = " ".join([shlex_quote(i) for i in command])
 
         # HACK: remove rpmdb and yum cache
         command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command

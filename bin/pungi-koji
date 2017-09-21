@@ -11,7 +11,7 @@ import locale
 import datetime
 import getpass
 import socket
-import pipes
+from six.moves import shlex_quote
 import json
 
 here = sys.path[0]
@@ -266,7 +266,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.log_info("Pungi version: %s" % get_full_version())
     compose.log_info("User name: %s" % getpass.getuser())
     compose.log_info("Working directory: %s" % os.getcwd())
-    compose.log_info("Command line: %s" % " ".join([pipes.quote(arg) for arg in sys.argv]))
+    compose.log_info("Command line: %s" % " ".join([shlex_quote(arg) for arg in sys.argv]))
     compose.log_info("Compose top directory: %s" % compose.topdir)
     compose.log_info("Current timezone offset: %s" % pungi.util.get_tz_offset())
     compose.read_variants()

@@ -17,12 +17,12 @@
 import os
 import sys
 import time
-import pipes
 import shutil
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, save_to_file, force_list
 from productmd.images import Image
+from six.moves import shlex_quote
 
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from pungi.wrappers import iso
@@ -254,7 +254,7 @@ class CreateLiveImageThread(WorkerThread):
         :param iso_path: (str) absolute path to the ISO
         """
         dir, filename = os.path.split(iso_path)
-        run("cd %s && %s" % (pipes.quote(dir), iso.get_manifest_cmd(filename)))
+        run("cd %s && %s" % (shlex_quote(dir), iso.get_manifest_cmd(filename)))
 
     def _sign_image(self, koji_wrapper, compose, cmd, koji_task_id):
         signing_key_id = compose.conf.get("signing_key_id")

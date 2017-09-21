@@ -4,7 +4,7 @@ import os
 from kobo.threads import ThreadPool, WorkerThread
 import shutil
 from productmd import images
-import pipes
+from six.moves import shlex_quote
 from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
@@ -99,7 +99,7 @@ class OstreeInstallerThread(WorkerThread):
         boot_iso = os.path.join(output_dir, 'images', 'boot.iso')
 
         shortcuts.run('cp -av %s/* %s/' %
-                      (pipes.quote(output_dir), pipes.quote(os_path)))
+                      (shlex_quote(output_dir), shlex_quote(os_path)))
         try:
             os.link(boot_iso, iso_path)
         except OSError:
@@ -164,8 +164,8 @@ class OstreeInstallerThread(WorkerThread):
             is_final=compose.supported,
             log_dir=self.logdir,
         )
-        cmd = 'rm -rf %s && %s' % (pipes.quote(output_dir),
-                                   ' '.join([pipes.quote(x) for x in lorax_cmd]))
+        cmd = 'rm -rf %s && %s' % (shlex_quote(output_dir),
+                                   ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]

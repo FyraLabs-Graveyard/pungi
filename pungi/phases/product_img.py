@@ -39,7 +39,7 @@ run/install/product/pyanaconda/installclasses -> ../installclasses
 import os
 import fnmatch
 import shutil
-import pipes
+from six.moves import shlex_quote
 
 from kobo.shortcuts import run
 
@@ -134,24 +134,24 @@ def create_product_img(compose, arch, variant):
     mount_tmp = compose.mkdtemp(prefix="product_img_mount_")
     cmds = [
         # allocate image
-        "dd if=/dev/zero of=%s bs=1k count=5760" % pipes.quote(image),
+        "dd if=/dev/zero of=%s bs=1k count=5760" % shlex_quote(image),
         # create file system
-        "mke2fs -F %s" % pipes.quote(image),
+        "mke2fs -F %s" % shlex_quote(image),
         # use guestmount to mount the image, which doesn't require root privileges
         # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
-        "LIBGUESTFS_BACKEND=direct guestmount -a %s -m /dev/sda %s" % (pipes.quote(image), pipes.quote(mount_tmp)),
-        "mkdir -p %s/run/install/product" % pipes.quote(mount_tmp),
-        "cp -rp %s/* %s/run/install/product/" % (pipes.quote(product_tmp), pipes.quote(mount_tmp)),
-        "mkdir -p %s/run/install/product/pyanaconda" % pipes.quote(mount_tmp),
+        "LIBGUESTFS_BACKEND=direct guestmount -a %s -m /dev/sda %s" % (shlex_quote(image), shlex_quote(mount_tmp)),
+        "mkdir -p %s/run/install/product" % shlex_quote(mount_tmp),
+        "cp -rp %s/* %s/run/install/product/" % (shlex_quote(product_tmp), shlex_quote(mount_tmp)),
+        "mkdir -p %s/run/install/product/pyanaconda" % shlex_quote(mount_tmp),
         # compat symlink: installclasses -> run/install/product/installclasses
-        "ln -s run/install/product/installclasses %s" % pipes.quote(mount_tmp),
+        "ln -s run/install/product/installclasses %s" % shlex_quote(mount_tmp),
         # compat symlink: locale -> run/install/product/locale
-        "ln -s run/install/product/locale %s" % pipes.quote(mount_tmp),
+        "ln -s run/install/product/locale %s" % shlex_quote(mount_tmp),
         # compat symlink: run/install/product/pyanaconda/installclasses -> ../installclasses
-        "ln -s ../installclasses %s/run/install/product/pyanaconda/installclasses" % pipes.quote(mount_tmp),
-        "fusermount -u %s" % pipes.quote(mount_tmp),
+        "ln -s ../installclasses %s/run/install/product/pyanaconda/installclasses" % shlex_quote(mount_tmp),
+        "fusermount -u %s" % shlex_quote(mount_tmp),
         # tweak last mount path written in the image
-        "tune2fs -M /run/install/product %s" % pipes.quote(image),
+        "tune2fs -M /run/install/product %s" % shlex_quote(image),
     ]
     run(" && ".join(cmds))
     shutil.rmtree(mount_tmp)
@@ -188,7 +188,7 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
     tmp_dir = compose.mkdtemp(prefix="boot_iso_")
     mount_dir = compose.mkdtemp(prefix="boot_iso_mount_")
 
-    cmd = "mount -o loop %s %s" % (pipes.quote(buildinstall_boot_iso), pipes.quote(mount_dir))
+    cmd = "mount -o loop %s %s" % (shlex_quote(buildinstall_boot_iso), shlex_quote(mount_dir))
     run(cmd, logfile=log_file, show_cmd=True)
 
     images_dir = os.path.join(tmp_dir, "images")
@@ -219,19 +219,19 @@ def rebuild_boot_iso(compose, arch, variant, package_sets):
     mkisofs_cmd = iso.get_mkisofs_cmd(boot_iso, None, volid=volume_id, exclude=["./lost+found"], graft_points=graft_points_path, **mkisofs_kwargs)
     run(mkisofs_cmd, logfile=log_file, show_cmd=True)
 
-    cmd = "umount %s" % pipes.quote(mount_dir)
+    cmd = "umount %s" % shlex_quote(mount_dir)
     run(cmd, logfile=log_file, show_cmd=True)
 
     if arch == "x86_64":
-        isohybrid_cmd = "isohybrid --uefi %s" % pipes.quote(boot_iso)
+        isohybrid_cmd = "isohybrid --uefi %s" % shlex_quote(boot_iso)
         run(isohybrid_cmd, logfile=log_file, show_cmd=True)
     elif arch == "i386":
-        isohybrid_cmd = "isohybrid %s" % pipes.quote(boot_iso)
+        isohybrid_cmd = "isohybrid %s" % shlex_quote(boot_iso)
         run(isohybrid_cmd, logfile=log_file, show_cmd=True)
 
     # implant MD5SUM to iso
     isomd5sum_cmd = iso.get_implantisomd5_cmd(boot_iso, compose.supported)
-    isomd5sum_cmd = " ".join([pipes.quote(i) for i in isomd5sum_cmd])
+    isomd5sum_cmd = " ".join([shlex_quote(i) for i in isomd5sum_cmd])
     run(isomd5sum_cmd, logfile=log_file, show_cmd=True)
 
     if boot_files:

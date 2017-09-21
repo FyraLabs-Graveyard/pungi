@@ -17,13 +17,13 @@
 import errno
 import os
 import time
-import pipes
 import shutil
 import re
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run
 from productmd.images import Image
+from six.moves import shlex_quote
 
 from pungi.arch import get_valid_arches
 from pungi.util import get_volid, get_arch_variant_data
@@ -100,8 +100,8 @@ class BuildinstallPhase(PhaseBase):
                                         add_arch_template_var=add_arch_template_var,
                                         noupgrade=noupgrade,
                                         log_dir=log_dir)
-        return 'rm -rf %s && %s' % (pipes.quote(output_dir),
-                                    ' '.join([pipes.quote(x) for x in lorax_cmd]))
+        return 'rm -rf %s && %s' % (shlex_quote(output_dir),
+                                    ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
     def run(self):
         lorax = LoraxWrapper()
@@ -276,7 +276,7 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
 
     # copy src to temp
     # TODO: place temp on the same device as buildinstall dir so we can hardlink
-    cmd = "cp -av --remove-destination %s/* %s/" % (pipes.quote(src), pipes.quote(tmp_dir))
+    cmd = "cp -av --remove-destination %s/* %s/" % (shlex_quote(src), shlex_quote(tmp_dir))
     run(cmd)
 
     found_configs = tweak_configs(tmp_dir, volid, kickstart_file)
@@ -300,10 +300,10 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
                     run(cmd)
 
     # HACK: make buildinstall files world readable
-    run("chmod -R a+rX %s" % pipes.quote(tmp_dir))
+    run("chmod -R a+rX %s" % shlex_quote(tmp_dir))
 
     # copy temp to dst
-    cmd = "cp -av --remove-destination %s/* %s/" % (pipes.quote(tmp_dir), pipes.quote(dst))
+    cmd = "cp -av --remove-destination %s/* %s/" % (shlex_quote(tmp_dir), shlex_quote(dst))
     run(cmd)
 
     shutil.rmtree(tmp_dir)
