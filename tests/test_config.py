@@ -10,6 +10,7 @@ except ImportError:
 import os
 import six
 import sys
+import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -249,6 +250,38 @@ class GatherConfigTestCase(ConfigTestCase):
         self.assertValidation(
             cfg,
             [checks.REQUIRES.format('gather_source', 'json', 'gather_source_mapping')])
+
+    def test_dnf_backend_is_default_on_py3(self):
+        cfg = load_config(
+            pkgset_source='koji',
+            pkgset_koji_tag='f27',
+        )
+
+        with mock.patch('six.PY2', new=False):
+            self.assertValidation(cfg, [])
+        self.assertEqual(cfg['gather_backend'], 'dnf')
+
+    def test_yum_backend_is_default_on_py2(self):
+        cfg = load_config(
+            pkgset_source='koji',
+            pkgset_koji_tag='f27',
+        )
+
+        with mock.patch('six.PY2', new=True):
+            self.assertValidation(cfg, [])
+        self.assertEqual(cfg['gather_backend'], 'yum')
+
+    def test_yum_backend_is_rejected_on_py3(self):
+        cfg = load_config(
+            pkgset_source='koji',
+            pkgset_koji_tag='f27',
+            gather_backend='yum',
+        )
+
+        with mock.patch('six.PY2', new=False):
+            self.assertValidation(
+                cfg,
+                ["Failed validation in gather_backend: 'yum' is not one of ['dnf']"])
 
 
 class OSBSConfigTestCase(ConfigTestCase):

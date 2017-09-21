@@ -581,8 +581,8 @@ def make_schema():
             "gather_source_mapping": {"type": "string"},
             "gather_backend": {
                 "type": "string",
-                "enum": ["yum", "dnf"],
-                "default": "yum",
+                "enum": _get_gather_backends(),
+                "default": _get_default_gather_backend(),
             },
             "gather_profiler": {
                 "type": "boolean",
@@ -1203,3 +1203,13 @@ CONFIG_DEPS = {
         ],
     },
 }
+
+
+def _get_gather_backends():
+    if six.PY2:
+        return ['yum', 'dnf']
+    return ['dnf']
+
+
+def _get_default_gather_backend():
+    return 'yum' if six.PY2 else 'dnf'

@@ -575,10 +575,12 @@ Options
         * With ``greedy_method = "build" ``pkg-b-provider-1`` and
           ``pkg-b-provider-2`` will be pulled in.
 
-**gather_backend** = ``yum``
-    (*str*) -- Either ``yum`` or ``dnf``. This changes the entire codebase
-    doing dependency solving, so it can change the result in unpredictable
-    ways.
+**gather_backend**
+    (*str*) --This changes the entire codebase doing dependency solving, so it
+    can change the result in unpredictable ways.
+
+    On Python 2, the choice is between ``yum`` or ``dnf`` and defaults to
+    ``yum``. On Python 3 ``dnf`` is the only option and default.
 
     Particularly the multilib work is performed differently by using
     ``python-multilib`` library. Please refer to ``multilib`` option to see the
