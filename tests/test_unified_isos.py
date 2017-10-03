@@ -9,7 +9,7 @@ from ConfigParser import SafeConfigParser
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from tests.helpers import PungiTestCase, FIXTURE_DIR, touch
+from tests.helpers import PungiTestCase, FIXTURE_DIR, touch, mk_boom
 from pungi_utils import unified_isos
 
 
@@ -35,13 +35,29 @@ class TestUnifiedIsos(PungiTestCase):
         self.assertRegexpMatches(isos.temp_dir,
                                  '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
 
-    def test_dump_manifest(self):
+    @mock.patch('os.rename')
+    def test_dump_manifest(self, rename):
         compose_path = os.path.join(self.topdir, COMPOSE_ID, 'compose')
         isos = unified_isos.UnifiedISO(compose_path)
         isos.compose._images = mock.Mock()
         isos.dump_manifest()
         self.assertEqual(isos.compose._images.mock_calls,
-                         [mock.call.dump(compose_path + '/metadata/images.json')])
+                         [mock.call.dump(compose_path + '/metadata/images.json.tmp')])
+        self.assertEqual(rename.call_args_list,
+                         [mock.call(compose_path + '/metadata/images.json.tmp',
+                                    compose_path + '/metadata/images.json')])
+
+    @mock.patch('os.rename')
+    def test_dump_manifest_fails(self, rename):
+        compose_path = os.path.join(self.topdir, COMPOSE_ID, 'compose')
+        isos = unified_isos.UnifiedISO(compose_path)
+        isos.compose._images = mock.Mock()
+        isos.compose._images.dump.side_effect = mk_boom()
+        with self.assertRaises(Exception):
+            isos.dump_manifest()
+        self.assertEqual(isos.compose._images.mock_calls,
+                         [mock.call.dump(compose_path + '/metadata/images.json.tmp')])
+        self.assertEqual(rename.call_args_list, [])
 
 
 class TestCreate(PungiTestCase):

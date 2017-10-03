@@ -92,7 +92,17 @@ class UnifiedISO(object):
                 shutil.rmtree(self.temp_dir)
 
     def dump_manifest(self):
-        self.compose.images.dump(os.path.join(self.compose_path, 'metadata', 'images.json'))
+        dest = os.path.join(self.compose_path, 'metadata', 'images.json')
+        tmp_file = dest + '.tmp'
+        try:
+            self.compose.images.dump(tmp_file)
+        except:
+            # We failed, clean up the temporary file.
+            if os.path.exists(tmp_file):
+                os.remove(tmp_file)
+            raise
+        # Success, move the temp file to proper location.
+        os.rename(tmp_file, dest)
 
     def _link_tree(self, dir, variant, arch):
         blacklist_files = [".treeinfo", ".discinfo", "boot.iso", "media.repo", "extra_files.json"]
