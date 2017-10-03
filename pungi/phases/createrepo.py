@@ -63,7 +63,7 @@ class CreaterepoPhase(PhaseBase):
 
     def run(self):
         get_productids_from_scm(self.compose)
-        for i in range(3):
+        for i in range(self.compose.conf['createrepo_num_threads']):
             self.pool.add(CreaterepoThread(self.pool))
 
         for variant in self.compose.get_variants():

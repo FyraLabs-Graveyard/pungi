@@ -59,8 +59,10 @@ class TestCreaterepoPhase(PungiTestCase):
 
         self.assertIn('deltas', str(ctx.exception))
 
+    @mock.patch('pungi.checks.get_num_cpus')
     @mock.patch('pungi.phases.createrepo.ThreadPool')
-    def test_starts_jobs(self, ThreadPoolCls):
+    def test_starts_jobs(self, ThreadPoolCls, get_num_cpus):
+        get_num_cpus.return_value = 5
         compose = DummyCompose(self.topdir, {})
 
         pool = ThreadPoolCls.return_value
@@ -69,7 +71,7 @@ class TestCreaterepoPhase(PungiTestCase):
         phase.run()
         self.maxDiff = None
 
-        self.assertEqual(len(pool.add.mock_calls), 3)
+        self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
             [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm')),
@@ -86,8 +88,10 @@ class TestCreaterepoPhase(PungiTestCase):
              mock.call((compose, 'amd64', compose.variants['Client'], 'debuginfo')),
              mock.call((compose, None, compose.variants['Client'], 'srpm'))])
 
+    @mock.patch('pungi.checks.get_num_cpus')
     @mock.patch('pungi.phases.createrepo.ThreadPool')
-    def test_skips_empty_variants(self, ThreadPoolCls):
+    def test_skips_empty_variants(self, ThreadPoolCls, get_num_cpus):
+        get_num_cpus.return_value = 5
         compose = DummyCompose(self.topdir, {})
         compose.variants['Client'].is_empty = True
 
@@ -97,7 +101,7 @@ class TestCreaterepoPhase(PungiTestCase):
         phase.run()
         self.maxDiff = None
 
-        self.assertEqual(len(pool.add.mock_calls), 3)
+        self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
             [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm')),

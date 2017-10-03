@@ -45,6 +45,7 @@ import jsonschema
 import six
 from kobo.shortcuts import force_list
 from productmd.composeinfo import COMPOSE_TYPES
+import multiprocessing
 
 from . import util
 
@@ -605,6 +606,10 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "createrepo_num_threads": {
+                "type": "number",
+                "default": get_num_cpus(),
+            },
             "repoclosure_strictness": _variant_arch_mapping({
                 "type": "string",
                 "default": "lenient",
@@ -1115,6 +1120,13 @@ def _one_or_list(value):
             },
         ],
     }
+
+
+def get_num_cpus():
+    try:
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        return 3
 
 
 # This is a mapping of configuration option dependencies and conflicts.

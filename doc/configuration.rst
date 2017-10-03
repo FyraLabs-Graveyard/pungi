@@ -399,6 +399,10 @@ Options
     (*bool*) -- whether to pass ``--xz`` to the createrepo command. This will
     cause the SQLite databases to be compressed with xz.
 
+**createrepo_num_threads**
+    (*int*) -- how many concurrent ``createrepo`` process to run. The default
+    is to use one thread per CPU available on the machine.
+
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
     directory with certificates ``<variant_uid>-<arch>-*.pem``. This
