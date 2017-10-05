@@ -1429,7 +1429,7 @@ Media Checksums Settings
       * ``type``
       * ``type_suffix``
       * ``version``
-      * ``version``
+      * ``dirname`` (only if ``media_checksum_one_file`` is enabled)
 
     For example, for Fedora the prefix should be
     ``%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s``.

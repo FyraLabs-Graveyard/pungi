@@ -60,10 +60,10 @@ class ImageChecksumPhase(PhaseBase):
                     images.setdefault((variant, arch, path), set()).add(image)
         return images
 
-    def _get_base_filename(self, variant, arch):
+    def _get_base_filename(self, variant, arch, **kwargs):
         base_checksum_name = self.compose.conf['media_checksum_base_filename']
         if base_checksum_name:
-            substs = get_format_substs(self.compose, variant=variant, arch=arch)
+            substs = get_format_substs(self.compose, variant=variant, arch=arch, **kwargs)
             base_checksum_name = (base_checksum_name % substs).format(**substs)
             base_checksum_name += '-'
         return base_checksum_name
@@ -74,7 +74,7 @@ class ImageChecksumPhase(PhaseBase):
 
 
 def _compute_checksums(results, cache, variant, arch, path, images,
-                       checksum_types, base_checksum_name, one_file):
+                       checksum_types, base_checksum_name_gen, one_file):
     for image in images:
         filename = os.path.basename(image.path)
         full_path = os.path.join(path, filename)
@@ -98,20 +98,23 @@ def _compute_checksums(results, cache, variant, arch, path, images,
                 results[checksum_filename].add((filename, filesize, checksum, digest))
 
             if one_file:
-                checksum_filename = os.path.join(path, base_checksum_name + 'CHECKSUM')
+                dirname = os.path.basename(path)
+                base_checksum_name = base_checksum_name_gen(variant, arch, dirname=dirname)
+                checksum_filename = base_checksum_name + 'CHECKSUM'
             else:
-                checksum_filename = os.path.join(path, '%s%sSUM' % (base_checksum_name, checksum.upper()))
+                base_checksum_name = base_checksum_name_gen(variant, arch)
+                checksum_filename = '%s%sSUM' % (base_checksum_name, checksum.upper())
+            checksum_path = os.path.join(path, checksum_filename)
 
-            results[checksum_filename].add((filename, filesize, checksum, digest))
+            results[checksum_path].add((filename, filesize, checksum, digest))
 
 
 def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen):
     results = defaultdict(set)
     cache = {}
     for (variant, arch, path), images in get_images(topdir, im).iteritems():
-        base_checksum_name = base_checksum_name_gen(variant, arch)
         _compute_checksums(results, cache, variant, arch, path, images,
-                           checksum_types, base_checksum_name, one_file)
+                           checksum_types, base_checksum_name_gen, one_file)
 
     for file in results:
         dump_checksums(file, results[file])
