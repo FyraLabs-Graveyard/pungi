@@ -25,6 +25,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         'kickstart': 'test.ks',
                         'repo': ['http://example.com/repo/', 'Everything', 'Server-optional'],
                         'release': None,
+                        'target': 'f27',
                     }
                 })
             ],
@@ -60,7 +61,8 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
-                                           'ksurl': None},
+                                           'ksurl': None,
+                                           'target': 'f27'},
                                           compose.variants['Client'],
                                           'amd64'))])
         self.assertItemsEqual(
@@ -77,6 +79,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         'kickstart': 'test.ks',
                         'repo': ['http://example.com/repo/', 'Everything'],
                         'release': None,
+                        'target': 'f27',
                     }
                 })
             ],
@@ -110,7 +113,8 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
-                                           'ksurl': None},
+                                           'ksurl': None,
+                                           'target': 'f27'},
                                           compose.variants['Client'],
                                           'amd64'))])
 
@@ -124,6 +128,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         'kickstart': 'test.ks',
                         'repo': ['http://example.com/repo/', 'Everything'],
                         'release': None,
+                        'target': 'f27',
                     }
                 })
             ],
@@ -157,7 +162,8 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
-                                           'ksurl': None},
+                                           'ksurl': None,
+                                           'target': 'f27'},
                                           compose.variants['Client'],
                                           'amd64'))])
 
@@ -169,9 +175,11 @@ class TestLiveImagesPhase(PungiTestCase):
                     'amd64': [{
                         'kickstart': 'test.ks',
                         'repo': ['http://example.com/repo/', 'Everything'],
+                        'target': 'f27',
                     }, {
                         'kickstart': 'another.ks',
                         'repo': ['http://example.com/repo/', 'Everything'],
+                        'target': 'f27',
                     }]
                 })
             ],
@@ -205,6 +213,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': None,
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64')),
@@ -226,6 +235,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': None,
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -241,6 +251,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         'ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
                         'repo': ['http://example.com/repo/', 'Everything'],
                         'type': 'appliance',
+                        'target': 'f27',
                     }
                 })
             ],
@@ -276,6 +287,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': None,
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -289,6 +301,7 @@ class TestLiveImagesPhase(PungiTestCase):
             'live_images_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
             'live_images_release': None,
             'live_images_version': 'Rawhide',
+            'live_images_target': 'f27',
             'live_images': [
                 ('^Client$', {
                     'amd64': {
@@ -330,6 +343,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -343,6 +357,7 @@ class TestLiveImagesPhase(PungiTestCase):
             'global_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
             'global_release': None,
             'global_version': 'Rawhide',
+            'global_target': 'f27',
             'live_images': [
                 ('^Client$', {
                     'amd64': {
@@ -384,6 +399,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -400,6 +416,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         'kickstart': 'test.ks',
                         'repo': ['http://example.com/repo/', 'Everything'],
                         'release': None,
+                        'target': 'f27',
                     }
                 })
             ],
@@ -433,6 +450,7 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'release': '20151203.t.0',
                                            'subvariant': 'Client',
                                            'failable_arches': [],
+                                           'target': 'f27',
                                            'ksurl': None},
                                           compose.variants['Client'],
                                           'amd64'))])
@@ -468,6 +486,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'release': None,
             'subvariant': 'Something',
+            'target': 'f27',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -500,7 +519,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('test-Something-Live-amd64', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Something-Live-amd64', '20151203.0.t', 'f27',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -547,6 +566,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'release': None,
             'subvariant': 'Client',
+            'target': 'f27',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -579,7 +599,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         ])
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('test-Client-Live-amd64', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Client-Live-amd64', '20151203.0.t', 'f27',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -627,6 +647,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'ksurl': None,
             'release': None,
             'subvariant': 'Client',
+            'target': 'f27',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -655,7 +676,7 @@ class TestCreateLiveImageThread(PungiTestCase):
 
         self.assertEqual(run.mock_calls, [])
         self.assertEqual(koji_wrapper.get_create_image_cmd.mock_calls,
-                         [mock.call('test-Client-Disk-amd64', '20151203.0.t', 'rhel-7.0-candidate',
+                         [mock.call('test-Client-Disk-amd64', '20151203.0.t', 'f27',
                                     'amd64', '/path/to/ks_file',
                                     ['/repo/amd64/Client',
                                      'http://example.com/repo/',
@@ -703,6 +724,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'release': 'xyz',
             'type': 'live',
             'failable_arches': ['*'],
+            'target': 'f27',
         }
 
         koji_wrapper = KojiWrapper.return_value
@@ -747,6 +769,7 @@ class TestCreateLiveImageThread(PungiTestCase):
             'release': 'xyz',
             'type': 'live',
             'failable_arches': ['*'],
+            'target': 'f27',
         }
 
         koji_wrapper = KojiWrapper.return_value

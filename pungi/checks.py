@@ -462,6 +462,7 @@ def make_schema():
                     "ksurl": {"type": "string"},
                     "name": {"type": "string"},
                     "subvariant": {"type": "string"},
+                    "target": {"type": "string"},
                     "version": {"type": "string"},
                     "repo": {
                         "$ref": "#/definitions/repos",
@@ -759,6 +760,7 @@ def make_schema():
                 "default": False,
             },
             "live_images_ksurl": {"type": "string"},
+            "live_images_target": {"type": "string"},
             "live_images_release": {"$ref": "#/definitions/optional_string"},
             "live_images_version": {"type": "string"},
 
@@ -805,10 +807,8 @@ def make_schema():
                 "default": False
             },
 
-            "live_target": {
-                "type": "string",
-                "default": "rhel-7.0-candidate",
-            },
+            # Deprecated in favour of regular local/phase/global setting.
+            "live_target": {"type": "string"},
 
             "tree_arches": {
                 "$ref": "#/definitions/list_of_strings",

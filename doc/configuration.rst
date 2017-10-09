@@ -973,11 +973,12 @@ The kickstart URL is configured by these options.
  * ``image_build_ksurl``
  * ``live_images_ksurl``
 
-Target is specified by these settings. For live images refer to ``live_target``.
+Target is specified by these settings.
 
  * ``global_target`` -- global fallback setting
  * ``live_media_target``
  * ``image_build_target``
+ * ``live_images_target``
 
 Version is specified by these options. If no version is set, a default value
 will be provided according to :ref:`automatic versioning <auto-version>`.
@@ -1006,10 +1007,6 @@ compose. If the list contains only ``"*"``, all arches will be substituted.
 Live Images Settings
 ====================
 
-**live_target**
-    (*str*) -- Koji build target for which to build the images. This gets
-    passed to ``koji spin-livecd``.
-
 **live_images**
     (*list*) -- Configuration for the particular image. The elements of the
     list should be tuples ``(variant_uid_regex, {arch|*: config})``. The config
@@ -1019,6 +1016,7 @@ Live Images Settings
       * ``ksurl`` (*str*) [optional] -- where to get the kickstart from
       * ``name`` (*str*)
       * ``version`` (*str*)
+      * ``target`` (*str*)
       * ``repo`` (*str|[str]*) -- repos specified by URL or variant UID
       * ``specfile`` (*str*) -- for images wrapped in RPM
       * ``scratch`` (*bool*) -- only RPM-wrapped images can use scratch builds,
@@ -1050,7 +1048,6 @@ Live Media Settings
 
       * ``name`` (*str*)
       * ``version`` (*str*)
-      * ``target`` (*str*)
       * ``arches`` (*[str]*) -- what architectures to build the media for; by default uses
         all arches for the variant.
       * ``kickstart`` (*str*) -- name of the kickstart file
@@ -1060,6 +1057,7 @@ Live Media Settings
       * ``ksurl`` (*str*)
       * ``ksversion`` (*str*)
       * ``scratch`` (*bool*)
+      * ``target`` (*str*)
       * ``release`` (*str*) -- a string with the release, or
         ``!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN`` to automatically generate a
         suitable value. See :ref:`automatic versioning <auto-version>` for

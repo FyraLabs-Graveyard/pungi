@@ -92,6 +92,9 @@ class LiveImagesPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                         "label": "",  # currently not used
                         "subvariant": subvariant,
                         "failable_arches": data.get('failable', []),
+                        # First see if live_target is specified, then fall back
+                        # to regular setup of local, phase and global setting.
+                        "target": self.compose.conf.get('live_target') or self.get_config(data, 'target'),
                     }
 
                     cmd["repos"] = self._get_repos(arch, variant, data)
@@ -161,8 +164,8 @@ class CreateLiveImageThread(WorkerThread):
         if cmd["specfile"] and not cmd["scratch"]:
             # Non scratch build are allowed only for rpm wrapped images
             archive = True
-        target = compose.conf["live_target"]
-        koji_cmd = koji_wrapper.get_create_image_cmd(name, version, target,
+        koji_cmd = koji_wrapper.get_create_image_cmd(name, version,
+                                                     cmd["target"],
                                                      cmd["build_arch"],
                                                      cmd["ks_file"],
                                                      cmd["repos"],
