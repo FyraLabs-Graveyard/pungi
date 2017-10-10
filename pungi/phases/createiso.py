@@ -414,7 +414,8 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
         if file_list_content:
             # write modified repodata only if there are packages available
             run("cp -a %s/repodata %s/" % (pipes.quote(tree_dir), pipes.quote(iso_dir)))
-            open(file_list, "w").write("\n".join(file_list_content))
+            with open(file_list, "w") as f:
+                f.write("\n".join(file_list_content))
             cmd = repo.get_createrepo_cmd(tree_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=iso_dir, workers=3, checksum=createrepo_checksum)
             run(cmd)
             # add repodata/repomd.xml back to checksums

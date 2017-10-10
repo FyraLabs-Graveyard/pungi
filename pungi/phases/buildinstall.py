@@ -423,7 +423,8 @@ class BuildinstallThread(WorkerThread):
 
         log_file = compose.paths.log.log_file(arch, log_filename + '-RPMs')
         rpms = get_buildroot_rpms(compose, task_id)
-        open(log_file, "w").write("\n".join(rpms))
+        with open(log_file, "w") as f:
+            f.write("\n".join(rpms))
 
         self.pool.finished_tasks.add((variant.uid if variant else None, arch))
         self.pool.log_info("[DONE ] %s" % msg)
