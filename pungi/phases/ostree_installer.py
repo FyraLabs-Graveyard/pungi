@@ -120,7 +120,7 @@ class OstreeInstallerThread(WorkerThread):
         img.disc_number = 1
         img.disc_count = 1
         img.bootable = True
-        img.subvariant = variant.name
+        img.subvariant = variant.uid
         img.implant_md5 = implant_md5
         setattr(img, 'can_fail', self.can_fail)
         setattr(img, 'deliverable', 'ostree-installer')
