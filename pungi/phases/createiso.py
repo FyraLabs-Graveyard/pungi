@@ -302,7 +302,7 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     media_size = compose.conf['iso_size']
     media_reserve = compose.conf['split_iso_reserve']
     split_size = convert_media_size(media_size) - convert_media_size(media_reserve)
-    real_size = 10**20 if no_split else split_size
+    real_size = None if no_split else split_size
 
     ms = MediaSplitter(real_size, compose, logger=logger)
 
@@ -326,7 +326,8 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     boot_iso_rpath = ti.images.images.get(arch, {}).get("boot.iso", None)
     if boot_iso_rpath:
         all_files_ignore.append(boot_iso_rpath)
-    logger.debug("split_iso all_files_ignore = %s" % ", ".join(all_files_ignore))
+    if all_files_ignore:
+        logger.debug("split_iso all_files_ignore = %s" % ", ".join(all_files_ignore))
 
     for root, dirs, files in os.walk(os_tree):
         for dn in dirs[:]:
@@ -349,6 +350,7 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     for path, size, sticky in all_files + packages:
         ms.add_file(path, size, sticky)
 
+    logger.debug('Splitting media for %s.%s:' % (variant.uid, arch))
     result = ms.split()
     if no_split and result[0]['size'] > split_size:
         logger.warn('ISO for %s.%s does not fit on single media! '
