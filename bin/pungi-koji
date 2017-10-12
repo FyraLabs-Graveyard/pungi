@@ -450,6 +450,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
             os.symlink(compose_dir, symlink)
         except Exception as ex:
             compose.log_error("Couldn't create latest symlink: %s" % ex)
+            raise
 
     compose.log_info("Compose finished: %s" % compose.topdir)
 
