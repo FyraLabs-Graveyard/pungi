@@ -755,6 +755,17 @@ class TestGetPrepopulate(helpers.PungiTestCase):
              "bar.x86_64"]
         )
 
+    def test_for_all_variants_include_arch_set_to_false(self):
+        helpers.copy_fixture('prepopulate.json',
+                             os.path.join(self.topdir, 'work', 'global', 'prepopulate.json'))
+        self.assertItemsEqual(
+            gather.get_prepopulate_packages(self.compose, 'x86_64', None,
+                                            include_arch=False),
+            ["foo-common",
+             "foo",
+             "bar"]
+        )
+
 
 class TestGatherPhase(helpers.PungiTestCase):
     @mock.patch('pungi.phases.gather.link_files')
@@ -797,3 +808,74 @@ class TestGatherPhase(helpers.PungiTestCase):
 
         self.assertEqual(gather_wrapper.call_args_list, [])
         self.assertTrue(os.path.isfile(os.path.join(self.topdir, 'compose', 'metadata', 'rpms.json')))
+
+
+class TestGetPackagesToGather(helpers.PungiTestCase):
+    def setUp(self):
+        super(TestGetPackagesToGather, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {
+            'additional_packages': [
+                ('.*', {'*': ['pkg', 'foo2.x86_64']}),
+            ]
+        })
+        helpers.copy_fixture('prepopulate.json',
+                             os.path.join(self.topdir, 'work', 'global', 'prepopulate.json'))
+
+    @mock.patch('pungi.phases.gather.get_gather_source')
+    def test_all_arches(self, get_gather_source):
+        get_gather_source.return_value = mock.Mock(
+            return_value=mock.Mock(return_value=(set([('foo', None)]), set(['core'])))
+        )
+
+        packages, groups = gather.get_packages_to_gather(self.compose)
+
+        self.assertItemsEqual(packages, ["foo", "foo2.x86_64", "pkg"])
+        self.assertItemsEqual(groups, ["core"])
+
+    @mock.patch('pungi.phases.gather.get_gather_source')
+    def test_all_include_arch_set_to_false(self, get_gather_source):
+        get_gather_source.return_value = mock.Mock(
+            return_value=mock.Mock(return_value=(set([('foo', None)]), set(['core'])))
+        )
+
+        packages, groups = gather.get_packages_to_gather(self.compose, include_arch=False)
+
+        self.assertItemsEqual(packages, ["foo", "foo2", "pkg"])
+        self.assertItemsEqual(groups, ["core"])
+
+    @mock.patch('pungi.phases.gather.get_gather_source')
+    def test_all_include_prepopulated(self, get_gather_source):
+        get_gather_source.return_value = mock.Mock(
+            return_value=mock.Mock(return_value=(set([('foo', None)]), set(['core'])))
+        )
+
+        packages, groups = gather.get_packages_to_gather(self.compose, include_prepopulated=True)
+
+        self.assertItemsEqual(packages, ["foo", "pkg", "foo-common.noarch",
+                                         "foo.x86_64", "foo.i686", "foo2.x86_64",
+                                         "bar.x86_64"])
+        self.assertItemsEqual(groups, ["core"])
+
+    @mock.patch('pungi.phases.gather.get_gather_source')
+    def test_all_include_prepopulated_no_include_arch(self, get_gather_source):
+        get_gather_source.return_value = mock.Mock(
+            return_value=mock.Mock(return_value=(set([('foo', None)]), set(['core'])))
+        )
+
+        packages, groups = gather.get_packages_to_gather(self.compose, include_prepopulated=True,
+                                                         include_arch=False)
+
+        self.assertItemsEqual(packages, ["foo", "pkg", "foo-common",
+                                         "foo2", "bar"])
+        self.assertItemsEqual(groups, ["core"])
+
+    @mock.patch('pungi.phases.gather.get_gather_source')
+    def test_all_one_arch(self, get_gather_source):
+        get_gather_source.return_value = mock.Mock(
+            return_value=mock.Mock(return_value=(set([('foo', None)]), set(['core'])))
+        )
+
+        packages, groups = gather.get_packages_to_gather(self.compose, "x86_64")
+
+        self.assertItemsEqual(packages, ["foo", "pkg", "foo2.x86_64"])
+        self.assertItemsEqual(groups, ["core"])

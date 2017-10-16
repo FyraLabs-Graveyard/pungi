@@ -275,6 +275,31 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         self.assertRegexpMatches(str(ctx.exception),
                                  r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
+    def test_packages_attribute(self):
+        self._touch_files([
+            'rpms/pungi@4.1.3@3.fc25@noarch',
+            'rpms/pungi@4.1.3@3.fc25@src',
+            'rpms/bash@4.3.42@4.fc24@i686',
+            'rpms/bash@4.3.42@4.fc24@x86_64',
+            'rpms/bash@4.3.42@4.fc24@src',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@i686',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+        ])
+
+        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None],
+                                        packages=["bash"])
+
+        result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
+
+        self.assertPkgsetEqual(result,
+                               {'src': ['rpms/bash@4.3.42@4.fc24@src'],
+                                'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
+                                'x86_64': ['rpms/bash@4.3.42@4.fc24@x86_64']})
+
 
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):

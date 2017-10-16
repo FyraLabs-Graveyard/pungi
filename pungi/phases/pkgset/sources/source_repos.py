@@ -25,7 +25,7 @@ from pungi.util import makedirs, is_arch_multilib
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
-from pungi.phases.gather import get_prepopulate_packages, get_additional_packages
+from pungi.phases.gather import get_prepopulate_packages, get_packages_to_gather
 from pungi.linker import LinkerThread, LinkerPool
 
 
@@ -160,24 +160,7 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
         return
 
     compose.log_info(msg)
-
-    # TODO move to a function
-    gather_source = "GatherSource%s" % compose.conf["gather_source"]
-    from pungi.phases.gather.source import GatherSourceContainer
-    import pungi.phases.gather.sources
-    GatherSourceContainer.register_module(pungi.phases.gather.sources)
-    container = GatherSourceContainer()
-    SourceClass = container[gather_source]
-    src = SourceClass(compose)
-
-    packages = []
-    pkgs, grps = src(arch, variant)
-    additional_packages = get_additional_packages(compose, arch, None)
-    for pkg_name, pkg_arch in pkgs | additional_packages:
-        if pkg_arch is None:
-            packages.append(pkg_name)
-        else:
-            packages.append("%s.%s" % (pkg_name, pkg_arch))
+    packages, grps = get_packages_to_gather(compose, arch, variant)
 
     # include *all* packages providing system-release
     if "system-release" not in packages:

@@ -21,11 +21,13 @@ import re
 from kobo.shortcuts import force_list
 
 import pungi.wrappers.kojiwrapper
+from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
 from pungi.util import is_arch_multilib, retry
 
 from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
+from pungi.phases.gather import get_packages_to_gather
 
 
 import pungi.phases.pkgset.source
@@ -163,6 +165,20 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     # List of compose_tags per variant
     variant_tags = {}
 
+    # In case we use "nodeps" gather_method, we might now the final list of
+    # packages which will end up in the compose even now, so instead of
+    # reading all the packages from Koji tag, we can just cherry-pick the ones
+    # which are really needed to do the compose and safe lot of time and
+    # resources here.
+    packages_to_gather = []
+    if compose.conf["gather_method"] == "nodeps":
+        packages_to_gather, groups = get_packages_to_gather(
+            compose, include_arch=False, include_prepopulated=True)
+        if groups:
+            comps = CompsWrapper(compose.paths.work.comps())
+            for group in groups:
+                packages_to_gather += comps.get_packages(group)
+
     session = get_pdc_client_session(compose)
     for variant in compose.all_variants.values():
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
@@ -219,7 +235,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                              "'%s'" % compose_tag)
             pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-                arches=all_arches)
+                arches=all_arches, packages=packages_to_gather)
             # Create a filename for log with package-to-tag mapping. The tag
             # name is included in filename, so any slashes in it are replaced
             # with underscores just to be safe.

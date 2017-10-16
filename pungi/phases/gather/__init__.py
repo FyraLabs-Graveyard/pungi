@@ -335,12 +335,13 @@ def write_prepopulate_file(compose):
         shutil.rmtree(tmp_dir)
 
 
-def get_prepopulate_packages(compose, arch, variant):
+def get_prepopulate_packages(compose, arch, variant, include_arch=True):
     """Read prepopulate file and return list of packages for given tree.
 
     If ``variant`` is ``None``, all variants in the file are considered. The
     result of this function is a set of strings of format
-    ``package_name.arch``.
+    ``package_name.arch``. If ``include_arch`` is False, the ".arch" suffix
+    is not included in packages in returned list.
     """
     result = set()
 
@@ -361,7 +362,10 @@ def get_prepopulate_packages(compose, arch, variant):
                     raise ValueError(
                         "Incompatible package arch '%s' for tree arch '%s' in prepopulate package '%s'"
                         % (pkg_arch, arch, pkg_name))
-                result.add(i)
+                if include_arch:
+                    result.add(i)
+                else:
+                    result.add(pkg_name)
     return result
 
 
@@ -491,3 +495,51 @@ def get_system_release_packages(compose, arch, variant, package_sets):
             filter_packages.add((pkg.name, None))
 
     return packages, filter_packages
+
+
+def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
+                           include_prepopulated=False):
+    """
+    Returns the list of names of packages and list of names of groups which
+    would be included in a compose as GATHER phase result.
+    This works only for "comps" or "json" gather_source. For "module"
+    gather_source, this always return an empty list, because it is not clear
+    what packages will end up in a compose before the gather phase is run.
+
+    :param str arch: Arch to return packages for. If not set, returns packages
+        for all arches.
+    :param Variant variant: Variant to return packages for, If not set, returns
+        packages for all variants of a compose.
+    :param include_arch: When True, the arch of package will be included in
+        returned list as ["pkg_name.arch", ...]. Otherwise only
+        ["pkg_name", ...] is returned.
+    :param include_prepopulated: When True, the prepopulated packages will
+        be included in a list of packages.
+    """
+    if compose.conf["gather_source"] == "module":
+        return []
+
+    arches = [arch] if arch else compose.get_arches()
+
+    GatherSource = get_gather_source(compose.conf["gather_source"])
+    src = GatherSource(compose)
+
+    packages = set([])
+    groups = set([])
+    for arch in arches:
+        pkgs, grps = src(arch, variant)
+        groups = groups.union(set(grps))
+
+        additional_packages = get_additional_packages(compose, arch, None)
+        for pkg_name, pkg_arch in pkgs | additional_packages:
+            if not include_arch or pkg_arch is None:
+                packages.add(pkg_name)
+            else:
+                packages.add("%s.%s" % (pkg_name, pkg_arch))
+
+        if include_prepopulated:
+            prepopulated = get_prepopulate_packages(
+                compose, arch, variant, include_arch)
+            packages = packages.union(prepopulated)
+
+    return list(packages), list(groups)

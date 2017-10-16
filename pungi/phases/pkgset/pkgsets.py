@@ -208,10 +208,13 @@ class FilelistPackageSet(PackageSetBase):
 
 
 class KojiPackageSet(PackageSetBase):
-    def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None):
+    def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
+                 packages=None):
         super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
                                              arches=arches, logger=logger)
         self.koji_wrapper = koji_wrapper
+        # Names of packages to look for in the Koji tag.
+        self.packages = packages
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -281,6 +284,7 @@ class KojiPackageSet(PackageSetBase):
             builds_by_id.setdefault(build_info["build_id"], build_info)
 
         skipped_arches = []
+        skipped_packages_count = 0
         for rpm_info in rpms:
             if self.arches and rpm_info["arch"] not in self.arches:
                 if rpm_info["arch"] not in skipped_arches:
@@ -288,11 +292,20 @@ class KojiPackageSet(PackageSetBase):
                     skipped_arches.append(rpm_info["arch"])
                 continue
 
+            if self.packages and rpm_info['name'] not in self.packages:
+                skipped_packages_count += 1
+                continue
+
             build_info = builds_by_id[rpm_info["build_id"]]
             if rpm_info["arch"] in ("src", "nosrc"):
                 result_srpms.append((rpm_info, build_info))
             else:
                 result_rpms.append((rpm_info, build_info))
+
+        if skipped_packages_count:
+            self.log_debug("Skipped %d packages, not marked as to be "
+                           "included in a compose." % skipped_packages_count)
+
         result = self.read_packages(result_rpms, result_srpms)
 
         # Create a log with package NEVRAs and the tag they are coming from
