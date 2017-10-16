@@ -238,7 +238,7 @@ class KojiPackageSet(PackageSetBase):
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []
         for sigkey in self.sigkey_ordering:
-            if sigkey is None:
+            if not sigkey:
                 # we're looking for *signed* copies here
                 continue
             sigkey = sigkey.lower()
@@ -247,7 +247,7 @@ class KojiPackageSet(PackageSetBase):
             if os.path.isfile(rpm_path):
                 return rpm_path
 
-        if None in self.sigkey_ordering:
+        if None in self.sigkey_ordering or '' in self.sigkey_ordering:
             # use an unsigned copy (if allowed)
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
             paths.append(rpm_path)

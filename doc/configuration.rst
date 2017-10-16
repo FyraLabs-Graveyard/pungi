@@ -435,7 +435,8 @@ Options
 -------
 
 **sigkeys**
-    ([*str* or None]) -- priority list of sigkeys, *None* means unsigned
+    ([*str* or None]) -- priority list of sigkeys; if the list includes an
+    empty string or  *None*, unsigned packages will be allowed
 
 **pkgset_source** [mandatory]
     (*str*) -- "koji" (any koji instance) or "repos" (arbitrary yum repositories)
