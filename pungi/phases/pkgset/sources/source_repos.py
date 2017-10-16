@@ -52,6 +52,9 @@ def get_pkgset_from_repos(compose):
     for i in range(10):
         pool.add(LinkerThread(pool))
 
+    path_prefix = os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
+    makedirs(path_prefix)
+
     seen_packages = set()
     for arch in compose.get_arches():
         # write a pungi config for remote repos and a local comps repo
@@ -89,8 +92,6 @@ def get_pkgset_from_repos(compose):
         # TODO: runroot
         run(cmd, logfile=pungi_log, show_cmd=True, stdout=False)
 
-        path_prefix = os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
-        makedirs(path_prefix)
         for root, dirs, files in os.walk(pungi_dir):
             for fn in files:
                 if not fn.endswith(".rpm"):
