@@ -59,7 +59,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 elif (type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
                       and pkg.nevra != gathered_pkg.nevra):
                     continue
-                if pkg_arch is not None and pkg.arch != pkg_arch:
+                if pkg_arch is not None and pkg.arch != pkg_arch and pkg.arch != 'noarch':
                     continue
                 result["rpm"].append({
                     "path": pkg.file_path,
