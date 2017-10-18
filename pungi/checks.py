@@ -1138,7 +1138,6 @@ CONFIG_DEPS = {
     "gather_source": {
         "conflicts": [
             (lambda val: val != 'json', ['gather_source_mapping']),
-            (lambda val: val != 'comps', ['comps_file']),
         ],
         "requires": [
             (lambda val: val == 'json', ['gather_source_mapping']),

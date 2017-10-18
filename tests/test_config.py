@@ -247,8 +247,7 @@ class GatherConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.REQUIRES.format('gather_source', 'json', 'gather_source_mapping'),
-             checks.CONFLICTS.format('gather_source', 'json', 'comps_file')])
+            [checks.REQUIRES.format('gather_source', 'json', 'gather_source_mapping')])
 
 
 class OSBSConfigTestCase(ConfigTestCase):
