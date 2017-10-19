@@ -189,9 +189,12 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
             repo_mmd = copy.deepcopy(mmd)
-            repo_mmd["data"]["artifacts"]["rpms"] = [
-                rpm_nevra for rpm_nevra in repo_mmd["data"]["artifacts"]["rpms"]
-                if rpm_nevra in rpm_nevras]
+            # Modules without RPMs are also valid.
+            if ("artifacts" in repo_mmd["data"] and
+                    "rpms" in repo_mmd["data"]["artifacts"]):
+                repo_mmd["data"]["artifacts"]["rpms"] = [
+                    rpm_nevra for rpm_nevra in repo_mmd["data"]["artifacts"]["rpms"]
+                    if rpm_nevra in rpm_nevras]
             modules.append(repo_mmd)
 
         with temp_dir() as tmp_dir:

@@ -194,6 +194,14 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
 
+                # Catch the issue when PDC does not contain RPMs, but
+                # the module definition says there should be some.
+                if not pdc_module["rpms"] and mmd.components.rpms:
+                    raise ValueError(
+                        "Module %s does not have any rpms in 'rpms' PDC field,"
+                        "but according to modulemd, there should be some."
+                        % pdc_module["variant_uid"])
+
                 # Add RPMs from PDC response to modulemd, so we can track
                 # what RPM is in which module later in gather phase.
                 for rpm_nevra in pdc_module["rpms"]:
