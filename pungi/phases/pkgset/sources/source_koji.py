@@ -55,37 +55,71 @@ def get_pdc_client_session(compose):
         return None
 
 
-def variant_dict_from_str(module_str):
+def variant_dict_from_str(compose, module_str):
     """
     Method which parses module NVR string, defined in a variants file and returns
     a module info dictionary instead.
 
+    For more information about format of module_str, read:
+    https://pagure.io/modularity/blob/master/f/source/development/
+    building-modules/naming-policy.rst
+
+    Pungi supports only N:S and N:S:V, because other combinations do not
+    have sense for variant files.
+
     Attributes:
+        compose: compose for which the variant_dict is generated
         module_str: string, the NV(R) of module defined in a variants file.
     """
 
-    module_info = {}
-    # The regex is matching a string which should represent the release number
-    # of a module. The release number is in format: "%Y%m%d%H%M%S"
-    release_regex = re.compile("^(\d){14}$")
+    # The new format can be distinguished by colon in module_str, because
+    # there is not module in Fedora with colon in a name or stream and it is
+    # now disallowed to create one. So if colon is there, it must be new
+    # naming policy format.
+    if module_str.find(":") != -1:
+        module_info = {}
+        module_info['variant_type'] = 'module'
 
-    section_start = module_str.rfind('-')
-    module_str_first_part = module_str[section_start+1:]
-    if release_regex.match(module_str_first_part):
-        module_info['variant_release'] = module_str_first_part
-        module_str = module_str[:section_start]
-        section_start = module_str.rfind('-')
-        module_info['variant_version'] = module_str[section_start+1:]
+        nsv = module_str.split(":")
+        if len(nsv) > 3:
+            raise ValueError(
+                "Module string \"%s\" is not allowed. "
+                "Only NAME:STREAM or NAME:STREAM:VERSION is allowed.")
+        if len(nsv) > 2:
+            module_info["variant_release"] = nsv[2]
+        if len(nsv) > 1:
+            module_info["variant_version"] = nsv[1]
+        module_info["variant_id"] = nsv[0]
+        return module_info
     else:
-        module_info['variant_version'] = module_str_first_part
-    module_info['variant_id'] = module_str[:section_start]
-    module_info['variant_type'] = 'module'
+        # Fallback to previous old format with '-' delimiter.
+        compose.log_warning(
+            "Variant file uses old format of module definition with '-'"
+            "delimiter, please switch to official format defined by "
+            "Modules Naming Policy.")
 
-    return module_info
+        module_info = {}
+        # The regex is matching a string which should represent the release number
+        # of a module. The release number is in format: "%Y%m%d%H%M%S"
+        release_regex = re.compile("^(\d){14}$")
+
+        section_start = module_str.rfind('-')
+        module_str_first_part = module_str[section_start+1:]
+        if release_regex.match(module_str_first_part):
+            module_info['variant_release'] = module_str_first_part
+            module_str = module_str[:section_start]
+            section_start = module_str.rfind('-')
+            module_info['variant_version'] = module_str[section_start+1:]
+        else:
+            module_info['variant_version'] = module_str_first_part
+        module_info['variant_id'] = module_str[:section_start]
+        module_info['variant_type'] = 'module'
+
+        return module_info
 
 
 @retry(wait_on=IOError)
-def get_module(session, module_info):
+def get_module(compose, session, module_info):
     """
     :param session : PDCClient instance
     :param module_info: pdc variant_dict, str, mmd or module dict
@@ -93,7 +127,7 @@ def get_module(session, module_info):
     :return final list of module_info which pass repoclosure
     """
 
-    module_info = variant_dict_from_str(module_info)
+    module_info = variant_dict_from_str(compose, module_info)
 
     query = dict(
         variant_id=module_info['variant_id'],
@@ -190,7 +224,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         # to compose_tags list.
         if session:
             for module in variant.get_modules():
-                pdc_module = get_module(session, module["name"])
+                pdc_module = get_module(compose, session, module["name"])
                 mmd = modulemd.ModuleMetadata()
                 mmd.loads(pdc_module["modulemd"])
 

@@ -254,24 +254,49 @@ class TestCorrectNVR(helpers.PungiTestCase):
 
     def setUp(self):
         super(TestCorrectNVR, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {})
         self.nv = "base-runtime-f26"
         self.nvr = "base-runtime-f26-20170502134116"
         self.release_regex = re.compile("^(\d){14}$")
+        self.new_nv = "base-runtime:f26"
+        self.new_nvr = "base-runtime:f26:20170502134116"
+        self.new_nvrc = "base-runtime:f26:20170502134116:0123abcd"
 
     def test_nv(self):
-        module_info = source_koji.variant_dict_from_str(self.nv)
+        module_info = source_koji.variant_dict_from_str(self.compose, self.nv)
         expectedKeys = ["variant_version", "variant_id", "variant_type"]
         self.assertItemsEqual(module_info.keys(), expectedKeys)
 
     def test_nvr(self):
-        module_info = source_koji.variant_dict_from_str(self.nvr)
+        module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
         expectedKeys = ["variant_version", "variant_id", "variant_type", "variant_release"]
         self.assertItemsEqual(module_info.keys(), expectedKeys)
 
     def test_correct_release(self):
-        module_info = source_koji.variant_dict_from_str(self.nvr)
+        module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
         self.assertIsNotNone(self.release_regex.match(module_info["variant_release"]))
 
+    def test_new_nv(self):
+        module_info = source_koji.variant_dict_from_str(self.compose, self.new_nv)
+        expected = {
+            'variant_id': 'base-runtime',
+            'variant_type': 'module',
+            'variant_version': 'f26'}
+
+        self.assertEqual(module_info, expected)
+
+    def test_new_nvr(self):
+        module_info = source_koji.variant_dict_from_str(self.compose, self.new_nvr)
+        expected = {
+            'variant_id': 'base-runtime',
+            'variant_type': 'module',
+            'variant_version': 'f26',
+            'variant_release': '20170502134116'}
+        self.assertEqual(module_info, expected)
+
+    def test_new_nvrc(self):
+        self.assertRaises(ValueError, source_koji.variant_dict_from_str,
+                          self.compose, self.new_nvrc)
 
 if __name__ == "__main__":
     unittest.main()
