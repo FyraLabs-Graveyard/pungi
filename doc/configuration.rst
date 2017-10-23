@@ -62,8 +62,10 @@ Options
 **release_version** [mandatory]
     (*str*) -- release version
 
-**release_type** = "ga"
-    (*str*) -- release type, "ga" or "updates"
+**release_type** = "ga" (*str*) -- release type, for example ``ga``,
+    ``updates`` or ``updates-testing``. See `list of all valid values
+    <http://productmd.readthedocs.io/en/latest/common.html#productmd.common.RELEASE_TYPES>`_
+    in productmd documentation.
 
 **release_is_layered** = False
     (*bool*) -- typically False for an operating system, True otherwise

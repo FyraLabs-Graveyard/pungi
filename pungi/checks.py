@@ -44,6 +44,7 @@ import re
 import jsonschema
 import six
 from kobo.shortcuts import force_list
+from productmd.common import RELEASE_TYPES
 from productmd.composeinfo import COMPOSE_TYPES
 import multiprocessing
 
@@ -520,7 +521,7 @@ def make_schema():
             "release_version": {"type": "string"},
             "release_type": {
                 "type": "string",
-                "enum": ["fast", "ga", "updates", "eus", "aus", "els"],
+                "enum": RELEASE_TYPES,
                 "default": "ga",
             },
             "release_is_layered": {"type": "boolean"},
