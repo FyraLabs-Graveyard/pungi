@@ -58,6 +58,10 @@ class BuildinstallPhase(PhaseBase):
         noupgrade = True
         bugurl = None
         nomacboot = True
+        add_template = []
+        add_arch_template = []
+        add_template_var = []
+        add_arch_template_var = []
         for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
             if not data.get('noupgrade', True):
                 noupgrade = False
@@ -65,6 +69,10 @@ class BuildinstallPhase(PhaseBase):
                 bugurl = data.get('bugurl')
             if not data.get('nomacboot', True):
                 nomacboot = False
+            add_template.extend(data.get('add_template', []))
+            add_arch_template.extend(data.get('add_arch_template', []))
+            add_template_var.extend(data.get('add_template_var', []))
+            add_arch_template_var.extend(data.get('add_arch_template_var', []))
         output_dir = os.path.join(output_dir, variant.uid)
 
         # The paths module will modify the filename (by inserting arch). But we
@@ -86,6 +94,10 @@ class BuildinstallPhase(PhaseBase):
                                         volid=volid,
                                         nomacboot=nomacboot,
                                         bugurl=bugurl,
+                                        add_template=add_template,
+                                        add_arch_template=add_arch_template,
+                                        add_template_var=add_template_var,
+                                        add_arch_template_var=add_arch_template_var,
                                         noupgrade=noupgrade,
                                         log_dir=log_dir)
         return 'rm -rf %s && %s' % (pipes.quote(output_dir),

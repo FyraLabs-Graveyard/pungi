@@ -486,6 +486,10 @@ Options
       * ``bugurl`` -- *str* (default ``None``)
       * ``nomacboot`` -- *bool* (default ``True``)
       * ``noupgrade`` -- *bool* (default ``True``)
+      * ``add_template`` -- *[str]* (default empty)
+      * ``add_arch_template`` -- *[str]* (default empty)
+      * ``add_template_var`` -- *[str]* (default empty)
+      * ``add_arch_template_var`` -- *[str]* (default empty)
 **buildinstall_kickstart**
     (:ref:`scm_dict <scm_support>`) -- If specified, this kickstart file will
     be copied into each file and pointed to in boot configuration.
