@@ -155,6 +155,12 @@ def main():
         help="only create latest symbol link to this compose when compose status matches specified status",
     )
     parser.add_argument(
+        "--print-output-dir",
+        action="store_true",
+        default=False,
+        help="print the compose directory"
+    )
+    parser.add_argument(
         "--quiet",
         action="store_true",
         default=False,
@@ -230,6 +236,9 @@ def main():
         compose_dir = Compose.get_compose_dir(opts.target_dir, conf, compose_type=compose_type, compose_label=opts.label)
     else:
         compose_dir = opts.compose_dir
+
+    if opts.print_output_dir:
+        print('Compose dir: %s' % compose_dir)
 
     compose = Compose(conf,
                       topdir=compose_dir,
