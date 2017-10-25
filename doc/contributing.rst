@@ -12,6 +12,7 @@ These packages will have to installed:
  * createrepo
  * createrepo_c
  * cvs
+ * gcc
  * genisoimage
  * gettext
  * git
@@ -20,10 +21,12 @@ These packages will have to installed:
  * kobo
  * kobo-rpmlib
  * koji
+ * libcurl-devel
  * libselinux-python
  * lorax
  * python-jsonschema
  * python-kickstart
+ * python-libcomps
  * python-lockfile
  * python-lxml
  * python2-multilib
@@ -40,16 +43,19 @@ For running unit tests, these packages are recommended as well:
  * python-nose-cov
 
 While being difficult, it is possible to work on *Pungi* using *virtualenv*.
-Install *python-virtualenvwrapper* and use following steps. It will link system
-libraries into the virtual environment and install all packages preferably from
-PyPI or from tarball. You will still need to install all of the non-Python
+Install *python-virtualenvwrapper* (after installation you have to add the command
+to *source /usr/local/bin/virtualenvwrapper.sh* to your shell startup file,
+depending on where it was installed by package manager) and use following steps.
+It will link system libraries into the virtual environment and install all packages
+preferably from PyPI or from tarball. You will still need to install all of the non-Python
 packages above as they are used by calling an executable. ::
 
     $ mkvirtualenv pungienv
-    $ for pkg in koji rpm pykickstart selinux createrepo yum urlgrabber; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
-    $ for pkg in _selinux deltarpm _deltarpm krbV sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in createrepo koji libcomps pykickstart rpm rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install lxml pyopenssl mock sphinx setuptools nose nose-cov productmd jsonschema requests lockfile python-multilib kobo
+    $ pip install jsonschema kobo lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests setuptools sphinx
 
 Now you should be able to run all existing tests.
 
@@ -147,7 +153,7 @@ you can use to try and create a miniature compose on dummy data. The actual
 data will be created by running ``make test-data`` in project root. ::
 
     $ make test-data
-    $ make test-commpose
+    $ make test-compose
 
 This testing compose does not actually use all phases that are available, and
 there is no checking that the result is correct. It only tells you whether it
