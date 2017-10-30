@@ -10,6 +10,13 @@ import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+try:
+    import modulemd         # noqa
+    import pdc_client       # noqa
+    HAS_MODULE_SUPPORT = True
+except ImportError:
+    HAS_MODULE_SUPPORT = False
+
 from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
 
@@ -118,6 +125,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
+    @unittest.skipUnless(HAS_MODULE_SUPPORT, 'Modulemd/pdc_client are not available')   # noqa
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_module')
