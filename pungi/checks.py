@@ -611,6 +611,10 @@ def make_schema():
                 "type": "number",
                 "default": get_num_cpus(),
             },
+            "createrepo_num_workers": {
+                "type": "number",
+                "default": 3,
+            },
             "repoclosure_strictness": _variant_arch_mapping({
                 "type": "string",
                 "default": "lenient",

@@ -418,7 +418,8 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             run("cp -a %s/repodata %s/" % (shlex_quote(tree_dir), shlex_quote(iso_dir)))
             with open(file_list, "w") as f:
                 f.write("\n".join(file_list_content))
-            cmd = repo.get_createrepo_cmd(tree_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=iso_dir, workers=3, checksum=createrepo_checksum)
+            cmd = repo.get_createrepo_cmd(tree_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=iso_dir,
+                                          workers=compose.conf["createrepo_num_workers"], checksum=createrepo_checksum)
             run(cmd)
             # add repodata/repomd.xml back to checksums
             ti.checksums.add("repodata/repomd.xml", "sha256", root_dir=iso_dir)

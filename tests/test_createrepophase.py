@@ -251,6 +251,7 @@ class TestCreateVariantRepo(PungiTestCase):
     def test_variant_repo_is_idepotent(self, CreaterepoWrapperCls, run):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
+            'createrepo_num_workers': 10,
         })
         compose.DEBUG = False
         compose.has_comps = False
@@ -268,7 +269,7 @@ class TestCreateVariantRepo(PungiTestCase):
         self.assertItemsEqual(
             repo.get_createrepo_cmd.mock_calls,
             [mock.call(self.topdir + '/compose/Server/x86_64/os', checksum='sha256',
-                       database=True, groupfile=None, workers=3,
+                       database=True, groupfile=None, workers=10,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',

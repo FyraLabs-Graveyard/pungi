@@ -159,7 +159,8 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
     cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True,
-                                  pkglist=file_list, outputdir=repo_dir, workers=3,
+                                  pkglist=file_list, outputdir=repo_dir,
+                                  workers=compose.conf["createrepo_num_workers"],
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
                                   checksum=createrepo_checksum,
                                   deltas=with_deltas,
@@ -202,8 +203,8 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             with open(modules_path, "w") as outfile:
                 outfile.write(yaml.dump_all(modules, explicit_start=True))
             cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
-                                        modules_path, mdtype="modules",
-                                        compress_type="gz")
+                                          modules_path, mdtype="modules",
+                                          compress_type="gz")
             log_file = compose.paths.log.log_file(
                 arch, "modifyrepo-modules-%s" % variant)
             run(cmd, logfile=log_file, show_cmd=True)
