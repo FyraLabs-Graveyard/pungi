@@ -213,7 +213,7 @@ class GitSCMTestCase(SCMBaseTest):
                                        self.destdir)
         self.assertStructure(retval, ['some_file.txt'])
         self.assertEqual(1, len(commands))
-        self.assertRegex(
+        self.assertRegexpMatches(
             commands[0],
             r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
 
@@ -308,7 +308,7 @@ class GitSCMTestCase(SCMBaseTest):
                                       self.destdir)
         self.assertStructure(retval, ['first', 'second'])
 
-        self.assertRegex(
+        self.assertRegexpMatches(
             commands[0],
             r'/usr/bin/git clone --depth 1 --branch=master https://example.com/git/repo.git /tmp/.+')
         self.assertEqual(commands[1:], ['make'])

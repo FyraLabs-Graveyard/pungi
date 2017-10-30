@@ -801,8 +801,9 @@ class TestGetProductIds(PungiTestCase):
             get_productids_from_scm(self.compose)
 
         self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
-        self.assertRegex(str(ctx.exception),
-                         r'No product certificate found \(arch: amd64, variant: (Everything|Client)\)')
+        self.assertRegexpMatches(
+            str(ctx.exception),
+            r'No product certificate found \(arch: amd64, variant: (Everything|Client)\)')
 
     @mock.patch('pungi.phases.createrepo.get_dir_from_scm')
     def test_multiple_matching(self, get_dir_from_scm):
@@ -823,8 +824,9 @@ class TestGetProductIds(PungiTestCase):
             get_productids_from_scm(self.compose)
 
         self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
-        self.assertRegex(str(ctx.exception),
-                         'Multiple product certificates found.+')
+        self.assertRegexpMatches(
+            str(ctx.exception),
+            'Multiple product certificates found.+')
 
 
 if __name__ == "__main__":

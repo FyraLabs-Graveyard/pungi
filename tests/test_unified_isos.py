@@ -26,14 +26,14 @@ class TestUnifiedIsos(PungiTestCase):
         compose_path = os.path.join(self.topdir, COMPOSE_ID, 'compose')
         isos = unified_isos.UnifiedISO(compose_path)
         self.assertEqual(isos.compose_path, compose_path)
-        self.assertRegex(isos.temp_dir,
-                         '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
+        self.assertRegexpMatches(
+            isos.temp_dir, '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
 
     def test_can_find_compose_subdir(self):
         isos = unified_isos.UnifiedISO(os.path.join(self.topdir, COMPOSE_ID))
         self.assertEqual(isos.compose_path, os.path.join(self.topdir, COMPOSE_ID, 'compose'))
-        self.assertRegex(isos.temp_dir,
-                         '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
+        self.assertRegexpMatches(isos.temp_dir,
+                                 '^%s/' % os.path.join(self.topdir, COMPOSE_ID, 'work'))
 
     @mock.patch('os.rename')
     def test_dump_manifest(self, rename):

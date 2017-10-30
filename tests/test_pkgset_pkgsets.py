@@ -259,8 +259,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
-        self.assertRegex(str(ctx.exception),
-                         r'^RPM\(s\) not found for sigs: .+Check log for details.+')
+        self.assertRegexpMatches(
+            str(ctx.exception),
+            r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
     def test_can_not_find_any_package(self):
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
@@ -272,8 +273,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
-        self.assertRegex(str(ctx.exception),
-                         r'^RPM\(s\) not found for sigs: .+Check log for details.+')
+        self.assertRegexpMatches(
+            str(ctx.exception),
+            r'^RPM\(s\) not found for sigs: .+Check log for details.+')
 
     def test_packages_attribute(self):
         self._touch_files([
