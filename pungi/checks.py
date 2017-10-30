@@ -980,7 +980,13 @@ def make_schema():
                                         },
                                         "install_tree_from": {"type": "string"},
                                         "subvariant": {"type": "string"},
-                                        "format": {"$ref": "#/definitions/string_tuples"},
+                                        "format": {
+                                            "anyOf": [
+                                                # The variant with explicit extension is deprecated.
+                                                {"$ref": "#/definitions/string_tuples"},
+                                                {"$ref": "#/definitions/strings"}
+                                            ]
+                                        },
                                     },
                                 },
                                 "factory-parameters": {

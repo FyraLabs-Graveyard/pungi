@@ -55,12 +55,11 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         client_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Client/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Client/$arch/os',
                     'variant': compose.variants['Client'],
                     'target': 'f24',
@@ -80,12 +79,11 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         server_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
@@ -119,7 +117,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'kickstart': "fedora-docker-base.ks",
                             'distro': 'Fedora-20',
@@ -140,12 +138,11 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
@@ -177,7 +174,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': 'docker',
                             'name': 'Fedora-Docker-Base',
                             'kickstart': "fedora-docker-base.ks",
                             'distro': 'Fedora-20',
@@ -196,12 +193,11 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
@@ -230,7 +226,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Client|Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -263,7 +259,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -294,12 +290,11 @@ class TestImageBuildPhase(PungiTestCase):
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
         self.assertDictEqual(args[0][1], {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server-optional/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.variants['Server'],
                     'target': 'f24',
@@ -325,7 +320,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -356,12 +351,11 @@ class TestImageBuildPhase(PungiTestCase):
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
         self.assertDictEqual(args[0][1], {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': ','.join([self.topdir + '/compose/Everything/$arch/os',
                                       self.topdir + '/compose/Server-optional/$arch/os',
                                       self.topdir + '/compose/Server/$arch/os']),
@@ -389,7 +383,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -419,12 +413,11 @@ class TestImageBuildPhase(PungiTestCase):
         args, kwargs = phase.pool.queue_put.call_args
         self.assertEqual(args[0][0], compose)
         self.assertDictEqual(args[0][1], {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': 'http://example.com/install-tree/',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': ','.join([self.topdir + '/compose/Server/$arch/os']),
                     'variant': compose.variants['Server'],
                     'target': 'f24',
@@ -450,7 +443,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -488,7 +481,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -526,7 +519,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -564,7 +557,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -604,7 +597,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server-optional$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -630,12 +623,11 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server-optional/$arch/os',
                     'variant': compose.all_variants['Server-optional'],
                     'target': 'f24',
@@ -664,7 +656,7 @@ class TestImageBuildPhase(PungiTestCase):
                 '^Server$': [
                     {
                         'image-build': {
-                            'format': [('docker', 'tar.xz')],
+                            'format': ['docker'],
                             'name': 'Fedora-Docker-Base',
                             'target': 'f24',
                             'version': 'Rawhide',
@@ -690,12 +682,11 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
-            "format": [('docker', 'tar.xz')],
             "image_conf": {
                 'image-build': {
                     'install_tree': self.topdir + '/compose/Server/$arch/os',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker'],
                     'repo': self.topdir + '/compose/Server/$arch/os',
                     'variant': compose.all_variants['Server'],
                     'target': 'f24',
@@ -730,12 +721,11 @@ class TestCreateImageBuildThread(PungiTestCase):
         })
         pool = mock.Mock()
         cmd = {
-            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
                 'image-build': {
                     'install_tree': '/ostree/$arch/Client',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker', 'qcow2'],
                     'repo': '/ostree/$arch/Client',
                     'variant': compose.variants['Client'],
                     'target': 'f24',
@@ -764,12 +754,12 @@ class TestCreateImageBuildThread(PungiTestCase):
             'amd64': [
                 '/koji/task/1235/tdl-amd64.xml',
                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',
-                '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.xz'
+                '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.gz'
             ],
             'x86_64': [
                 '/koji/task/1235/tdl-x86_64.xml',
                 '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2',
-                '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.xz'
+                '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.gz'
             ]
         }
 
@@ -781,7 +771,6 @@ class TestCreateImageBuildThread(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd), 1)
 
-        self.assertEqual(cmd['image_conf']['image-build']['arches'], 'amd64,x86_64')
         self.assertItemsEqual(
             koji_wrapper.get_image_build_cmd.call_args_list,
             [mock.call(cmd['image_conf'],
@@ -792,7 +781,7 @@ class TestCreateImageBuildThread(PungiTestCase):
         self.assertItemsEqual(
             koji_wrapper.run_blocking_cmd.call_args_list,
             [mock.call(koji_wrapper.get_image_build_cmd.return_value,
-                       log_file=self.topdir + '/logs/amd64-x86_64/imagebuild-Client-KDE-docker.amd64-x86_64.log')]
+                       log_file=self.topdir + '/logs/amd64-x86_64/imagebuild-Client-KDE-docker-qcow2.amd64-x86_64.log')]
         )
 
         self.assertItemsEqual(
@@ -802,16 +791,16 @@ class TestCreateImageBuildThread(PungiTestCase):
                 self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2',
                 link_type='hardlink-or-copy'),
              mock.call.link(
-                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.xz',
-                 self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.xz',
+                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.gz',
+                 self.topdir + '/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.gz',
                  link_type='hardlink-or-copy'),
              mock.call.link(
                  '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2',
                  self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2',
                  link_type='hardlink-or-copy'),
              mock.call.link(
-                 '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.xz',
-                 self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.xz',
+                 '/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.gz',
+                 self.topdir + '/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.gz',
                  link_type='hardlink-or-copy')])
 
         image_relative_paths = {
@@ -820,8 +809,8 @@ class TestCreateImageBuildThread(PungiTestCase):
                 'type': 'qcow2',
                 'arch': 'amd64',
             },
-            'image_dir/Client/amd64/Fedora-Docker-Base-20160103.amd64.tar.xz': {
-                'format': 'tar.xz',
+            'image_dir/Client/amd64/Fedora-Docker-Base-20160103.amd64.tar.gz': {
+                'format': 'tar.gz',
                 'type': 'docker',
                 'arch': 'amd64',
             },
@@ -830,8 +819,8 @@ class TestCreateImageBuildThread(PungiTestCase):
                 'type': 'qcow2',
                 'arch': 'x86_64',
             },
-            'image_dir/Client/x86_64/Fedora-Docker-Base-20160103.x86_64.tar.xz': {
-                'format': 'tar.xz',
+            'image_dir/Client/x86_64/Fedora-Docker-Base-20160103.x86_64.tar.gz': {
+                'format': 'tar.gz',
                 'type': 'docker',
                 'arch': 'x86_64',
             },
@@ -860,12 +849,11 @@ class TestCreateImageBuildThread(PungiTestCase):
         compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
-            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
                 'image-build': {
                     'install_tree': '/ostree/$arch/Client',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker', 'qcow2'],
                     'repo': '/ostree/$arch/Client',
                     'variant': compose.variants['Client'],
                     'target': 'f24',
@@ -899,7 +887,7 @@ class TestCreateImageBuildThread(PungiTestCase):
             mock.call('[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway.'),
             mock.call('ImageBuild task failed: 1234. See %s for more details.'
                       % (os.path.join(self.topdir,
-                                      'logs/amd64-x86_64/imagebuild-Client-Client-docker.amd64-x86_64.log'))),
+                                      'logs/amd64-x86_64/imagebuild-Client-Client-docker-qcow2.amd64-x86_64.log'))),
         ])
 
     @mock.patch('pungi.phases.image_build.KojiWrapper')
@@ -908,12 +896,11 @@ class TestCreateImageBuildThread(PungiTestCase):
         compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
-            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
                 'image-build': {
                     'install_tree': '/ostree/$arch/Client',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker', 'qcow2'],
                     'repo': '/ostree/$arch/Client',
                     'variant': compose.variants['Client'],
                     'target': 'f24',
@@ -951,12 +938,11 @@ class TestCreateImageBuildThread(PungiTestCase):
         compose = DummyCompose(self.topdir, {'koji_profile': 'koji'})
         pool = mock.Mock()
         cmd = {
-            "format": [('docker', 'tar.xz'), ('qcow2', 'qcow2')],
             "image_conf": {
                 'image-build': {
                     'install_tree': '/ostree/$arch/Client',
                     'kickstart': 'fedora-docker-base.ks',
-                    'format': 'docker',
+                    'format': ['docker', 'qcow2'],
                     'repo': '/ostree/$arch/Client',
                     'variant': compose.variants['Client'],
                     'target': 'f24',

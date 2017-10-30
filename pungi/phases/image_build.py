@@ -11,7 +11,32 @@ from pungi.phases import base
 from pungi.linker import Linker
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from kobo.threads import ThreadPool, WorkerThread
+from kobo.shortcuts import force_list
 from productmd.images import Image
+
+
+# This is a mapping from formats to file extensions. The format is what koji
+# image-build command expects as argument, and the extension is what the file
+# name will be ending with. The extensions are used to filter out which task
+# results will be pulled into the compose.
+EXTENSIONS = {
+    'docker': 'tar.gz',
+    'liveimg-squashfs': 'liveimg.squashfs',
+    'qcow': 'qcow',
+    'qcow2': 'qcow2',
+    'raw': 'raw',
+    'raw-xz': 'raw.xz',
+    'rhevm-ova': 'rhevm.ova',
+    'tar-gz': 'tar.gz',
+    'vagrant-hyperv': 'vagrant-hyperv.box',
+    'vagrant-libvirt': 'vagrant-libvirt.box',
+    'vagrant-virtualbox': 'vagrant-virtualbox.box',
+    'vagrant-vmware-fusion': 'vagrant-vmware-fusion.box',
+    'vdi': 'vdi',
+    'vmdk': 'vdmk',
+    'vpc': 'vhd',
+    'vsphere-ova': 'vsphere.ova',
+}
 
 
 class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigGuardedPhase):
@@ -102,10 +127,12 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                 image_conf['image-build']['version'] = self.get_version(image_conf['image-build'])
                 image_conf['image-build']['target'] = self.get_config(image_conf['image-build'], 'target')
 
-                # transform format into right 'format' for image-build
-                # e.g. 'docker,qcow2'
-                format = image_conf["image-build"]["format"]
-                image_conf["image-build"]["format"] = ",".join([x[0] for x in image_conf["image-build"]["format"]])
+                # Pungi config can either contain old [(format, suffix)], or
+                # just list of formats, or a single format.
+                formats = []
+                for format in force_list(image_conf["image-build"]["format"]):
+                    formats.append(format[0] if isinstance(format, tuple) else format)
+                image_conf["image-build"]["format"] = formats
                 image_conf["image-build"]['repo'] = self._get_repo(image_conf['image-build'], variant)
 
                 can_fail = image_conf['image-build'].pop('failable', [])
@@ -115,12 +142,11 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                     image_conf['image-build']['can_fail'] = sorted(can_fail)
 
                 cmd = {
-                    "format": format,
                     "image_conf": image_conf,
                     "conf_file": self.compose.paths.work.image_build_conf(
                         image_conf["image-build"]['variant'],
                         image_name=image_conf["image-build"]['name'],
-                        image_type=image_conf["image-build"]['format'].replace(",", "-"),
+                        image_type='-'.join(formats),
                         arches=image_conf["image-build"]['arches'],
                     ),
                     "image_dir": self.compose.paths.compose.image_dir(variant),
@@ -152,15 +178,14 @@ class CreateImageBuildThread(WorkerThread):
 
     def worker(self, num, compose, variant, subvariant, cmd):
         arches = cmd["image_conf"]["image-build"]['arches']
+        formats = '-'.join(cmd['image_conf']['image-build']['format'])
         dash_arches = '-'.join(arches)
         log_file = compose.paths.log.log_file(
             dash_arches,
-            "imagebuild-%s-%s-%s" % (variant.uid, subvariant,
-                                     cmd["image_conf"]["image-build"]['format'].replace(",", "-"))
+            "imagebuild-%s-%s-%s" % (variant.uid, subvariant, formats)
         )
-        msg = ("Creating %s image (arches: %s, variant: %s, subvariant: %s)"
-               % (cmd["image_conf"]["image-build"]["format"].replace(",", "-"),
-                  dash_arches, variant, subvariant))
+        msg = ("Creating image (formats: %s, arches: %s, variant: %s, subvariant: %s)"
+               % (formats, dash_arches, variant, subvariant))
         self.pool.log_info("[BEGIN] %s" % msg)
 
         koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
@@ -168,12 +193,6 @@ class CreateImageBuildThread(WorkerThread):
         # writes conf file for koji image-build
         self.pool.log_info("Writing image-build config for %s.%s into %s" % (
             variant, dash_arches, cmd["conf_file"]))
-
-        # Join the arches into a single string. This is the value expected by
-        # koji config file.
-        cmd["image_conf"]["image-build"]['arches'] = ','.join(cmd["image_conf"]["image-build"]['arches'])
-        if 'can_fail' in cmd["image_conf"]["image-build"]:
-            cmd["image_conf"]["image-build"]['can_fail'] = ','.join(cmd["image_conf"]["image-build"]['can_fail'])
 
         koji_cmd = koji_wrapper.get_image_build_cmd(cmd["image_conf"],
                                                     conf_file_dest=cmd["conf_file"],
@@ -196,8 +215,8 @@ class CreateImageBuildThread(WorkerThread):
 
         for arch, paths in paths.items():
             for path in paths:
-                # format is list of tuples [('qcow2', '.qcow2'), ('raw-xz', 'raw.xz'),]
-                for format, suffix in cmd['format']:
+                for format in cmd['image_conf']['image-build']['format']:
+                    suffix = EXTENSIONS[format]
                     if path.endswith(suffix):
                         image_infos.append({'path': path, 'suffix': suffix, 'type': format, 'arch': arch})
                         break

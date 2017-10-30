@@ -1109,8 +1109,8 @@ Image Build Settings
     based on current variant. You can use ``install_tree_from`` key to use
     install tree from another variant.
 
-    The ``format`` attr is [('image_type', 'image_suffix'), ...].
-    See productmd documentation for list of supported types and suffixes.
+    You can set either a single format, or a list of formats. For available
+    values see help output for ``koji image-build`` command.
 
     If ``ksurl`` ends with ``#HEAD``, Pungi will figure out the SHA1 hash of
     current HEAD and use that instead.
@@ -1126,7 +1126,7 @@ Example
         '^Server$': [
             {
                 'image-build': {
-                    'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
+                    'format': ['docker', 'qcow2']
                     'name': 'fedora-qcow-and-docker-base',
                     'target': 'koji-target-name',
                     'ksversion': 'F23',     # value from pykickstart
@@ -1149,7 +1149,7 @@ Example
             },
             {
                 'image-build': {
-                    'format': [('docker', 'tar.gz'), ('qcow2', 'qcow2')]
+                    'format': ['docker', 'qcow2']
                     'name': 'fedora-qcow-and-docker-base',
                     'target': 'koji-target-name',
                     'ksversion': 'F23',     # value from pykickstart
@@ -1167,7 +1167,7 @@ Example
             },
             {
                 'image-build': {
-                    'format': [('qcow2','qcow2')]
+                    'format': 'qcow2',
                     'name': 'fedora-qcow-base',
                     'target': 'koji-target-name',
                     'ksversion': 'F23',     # value from pykickstart
