@@ -78,7 +78,7 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                     'target': 'test-target',
                     'install_tree': '/tmp/test/install_tree',
                     'arches': 'x86_64',
-                    'format': 'docker,qcow2',
+                    'format': ['docker', 'qcow2'],
                     'kickstart': 'test-kickstart',
                     'ksurl': 'git://example.com/ks.git',
                     'distro': 'test-distro',

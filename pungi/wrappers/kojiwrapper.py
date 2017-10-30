@@ -171,6 +171,8 @@ class KojiWrapper(object):
         for section, opts in config_options.items():
             cfg_parser.add_section(section)
             for option, value in opts.items():
+                if isinstance(value, list):
+                    value = ','.join(value)
                 if not isinstance(value, six.string_types):
                     # Python 3 configparser will reject non-string values.
                     value = str(value)
