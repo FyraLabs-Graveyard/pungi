@@ -86,6 +86,7 @@ class PungiNotifier(object):
                                workdir=workdir,
                                return_stdout=False,
                                show_cmd=True,
+                               universal_newlines=True,
                                logfile=logfile)
         if ret != 0:
             if self.compose:

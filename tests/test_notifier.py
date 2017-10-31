@@ -51,7 +51,7 @@ class TestNotifier(unittest.TestCase):
                          stdin_data=json.dumps(data),
                          can_fail=True, return_stdout=False,
                          workdir=self.compose.paths.compose.topdir.return_value,
-                         show_cmd=True, logfile=self.logfile)
+                         universal_newlines=True, show_cmd=True, logfile=self.logfile)
 
     @mock.patch('pungi.util.translate_path')
     @mock.patch('kobo.shortcuts.run')
