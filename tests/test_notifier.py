@@ -30,7 +30,22 @@ class TestNotifier(unittest.TestCase):
         self.logfile = '/logs/notifications/notification-2017-06-28_09-34-00.log'
         self.compose = mock.Mock(
             compose_id='COMPOSE_ID',
+            compose_date='20171031',
+            compose_respin=1,
+            compose_label='Updates-20171031.1021',
+            compose_type='production',
             log_warning=mock.Mock(),
+            conf={
+                'release_name': 'Layer',
+                'release_short': 'L',
+                'release_version': '27',
+                'release_type': 'updates',
+                'release_is_layered': True,
+                'base_product_name': 'Base',
+                'base_product_short': 'B',
+                'base_product_version': '1',
+                'base_product_type': 'ga',
+            },
             paths=mock.Mock(
                 compose=mock.Mock(
                     topdir=mock.Mock(return_value='/a/b')
@@ -46,6 +61,19 @@ class TestNotifier(unittest.TestCase):
         data = self.data.copy()
         data['compose_id'] = 'COMPOSE_ID'
         data['location'] = '/a/b'
+        data['compose_date'] = '20171031'
+        data['compose_type'] = 'production'
+        data['compose_respin'] = 1
+        data['compose_label'] = 'Updates-20171031.1021'
+        data['release_short'] = 'L'
+        data['release_name'] = 'Layer'
+        data['release_version'] = '27'
+        data['release_type'] = 'updates'
+        data['release_is_layered'] = True
+        data['base_product_name'] = 'Base'
+        data['base_product_version'] = '1'
+        data['base_product_short'] = 'B'
+        data['base_product_type'] = 'ga'
         data.update(kwargs)
         return mock.call((script, cmd),
                          stdin_data=json.dumps(data),
@@ -84,9 +112,7 @@ class TestNotifier(unittest.TestCase):
     @mock.patch('kobo.shortcuts.run')
     def test_translates_path(self, run, makedirs):
         self.compose.paths.compose.topdir.return_value = '/root/a/b'
-        self.compose.conf = {
-            "translate_paths": [("/root/", "http://example.com/compose/")],
-        }
+        self.compose.conf["translate_paths"] = [("/root/", "http://example.com/compose/")]
 
         run.return_value = (0, None)
 

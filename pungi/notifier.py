@@ -45,6 +45,23 @@ class PungiNotifier(object):
             self.compose, self.compose.paths.compose.topdir())
         data.setdefault('location', location)
 
+        # Add information about the compose itself.
+        data.setdefault('compose_date', self.compose.compose_date)
+        data.setdefault('compose_type', self.compose.compose_type)
+        data.setdefault('compose_respin', self.compose.compose_respin)
+        data.setdefault('compose_label', self.compose.compose_label)
+        data.setdefault('release_short', self.compose.conf['release_short'])
+        data.setdefault('release_name', self.compose.conf['release_name'])
+        data.setdefault('release_version', self.compose.conf['release_version'])
+        data.setdefault('release_type', self.compose.conf['release_type'].lower())
+        data.setdefault('release_is_layered', self.compose.conf["release_is_layered"])
+
+        if self.compose.conf['release_is_layered']:
+            data['base_product_name'] = self.compose.conf["base_product_name"]
+            data['base_product_version'] = self.compose.conf["base_product_version"]
+            data['base_product_short'] = self.compose.conf["base_product_short"]
+            data['base_product_type'] = self.compose.conf["base_product_type"].lower()
+
     def send(self, msg, workdir=None, **kwargs):
         """Send a message.
 
