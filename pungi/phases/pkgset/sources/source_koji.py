@@ -42,7 +42,7 @@ except:
 
 def get_pdc_client_session(compose):
     if not WITH_MODULES:
-        compose.log_warning("pdc_client module is not installed, "
+        compose.log_warning("pdc_client or modulemd  module is not installed, "
                             "support for modules is disabled")
         return None
     try:
