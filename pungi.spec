@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.19
+Version:        4.1.20
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -105,6 +105,48 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Nov 01 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.20-1
+- image-build: Drop suffixes from configuration (lsedlar)
+- kojiwrapper: Deal with multiple values for image-build (lsedlar)
+- Add modulemd to the missing module error (patrick)
+- notification: Add more info into the messages (lsedlar)
+- notification: Fix running on Python 3 (lsedlar)
+- remove remaining hard coded createrepo threads (onosek)
+- tests: Fix remaining missing assertions (lsedlar)
+- tests: Work with older unittest2 (lsedlar)
+- tests: Skip testing pdc logs if dependencies are not installed (lsedlar)
+- Log PDC communications and info for modular composes (dowang)
+- Update documentation section "Contributing to Pungi". (onosek)
+- Reject yum gather backend on Python 3 (lsedlar)
+- Stop using deprecated pipes.quote (lsedlar)
+- Convert configparser values to string (lsedlar)
+- Explicitly decode test files as UTF-8 (lsedlar)
+- Use universal_newlines when running other commands (lsedlar)
+- Port to Python 3 (lsedlar)
+- checks: Use list of release types from productmd (patrick)
+- Add an option to make pungi-koji print its compose_dir to stdout (patrick)
+- buildinstall: Expose template arguments for lorax (lsedlar)
+- Add support for new modules naming policy with colon delimiter (jkaluza)
+- Catch the issue when PDC does not contain RPMs, but the module definition
+  says there should be some. (jkaluza)
+- pkgset: Cherry-pick packages from Koji when we know already what packages
+  will end up in compose (jkaluza)
+- config: Allow comps_file for any gather_source (lsedlar)
+- pkgset: Allow unsigned packages by empty key (lsedlar)
+- gather: Nodeps should allow noarch packages (lsedlar)
+- pkgset: Clean up path generation (lsedlar)
+- createiso: Fix logging for media split (lsedlar)
+- Raise the Exception when a symlink cannot be created. (randy)
+- Use variant UID for subvariant fallback (lsedlar)
+- Fixup for opening config dumps (lsedlar)
+- Open and close file descriptors. (rbean)
+- live-images: Honor global settings for target (lsedlar)
+- unified-isos: Stop erasing metadata on failure (lsedlar)
+- Add directory name for checksum file (lsedlar)
+- createrepo: Allow customizing number of threads (lsedlar)
+- Make ostree installer before cloud images (lsedlar)
+
+
 * Mon Sep 18 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.19-1
 - docs: Mention how input package list are interpreted (lsedlar)
 - Fix pungi-koji --version (dowang)
