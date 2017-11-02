@@ -61,6 +61,21 @@ class GatherPhase(PhaseBase):
         self.manifest.compose.date = self.compose.compose_date
         self.manifest.compose.respin = self.compose.compose_respin
 
+    def validate(self):
+        errors = []
+        try:
+            super(GatherPhase, self).validate()
+        except ValueError as exc:
+            errors = exc.message.split('\n')
+
+        if self.compose.conf['gather_source'] == 'module':
+            from pungi.phases.pkgset.sources import source_koji
+            if not source_koji.WITH_MODULES:
+                errors.append('Modular compose requires pdc_client and modulemd packages.')
+
+        if errors:
+            raise ValueError('\n'.join(errors))
+
     def _write_manifest(self):
         self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
         self.manifest.dump(self.manifest_file)
