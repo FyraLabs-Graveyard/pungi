@@ -4,6 +4,7 @@ import mock
 import os
 import sys
 import unittest
+import itertools
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -75,3 +76,35 @@ class TestIsoUtils(unittest.TestCase):
         self.assertEqual(len(mock_run.call_args_list), 1)
         self.assertEqual(len(mock_unmount.call_args_list), 0)
         self.assertEqual(len(log.mock_calls), 1)
+
+
+class TestCmpGraftPoints(unittest.TestCase):
+    def assertSorted(self, *args):
+        """Tests that all permutations of arguments yield the same sorted results."""
+        for perm in itertools.permutations(args):
+            self.assertEqual(sorted(perm, key=iso.graft_point_sort_key),
+                             list(args))
+
+    def test_eq(self):
+        self.assertSorted('pkgs/foo.rpm', 'pkgs/foo.rpm')
+
+    def test_rpms_sorted_alphabetically(self):
+        self.assertSorted('pkgs/bar.rpm', 'pkgs/foo.rpm')
+
+    def test_images_sorted_alphabetically(self):
+        self.assertSorted('aaa.img', 'images/foo', 'isolinux/foo')
+
+    def test_other_files_sorted_alphabetically(self):
+        self.assertSorted('bar.txt', 'foo.txt')
+
+    def test_rpms_after_images(self):
+        self.assertSorted('foo.ins', 'bar.rpm')
+
+    def test_other_after_images(self):
+        self.assertSorted('EFI/anything', 'zzz.txt')
+
+    def test_rpm_after_other(self):
+        self.assertSorted('bbb.txt', 'aaa.rpm')
+
+    def test_all_kinds(self):
+        self.assertSorted('etc/file', 'ppc/file', 'c.txt', 'd.txt', 'a.rpm', 'b.rpm')

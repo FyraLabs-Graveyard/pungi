@@ -15,20 +15,12 @@
 
 
 import os
-import sys
 from fnmatch import fnmatch
 import contextlib
-from functools import cmp_to_key
 from six.moves import shlex_quote
 
 from kobo.shortcuts import force_list, relative_path, run
 from pungi import util
-
-
-# HACK: define cmp in python3
-if sys.version_info[0] == 3:
-    def cmp(a, b):
-        return (a > b) - (a < b)
 
 
 def get_boot_options(arch, createfrom, efi=True):
@@ -342,7 +334,7 @@ def write_graft_points(file_name, h, exclude=None):
         seen_dirs.add(dn)
 
     f = open(file_name, "w")
-    for i in sorted(result, key=cmp_to_key(cmp_graft_points)):
+    for i in sorted(result, key=graft_point_sort_key):
         # make sure all files required for boot come first,
         # otherwise there may be problems with booting (large LBA address, etc.)
         found = False
@@ -357,9 +349,7 @@ def write_graft_points(file_name, h, exclude=None):
 
 
 def _is_rpm(path):
-    if path.endswith(".rpm"):
-        return True
-    return False
+    return path.endswith(".rpm")
 
 
 def _is_image(path):
@@ -380,27 +370,12 @@ def _is_image(path):
     return False
 
 
-def cmp_graft_points(x, y):
-    x_is_rpm = _is_rpm(x)
-    y_is_rpm = _is_rpm(y)
-    x_is_image = _is_image(x)
-    y_is_image = _is_image(y)
-
-    if x_is_rpm and y_is_rpm:
-        return cmp(x, y)
-    if x_is_rpm:
-        return 1
-    if y_is_rpm:
-        return -1
-
-    if x_is_image and y_is_image:
-        return cmp(x, y)
-    if x_is_image:
-        return -1
-    if y_is_image:
-        return 1
-
-    return cmp(x, y)
+def graft_point_sort_key(x):
+    """
+    Images are sorted first, followed by other files. RPMs always come last.
+    In the same group paths are sorted alphabetically.
+    """
+    return (0 if _is_image(x) else 2 if _is_rpm(x) else 1, x)
 
 
 @contextlib.contextmanager
