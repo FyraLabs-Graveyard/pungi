@@ -601,6 +601,20 @@ class GetRepoFuncsTestCase(unittest.TestCase):
 
 
 class TestVersionGenerator(unittest.TestCase):
+    def setUp(self):
+        ci = mock.MagicMock()
+        ci.respin = 0
+        ci.id = 'RHEL-8.0-20180101.0'
+        ci.release.version = '8'
+        ci.date = '20160101'
+        ci.type = 'nightly'
+        ci.type_suffix = ''
+        ci.label = 'RC-1.0'
+        ci.label_major_version = '1'
+
+        self.compose = mock.MagicMock()
+        self.compose.ci_base = ci
+
     def test_unknown_generator(self):
         compose = mock.Mock()
         with self.assertRaises(RuntimeError) as ctx:
@@ -616,6 +630,10 @@ class TestVersionGenerator(unittest.TestCase):
     def test_passthrough_none(self):
         compose = mock.Mock()
         self.assertEqual(util.version_generator(compose, None), None)
+
+    def test_release_from_version_compose_id(self):
+        self.assertEqual(util.version_generator(self.compose, '!RELEASE_FROM_VERSION_COMPOSE_ID'),
+                         '8.RHEL-8.0-20180101.0')
 
 
 class TestTZOffset(unittest.TestCase):
