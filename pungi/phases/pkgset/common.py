@@ -55,7 +55,14 @@ def create_global_repo(compose, path_prefix):
     old_compose_path = None
     update_md_path = None
     if compose.old_composes:
-        old_compose_path = find_old_compose(compose.old_composes, compose.conf["release_short"], compose.conf["release_version"], compose.conf.get("base_product_short"), compose.conf.get("base_product_version"))
+        old_compose_path = find_old_compose(
+            compose.old_composes,
+            compose.ci_base.release.short,
+            compose.ci_base.release.version,
+            compose.ci_base.release.type_suffix if compose.conf['old_composes_per_release_type'] else None,
+            compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
+            compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
+        )
         if old_compose_path is None:
             compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
         else:

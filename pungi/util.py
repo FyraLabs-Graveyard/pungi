@@ -395,8 +395,8 @@ def get_file_size(path):
 
 
 def find_old_compose(old_compose_dirs, release_short, release_version,
-                     base_product_short=None, base_product_version=None,
-                     allowed_statuses=None):
+                     release_type_suffix=None, base_product_short=None,
+                     base_product_version=None, allowed_statuses=None):
     allowed_statuses = allowed_statuses or ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED")
     composes = []
 
@@ -417,12 +417,20 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
             # TODO: read .composeinfo
 
             pattern = "%s-%s" % (release_short, release_version)
+            if release_type_suffix:
+                pattern += release_type_suffix
             if base_product_short:
                 pattern += "-%s" % base_product_short
             if base_product_version:
                 pattern += "-%s" % base_product_version
 
             if not i.startswith(pattern):
+                continue
+
+            suffix = i[len(pattern):]
+            if release_type_suffix and (len(suffix) < 2 or not suffix[1].isdigit()):
+                # This covers the case where we are looking for -updates, but there
+                # is an updates-testing as well.
                 continue
 
             path = os.path.join(compose_dir, i)

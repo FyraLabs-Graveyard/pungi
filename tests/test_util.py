@@ -253,6 +253,16 @@ class TestFindOldCompose(unittest.TestCase):
         old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.1')
 
+    def test_find_correct_type(self):
+        touch(self.tmp_dir + '/Fedora-26-updates-20160229.0/STATUS', 'FINISHED')
+        touch(self.tmp_dir + '/Fedora-26-updates-testing-20160229.0/STATUS', 'FINISHED')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', '26', '-updates')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-20160229.0')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', '26', '-updates-testing')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-testing-20160229.0')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', '26')
+        self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-testing-20160229.0')
+
     def test_find_latest_with_two_digit_respin(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.9/STATUS', 'FINISHED')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.10/STATUS', 'FINISHED')

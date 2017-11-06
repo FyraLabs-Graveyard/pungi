@@ -275,6 +275,7 @@ def _get_old_package_dirs(compose, repo_dir):
         compose.old_composes,
         compose.ci_base.release.short,
         compose.ci_base.release.version,
+        compose.ci_base.release.type_suffix if compose.conf['old_composes_per_release_type'] else None,
         compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
         compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
         allowed_statuses=['FINISHED', 'FINISHED_INCOMPLETE'],

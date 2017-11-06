@@ -626,6 +626,10 @@ def make_schema():
                 "enum": ["yum", "dnf"],
             },
 
+            "old_composes_per_release_type": {
+                "type": "boolean",
+                "default": False,
+            },
             "hashed_directories": {
                 "type": "boolean",
                 "default": False,
