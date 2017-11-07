@@ -114,6 +114,7 @@ class DummyCompose(object):
                 short='test',
                 version='1.0',
                 is_layered=False,
+                type_suffix=''
             ),
         )
         self.topdir = topdir

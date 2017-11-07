@@ -260,17 +260,17 @@ class TestFindOldCompose(unittest.TestCase):
 
     def test_finds_single(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.0')
 
     def test_ignores_in_progress(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'STARTED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertIsNone(old)
 
     def test_only_considers_allowed_status(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide',
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '',
                                     allowed_statuses=['DOOMED'])
         self.assertIsNone(old)
 
@@ -278,7 +278,7 @@ class TestFindOldCompose(unittest.TestCase):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS', 'DOOMED')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.0/STATUS', 'FINISHED')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160229.1/STATUS', 'FINISHED_INCOMPLETE')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160229.1')
 
     def test_find_correct_type(self):
@@ -288,13 +288,11 @@ class TestFindOldCompose(unittest.TestCase):
         self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-20160229.0')
         old = util.find_old_compose(self.tmp_dir, 'Fedora', '26', '-updates-testing')
         self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-testing-20160229.0')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', '26')
-        self.assertEqual(old, self.tmp_dir + '/Fedora-26-updates-testing-20160229.0')
 
     def test_find_latest_with_two_digit_respin(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.9/STATUS', 'FINISHED')
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.n.10/STATUS', 'FINISHED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-20160228.n.10')
 
     def test_finds_ignores_other_files(self):
@@ -302,22 +300,22 @@ class TestFindOldCompose(unittest.TestCase):
         touch(self.tmp_dir + '/Fedora-Rawhide-20160228.0/STATUS/file', 'also not a compose')
         touch(self.tmp_dir + '/Fedora-24-20160229.0/STATUS', 'FINISHED')
         touch(self.tmp_dir + '/Another-Rawhide-20160229.0/STATUS', 'FINISHED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertIsNone(old)
 
     def test_search_in_file(self):
         touch(self.tmp_dir + '/file')
-        old = util.find_old_compose(self.tmp_dir + '/file', 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir + '/file', 'Fedora', 'Rawhide', '')
         self.assertIsNone(old)
 
     def test_skips_symlink(self):
         os.symlink(self.tmp_dir, self.tmp_dir + '/Fedora-Rawhide-20160229.0')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide')
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '')
         self.assertIsNone(old)
 
     def test_finds_layered_product(self):
         touch(self.tmp_dir + '/Fedora-Rawhide-Base-1-20160229.0/STATUS', 'FINISHED')
-        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide',
+        old = util.find_old_compose(self.tmp_dir, 'Fedora', 'Rawhide', '',
                                     base_product_short='Base', base_product_version='1')
         self.assertEqual(old, self.tmp_dir + '/Fedora-Rawhide-Base-1-20160229.0')
 

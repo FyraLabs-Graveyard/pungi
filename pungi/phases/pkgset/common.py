@@ -57,7 +57,7 @@ def get_create_global_repo_cmd(compose, path_prefix):
             compose.old_composes,
             compose.ci_base.release.short,
             compose.ci_base.release.version,
-            compose.ci_base.release.type_suffix if compose.conf['old_composes_per_release_type'] else None,
+            compose.ci_base.release.type_suffix,
             compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
             compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
         )

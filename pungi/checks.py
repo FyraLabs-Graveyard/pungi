@@ -643,8 +643,7 @@ def make_schema():
             },
 
             "old_composes_per_release_type": {
-                "type": "boolean",
-                "default": False,
+                "deprecated": "remove it. It is the default behavior now"
             },
             "hashed_directories": {
                 "type": "boolean",
