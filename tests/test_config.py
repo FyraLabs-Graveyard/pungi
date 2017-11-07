@@ -213,31 +213,6 @@ class CreaterepoConfigTestCase(ConfigTestCase):
 
 
 class GatherConfigTestCase(ConfigTestCase):
-    def test_source_comps_requires_comps(self):
-        cfg = load_config(
-            pkgset_source='koji',
-            pkgset_koji_tag="f25",
-            gather_source='comps',
-            gather_source_mapping='foo'
-        )
-
-        self.assertValidation(
-            cfg,
-            [checks.REQUIRES.format('gather_source', 'comps', 'comps_file'),
-             checks.CONFLICTS.format('gather_source', 'comps', 'gather_source_mapping')])
-
-    def test_source_json_requires_mapping(self):
-        cfg = load_config(
-            pkgset_source='koji',
-            pkgset_koji_tag="f25",
-            gather_source='json',
-            comps_file='comps',
-        )
-
-        self.assertValidation(
-            cfg,
-            [checks.REQUIRES.format('gather_source', 'json', 'gather_source_mapping')])
-
     def test_dnf_backend_is_default_on_py3(self):
         cfg = load_config(
             pkgset_source='koji',

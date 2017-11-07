@@ -107,32 +107,37 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
-    def pungi_conf(self, arch=None, variant=None, create_dir=True):
+    def pungi_conf(self, arch=None, variant=None, create_dir=True, source_name=None):
         """
         Examples:
             work/x86_64/pungi/x86_64.conf
             work/x86_64/pungi/Server.x86_64.conf
         """
         arch = arch or "global"
-        if variant is None:
-            file_name = "%s.conf" % arch
-        else:
-            file_name = "%s.%s.conf" % (variant.uid, arch)
+        file_name = ''
+        if variant:
+            file_name += variant.uid + '.'
+        file_name += arch + '.'
+        if source_name:
+            file_name += source_name + '.'
+        file_name += 'conf'
         path = os.path.join(self.topdir(arch, create_dir=create_dir), "pungi")
         if create_dir:
             makedirs(path)
         path = os.path.join(path, file_name)
         return path
 
-    def pungi_log(self, arch=None, variant=None, create_dir=True):
+    def pungi_log(self, arch=None, variant=None, create_dir=True, source_name=None):
         """
         Examples:
             work/x86_64/pungi/x86_64.log
             work/x86_64/pungi/Server.x86_64.log
         """
         path = self.pungi_conf(arch, variant, create_dir=create_dir)
-        path = path[:-5] + ".log"
-        return path
+        path = path[:-5]
+        if source_name:
+            path += '.' + source_name
+        return path + ".log"
 
     def pungi_cache_dir(self, arch, variant=None, create_dir=True):
         """

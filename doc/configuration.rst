@@ -35,7 +35,6 @@ Minimal Config Example
     createrepo_checksum = "sha256"
 
     # GATHER
-    gather_source = "comps"
     gather_method = "deps"
     greedy_method = "build"
     check_deps = False
@@ -546,16 +545,13 @@ Gather Settings
 Options
 -------
 
-**gather_source** [mandatory]
-    (*str*) -- from where to read initial package list; expected values:
-    ``comps``, ``none``, ``module``
-
-    When ``comps`` is selected, you have to specify ``comps_file`` option. When
-    ``module`` is selected, you have to :ref:`configure PDC API url <pdc-settings>`.
-
 **gather_method** [mandatory]
-    (*str*) -- Options are ``deps`` and ``nodeps``. Specifies whether package
-    dependencies should be pulled in as well.
+    (*str*|*dict*) -- Options are ``deps`` and ``nodeps``. Specifies whether
+    package dependencies should be pulled in as well. Either a single value or
+    a dictionary mapping variant UID and source type to a value. Make sure only
+    one regex matches each variant, as there is no guarantee which value will
+    be used if there are multiple matching ones. All used sources must have a
+    configured method.
 
 **gather_fulltree** = False
     (*bool*) -- When set to ``True`` all RPMs built from an SRPM will always be
@@ -671,9 +667,9 @@ Options
     such cases are still reported as warnings in the log.
 
 **gather_source_mapping**
-    (*str*) -- Only use when ``gather_source = "json"``. The value should be a
-    path to JSON file with following mapping: ``{variant: {arch: {rpm_name:
-    [rpm_arch|None]}}}``.
+    (*str*) -- JSON mapping with initial packages for the compose. The value
+    should be a path to JSON file with following mapping: ``{variant: {arch:
+    {rpm_name: [rpm_arch|None]}}}``.
 
 **gather_profiler** = False
     (*bool*) -- When set to ``True`` the gather tool will produce additional
@@ -685,11 +681,23 @@ Example
 -------
 ::
 
-    gather_source = "comps"
     gather_method = "deps"
     greedy_method = "build"
     check_deps = False
     hashed_directories = True
+
+    gather_method = {
+        "^Everything$": {
+            "comps": "deps"     # traditional content defined by comps groups
+        },
+        "^Modular$": {
+            "module": "nodeps"  # Modules do not need dependencies
+        },
+        "^Mixed$": {            # Mixed content in one variant
+            "comps": "deps",
+            "module": "nodeps"
+        }
+    }
 
     additional_packages = [
         # bz#123456

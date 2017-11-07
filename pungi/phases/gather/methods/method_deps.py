@@ -40,8 +40,9 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
 
         write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
                            multilib_whitelist, multilib_blacklist,
-                           fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
-        result, missing_deps = resolve_deps(self.compose, arch, variant)
+                           fulltree_excludes=fulltree_excludes, prepopulate=prepopulate,
+                           source_name=self.source_name)
+        result, missing_deps = resolve_deps(self.compose, arch, variant, source_name=self.source_name)
         check_deps(self.compose, arch, variant, missing_deps)
         return result
 
@@ -61,10 +62,10 @@ def _format_packages(pkgs):
 
 def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
                        multilib_whitelist, multilib_blacklist, fulltree_excludes=None,
-                       prepopulate=None):
+                       prepopulate=None, source_name=None):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
-    pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
+    pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch, source_name=source_name)
     msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
     if compose.DEBUG and os.path.isfile(pungi_cfg):
@@ -95,9 +96,9 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         prepopulate=prepopulate)
 
 
-def resolve_deps(compose, arch, variant):
+def resolve_deps(compose, arch, variant, source_name=None):
     pungi_wrapper = PungiWrapper()
-    pungi_log = compose.paths.work.pungi_log(arch, variant)
+    pungi_log = compose.paths.work.pungi_log(arch, variant, source_name=source_name)
 
     msg = "Running pungi (arch: %s, variant: %s)" % (arch, variant)
     if compose.DEBUG and os.path.exists(pungi_log):
@@ -107,7 +108,7 @@ def resolve_deps(compose, arch, variant):
             return res, broken_deps
 
     compose.log_info("[BEGIN] %s" % msg)
-    pungi_conf = compose.paths.work.pungi_conf(arch, variant)
+    pungi_conf = compose.paths.work.pungi_conf(arch, variant, source_name=source_name)
 
     multilib_methods = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
 

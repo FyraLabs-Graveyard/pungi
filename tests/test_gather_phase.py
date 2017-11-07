@@ -460,7 +460,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
     def test_no_variant(self):
         compose = helpers.DummyCompose(self.topdir, {})
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', None)
+            compose, 'x86_64', None, 'comps')
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [])
@@ -473,7 +473,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.variants['Server'])
+            compose, 'x86_64', compose.variants['Server'], 'comps')
         self.assertItemsEqual(packages, ['foo'])
         self.assertItemsEqual(groups, ['core'])
         self.assertItemsEqual(filter_packages, [])
@@ -490,7 +490,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.variants['Server'], package_sets={'x86_64': pkgset})
+            compose, 'x86_64', compose.variants['Server'], 'comps', package_sets={'x86_64': pkgset})
         self.assertItemsEqual(packages, [('system-release-server', None)])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [('system-release', None)])
@@ -509,7 +509,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.variants['Server'], package_sets={'x86_64': pkgset})
+            compose, 'x86_64', compose.variants['Server'], 'comps', package_sets={'x86_64': pkgset})
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [])
@@ -534,7 +534,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.all_variants['Server-optional'])
+            compose, 'x86_64', compose.all_variants['Server-optional'], 'comps')
         self.assertItemsEqual(packages, ['server-pkg', 'addon-pkg', 'opt-pkg'])
         self.assertItemsEqual(groups, ['server-group', 'addon-group', 'opt-group'])
         self.assertItemsEqual(filter_packages, [])
@@ -554,7 +554,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.all_variants['Server-optional'])
+            compose, 'x86_64', compose.all_variants['Server-optional'], 'comps')
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [])
@@ -572,7 +572,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.all_variants['Server'])
+            compose, 'x86_64', compose.all_variants['Server'], 'comps')
         self.assertItemsEqual(packages, [('pkg', None), ('foo', 'x86_64')])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [])
@@ -591,7 +591,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
 
         with self.assertRaises(ValueError) as ctx:
             packages, groups, filter_packages = gather.get_variant_packages(
-                compose, 'x86_64', compose.all_variants['Server'])
+                compose, 'x86_64', compose.all_variants['Server'], 'comps')
 
         self.assertIn('Incompatible package arch', str(ctx.exception))
 
@@ -641,17 +641,19 @@ class TestGatherPackages(helpers.PungiTestCase):
         pkg_set = mock.Mock()
         self.assertEqual(
             gather.gather_packages(compose, 'x86_64', compose.variants['Server'], pkg_set),
-            get_gather_method.return_value.return_value.return_value
+            {'rpm': [], 'srpm': [], 'debuginfo': []}
         )
         self.assertEqual(get_gather_method.call_args_list,
-                         [mock.call(compose.conf['gather_method'])])
+                         [mock.call(compose.conf['gather_method'])] * 3)
         self.assertEqual(get_variant_packages.call_args_list,
-                         [mock.call(compose, 'x86_64', compose.variants['Server'], pkg_set)])
+                         [mock.call(compose, 'x86_64', compose.variants['Server'], 'module', pkg_set),
+                          mock.call(compose, 'x86_64', compose.variants['Server'], 'comps', pkg_set),
+                          mock.call(compose, 'x86_64', compose.variants['Server'], 'json', pkg_set)])
         self.assertEqual(
             get_gather_method.return_value.return_value.call_args_list,
             [mock.call('x86_64', compose.variants['Server'], packages, groups,
                        filters, set(), set(), pkg_set, fulltree_excludes=set(),
-                       prepopulate=set())]
+                       prepopulate=set())] * 3
         )
 
     @mock.patch('pungi.phases.gather.get_variant_packages')
@@ -679,18 +681,35 @@ class TestGatherPackages(helpers.PungiTestCase):
         pkg_set = mock.Mock()
         self.assertEqual(
             gather.gather_packages(compose, 'x86_64', compose.variants['Server'], pkg_set),
-            get_gather_method.return_value.return_value.return_value
+            {'rpm': [], 'srpm': [], 'debuginfo': []}
         )
         self.assertEqual(get_gather_method.call_args_list,
-                         [mock.call(compose.conf['gather_method'])])
+                         [mock.call(compose.conf['gather_method'])] * 3)
         self.assertEqual(get_variant_packages.call_args_list,
-                         [mock.call(compose, 'x86_64', compose.variants['Server'], pkg_set)])
+                         [mock.call(compose, 'x86_64', compose.variants['Server'], 'module', pkg_set),
+                          mock.call(compose, 'x86_64', compose.variants['Server'], 'comps', pkg_set),
+                          mock.call(compose, 'x86_64', compose.variants['Server'], 'json', pkg_set)])
         self.assertEqual(
             get_gather_method.return_value.return_value.call_args_list,
             [mock.call('x86_64', compose.variants['Server'], packages, groups,
                        filters, set(['white']), set(['black']), pkg_set,
-                       fulltree_excludes=set(), prepopulate=set())]
+                       fulltree_excludes=set(), prepopulate=set())] * 3
         )
+
+    @mock.patch('pungi.phases.gather.get_variant_packages')
+    @mock.patch('pungi.phases.gather.get_gather_method')
+    def test_per_source_method(self, get_gather_method, get_variant_packages):
+        packages, groups, filters = mock.Mock(), mock.Mock(), mock.Mock()
+        get_variant_packages.return_value = (packages, groups, filters)
+        compose = helpers.DummyCompose(self.topdir, {
+            'multilib_whitelist': {'*': ['white']},
+            'multilib_blacklist': {'*': ['black']},
+            'gather_method': {'^Server$': {'comps': 'deps', 'module': 'nodeps', 'json': 'deps'}},
+        })
+        pkg_set = mock.Mock()
+        gather.gather_packages(compose, 'x86_64', compose.variants['Server'], pkg_set),
+        self.assertEqual(get_gather_method.call_args_list,
+                         [mock.call('nodeps'), mock.call('deps'), mock.call('deps')])
 
 
 class TestWritePrepopulate(helpers.PungiTestCase):

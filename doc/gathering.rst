@@ -8,9 +8,9 @@ a subset of the content targeted at a particular use case.
 There are different types of variants. The type affects how packages are
 gathered into the variant.
 
-The inputs for gathering are defined by the ``gather_source`` option. It
-provides a list of package names, comps groups names and a list of packages
-that should be filtered out.
+The inputs for gathering are defined by various gather sources. Packages from
+all sources are collected to create a big list of package names, comps groups
+names and a list of packages that should be filtered out.
 
 .. note::
    The inputs for both explicit package list and comps file are interpreted as

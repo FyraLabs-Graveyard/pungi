@@ -204,7 +204,6 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                                          pickle_dumps):
         self.compose = helpers.DummyCompose(self.topdir, {
             'gather_method': 'nodeps',
-            'gather_source': 'none',
             'pkgset_koji_tag': 'f25',
             'sigkeys': mock.Mock(),
             'additional_packages': [

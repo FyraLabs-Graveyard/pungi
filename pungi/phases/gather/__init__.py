@@ -24,7 +24,7 @@ from productmd.rpms import Rpms
 from pungi.wrappers.scm import get_file_from_scm
 from .link import link_files
 
-from pungi.util import get_arch_variant_data, get_arch_data
+from pungi.util import get_arch_variant_data, get_arch_data, get_variant_data
 from pungi.phases.base import PhaseBase
 from pungi.arch import split_name_arch, get_compatible_arches
 
@@ -68,10 +68,13 @@ class GatherPhase(PhaseBase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        if self.compose.conf['gather_source'] == 'module':
-            from pungi.phases.pkgset.sources import source_koji
-            if not source_koji.WITH_MODULES:
-                errors.append('Modular compose requires pdc_client and modulemd packages.')
+        # This must be imported here to avoid circular deps problems.
+        from pungi.phases.pkgset.sources import source_koji
+        if not source_koji.WITH_MODULES:
+            # Modules are not supported, check if we need them
+            for variant in self.compose.variants.values():
+                if variant.modules:
+                    errors.append('Modular compose requires pdc_client and modulemd packages.')
 
         if errors:
             raise ValueError('\n'.join(errors))
@@ -126,7 +129,14 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     # multilib white/black-list is per-arch, common for all variants
     multilib_whitelist = get_multilib_whitelist(compose, arch)
     multilib_blacklist = get_multilib_blacklist(compose, arch)
-    GatherMethod = get_gather_method(compose.conf["gather_method"])
+    methods = compose.conf["gather_method"]
+    global_method_name = methods
+    if isinstance(methods, dict):
+        try:
+            methods = get_variant_data(compose.conf, 'gather_method', variant)[-1]
+            global_method_name = None
+        except IndexError:
+            raise RuntimeError("Variant %s has no configured gather_method" % variant.uid)
 
     msg = "Gathering packages (arch: %s, variant: %s)" % (arch, variant)
 
@@ -136,17 +146,43 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
 
     compose.log_info("[BEGIN] %s" % msg)
 
-    packages, groups, filter_packages = get_variant_packages(compose, arch, variant, package_sets)
+    result = {
+        "rpm": [],
+        "srpm": [],
+        "debuginfo": [],
+    }
+
     prepopulate = get_prepopulate_packages(compose, arch, variant)
     fulltree_excludes = fulltree_excludes or set()
 
-    method = GatherMethod(compose)
-    pkg_map = method(arch, variant, packages, groups, filter_packages,
-                     multilib_whitelist, multilib_blacklist, package_sets,
-                     fulltree_excludes=fulltree_excludes, prepopulate=prepopulate)
+    for source_name in ('module', 'comps', 'json'):
+
+        packages, groups, filter_packages = get_variant_packages(compose, arch, variant,
+                                                                 source_name, package_sets)
+        if not packages and not groups:
+            # No inputs, nothing to do really.
+            continue
+
+        try:
+            method_name = global_method_name or methods[source_name]
+        except KeyError:
+            raise RuntimeError("Variant %s has no configured gather_method for source %s"
+                               % (variant.uid, source_name))
+
+        GatherMethod = get_gather_method(method_name)
+        method = GatherMethod(compose)
+        method.source_name = source_name
+        compose.log_debug("Gathering source %s, method %s" % (source_name, method_name))
+        pkg_map = method(arch, variant, packages, groups, filter_packages,
+                         multilib_whitelist, multilib_blacklist, package_sets,
+                         fulltree_excludes=fulltree_excludes,
+                         prepopulate=prepopulate if source_name == 'comps' else set())
+
+        for t in ('rpm', 'srpm', 'debuginfo'):
+            result[t].extend(pkg_map.get(t, []))
 
     compose.log_info("[DONE ] %s" % msg)
-    return pkg_map
+    return result
 
 
 def write_packages(compose, arch, variant, pkg_map, path_prefix):
@@ -415,7 +451,7 @@ def get_lookaside_repos(compose, arch, variant):
     return get_arch_variant_data(compose.conf, "gather_lookaside_repos", arch, variant)
 
 
-def get_variant_packages(compose, arch, variant, package_sets=None):
+def get_variant_packages(compose, arch, variant, source_name, package_sets=None):
     """Find inputs for depsolving of variant.arch combination.
 
     Returns a triple: a list of input packages, a list of input comps groups
@@ -429,17 +465,27 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
     When system-release packages should be filtered, the ``package_sets``
     argument is required.
     """
-    GatherSource = get_gather_source(compose.conf["gather_source"])
+    packages, groups, filter_packages = set(), set(), set()
+    GatherSource = get_gather_source(source_name)
     source = GatherSource(compose)
-    packages, groups = source(arch, variant)
-    filter_packages = set()
+    p, g = source(arch, variant)
+
+    if source_name != "comps" and not p and not g:
+        # For modules and json source, if the source did not return anything,
+        # we should skip all further work. Additional packages and possibly
+        # system-release will be added to comps source.
+        return packages, groups, filter_packages
+
+    packages |= p
+    groups |= g
 
     if variant is None:
         # no variant -> no parent -> we have everything we need
         # doesn't make sense to do any package filtering
         return packages, groups, filter_packages
 
-    packages |= get_additional_packages(compose, arch, variant)
+    if source_name == 'comps':
+        packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
     if compose.conf['filter_system_release_packages']:
@@ -452,13 +498,13 @@ def get_variant_packages(compose, arch, variant, package_sets=None):
         for var in variant.parent.get_variants(
                 arch=arch, types=["self", "variant", "addon", "layered-product"]):
             var_packages, var_groups, _ = get_variant_packages(
-                compose, arch, var, package_sets=package_sets)
+                compose, arch, var, source_name, package_sets=package_sets)
             packages |= var_packages
             groups |= var_groups
 
     if variant.type in ["addon", "layered-product"]:
         var_packages, var_groups, _ = get_variant_packages(
-            compose, arch, variant.parent, package_sets=package_sets)
+            compose, arch, variant.parent, source_name, package_sets=package_sets)
         packages |= var_packages
         groups |= var_groups
 
@@ -517,9 +563,6 @@ def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
     """
     Returns the list of names of packages and list of names of groups which
     would be included in a compose as GATHER phase result.
-    This works only for "comps" or "json" gather_source. For "module"
-    gather_source, this always return an empty list, because it is not clear
-    what packages will end up in a compose before the gather phase is run.
 
     :param str arch: Arch to return packages for. If not set, returns packages
         for all arches.
@@ -531,30 +574,28 @@ def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
     :param include_prepopulated: When True, the prepopulated packages will
         be included in a list of packages.
     """
-    if compose.conf["gather_source"] == "module":
-        return ([], [])
-
-    arches = [arch] if arch else compose.get_arches()
-
-    GatherSource = get_gather_source(compose.conf["gather_source"])
-    src = GatherSource(compose)
-
     packages = set([])
     groups = set([])
-    for arch in arches:
-        pkgs, grps = src(arch, variant)
-        groups = groups.union(set(grps))
+    for source_name in ('module', 'comps', 'json'):
+        GatherSource = get_gather_source(source_name)
+        src = GatherSource(compose)
 
-        additional_packages = get_additional_packages(compose, arch, None)
-        for pkg_name, pkg_arch in pkgs | additional_packages:
-            if not include_arch or pkg_arch is None:
-                packages.add(pkg_name)
-            else:
-                packages.add("%s.%s" % (pkg_name, pkg_arch))
+        arches = [arch] if arch else compose.get_arches()
 
-        if include_prepopulated:
-            prepopulated = get_prepopulate_packages(
-                compose, arch, variant, include_arch)
-            packages = packages.union(prepopulated)
+        for arch in arches:
+            pkgs, grps = src(arch, variant)
+            groups = groups.union(set(grps))
+
+            additional_packages = get_additional_packages(compose, arch, None)
+            for pkg_name, pkg_arch in pkgs | additional_packages:
+                if not include_arch or pkg_arch is None:
+                    packages.add(pkg_name)
+                else:
+                    packages.add("%s.%s" % (pkg_name, pkg_arch))
+
+            if include_prepopulated:
+                prepopulated = get_prepopulate_packages(
+                    compose, arch, variant, include_arch)
+                packages = packages.union(prepopulated)
 
     return list(packages), list(groups)

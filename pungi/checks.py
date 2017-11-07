@@ -554,12 +554,30 @@ def make_schema():
             },
 
             "gather_method": {
-                "type": "string",
-                "enum": ["deps", "nodeps"],
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "patternProperties": {
+                            ".+": {
+                                "type": "object",
+                                "patternProperties": {
+                                    "^module|comps|json$": {
+                                        "type": "string",
+                                        "enum": ["deps", "nodeps"],
+                                    }
+                                }
+                            }
+                        },
+                        "additionalProperties": False,
+                    },
+                    {
+                        "type": "string",
+                        "enum": ["deps", "nodeps"],
+                    }
+                ],
             },
             "gather_source": {
-                "type": "string",
-                "enum": ["module", "json", "comps", "none"],
+                "deprecated": "remove it",
             },
             "gather_fulltree": {
                 "type": "boolean",
@@ -706,7 +724,7 @@ def make_schema():
                 "type": "string",
                 "enum": ["lorax", "buildinstall"],
             },
-            "buildinstall_topdir":  {"type": "string"},
+            "buildinstall_topdir": {"type": "string"},
             "buildinstall_kickstart": {"$ref": "#/definitions/str_or_scm_dict"},
             "buildinstall_use_guestmount": {"type": "boolean", "default": True},
 
@@ -1067,7 +1085,7 @@ def make_schema():
                      "release_is_layered",
                      "variants_file", "sigkeys",
                      "runroot", "pkgset_source",
-                     "gather_source", "gather_method"],
+                     "gather_method"],
         "additionalProperties": False,
     }
 
@@ -1118,15 +1136,6 @@ def get_num_cpus():
 # encountered and its value satisfies the lambda, an error is reported for each
 # missing (for requires) option in the list.
 CONFIG_DEPS = {
-    "gather_source": {
-        "conflicts": [
-            (lambda val: val != 'json', ['gather_source_mapping']),
-        ],
-        "requires": [
-            (lambda val: val == 'json', ['gather_source_mapping']),
-            (lambda val: val == 'comps', ['comps_file']),
-        ]
-    },
     "productimg": {
         "requires": (
             (lambda x: bool(x), ["productimg_install_class"]),

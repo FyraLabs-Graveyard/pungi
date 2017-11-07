@@ -28,7 +28,10 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
 
     def __call__(self, arch, variant, *args, **kwargs):
-        log_file = self.compose.paths.log.log_file(arch, 'gather-nodeps-%s' % variant.uid)
+        fname = 'gather-nodeps-%s' % variant.uid
+        if self.source_name:
+            fname += '-' + self.source_name
+        log_file = self.compose.paths.log.log_file(arch, fname)
         with open(log_file, 'w') as log:
             return self.worker(log, arch, variant, *args, **kwargs)
 
