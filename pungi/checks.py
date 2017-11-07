@@ -1172,7 +1172,6 @@ CONFIG_DEPS = {
     },
     "pkgset_source": {
         "requires": [
-            (lambda x: x == "koji", ["pkgset_koji_tag"]),
             (lambda x: x == "repos", ["pkgset_repos"]),
         ],
         "conflicts": [

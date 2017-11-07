@@ -30,7 +30,6 @@ class PkgsetConfigTestCase(ConfigTestCase):
     def test_validate_minimal_pkgset_koji(self):
         cfg = load_config(
             pkgset_source='koji',
-            pkgset_koji_tag="f25",
         )
 
         self.assertValidation(cfg)
@@ -64,8 +63,7 @@ class PkgsetConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.REQUIRES.format('pkgset_source', 'koji', 'pkgset_koji_tag'),
-             checks.CONFLICTS.format('pkgset_source', 'koji', 'pkgset_repos')])
+            [checks.CONFLICTS.format('pkgset_source', 'koji', 'pkgset_repos')])
 
     def test_pkgset_multiple_koji_tags(self):
         cfg = load_config(
