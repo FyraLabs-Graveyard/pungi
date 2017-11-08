@@ -394,8 +394,8 @@ def mount(image, logger=None):
         if ret != 0:
             # The mount command failed, something is wrong. Log the output and raise an exception.
             if logger:
-                logger.log_error('Command %s exited with %s and output:\n%s'
-                                 % (cmd, ret, out))
+                logger.error('Command %s exited with %s and output:\n%s'
+                             % (cmd, ret, out))
             raise RuntimeError('Failed to mount %s' % image)
         try:
             yield mount_dir
