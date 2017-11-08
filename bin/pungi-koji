@@ -397,7 +397,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     # write treeinfo before ISOs are created
     for variant in compose.get_variants():
         for arch in variant.arches + ["src"]:
-            pungi.metadata.write_tree_info(compose, arch, variant)
+            pungi.metadata.write_tree_info(compose, arch, variant, bi=buildinstall_phase)
 
     # write .discinfo and media.repo before ISOs are created
     for variant in compose.get_variants():

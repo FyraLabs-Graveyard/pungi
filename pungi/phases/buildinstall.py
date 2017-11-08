@@ -45,6 +45,8 @@ class BuildinstallPhase(PhaseBase):
         # A set of (variant_uid, arch) pairs that completed successfully. This
         # is needed to skip copying files for failed tasks.
         self.pool.finished_tasks = set()
+        self.buildinstall_method = self.compose.conf.get("buildinstall_method")
+        self.used_lorax = self.buildinstall_method == 'lorax'
 
     def skip(self):
         if PhaseBase.skip(self):
@@ -120,7 +122,6 @@ class BuildinstallPhase(PhaseBase):
         product = self.compose.conf["release_name"]
         version = self.compose.conf["release_version"]
         release = self.compose.conf["release_version"]
-        buildinstall_method = self.compose.conf["buildinstall_method"]
         disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
         for arch in self.compose.get_arches():
@@ -132,7 +133,7 @@ class BuildinstallPhase(PhaseBase):
             if final_output_dir != output_dir:
                 repo_baseurl = translate_path(self.compose, repo_baseurl)
 
-            if buildinstall_method == "lorax":
+            if self.buildinstall_method == "lorax":
                 buildarch = get_valid_arches(arch)[0]
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     if variant.is_empty:
@@ -142,7 +143,7 @@ class BuildinstallPhase(PhaseBase):
                         (variant,
                          self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid))
                     )
-            elif buildinstall_method == "buildinstall":
+            elif self.buildinstall_method == "buildinstall":
                 volid = get_volid(self.compose, arch, disc_type=disc_type)
                 commands.append(
                     (None,
@@ -156,7 +157,7 @@ class BuildinstallPhase(PhaseBase):
                                                 volid=volid))
                 )
             else:
-                raise ValueError("Unsupported buildinstall method: %s" % buildinstall_method)
+                raise ValueError("Unsupported buildinstall method: %s" % self.buildinstall_method)
 
             for (variant, cmd) in commands:
                 self.pool.add(BuildinstallThread(self.pool))
@@ -164,11 +165,11 @@ class BuildinstallPhase(PhaseBase):
 
         self.pool.start()
 
-    def copy_files(self):
-        buildinstall_method = self.compose.conf["buildinstall_method"]
-        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
+    def succeeded(self, variant, arch):
+        return (variant.uid if self.used_lorax else None, arch) in self.pool.finished_tasks
 
-        used_lorax = buildinstall_method == 'lorax'
+    def copy_files(self):
+        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
         # copy buildinstall files to the 'os' dir
         kickstart_file = get_kickstart_file(self.compose)
@@ -176,7 +177,7 @@ class BuildinstallPhase(PhaseBase):
             for variant in self.compose.get_variants(arch=arch, types=["self", "variant"]):
                 if variant.is_empty:
                     continue
-                if (variant.uid if used_lorax else None, arch) not in self.pool.finished_tasks:
+                if not self.succeeded(variant, arch):
                     self.compose.log_debug(
                         'Buildinstall: skipping copying files for %s.%s due to failed runroot task'
                         % (variant.uid, arch))
@@ -186,7 +187,7 @@ class BuildinstallPhase(PhaseBase):
 
                 # Lorax runs per-variant, so we need to tweak the source path
                 # to include variant.
-                if used_lorax:
+                if self.used_lorax:
                     buildinstall_dir = os.path.join(buildinstall_dir, variant.uid)
 
                 if not os.path.isdir(buildinstall_dir) or not os.listdir(buildinstall_dir):

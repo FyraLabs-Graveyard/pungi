@@ -185,7 +185,7 @@ def write_compose_info(compose):
     compose.log_info("[DONE ] %s" % msg)
 
 
-def write_tree_info(compose, arch, variant, timestamp=None):
+def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     if variant.type in ("addon", ) or variant.is_empty:
         return
 
@@ -288,7 +288,7 @@ def write_tree_info(compose, arch, variant, timestamp=None):
             self.release = LoraxProduct(self)
 
     # images
-    if variant.type == "variant":
+    if variant.type == "variant" and bi.succeeded(variant, arch):
         os_tree = compose.paths.compose.os_tree(arch, variant)
 
         # clone all but 'general' sections from buildinstall .treeinfo
