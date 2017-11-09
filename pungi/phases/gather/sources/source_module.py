@@ -28,6 +28,11 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
     def __call__(self, arch, variant):
+        logfile = self.compose.paths.log.log_file(arch, 'source-module-%s' % variant.uid)
+        with open(logfile, 'w') as log:
+            return self.worker(log, arch, variant)
+
+    def worker(self, log, arch, variant):
         import yaml
 
         groups = set()
@@ -46,9 +51,11 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 for a in compatible_arches
             ], [])
             for rpm_obj in rpms:
+                log.write('Examining %s for inclusion\n' % rpm_obj)
                 # Skip the RPM if it is excluded on this arch or exclusive
                 # for different arch.
                 if pungi.arch.is_excluded(rpm_obj, compatible_arches):
+                    log.write('Skipping %s due to incompatible arch\n' % rpm_obj)
                     continue
 
                 for mmd in variant.mmds:
@@ -68,6 +75,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                         packages.add((rpm_obj, None))
                         added_rpms.setdefault(mmd_id, [])
                         added_rpms[mmd_id].append(str(rpm_obj.nevra))
+                        log.write('Adding %s because it is in %s\n'
+                                  % (rpm_obj, mmd_id))
 
             # GatherSource returns all the packages in variant and does not
             # care which package is in which module, but for modular metadata
