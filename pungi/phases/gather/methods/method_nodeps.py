@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+from pprint import pformat
 
 import pungi.arch
 from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
@@ -25,9 +26,14 @@ from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
 
-    def __call__(self, arch, variant, pkgs, groups, filter_packages,
-                 multilib_whitelist, multilib_blacklist, package_sets,
-                 path_prefix=None, fulltree_excludes=None, prepopulate=None):
+    def __call__(self, arch, variant, *args, **kwargs):
+        log_file = self.compose.paths.log.log_file(arch, 'gather-nodeps-%s' % variant.uid)
+        with open(log_file, 'w') as log:
+            return self.worker(log, arch, variant, *args, **kwargs)
+
+    def worker(self, log, arch, variant, pkgs, groups, filter_packages,
+               multilib_whitelist, multilib_blacklist, package_sets,
+               path_prefix=None, fulltree_excludes=None, prepopulate=None):
         global_pkgset = package_sets["global"]
         result = {
             "rpm": [],
@@ -37,6 +43,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
 
         group_packages = expand_groups(self.compose, arch, groups)
         packages = pkgs | group_packages
+        log.write('Requested packages:\n%s\n' % pformat(packages))
 
         seen_rpms = {}
         seen_srpms = {}
@@ -46,6 +53,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
         for i in valid_arches:
             compatible_arches[i] = pungi.arch.get_compatible_arches(i)
 
+        log.write('\nGathering rpms\n')
         for i in global_pkgset:
             pkg = global_pkgset[i]
             if not pkg_is_rpm(pkg):
@@ -67,7 +75,10 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 })
                 seen_rpms.setdefault(pkg.name, set()).add(pkg.arch)
                 seen_srpms.setdefault(pkg.sourcerpm, set()).add(pkg.arch)
+                log.write('Added %s (matched %s.%s) (sourcerpm: %s)\n'
+                          % (pkg, gathered_pkg, pkg_arch, pkg.sourcerpm))
 
+        log.write('\nGathering source rpms\n')
         for i in global_pkgset:
             pkg = global_pkgset[i]
             if not pkg_is_srpm(pkg):
@@ -77,7 +88,9 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                     "path": pkg.file_path,
                     "flags": ["input"],
                 })
+                log.write('Adding %s\n' % pkg)
 
+        log.write('\nGathering debuginfo packages\n')
         for i in global_pkgset:
             pkg = global_pkgset[i]
             if pkg.arch not in valid_arches:
@@ -85,6 +98,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             if not pkg_is_debug(pkg):
                 continue
             if pkg.sourcerpm not in seen_srpms:
+                log.write('Not considering %s: corresponding srpm not included\n' % pkg)
                 continue
             pkg_arches = set(compatible_arches[pkg.arch]) - set(['noarch'])
             seen_arches = set(seen_srpms[pkg.sourcerpm]) - set(['noarch'])
@@ -92,11 +106,14 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 # We only want to pull in a debuginfo if we have a binary
                 # package for a compatible arch. Noarch packages should not
                 # pull debuginfo (they would pull in all architectures).
+                log.write('Not including %s: no package for this arch\n'
+                          % pkg)
                 continue
             result["debuginfo"].append({
                 "path": pkg.file_path,
                 "flags": ["input"],
             })
+            log.write('Adding %s\n' % pkg)
 
         return result
 
