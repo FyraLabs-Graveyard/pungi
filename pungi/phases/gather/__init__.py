@@ -532,7 +532,7 @@ def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
         be included in a list of packages.
     """
     if compose.conf["gather_source"] == "module":
-        return []
+        return ([], [])
 
     arches = [arch] if arch else compose.get_arches()
 
