@@ -614,6 +614,7 @@ class TestVersionGenerator(unittest.TestCase):
 
         self.compose = mock.MagicMock()
         self.compose.ci_base = ci
+        self.compose.compose_respin = 0
 
     def test_unknown_generator(self):
         compose = mock.Mock()
@@ -631,9 +632,9 @@ class TestVersionGenerator(unittest.TestCase):
         compose = mock.Mock()
         self.assertEqual(util.version_generator(compose, None), None)
 
-    def test_release_from_version_compose_id(self):
-        self.assertEqual(util.version_generator(self.compose, '!RELEASE_FROM_VERSION_COMPOSE_ID'),
-                         '8.RHEL-8.0-20180101.0')
+    def test_release_from_version_date_respin(self):
+        self.assertEqual(util.version_generator(self.compose, '!VERSION_FROM_VERSION_DATE_RESPIN'),
+                         '8.20160101.0')
 
 
 class TestTZOffset(unittest.TestCase):

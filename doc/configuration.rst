@@ -950,17 +950,17 @@ Version and release values for certain artifacts can be generated automatically
 based on release version, compose label, date, type and respin. This can be
 used to shorten the config and keep it the same for multiple uses.
 
-+----------------------------+-------------------+--------------+------------------+
-| Compose ID                 | Label             | Version      | Release          |
-+============================+===================+==============+==================+
-| ``F-Rawhide-20170406.n.0`` | ``-``             | ``Rawhide``  | ``20170406.n.0`` |
-+----------------------------+-------------------+--------------+------------------+
-| ``F-26-20170329.1``        | ``Alpha-1.6``     | ``26_Alpha`` | ``1.6``          |
-+----------------------------+-------------------+--------------+------------------+
-| ``F-Atomic-25-20170407.0`` | ``RC-20170407.0`` | ``25``       | ``20170407.0``   |
-+----------------------------+-------------------+--------------+------------------+
-| ``F-Atomic-25-20170407.0`` | ``-``             | ``25``       | ``20170407.0``   |
-+----------------------------+-------------------+--------------+------------------+
++----------------------------+-------------------+--------------+--------------+--------+------------------+
+| Compose ID                 | Label             | Version      | Date         | Respin | Release          |
++============================+===================+==============+==============+========+==================+
+| ``F-Rawhide-20170406.n.0`` | ``-``             | ``Rawhide``  | ``20170406`` | ``0``  | ``20170406.n.0`` |
++----------------------------+-------------------+--------------+--------------+--------+------------------+
+| ``F-26-20170329.1``        | ``Alpha-1.6``     | ``26_Alpha`` | ``20170329`` | ``1``  | ``1.6``          |
++----------------------------+-------------------+--------------+--------------+--------+------------------+
+| ``F-Atomic-25-20170407.0`` | ``RC-20170407.0`` | ``25``       | ``20170407`` | ``0``  | ``20170407.0``   |
++----------------------------+-------------------+--------------+--------------+--------+------------------+
+| ``F-Atomic-25-20170407.0`` | ``-``             | ``25``       | ``20170407`` | ``0``  | ``20170407.0``   |
++----------------------------+-------------------+--------------+--------------+--------+------------------+
 
 All non-``RC`` milestones from label get appended to the version. For release
 either label is used or date, type and respin.
@@ -1230,6 +1230,8 @@ repository with a new commit.
     * ``version`` -- (*str*) Version string to be added as versioning metadata.
       If this option is set to ``!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN``,
       a value will be generated automatically as ``$VERSION.$RELEASE``.
+      If this option is set to ``!VERSION_FROM_VERSION_DATE_RESPIN``,
+      a value will be generated automatically as ``$VERSION.$DATE.$RESPIN``.
       :ref:`See how those values are created <auto-version>`.
     * ``tag_ref`` -- (*bool*, default ``True``) If set to ``False``, a git
       reference will not be created.
