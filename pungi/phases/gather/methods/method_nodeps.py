@@ -35,7 +35,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     def worker(self, log, arch, variant, pkgs, groups, filter_packages,
                multilib_whitelist, multilib_blacklist, package_sets,
                path_prefix=None, fulltree_excludes=None, prepopulate=None):
-        global_pkgset = package_sets["global"]
+        pkgset = package_sets[arch]
         result = {
             "rpm": [],
             "srpm": [],
@@ -55,11 +55,9 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             compatible_arches[i] = pungi.arch.get_compatible_arches(i)
 
         log.write('\nGathering rpms\n')
-        for i in global_pkgset:
-            pkg = global_pkgset[i]
+        for i in pkgset:
+            pkg = pkgset[i]
             if not pkg_is_rpm(pkg):
-                continue
-            if pkg.arch not in valid_arches:
                 continue
             for gathered_pkg, pkg_arch in packages:
                 if isinstance(gathered_pkg, six.string_types) and pkg.name != gathered_pkg:
@@ -79,8 +77,8 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                           % (pkg, gathered_pkg, pkg_arch, pkg.sourcerpm))
 
         log.write('\nGathering source rpms\n')
-        for i in global_pkgset:
-            pkg = global_pkgset[i]
+        for i in pkgset:
+            pkg = pkgset[i]
             if not pkg_is_srpm(pkg):
                 continue
             if pkg.file_name in seen_srpms:
@@ -91,10 +89,8 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 log.write('Adding %s\n' % pkg)
 
         log.write('\nGathering debuginfo packages\n')
-        for i in global_pkgset:
-            pkg = global_pkgset[i]
-            if pkg.arch not in valid_arches:
-                continue
+        for i in pkgset:
+            pkg = pkgset[i]
             if not pkg_is_debug(pkg):
                 continue
             if pkg.sourcerpm not in seen_srpms:
