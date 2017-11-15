@@ -40,9 +40,11 @@ class GatherSourceJson(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
     def __call__(self, arch, variant):
-        json_path = self.compose.conf["gather_source_mapping"]
-        data = open(json_path, "r").read()
-        mapping = json.loads(data)
+        json_path = self.compose.conf.get("gather_source_mapping")
+        if not json_path:
+            return set(), set()
+        with open(json_path, "r") as f:
+            mapping = json.load(f)
 
         packages = set()
         if variant is None:
