@@ -55,7 +55,7 @@ packages above as they are used by calling an executable. ::
     $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install jsonschema kobo lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests setuptools sphinx
+    $ pip install jsonschema kobo==0.60 lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests setuptools sphinx
 
 Now you should be able to run all existing tests.
 

@@ -342,7 +342,7 @@ class TestLiveMediaPhase(PungiTestCase):
                         'ksurl': 'git://example.com/repo.git',
                         'name': 'Fedora Server Live',
                         'version': 'Rawhide',
-                        'repo_from': 'Missing',
+                        'repo': 'Missing',
                     }
                 ]
             },
@@ -370,8 +370,7 @@ class TestLiveMediaPhase(PungiTestCase):
                         'scratch': True,
                         'skip_tag': True,
                         'title': 'Custom Title',
-                        'repo_from': ['Everything', 'Server-optional'],
-                        'repo': ['http://example.com/extra_repo'],
+                        'repo': ['http://example.com/extra_repo', 'Everything', 'Server-optional'],
                         'arches': ['x86_64'],
                         'ksversion': '24',
                         'release': None,

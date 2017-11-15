@@ -200,17 +200,6 @@ class BuildinstallConfigTestCase(ConfigTestCase):
             [checks.CONFLICTS.format('buildinstall_method', 'None', 'lorax_options'),
              checks.CONFLICTS.format('buildinstall_method', 'None', 'buildinstall_kickstart')])
 
-    def test_deprecated(self):
-        cfg = load_config(
-            PKGSET_REPOS,
-            buildinstall_upgrade_image=True,
-        )
-
-        self.assertValidation(
-            cfg, [],
-            [checks.REMOVED.format('buildinstall_upgrade_image', 'use lorax_options instead')]
-        )
-
 
 class CreaterepoConfigTestCase(ConfigTestCase):
     def test_validate_minimal_pkgset_koji(self):

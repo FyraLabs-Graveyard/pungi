@@ -23,9 +23,6 @@ from ..wrappers import lorax
 
 class Installer(OSTree):
     def _merge_config(self, config):
-        if config.get("source_repo_from", None):
-            self.sources.extend([config.get("source_repo_from")])
-
         self.installpkgs.extend(config.get('installpkgs', []))
         self.add_template.extend(config.get("add_template", []))
         self.add_template_var.extend(config.get("add_template_var"))

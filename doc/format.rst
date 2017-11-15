@@ -3,7 +3,7 @@ Config file format
 ==================
 
 The configuration file parser is provided by `kobo
-<https://github.io/release-engineering/kobo>`_
+<https://github.com/release-engineering/kobo>`_
 
 The file follows a Python-like format. It consists of a sequence of variables
 that have a value assigned to them. ::

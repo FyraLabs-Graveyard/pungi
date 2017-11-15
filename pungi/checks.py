@@ -464,11 +464,7 @@ def make_schema():
                     "subvariant": {"type": "string"},
                     "target": {"type": "string"},
                     "version": {"type": "string"},
-                    "repo": {
-                        "$ref": "#/definitions/repos",
-                        "alias": "additional_repos",
-                        "append": "repo_from",
-                    },
+                    "repo": {"$ref": "#/definitions/repos"},
                     "specfile": {"type": "string"},
                     "scratch": {"type": "boolean"},
                     "type": {"type": "string"},
@@ -857,10 +853,7 @@ def make_schema():
                                 "name": {"type": "string"},
                                 "subvariant": {"type": "string"},
                                 "title": {"type": "string"},
-                                "repo": {
-                                    "$ref": "#/definitions/repos",
-                                    "append": "repo_from",
-                                },
+                                "repo": {"$ref": "#/definitions/repos"},
                                 "target": {"type": "string"},
                                 "arches": {"$ref": "#/definitions/list_of_strings"},
                                 "failable": {"$ref": "#/definitions/list_of_strings"},
@@ -887,11 +880,7 @@ def make_schema():
                                 "properties": {
                                     "treefile": {"type": "string"},
                                     "config_url": {"type": "string"},
-                                    "repo": {
-                                        "$ref": "#/definitions/repos",
-                                        "alias": "extra_source_repos",
-                                        "append": ["repo_from", "source_repo_from"],
-                                    },
+                                    "repo": {"$ref": "#/definitions/repos"},
                                     "keep_original_sources": {"type": "boolean"},
                                     "ostree_repo": {"type": "string"},
                                     "arches": {"$ref": "#/definitions/list_of_strings"},
@@ -935,10 +924,7 @@ def make_schema():
             "ostree_installer": _variant_arch_mapping({
                 "type": "object",
                 "properties": {
-                    "repo": {
-                        "$ref": "#/definitions/repos",
-                        "append": ["repo_from", "source_repo_from"],
-                    },
+                    "repo": {"$ref": "#/definitions/repos"},
                     "release": {"$ref": "#/definitions/optional_string"},
                     "failable": {"$ref": "#/definitions/list_of_strings"},
                     "installpkgs": {"$ref": "#/definitions/list_of_strings"},
@@ -1073,29 +1059,6 @@ def make_schema():
             "gather_lookaside_repos": _variant_arch_mapping({
                 "$ref": "#/definitions/strings",
             }),
-
-            # Deprecated options
-            "multilib_arches": {
-                "deprecated": "use multilib instead"
-            },
-            "multilib_methods": {
-                "deprecated": "use multilib instead"
-            },
-            "additional_packages_multiarch": {
-                "deprecated": "use multilib_whitelist instead"
-            },
-            "filter_packages_multiarch": {
-                "deprecated": "use multilib_blacklist instead"
-            },
-            "buildinstall_upgrade_image": {
-                "deprecated": "use lorax_options instead"
-            },
-            "pkgset_koji_path_prefix": {
-                "deprecated": "use koji_profile instead",
-            },
-            "pkgset_koji_url": {
-                "deprecated": "use koji_profile instead",
-            },
         },
 
         "required": ["release_name", "release_short", "release_version",

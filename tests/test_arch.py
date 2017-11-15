@@ -9,7 +9,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.arch import *
+from pungi.arch import (get_compatible_arches, get_valid_arches, get_valid_multilib_arches,
+                        is_excluded, is_valid_arch, split_name_arch)
 
 
 class MockArchModule(object):
@@ -110,7 +111,7 @@ class TestArch(unittest.TestCase):
         self.assertEqual(split_name_arch("package"), ("package", None))
         self.assertEqual(split_name_arch("package.x86_64"), ("package", "x86_64"))
         self.assertEqual(split_name_arch("package.foo"), ("package.foo", None))
-        self.assertEqual(split_name_arch("i386"), ("i386", None)) # we suppose that $name is never empty
+        self.assertEqual(split_name_arch("i386"), ("i386", None))  # we suppose that $name is never empty
 
     def test_get_valid_multilib_arches(self):
         self.assertEqual(get_valid_multilib_arches("noarch"), [])

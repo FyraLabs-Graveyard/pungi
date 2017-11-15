@@ -318,7 +318,7 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
     def test_run_with_extra_config_file(self, run):
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         helpers.touch(extra_config_file,
-                      json.dumps({'source_repo_from': 'http://www.example.com/another/repo',
+                      json.dumps({'repo': 'http://www.example.com/another/repo',
                                   'installpkgs': ['dummy-foo', 'dummy-bar'],
                                   'add_template': ['/path/to/lorax.tmpl'],
                                   'add_template_var': ['ostree_osname=dummy-atomic',
@@ -345,7 +345,6 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
                                           '--version=1.0',
                                           '--release=20160101.t.0',
                                           '--source=http://www.example.com/dummy/repo',
-                                          '--source=http://www.example.com/another/repo',
                                           '--variant=dummy',
                                           '--nomacboot',
                                           '--isfinal',
