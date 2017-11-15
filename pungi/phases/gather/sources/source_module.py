@@ -28,7 +28,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
     enabled = True
 
     def __call__(self, arch, variant):
-        logfile = self.compose.paths.log.log_file(arch, 'source-module-%s' % variant.uid)
+        uid = variant.uid if variant else 'no-variant'
+        logfile = self.compose.paths.log.log_file(arch, 'source-module-%s' % uid)
         with open(logfile, 'w') as log:
             return self.worker(log, arch, variant)
 
