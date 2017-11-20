@@ -133,8 +133,8 @@ class OSBSThread(WorkerThread):
             raise RuntimeError(
                 'There is no variant %s to get repo from to pass to OSBS.'
                 % (repo))
-        os_tree = compose.paths.compose.os_tree('$basearch', variant,
-                                                create_dir=False)
+        os_tree = compose.paths.compose.repository('$basearch', variant,
+                                                   create_dir=False)
         repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),
                                  'compose-rpms-%s.repo' % self.num)
 
