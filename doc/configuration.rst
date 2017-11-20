@@ -538,7 +538,11 @@ Options
 -------
 
 **gather_source** [mandatory]
-    (*str*) -- from where to read initial package list; expected values: "comps", "none"
+    (*str*) -- from where to read initial package list; expected values:
+    ``comps``, ``none``, ``module``
+
+    When ``comps`` is selected, you have to specify ``comps_file`` option. When
+    ``module`` is selected, you have to :ref:`configure PDC API url <pdc-settings>`.
 
 **gather_method** [mandatory]
     (*str*) -- Options are ``deps`` and ``nodeps``. Specifies whether package
@@ -1416,6 +1420,26 @@ Media Checksums Settings
     For example, for Fedora the prefix should be
     ``%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s``.
 
+
+.. _pdc-settings:
+
+PDC Settings
+============
+
+Modular compose needs a PDC instance to talk to so that it can query list of
+module contents.
+
+**pdc_url**
+    (*str*) -- URL to the PDC API
+
+**pdc_develop** = ``False``
+    (*bool*) -- Turning this option on makes the client skip any authentication
+    assuming the server is open to anyone. This is useful for debugging against
+    a local instance, but you most likely do not want this in production.
+
+**pdc_insecure** = ``False``
+    (*bool*) -- Enable this to skip SSL certificate verification. This is a bad
+    idea in production.
 
 Translate Paths Settings
 ========================

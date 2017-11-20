@@ -78,3 +78,25 @@ Profiling
 
 Profiling data on the ``pungi-gather`` tool can be enabled by setting the
 ``gather_profiler`` configuration option to ``True``.
+
+
+Modular compose
+===============
+
+A compose with ``gather_source`` set to ``module`` is called *modular*. The
+package list is determined by a list of modules.
+
+The list of modules that will be put into a variant is defined in the
+``variants.xml`` file. The file can contain either *Name:Stream* or
+*Name:Stream:Version* references. See `Module Naming Policy
+<https://pagure.io/modularity/blob/master/f/source/development/building-modules/naming-policy.rst>`_
+for details. When *Version* is missing from the specification, Pungi will ask
+PDC for the latest one.
+
+The module metadata in PDC contains a list of RPMs in the module as well as
+Koji tag from which the packages can be retrieved.
+
+Restrictions
+------------
+
+ * A modular compose must always use Koji as a package set source.
