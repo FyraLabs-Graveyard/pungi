@@ -496,6 +496,14 @@ Options
 **buildinstall_kickstart**
     (:ref:`scm_dict <scm_support>`) -- If specified, this kickstart file will
     be copied into each file and pointed to in boot configuration.
+**buildinstall_topdir**
+    (*str*) -- Full path to top directory where the runroot buildinstall
+    Koji tasks output should be stored. This is useful in situation when
+    the Pungi compose is not generated on the same storage as the Koji task
+    is running on. In this case, Pungi can provide input repository for runroot
+    task using HTTP and set the output directory for this task to
+    ``buildinstall_topdir``. Once the runroot task finishes, Pungi will copy
+    the results of runroot tasks to the compose working directory.
 
 Example
 -------

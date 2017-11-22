@@ -203,14 +203,28 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def buildinstall_dir(self, arch, create_dir=True):
+    def buildinstall_dir(self, arch, create_dir=True,
+                         allow_topdir_override=False, variant=None):
         """
+        :param bool allow_topdir_override: When True, the
+            "buildinstall_topdir" will be used (if set) instead of real
+            "topdir".
         Examples:
             work/x86_64/buildinstall
         """
         if arch == "global":
             raise RuntimeError("Global buildinstall dir makes no sense.")
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), "buildinstall")
+
+        buildinstall_topdir = self.compose.conf.get("buildinstall_topdir", "")
+        if allow_topdir_override and buildinstall_topdir:
+            topdir_basename = os.path.basename(self.compose.topdir)
+            path = os.path.join(
+                buildinstall_topdir, "buildinstall-%s" % topdir_basename, arch)
+        else:
+            path = os.path.join(self.topdir(arch, create_dir=create_dir), "buildinstall")
+
+        if variant:
+            path = os.path.join(path, variant.uid)
         return path
 
     def extra_files_dir(self, arch, variant, create_dir=True):

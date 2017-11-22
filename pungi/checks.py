@@ -709,6 +709,7 @@ def make_schema():
                 "type": "string",
                 "enum": ["lorax", "buildinstall"],
             },
+            "buildinstall_topdir":  {"type": "string"},
             "buildinstall_kickstart": {"$ref": "#/definitions/str_or_scm_dict"},
 
             "global_ksurl": {"type": "string"},

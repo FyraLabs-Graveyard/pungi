@@ -28,6 +28,7 @@ from six.moves import shlex_quote
 from pungi.arch import get_valid_arches
 from pungi.util import get_volid, get_arch_variant_data
 from pungi.util import get_file_size, get_mtime, failable, makedirs
+from pungi.util import copy_all, translate_path
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers.kojiwrapper import get_buildroot_rpms, KojiWrapper
 from pungi.wrappers import iso
@@ -74,12 +75,23 @@ class BuildinstallPhase(PhaseBase):
             add_template_var.extend(data.get('add_template_var', []))
             add_arch_template_var.extend(data.get('add_arch_template_var', []))
         output_dir = os.path.join(output_dir, variant.uid)
+        output_topdir = output_dir
 
         # The paths module will modify the filename (by inserting arch). But we
         # only care about the directory anyway.
-        log_filename = 'buildinstall-%s-logs/dumym' % variant.uid
+        log_filename = 'buildinstall-%s-logs/dummy' % variant.uid
         log_dir = os.path.dirname(self.compose.paths.log.log_file(arch, log_filename))
         makedirs(log_dir)
+
+        # If the buildinstall_topdir is set, it means Koji is used for
+        # buildinstall phase and the filesystem with Koji is read-only.
+        # In that case, we have to write logs to buildinstall_topdir and
+        # later copy them back to our local log directory.
+        if self.compose.conf.get("buildinstall_topdir", None):
+            log_dir = self.compose.paths.work.buildinstall_dir(
+                arch, allow_topdir_override=True, variant=variant)
+            log_dir = os.path.join(log_dir, "logs")
+            output_dir = os.path.join(output_dir, "results")
 
         lorax = LoraxWrapper()
         lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
@@ -100,7 +112,7 @@ class BuildinstallPhase(PhaseBase):
                                         add_arch_template_var=add_arch_template_var,
                                         noupgrade=noupgrade,
                                         log_dir=log_dir)
-        return 'rm -rf %s && %s' % (shlex_quote(output_dir),
+        return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
                                     ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
     def run(self):
@@ -114,8 +126,11 @@ class BuildinstallPhase(PhaseBase):
         for arch in self.compose.get_arches():
             commands = []
 
+            output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=True)
+            final_output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=False)
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
-            output_dir = self.compose.paths.work.buildinstall_dir(arch)
+            if final_output_dir != output_dir:
+                repo_baseurl = translate_path(self.compose, repo_baseurl)
 
             if buildinstall_method == "lorax":
                 buildarch = get_valid_arches(arch)[0]
@@ -388,11 +403,13 @@ class BuildinstallThread(WorkerThread):
 
         msg = "Running buildinstall for arch %s, variant %s" % (arch, variant)
 
-        output_dir = compose.paths.work.buildinstall_dir(arch)
-        if variant:
-            output_dir = os.path.join(output_dir, variant.uid)
+        output_dir = compose.paths.work.buildinstall_dir(
+            arch, allow_topdir_override=True, variant=variant)
+        final_output_dir = compose.paths.work.buildinstall_dir(
+            arch, variant=variant)
 
-        if os.path.isdir(output_dir) and os.listdir(output_dir):
+        if (os.path.isdir(output_dir) and os.listdir(output_dir) or
+                os.path.isdir(final_output_dir) and os.listdir(final_output_dir)):
             # output dir is *not* empty -> SKIP
             self.pool.log_warning(
                 '[SKIP ] Buildinstall for arch %s, variant %s' % (arch, variant))
@@ -432,6 +449,20 @@ class BuildinstallThread(WorkerThread):
         else:
             # run locally
             run(cmd, show_cmd=True, logfile=log_file)
+
+        if final_output_dir != output_dir:
+            if not os.path.exists(final_output_dir):
+                makedirs(final_output_dir)
+            results_dir = os.path.join(output_dir, "results")
+            copy_all(results_dir, final_output_dir)
+
+            # Get the log_dir into which we should copy the resulting log files.
+            log_fname = 'buildinstall-%s-logs/dummy' % variant.uid
+            final_log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_fname))
+            if not os.path.exists(final_log_dir):
+                makedirs(final_log_dir)
+            log_dir = os.path.join(output_dir, "logs")
+            copy_all(log_dir, final_log_dir)
 
         log_file = compose.paths.log.log_file(arch, log_filename + '-RPMs')
         rpms = get_buildroot_rpms(compose, task_id)
