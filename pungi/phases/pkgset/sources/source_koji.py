@@ -309,7 +309,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             if len(compose_tags) == 1:
                 global_pkgset = pkgset
             else:
-                global_pkgset.merge(pkgset, None, list(all_arches))
+                global_pkgset.merge(pkgset, None, list(all_arches),
+                                    unique_name=compose_tag in compose.conf['pkgset_koji_tag'])
         with open(global_pkgset_path, 'wb') as f:
             data = pickle.dumps(global_pkgset)
             f.write(data)

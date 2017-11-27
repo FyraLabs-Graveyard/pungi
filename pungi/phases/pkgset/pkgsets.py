@@ -134,7 +134,13 @@ class PackageSetBase(kobo.log.LoggingBase):
 
         return self.rpms_by_arch
 
-    def merge(self, other, primary_arch, arch_list):
+    def merge(self, other, primary_arch, arch_list, unique_name=False):
+        """
+        Merge ``other`` package set into this instance.
+
+        With ``unique_name=True`` a package will be added only if there is not
+        a package with the same name already.
+        """
         msg = "Merging package sets for %s: %s" % (primary_arch, arch_list)
         self.log_debug("[BEGIN] %s" % msg)
 
@@ -157,10 +163,14 @@ class PackageSetBase(kobo.log.LoggingBase):
         else:
             exclusivearch_list = None
         for arch in arch_list:
+            known_packages = set(pkg.name for pkg in self.rpms_by_arch.get(arch, []))
             self.rpms_by_arch.setdefault(arch, [])
             for i in other.rpms_by_arch.get(arch, []):
                 if i.file_path in self.file_cache:
                     # TODO: test if it really works
+                    continue
+                if unique_name and i.name in known_packages:
+                    self.log_debug('Not merging in %r' % i)
                     continue
                 if exclusivearch_list and arch == "noarch":
                     if is_excluded(i, exclusivearch_list, logger=self._logger):
