@@ -1228,6 +1228,7 @@ repository with a new commit.
       :ref:`See how those values are created <auto-version>`.
     * ``tag_ref`` -- (*bool*, default ``True``) If set to ``False``, a git
       reference will not be created.
+    * ``ostree_ref`` -- (*str*) To override value ``ref`` from ``treefile``.
 
 
 Example config

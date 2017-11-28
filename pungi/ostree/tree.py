@@ -57,7 +57,11 @@ class Tree(OSTree):
         if not tag_ref:
             print('Not updating ref as configured')
             return
-        ref = get_ref_from_treefile(self.treefile)
+        # if ostree_ref argument is given, it overrides ref value from treefile
+        if self.ostree_ref:
+            ref = self.ostree_ref
+        else:
+            ref = get_ref_from_treefile(self.treefile)
         commitid = get_commitid_from_commitid_file(self.commitid_file)
         print('Ref: %r, Commit ID: %r' % (ref, commitid))
         if ref and commitid:
@@ -79,6 +83,8 @@ class Tree(OSTree):
         self.logdir = self.args.log_dir
         self.update_summary = self.args.update_summary
         self.extra_config = self.args.extra_config
+        self.ostree_ref = self.args.ostree_ref
+
         if self.extra_config:
             self.extra_config = json.load(open(self.extra_config, 'r'))
             repos = self.extra_config.get('repo', [])

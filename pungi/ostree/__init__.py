@@ -40,6 +40,8 @@ def main(args=None):
                        help='version string to be added as versioning metadata')
     treep.add_argument('--update-summary', action='store_true',
                        help='update summary metadata')
+    treep.add_argument('--ostree-ref', metavar='PATH',
+                       help='override ref value from treefile')
 
     installerp = subparser.add_parser("installer", help="Create an OSTree installer image")
     installerp.set_defaults(_class=Installer, func='run')

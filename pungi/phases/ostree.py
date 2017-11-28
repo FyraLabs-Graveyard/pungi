@@ -122,6 +122,10 @@ class OSTreeThread(WorkerThread):
         if config.get('update_summary', False):
             cmd.append('--update-summary')
 
+        ostree_ref = config.get('ostree_ref')
+        if ostree_ref:
+            cmd.append('--ostree-ref=%s' % ostree_ref)
+
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
 
