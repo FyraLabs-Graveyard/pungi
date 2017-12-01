@@ -38,7 +38,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         groups = set()
         packages = set()
 
-        compatible_arches = pungi.arch.get_compatible_arches(arch)
+        compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
 
         if variant is not None and variant.modules:
             variant.arch_mmds.setdefault(arch, {})
