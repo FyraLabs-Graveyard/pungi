@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 
+import six
+
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 BINDIR = os.path.join(HERE, '../bin')
@@ -21,7 +23,8 @@ class ConfigValidateScriptTest(helpers.PungiTestCase):
     @mock.patch('kobo.shortcuts.run')
     def test_validate_dummy_config(self, run):
         DUMMY_CONFIG = os.path.join(HERE, 'data/dummy-pungi.conf')
-        p = subprocess.Popen([PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
+        interp = 'python2' if six.PY2 else 'python3'
+        p = subprocess.Popen([interp, PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
