@@ -614,8 +614,9 @@ def make_schema():
             }),
             "repoclosure_backend": {
                 "type": "string",
-                "default": "yum",
-                "enum": ["yum", "dnf"],
+                # Gather and repoclosure both have the same backends: yum + dnf
+                "default": _get_default_gather_backend(),
+                "enum": _get_gather_backends(),
             },
 
             "old_composes_per_release_type": {

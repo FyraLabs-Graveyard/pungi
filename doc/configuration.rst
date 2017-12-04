@@ -172,7 +172,7 @@ Options
     (*str*) -- Select which tool should be used to run repoclosure over created
     repositories. By default ``yum`` is used, but you can switch to ``dnf``.
     Please note that when ``dnf`` is used, the build dependencies check is
-    skipped.
+    skipped. On Python 3, only ``dnf`` backend is available.
 
 **compose_type**
     (*str*) -- Allows to set default compose type. Type set via a command-line

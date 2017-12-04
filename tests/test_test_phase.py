@@ -192,7 +192,9 @@ class TestRepoclosure(PungiTestCase):
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
     def test_repoclosure_default_backend(self, mock_run, mock_grc):
-        compose = DummyCompose(self.topdir, {})
+        with mock.patch('six.PY2', new=True):
+            compose = DummyCompose(self.topdir, {})
+
         test_phase.run_repoclosure(compose)
 
         self.assertItemsEqual(

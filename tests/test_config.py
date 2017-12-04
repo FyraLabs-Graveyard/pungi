@@ -427,9 +427,10 @@ class RepoclosureTestCase(ConfigTestCase):
             repoclosure_backend='fnd',  # Intentionally with a typo
         )
 
+        options = ['yum', 'dnf'] if six.PY2 else ['dnf']
         self.assertValidation(
             cfg,
-            ["Failed validation in repoclosure_backend: 'fnd' is not one of ['yum', 'dnf']"])
+            ["Failed validation in repoclosure_backend: 'fnd' is not one of %s" % options])
 
 
 if __name__ == '__main__':
