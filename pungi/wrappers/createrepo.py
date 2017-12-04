@@ -163,29 +163,3 @@ class CreaterepoWrapper(object):
             cmd.append("--compress-type=%s" % compress_type)
 
         return cmd
-
-    def get_repoquery_cmd(self, repos, whatrequires=False, alldeps=False, packages=None, tempcache=True):
-        cmd = ["/usr/bin/repoquery"]
-
-        if tempcache:
-            cmd.append("--tempcache")
-
-        # a dict is expected: {repo_name: repo_path}
-        for repo_name in sorted(repos):
-            repo_path = repos[repo_name]
-            if "://" not in repo_path:
-                repo_path = "file://" + repo_path
-            cmd.append("--repofrompath=%s,%s" % (repo_name, repo_path))
-            cmd.append("--enablerepo=%s" % repo_name)
-
-        if whatrequires:
-            cmd.append("--whatrequires")
-
-        if alldeps:
-            cmd.append("--alldeps")
-
-        if packages:
-            for pkg in packages:
-                cmd.append(pkg)
-
-        return cmd

@@ -106,7 +106,6 @@ tools = [
     ("createrepo_c", "/usr/bin/modifyrepo_c", is_createrepo_c_needed),
     ("createrepo_c", "/usr/bin/mergerepo_c", is_createrepo_c_needed),
 
-    ("yum-utils", "/usr/bin/repoquery", None),
     ("git", "/usr/bin/git", None),
     ("cvs", "/usr/bin/cvs", None),
 ]
