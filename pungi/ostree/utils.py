@@ -86,21 +86,17 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
     Additionally, other values can be passed to method by 'update_dict' parameter to
     update treefile content.
     """
-    # add this timestamp to repo name to get unique repo filename and repo name
-    # should be safe enough
-    time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
     treeconf_dir = os.path.dirname(treeconf)
     with open(treeconf, 'r') as f:
         treeconf_content = json.load(f)
 
     # backup the old tree config
-    os.rename(treeconf, '%s.%s.bak' % (treeconf, time))
+    os.rename(treeconf, '{}.bak'.format(treeconf))
 
     repos = []
     if source_repos:
         for repo in source_repos:
-            name = "%s-%s" % (repo['name'], time)
+            name = repo['name']
             _write_repofile("%s/%s.repo" % (treeconf_dir, name), name, repo)
             repos.append(name)
 
