@@ -95,7 +95,7 @@ tools = [
     ("isomd5sum", "/usr/bin/checkisomd5", None),
     ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
     ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
-    ("gettext", "/usr/bin/msgfmt", None),
+    ("gettext", "/usr/bin/msgfmt", _will_productimg_run),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     # createrepo, modifyrepo and mergerepo are not needed by default, only when
     # createrepo_c is not configured
