@@ -19,7 +19,7 @@ The KojiPackageSet object obtains the latest RPMs from a Koji tag.
 It automatically finds a signed copies according to *sigkey_ordering*.
 """
 
-
+import itertools
 import os
 
 import kobo.log
@@ -214,7 +214,7 @@ class KojiPackageSet(PackageSetBase):
                                              arches=arches, logger=logger)
         self.koji_wrapper = koji_wrapper
         # Names of packages to look for in the Koji tag.
-        self.packages = packages
+        self.packages = set(packages or [])
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -285,7 +285,14 @@ class KojiPackageSet(PackageSetBase):
 
         skipped_arches = []
         skipped_packages_count = 0
-        for rpm_info in rpms:
+        # We need to process binary packages first, and then source packages.
+        # If we have a list of packages to use, we need to put all source rpms
+        # names into it. Otherwise if the SRPM name does not occur on the list,
+        # it would be missing from the package set. Even if it ultimately does
+        # not end in the compose, we need it to extract ExcludeArch and
+        # ExclusiveArch for noarch packages.
+        for rpm_info in itertools.chain((rpm for rpm in rpms if not _is_src(rpm)),
+                                        (rpm for rpm in rpms if _is_src(rpm))):
             if self.arches and rpm_info["arch"] not in self.arches:
                 if rpm_info["arch"] not in skipped_arches:
                     self.log_debug("Skipping packages for arch: %s" % rpm_info["arch"])
@@ -297,10 +304,13 @@ class KojiPackageSet(PackageSetBase):
                 continue
 
             build_info = builds_by_id[rpm_info["build_id"]]
-            if rpm_info["arch"] in ("src", "nosrc"):
+            if _is_src(rpm_info):
                 result_srpms.append((rpm_info, build_info))
             else:
                 result_rpms.append((rpm_info, build_info))
+                if self.packages:
+                    # Only add the package if we already have some whitelist.
+                    self.packages.add(build_info['name'])
 
         if skipped_packages_count:
             self.log_debug("Skipped %d packages, not marked as to be "
@@ -318,3 +328,8 @@ class KojiPackageSet(PackageSetBase):
 
         self.log_info("[DONE ] %s" % msg)
         return result
+
+
+def _is_src(rpm_info):
+    """Check if rpm info object returned by Koji refers to source packages."""
+    return rpm_info['arch'] in ('src', 'nosrc')
