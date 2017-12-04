@@ -66,19 +66,6 @@ def get_commitid_from_commitid_file(commitid_file, logger=None):
     return commitid
 
 
-def _write_repofile(path, name, repo):
-    """Write a .repo file with given data."""
-    with open(path, 'w') as f:
-        f.write("[%s]\n" % name)
-        f.write("name=%s\n" % name)
-        f.write("baseurl=%s\n" % repo['baseurl'])
-        exclude = repo.get('exclude', None)
-        if exclude:
-            f.write("exclude=%s\n" % exclude)
-        gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
-        f.write("gpgcheck=%s\n" % gpgcheck)
-
-
 def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, update_dict=None):
     """
     Update tree config file by adding new repos, and remove existing repos
@@ -95,10 +82,25 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
 
     repos = []
     if source_repos:
-        for repo in source_repos:
-            name = repo['name']
-            _write_repofile("%s/%s.repo" % (treeconf_dir, name), name, repo)
-            repos.append(name)
+        # Sort to ensure reliable ordering
+        source_repos = sorted(source_repos, key=lambda x: x['name'])
+        # Now, since pungi includes timestamps in the repo names which
+        # currently defeats rpm-ostree's change detection, let's just
+        # use repos named 'repo-<number>'.
+        # https://pagure.io/pungi/issue/811
+        with open("{}/pungi.repo".format(treeconf_dir), 'w') as f:
+            for i,repo in enumerate(source_repos):
+                name = 'repo-{}'.format(i)
+                f.write("[%s]\n" % name)
+                f.write("name=%s\n" % name)
+                f.write("baseurl=%s\n" % repo['baseurl'])
+                exclude = repo.get('exclude', None)
+                if exclude:
+                    f.write("exclude=%s\n" % exclude)
+                gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
+                f.write("gpgcheck=%s\n" % gpgcheck)
+
+                repos.append(name)
 
     original_repos = treeconf_content.get('repos', [])
     if keep_original_sources:
