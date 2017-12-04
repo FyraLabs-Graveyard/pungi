@@ -97,13 +97,13 @@ tools = [
     ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
     ("gettext", "/usr/bin/msgfmt", None),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
-    # modifyrepo can always be called
-    ("createrepo", "/usr/bin/modifyrepo", None),
-    # createrepo and mergerepo are not needed by default, only when
+    # createrepo, modifyrepo and mergerepo are not needed by default, only when
     # createrepo_c is not configured
     ("createrepo", "/usr/bin/createrepo", lambda conf: not is_createrepo_c_needed(conf)),
+    ("createrepo", "/usr/bin/modifyrepo", lambda conf: not is_createrepo_c_needed(conf)),
     ("createrepo", "/usr/bin/mergerepo", lambda conf: not is_createrepo_c_needed(conf)),
     ("createrepo_c", "/usr/bin/createrepo_c", is_createrepo_c_needed),
+    ("createrepo_c", "/usr/bin/modifyrepo_c", is_createrepo_c_needed),
     ("createrepo_c", "/usr/bin/mergerepo_c", is_createrepo_c_needed),
 
     ("yum-utils", "/usr/bin/repoquery", None),

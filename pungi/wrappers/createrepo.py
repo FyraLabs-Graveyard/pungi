@@ -22,10 +22,11 @@ class CreaterepoWrapper(object):
         if createrepo_c:
             self.createrepo = "createrepo_c"
             self.mergerepo = "mergerepo_c"
+            self.modifyrepo = "modifyrepo_c"
         else:
             self.createrepo = "createrepo"
             self.mergerepo = "mergerepo"
-        self.modifyrepo = "modifyrepo"
+            self.modifyrepo = "modifyrepo"
 
     def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, excludes=None,
                            pkglist=None, groupfile=None, cachedir=None, update=True,
