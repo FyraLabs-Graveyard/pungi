@@ -79,10 +79,12 @@ def _write_repofile(path, name, repo):
         f.write("gpgcheck=%s\n" % gpgcheck)
 
 
-def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False):
+def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, update_dict=None):
     """
     Update tree config file by adding new repos, and remove existing repos
     from the tree config file if 'keep_original_sources' is not enabled.
+    Additionally, other values can be passed to method by 'update_dict' parameter to
+    update treefile content.
     """
     # add this timestamp to repo name to get unique repo filename and repo name
     # should be safe enough
@@ -107,6 +109,10 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False):
         treeconf_content['repos'] = original_repos + repos
     else:
         treeconf_content['repos'] = repos
+
+    # update content with config values from dictionary (for example 'ref')
+    if isinstance(update_dict, dict):
+        treeconf_content.update(update_dict)
 
     # update tree config to add new repos
     with open(treeconf, 'w') as f:

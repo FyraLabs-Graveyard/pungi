@@ -133,6 +133,37 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
+    @mock.patch('kobo.shortcuts.run')
+    def test_ostree_ref(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        self._make_dummy_config_dir(self.topdir)
+        treefile = os.path.join(self.topdir, 'fedora-atomic-docker-host.json')
+
+        with open(treefile, 'r') as f:
+            treefile_content = json.load(f)
+        original_repos = treefile_content['repos']
+        original_ref = treefile_content['ref']
+        replacing_ref = original_ref + '-changed'
+
+        ostree.main([
+            'tree',
+            '--repo=%s' % repo,
+            '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
+            '--treefile=%s' % treefile,
+            '--ostree-ref=%s' % replacing_ref,
+        ])
+
+        with open(treefile, 'r') as f:
+            treefile_content = json.load(f)
+        new_repos = treefile_content['repos']
+        new_ref = treefile_content['ref']
+
+        # ref value in treefile should be overrided with new ref
+        self.assertEqual(replacing_ref, new_ref)
+        # repos should stay unchanged
+        self.assertEqual(original_repos, new_repos)
+
     @mock.patch('pungi.ostree.utils.datetime')
     @mock.patch('kobo.shortcuts.run')
     def test_extra_config_with_extra_repos(self, run, time):

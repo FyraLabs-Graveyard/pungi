@@ -85,11 +85,22 @@ class Tree(OSTree):
         self.extra_config = self.args.extra_config
         self.ostree_ref = self.args.ostree_ref
 
-        if self.extra_config:
-            self.extra_config = json.load(open(self.extra_config, 'r'))
-            repos = self.extra_config.get('repo', [])
-            keep_original_sources = self.extra_config.get('keep_original_sources', False)
-            tweak_treeconf(self.treefile, source_repos=repos, keep_original_sources=keep_original_sources)
+        if self.extra_config or self.ostree_ref:
+            if self.extra_config:
+                self.extra_config = json.load(open(self.extra_config, 'r'))
+                repos = self.extra_config.get('repo', [])
+                keep_original_sources = self.extra_config.get('keep_original_sources', False)
+            else:
+                # missing extra_config mustn't affect tweak_treeconf call
+                repos = []
+                keep_original_sources = True
+
+            update_dict = {}
+            if self.ostree_ref:
+                # override ref value in treefile
+                update_dict['ref'] = self.ostree_ref
+
+            tweak_treeconf(self.treefile, source_repos=repos, keep_original_sources=keep_original_sources, update_dict=update_dict)
 
         self.commitid_file = make_log_file(self.logdir, 'commitid')
 
