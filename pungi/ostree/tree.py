@@ -33,6 +33,10 @@ class Tree(OSTree):
         if self.version:
             # Add versioning metadata
             cmd.append('--add-metadata-string=version=%s' % self.version)
+        # Note renamed from rpm-ostree --force-nocache since it's a better
+        # name; more clearly describes what we're doing here.
+        if self.force_new_commit:
+            cmd.append('--force-nocache')
         cmd.append(self.treefile)
 
         shortcuts.run(cmd, show_cmd=True, stdout=True, logfile=log_file)
@@ -84,6 +88,7 @@ class Tree(OSTree):
         self.update_summary = self.args.update_summary
         self.extra_config = self.args.extra_config
         self.ostree_ref = self.args.ostree_ref
+        self.force_new_commit = self.args.force_new_commit
 
         if self.extra_config or self.ostree_ref:
             if self.extra_config:

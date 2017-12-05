@@ -884,6 +884,7 @@ def make_schema():
                                     "arches": {"$ref": "#/definitions/list_of_strings"},
                                     "failable": {"$ref": "#/definitions/list_of_strings"},
                                     "update_summary": {"type": "boolean"},
+                                    "force_new_commit": {"type": "boolean"},
                                     "version": {"type": "string"},
                                     "config_branch": {"type": "string"},
                                     "tag_ref": {"type": "boolean"},
