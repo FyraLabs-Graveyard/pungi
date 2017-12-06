@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.20
+Version:        4.1.21
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -105,6 +105,32 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Dec 06 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.21-1
+- tests: Use correct python version for config validation test (lsedlar)
+- Use dnf backend for repoclosure on PY3 (lsedlar)
+- Drop checks for git and cvs (lsedlar)
+- Relax check for gettext (lsedlar)
+- Drop check for repoquery command (lsedlar)
+- Use modifyrepo_c if possible (lsedlar)
+- pkgset: Add SRPMs to whitelist (lsedlar)
+- modules: Allow multilib (lsedlar)
+- add ability to specify ostree ref in OSTREE phase - update (onosek)
+- add ability to specify ostree ref in OSTREE phase (onosek)
+- buildinstall: Allow using external dire for runroot task (jkaluza)
+- pkgset: Remove package skip optimization for bootable products (lsedlar)
+- Add documentation for modular composes (lsedlar)
+- osbs: Get correct path to repo for addons (lsedlar)
+- Remove deprecated options (onosek)
+- module-source: Log details about what packages are gathered (lsedlar)
+- gather: Log details about nodeps method (lsedlar)
+- gather: get_packages_to_gather returns a tuple (lsedlar)
+- iso-wrapper: Fix calling wrong logger method (lsedlar)
+- Turn COMPOSE_ID version generator into DATE_RESPIN (puiterwijk)
+- iso-wrapper: Remove hacks for sorting (lsedlar)
+- Report missing module dependencies earlier (lsedlar)
+- Implement version.compose_id version generator (patrick)
+- Optionally do old_compose per release type (patrick)
+
 * Wed Nov 01 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.20-1
 - image-build: Drop suffixes from configuration (lsedlar)
 - kojiwrapper: Deal with multiple values for image-build (lsedlar)
