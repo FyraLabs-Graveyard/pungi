@@ -1479,8 +1479,8 @@ Example usage
     http://b/dir/c/somefile
 
 
-Miscelanous Settings
-====================
+Miscellaneous Settings
+======================
 
 **paths_module**
     (*str*) -- Name of Python module implementing the same interface as
