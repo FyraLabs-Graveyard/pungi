@@ -371,7 +371,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_full(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
                                         quiet=True, channel='chan',
-                                        packages=['strace', 'lorax'],
+                                        packages=['lorax', 'some_other_package'],
                                         mounts=['/tmp'], weight=1000)
         self.assertEqual(len(cmd), 14)
         self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
@@ -380,7 +380,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo \'&\'')
         self.assertItemsEqual(cmd[3:-3],
                               ['--channel-override=chan', '--quiet', '--use-shell',
-                               '--task-id', '--weight=1000', '--package=strace',
+                               '--task-id', '--weight=1000', '--package=some_other_package',
                                '--package=lorax', '--mount=/tmp'])
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')

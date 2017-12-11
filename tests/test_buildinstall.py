@@ -344,7 +344,6 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
 
-
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
@@ -627,7 +626,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call('rrt', 'x86_64', self.cmd, channel=None,
                        use_shell=True, task_id=True,
-                       packages=['strace', 'lorax'], mounts=[self.topdir], weight=123)])
+                       packages=['lorax'], mounts=[self.topdir], weight=123)])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -668,7 +667,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call('rrt', 'x86_64', self.cmd, channel=None,
                        use_shell=True, task_id=True,
-                       packages=['strace', 'anaconda'], mounts=[self.topdir], weight=None)])
+                       packages=['anaconda'], mounts=[self.topdir], weight=None)])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -811,7 +810,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call('rrt', 'x86_64', self.cmd, channel=None,
                        use_shell=True, task_id=True,
-                       packages=['strace', 'lorax'], mounts=[self.topdir], weight=123)])
+                       packages=['lorax'], mounts=[self.topdir], weight=123)])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -828,8 +827,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             [mock.call(os.path.join(buildinstall_topdir, 'x86_64/Server/results'),
                        os.path.join(self.topdir, 'work/x86_64/buildinstall/Server')),
              mock.call(os.path.join(buildinstall_topdir, 'x86_64/Server/logs'),
-                       os.path.join(self.topdir, 'logs/x86_64/buildinstall-Server-logs'))
-            ]
+                       os.path.join(self.topdir, 'logs/x86_64/buildinstall-Server-logs'))]
         )
 
 

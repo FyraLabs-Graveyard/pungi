@@ -420,7 +420,7 @@ class BuildinstallThread(WorkerThread):
         task_id = None
         if runroot:
             # run in a koji build root
-            packages = ["strace"]
+            packages = []
             if buildinstall_method == "lorax":
                 packages += ["lorax"]
             elif buildinstall_method == "buildinstall":
