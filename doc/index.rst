@@ -12,11 +12,11 @@ Contents:
     :maxdepth: 2
 
     about
-    contributing
-    testing
+    phases
     format
     configuration
     scm_support
     messaging
-    phases
     gathering
+    contributing
+    testing
