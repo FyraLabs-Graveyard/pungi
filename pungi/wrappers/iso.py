@@ -89,9 +89,8 @@ def get_boot_options(arch, createfrom, efi=True):
 
     if arch in ("s390", "s390x"):
         result = [
-            # "-no-emul-boot",
-            # "-b", "images/cdboot.img",
-            # "-c", "boot.cat",
+            '-eltorito-boot', 'images/cdboot.img',
+            '-no-emul-boot',
         ]
         return result
 
@@ -260,6 +259,7 @@ def get_graft_points(paths, exclusive_paths=None, exclude=None):
 
     # TODO: exclude
     return result
+
 
 def _paths_from_list(root, paths):
     root = os.path.abspath(root).rstrip("/") + "/"

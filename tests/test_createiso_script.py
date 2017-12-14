@@ -129,6 +129,30 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
              'isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest']
         )
 
+    def test_bootable_run_on_s390x(self):
+        createiso.write_script(createiso.CreateIsoOpts(
+            output_dir=self.outdir,
+            iso_name='DP-1.0-20160405.t.3-s390x.iso',
+            volid='DP-1.0-20160405.t.3',
+            graft_points='graft-list',
+            arch='s390x',
+            buildinstall_method='lorax',
+        ), self.out)
+
+        self.assertScript(
+            [createiso.FIND_TEMPLATE_SNIPPET,
+             ' '.join(['/usr/bin/genisoimage', '-untranslated-filenames',
+                       '-volid', 'DP-1.0-20160405.t.3', '-J', '-joliet-long',
+                       '-rational-rock', '-translation-table',
+                       '-input-charset', 'utf-8',
+                       '-x', './lost+found',
+                       '-eltorito-boot images/cdboot.img', '-no-emul-boot',
+                       '-o', 'DP-1.0-20160405.t.3-s390x.iso',
+                       '-graft-points', '-path-list', 'graft-list']),
+             ' '.join(['/usr/bin/implantisomd5', 'DP-1.0-20160405.t.3-s390x.iso']),
+             'isoinfo -R -f -i DP-1.0-20160405.t.3-s390x.iso | grep -v \'/TRANS.TBL$\' | sort >> DP-1.0-20160405.t.3-s390x.iso.manifest']
+        )
+
     def test_bootable_run_buildinstall(self):
         createiso.write_script(createiso.CreateIsoOpts(
             output_dir=self.outdir,
