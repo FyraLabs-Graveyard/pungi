@@ -385,11 +385,17 @@ def mount(image, logger=None):
     The yielded path will only be valid in the with block and is removed once
     the image is unmounted.
     """
-    # use guestmount to mount the image, which doesn't require root privileges
-    # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
     with util.temp_dir(prefix='iso-mount-') as mount_dir:
-        env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
-        cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
+        ret, __ = run(["which", "guestmount"], can_fail=True)
+        guestmount_available = not bool(ret)  # return code 0 means that guestmount is available
+        if guestmount_available:
+            # use guestmount to mount the image, which doesn't require root privileges
+            # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
+            env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
+            cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
+        else:
+            env = {}
+            cmd = ["mount", "-o", "loop", image, mount_dir]
         ret, out = run(cmd, env=env, can_fail=True, universal_newlines=True)
         if ret != 0:
             # The mount command failed, something is wrong. Log the output and raise an exception.
@@ -400,4 +406,7 @@ def mount(image, logger=None):
         try:
             yield mount_dir
         finally:
-            util.fusermount(mount_dir, logger=logger)
+            if guestmount_available:
+                util.run_unmount_cmd(['fusermount', '-u', mount_dir], path=mount_dir)
+            else:
+                util.run_unmount_cmd(['umount', mount_dir], path=mount_dir)

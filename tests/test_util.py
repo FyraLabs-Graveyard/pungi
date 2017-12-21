@@ -446,7 +446,7 @@ class TestUnmountCmd(unittest.TestCase):
                                  self._fakeProc(0, out='It is very busy'),
                                  self._fakeProc(1, out='lsof output')]
         with self.assertRaises(RuntimeError) as ctx:
-            util.fusermount('/path', max_retries=3, logger=logger)
+            util.run_unmount_cmd(['fusermount', '-u', '/path'], path='/path', max_retries=3, logger=logger)
         cmd = ['fusermount', '-u', '/path']
         expected = [mock.call(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                               universal_newlines=True),

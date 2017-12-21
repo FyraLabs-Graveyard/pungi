@@ -131,6 +131,9 @@ def create_product_img(compose, arch, variant):
 
     shutil.rmtree(po_tmp)
 
+    ret, __ = run(["which", "guestmount"], can_fail=True)
+    guestmount_available = not bool(ret)  # return code 0 means that guestmount is available
+
     mount_tmp = compose.mkdtemp(prefix="product_img_mount_")
     cmds = [
         # allocate image
@@ -139,7 +142,8 @@ def create_product_img(compose, arch, variant):
         "mke2fs -F %s" % shlex_quote(image),
         # use guestmount to mount the image, which doesn't require root privileges
         # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
-        "LIBGUESTFS_BACKEND=direct guestmount -a %s -m /dev/sda %s" % (shlex_quote(image), shlex_quote(mount_tmp)),
+        "LIBGUESTFS_BACKEND=direct guestmount -a %s -m /dev/sda %s" % (shlex_quote(image), shlex_quote(mount_tmp)) if guestmount_available
+        else "mount -o loop %s %s" % (shlex_quote(image), shlex_quote(mount_tmp)),
         "mkdir -p %s/run/install/product" % shlex_quote(mount_tmp),
         "cp -rp %s/* %s/run/install/product/" % (shlex_quote(product_tmp), shlex_quote(mount_tmp)),
         "mkdir -p %s/run/install/product/pyanaconda" % shlex_quote(mount_tmp),
@@ -149,7 +153,8 @@ def create_product_img(compose, arch, variant):
         "ln -s run/install/product/locale %s" % shlex_quote(mount_tmp),
         # compat symlink: run/install/product/pyanaconda/installclasses -> ../installclasses
         "ln -s ../installclasses %s/run/install/product/pyanaconda/installclasses" % shlex_quote(mount_tmp),
-        "fusermount -u %s" % shlex_quote(mount_tmp),
+        "fusermount -u %s" % shlex_quote(mount_tmp) if guestmount_available
+        else "umount %s" % shlex_quote(mount_tmp),
         # tweak last mount path written in the image
         "tune2fs -M /run/install/product %s" % shlex_quote(image),
     ]

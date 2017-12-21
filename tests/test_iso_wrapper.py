@@ -20,6 +20,7 @@ INCORRECT_OUTPUT = '''This should never happen: File not found'''
 
 
 class TestIsoUtils(unittest.TestCase):
+
     @mock.patch('pungi.wrappers.iso.run')
     def test_get_implanted_md5_correct(self, mock_run):
         mock_run.return_value = (0, CORRECT_OUTPUT)
@@ -44,24 +45,48 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch('pungi.util.run_unmount_cmd')
     @mock.patch('pungi.wrappers.iso.run')
     def test_mount_iso(self, mock_run, mock_unmount):
-        mock_run.return_value = (0, '')
+        # first tuple is return value for command 'which guestmount'
+        # value determines type of the mount/unmount command ('1' - guestmount is not available)
+        # for approach as a root, pair commands mount-umount are used
+        mock_run.side_effect = [(1, ''), (0, '')]
         with iso.mount('dummy') as temp_dir:
             self.assertTrue(os.path.isdir(temp_dir))
-        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_run.call_args_list), 2)
+        mount_call_str = str(mock_run.call_args_list[1])
+        self.assertTrue(mount_call_str.startswith("call(['mount'"))
         self.assertEqual(len(mock_unmount.call_args_list), 1)
+        unmount_call_str = str(mock_unmount.call_args_list[0])
+        self.assertTrue(unmount_call_str.startswith("call(['umount'"))
+        self.assertFalse(os.path.isdir(temp_dir))
+
+    @mock.patch('pungi.util.run_unmount_cmd')
+    @mock.patch('pungi.wrappers.iso.run')
+    def test_guestmount(self, mock_run, mock_unmount):
+        # first tuple is return value for command 'which guestmount'
+        # value determines type of the mount/unmount command ('0' - guestmount is available)
+        # for approach as a non-root, pair commands guestmount-fusermount are used
+        mock_run.side_effect = [(0, ''), (0, '')]
+        with iso.mount('dummy') as temp_dir:
+            self.assertTrue(os.path.isdir(temp_dir))
+        self.assertEqual(len(mock_run.call_args_list), 2)
+        mount_call_str = str(mock_run.call_args_list[1])
+        self.assertTrue(mount_call_str.startswith("call(['guestmount'"))
+        self.assertEqual(len(mock_unmount.call_args_list), 1)
+        unmount_call_str = str(mock_unmount.call_args_list[0])
+        self.assertTrue(unmount_call_str.startswith("call(['fusermount'"))
         self.assertFalse(os.path.isdir(temp_dir))
 
     @mock.patch('pungi.util.run_unmount_cmd')
     @mock.patch('pungi.wrappers.iso.run')
     def test_mount_iso_always_unmounts(self, mock_run, mock_unmount):
-        mock_run.return_value = (0, '')
+        mock_run.side_effect = [(1, ''), (0, '')]
         try:
             with iso.mount('dummy') as temp_dir:
                 self.assertTrue(os.path.isdir(temp_dir))
                 raise RuntimeError()
         except RuntimeError:
             pass
-        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_run.call_args_list), 2)
         self.assertEqual(len(mock_unmount.call_args_list), 1)
         self.assertFalse(os.path.isdir(temp_dir))
 
@@ -69,11 +94,11 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch('pungi.wrappers.iso.run')
     def test_mount_iso_raises_on_error(self, mock_run, mock_unmount):
         log = mock.Mock()
-        mock_run.return_value = (1, 'Boom')
+        mock_run.side_effect = [(1, ''), (1, 'Boom')]
         with self.assertRaises(RuntimeError):
             with iso.mount('dummy', logger=log) as temp_dir:
                 self.assertTrue(os.path.isdir(temp_dir))
-        self.assertEqual(len(mock_run.call_args_list), 1)
+        self.assertEqual(len(mock_run.call_args_list), 2)
         self.assertEqual(len(mock_unmount.call_args_list), 0)
         self.assertEqual(len(log.mock_calls), 1)
 

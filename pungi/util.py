@@ -36,6 +36,7 @@ from productmd.common import get_major_version
 # Patterns that match all names of debuginfo packages
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
 
+
 def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
     """Run a command and log the output.  Error out if we get something on stderr"""
 
@@ -607,11 +608,6 @@ def temp_dir(log=None, *args, **kwargs):
             # Okay, we failed to delete temporary dir.
             if log:
                 log.warning('Error removing %s: %s', dir, exc.strerror)
-
-
-def fusermount(path, **kwargs):
-    """Run fusermount -u on a given path."""
-    run_unmount_cmd(['fusermount', '-u', path], path=path, **kwargs)
 
 
 def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
