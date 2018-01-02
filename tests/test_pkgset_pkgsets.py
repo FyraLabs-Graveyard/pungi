@@ -10,6 +10,7 @@ except ImportError:
     import unittest
 import json
 import tempfile
+import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -259,9 +260,10 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
-        self.assertRegexpMatches(
-            str(ctx.exception),
-            r'^RPM\(s\) not found for sigs: .+Check log for details.+')
+        figure = re.compile(
+            r'^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$',
+            re.DOTALL)
+        self.assertRegexpMatches(str(ctx.exception), figure)
 
     def test_can_not_find_any_package(self):
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])

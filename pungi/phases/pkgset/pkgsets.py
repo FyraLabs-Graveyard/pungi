@@ -124,10 +124,13 @@ class PackageSetBase(kobo.log.LoggingBase):
         self.log_debug("Package set: worker threads stopped (RPMs)")
 
         if self._invalid_sigkey_rpms:
+            def nvr_formatter(package_info):
+                # joins NVR parts of the package with '-' character.
+                return '-'.join((package_info['name'], package_info['version'], package_info['release']))
             raise RuntimeError(
                 "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
                     self.sigkey_ordering,
-                    '\n'.join([rpminfo['name'] for rpminfo in self._invalid_sigkey_rpms])))
+                    '\n'.join(sorted(set([nvr_formatter(rpminfo) for rpminfo in self._invalid_sigkey_rpms])))))
 
         return self.rpms_by_arch
 
