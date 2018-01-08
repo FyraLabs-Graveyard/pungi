@@ -252,6 +252,11 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 variant_tags[variant].append(tag)
                 if tag not in compose_tags:
                     compose_tags.append(tag)
+
+                module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
+                    variant=variant, tag=tag, module=module["name"])
+                compose.log_info("%s" % module_msg)
+
         if pdc_modules:
             with open(pdc_module_file, 'w') as f:
                 json.dump(pdc_modules, f)
