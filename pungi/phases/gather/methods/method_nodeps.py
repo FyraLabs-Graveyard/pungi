@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 from pprint import pformat
+import six
 
 import pungi.arch
 from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
@@ -61,8 +62,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             if pkg.arch not in valid_arches:
                 continue
             for gathered_pkg, pkg_arch in packages:
-                if (type(gathered_pkg) in [str, unicode]
-                        and pkg.name != gathered_pkg):
+                if isinstance(gathered_pkg, six.string_types) and pkg.name != gathered_pkg:
                     continue
                 elif (type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
                       and pkg.nevra != gathered_pkg.nevra):
