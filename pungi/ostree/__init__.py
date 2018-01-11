@@ -42,6 +42,8 @@ def main(args=None):
                        help='update summary metadata')
     treep.add_argument('--ostree-ref', metavar='PATH',
                        help='override ref value from treefile')
+    treep.add_argument('--force-new-commit', action='store_true',
+                       help='do not use rpm-ostree\'s built-in change detection')
 
     installerp = subparser.add_parser("installer", help="Create an OSTree installer image")
     installerp.set_defaults(_class=Installer, func='run')

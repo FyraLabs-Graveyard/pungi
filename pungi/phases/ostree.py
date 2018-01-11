@@ -126,6 +126,9 @@ class OSTreeThread(WorkerThread):
         if ostree_ref:
             cmd.append('--ostree-ref=%s' % ostree_ref)
 
+        if config.get('force_new_commit', False):
+            cmd.append('--force-new-commit')
+
         runroot_channel = compose.conf.get("runroot_channel")
         runroot_tag = compose.conf["runroot_tag"]
 

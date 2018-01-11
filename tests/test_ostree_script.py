@@ -106,7 +106,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.assertItemsEqual(
             run.call_args_list,
             [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                       '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
+                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True),
              mock.call(['ostree', 'summary', '-u', '--repo=%s' % repo],
@@ -128,7 +128,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.assertItemsEqual(
             run.call_args_list,
             [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                       '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
+                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
                         '--add-metadata-string=version=24',
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
@@ -163,6 +163,29 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self.assertEqual(replacing_ref, new_ref)
         # repos should stay unchanged
         self.assertEqual(original_repos, new_repos)
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_force_new_commit(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        helpers.touch(os.path.join(repo, 'initialized'))
+
+        ostree.main([
+            'tree',
+            '--repo=%s' % repo,
+            '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
+            '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
+            '--force-new-commit',
+        ])
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            run.call_args_list,
+            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
+                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
+                        '--force-nocache',
+                        self.topdir + '/fedora-atomic-docker-host.json'],
+                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
     @mock.patch('pungi.ostree.utils.datetime')
     @mock.patch('kobo.shortcuts.run')

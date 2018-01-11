@@ -1220,7 +1220,7 @@ repository with a new commit.
       deliverable is not release blocking.
     * ``update_summary`` -- (*bool*) Update summary metadata after tree composing.
       Defaults to ``False``.
-    * ``force_new_commit`` -- (*bool*) Do not use rpm-ostree's built in change
+    * ``force_new_commit`` -- (*bool*) Do not use rpm-ostree's built-in change
       detection.
       Defaults to ``False``.
     * ``version`` -- (*str*) Version string to be added as versioning metadata.
