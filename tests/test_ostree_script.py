@@ -7,7 +7,6 @@ import mock
 import os
 import json
 import sys
-import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'bin'))
@@ -187,11 +186,8 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
                         self.topdir + '/fedora-atomic-docker-host.json'],
                        logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
 
-    @mock.patch('pungi.ostree.utils.datetime')
     @mock.patch('kobo.shortcuts.run')
-    def test_extra_config_with_extra_repos(self, run, time):
-        time.datetime.now.return_value = datetime.datetime(2016, 1, 1, 1, 1)
-        timestamp = time.datetime.now().strftime("%Y%m%d%H%M%S")
+    def test_extra_config_with_extra_repos(self, run):
 
         configdir = os.path.join(self.topdir, 'config')
         self._make_dummy_config_dir(configdir)
@@ -228,47 +224,36 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
             '--extra-config=%s' % extra_config_file,
         ])
 
-        server_repo_name = "server-%s" % timestamp
-        server_repo = os.path.join(configdir, "%s.repo" % server_repo_name)
-        self.assertTrue(os.path.isfile(server_repo))
-        with open(server_repo, 'r') as f:
-            content = f.read()
-            self.assertIn("[%s]" % server_repo_name, content)
-            self.assertIn("name=%s" % server_repo_name, content)
-            self.assertIn("baseurl=http://www.example.com/Server/repo", content)
-            self.assertIn("gpgcheck=0", content)
-
-        optional_repo_name = "optional-%s" % timestamp
-        optional_repo = os.path.join(configdir, "%s.repo" % optional_repo_name)
-        self.assertTrue(os.path.isfile(optional_repo))
-        with open(optional_repo, 'r') as f:
-            content = f.read()
-            self.assertIn("[%s]" % optional_repo_name, content)
-            self.assertIn("name=%s" % optional_repo_name, content)
-            self.assertIn("baseurl=http://example.com/repo/x86_64/optional", content)
-            self.assertIn("gpgcheck=0", content)
-
-        extra_repo_name = "extra-%s" % timestamp
-        extra_repo = os.path.join(configdir, "%s.repo" % extra_repo_name)
-        self.assertTrue(os.path.isfile(extra_repo))
-        with open(extra_repo, 'r') as f:
-            content = f.read()
-            self.assertIn("[%s]" % extra_repo_name, content)
-            self.assertIn("name=%s" % extra_repo_name, content)
-            self.assertIn("baseurl=http://example.com/repo/x86_64/extra", content)
-            self.assertIn("gpgcheck=0", content)
+        pungi_repo = os.path.join(configdir, "pungi.repo")
+        self.assertTrue(os.path.isfile(pungi_repo))
+        with open(pungi_repo, 'r') as f:
+            content = f.read().strip()
+            result_template = (
+                "[repo-0]",
+                "name=repo-0",
+                "baseurl=http://example.com/repo/x86_64/extra",
+                "gpgcheck=0",
+                "[repo-1]",
+                "name=repo-1",
+                "baseurl=http://example.com/repo/x86_64/optional",
+                "exclude=systemd-container",
+                "gpgcheck=0",
+                "[repo-2]",
+                "name=repo-2",
+                "baseurl=http://www.example.com/Server/repo",
+                "gpgcheck=0",
+            )
+            result = '\n'.join(result_template).strip()
+            self.assertEqual(content, result)
 
         treeconf = json.load(open(treefile, 'r'))
         repos = treeconf['repos']
         self.assertEqual(len(repos), 3)
-        for name in [server_repo_name, optional_repo_name, extra_repo_name]:
+        for name in ("repo-0", "repo-1", "repo-2"):
             self.assertIn(name, repos)
 
-    @mock.patch('pungi.ostree.utils.datetime')
     @mock.patch('kobo.shortcuts.run')
-    def test_extra_config_with_keep_original_sources(self, run, time):
-        time.datetime.now.return_value = datetime.datetime(2016, 1, 1, 1, 1)
-        timestamp = time.datetime.now().strftime("%Y%m%d%H%M%S")
+    def test_extra_config_with_keep_original_sources(self, run):
 
         configdir = os.path.join(self.topdir, 'config')
         self._make_dummy_config_dir(configdir)
@@ -306,15 +291,11 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
             '--extra-config=%s' % extra_config_file,
         ])
 
-        server_repo_name = "server-%s" % timestamp
-        optional_repo_name = "optional-%s" % timestamp
-        extra_repo_name = "extra-%s" % timestamp
-
         treeconf = json.load(open(treefile, 'r'))
         repos = treeconf['repos']
         self.assertEqual(len(repos), 6)
         for name in ['fedora-rawhide', 'fedora-24', 'fedora-23',
-                     server_repo_name, optional_repo_name, extra_repo_name]:
+                     'repo-0', 'repo-1', 'repo-2']:
             self.assertIn(name, repos)
 
 

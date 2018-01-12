@@ -14,7 +14,6 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import datetime
 import json
 import logging
 import os
@@ -89,7 +88,7 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
         # use repos named 'repo-<number>'.
         # https://pagure.io/pungi/issue/811
         with open("{}/pungi.repo".format(treeconf_dir), 'w') as f:
-            for i,repo in enumerate(source_repos):
+            for i, repo in enumerate(source_repos):
                 name = 'repo-{}'.format(i)
                 f.write("[%s]\n" % name)
                 f.write("name=%s\n" % name)
