@@ -708,6 +708,7 @@ def make_schema():
             },
             "buildinstall_topdir":  {"type": "string"},
             "buildinstall_kickstart": {"$ref": "#/definitions/str_or_scm_dict"},
+            "buildinstall_use_guestmount": {"type": "boolean", "default": True},
 
             "global_ksurl": {"type": "string"},
             "global_version": {"type": "string"},

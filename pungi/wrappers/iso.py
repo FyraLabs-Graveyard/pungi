@@ -379,7 +379,7 @@ def graft_point_sort_key(x):
 
 
 @contextlib.contextmanager
-def mount(image, logger=None):
+def mount(image, logger=None, use_guestmount=True):
     """Mount an image and make sure it's unmounted.
 
     The yielded path will only be valid in the with block and is removed once
@@ -387,7 +387,8 @@ def mount(image, logger=None):
     """
     with util.temp_dir(prefix='iso-mount-') as mount_dir:
         ret, __ = run(["which", "guestmount"], can_fail=True)
-        guestmount_available = not bool(ret)  # return code 0 means that guestmount is available
+        # return code 0 means that guestmount is available
+        guestmount_available = use_guestmount and not bool(ret)
         if guestmount_available:
             # use guestmount to mount the image, which doesn't require root privileges
             # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt

@@ -305,7 +305,9 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
         if not os.path.isfile(image):
             continue
 
-        with iso.mount(image, logger=compose._logger) as mount_tmp_dir:
+        with iso.mount(image, logger=compose._logger,
+                       use_guestmount=compose.conf.get("buildinstall_use_guestmount")
+                       ) as mount_tmp_dir:
             for config in BOOT_CONFIGS:
                 config_path = os.path.join(tmp_dir, config)
                 config_in_image = os.path.join(mount_tmp_dir, config)
