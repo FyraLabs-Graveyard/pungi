@@ -36,6 +36,8 @@ from pungi.wrappers.scm import get_file_from_scm
 from pungi.util import makedirs, get_arch_variant_data, get_format_substs
 from pungi.metadata import compose_to_composeinfo
 
+SUPPORTED_MILESTONES = ["RC", "Update"]
+
 
 def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):
     already_exists_callbacks = already_exists_callbacks or []
@@ -125,8 +127,8 @@ class Compose(kobo.log.LoggingBase):
         self.ci_base.load(os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json"))
 
         self.supported = supported
-        if self.compose_label and self.compose_label.split("-")[0] == "RC":
-            self.log_info("Automatically setting 'supported' flag for a Release Candidate (%s) compose." % self.compose_label)
+        if self.compose_label and self.compose_label.split("-")[0] in SUPPORTED_MILESTONES:
+            self.log_info("Automatically setting 'supported' flag due to label: %s." % self.compose_label)
             self.supported = True
 
         self.im = Images()
