@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.21
+Version:        4.1.22
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -104,6 +104,31 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Jan 24 2018 Ondrej Nosek - 4.1.22-1
+- Better INFO messages about modules (onosek)
+- Updates composes should be marked as supported (lsedlar)
+- pkgset: Only add missing packages from global tag (lsedlar)
+- ostree/utils: Drop timestamps from generated repo names - tests (onosek)
+- ostree/utils: Generate a single pungi.repo file, use repo-<num> IDs (walters)
+- ostree/utils: Drop timestamps from generated repo names (walters)
+- gather: Do not require variant for module source (lsedlar)
+- gather: Comps source should not crash without comps file (lsedlar)
+- gather: JSON source returns nothing without configuration (lsedlar)
+- buildinstall: Fix treeinfo generating on failure (lsedlar)
+- Add buildinstall_use_guestmount boolean option (jkaluza)
+- gather: Use arch packages in nodeps method (lsedlar)
+- pkgset: Always use global tag if specified (lsedlar)
+- config: Make pkgset_koji_tag optional (lsedlar)
+- ostree: Add force_new_commit option - test added (onosek)
+- ostree: Add force_new_commit option (walters)
+- gather: Fix checking string type (lsedlar)
+- Improve logging for unsigned packages (onosek)
+- Fall back to mount if guestmount is not available (onosek)
+- El-Torito boot information on s390x (onosek)
+- Remove strace from buildinstall runroot (onosek)
+- doc: fix "Miscellaneous" spelling in Config section (kdreyer)
+- doc: move "Phases" up, "Contributing" down (kdreyer)
+
 * Wed Dec 06 2017 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.21-1
 - tests: Use correct python version for config validation test (lsedlar)
 - Use dnf backend for repoclosure on PY3 (lsedlar)
