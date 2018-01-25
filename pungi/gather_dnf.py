@@ -535,6 +535,16 @@ class Gather(GatherBase):
 
         return added
 
+    def _get_matching_srpm(self, pkg, sources):
+        """
+        Get a source rpm from the same repo that pkg comes from. If there is no
+        such package, get the first one.
+        """
+        for srpm in sources:
+            if pkg.repo == srpm.repo:
+                return srpm
+        return sources[0]
+
     @Profiler("Gather.add_source_packages()")
     def add_source_packages(self):
         """
@@ -556,7 +566,7 @@ class Gather(GatherBase):
                         nvra = parse_nvra(pkg.sourcerpm)
                         source_pkgs = self.source_pkgs_cache.get(nvra["name"], nvra["version"], nvra["release"])
                         if source_pkgs:
-                            source_pkg = list(source_pkgs)[0]
+                            source_pkg = self._get_matching_srpm(pkg, source_pkgs)
                             self.sourcerpm_cache[pkg.sourcerpm] = source_pkg
                 self.finished_add_source_packages[pkg] = source_pkg
 
