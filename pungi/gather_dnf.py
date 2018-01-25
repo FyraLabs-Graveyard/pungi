@@ -204,9 +204,6 @@ class Gather(GatherBase):
     def _set_flag(self, pkg, *flags):
         self.result_package_flags.setdefault(pkg, set()).update(flags)
 
-    def _has_flag(self, pkg, flag):
-        return flag in self.result_package_flags.get(pkg, set())
-
     def _get_best_package(self, package_list, pkg=None, req=None):
         if not package_list:
             return []
@@ -573,8 +570,7 @@ class Gather(GatherBase):
             if not source_pkg:
                 continue
 
-            lookaside = self._has_flag(pkg, PkgFlag.lookaside)
-            if lookaside:
+            if source_pkg.repoid in self.opts.lookaside_repos:
                 self._set_flag(source_pkg, PkgFlag.lookaside)
             if source_pkg not in self.result_source_packages:
                 added.add(source_pkg)
@@ -607,7 +603,6 @@ class Gather(GatherBase):
                 continue
 
             debug_pkgs = []
-            lookaside = self._has_flag(pkg, PkgFlag.lookaside)
             for i in candidates:
                 if pkg.arch == 'noarch' and i.arch != 'noarch':
                     # If the package is noarch, we will only pull debuginfo if
@@ -615,7 +610,7 @@ class Gather(GatherBase):
                     # means we don't for example pull debuginfo just because of
                     # -doc subpackage.
                     continue
-                if lookaside:
+                if i.repoid in self.opts.lookaside_repos:
                     self._set_flag(i, PkgFlag.lookaside)
                 if i not in self.result_debug_packages:
                     added.add(i)
