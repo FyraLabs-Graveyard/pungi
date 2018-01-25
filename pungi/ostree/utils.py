@@ -77,7 +77,7 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
         treeconf_content = json.load(f)
 
     # backup the old tree config
-    os.rename(treeconf, '{}.bak'.format(treeconf))
+    os.rename(treeconf, '{0}.bak'.format(treeconf))
 
     repos = []
     if source_repos:
@@ -87,9 +87,9 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
         # currently defeats rpm-ostree's change detection, let's just
         # use repos named 'repo-<number>'.
         # https://pagure.io/pungi/issue/811
-        with open("{}/pungi.repo".format(treeconf_dir), 'w') as f:
+        with open("{0}/pungi.repo".format(treeconf_dir), 'w') as f:
             for i, repo in enumerate(source_repos):
-                name = 'repo-{}'.format(i)
+                name = 'repo-{0}'.format(i)
                 f.write("[%s]\n" % name)
                 f.write("name=%s\n" % name)
                 f.write("baseurl=%s\n" % repo['baseurl'])
