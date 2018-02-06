@@ -118,7 +118,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
             'translate_paths': [
-                (self.topdir + '/compose', 'http://example.com')
+                (self.topdir, 'http://example.com')
             ]
         })
         self.pool = mock.Mock()
@@ -147,6 +147,28 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                   '\n'.join(writefiles[filename]))
             return {'task_id': 1234, 'retcode': retcode, 'output': 'Foo bar\n'}
         return fake_runroot
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_extra_config_content(self, KojiWrapper, get_dir_from_scm):
+        get_dir_from_scm.side_effect = self._dummy_config_repo
+        self.compose.conf['runroot_weights'] = {'ostree': 123}
+
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
+
+        t = ostree.OSTreeThread(self.pool)
+
+        extra_config_file = os.path.join(self.topdir, 'work/ostree-1/extra_config.json')
+        self.assertFalse(os.path.isfile(extra_config_file))
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
+
+        self.assertTrue(os.path.isfile(extra_config_file))
+        with open(extra_config_file, 'r') as f:
+            extraconf_content = json.load(f)
+        proper_extraconf_content = json.loads('{"repo": [{"name": "http:__example.com_work__basearch_repo", "baseurl": "http://example.com/work/$basearch/repo"}]}')
+        self.assertEqual(proper_extraconf_content, extraconf_content)
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
@@ -269,7 +291,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                                     arch='x86_64',
                                     ref='fedora-atomic/25/x86_64',
                                     commitid=None,
-                                    repo_path=self.repo,
+                                    repo_path='http://example.com/place/for/atomic',
                                     local_repo_path=self.repo)])
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
@@ -402,14 +424,14 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
         cfg = {
-            'repo': [
-                'Everything',
+            'repo': [  # Variant type repos will not be included into extra_config. This part of the config is deprecated
+                'Everything',  # do not include
                 {
                     'name': 'repo_a',
                     'baseurl': 'http://url/to/repo/a',
                     'exclude': 'systemd-container'
                 },
-                {
+                {  # do not include
                     'name': 'Server',
                     'baseurl': 'Server',
                     'exclude': 'systemd-container'
@@ -428,12 +450,13 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         extra_config_file = os.path.join(self.topdir, 'work/ostree-1/extra_config.json')
         self.assertTrue(os.path.isfile(extra_config_file))
-        extra_config = json.load(open(extra_config_file, 'r'))
+        with open(extra_config_file, 'r') as extra_config_fd:
+            extra_config = json.load(extra_config_fd)
         self.assertTrue(extra_config.get('keep_original_sources', False))
-        self.assertEqual(len(extra_config.get('repo', [])), len(cfg['repo']))
-        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/Server/$basearch/os')
+        self.assertEqual(len(extra_config.get('repo', [])), 2)  # should equal to number of valid repositories in cfg['repo'] + default repository
+        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/work/$basearch/repo')
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://url/to/repo/a')
-        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/Everything/$basearch/os')
+
 
 if __name__ == '__main__':
     unittest.main()

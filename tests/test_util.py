@@ -560,43 +560,35 @@ class GetRepoFuncsTestCase(unittest.TestCase):
         self.assertEqual(util.get_repo_urls(self.compose, repos), expect)
 
     def test_get_repo_dict_from_normal_url(self):
-        repo_dict = util.get_repo_dict(self.compose, 'http://example.com/repo')
+        repo_dict = util.get_repo_dict('http://example.com/repo')
         expect = {'name': 'http:__example.com_repo', 'baseurl': 'http://example.com/repo'}
         self.assertEqual(repo_dict, expect)
 
     def test_get_repo_dict_from_variant_uid(self):
-        repo_dict = util.get_repo_dict(self.compose, 'Server')
-        expect = {
-            'name': "%s-%s" % (self.compose.compose_id, 'Server'),
-            'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os',
-        }
+        repo_dict = util.get_repo_dict('Server')  # this repo format is deprecated
+        expect = {}
         self.assertEqual(repo_dict, expect)
 
     def test_get_repo_dict_from_repo_dict(self):
-        repo = {'baseurl': 'Server'}
-        expect = {
-            'name': '%s-%s' % (self.compose.compose_id, 'Server'),
-            'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os'
-        }
-        repo_dict = util.get_repo_dict(self.compose, repo)
+        repo = {'baseurl': 'Server'}  # this repo format is deprecated
+        expect = {}
+        repo_dict = util.get_repo_dict(repo)
         self.assertEqual(repo_dict, expect)
 
     def test_get_repo_dicts(self):
         repos = [
             'http://example.com/repo',
-            'Server',
-            {'baseurl': 'Client'},
+            'Server',  # this repo format is deprecated (and will not be included into final repo_dict)
+            {'baseurl': 'Client'},  # this repo format is deprecated
             {'baseurl': 'ftp://example.com/linux/repo'},
             {'name': 'testrepo', 'baseurl': 'ftp://example.com/linux/repo'},
         ]
         expect = [
             {'name': 'http:__example.com_repo', 'baseurl': 'http://example.com/repo'},
-            {'name': '%s-%s' % (self.compose.compose_id, 'Server'), 'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os'},
-            {'name': '%s-%s' % (self.compose.compose_id, 'Client'), 'baseurl': 'http://example.com/RHEL-8.0-20180101.n.0/compose/Client/$basearch/os'},
             {'name': 'ftp:__example.com_linux_repo', 'baseurl': 'ftp://example.com/linux/repo'},
             {'name': 'testrepo', 'baseurl': 'ftp://example.com/linux/repo'},
         ]
-        repos = util.get_repo_dicts(self.compose, repos)
+        repos = util.get_repo_dicts(repos)
         self.assertEqual(repos, expect)
 
 

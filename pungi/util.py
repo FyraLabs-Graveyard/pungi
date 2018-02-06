@@ -715,19 +715,16 @@ def _translate_url_to_repo_id(url):
     return ''.join([s if s in list(_REPOID_CHARS) else '_' for s in url])
 
 
-def get_repo_dict(compose, repo, arch='$basearch'):
+def get_repo_dict(repo):
     """
     Convert repo to a dict of repo options.
 
-    If repo is a string, translate it to repo url if necessary (when it's
-    not a url), and set it as 'baseurl' in result dict, also generate
-    a repo id/name as 'name' key in result dict.
-    If repo is a dict, translate value of 'baseurl' key to url if necessary,
-    if 'name' key is missing in the dict, generate one for it.
+    If repo is a string that represents url, set it as 'baseurl' in result dict,
+    also generate a repo id/name as 'name' key in result dict.
+    If repo is a dict, and if 'name' key is missing in the dict, generate one for it.
+    Repo (str or dict) that has not url format is no longer processed.
 
-    @param compose - required for access to variants
     @param repo - A string or dict, if it is a dict, key 'baseurl' is required
-    @param arch - string to be used as arch in repo url
     """
     repo_dict = {}
     if isinstance(repo, dict):
@@ -737,10 +734,8 @@ def get_repo_dict(compose, repo, arch='$basearch'):
             if name is None:
                 name = _translate_url_to_repo_id(url)
         else:
-            # url is variant uid
-            if name is None:
-                name = '%s-%s' % (compose.compose_id, url)
-            url = get_repo_url(compose, url, arch=arch)
+            # url is variant uid - this possibility is now discontinued
+            return {}
         repo['name'] = name
         repo['baseurl'] = url
         return repo
@@ -751,24 +746,24 @@ def get_repo_dict(compose, repo, arch='$basearch'):
             repo_dict['name'] = _translate_url_to_repo_id(repo)
             repo_dict['baseurl'] = repo
         else:
-            repo_dict['name'] = '%s-%s' % (compose.compose_id, repo)
-            repo_dict['baseurl'] = get_repo_url(compose, repo)
-
+            return {}
     return repo_dict
 
 
-def get_repo_dicts(compose, repos, arch='$basearch'):
+def get_repo_dicts(repos, logger=None):
     """
     Convert repos to a list of repo dicts.
 
-    @param compose - required for access to variants
     @param repo - A list of string or dict, if item is a dict, key 'baseurl' is required
-    @param arch - string to be used as arch in repo url
     """
     repo_dicts = []
     for repo in repos:
-        repo_dict = get_repo_dict(compose, repo, arch=arch)
-        repo_dicts.append(repo_dict)
+        repo_dict = get_repo_dict(repo)
+        if repo_dict == {}:
+            if logger:
+                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'ostree' phase: %s" % (repo))
+        else:
+            repo_dicts.append(repo_dict)
     return repo_dicts
 
 

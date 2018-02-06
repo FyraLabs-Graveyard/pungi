@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-import mock
 import os
 import subprocess
 import sys
@@ -20,8 +19,7 @@ from tests import helpers
 
 class ConfigValidateScriptTest(helpers.PungiTestCase):
 
-    @mock.patch('kobo.shortcuts.run')
-    def test_validate_dummy_config(self, run):
+    def test_validate_dummy_config(self):
         DUMMY_CONFIG = os.path.join(HERE, 'data/dummy-pungi.conf')
         interp = 'python2' if six.PY2 else 'python3'
         p = subprocess.Popen([interp, PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
