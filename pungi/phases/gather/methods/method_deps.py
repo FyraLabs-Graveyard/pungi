@@ -18,6 +18,7 @@ import os
 
 from kobo.shortcuts import run
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
+from kobo.rpmlib import parse_nvra
 
 from pungi.util import rmtree, get_arch_variant_data
 from pungi.wrappers.pungi import PungiWrapper
@@ -43,8 +44,26 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
                            fulltree_excludes=fulltree_excludes, prepopulate=prepopulate,
                            source_name=self.source_name)
         result, missing_deps = resolve_deps(self.compose, arch, variant, source_name=self.source_name)
+        raise_on_invalid_sigkeys(arch, variant, package_sets, result)
         check_deps(self.compose, arch, variant, missing_deps)
         return result
+
+
+def raise_on_invalid_sigkeys(arch, variant, package_sets, result):
+    """
+    Raises RuntimeError if some package in compose is signed with an invalid
+    sigkey.
+    """
+    invalid_sigkeys_rpms = []
+    for package in result["rpm"]:
+        name = parse_nvra(package["path"])["name"]
+        for forbidden_package in package_sets["global"].invalid_sigkeys_rpms():
+            if name == forbidden_package["name"]:
+                invalid_sigkeys_rpms.append(forbidden_package)
+
+    if invalid_sigkeys_rpms:
+        package_sets["global"].raise_invalid_sigkeys_exception(
+            invalid_sigkeys_rpms)
 
 
 def _format_packages(pkgs):

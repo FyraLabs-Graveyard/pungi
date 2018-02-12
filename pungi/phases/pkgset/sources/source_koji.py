@@ -214,11 +214,23 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             for group in groups:
                 packages_to_gather += comps.get_packages(group)
 
+    # In case we use "deps" gather_method, there might be some packages in
+    # the Koji tag which are not signed with proper sigkey. However, these
+    # packages might never end up in a compose depending on which packages
+    # from the Koji tag are requested how the deps are resolved in the end.
+    # In this case, we allow even packages with invalid sigkeys to be returned
+    # by PKGSET phase and later, the gather phase checks its results and if
+    # there are some packages with invalid sigkeys, it raises an exception.
+    if compose.conf["gather_method"] == "deps":
+        allow_invalid_sigkeys = True
+    else:
+        allow_invalid_sigkeys = False
+
     session = get_pdc_client_session(compose)
     for variant in compose.all_variants.values():
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches)
+            arches=all_arches, allow_invalid_sigkeys=allow_invalid_sigkeys)
         variant_tags[variant] = []
         pdc_module_file = os.path.join(compose.paths.work.topdir(arch="global"),
                                        "pdc-module-%s.json" % variant.uid)
@@ -285,7 +297,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     else:
         global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches)
+            arches=all_arches, allow_invalid_sigkeys=allow_invalid_sigkeys)
         # Get package set for each compose tag and merge it to global package
         # list. Also prepare per-variant pkgset, because we do not have list
         # of binary RPMs in module definition - there is just list of SRPMs.
@@ -294,7 +306,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                              "'%s'" % compose_tag)
             pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-                arches=all_arches, packages=packages_to_gather)
+                arches=all_arches, packages=packages_to_gather,
+                allow_invalid_sigkeys=allow_invalid_sigkeys)
             # Create a filename for log with package-to-tag mapping. The tag
             # name is included in filename, so any slashes in it are replaced
             # with underscores just to be safe.

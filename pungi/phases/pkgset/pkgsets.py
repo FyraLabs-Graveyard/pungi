@@ -67,7 +67,8 @@ class ReaderThread(WorkerThread):
 
 class PackageSetBase(kobo.log.LoggingBase):
 
-    def __init__(self, sigkey_ordering, arches=None, logger=None):
+    def __init__(self, sigkey_ordering, arches=None, logger=None,
+                 allow_invalid_sigkeys=False):
         super(PackageSetBase, self).__init__(logger=logger)
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
         self.sigkey_ordering = sigkey_ordering or [None]
@@ -76,6 +77,10 @@ class PackageSetBase(kobo.log.LoggingBase):
         self.srpms_by_name = {}
         # RPMs not found for specified sigkeys
         self._invalid_sigkey_rpms = []
+        self._allow_invalid_sigkeys = allow_invalid_sigkeys
+
+    def invalid_sigkeys_rpms(self):
+        return self._invalid_sigkey_rpms
 
     def __getitem__(self, name):
         return self.file_cache[name]
@@ -95,6 +100,19 @@ class PackageSetBase(kobo.log.LoggingBase):
     def __setstate__(self, data):
         self._logger = None
         self.__dict__.update(data)
+
+    def raise_invalid_sigkeys_exception(self, rpminfos):
+        """
+        Raises RuntimeError containing details of RPMs with invalid
+        sigkeys defined in `rpminfos`.
+        """
+        def nvr_formatter(package_info):
+            # joins NVR parts of the package with '-' character.
+            return '-'.join((package_info['name'], package_info['version'], package_info['release']))
+        raise RuntimeError(
+            "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
+                self.sigkey_ordering,
+                '\n'.join(sorted(set([nvr_formatter(rpminfo) for rpminfo in rpminfos])))))
 
     def read_packages(self, rpms, srpms):
         srpm_pool = ReaderPool(self, self._logger)
@@ -123,14 +141,8 @@ class PackageSetBase(kobo.log.LoggingBase):
         rpm_pool.stop()
         self.log_debug("Package set: worker threads stopped (RPMs)")
 
-        if self._invalid_sigkey_rpms:
-            def nvr_formatter(package_info):
-                # joins NVR parts of the package with '-' character.
-                return '-'.join((package_info['name'], package_info['version'], package_info['release']))
-            raise RuntimeError(
-                "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
-                    self.sigkey_ordering,
-                    '\n'.join(sorted(set([nvr_formatter(rpminfo) for rpminfo in self._invalid_sigkey_rpms])))))
+        if not self._allow_invalid_sigkeys and self._invalid_sigkey_rpms:
+            self.raise_invalid_sigkeys_exception(self._invalid_sigkey_rpms)
 
         return self.rpms_by_arch
 
@@ -222,9 +234,10 @@ class FilelistPackageSet(PackageSetBase):
 
 class KojiPackageSet(PackageSetBase):
     def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
-                 packages=None):
+                 packages=None, allow_invalid_sigkeys=False):
         super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
-                                             arches=arches, logger=logger)
+                                             arches=arches, logger=logger,
+                                             allow_invalid_sigkeys=allow_invalid_sigkeys)
         self.koji_wrapper = koji_wrapper
         # Names of packages to look for in the Koji tag.
         self.packages = set(packages or [])
@@ -268,6 +281,14 @@ class KojiPackageSet(PackageSetBase):
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
             paths.append(rpm_path)
             if os.path.isfile(rpm_path):
+                return rpm_path
+
+        if self._allow_invalid_sigkeys:
+            # use an unsigned copy (if allowed)
+            rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
+            paths.append(rpm_path)
+            if os.path.isfile(rpm_path):
+                self._invalid_sigkey_rpms.append(rpm_info)
                 return rpm_path
 
         self._invalid_sigkey_rpms.append(rpm_info)
