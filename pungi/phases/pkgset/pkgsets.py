@@ -79,7 +79,8 @@ class PackageSetBase(kobo.log.LoggingBase):
         self._invalid_sigkey_rpms = []
         self._allow_invalid_sigkeys = allow_invalid_sigkeys
 
-    def invalid_sigkeys_rpms(self):
+    @property
+    def invalid_sigkey_rpms(self):
         return self._invalid_sigkey_rpms
 
     def __getitem__(self, name):
@@ -234,13 +235,38 @@ class FilelistPackageSet(PackageSetBase):
 
 class KojiPackageSet(PackageSetBase):
     def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
-                 packages=None, allow_invalid_sigkeys=False):
+                 packages=None, allow_invalid_sigkeys=False,
+                 populate_only_packages=False):
+        """
+        Creates new KojiPackageSet.
+
+        :param list sigkey_ordering: Ordered list of sigkey strings. When
+            getting package from Koji, KojiPackageSet tries to get the package
+            signed by sigkey from this list. If None or "" appears in this
+            list, unsigned package is used.
+        :param list arches: List of arches to get the packages for.
+        :param logging.Logger logger: Logger instance to use for logging.
+        :param list packages: List of package names to be used when
+            `allow_invalid_sigkeys` or `populate_only_packages` is set.
+        :param bool allow_invalid_sigkeys: When True, packages *not* listed in
+            the `packages` list are added to KojiPackageSet even if they have
+            invalid sigkey. This is useful in case Koji tag contains some
+            unsigned packages, but we know they won't appear in a compose.
+            When False, all packages in Koji tag must have valid sigkey as
+            defined in `sigkey_ordering`.
+        :param bool populate_only_packages. When True, only packages in
+            `packages` list are added to KojiPackageSet. This can save time
+            when generating compose from predefined list of packages from big
+            Koji tag.
+            When False, all packages from Koji tag are added to KojiPackageSet.
+        """
         super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
                                              arches=arches, logger=logger,
                                              allow_invalid_sigkeys=allow_invalid_sigkeys)
         self.koji_wrapper = koji_wrapper
         # Names of packages to look for in the Koji tag.
         self.packages = set(packages or [])
+        self.populate_only_packages = populate_only_packages
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -283,7 +309,7 @@ class KojiPackageSet(PackageSetBase):
             if os.path.isfile(rpm_path):
                 return rpm_path
 
-        if self._allow_invalid_sigkeys:
+        if self._allow_invalid_sigkeys and rpm_info["name"] not in self.packages:
             # use an unsigned copy (if allowed)
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
             paths.append(rpm_path)
@@ -333,7 +359,8 @@ class KojiPackageSet(PackageSetBase):
                     skipped_arches.append(rpm_info["arch"])
                 continue
 
-            if self.packages and rpm_info['name'] not in self.packages:
+            if (self.populate_only_packages and self.packages and
+                    rpm_info['name'] not in self.packages):
                 skipped_packages_count += 1
                 continue
 
@@ -351,6 +378,14 @@ class KojiPackageSet(PackageSetBase):
                            "included in a compose." % skipped_packages_count)
 
         result = self.read_packages(result_rpms, result_srpms)
+
+        # Check that after reading the packages, every package that is
+        # included in a compose has the right sigkey.
+        if self._invalid_sigkey_rpms:
+            invalid_sigkey_rpms = [rpm for rpm in self._invalid_sigkey_rpms
+                                   if rpm["name"] in self.packages]
+            if invalid_sigkey_rpms:
+                self.raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
 
         # Create a log with package NEVRAs and the tag they are coming from
         if logfile:

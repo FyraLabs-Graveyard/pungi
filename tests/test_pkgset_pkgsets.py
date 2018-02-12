@@ -276,7 +276,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
 
         with self.assertRaises(RuntimeError) as ctx:
-            pkgset.raise_invalid_sigkeys_exception(pkgset.invalid_sigkeys_rpms())
+            pkgset.raise_invalid_sigkeys_exception(pkgset.invalid_sigkey_rpms)
 
         figure = re.compile(
             r'^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$',
@@ -309,7 +309,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         ])
 
         pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None],
-                                        packages=["bash"])
+                                        packages=["bash"], populate_only_packages=True)
 
         result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
 

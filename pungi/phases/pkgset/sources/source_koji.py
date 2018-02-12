@@ -205,14 +205,16 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     # are really needed to do the compose and safe lot of time and resources
     # here. This only works if we are not creating bootable images. Those could
     # include packages that are not in the compose.
-    packages_to_gather = []
+    packages_to_gather, groups = get_packages_to_gather(
+        compose, include_arch=False, include_prepopulated=True)
+    if groups:
+        comps = CompsWrapper(compose.paths.work.comps())
+        for group in groups:
+            packages_to_gather += comps.get_packages(group)
     if compose.conf["gather_method"] == "nodeps" and not compose.conf.get('bootable'):
-        packages_to_gather, groups = get_packages_to_gather(
-            compose, include_arch=False, include_prepopulated=True)
-        if groups:
-            comps = CompsWrapper(compose.paths.work.comps())
-            for group in groups:
-                packages_to_gather += comps.get_packages(group)
+        populate_only_packages_to_gather = True
+    else:
+        populate_only_packages_to_gather = False
 
     # In case we use "deps" gather_method, there might be some packages in
     # the Koji tag which are not signed with proper sigkey. However, these
@@ -221,16 +223,13 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     # In this case, we allow even packages with invalid sigkeys to be returned
     # by PKGSET phase and later, the gather phase checks its results and if
     # there are some packages with invalid sigkeys, it raises an exception.
-    if compose.conf["gather_method"] == "deps":
-        allow_invalid_sigkeys = True
-    else:
-        allow_invalid_sigkeys = False
+    allow_invalid_sigkeys = compose.conf["gather_method"] == "deps"
 
     session = get_pdc_client_session(compose)
     for variant in compose.all_variants.values():
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches, allow_invalid_sigkeys=allow_invalid_sigkeys)
+            arches=all_arches)
         variant_tags[variant] = []
         pdc_module_file = os.path.join(compose.paths.work.topdir(arch="global"),
                                        "pdc-module-%s.json" % variant.uid)
@@ -297,7 +296,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     else:
         global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches, allow_invalid_sigkeys=allow_invalid_sigkeys)
+            arches=all_arches)
         # Get package set for each compose tag and merge it to global package
         # list. Also prepare per-variant pkgset, because we do not have list
         # of binary RPMs in module definition - there is just list of SRPMs.
@@ -307,7 +306,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
                 arches=all_arches, packages=packages_to_gather,
-                allow_invalid_sigkeys=allow_invalid_sigkeys)
+                allow_invalid_sigkeys=allow_invalid_sigkeys,
+                populate_only_packages=populate_only_packages_to_gather)
             # Create a filename for log with package-to-tag mapping. The tag
             # name is included in filename, so any slashes in it are replaced
             # with underscores just to be safe.

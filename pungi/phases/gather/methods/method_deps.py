@@ -54,16 +54,16 @@ def raise_on_invalid_sigkeys(arch, variant, package_sets, result):
     Raises RuntimeError if some package in compose is signed with an invalid
     sigkey.
     """
-    invalid_sigkeys_rpms = []
+    invalid_sigkey_rpms = []
     for package in result["rpm"]:
         name = parse_nvra(package["path"])["name"]
-        for forbidden_package in package_sets["global"].invalid_sigkeys_rpms():
+        for forbidden_package in package_sets["global"].invalid_sigkey_rpms:
             if name == forbidden_package["name"]:
-                invalid_sigkeys_rpms.append(forbidden_package)
+                invalid_sigkey_rpms.append(forbidden_package)
 
-    if invalid_sigkeys_rpms:
+    if invalid_sigkey_rpms:
         package_sets["global"].raise_invalid_sigkeys_exception(
-            invalid_sigkeys_rpms)
+            invalid_sigkey_rpms)
 
 
 def _format_packages(pkgs):
