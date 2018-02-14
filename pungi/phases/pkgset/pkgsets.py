@@ -369,7 +369,7 @@ class KojiPackageSet(PackageSetBase):
                 result_srpms.append((rpm_info, build_info))
             else:
                 result_rpms.append((rpm_info, build_info))
-                if self.packages:
+                if self.populate_only_packages and self.packages:
                     # Only add the package if we already have some whitelist.
                     self.packages.add(build_info['name'])
 
