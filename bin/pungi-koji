@@ -358,41 +358,27 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
             # Store the password
             compose.conf["signing_key_password"] = signing_key_password
 
-    # INIT phase
     init_phase.start()
     init_phase.stop()
 
-    # PKGSET phase
     pkgset_phase.start()
     pkgset_phase.stop()
 
-    # BUILDINSTALL phase - start, we can run gathering, extra files and
-    # createrepo while buildinstall is in progress.
-    buildinstall_phase.start()
-
-    # If any of the following three phases fail, we must ensure that
-    # buildinstall is stopped. Otherwise the whole process will hang.
-    try:
-        gather_phase.start()
-        gather_phase.stop()
-
-        extrafiles_phase.start()
-        extrafiles_phase.stop()
-
-        createrepo_phase.start()
-        createrepo_phase.stop()
-
-    finally:
-        buildinstall_phase.stop()
+    # WEAVER phase - launches other phases which can safely run in parallel
+    essentials_schema = (
+        buildinstall_phase,
+        (gather_phase, extrafiles_phase, createrepo_phase),
+        (ostree_phase, ostree_installer_phase),
+    )
+    essentials_phase = pungi.phases.WeaverPhase(compose, essentials_schema)
+    essentials_phase.start()
+    essentials_phase.stop()
 
     if not buildinstall_phase.skip():
         buildinstall_phase.copy_files()
 
-    ostree_phase.start()
-    ostree_phase.stop()
-
-    pungi.phases.run_all([productimg_phase,
-                          ostree_installer_phase])
+    productimg_phase.start()
+    productimg_phase.stop()
 
     # write treeinfo before ISOs are created
     for variant in compose.get_variants():
@@ -408,11 +394,16 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
             pungi.metadata.write_media_repo(compose, arch, variant, timestamp)
 
     # Start all phases for image artifacts
-    pungi.phases.run_all([createiso_phase,
-                          liveimages_phase,
-                          image_build_phase,
-                          livemedia_phase,
-                          osbs_phase])
+    compose_images_schema = (
+        createiso_phase,
+        liveimages_phase,
+        image_build_phase,
+        livemedia_phase,
+        osbs_phase,
+    )
+    compose_images_phase = pungi.phases.WeaverPhase(compose, compose_images_schema)
+    compose_images_phase.start()
+    compose_images_phase.stop()
 
     image_checksum_phase.start()
     image_checksum_phase.stop()
@@ -421,7 +412,6 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.im.dump(compose.paths.compose.metadata("images.json"))
     osbs_phase.dump_metadata()
 
-    # TEST phase
     test_phase.start()
     test_phase.stop()
 
