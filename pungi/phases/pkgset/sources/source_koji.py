@@ -34,7 +34,9 @@ import pungi.phases.pkgset.source
 
 try:
     from pdc_client import PDCClient
-    import modulemd
+    import gi
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd
     WITH_MODULES = True
 except:
     WITH_MODULES = False
@@ -42,7 +44,8 @@ except:
 
 def get_pdc_client_session(compose):
     if not WITH_MODULES:
-        compose.log_warning("pdc_client or modulemd  module is not installed, "
+        compose.log_warning("pdc_client module, pygobject module or "
+                            "libmodulemd library is not installed, "
                             "support for modules is disabled")
         return None
     try:
@@ -240,12 +243,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             for module in variant.get_modules():
                 pdc_module = get_module(compose, session, module["name"])
                 pdc_modules.append(pdc_module)
-                mmd = modulemd.ModuleMetadata()
-                mmd.loads(pdc_module["modulemd"])
+                mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])
+                mmd.upgrade()
 
                 # Catch the issue when PDC does not contain RPMs, but
                 # the module definition says there should be some.
-                if not pdc_module["rpms"] and mmd.components.rpms:
+                if not pdc_module["rpms"] and mmd.get_rpm_components():
                     raise ValueError(
                         "Module %s does not have any rpms in 'rpms' PDC field,"
                         "but according to modulemd, there should be some."
@@ -253,10 +256,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
 
                 # Add RPMs from PDC response to modulemd, so we can track
                 # what RPM is in which module later in gather phase.
+                rpm_artifacts = mmd.get_rpm_artifacts()
                 for rpm_nevra in pdc_module["rpms"]:
                     if rpm_nevra.endswith(".rpm"):
                         rpm_nevra = rpm_nevra[:-len(".rpm")]
-                    mmd.artifacts.add_rpm(str(rpm_nevra))
+                    rpm_artifacts.add(str(rpm_nevra))
+                mmd.set_rpm_artifacts(rpm_artifacts)
 
                 tag = pdc_module["koji_tag"]
                 variant.mmds.append(mmd)

@@ -74,7 +74,7 @@ class GatherPhase(PhaseBase):
             # Modules are not supported, check if we need them
             for variant in self.compose.variants.values():
                 if variant.modules:
-                    errors.append('Modular compose requires pdc_client and modulemd packages.')
+                    errors.append('Modular compose requires pdc_client and libmodulemd packages.')
 
         if errors:
             raise ValueError('\n'.join(errors))

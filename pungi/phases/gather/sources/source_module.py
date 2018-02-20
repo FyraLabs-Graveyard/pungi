@@ -50,7 +50,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             # Generate architecture specific modulemd metadata, so we can
             # store per-architecture artifacts there later.
             for mmd in variant.mmds:
-                mmd_id = "%s-%s" % (mmd.name, mmd.stream)
+                mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
                 if mmd_id not in variant.arch_mmds[arch]:
                     arch_mmd = yaml.safe_load(mmd.dumps())
                     variant.arch_mmds[arch][mmd_id] = arch_mmd
@@ -71,13 +71,13 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     continue
 
                 for mmd in variant.mmds:
-                    mmd_id = "%s-%s" % (mmd.name, mmd.stream)
+                    mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
                     arch_mmd = variant.arch_mmds[arch][mmd_id]
 
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
-                    if (srpm in mmd.components.rpms.keys() and
-                            rpm_obj.name not in mmd.filter.rpms and
-                            rpm_obj.nevra in mmd.artifacts.rpms):
+                    if (srpm in mmd.get_rpm_components().keys() and
+                            rpm_obj.name not in mmd.get_rpm_filter().get() and
+                            rpm_obj.nevra in mmd.get_rpm_artifacts().get()):
                         packages.add((rpm_obj, None))
                         added_rpms.setdefault(mmd_id, [])
                         added_rpms[mmd_id].append(str(rpm_obj.nevra))

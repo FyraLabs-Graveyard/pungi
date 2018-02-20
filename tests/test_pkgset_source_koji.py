@@ -11,7 +11,9 @@ import re
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
-    import modulemd         # noqa
+    import gi # noqa
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd # noqa
     import pdc_client       # noqa
     HAS_MODULE_SUPPORT = True
 except ImportError:
@@ -130,7 +132,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_module')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_client_session')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.modulemd')
+    @mock.patch('pungi.phases.pkgset.sources.source_koji.Modulemd')
     def test_pdc_log(self, modulemd, get_pdc_client_session, get_module, KojiPackageSet, pickle_dumps):
 
         pickle_dumps.return_value = b'DATA'
