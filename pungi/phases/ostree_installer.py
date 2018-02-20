@@ -9,7 +9,7 @@ from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
-from ..util import get_volid, get_repo_urls, version_generator
+from ..util import get_volid, get_repo_urls, version_generator, translate_path
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
 
@@ -64,7 +64,11 @@ class OstreeInstallerThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
 
-        repos = get_repo_urls(compose, shortcuts.force_list(config['repo']), arch=arch)
+        repo_baseurl = compose.paths.work.arch_repo('$basearch', create_dir=False)
+        repos = get_repo_urls(None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
+                              shortcuts.force_list(config['repo']) + shortcuts.force_list(translate_path(compose, repo_baseurl)),
+                              arch=arch,
+                              logger=self.pool)
         repos = [url.replace('$arch', arch) for url in repos]
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))

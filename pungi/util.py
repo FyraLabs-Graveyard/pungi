@@ -678,6 +678,8 @@ def get_repo_url(compose, repo, arch='$basearch'):
     Convert repo to repo URL.
 
     @param compose - required for access to variants
+        special value compose==None determines that method is called during
+        OSTreeInstaller phase where variant-type source repository is deprecated
     @param repo - string or a dict which at least contains 'baseurl' key
     @param arch - string to be used as arch in repo url
     """
@@ -688,14 +690,17 @@ def get_repo_url(compose, repo, arch='$basearch'):
             raise RuntimeError('Baseurl is required in repo dict %s' % str(repo))
     if '://' not in repo:
         # this is a variant name
-        v = compose.all_variants.get(repo)
-        if not v:
-            raise RuntimeError('There is no variant %s to get repo from.' % repo)
+        if compose is not None:
+            v = compose.all_variants.get(repo)
+            if not v:
+                raise RuntimeError('There is no variant %s to get repo from.' % repo)
+        else:
+            return None
         repo = translate_path(compose, compose.paths.compose.repository(arch, v, create_dir=False))
     return repo
 
 
-def get_repo_urls(compose, repos, arch='$basearch'):
+def get_repo_urls(compose, repos, arch='$basearch', logger=None):
     """
     Convert repos to a list of repo URLs.
 
@@ -706,7 +711,11 @@ def get_repo_urls(compose, repos, arch='$basearch'):
     urls = []
     for repo in repos:
         repo = get_repo_url(compose, repo, arch=arch)
-        urls.append(repo)
+        if repo is None:
+            if logger:
+                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'OSTreeInstaller' phase: %s" % (repo))
+        else:
+            urls.append(repo)
     return urls
 
 
@@ -764,7 +773,7 @@ def get_repo_dicts(repos, logger=None):
         repo_dict = get_repo_dict(repo)
         if repo_dict == {}:
             if logger:
-                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'ostree' phase: %s" % (repo))
+                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'OSTree' phase: %s" % (repo))
         else:
             repo_dicts.append(repo_dict)
     return repo_dicts

@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from tests import helpers
 from pungi.phases import ostree_installer as ostree
+from six.moves import shlex_quote
 
 
 LOG_PATH = 'logs/x86_64/Everything/ostree_installer-1'
@@ -58,6 +59,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
             'image_volid_formats': ['{release_short}-{variant}-{arch}'],
+            'translate_paths': [
+                (self.topdir + '/work', 'http://example.com/work')
+            ],
         })
 
     def assertImageAdded(self, compose, ImageCls, iso):
@@ -84,7 +88,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         ]
 
         for s in force_list(sources):
-            lorax_cmd.append('--source=%s' % s)
+            lorax_cmd.append(shlex_quote('--source=%s' % s))
 
         lorax_cmd.append('--variant=Everything')
         lorax_cmd.append('--nomacboot')
@@ -137,7 +141,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.compose.supported = False
         pool = mock.Mock()
         cfg = {
-            'repo': 'Everything',
+            'repo': 'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
             'release': '20160321.n.0',
         }
         koji = KojiWrapper.return_value
@@ -155,7 +159,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(koji,
-                               'file://%s/compose/Everything/x86_64/os' % self.topdir,
+                               'http://example.com/work/$basearch/repo',
                                cfg['release'],
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
@@ -190,7 +194,11 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
-        self.assertRunrootCall(koji, 'http://example.com/repo/x86_64/', cfg['release'], isfinal=True,
+        self.assertRunrootCall(koji,
+                               ('http://example.com/repo/x86_64/',
+                                'http://example.com/work/$basearch/repo'),
+                               cfg['release'],
+                               isfinal=True,
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
@@ -209,7 +217,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'release': '20160321.n.0',
             'repo': [
-                'Everything',
+                'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
                 'https://example.com/extra-repo1.repo',
                 'https://example.com/extra-repo2.repo',
             ],
@@ -226,9 +234,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         sources = [
-            'file://%s/compose/Everything/x86_64/os' % self.topdir,
             'https://example.com/extra-repo1.repo',
-            'https://example.com/extra-repo2.repo'
+            'https://example.com/extra-repo2.repo',
+            'http://example.com/work/$basearch/repo',
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
@@ -247,8 +255,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             'release': '20160321.n.0',
             'repo': [
-                'Everything',
-                'Server',
+                'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
+                'Server',  # this variant-type repo is deprecated, in result will be replaced with default repo
                 'https://example.com/extra-repo1.repo',
                 'https://example.com/extra-repo2.repo',
             ],
@@ -265,10 +273,9 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         sources = [
-            'file://%s/compose/Everything/x86_64/os' % self.topdir,
-            'file://%s/compose/Server/x86_64/os' % self.topdir,
             'https://example.com/extra-repo1.repo',
-            'https://example.com/extra-repo2.repo'
+            'https://example.com/extra-repo2.repo',
+            'http://example.com/work/$basearch/repo',
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
@@ -319,7 +326,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                  get_dir_from_scm):
         pool = mock.Mock()
         cfg = {
-            'repo': 'Everything',
+            'repo': 'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
             'release': '20160321.n.0',
             'add_template': ['some_file.txt'],
             'add_arch_template': ['other_file.txt'],
@@ -346,7 +353,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      'branch': 'f24', 'dir': '.'},
                                     templ_dir, logger=pool._logger)])
         self.assertRunrootCall(koji,
-                               'file://%s/compose/Everything/x86_64/os' % self.topdir,
+                               'http://example.com/work/$basearch/repo',
                                cfg['release'],
                                isfinal=True,
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
@@ -367,7 +374,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                                    get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'repo': 'Everything',
+            'repo': 'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
             'release': '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN',
             "installpkgs": ["fedora-productimg-atomic"],
             "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
@@ -399,7 +406,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(
             koji,
-            'file://%s/compose/Everything/x86_64/os' % self.topdir,
+            'http://example.com/work/$basearch/repo',
             '20151203.t.0',
             isfinal=True,
             extra=['--installpkgs=fedora-productimg-atomic',
@@ -428,7 +435,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                        get_file_size, get_mtime, ImageCls, run):
         pool = mock.Mock()
         cfg = {
-            'repo': 'Everything',
+            'repo': 'Everything',  # this variant-type repo is deprecated, in result will be replaced with default repo
             'release': None,
             "installpkgs": ["fedora-productimg-atomic"],
             "add_template": ["/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"],
@@ -460,7 +467,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(
             koji,
-            'file://%s/compose/Everything/x86_64/os' % self.topdir,
+            'http://example.com/work/$basearch/repo',
             '20151203.t.0',
             isfinal=True,
             extra=['--installpkgs=fedora-productimg-atomic',

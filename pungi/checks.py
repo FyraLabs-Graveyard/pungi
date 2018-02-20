@@ -935,7 +935,7 @@ def make_schema():
                             "tag_ref": {"type": "boolean"},
                             "ostree_ref": {"type": "string"},
                         },
-                        "required": ["treefile", "config_url", "repo", "ostree_repo"],
+                        "required": ["treefile", "config_url", "ostree_repo"],
                         "additionalProperties": False,
                     }),
                 ]
@@ -956,7 +956,6 @@ def make_schema():
                     "template_repo": {"type": "string"},
                     "template_branch": {"type": "string"},
                 },
-                "required": ["repo"],
                 "additionalProperties": False,
             }),
 
