@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # A copy of some necessary parts from yum.rpmUtils.arch, with slightly changes:
 # 1. _ppc64_native_is_best changed to True
 # 2. code style fixes for flake8 reported errors
