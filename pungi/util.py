@@ -322,7 +322,10 @@ def get_variant_data(conf, var_name, variant, keys=None):
 
 
 def _apply_substitutions(compose, volid):
-    for k, v in compose.conf['volume_id_substitutions'].items():
+    substitutions = compose.conf['volume_id_substitutions'].items()
+    # processing should start with the longest pattern, otherwise, we could
+    # unexpectedly replace a substring of that longest pattern
+    for k, v in sorted(substitutions, reverse=True):
         volid = volid.replace(k, v)
     return volid
 

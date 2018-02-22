@@ -222,6 +222,27 @@ class TestVolumeIdGenerator(unittest.TestCase):
         self.assertIn('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', str(ctx.exception))
         self.assertIn('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', str(ctx.exception))
 
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_apply_substitutions(self, ci):
+        all_keys = [
+            ('Fedora-WorkstationOstree-ostree-x86_64-rawhide', 'Fedora-WS-ostree-x86_64-rawhide'),
+            ('Fedora-WorkstationOstree-ostree-x86_64-Rawhide', 'Fedora-WS-ostree-x86_64-rawh'),
+            ('x86_64-compose_id-20160107', 'x86_64-compose_id-20160107'),
+            ('x86_64-compose_id-20160107-Alpha', 'x86_64-compose_id-20160107-A'),
+        ]
+        for volid, expected in all_keys:
+            conf = {
+                'volume_id_substitutions': {
+                    'Rawhide': 'rawh',
+                    'WorkstationOstree': 'WS',
+                    'Workstation': 'WS',
+                    'Alpha': 'A',
+                }
+            }
+            c = compose.Compose(conf, self.tmp_dir)
+            transformed_volid = util._apply_substitutions(c, volid)
+            self.assertEqual(transformed_volid, expected)
+
 
 class TestFindOldCompose(unittest.TestCase):
     def setUp(self):
