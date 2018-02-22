@@ -39,7 +39,10 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         groups = set()
         packages = set()
 
-        compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
+        # TODO: Enable multilib here and handle "multilib" field in the
+        # components part of modulemd. We currently cannot do it, because
+        # it is not clear what is semantic of that modulemd section.
+        compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=False)
 
         if variant is not None and variant.modules:
             variant.arch_mmds.setdefault(arch, {})
