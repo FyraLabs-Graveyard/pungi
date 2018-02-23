@@ -47,6 +47,14 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         if variant is not None and variant.modules:
             variant.arch_mmds.setdefault(arch, {})
 
+            # Generate architecture specific modulemd metadata, so we can
+            # store per-architecture artifacts there later.
+            for mmd in variant.mmds:
+                mmd_id = "%s-%s" % (mmd.name, mmd.stream)
+                if mmd_id not in variant.arch_mmds[arch]:
+                    arch_mmd = yaml.safe_load(mmd.dumps())
+                    variant.arch_mmds[arch][mmd_id] = arch_mmd
+
             # Contains per-module RPMs added to variant.
             added_rpms = {}
 
@@ -64,13 +72,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 
                 for mmd in variant.mmds:
                     mmd_id = "%s-%s" % (mmd.name, mmd.stream)
-                    # Generate architecture specific modulemd metadata
-                    # with list of artifacts only for this architecture.
-                    if mmd_id not in variant.arch_mmds[arch]:
-                        arch_mmd = yaml.safe_load(mmd.dumps())
-                        variant.arch_mmds[arch][mmd_id] = arch_mmd
-                    else:
-                        arch_mmd = variant.arch_mmds[arch][mmd_id]
+                    arch_mmd = variant.arch_mmds[arch][mmd_id]
 
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
                     if (srpm in mmd.components.rpms.keys() and
@@ -92,6 +94,10 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             # list is later used in createrepo phase to generated modules.yaml.
             for mmd_id, rpm_nevras in added_rpms.items():
                 arch_mmd = variant.arch_mmds[arch][mmd_id]
+                # Modules without artifacts are also valid.
+                if ("artifacts" not in arch_mmd["data"] or
+                        "rpms" not in arch_mmd["data"]["artifacts"]):
+                    continue
                 arch_mmd["data"]["artifacts"]["rpms"] = [
                     rpm_nevra for rpm_nevra in rpm_nevras
                     if rpm_nevra in arch_mmd["data"]["artifacts"]["rpms"]]
