@@ -229,6 +229,11 @@ class TestVolumeIdGenerator(unittest.TestCase):
             ('Fedora-WorkstationOstree-ostree-x86_64-Rawhide', 'Fedora-WS-ostree-x86_64-rawh'),
             ('x86_64-compose_id-20160107', 'x86_64-compose_id-20160107'),
             ('x86_64-compose_id-20160107-Alpha', 'x86_64-compose_id-20160107-A'),
+            # These test the case where one substitution is a subset
+            # of the other, but sorts alphabetically ahead of it, to
+            # make sure we're correctly sorting by length
+            ('Fedora-zzzaaaaaazzz-Rawhide', 'Fedora-zzz-rawh'),
+            ('Fedora-aaaaaa-Rawhide', 'Fedora-aaa-rawh'),
         ]
         for volid, expected in all_keys:
             conf = {
@@ -237,6 +242,8 @@ class TestVolumeIdGenerator(unittest.TestCase):
                     'WorkstationOstree': 'WS',
                     'Workstation': 'WS',
                     'Alpha': 'A',
+                    'zzzaaaaaazzz': 'zzz',
+                    'aaaaaa': 'aaa',
                 }
             }
             c = compose.Compose(conf, self.tmp_dir)

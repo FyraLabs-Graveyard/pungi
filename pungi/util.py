@@ -325,7 +325,7 @@ def _apply_substitutions(compose, volid):
     substitutions = compose.conf['volume_id_substitutions'].items()
     # processing should start with the longest pattern, otherwise, we could
     # unexpectedly replace a substring of that longest pattern
-    for k, v in sorted(substitutions, reverse=True):
+    for k, v in sorted(substitutions, key=lambda x: len(x[0]), reverse=True):
         volid = volid.replace(k, v)
     return volid
 
