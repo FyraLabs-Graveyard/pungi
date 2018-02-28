@@ -334,7 +334,6 @@ class Gather(GatherBase):
         exclude = set()
         for pattern in excludes:
             with Profiler("Gather._apply_excludes():exclude"):
-                # TODO: debug
                 if pattern.endswith(".+"):
                     pkgs = self.q_multilib_binary_packages.filter(
                         name__glob=pattern[:-2], arch__neq='noarch',
@@ -342,6 +341,10 @@ class Gather(GatherBase):
                 elif pattern.endswith(".src"):
                     pkgs = self.q_source_packages.filter(
                         name__glob=pattern[:-4],
+                        reponame__neq=self.opts.lookaside_repos)
+                elif pungi.util.pkg_is_debug(pattern):
+                    pkgs = self.q_debug_packages.filter(
+                        name__glob=pattern,
                         reponame__neq=self.opts.lookaside_repos)
                 else:
                     pkgs = self.q_binary_packages.filter(
@@ -366,6 +369,8 @@ class Gather(GatherBase):
             self._filter_queue('q_multilib_binary_packages', exclude)
             self._filter_queue('q_noarch_binary_packages', exclude)
             self._filter_queue('q_source_packages', exclude)
+            self._filter_queue('q_native_debug_packages', exclude)
+            self._filter_queue('q_multilib_debug_packages', exclude)
 
     @Profiler("Gather.add_initial_packages()")
     def add_initial_packages(self, pattern_list):
