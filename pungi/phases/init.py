@@ -45,12 +45,16 @@ class InitPhase(PhaseBase):
 
             # write variant comps
             for variant in self.compose.get_variants():
+                is_modular = not variant.groups and variant.modules
                 for arch in variant.arches:
-                    if variant.groups or variant.type == 'optional':
+                    if variant.groups or variant.type == 'optional' or is_modular:
                         # The variant lists only some groups, run filter. Other
                         # option is that it's optional variant, in which case
                         # we want to filter everything (unless there was
                         # explicit list in which case it will be used).
+                        # For fully modular variant (one without groups but
+                        # with modules) we also want to filter (effectively
+                        # producing empty comps).
                         write_variant_comps(self.compose, arch, variant)
                     else:
                         # The variant does not mention any groups, copy

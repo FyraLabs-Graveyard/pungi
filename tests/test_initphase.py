@@ -53,6 +53,7 @@ class TestInitPhase(PungiTestCase):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
         compose.variants['Everything'].groups = []
+        compose.variants['Everything'].modules = []
         phase = init.InitPhase(compose)
         phase.run()
 

@@ -39,7 +39,8 @@ class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
 
         comps = CompsWrapper(self.compose.paths.work.comps(arch=arch))
 
-        if variant is not None and (variant.groups or variant.type != 'variant'):
+        is_modular = variant and not variant.groups and variant.modules
+        if variant is not None and (variant.groups or variant.type != 'variant' or is_modular):
             # Get packages for a particular variant. We want to skip the
             # filtering if the variant is top-level and has no groups (to use
             # all of them).
