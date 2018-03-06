@@ -320,7 +320,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 if compose_tag in variant_tags[variant]:
                     # Optimization for case where we have just single compose
                     # tag - we do not have to merge in this case...
-                    if len(compose_tags) == 1:
+                    if len(variant_tags[variant]) == 1:
                         variant.pkgset = pkgset
                     else:
                         variant.pkgset.merge(pkgset, None, list(all_arches))
