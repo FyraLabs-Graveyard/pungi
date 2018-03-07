@@ -275,7 +275,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     # Add global tag(s) if supplied.
-    global_tags = []
     if 'pkgset_koji_tag' in compose.conf:
         if compose.conf["pkgset_koji_tag"] == "not-used":
             # The magic value is used for modular composes to avoid errors
@@ -284,8 +283,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                                 'option is no longer required. Remove it from '
                                 'the configuration.')
         else:
-            global_tags = force_list(compose.conf["pkgset_koji_tag"])
-    compose_tags.extend(global_tags)
+            compose_tags.extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     inherit = compose.conf["pkgset_koji_inherit"]
     global_pkgset_path = os.path.join(
@@ -329,8 +327,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             if len(compose_tags) == 1:
                 global_pkgset = pkgset
             else:
-                global_pkgset.merge(pkgset, None, list(all_arches),
-                                    unique_name=compose_tag in global_tags)
+                global_pkgset.merge(pkgset, None, list(all_arches))
         with open(global_pkgset_path, 'wb') as f:
             data = pickle.dumps(global_pkgset)
             f.write(data)
