@@ -39,7 +39,7 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            groups=['grp1'], prepopulate=prepopulate,
                            repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
                            exclude_packages=['pkg3', 'pkg4.x86_64'],
-                           fulltree_excludes=fulltree)
+                           fulltree_excludes=fulltree, package_whitelist=set())
 
     @mock.patch('pungi.phases.gather.get_lookaside_repos')
     @mock.patch('pungi.phases.gather.methods.method_deps.PungiWrapper')
@@ -54,9 +54,34 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            multilib_whitelist=[], multilib_blacklist=[],
                            groups=[], prepopulate=None,
                            repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
-                           exclude_packages=[], fulltree_excludes=None)
+                           exclude_packages=[], fulltree_excludes=None,
+                           package_whitelist=set())
         self.assertEqual(glr.call_args_list,
                          [mock.call(self.compose, 'x86_64', self.compose.variants['Server'])])
+
+    @mock.patch('pungi.phases.gather.methods.method_deps.PungiWrapper')
+    def test_with_whitelist(self, PungiWrapper):
+        pkgs = [('pkg1', None), ('pkg2', 'x86_64')]
+        grps = ['grp1']
+        filter = [('pkg3', None), ('pkg4', 'x86_64')]
+        self.compose.variants['Server'].pkgset.rpms_by_arch['x86_64'] = [
+            mock.Mock(nevra='pkg-1.0.0-1')
+        ]
+        white = mock.Mock()
+        black = mock.Mock()
+        prepopulate = mock.Mock()
+        fulltree = mock.Mock()
+        deps.write_pungi_config(self.compose, 'x86_64', self.compose.variants['Server'],
+                                pkgs, grps, filter, white, black,
+                                prepopulate=prepopulate, fulltree_excludes=fulltree)
+        self.assertWritten(PungiWrapper, packages=['pkg1', 'pkg2.x86_64'],
+                           ks_path=self.topdir + '/work/x86_64/pungi/Server.x86_64.conf',
+                           lookaside_repos={}, multilib_whitelist=white, multilib_blacklist=black,
+                           groups=['grp1'], prepopulate=prepopulate,
+                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
+                           exclude_packages=['pkg3', 'pkg4.x86_64'],
+                           fulltree_excludes=fulltree,
+                           package_whitelist=set(['pkg-1.0.0-1']))
 
     @mock.patch('pungi.phases.gather.methods.method_deps.PungiWrapper')
     def test_without_input(self, PungiWrapper):

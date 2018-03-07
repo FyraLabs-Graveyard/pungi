@@ -107,12 +107,17 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
             'No packages included in %s.%s (no comps groups, no input packages, no prepopulate)'
             % (variant.uid, arch))
 
+    package_whitelist = set()
+    if variant.pkgset:
+        for rpm_obj in variant.pkgset.rpms_by_arch.get(arch, []):
+            package_whitelist.add(rpm_obj.nevra)
+
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
         exclude_packages=filter_packages_str,
         lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes,
         multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist,
-        prepopulate=prepopulate)
+        prepopulate=prepopulate, package_whitelist=package_whitelist)
 
 
 def resolve_deps(compose, arch, variant, source_name=None):

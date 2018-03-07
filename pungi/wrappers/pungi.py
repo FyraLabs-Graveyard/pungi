@@ -32,9 +32,22 @@ UNRESOLVED_DEPENDENCY_RE = re.compile(r"^.*Unresolvable dependency (.+) in ([^ ]
 MISSING_COMPS_PACKAGE_RE = re.compile(r"^.*Could not find a match for (.+) in any configured repo")
 
 
+def _write_ks_section(f, section, lines):
+    if lines:
+        f.write("\n%%%s\n" % section)
+        for i in sorted(lines):
+            f.write("%s\n" % i)
+
+        f.write("%end\n")
+
+
 class PungiWrapper(object):
 
-    def write_kickstart(self, ks_path, repos, groups, packages, exclude_packages=None, comps_repo=None, lookaside_repos=None, fulltree_excludes=None, multilib_blacklist=None, multilib_whitelist=None, prepopulate=None):
+    def write_kickstart(self, ks_path, repos, groups, packages,
+                        exclude_packages=None, comps_repo=None,
+                        lookaside_repos=None, fulltree_excludes=None,
+                        multilib_blacklist=None, multilib_whitelist=None,
+                        prepopulate=None, package_whitelist=None):
         groups = groups or []
         exclude_packages = exclude_packages or {}
         lookaside_repos = lookaside_repos or {}
@@ -75,37 +88,11 @@ class PungiWrapper(object):
 
         kickstart.write("%end\n")
 
-        # %fulltree-excludes
-        if fulltree_excludes:
-            kickstart.write("\n")
-            kickstart.write("%fulltree-excludes\n")
-            for i in sorted(fulltree_excludes):
-                kickstart.write("%s\n" % i)
-            kickstart.write("%end\n")
-
-        # %multilib-blacklist
-        if multilib_blacklist:
-            kickstart.write("\n")
-            kickstart.write("%multilib-blacklist\n")
-            for i in sorted(multilib_blacklist):
-                kickstart.write("%s\n" % i)
-            kickstart.write("%end\n")
-
-        # %multilib-whitelist
-        if multilib_whitelist:
-            kickstart.write("\n")
-            kickstart.write("%multilib-whitelist\n")
-            for i in sorted(multilib_whitelist):
-                kickstart.write("%s\n" % i)
-            kickstart.write("%end\n")
-
-        # %prepopulate
-        if prepopulate:
-            kickstart.write("\n")
-            kickstart.write("%prepopulate\n")
-            for i in sorted(prepopulate):
-                kickstart.write("%s\n" % i)
-            kickstart.write("%end\n")
+        _write_ks_section(kickstart, "fulltree-excludes", fulltree_excludes)
+        _write_ks_section(kickstart, "multilib-blacklist", multilib_blacklist)
+        _write_ks_section(kickstart, "multilib-whitelist", multilib_whitelist)
+        _write_ks_section(kickstart, "prepopulate", prepopulate)
+        _write_ks_section(kickstart, "package-whitelist", package_whitelist)
 
         kickstart.close()
 
