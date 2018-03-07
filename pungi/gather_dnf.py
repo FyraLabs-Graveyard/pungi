@@ -69,6 +69,8 @@ class GatherOptions(pungi.common.OptionsBase):
         # lookaside repos; packages will be flagged accordingly
         self.lookaside_repos = []
 
+        self.package_whitelist = set()
+
         self.merge_options(**kwargs)
 
 
@@ -363,14 +365,29 @@ class Gather(GatherBase):
                 self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
                 self.dnf._sack.add_excludes(pkgs)
 
+        all_queues = ['q_binary_packages', 'q_native_binary_packages',
+                      'q_multilib_binary_packages', 'q_noarch_binary_packages',
+                      'q_source_packages', 'q_native_debug_packages',
+                      'q_multilib_debug_packages']
+
+        if self.opts.package_whitelist:
+            with Profiler("Gather._apply_excludes():apply-package-whitelist'"):
+                to_keep = []
+                for pattern in self.opts.package_whitelist:
+                    nvra = parse_nvra(pattern)
+                    nvra.pop('src')
+                    try:
+                        nvra['epoch'] = int(nvra.pop('epoch'))
+                    except ValueError:
+                        pass
+                    to_keep.extend(self._query.filter(**nvra).run())
+
+                for queue in all_queues:
+                    setattr(self, queue, getattr(self, queue).filter(pkg=to_keep).latest().apply())
+
         with Profiler("Gather._apply_excludes():exclude-queries"):
-            self._filter_queue('q_binary_packages', exclude)
-            self._filter_queue('q_native_binary_packages', exclude)
-            self._filter_queue('q_multilib_binary_packages', exclude)
-            self._filter_queue('q_noarch_binary_packages', exclude)
-            self._filter_queue('q_source_packages', exclude)
-            self._filter_queue('q_native_debug_packages', exclude)
-            self._filter_queue('q_multilib_debug_packages', exclude)
+            for queue in all_queues:
+                self._filter_queue(queue, exclude)
 
     @Profiler("Gather.add_initial_packages()")
     def add_initial_packages(self, pattern_list):
