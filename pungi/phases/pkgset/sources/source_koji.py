@@ -321,13 +321,13 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                     if len(variant_tags[variant]) == 1:
                         variant.pkgset = pkgset
                     else:
-                        variant.pkgset.merge(pkgset, None, list(all_arches))
+                        variant.pkgset.fast_merge(pkgset)
             # Optimization for case where we have just single compose
             # tag - we do not have to merge in this case...
             if len(compose_tags) == 1:
                 global_pkgset = pkgset
             else:
-                global_pkgset.merge(pkgset, None, list(all_arches))
+                global_pkgset.fast_merge(pkgset)
         with open(global_pkgset_path, 'wb') as f:
             data = pickle.dumps(global_pkgset)
             f.write(data)

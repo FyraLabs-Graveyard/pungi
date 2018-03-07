@@ -170,8 +170,8 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                                                     logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log')])
         pkgset.assert_has_calls([mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
                                                           remove_path_prefix='/prefix')])
-        # for each tag, call pkgset.merge once for each variant and once for global pkgset
-        self.assertEqual(pkgset.merge.call_count, 2 * (len(self.compose.all_variants.values()) + 1))
+        # for each tag, call pkgset.fast_merge once for each variant and once for global pkgset
+        self.assertEqual(pkgset.fast_merge.call_count, 2 * (len(self.compose.all_variants.values()) + 1))
         self.assertItemsEqual(pickle_dumps.call_args_list,
                               [mock.call(orig_pkgset)])
         with open(self.pkgset_path) as f:
