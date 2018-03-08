@@ -20,22 +20,22 @@ from productmd.images import Image
 # name will be ending with. The extensions are used to filter out which task
 # results will be pulled into the compose.
 EXTENSIONS = {
-    'docker': 'tar.gz',
-    'liveimg-squashfs': 'liveimg.squashfs',
-    'qcow': 'qcow',
-    'qcow2': 'qcow2',
-    'raw': 'raw',
-    'raw-xz': 'raw.xz',
-    'rhevm-ova': 'rhevm.ova',
-    'tar-gz': 'tar.gz',
-    'vagrant-hyperv': 'vagrant-hyperv.box',
-    'vagrant-libvirt': 'vagrant-libvirt.box',
-    'vagrant-virtualbox': 'vagrant-virtualbox.box',
-    'vagrant-vmware-fusion': 'vagrant-vmware-fusion.box',
-    'vdi': 'vdi',
-    'vmdk': 'vdmk',
-    'vpc': 'vhd',
-    'vsphere-ova': 'vsphere.ova',
+    'docker': ['tar.gz', 'tar.xz'],
+    'liveimg-squashfs': ['liveimg.squashfs'],
+    'qcow': ['qcow'],
+    'qcow2': ['qcow2'],
+    'raw': ['raw'],
+    'raw-xz': ['raw.xz'],
+    'rhevm-ova': ['rhevm.ova'],
+    'tar-gz': ['tar.gz'],
+    'vagrant-hyperv': ['vagrant-hyperv.box'],
+    'vagrant-libvirt': ['vagrant-libvirt.box'],
+    'vagrant-virtualbox': ['vagrant-virtualbox.box'],
+    'vagrant-vmware-fusion': ['vagrant-vmware-fusion.box'],
+    'vdi': ['vdi'],
+    'vmdk': ['vdmk'],
+    'vpc': ['vhd'],
+    'vsphere-ova': ['vsphere.ova'],
 }
 
 
@@ -216,10 +216,13 @@ class CreateImageBuildThread(WorkerThread):
         for arch, paths in paths.items():
             for path in paths:
                 for format in cmd['image_conf']['image-build']['format']:
-                    suffix = EXTENSIONS[format]
-                    if path.endswith(suffix):
-                        image_infos.append({'path': path, 'suffix': suffix, 'type': format, 'arch': arch})
-                        break
+                    for suffix in EXTENSIONS[format]:
+                        if path.endswith(suffix):
+                            image_infos.append({'path': path,
+                                                'suffix': suffix,
+                                                'type': format,
+                                                'arch': arch})
+                            break
 
         # The usecase here is that you can run koji image-build with multiple --format
         # It's ok to do it serialized since we're talking about max 2 images per single
