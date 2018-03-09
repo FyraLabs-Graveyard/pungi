@@ -1853,18 +1853,14 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
             "dummy-bash",
         ]
         package_whitelist = [
-            "dummy-basesystem-10.0-6.noarch",
-            "dummy-basesystem-10.0-6.src",
-            "dummy-bash-debuginfo-4.2.37-5.x86_64",
-            "dummy-bash-4.2.37-5.x86_64",
-            "dummy-bash-4.2.37-5.src",
-            "dummy-filesystem-4.2.37-6.x86_64",
-            "dummy-filesystem-4.2.37-6.src",
-            "dummy-glibc-common-2.14-5.x86_64",
-            "dummy-glibc-debuginfo-common-2.14-5.x86_64",
-            "dummy-glibc-debuginfo-2.14-5.x86_64",
-            "dummy-glibc-2.14-5.x86_64",
-            "dummy-glibc-2.14-5.src",
+            "dummy-basesystem-10.0-6",
+            "dummy-bash-debuginfo-4.2.37-5",
+            "dummy-bash-4.2.37-5",
+            "dummy-filesystem-4.2.37-6",
+            "dummy-glibc-common-2.14-5",
+            "dummy-glibc-debuginfo-common-2.14-5",
+            "dummy-glibc-debuginfo-2.14-5",
+            "dummy-glibc-2.14-5",
         ]
         pkg_map = self.go(packages, None, greedy="none", package_whitelist=package_whitelist)
 
@@ -1900,8 +1896,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_package_whitelist(self):
         packages = ['*']
         whitelist = [
-            'dummy-bash-4.2.37-6.x86_64',
-            'dummy-bash-4.2.37-6.src',
+            'dummy-bash-4.2.37-6',
         ]
 
         pkg_map = self.go(packages, None, package_whitelist=whitelist)

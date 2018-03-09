@@ -64,9 +64,9 @@ class TestWritePungiConfig(helpers.PungiTestCase):
         pkgs = [('pkg1', None), ('pkg2', 'x86_64')]
         grps = ['grp1']
         filter = [('pkg3', None), ('pkg4', 'x86_64')]
-        self.compose.variants['Server'].pkgset.rpms_by_arch['x86_64'] = [
-            mock.Mock(nevra='pkg-1.0.0-1')
-        ]
+        mock_rpm = mock.Mock(version='1.0.0', release='1', epoch=0)
+        mock_rpm.name = 'pkg'
+        self.compose.variants['Server'].pkgset.rpms_by_arch['x86_64'] = [mock_rpm]
         white = mock.Mock()
         black = mock.Mock()
         prepopulate = mock.Mock()
@@ -81,7 +81,7 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
                            exclude_packages=['pkg3', 'pkg4.x86_64'],
                            fulltree_excludes=fulltree,
-                           package_whitelist=set(['pkg-1.0.0-1']))
+                           package_whitelist=set(['pkg-0:1.0.0-1']))
 
     @mock.patch('pungi.phases.gather.methods.method_deps.PungiWrapper')
     def test_without_input(self, PungiWrapper):

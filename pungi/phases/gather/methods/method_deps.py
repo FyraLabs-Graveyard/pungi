@@ -23,7 +23,7 @@ from kobo.rpmlib import parse_nvra
 from pungi.util import rmtree, get_arch_variant_data
 from pungi.wrappers.pungi import PungiWrapper
 
-from pungi.arch import tree_arch_to_yum_arch
+from pungi.arch import tree_arch_to_yum_arch, get_valid_arches
 import pungi.phases.gather
 
 import pungi.phases.gather.method
@@ -109,8 +109,11 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     package_whitelist = set()
     if variant.pkgset:
-        for rpm_obj in variant.pkgset.rpms_by_arch.get(arch, []):
-            package_whitelist.add(rpm_obj.nevra)
+        multilib = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
+        for i in get_valid_arches(arch, multilib=multilib, add_noarch=True, add_src=True):
+            for rpm_obj in variant.pkgset.rpms_by_arch.get(i, []):
+                package_whitelist.add(
+                    '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
 
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,

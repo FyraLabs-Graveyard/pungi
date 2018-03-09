@@ -19,7 +19,7 @@ from itertools import count
 import logging
 import os
 
-from kobo.rpmlib import parse_nvra
+from kobo.rpmlib import parse_nvra, parse_nvr
 
 import pungi.common
 import pungi.dnf_wrapper
@@ -374,13 +374,12 @@ class Gather(GatherBase):
             with Profiler("Gather._apply_excludes():apply-package-whitelist'"):
                 to_keep = []
                 for pattern in self.opts.package_whitelist:
-                    nvra = parse_nvra(pattern)
-                    nvra.pop('src')
+                    nvr = parse_nvr(pattern)
                     try:
-                        nvra['epoch'] = int(nvra.pop('epoch'))
+                        nvr['epoch'] = int(nvr.pop('epoch'))
                     except ValueError:
                         pass
-                    to_keep.extend(self._query.filter(**nvra).run())
+                    to_keep.extend(self._query.filter(**nvr).run())
 
                 for queue in all_queues:
                     setattr(self, queue, getattr(self, queue).filter(pkg=to_keep).latest().apply())
