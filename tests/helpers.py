@@ -11,10 +11,19 @@ import shutil
 import errno
 import imp
 import six
+from kobo.rpmlib import parse_nvr
 
 from pungi.util import get_arch_variant_data
 from pungi import paths, checks
 
+try:
+    import gi # noqa
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd # noqa
+    import pdc_client       # noqa
+    HAS_MODULE_SUPPORT = True
+except ImportError:
+    HAS_MODULE_SUPPORT = False
 
 class PungiTestCase(unittest.TestCase):
     def setUp(self):
@@ -50,6 +59,39 @@ class MockVariant(mock.Mock):
 
     def get_modules(self, arch=None, types=None):
         return []
+
+    def add_fake_module(self, nsvc, rpm_nvrs=None):
+        if not HAS_MODULE_SUPPORT:
+            return
+        name, stream, version, context = nsvc.split(":")
+        mmd = Modulemd.Module()
+        mmd.set_mdversion(2)
+        mmd.set_name(name)
+        mmd.set_stream(stream)
+        mmd.set_version(int(version))
+        mmd.set_context(context)
+        mmd.set_summary("foo")
+        mmd.set_description("foo")
+        licenses = Modulemd.SimpleSet()
+        licenses.add("GPL")
+        mmd.set_module_licenses(licenses)
+
+        if rpm_nvrs:
+            artifacts = Modulemd.SimpleSet()
+            for rpm_nvr in rpm_nvrs:
+                artifacts.add(rpm_nvr)
+                rpm_name = parse_nvr(rpm_nvr)["name"]
+                component = Modulemd.ComponentRpm()
+                component.set_name(rpm_name)
+                component.set_rationale("Needed for test")
+                mmd.add_rpm_component(component)
+            mmd.set_rpm_artifacts(artifacts)
+
+        if self.modules is None:
+            self.modules = []
+        self.modules.append(":".join([name, stream, version]))
+        self.mmds.append(mmd)
+        return mmd
 
 
 class IterableMock(mock.Mock):

@@ -74,15 +74,23 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
                     arch_mmd = variant.arch_mmds[arch][mmd_id]
 
+                    # Skip this mmd if this RPM does not belong to it.
                     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
-                    if (srpm in mmd.get_rpm_components().keys() and
-                            rpm_obj.name not in mmd.get_rpm_filter().get() and
-                            rpm_obj.nevra in mmd.get_rpm_artifacts().get()):
+                    if (srpm not in mmd.get_rpm_components().keys() or
+                            rpm_obj.nevra not in mmd.get_rpm_artifacts().get()):
+                        continue
+
+                    # If the RPM is not filtered out, add it to compose,
+                    # otherwise remove it from arch_mmd artifacts section.
+                    if rpm_obj.name not in mmd.get_rpm_filter().get():
                         packages.add((rpm_obj, None))
                         added_rpms.setdefault(mmd_id, [])
                         added_rpms[mmd_id].append(str(rpm_obj.nevra))
                         log.write('Adding %s because it is in %s\n'
                                   % (rpm_obj, mmd_id))
+                    elif rpm_obj.nevra in arch_mmd["data"]["artifacts"]["rpms"]:
+                        arch_mmd["data"]["artifacts"]["rpms"].remove(
+                            rpm_obj.nevra)
 
             # GatherSource returns all the packages in variant and does not
             # care which package is in which module, but for modular metadata
