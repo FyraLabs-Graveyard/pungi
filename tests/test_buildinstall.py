@@ -43,6 +43,33 @@ class TestBuildinstallPhase(PungiTestCase):
 
         self.assertTrue(phase.skip())
 
+    @mock.patch('pungi.phases.buildinstall.ThreadPool')
+    @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_skip_option(self, get_volid, loraxCls, poolCls):
+        compose = BuildInstallCompose(self.topdir, {
+            'bootable': True,
+            'buildinstall_method': 'lorax',
+            'buildinstall_skip': [
+                ('^Server$', {
+                    'amd64': True
+                }),
+                ('^Client$', {
+                    '*': True,
+                }),
+            ]
+        })
+
+        get_volid.return_value = 'vol_id'
+        loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
+
+        phase = BuildinstallPhase(compose)
+
+        phase.run()
+
+        pool = poolCls.return_value
+        self.assertEqual(1, len(pool.queue_put.mock_calls))
+
     def test_does_not_skip_on_bootable(self):
         compose = BuildInstallCompose(self.topdir, {'bootable': True})
         compose.just_phases = None

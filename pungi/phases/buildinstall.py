@@ -134,10 +134,18 @@ class BuildinstallPhase(PhaseBase):
                 repo_baseurl = translate_path(self.compose, repo_baseurl)
 
             if self.buildinstall_method == "lorax":
+
                 buildarch = get_valid_arches(arch)[0]
                 for variant in self.compose.get_variants(arch=arch, types=['variant']):
                     if variant.is_empty:
                         continue
+
+                    skip = get_arch_variant_data(self.compose.conf, "buildinstall_skip", arch, variant)
+                    if skip == [True]:
+                        self.compose.log_info(
+                            'Skipping buildinstall for %s.%s due to config option' % (variant, arch))
+                        continue
+
                     volid = get_volid(self.compose, arch, variant=variant, disc_type=disc_type)
                     commands.append(
                         (variant,

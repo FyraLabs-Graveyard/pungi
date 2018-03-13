@@ -504,6 +504,11 @@ Options
     task using HTTP and set the output directory for this task to
     ``buildinstall_topdir``. Once the runroot task finishes, Pungi will copy
     the results of runroot tasks to the compose working directory.
+**buildinstall_skip**
+    (*list*) -- mapping that defines which variants and arches to skip during
+    buildinstall; format: ``[(variant_uid_regex, {arch|*: True})]``. This is
+    only supported for lorax.
+
 
 Example
 -------
@@ -522,6 +527,13 @@ Example
             "*": {
                 "noupgrade": False
             }
+        })
+    ]
+
+    # Don't run buildinstall phase for Modular variant
+    buildinstall_skip = [
+        ('^Modular', {
+            '*': True
         })
     ]
 
