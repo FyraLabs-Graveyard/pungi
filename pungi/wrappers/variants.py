@@ -71,7 +71,7 @@ class VariantsXmlParser(object):
             "type": str(variant_node.attrib["type"]),
             "arches": [str(i) for i in variant_node.xpath("arches/arch/text()")],
             "groups": [],
-            "modules": [],
+            "modules": None,
             "environments": [],
             "buildinstallpackages": [],
             "is_empty": bool(variant_node.attrib.get("is_empty", False)),
@@ -110,6 +110,7 @@ class VariantsXmlParser(object):
                     "glob": self._is_true(module_node.attrib.get("glob", "false"))
                 }
 
+                variant_dict["modules"] = variant_dict["modules"] or []
                 variant_dict["modules"].append(module)
 
         for environments_node in variant_node.xpath("environments"):
@@ -283,7 +284,10 @@ class Variant(object):
         return result
 
     def get_modules(self, arch=None, types=None, recursive=False):
-        """Return list of groups, default types is ["self"]"""
+        """Return list of modules, default types is ["self"]"""
+
+        if self.modules is None:
+            return []
 
         types = types or ["self"]
         result = copy.deepcopy(self.modules)

@@ -39,6 +39,7 @@ class MockVariant(mock.Mock):
         self.arch_mmds = {}
         self.variants = {}
         self.pkgset = mock.Mock(rpms_by_arch={})
+        self.modules = None
 
     def __str__(self):
         return self.uid

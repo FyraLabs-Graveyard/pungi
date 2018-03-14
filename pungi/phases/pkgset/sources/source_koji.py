@@ -276,7 +276,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         if pdc_modules:
             with open(pdc_module_file, 'w') as f:
                 json.dump(pdc_modules, f)
-        if not variant_tags[variant]:
+        if not variant_tags[variant] and variant.modules is None:
             variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     # Add global tag(s) if supplied.

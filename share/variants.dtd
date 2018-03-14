@@ -27,7 +27,7 @@
     uservisible (true|false) #IMPLIED
 >
 
-<!ELEMENT modules (module)+>
+<!ELEMENT modules (module)*>
 
 <!ELEMENT module (#PCDATA)>
 <!ATTLIST module

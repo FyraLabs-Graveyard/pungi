@@ -44,7 +44,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # it is not clear what is semantic of that modulemd section.
         compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=False)
 
-        if variant is not None and variant.modules:
+        if variant is not None and variant.modules is not None:
             variant.arch_mmds.setdefault(arch, {})
 
             # Generate architecture specific modulemd metadata, so we can
