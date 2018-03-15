@@ -19,6 +19,15 @@ from pungi.phases.createrepo import (CreaterepoPhase,
                                      get_productids_from_scm)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
 
+try:
+    import gi # noqa
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd # noqa
+    import pdc_client       # noqa
+    HAS_MODULE_SUPPORT = True
+except ImportError:
+    HAS_MODULE_SUPPORT = False
+
 
 class TestCreaterepoPhase(PungiTestCase):
     @mock.patch('pungi.phases.createrepo.ThreadPool')
@@ -706,6 +715,92 @@ class TestCreateVariantRepo(PungiTestCase):
         self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')
+
+    @mock.patch('pungi.phases.createrepo.run')
+    @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
+    def test_variant_repo_modules_artifacts_not_in_compose(
+            self, CreaterepoWrapperCls, run):
+        if not HAS_MODULE_SUPPORT:
+            self.skipTest("Skipped test, no module support.")
+
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+        })
+        compose.DEBUG = False
+        compose.has_comps = False
+
+        variant = compose.variants['Server']
+        variant.arch_mmds["x86_64"] = {}
+        variant.arch_mmds["x86_64"]["test-f27"] = variant.add_fake_module(
+            "test:f27:1:2017", rpm_nvrs=["pkg-1.0.0-1"])
+        variant.arch_mmds["x86_64"]["test-f28"] = variant.add_fake_module(
+            "test:f28:1:2017", rpm_nvrs=["pkg-2.0.0-1"])
+
+        def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
+            modules = Modulemd.Module.new_all_from_file(mmd_path)
+            self.assertEqual(len(modules), 2)
+            self.assertItemsEqual([m.get_stream() for m in modules],
+                                  ["f27", "f28"])
+            self.assertItemsEqual(
+                [m.get_rpm_artifacts().get() for m in modules],
+                [[], []])
+
+        repo = CreaterepoWrapperCls.return_value
+        repo.get_modifyrepo_cmd.side_effect = mocked_modifyrepo_cmd
+        copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
+
+        repodata_dir = os.path.join(
+            compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
+            'repodata')
+
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [mock.call(repodata_dir, ANY, compress_type='gz', mdtype='modules')])
+
+    @mock.patch('pungi.phases.createrepo.run')
+    @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
+    def test_variant_repo_modules_artifacts(
+            self, CreaterepoWrapperCls, run):
+        if not HAS_MODULE_SUPPORT:
+            self.skipTest("Skipped test, no module support.")
+
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+        })
+        compose.DEBUG = False
+        compose.has_comps = False
+
+        variant = compose.variants['Server']
+        variant.arch_mmds["x86_64"] = {}
+        variant.arch_mmds["x86_64"]["test-f27"] = variant.add_fake_module(
+            "test:f27:1:2017", rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"])
+        variant.arch_mmds["x86_64"]["test-f28"] = variant.add_fake_module(
+            "test:f28:1:2017", rpm_nvrs=["pkg-2.0.0-1"])
+
+        def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
+            modules = Modulemd.Module.new_all_from_file(mmd_path)
+            self.assertEqual(len(modules), 2)
+            self.assertItemsEqual([m.get_stream() for m in modules],
+                                  ["f27", "f28"])
+            self.assertItemsEqual(
+                [m.get_rpm_artifacts().get() for m in modules],
+                [["bash-0:4.3.30-2.fc21.x86_64"], []])
+
+        repo = CreaterepoWrapperCls.return_value
+        repo.get_modifyrepo_cmd.side_effect = mocked_modifyrepo_cmd
+        copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
+
+        repodata_dir = os.path.join(
+            compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
+            'repodata')
+
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+
+        self.assertItemsEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [mock.call(repodata_dir, ANY, compress_type='gz', mdtype='modules')])
 
 
 class ANYSingleton(object):

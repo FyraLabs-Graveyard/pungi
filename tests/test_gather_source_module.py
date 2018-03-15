@@ -45,7 +45,7 @@ class TestGatherSourceModule(helpers.PungiTestCase):
 
         variant = self.compose.variants["Server"]
         arch_mmd = variant.arch_mmds["x86_64"]["testmodule-master"]
-        self.assertEqual(set(arch_mmd["data"]["artifacts"]["rpms"]),
+        self.assertEqual(set(arch_mmd.get_rpm_artifacts().get()),
                          set(["pkg-1.0.0-1"]))
 
     def test_gather_filtered_module(self):
@@ -60,4 +60,4 @@ class TestGatherSourceModule(helpers.PungiTestCase):
 
         variant = self.compose.variants["Server"]
         arch_mmd = variant.arch_mmds["x86_64"]["testmodule-master"]
-        self.assertEqual(len(arch_mmd["data"]["artifacts"]["rpms"]), 0)
+        self.assertEqual(len(arch_mmd.get_rpm_artifacts().get()), 0)

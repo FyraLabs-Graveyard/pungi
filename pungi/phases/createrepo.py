@@ -37,6 +37,16 @@ from ..util import find_old_compose, temp_dir, get_arch_variant_data
 import productmd.rpms
 
 
+try:
+    from pdc_client import PDCClient
+    import gi
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd
+    WITH_MODULES = True
+except:
+    WITH_MODULES = False
+
+
 createrepo_lock = threading.Lock()
 createrepo_dirs = set()
 
@@ -183,25 +193,29 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
 
     # call modifyrepo to inject modulemd if needed
-    if arch in variant.arch_mmds:
-        import yaml
+    if arch in variant.arch_mmds and WITH_MODULES:
         modules = []
         for mmd in variant.arch_mmds[arch].values():
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
-            repo_mmd = copy.deepcopy(mmd)
+            repo_mmd = Modulemd.Module.new_from_string(mmd.dumps())
+            artifacts = repo_mmd.get_rpm_artifacts()
+
             # Modules without RPMs are also valid.
-            if ("artifacts" in repo_mmd["data"] and
-                    "rpms" in repo_mmd["data"]["artifacts"]):
-                repo_mmd["data"]["artifacts"]["rpms"] = [
-                    rpm_nevra for rpm_nevra in repo_mmd["data"]["artifacts"]["rpms"]
-                    if rpm_nevra in rpm_nevras]
+            if not artifacts or artifacts.size() == 0:
+                continue
+
+            repo_artifacts = Modulemd.SimpleSet()
+            for rpm_nevra in rpm_nevras:
+                if artifacts.contains(rpm_nevra):
+                    repo_artifacts.add(rpm_nevra)
+            repo_mmd.set_rpm_artifacts(repo_artifacts)
             modules.append(repo_mmd)
 
         with temp_dir() as tmp_dir:
             modules_path = os.path.join(tmp_dir, "modules.yaml")
-            with open(modules_path, "w") as outfile:
-                outfile.write(yaml.dump_all(modules, explicit_start=True))
+            Modulemd.Module.dump_all(modules, modules_path)
+
             cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
                                           modules_path, mdtype="modules",
                                           compress_type="gz")
