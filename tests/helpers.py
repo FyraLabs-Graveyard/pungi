@@ -14,16 +14,8 @@ import six
 from kobo.rpmlib import parse_nvr
 
 from pungi.util import get_arch_variant_data
-from pungi import paths, checks
+from pungi import paths, checks, Modulemd
 
-try:
-    import gi # noqa
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd # noqa
-    import pdc_client       # noqa
-    HAS_MODULE_SUPPORT = True
-except ImportError:
-    HAS_MODULE_SUPPORT = False
 
 class PungiTestCase(unittest.TestCase):
     def setUp(self):
@@ -61,7 +53,8 @@ class MockVariant(mock.Mock):
         return []
 
     def add_fake_module(self, nsvc, rpm_nvrs=None):
-        if not HAS_MODULE_SUPPORT:
+        if not Modulemd:
+            # No support for modules
             return
         name, stream, version, context = nsvc.split(":")
         mmd = Modulemd.Module()

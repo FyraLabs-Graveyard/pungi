@@ -10,17 +10,9 @@ import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-try:
-    import gi # noqa
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd # noqa
-    import pdc_client       # noqa
-    HAS_MODULE_SUPPORT = True
-except ImportError:
-    HAS_MODULE_SUPPORT = False
-
 from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
+from pungi import Modulemd
 
 EVENT_INFO = {'id': 15681980, 'ts': 1460956382.81936}
 TAG_INFO = {
@@ -127,7 +119,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
-    @unittest.skipUnless(HAS_MODULE_SUPPORT, 'Modulemd/pdc_client are not available')   # noqa
+    @unittest.skipUnless(Modulemd is not None, 'Modulemd not available')   # noqa
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_module')

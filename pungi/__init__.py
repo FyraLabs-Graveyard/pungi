@@ -4,6 +4,15 @@ import os
 import re
 
 
+try:
+    from pdc_client import PDCClient
+    import gi
+    gi.require_version('Modulemd', '1.0') # noqa
+    from gi.repository import Modulemd
+except:
+    Modulemd = None
+
+
 def get_full_version():
     """
     Find full version of Pungi: if running from git, this will return cleaned

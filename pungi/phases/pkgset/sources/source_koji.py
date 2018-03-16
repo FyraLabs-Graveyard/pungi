@@ -25,27 +25,23 @@ from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
 from pungi.util import is_arch_multilib, retry
+from pungi import Modulemd
 
 from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
 from pungi.phases.gather import get_packages_to_gather
-
 
 import pungi.phases.pkgset.source
 
 try:
     from pdc_client import PDCClient
-    import gi
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd
-    WITH_MODULES = True
+    WITH_PDC = True
 except:
-    WITH_MODULES = False
+    WITH_PDC = False
 
 
 def get_pdc_client_session(compose):
-    if not WITH_MODULES:
-        compose.log_warning("pdc_client module, pygobject module or "
-                            "libmodulemd library is not installed, "
+    if not WITH_PDC:
+        compose.log_warning("pdc_client module is not installed, "
                             "support for modules is disabled")
         return None
     try:
@@ -241,6 +237,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         # to compose_tags list.
         if session:
             for module in variant.get_modules():
+                if not Modulemd:
+                    raise ValueError(
+                        "pygobject module or libmodulemd library is not installed, "
+                        "support for modules is disabled, but compose contains "
+                        "modules.")
+
                 pdc_module = get_module(compose, session, module["name"])
                 pdc_modules.append(pdc_module)
                 mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])

@@ -22,16 +22,7 @@ Get a package list based on modulemd metadata loaded in pkgset phase.
 import pungi.arch
 import pungi.phases.gather.source
 import kobo.rpmlib
-
-
-try:
-    from pdc_client import PDCClient
-    import gi
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd
-    WITH_MODULES = True
-except:
-    WITH_MODULES = False
+from pungi import Modulemd
 
 
 class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
@@ -52,11 +43,10 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             return packages, groups
 
         # Check if we even support modules in Pungi.
-        if not WITH_MODULES:
+        if not Modulemd:
             log.write(
-                "pdc_client module, pygobject module or libmodulemd "
-                "library is not installed, support for modules is "
-                "disabled\n")
+                "pygobject module or libmodulemd library is not installed, "
+                "support for modules is disabled\n")
             return packages, groups
 
         # TODO: Enable multilib here and handle "multilib" field in the

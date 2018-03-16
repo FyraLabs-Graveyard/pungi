@@ -27,6 +27,7 @@ from .link import link_files
 from pungi.util import get_arch_variant_data, get_arch_data, get_variant_data
 from pungi.phases.base import PhaseBase
 from pungi.arch import split_name_arch, get_compatible_arches
+from pungi import Modulemd
 
 
 def get_gather_source(name):
@@ -68,9 +69,7 @@ class GatherPhase(PhaseBase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        # This must be imported here to avoid circular deps problems.
-        from pungi.phases.pkgset.sources import source_koji
-        if not source_koji.WITH_MODULES:
+        if not Modulemd:
             # Modules are not supported, check if we need them
             for variant in self.compose.variants.values():
                 if variant.modules:

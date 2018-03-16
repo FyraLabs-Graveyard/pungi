@@ -5,22 +5,14 @@ import os
 import sys
 import unittest
 
-try:
-    import gi # noqa
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd # noqa
-    import pdc_client       # noqa
-    HAS_MODULE_SUPPORT = True
-except ImportError:
-    HAS_MODULE_SUPPORT = False
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.gather.sources.source_module import GatherSourceModule
 from tests import helpers
+from pungi import Modulemd
 
 
-@unittest.skipUnless(HAS_MODULE_SUPPORT, 'Skipped test, no module support.')
+@unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
 class TestGatherSourceModule(helpers.PungiTestCase):
     def setUp(self):
         super(TestGatherSourceModule, self).setUp()

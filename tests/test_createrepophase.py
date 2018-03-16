@@ -18,15 +18,7 @@ from pungi.phases.createrepo import (CreaterepoPhase,
                                      create_variant_repo,
                                      get_productids_from_scm)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
-
-try:
-    import gi # noqa
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd # noqa
-    import pdc_client       # noqa
-    HAS_MODULE_SUPPORT = True
-except ImportError:
-    HAS_MODULE_SUPPORT = False
+from pungi import Modulemd
 
 
 class TestCreaterepoPhase(PungiTestCase):
@@ -716,13 +708,11 @@ class TestCreateVariantRepo(PungiTestCase):
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')
 
+    @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_modules_artifacts_not_in_compose(
             self, CreaterepoWrapperCls, run):
-        if not HAS_MODULE_SUPPORT:
-            self.skipTest("Skipped test, no module support.")
-
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
@@ -759,13 +749,11 @@ class TestCreateVariantRepo(PungiTestCase):
             repo.get_modifyrepo_cmd.mock_calls,
             [mock.call(repodata_dir, ANY, compress_type='gz', mdtype='modules')])
 
+    @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_modules_artifacts(
             self, CreaterepoWrapperCls, run):
-        if not HAS_MODULE_SUPPORT:
-            self.skipTest("Skipped test, no module support.")
-
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })

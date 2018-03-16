@@ -33,18 +33,9 @@ from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
 from ..util import find_old_compose, temp_dir, get_arch_variant_data
+from pungi import Modulemd
 
 import productmd.rpms
-
-
-try:
-    from pdc_client import PDCClient
-    import gi
-    gi.require_version('Modulemd', '1.0') # noqa
-    from gi.repository import Modulemd
-    WITH_MODULES = True
-except:
-    WITH_MODULES = False
 
 
 createrepo_lock = threading.Lock()
@@ -193,7 +184,7 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
 
     # call modifyrepo to inject modulemd if needed
-    if arch in variant.arch_mmds and WITH_MODULES:
+    if arch in variant.arch_mmds and Modulemd is not None:
         modules = []
         for mmd in variant.arch_mmds[arch].values():
             # Create copy of architecture specific mmd to filter out packages
