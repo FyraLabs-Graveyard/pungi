@@ -104,13 +104,13 @@ class VariantsXmlParser(object):
                 variant_dict["groups"].append(group)
 
         for modulelist_node in variant_node.xpath("modules"):
+            variant_dict["modules"] = variant_dict["modules"] or []
             for module_node in modulelist_node.xpath("module"):
                 module = {
                     "name": str(module_node.text),
                     "glob": self._is_true(module_node.attrib.get("glob", "false"))
                 }
 
-                variant_dict["modules"] = variant_dict["modules"] or []
                 variant_dict["modules"].append(module)
 
         for environments_node in variant_node.xpath("environments"):
@@ -205,7 +205,6 @@ class Variant(object):
                  modules=None):
 
         environments = environments or []
-        modules = modules or []
         buildinstallpackages = buildinstallpackages or []
 
         self.id = id
@@ -214,7 +213,9 @@ class Variant(object):
         self.arches = sorted(copy.deepcopy(arches))
         self.groups = sorted(copy.deepcopy(groups), key=lambda x: x["name"])
         self.environments = sorted(copy.deepcopy(environments), key=lambda x: x["name"])
-        self.modules = sorted(copy.deepcopy(modules), key=lambda x: x["name"])
+        self.modules = copy.deepcopy(modules)
+        if self.modules:
+            self.modules = sorted(self.modules, key=lambda x: x["name"])
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = parent
