@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.createrepo import (CreaterepoPhase,
                                      create_variant_repo,
-                                     get_productids_from_scm)
+                                     get_productids_from_scm,
+                                     ModulesMetadata)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
 from pungi import Modulemd
 
@@ -75,19 +76,19 @@ class TestCreaterepoPhase(PungiTestCase):
         self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
-            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm')),
-             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo')),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm')),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo')),
-             mock.call((compose, None, compose.variants['Server'], 'srpm')),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm')),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo')),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm')),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo')),
-             mock.call((compose, None, compose.variants['Everything'], 'srpm')),
-             mock.call((compose, 'amd64', compose.variants['Client'], 'rpm')),
-             mock.call((compose, 'amd64', compose.variants['Client'], 'debuginfo')),
-             mock.call((compose, None, compose.variants['Client'], 'srpm'))])
+            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, None, compose.variants['Server'], 'srpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Client'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Client'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, None, compose.variants['Client'], 'srpm', phase.modules_metadata))])
 
     @mock.patch('pungi.checks.get_num_cpus')
     @mock.patch('pungi.phases.createrepo.ThreadPool')
@@ -105,16 +106,16 @@ class TestCreaterepoPhase(PungiTestCase):
         self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
-            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm')),
-             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo')),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm')),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo')),
-             mock.call((compose, None, compose.variants['Server'], 'srpm')),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm')),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo')),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm')),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo')),
-             mock.call((compose, None, compose.variants['Everything'], 'srpm'))])
+            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, None, compose.variants['Server'], 'srpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
+             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
+             mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata))])
 
 
 class TestCreateVariantRepo(PungiTestCase):
@@ -750,10 +751,11 @@ class TestCreateVariantRepo(PungiTestCase):
             [mock.call(repodata_dir, ANY, compress_type='gz', mdtype='modules')])
 
     @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
+    @mock.patch('pungi.phases.createrepo.find_file_in_repodata')
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_modules_artifacts(
-            self, CreaterepoWrapperCls, run):
+            self, CreaterepoWrapperCls, run, modulemd_filename):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
@@ -784,7 +786,10 @@ class TestCreateVariantRepo(PungiTestCase):
             compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
             'repodata')
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        modules_metadata = ModulesMetadata(compose)
+
+        modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a723e1bd69826e591508f07e377d2212769b59178a9-modules.yaml.gz"
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm', modules_metadata)
 
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,

@@ -254,7 +254,12 @@ def _get_modules_from_pdc(compose, session, variant, variant_tags):
         _add_module_to_variant(variant, mmd, pdc_module["rpms"])
 
         tag = pdc_module["koji_tag"]
+        uid = pdc_module["variant_uid"]
         variant_tags[variant].append(tag)
+
+        # Store mapping module-uid --> koji_tag into variant.
+        # This is needed in createrepo phase where metadata is exposed by producmd
+        variant.module_uid_to_koji_tag[uid] = tag
 
         module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
             variant=variant, tag=tag, module=module["name"])
@@ -334,10 +339,22 @@ def _get_modules_from_koji_tags(
             mmd.upgrade()
             _add_module_to_variant(variant, mmd, rpms, True)
 
+            # Store mapping module-uid --> koji_tag into variant.
+            # This is needed in createrepo phase where metadata is exposed by producmd
+            module_data = build.get("extra", {}).get("typeinfo", {}).get("module", {})
+            try:
+                uid = "{name}:{stream}".format(**module_data)
+            except KeyError as e:
+                raise KeyError("Unable to create uid in format name:stream %s" % e)
+            if module_data.get("version"):
+                uid += ":{version}".format(**module_data)
+                if module_data.get("context"):
+                    uid += ":{context}".format(**module_data)
+            variant.module_uid_to_koji_tag[uid] = module_tag
+
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
                 variant=variant, tag=module_tag, module=build["nvr"])
             compose.log_info("%s" % module_msg)
-
 
 
 def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):

@@ -19,12 +19,13 @@ __all__ = (
 )
 
 
-import os
-import glob
-import shutil
-import threading
 import copy
 import errno
+import glob
+import os
+import shutil
+import threading
+import xml.dom.minidom
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, relative_path
@@ -36,6 +37,7 @@ from ..util import find_old_compose, temp_dir, get_arch_variant_data
 from pungi import Modulemd
 
 import productmd.rpms
+import productmd.modules
 
 
 createrepo_lock = threading.Lock()
@@ -48,6 +50,7 @@ class CreaterepoPhase(PhaseBase):
     def __init__(self, compose):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
+        self.modules_metadata = ModulesMetadata(compose)
 
     def validate(self):
         errors = []
@@ -70,22 +73,26 @@ class CreaterepoPhase(PhaseBase):
         for variant in self.compose.get_variants():
             if variant.is_empty:
                 continue
-            self.pool.queue_put((self.compose, None, variant, "srpm"))
+            self.pool.queue_put((self.compose, None, variant, "srpm", self.modules_metadata))
             for arch in variant.arches:
-                self.pool.queue_put((self.compose, arch, variant, "rpm"))
-                self.pool.queue_put((self.compose, arch, variant, "debuginfo"))
+                self.pool.queue_put((self.compose, arch, variant, "rpm", self.modules_metadata))
+                self.pool.queue_put((self.compose, arch, variant, "debuginfo", self.modules_metadata))
 
         self.pool.start()
 
+    def stop(self):
+        super(CreaterepoPhase, self).stop()
+        self.modules_metadata.write_modules_metadata()
 
-def create_variant_repo(compose, arch, variant, pkg_type):
+
+def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None):
     types = {
         'rpm': ('binary',
-                lambda: compose.paths.compose.repository(arch=arch, variant=variant)),
+                lambda **kwargs: compose.paths.compose.repository(arch=arch, variant=variant, **kwargs)),
         'srpm': ('source',
-                 lambda: compose.paths.compose.repository(arch='src', variant=variant)),
+                 lambda **kwargs: compose.paths.compose.repository(arch='src', variant=variant, **kwargs)),
         'debuginfo': ('debug',
-                      lambda: compose.paths.compose.debug_repository(arch=arch, variant=variant)),
+                      lambda **kwargs: compose.paths.compose.debug_repository(arch=arch, variant=variant, **kwargs)),
     }
 
     if variant.is_empty or (arch is None and pkg_type != 'srpm'):
@@ -186,7 +193,8 @@ def create_variant_repo(compose, arch, variant, pkg_type):
     # call modifyrepo to inject modulemd if needed
     if arch in variant.arch_mmds and Modulemd is not None:
         modules = []
-        for mmd in variant.arch_mmds[arch].values():
+        metadata = []
+        for module_id, mmd in variant.arch_mmds[arch].items():
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
             repo_mmd = Modulemd.Module.new_from_string(mmd.dumps())
@@ -196,11 +204,18 @@ def create_variant_repo(compose, arch, variant, pkg_type):
             if not artifacts or artifacts.size() == 0:
                 continue
 
+            module_rpms = set()
             repo_artifacts = Modulemd.SimpleSet()
             for rpm_nevra in rpm_nevras:
                 if artifacts.contains(rpm_nevra):
                     repo_artifacts.add(rpm_nevra)
+                    module_rpms.add(rpm_nevra)
             repo_mmd.set_rpm_artifacts(repo_artifacts)
+            if module_rpms:  # do not create metadata if there is empty rpm list
+                if modules_metadata:  # some unittests call this method without parameter modules_metadata and its default is None
+                    metadata.append((module_id, module_rpms))
+                else:
+                    raise AttributeError("module_metadata parameter was not passed and it is needed for module processing")
             modules.append(repo_mmd)
 
         with temp_dir() as tmp_dir:
@@ -214,13 +229,26 @@ def create_variant_repo(compose, arch, variant, pkg_type):
                 arch, "modifyrepo-modules-%s" % variant)
             run(cmd, logfile=log_file, show_cmd=True)
 
+            for module_id, module_rpms in metadata:
+                modulemd_path = os.path.join(types[pkg_type][1](relative=True), find_file_in_repodata(repo_dir, 'modules'))
+                modules_metadata.prepare_module_metadata(variant, arch, module_id, modulemd_path, types[pkg_type][0], list(module_rpms))
+
     compose.log_info("[DONE ] %s" % msg)
+
+
+def find_file_in_repodata(repo_path, type_):
+    dom = xml.dom.minidom.parse(os.path.join(repo_path, 'repodata', 'repomd.xml'))
+    for entry in dom.getElementsByTagName('data'):
+        if entry.getAttribute('type') == type_:
+            return entry.getElementsByTagName('location')[0].getAttribute('href')
+        entry.unlink()
+    raise RuntimeError('No such file in repodata: %s' % type_)
 
 
 class CreaterepoThread(WorkerThread):
     def process(self, item, num):
-        compose, arch, variant, pkg_type = item
-        create_variant_repo(compose, arch, variant, pkg_type=pkg_type)
+        compose, arch, variant, pkg_type, modules_metadata = item
+        create_variant_repo(compose, arch, variant, pkg_type=pkg_type, modules_metadata=modules_metadata)
 
 
 def get_productids_from_scm(compose):
@@ -317,3 +345,33 @@ def _has_deltas(compose, variant, arch):
     if isinstance(compose.conf.get(key), bool):
         return compose.conf[key]
     return any(get_arch_variant_data(compose.conf, key, arch, variant))
+
+
+class ModulesMetadata(object):
+    def __init__(self, compose):
+        # Prepare empty module metadata
+        self.compose = compose
+        self.modules_metadata_file = self.compose.paths.compose.metadata("modules.json")
+        self.productmd_modules_metadata = productmd.modules.Modules()
+        self.productmd_modules_metadata.compose.id = copy.copy(self.compose.compose_id)
+        self.productmd_modules_metadata.compose.type = copy.copy(self.compose.compose_type)
+        self.productmd_modules_metadata.compose.date = copy.copy(self.compose.compose_date)
+        self.productmd_modules_metadata.compose.respin = copy.copy(self.compose.compose_respin)
+
+    def write_modules_metadata(self):
+        """
+        flush modules metadata into file
+        """
+        self.compose.log_info("Writing modules metadata: %s" % self.modules_metadata_file)
+        self.productmd_modules_metadata.dump(self.modules_metadata_file)
+
+    def prepare_module_metadata(self, variant, arch, module_id, modulemd_path, category, module_rpms):
+        """
+        find uid/koji_tag which is correstponding with variant object and
+        add record(s) into module metadata structure
+        """
+        for uid, koji_tag in variant.module_uid_to_koji_tag.items():
+            uid_dict = self.productmd_modules_metadata.parse_uid(uid)
+            if module_id == '{module_name}-{stream}'.format(**uid_dict):
+                self.productmd_modules_metadata.add(variant.uid, arch, uid, koji_tag, modulemd_path, category, module_rpms)
+                break
