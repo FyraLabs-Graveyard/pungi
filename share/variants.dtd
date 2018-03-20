@@ -27,9 +27,10 @@
     uservisible (true|false) #IMPLIED
 >
 
-<!ELEMENT modules (module)*>
+<!ELEMENT modules (module*, kojitag*)>
 
 <!ELEMENT module (#PCDATA)>
+<!ELEMENT kojitag (#PCDATA)>
 <!ATTLIST module
     glob (true|false) #IMPLIED
 >

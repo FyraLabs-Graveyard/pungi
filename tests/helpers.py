@@ -52,6 +52,9 @@ class MockVariant(mock.Mock):
     def get_modules(self, arch=None, types=None):
         return []
 
+    def get_modular_koji_tags(self, arch=None, types=None):
+        return []
+
     def add_fake_module(self, nsvc, rpm_nvrs=None):
         if not Modulemd:
             # No support for modules

@@ -94,7 +94,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.compose.DEBUG = False
         self.koji_wrapper = mock.Mock()
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
-        self.pdc_module_path = os.path.join(self.topdir, 'work', 'global', 'pdc-module-Server.json')
+        self.pdc_module_path = os.path.join(self.topdir, 'work', 'global', 'pdc-module-Server.yaml')
 
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
@@ -124,22 +124,35 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_module')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_client_session')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.Modulemd')
-    def test_pdc_log(self, modulemd, get_pdc_client_session, get_module, KojiPackageSet, pickle_dumps):
+    def test_pdc_log(self, get_pdc_client_session, get_module, KojiPackageSet, pickle_dumps):
 
         pickle_dumps.return_value = b'DATA'
 
-        get_module.return_value = {'abc': 'def', 'modulemd': 'sth', 'rpms': ['dummy'], 'koji_tag': 'taggg'}
+        modulemd = """
+document: modulemd
+version: 2
+data:
+    name: foo
+    stream: bar
+    version: 1
+    summary: foo
+    description: foo
+    license:
+        module:
+            - MIT
+"""
+
+        get_module.return_value = {'abc': 'def', 'modulemd': modulemd, 'rpms': [], 'koji_tag': 'taggg'}
         for name, variant in self.compose.variants.items():
             variant.get_modules = mock.MagicMock()
             if name == 'Server':
-                variant.get_modules.return_value = [{'name': 'a'}]
+                variant.modules = [{'name': 'a'}]
+                variant.get_modules.return_value = variant.modules
 
         source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, '/prefix', 123456)
-        with open(self.pdc_module_path, 'r') as pdc_f:
-            self.assertEqual(json.load(pdc_f),
-                             [{"rpms": ["dummy"], "abc": "def", "koji_tag": "taggg", "modulemd": "sth"}])
+        mmds = Modulemd.Module.new_all_from_file(self.pdc_module_path)
+        self.assertEqual(mmds[0].get_name(), "foo")
 
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')

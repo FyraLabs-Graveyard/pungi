@@ -72,6 +72,7 @@ class VariantsXmlParser(object):
             "arches": [str(i) for i in variant_node.xpath("arches/arch/text()")],
             "groups": [],
             "modules": None,
+            "modular_koji_tags": None,
             "environments": [],
             "buildinstallpackages": [],
             "is_empty": bool(variant_node.attrib.get("is_empty", False)),
@@ -112,6 +113,14 @@ class VariantsXmlParser(object):
                 }
 
                 variant_dict["modules"].append(module)
+
+            for kojitag_node in modulelist_node.xpath("kojitag"):
+                kojitag = {
+                    "name": str(kojitag_node.text),
+                }
+
+                variant_dict["modular_koji_tags"] = variant_dict["modular_koji_tags"] or []
+                variant_dict["modular_koji_tags"].append(kojitag)
 
         for environments_node in variant_node.xpath("environments"):
             for environment_node in environments_node.xpath("environment"):
@@ -202,7 +211,7 @@ class VariantsXmlParser(object):
 class Variant(object):
     def __init__(self, id, name, type, arches, groups, environments=None,
                  buildinstallpackages=None, is_empty=False, parent=None,
-                 modules=None):
+                 modules=None, modular_koji_tags=None):
 
         environments = environments or []
         buildinstallpackages = buildinstallpackages or []
@@ -216,6 +225,9 @@ class Variant(object):
         self.modules = copy.deepcopy(modules)
         if self.modules:
             self.modules = sorted(self.modules, key=lambda x: x["name"])
+        self.modular_koji_tags = copy.deepcopy(modular_koji_tags)
+        if self.modular_koji_tags:
+            self.modular_koji_tags = sorted(self.modular_koji_tags, key=lambda x: x["name"])
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = parent
@@ -275,9 +287,9 @@ class Variant(object):
 
         types = types or ["self"]
         result = copy.deepcopy(self.groups)
-        for variant in self.get_variants(arch=arch, types=types, recursive=recursive):
+        for variant in self.get_variants(arch=arch, types=types,
+                                         recursive=recursive):
             if variant == self:
-                # XXX
                 continue
             for group in variant.get_groups(arch=arch, types=types, recursive=recursive):
                 if group not in result:
@@ -295,12 +307,29 @@ class Variant(object):
         for variant in self.get_variants(arch=arch, types=types,
                                          recursive=recursive):
             if variant == self:
-                # XXX
                 continue
             for module in variant.get_modules(arch=arch, types=types,
                                               recursive=recursive):
                 if module not in result:
                     result.append(module)
+        return result
+
+    def get_modular_koji_tags(self, arch=None, types=None, recursive=False):
+        """Return list of modular koji tags, default types is ["self"]"""
+
+        if self.modular_koji_tags is None:
+            return []
+
+        types = types or ["self"]
+        result = copy.deepcopy(self.modular_koji_tags)
+        for variant in self.get_variants(arch=arch, types=types,
+                                         recursive=recursive):
+            if variant == self:
+                continue
+            for koji_tag in variant.get_modular_koji_tags(
+                    arch=arch, types=types, recursive=recursive):
+                if koji_tag not in result:
+                    result.append(koji_tag)
         return result
 
     def get_variants(self, arch=None, types=None, recursive=False):
