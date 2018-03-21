@@ -226,7 +226,6 @@ BASE_CONFIG = dict(
     runroot=False,
     createrepo_checksum='sha256',
     gather_method='deps',
-    sigkeys=[],
 )
 
 

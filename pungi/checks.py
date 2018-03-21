@@ -669,6 +669,8 @@ def make_schema():
             "sigkeys": {
                 "type": "array",
                 "items": {"$ref": "#/definitions/optional_string"},
+                "minItems": 1,
+                "default": [None],
             },
             "variants_file": {"$ref": "#/definitions/str_or_scm_dict"},
             "comps_file": {"$ref": "#/definitions/str_or_scm_dict"},
@@ -1083,7 +1085,7 @@ def make_schema():
 
         "required": ["release_name", "release_short", "release_version",
                      "release_is_layered",
-                     "variants_file", "sigkeys",
+                     "variants_file",
                      "runroot", "pkgset_source",
                      "gather_method"],
         "additionalProperties": False,
