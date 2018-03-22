@@ -49,10 +49,9 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 "support for modules is disabled\n")
             return packages, groups
 
-        # TODO: Enable multilib here and handle "multilib" field in the
-        # components part of modulemd. We currently cannot do it, because
-        # it is not clear what is semantic of that modulemd section.
-        compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=False)
+        compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
+        multilib_arches = set(compatible_arches) - set(
+            pungi.arch.get_compatible_arches(arch))
 
         # Generate architecture specific modulemd metadata, so we can
         # store per-architecture artifacts there later.
@@ -88,18 +87,27 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                         rpm_obj.nevra not in mmd.get_rpm_artifacts().get()):
                     continue
 
-                # If the RPM is not filtered out, add it to compose,
-                # otherwise remove it from arch_mmd artifacts section.
-                if rpm_obj.name not in mmd.get_rpm_filter().get():
-                    packages.add((rpm_obj, None))
-                    added_rpms.setdefault(mmd_id, [])
-                    added_rpms[mmd_id].append(str(rpm_obj.nevra))
-                    log.write('Adding %s because it is in %s\n'
-                              % (rpm_obj, mmd_id))
-                else:
+                # Filter out the RPM from artifacts if its filtered in MMD.
+                if rpm_obj.name in mmd.get_rpm_filter().get():
                     # No need to check if the rpm_obj is in rpm artifacts,
                     # the .remove() method does that anyway.
                     arch_mmd.get_rpm_artifacts().remove(str(rpm_obj.nevra))
+                    continue
+
+                # Skip the rpm_obj if it's built for multilib arch, but
+                # multilib is not enabled for this srpm in MMD.
+                mmd_component = mmd.get_rpm_components()[srpm]
+                multilib = mmd_component.get_multilib()
+                multilib = multilib.get() if multilib else set()
+                if arch not in multilib and rpm_obj.arch in multilib_arches:
+                    continue
+
+                # Add RPM to packages.
+                packages.add((rpm_obj, None))
+                added_rpms.setdefault(mmd_id, [])
+                added_rpms[mmd_id].append(str(rpm_obj.nevra))
+                log.write('Adding %s because it is in %s\n'
+                          % (rpm_obj, mmd_id))
 
         # GatherSource returns all the packages in variant and does not
         # care which package is in which module, but for modular metadata
