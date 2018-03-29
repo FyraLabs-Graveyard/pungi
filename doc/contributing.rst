@@ -16,14 +16,18 @@ These packages will have to installed:
  * genisoimage
  * gettext
  * git
+ * gobject-introspection
  * isomd5sum
  * jigdo
  * kobo
  * kobo-rpmlib
  * koji
+ * krb5-devel
  * libcurl-devel
+ * libmodulemd
  * libselinux-python
  * lorax
+ * pdc-client
  * python-jsonschema
  * python-kickstart
  * python-libcomps
@@ -51,11 +55,11 @@ preferably from PyPI or from tarball. You will still need to install all of the 
 packages above as they are used by calling an executable. ::
 
     $ mkvirtualenv pungienv
-    $ for pkg in createrepo koji libcomps pykickstart rpm rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in createrepo gi koji libcomps pdc_client pykickstart rpm rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print os.path.dirname('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print '$pkg'.__file__')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install jsonschema kobo==0.6.0 lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests setuptools sphinx
+    $ pip install beanbag jsonschema kobo==0.6.0 lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set
 
 Now you should be able to run all existing tests.
 
