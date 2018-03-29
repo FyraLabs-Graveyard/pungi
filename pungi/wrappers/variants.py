@@ -17,7 +17,6 @@ from __future__ import print_function
 import os
 import copy
 import lxml.etree
-from functools import total_ordering
 
 
 def get_variants_dtd(logger=None):
@@ -207,7 +206,6 @@ class VariantsXmlParser(object):
         return result
 
 
-@total_ordering
 class Variant(object):
     def __init__(self, id, name, type, arches, groups, environments=None,
                  buildinstallpackages=None, is_empty=False, parent=None,
@@ -256,6 +254,15 @@ class Variant(object):
     def __lt__(self, other):
         ORDERING = {'variant': 0, 'addon': 1, 'layered-product': 1, 'optional': 2}
         return (ORDERING[self.type], self.uid) < (ORDERING[other.type], other.uid)
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __gt__(self, other):
+        return not (self <= other)
+
+    def __ge__(self, other):
+        return not (self < other)
 
     def __hash__(self):
         return hash((self.type, self.uid))

@@ -3,7 +3,7 @@
 import mock
 import os
 import sys
-import unittest
+import unittest2 as unittest
 import itertools
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -36,11 +36,11 @@ class TestIsoUtils(unittest.TestCase):
     def test_get_implanted_md5_incorrect(self, mock_run):
         mock_run.return_value = (0, INCORRECT_OUTPUT)
         logger = mock.Mock()
-        self.assertIsNone(iso.get_implanted_md5('dummy.iso', logger=logger))
+        self.assertEqual(iso.get_implanted_md5('dummy.iso', logger=logger), None)
         self.assertEqual(mock_run.call_args_list,
                          [mock.call(['/usr/bin/checkisomd5', '--md5sumonly', 'dummy.iso'],
                                     universal_newlines=True)])
-        self.assertGreater(len(logger.mock_calls), 0)
+        self.assertTrue(len(logger.mock_calls) > 0)
 
     @mock.patch('pungi.util.run_unmount_cmd')
     @mock.patch('pungi.wrappers.iso.run')

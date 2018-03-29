@@ -92,7 +92,7 @@ class TestNotifier(unittest.TestCase):
         n.send('cmd', **self.data)
 
         makedirs.assert_called_once_with('/logs/notifications')
-        self.assertItemsEqual(run.call_args_list, [self._call('run-notify', 'cmd')])
+        self.assertEqual(run.call_args_list, [self._call('run-notify', 'cmd')])
 
     @mock.patch('pungi.util.translate_path')
     @mock.patch('kobo.shortcuts.run')
@@ -104,10 +104,10 @@ class TestNotifier(unittest.TestCase):
         n.compose = self.compose
         n.send('cmd', **self.data)
 
-        self.assertItemsEqual(
-            run.call_args_list,
-            [self._call('run-notify', 'cmd'),
-             self._call('ping-user', 'cmd')])
+        self.assertEqual(
+            sorted(run.call_args_list),
+            sorted([self._call('run-notify', 'cmd'),
+                    self._call('ping-user', 'cmd')]))
 
     @mock.patch('kobo.shortcuts.run')
     def test_translates_path(self, run, makedirs):
@@ -120,7 +120,7 @@ class TestNotifier(unittest.TestCase):
         n.compose = self.compose
         n.send('cmd', **self.data)
 
-        self.assertItemsEqual(
+        self.assertEqual(
             run.call_args_list,
             [self._call('run-notify', 'cmd', location='http://example.com/compose/a/b')])
 
@@ -140,7 +140,7 @@ class TestNotifier(unittest.TestCase):
         n.compose = self.compose
         n.send('cmd', **self.data)
 
-        self.assertItemsEqual(run.call_args_list, [self._call('run-notify', 'cmd')])
+        self.assertEqual(run.call_args_list, [self._call('run-notify', 'cmd')])
         self.assertTrue(self.compose.log_warning.called)
 
 

@@ -37,15 +37,15 @@ class CompsWrapperTest(unittest.TestCase):
 
     def test_get_groups(self):
         comps = CompsWrapper(COMPS_FILE)
-        self.assertItemsEqual(
-            comps.get_comps_groups(),
-            ['core', 'standard', 'text-internet', 'firefox', 'resilient-storage', 'basic-desktop'])
+        self.assertEqual(
+            sorted(comps.get_comps_groups()),
+            sorted(['core', 'standard', 'text-internet', 'firefox', 'resilient-storage', 'basic-desktop']))
 
     def test_get_packages(self):
         comps = CompsWrapper(COMPS_FILE)
-        self.assertItemsEqual(
-            comps.get_packages('text-internet'),
-            {'dummy-elinks', 'dummy-tftp'})
+        self.assertEqual(
+            sorted(comps.get_packages('text-internet')),
+            sorted(['dummy-elinks', 'dummy-tftp']))
 
     def test_get_packages_for_non_existing_group(self):
         comps = CompsWrapper(COMPS_FILE)

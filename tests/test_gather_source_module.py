@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 import mock
 import os
 import sys
-import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

@@ -1,5 +1,8 @@
 import mock
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import six
 
 from tests.helpers import load_bin

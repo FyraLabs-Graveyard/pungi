@@ -4,7 +4,7 @@
 import mock
 import os
 import sys
-import unittest
+import unittest2 as unittest
 import json
 import re
 
