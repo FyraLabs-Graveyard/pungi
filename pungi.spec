@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.22
+Version:        4.1.23
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -27,7 +27,7 @@ Requires:       repoview
 Requires:       python-lockfile
 Requires:       kobo >= 0.6
 Requires:       kobo-rpmlib
-Requires:       python-productmd
+Requires:       python-productmd >= 1.11
 Requires:       python-kickstart
 Requires:       libselinux-python
 Requires:       createrepo_c
@@ -104,6 +104,50 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu Mar 29 2018 Ondrej Nosek - 4.1.23-1
+- Update documentation section 'contributing' (onosek)
+- Write module metadata (onosek)
+- Support multilib in GatherSourceModule (jkaluza)
+- ostree: Always substitute basearch (lsedlar)
+- If sigkeys is specified, require at least one (puiterwijk)
+- Allow setting <kojitag/> in <modules/> in variants.xml to get the modules
+  from this Koji tag. (jkaluza)
+- Move Modulemd import to pungi/__init__.py to remove duplicated code.
+  (jkaluza)
+- Use Modulemd.Module for 'variant.arch_mmds' instead of yaml dump (jkaluza)
+- Fix modular content in non-modular variant (lsedlar)
+- Remove the filtered RPMs from module metadata even in case all RPMs are
+  filtered out. (jkaluza)
+- pkgset: Allow empty list of modules (lsedlar)
+- buildinstall: Add option to disable it (lsedlar)
+- Use libmodulemd instead of modulemd Python module (jkaluza)
+- gather: Fix package set whitelist (lsedlar)
+- pkgset: Merge initial package set without checks (lsedlar)
+- pkgset: Remove check for unique name (lsedlar)
+- gather: Honor package whitelist (lsedlar)
+- Write package whitelist for each variant (lsedlar)
+- image-build: Accept tar.xz extension for docker images (lsedlar)
+- pkgset: Correctly detect single tag for variant (lsedlar)
+- Remove comps groups from purely modular variants (lsedlar)
+- gather: Allow filtering debuginfo packages (lsedlar)
+- Move ostree phase and pipelines for running phases (onosek)
+- Other repo for OstreeInstaller (onosek)
+- Add modulemd metadata to repo even without components (jkaluza)
+- Correct fix for volume ID substition sorting by length (awilliam)
+- Ordering processing for volume ID substitutions (onosek)
+- Disable multilib for modules (jkaluza)
+- scm: Stop decoding output of post-clone command (lsedlar)
+- Remove useless shebang (lsedlar)
+- source_koji.py: Properly handle unset pkgset_koji_tag (otaylor)
+- pkgset: Only use package whitelist if enabled (lsedlar)
+- Fail early if input packages are unsigned (jkaluza)
+- Allow composing from tag with unsigned packages (jkaluza)
+- Ostree can use pkgset repos (onosek)
+- Support multiple sources in one variant (lsedlar)
+- gather: Set lookaside flag focorrectly (lsedlar)
+- gather: Try getting srpm from the same repo as rpm (lsedlar)
+- Minor correction for python backward compatibility (onosek)
+
 * Wed Jan 24 2018 Ondrej Nosek - 4.1.22-1
 - Better INFO messages about modules (onosek)
 - Updates composes should be marked as supported (lsedlar)
