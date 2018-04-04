@@ -1810,6 +1810,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         conf = Conf(base_arch)
         conf.persistdir = persistdir
         conf.cachedir = self.cachedir
+        conf.modulesdir = os.path.join(persistdir, 'modules.d')
         if exclude:
             conf.exclude = exclude
         dnf = DnfWrapper(conf)
