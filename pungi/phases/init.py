@@ -151,6 +151,11 @@ def create_comps_repo(compose, arch):
 
 def write_module_defaults(compose):
     scm_dict = compose.conf["module_defaults_dir"]
+    if isinstance(scm_dict, dict):
+        if scm_dict["scm"] == "file":
+            scm_dict["dir"] = os.path.join(compose.config_dir, scm_dict["dir"])
+    else:
+        scm_dict = os.path.join(compose.config_dir, scm_dict)
 
     with temp_dir(prefix="moduledefaults_") as tmp_dir:
         get_dir_from_scm(scm_dict, tmp_dir, logger=compose._logger)
