@@ -23,7 +23,8 @@ from pungi.phases.base import PhaseBase
 from pungi.phases.gather import write_prepopulate_file
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.comps import CompsWrapper
-from pungi.wrappers.scm import get_file_from_scm
+from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
+from pungi.util import temp_dir
 
 
 class InitPhase(PhaseBase):
@@ -49,6 +50,10 @@ class InitPhase(PhaseBase):
                     write_variant_comps(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
+
+        # download module defaults
+        if self.compose.has_module_defaults:
+            write_module_defaults(self.compose)
 
         # write prepopulate file
         write_prepopulate_file(self.compose)
@@ -142,3 +147,13 @@ def create_comps_repo(compose, arch):
                                       checksum=createrepo_checksum)
         run(cmd, logfile=compose.paths.log.log_file(arch, "comps_repo"), show_cmd=True)
         compose.log_info("[DONE ] %s" % msg)
+
+
+def write_module_defaults(compose):
+    scm_dict = compose.conf["module_defaults_dir"]
+
+    with temp_dir(prefix="moduledefaults_") as tmp_dir:
+        get_dir_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+        compose.log_debug("Writing module defaults")
+        shutil.rmtree(os.path.join(compose.config_dir, "module_defaults"), ignore_errors=True)
+        shutil.copytree(tmp_dir, os.path.join(compose.config_dir, "module_defaults"))

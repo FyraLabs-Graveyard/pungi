@@ -218,9 +218,15 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
                     raise AttributeError("module_metadata parameter was not passed and it is needed for module processing")
             modules.append(repo_mmd)
 
+        module_names = set([x.get_name() for x in modules])
+        for mmddeffile in glob.glob(os.path.join(compose.config_dir, "module_defaults", "*.yaml")):
+            for mmddef in Modulemd.objects_from_file(mmddeffile):
+                if isinstance(mmddef, Modulemd.Defaults) and mmddef.peek_module_name() in module_names:
+                    modules.append(mmddef)
+
         with temp_dir() as tmp_dir:
             modules_path = os.path.join(tmp_dir, "modules.yaml")
-            Modulemd.Module.dump_all(modules, modules_path)
+            Modulemd.dump(modules, modules_path)
 
             cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
                                           modules_path, mdtype="modules",

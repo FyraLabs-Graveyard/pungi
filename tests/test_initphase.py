@@ -24,6 +24,7 @@ class TestInitPhase(PungiTestCase):
     def test_run(self, write_prepopulate, write_variant, create_comps, write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
+        compose.has_module_defaults = False
         compose.setup_optional()
         phase = init.InitPhase(compose)
         phase.run()
@@ -51,6 +52,7 @@ class TestInitPhase(PungiTestCase):
                                write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
+        compose.has_module_defaults = False
         compose.variants['Everything'].groups = []
         compose.variants['Everything'].modules = []
         phase = init.InitPhase(compose)
@@ -78,6 +80,7 @@ class TestInitPhase(PungiTestCase):
                                write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = False
+        compose.has_module_defaults = False
         phase = init.InitPhase(compose)
         phase.run()
 
