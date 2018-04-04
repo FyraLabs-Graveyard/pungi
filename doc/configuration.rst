@@ -21,6 +21,7 @@ Minimal Config Example
     # GENERAL SETTINGS
     comps_file = "comps-f23.xml"
     variants_file = "variants-f23.xml"
+    module_defaults_dir = "module_defaults"
 
     # KOJI
     koji_profile = "koji"
@@ -134,6 +135,10 @@ Options
 **variants_file** [mandatory]
     (:ref:`scm_dict <scm_support>` or *str*) -- reference to variants XML file
     that defines release variants and architectures
+
+**module_defaults_dir** [optional]
+    (:ref:`scm_dict <scm_support>` or *str*) -- reference the module defaults
+    directory containing modulemd-defaults YAML documents
 
 **failable_deliverables** [optional]
     (*list*) -- list which deliverables on which variant and architecture can
