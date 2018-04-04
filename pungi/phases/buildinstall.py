@@ -95,11 +95,14 @@ class BuildinstallPhase(PhaseBase):
             log_dir = os.path.join(log_dir, "logs")
             output_dir = os.path.join(output_dir, "results")
 
+        repos = [repo_baseurl] + get_arch_variant_data(self.compose.conf,
+                                                       'lorax_extra_sources', arch, variant)
+
         lorax = LoraxWrapper()
         lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
                                         self.compose.conf["release_version"],
                                         self.compose.conf["release_version"],
-                                        repo_baseurl,
+                                        repos,
                                         output_dir,
                                         variant=variant.uid,
                                         buildinstallpackages=variant.buildinstallpackages,

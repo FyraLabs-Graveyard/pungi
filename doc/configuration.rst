@@ -493,6 +493,9 @@ Options
       * ``add_arch_template`` -- *[str]* (default empty)
       * ``add_template_var`` -- *[str]* (default empty)
       * ``add_arch_template_var`` -- *[str]* (default empty)
+**lorax_extra_sources**
+    (*list*) -- a variant/arch mapping with urls for extra source repositories
+    added to Lorax command line. Either one repo or a list can be specified.
 **buildinstall_kickstart**
     (:ref:`scm_dict <scm_support>`) -- If specified, this kickstart file will
     be copied into each file and pointed to in boot configuration.
@@ -534,6 +537,13 @@ Example
     buildinstall_skip = [
         ('^Modular', {
             '*': True
+        })
+    ]
+
+    # Add another repository for lorax to install packages from
+    lorax_extra_sources = [
+        ('^Simple$', {
+            '*': 'https://example.com/repo/$basearch/',
         })
     ]
 

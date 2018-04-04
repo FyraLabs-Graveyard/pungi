@@ -1027,6 +1027,10 @@ def make_schema():
                 "additionalProperties": False,
             }),
 
+            "lorax_extra_sources": _variant_arch_mapping({
+                "$ref": "#/definitions/strings",
+            }),
+
             "signing_key_id": {"type": "string"},
             "signing_key_password_file": {"type": "string"},
             "signing_command": {"type": "string"},
