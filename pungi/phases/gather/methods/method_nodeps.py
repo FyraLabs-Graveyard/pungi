@@ -45,7 +45,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             "debuginfo": [],
         }
 
-        group_packages = expand_groups(self.compose, arch, groups)
+        group_packages = expand_groups(self.compose, arch, variant, groups)
         packages = pkgs | group_packages
         log.write('Requested packages:\n%s\n' % pformat(packages))
 
@@ -117,9 +117,9 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
         return result
 
 
-def expand_groups(compose, arch, groups):
-    """Read comps file filtered for given architecture and return all packages
-    in given groups.
+def expand_groups(compose, arch, variant, groups):
+    """Read comps file filtered for given architecture and variant and return
+    all packages in given groups.
 
     :returns: A set of tuples (pkg_name, arch)
     """
@@ -127,7 +127,7 @@ def expand_groups(compose, arch, groups):
         # No groups, nothing to do (this also covers case when there is no
         # comps file.
         return set()
-    comps_file = compose.paths.work.comps(arch, create_dir=False)
+    comps_file = compose.paths.work.comps(arch, variant, create_dir=False)
     comps = CompsWrapper(comps_file)
     packages = set()
 

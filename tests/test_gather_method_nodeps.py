@@ -20,7 +20,7 @@ class TestWritePungiConfig(helpers.PungiTestCase):
         self.compose.paths.work.comps = mock.Mock(return_value=COMPS_FILE)
 
     def test_expand_group(self):
-        packages = nodeps.expand_groups(self.compose, 'x86_64', ['core', 'text-internet'])
+        packages = nodeps.expand_groups(self.compose, 'x86_64', None, ['core', 'text-internet'])
         self.assertItemsEqual(packages, [('dummy-bash', 'x86_64'),
                                          ('dummy-elinks', 'x86_64'),
                                          ('dummy-tftp', 'x86_64')])
