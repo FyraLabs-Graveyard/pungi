@@ -17,6 +17,7 @@ Init
 
 The first phase to ever run. Can not be skipped. It prepares the comps files
 for variants (by filtering out groups and packages that should not be there).
+See :doc:`comps` for details about how this is done.
 
 Pkgset
 ------

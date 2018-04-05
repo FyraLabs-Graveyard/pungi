@@ -18,5 +18,6 @@ Contents:
     scm_support
     messaging
     gathering
+    comps
     contributing
     testing
