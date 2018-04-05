@@ -42,14 +42,13 @@ class TestInitPhase(PungiTestCase):
                                mock.call(compose, 'amd64', compose.variants['Everything']),
                                mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
 
-    @mock.patch('pungi.phases.init.copy_variant_comps')
     @mock.patch('pungi.phases.init.write_global_comps')
     @mock.patch('pungi.phases.init.write_arch_comps')
     @mock.patch('pungi.phases.init.create_comps_repo')
     @mock.patch('pungi.phases.init.write_variant_comps')
     @mock.patch('pungi.phases.init.write_prepopulate_file')
     def test_run_with_preserve(self, write_prepopulate, write_variant, create_comps,
-                               write_arch, write_global, copy_comps):
+                               write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
         compose.variants['Everything'].groups = []
@@ -66,19 +65,17 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(write_variant.mock_calls,
                               [mock.call(compose, 'x86_64', compose.variants['Server']),
                                mock.call(compose, 'amd64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Client'])])
-        self.assertItemsEqual(copy_comps.mock_calls,
-                              [mock.call(compose, 'x86_64', compose.variants['Everything']),
+                               mock.call(compose, 'amd64', compose.variants['Client']),
+                               mock.call(compose, 'x86_64', compose.variants['Everything']),
                                mock.call(compose, 'amd64', compose.variants['Everything'])])
 
-    @mock.patch('pungi.phases.init.copy_variant_comps')
     @mock.patch('pungi.phases.init.write_global_comps')
     @mock.patch('pungi.phases.init.write_arch_comps')
     @mock.patch('pungi.phases.init.create_comps_repo')
     @mock.patch('pungi.phases.init.write_variant_comps')
     @mock.patch('pungi.phases.init.write_prepopulate_file')
     def test_run_without_comps(self, write_prepopulate, write_variant, create_comps,
-                               write_arch, write_global, copy_comps):
+                               write_arch, write_global):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = False
         phase = init.InitPhase(compose)
@@ -89,21 +86,6 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(write_arch.mock_calls, [])
         self.assertItemsEqual(create_comps.mock_calls, [])
         self.assertItemsEqual(write_variant.mock_calls, [])
-        self.assertItemsEqual(copy_comps.mock_calls, [])
-
-
-class TestCopyVariantComps(PungiTestCase):
-
-    @mock.patch('shutil.copy')
-    def test_run(self, copy):
-        compose = DummyCompose(self.topdir, {})
-        variant = compose.variants['Server']
-
-        init.copy_variant_comps(compose, 'x86_64', variant)
-
-        self.assertEqual(copy.mock_calls,
-                         [mock.call(self.topdir + '/work/global/comps/comps-global.xml',
-                                    self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
 
 
 class TestWriteArchComps(PungiTestCase):
@@ -215,6 +197,55 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(CompsWrapper.call_args_list,
                          [mock.call(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
         self.assertEqual(comps.filter_groups.call_args_list, [mock.call(variant.groups)])
+        self.assertEqual(comps.filter_environments.mock_calls,
+                         [mock.call(variant.environments)])
+        self.assertEqual(comps.write_comps.mock_calls, [mock.call()])
+
+    @mock.patch('pungi.phases.init.run')
+    @mock.patch('pungi.phases.init.CompsWrapper')
+    def test_run_no_filter_without_groups(self, CompsWrapper, run):
+        compose = DummyCompose(self.topdir, {})
+        compose.DEBUG = False
+        variant = compose.variants['Server']
+        variant.groups = []
+        comps = CompsWrapper.return_value
+        comps.filter_groups.return_value = []
+
+        init.write_variant_comps(compose, 'x86_64', variant)
+
+        self.assertEqual(run.mock_calls,
+                         [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
+                                     '--keep-empty-group=conflicts-server',
+                                     '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
+                                     self.topdir + '/work/global/comps/comps-global.xml'])])
+        self.assertEqual(CompsWrapper.call_args_list,
+                         [mock.call(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
+        self.assertEqual(comps.filter_groups.call_args_list, [])
+        self.assertEqual(comps.filter_environments.mock_calls,
+                         [mock.call(variant.environments)])
+        self.assertEqual(comps.write_comps.mock_calls, [mock.call()])
+
+    @mock.patch('pungi.phases.init.run')
+    @mock.patch('pungi.phases.init.CompsWrapper')
+    def test_run_filter_for_modular(self, CompsWrapper, run):
+        compose = DummyCompose(self.topdir, {})
+        compose.DEBUG = False
+        variant = compose.variants['Server']
+        variant.groups = []
+        variant.modules = ['testmodule:2.0']
+        comps = CompsWrapper.return_value
+        comps.filter_groups.return_value = []
+
+        init.write_variant_comps(compose, 'x86_64', variant)
+
+        self.assertEqual(run.mock_calls,
+                         [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
+                                     '--keep-empty-group=conflicts-server',
+                                     '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
+                                     self.topdir + '/work/global/comps/comps-global.xml'])])
+        self.assertEqual(CompsWrapper.call_args_list,
+                         [mock.call(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
+        self.assertEqual(comps.filter_groups.call_args_list, [mock.call([])])
         self.assertEqual(comps.filter_environments.mock_calls,
                          [mock.call(variant.environments)])
         self.assertEqual(comps.write_comps.mock_calls, [mock.call()])

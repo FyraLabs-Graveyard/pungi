@@ -37,17 +37,7 @@ class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
         if not self.compose.conf.get('comps_file'):
             return set(), set()
 
-        comps = CompsWrapper(self.compose.paths.work.comps(arch=arch))
-
-        is_modular = variant and not variant.groups and variant.modules is not None
-        if variant is not None and (variant.groups or variant.type != 'variant' or is_modular):
-            # Get packages for a particular variant. We want to skip the
-            # filtering if the variant is top-level and has no groups (to use
-            # all of them).
-            # For optional we always want to filter (and parent groups will be
-            # added later), for addons and layered products it makes no sense
-            # for the groups to be empty in the first place.
-            comps.filter_groups(variant.groups)
+        comps = CompsWrapper(self.compose.paths.work.comps(arch=arch, variant=variant))
 
         for i in comps.get_comps_groups():
             groups.add(i)

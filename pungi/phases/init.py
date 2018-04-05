@@ -45,21 +45,8 @@ class InitPhase(PhaseBase):
 
             # write variant comps
             for variant in self.compose.get_variants():
-                is_modular = not variant.groups and variant.modules
                 for arch in variant.arches:
-                    if variant.groups or variant.type == 'optional' or is_modular:
-                        # The variant lists only some groups, run filter. Other
-                        # option is that it's optional variant, in which case
-                        # we want to filter everything (unless there was
-                        # explicit list in which case it will be used).
-                        # For fully modular variant (one without groups but
-                        # with modules) we also want to filter (effectively
-                        # producing empty comps).
-                        write_variant_comps(self.compose, arch, variant)
-                    else:
-                        # The variant does not mention any groups, copy
-                        # original file.
-                        copy_variant_comps(self.compose, arch, variant)
+                    write_variant_comps(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
 
@@ -128,20 +115,15 @@ def write_variant_comps(compose, arch, variant):
          "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
 
     comps = CompsWrapper(comps_file)
-    unmatched = comps.filter_groups(variant.groups)
-    for grp in unmatched:
-        compose.log_warning(UNMATCHED_GROUP_MSG % (variant.uid, arch, grp))
+    if variant.groups or variant.modules is not None or variant.type != 'variant':
+        # Filter groups if the variant has some, or it's a modular variant, or
+        # is not a base variant.
+        unmatched = comps.filter_groups(variant.groups)
+        for grp in unmatched:
+            compose.log_warning(UNMATCHED_GROUP_MSG % (variant.uid, arch, grp))
     if compose.conf["comps_filter_environments"]:
         comps.filter_environments(variant.environments)
     comps.write_comps()
-
-
-def copy_variant_comps(compose, arch, variant):
-    global_comps = compose.paths.work.comps(arch="global")
-    comps_file = compose.paths.work.comps(arch=arch, variant=variant)
-    msg = "Copying original comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
-    compose.log_debug(msg)
-    shutil.copy(global_comps, comps_file)
 
 
 def create_comps_repo(compose, arch):
