@@ -20,7 +20,7 @@ from kobo.shortcuts import run
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 from kobo.rpmlib import parse_nvra
 
-from pungi.util import rmtree, get_arch_variant_data
+from pungi.util import rmtree, get_arch_variant_data, temp_dir
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.arch import tree_arch_to_yum_arch, get_valid_arches
@@ -179,11 +179,8 @@ def resolve_deps(compose, arch, variant, source_name=None):
                   profiler=profiler)
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    tmp_dir = compose.mkdtemp(prefix="pungi_")
-    try:
+    with temp_dir(prefix='pungi_') as tmp_dir:
         run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
-    finally:
-        rmtree(tmp_dir)
 
     with open(pungi_log, "r") as f:
         packages, broken_deps, missing_comps_pkgs = pungi_wrapper.parse_log(f)
