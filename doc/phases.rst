@@ -3,7 +3,7 @@
 Phases
 ======
 
-Each invocation of ``punji-koji`` consists of a set of phases.
+Each invocation of ``pungi-koji`` consists of a set of phases.
 
 .. image:: _static/phases.png
    :alt: phase diagram
