@@ -45,6 +45,8 @@ For running unit tests, these packages are recommended as well:
  * python-mock
  * python-nose
  * python-nose-cov
+ * python-unittest2
+ * rpmdevtools
 
 While being difficult, it is possible to work on *Pungi* using *virtualenv*.
 Install *python-virtualenvwrapper* (after installation you have to add the command
