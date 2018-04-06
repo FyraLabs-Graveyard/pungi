@@ -189,6 +189,17 @@ class CompsFilter(object):
         self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
         file_obj.write(b"\n")
 
+    def cleanup(self, keep_groups=[]):
+        """
+        Remove empty groups, categories and environment from the comps file.
+        Groups given in ``keep_groups`` will be preserved even if empty.
+        """
+        self.remove_empty_groups(keep_groups)
+        self.filter_category_groups()
+        self.remove_empty_categories()
+        self.filter_environment_groups()
+        self.remove_empty_environments()
+
 
 class CompsWrapper(object):
     """

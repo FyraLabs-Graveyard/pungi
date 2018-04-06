@@ -44,11 +44,7 @@ def main():
     f.filter_environments(opts.arch, opts.arch_only_environments)
 
     if not opts.no_cleanup:
-        f.remove_empty_groups(keep_empty=opts.keep_empty_group)
-        f.filter_category_groups()
-        f.remove_empty_categories()
-        f.filter_environment_groups()
-        f.remove_empty_environments()
+        f.cleanup(opts.keep_empty_group)
 
     if opts.remove_categories:
         f.remove_categories()

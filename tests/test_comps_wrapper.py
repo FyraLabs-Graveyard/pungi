@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.wrappers.comps import CompsWrapper
+from pungi.wrappers.comps import CompsWrapper, CompsFilter
 from tests.helpers import FIXTURE_DIR
 
 COMPS_FILE = os.path.join(FIXTURE_DIR, 'comps.xml')
@@ -97,3 +97,70 @@ class CompsWrapperTest(unittest.TestCase):
         self.assertIn(
             'Package dummy-bash in group core has unknown type',
             str(ctx.exception))
+
+
+COMPS_IN_FILE = os.path.join(FIXTURE_DIR, 'comps.xml.in')
+
+
+class CompsFilterTest(unittest.TestCase):
+    def setUp(self):
+        self.filter = CompsFilter(COMPS_IN_FILE, reindent=True)
+        self.output = tempfile.NamedTemporaryFile(prefix='comps-filter-test-')
+
+    def assertOutput(self, filepath):
+        self.filter.write(self.output)
+        self.output.flush()
+        with open(self.output.name, 'r') as f:
+            actual = f.read().strip()
+        with open(filepath, 'r') as f:
+            expected = f.read().strip()
+        self.assertEqual(expected, actual)
+
+    def test_filter_packages(self):
+        self.filter.filter_packages('ppc64le')
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-filtered-packages.xml'))
+
+    def test_filter_groups(self):
+        self.filter.filter_groups('ppc64le')
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-filtered-groups.xml'))
+
+    def test_filter_environments(self):
+        self.filter.filter_environments('ppc64le')
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-filtered-environments.xml'))
+
+    def test_remove_categories(self):
+        self.filter.remove_categories()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-removed-categories.xml'))
+
+    def test_remove_langpacks(self):
+        self.filter.remove_langpacks()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-removed-langpacks.xml'))
+
+    def test_remove_translations(self):
+        self.filter.remove_translations()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-removed-translations.xml'))
+
+    def test_remove_environments(self):
+        self.filter.remove_environments()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-removed-environments.xml'))
+
+    def test_cleanup(self):
+        self.filter.cleanup()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-cleanup.xml'))
+
+    def test_cleanup_after_filter(self):
+        self.filter.filter_packages('ppc64le')
+        self.filter.cleanup()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-cleanup-filter.xml'))
+
+    def test_cleanup_after_filter_keep_group(self):
+        self.filter.filter_packages('ppc64le')
+        self.filter.cleanup(['standard'])
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-cleanup-keep.xml'))
+
+    def test_cleanup_all(self):
+        self.filter.filter_packages('ppc64le')
+        self.filter.filter_groups('ppc64le')
+        self.filter.filter_environments('ppc64le')
+        self.filter.cleanup()
+        self.assertOutput(os.path.join(FIXTURE_DIR, 'comps-cleanup-all.xml'))
