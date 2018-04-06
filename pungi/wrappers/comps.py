@@ -15,11 +15,14 @@
 
 
 import collections
-from operator import attrgetter
 import fnmatch
-import libcomps
+import re
 import sys
 import xml.dom.minidom
+from operator import attrgetter
+
+import libcomps
+import lxml.etree
 
 
 if sys.version_info[:2] < (2, 7):
@@ -46,8 +49,153 @@ TYPE_MAPPING = collections.OrderedDict([
 ])
 
 
+class CompsFilter(object):
+    """
+    Processor for extended comps file. This class treats the input as just an
+    XML file with no extra logic and can remove or modify some elements.
+    """
+
+    def __init__(self, file_obj, reindent=False):
+        self.reindent = reindent
+        parser = None
+        if self.reindent:
+            parser = lxml.etree.XMLParser(remove_blank_text=True)
+        self.tree = lxml.etree.parse(file_obj, parser=parser)
+        self.encoding = "utf-8"
+
+    def _filter_elements_by_arch(self, xpath, arch, only_arch=False):
+        if only_arch:
+            # remove all elements without the 'arch' attribute
+            for i in self.tree.xpath(xpath + "[not(@arch)]"):
+                i.getparent().remove(i)
+
+        for i in self.tree.xpath(xpath + "[@arch]"):
+            arches = i.attrib.get("arch")
+            arches = re.split(r"[, ]+", arches)
+            arches = [j for j in arches if j]
+            if arch not in arches:
+                # remove elements not matching the arch
+                i.getparent().remove(i)
+            else:
+                # remove the 'arch' attribute
+                del i.attrib["arch"]
+
+    def filter_packages(self, arch, only_arch=False):
+        """
+        Filter packages according to arch.
+        If only_arch is set, then only packages for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/group/packagelist/packagereq", arch, only_arch)
+
+    def filter_groups(self, arch, only_arch=False):
+        """
+        Filter groups according to arch.
+        If only_arch is set, then only groups for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/group", arch, only_arch)
+
+    def filter_environments(self, arch, only_arch=False):
+        """
+        Filter environments according to arch.
+        If only_arch is set, then only environments for the specified arch are preserved.
+        Multiple arches separated by comma can be specified in the XML.
+        """
+        self._filter_elements_by_arch("/comps/environment", arch, only_arch)
+
+    def filter_category_groups(self):
+        """
+        Remove undefined groups from categories.
+        """
+        all_groups = self.tree.xpath("/comps/group/id/text()")
+        for category in self.tree.xpath("/comps/category"):
+            for group in category.xpath("grouplist/groupid"):
+                if group.text not in all_groups:
+                    group.getparent().remove(group)
+
+    def remove_empty_groups(self, keep_empty=None):
+        """
+        Remove all groups without packages.
+        """
+        keep_empty = keep_empty or []
+        for group in self.tree.xpath("/comps/group"):
+            if not group.xpath("packagelist/packagereq"):
+                group_id = group.xpath("id/text()")[0]
+                for pattern in keep_empty:
+                    if fnmatch.fnmatch(group_id, pattern):
+                        break
+                else:
+                    group.getparent().remove(group)
+
+    def remove_empty_categories(self):
+        """
+        Remove all categories without groups.
+        """
+        for category in self.tree.xpath("/comps/category"):
+            if not category.xpath("grouplist/groupid"):
+                category.getparent().remove(category)
+
+    def remove_categories(self):
+        """
+        Remove all categories.
+        """
+        categories = self.tree.xpath("/comps/category")
+        for i in categories:
+            i.getparent().remove(i)
+
+    def remove_langpacks(self):
+        """
+        Remove all langpacks.
+        """
+        langpacks = self.tree.xpath("/comps/langpacks")
+        for i in langpacks:
+            i.getparent().remove(i)
+
+    def remove_translations(self):
+        """
+        Remove all translations.
+        """
+        for i in self.tree.xpath("//*[@xml:lang]"):
+            i.getparent().remove(i)
+
+    def filter_environment_groups(self):
+        """
+        Remove undefined groups from environments.
+        """
+        all_groups = self.tree.xpath("/comps/group/id/text()")
+        for environment in self.tree.xpath("/comps/environment"):
+            for group in environment.xpath("grouplist/groupid"):
+                if group.text not in all_groups:
+                    group.getparent().remove(group)
+
+    def remove_empty_environments(self):
+        """
+        Remove all environments without groups.
+        """
+        for environment in self.tree.xpath("/comps/environment"):
+            if not environment.xpath("grouplist/groupid"):
+                environment.getparent().remove(environment)
+
+    def remove_environments(self):
+        """
+        Remove all langpacks.
+        """
+        environments = self.tree.xpath("/comps/environment")
+        for i in environments:
+            i.getparent().remove(i)
+
+    def write(self, file_obj):
+        self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
+        file_obj.write(b"\n")
+
+
 class CompsWrapper(object):
-    """Class for reading and retreiving information from comps XML files"""
+    """
+    Class for reading and retrieving information from comps XML files. This
+    class is based on libcomps, and therefore only valid comps file with no
+    additional extensions are supported by it.
+    """
 
     def __init__(self, comps_file):
         self.comps = libcomps.Comps()
