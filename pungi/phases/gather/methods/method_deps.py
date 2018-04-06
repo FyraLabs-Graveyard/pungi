@@ -20,7 +20,7 @@ from kobo.shortcuts import run
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 from kobo.rpmlib import parse_nvra
 
-from pungi.util import rmtree, get_arch_variant_data, temp_dir
+from pungi.util import get_arch_variant_data, temp_dir
 from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.arch import tree_arch_to_yum_arch, get_valid_arches

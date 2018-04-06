@@ -1,12 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import json
 import mock
 import os
-import sys
-import unittest2 as unittest
-import json
 import re
+import sys
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
