@@ -254,7 +254,8 @@ def _get_modules_from_pdc(compose, session, variant, variant_tags):
         _add_module_to_variant(variant, mmd, pdc_module["rpms"])
 
         tag = pdc_module["koji_tag"]
-        uid = pdc_module["variant_uid"]
+        uid = ':'.join([pdc_module['variant_name'], pdc_module['variant_version'],
+                        pdc_module['variant_release'], pdc_module['variant_context']])
         variant_tags[variant].append(tag)
 
         # Store mapping module-uid --> koji_tag into variant.

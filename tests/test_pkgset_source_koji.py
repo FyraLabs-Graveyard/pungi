@@ -142,7 +142,7 @@ data:
             - MIT
 """
 
-        get_module.return_value = {'abc': 'def', 'modulemd': modulemd, 'rpms': [], 'koji_tag': 'taggg', 'variant_uid': 'modulenamefoo-rhel-1'}
+        get_module.return_value = {'abc': 'def', 'modulemd': modulemd, 'rpms': [], 'koji_tag': 'taggg', 'variant_uid': 'modulenamefoo-rhel-1', 'variant_name': 'modulenamefoo', 'variant_version': 'rhel', 'variant_release': '1', 'variant_context': '00000000'}
         for name, variant in self.compose.variants.items():
             variant.get_modules = mock.MagicMock()
             if name == 'Server':
