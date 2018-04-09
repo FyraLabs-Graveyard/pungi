@@ -59,7 +59,11 @@ class OSTreeThread(WorkerThread):
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
 
         repo_baseurl = compose.paths.work.arch_repo('$basearch', create_dir=False)
-        repos = get_repo_dicts(shortcuts.force_list(config['repo']) + shortcuts.force_list(translate_path(compose, repo_baseurl)), logger=self.pool)
+        comps_repo = compose.paths.work.comps_repo('$basearch', variant=variant, create_dir=False)
+        repos = get_repo_dicts(shortcuts.force_list(config['repo'])
+                               + shortcuts.force_list(translate_path(compose, repo_baseurl))
+                               + shortcuts.force_list(translate_path(compose, comps_repo)),
+                               logger=self.pool)
 
         # copy the original config and update before save to a json file
         new_config = copy.copy(config)

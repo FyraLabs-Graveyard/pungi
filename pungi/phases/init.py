@@ -42,12 +42,13 @@ class InitPhase(PhaseBase):
             write_global_comps(self.compose)
             for arch in self.compose.get_arches():
                 write_arch_comps(self.compose, arch)
-                create_comps_repo(self.compose, arch)
+                create_comps_repo(self.compose, arch, None)
 
             # write variant comps
             for variant in self.compose.get_variants():
                 for arch in variant.arches:
                     write_variant_comps(self.compose, arch, variant)
+                    create_comps_repo(self.compose, arch, variant)
 
         # download variants.xml / product.xml?
 
@@ -131,13 +132,13 @@ def write_variant_comps(compose, arch, variant):
     comps.write_comps()
 
 
-def create_comps_repo(compose, arch):
+def create_comps_repo(compose, arch, variant):
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-    comps_repo = compose.paths.work.comps_repo(arch=arch)
-    comps_path = compose.paths.work.comps(arch=arch)
-    msg = "Creating comps repo for arch '%s'" % arch
+    comps_repo = compose.paths.work.comps_repo(arch=arch, variant=variant)
+    comps_path = compose.paths.work.comps(arch=arch, variant=variant)
+    msg = "Creating comps repo for arch '%s' variant '%s'" % (arch, variant.uid if variant else None)
     if compose.DEBUG and os.path.isdir(os.path.join(comps_repo, "repodata")):
         compose.log_warning("[SKIP ] %s" % msg)
     else:

@@ -153,7 +153,7 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def comps_repo(self, arch=None, create_dir=True):
+    def comps_repo(self, arch=None, variant=None, create_dir=True):
         """
         Examples:
             work/x86_64/comps-repo
@@ -161,6 +161,8 @@ class WorkPaths(object):
         """
         arch = arch or "global"
         path = os.path.join(self.topdir(arch, create_dir=create_dir), "comps_repo")
+        if variant:
+            path += '_' + variant.uid
         if create_dir:
             makedirs(path)
         return path

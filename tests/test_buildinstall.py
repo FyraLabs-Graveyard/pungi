@@ -30,6 +30,7 @@ class BuildInstallCompose(DummyCompose):
                                 is_empty=False),
         }
         self.all_variants = self.variants.copy()
+        self.has_comps = True
 
 
 class TestBuildinstallPhase(PungiTestCase):
@@ -114,7 +115,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo'],
+                       [self.topdir + '/work/x86_64/repo',
+                        self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -123,7 +125,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -132,7 +135,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
@@ -177,7 +181,8 @@ class TestBuildinstallPhase(PungiTestCase):
         lorax = loraxCls.return_value
         lorax.get_lorax_cmd.assert_has_calls(
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
@@ -277,7 +282,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo'],
+                       [self.topdir + '/work/x86_64/repo',
+                        self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -286,7 +292,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl='http://example.com',
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -295,7 +302,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=False, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
@@ -349,7 +357,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo'],
+                       [self.topdir + '/work/x86_64/repo',
+                        self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=False, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -358,7 +367,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -367,7 +377,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
@@ -421,7 +432,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       ['http://localhost/work/x86_64/repo'],
+                       ['http://localhost/work/x86_64/repo',
+                        'http://localhost/work/x86_64/comps_repo_Server'],
                        buildinstall_topdir + '/x86_64/Server/results',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -430,7 +442,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        log_dir=buildinstall_topdir + '/x86_64/Server/logs'),
              mock.call('Test', '1', '1',
-                       ['http://localhost/work/amd64/repo'],
+                       ['http://localhost/work/amd64/repo',
+                        'http://localhost/work/amd64/comps_repo_Server'],
                        buildinstall_topdir + '/amd64/Server/results',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -439,7 +452,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        log_dir=buildinstall_topdir + '/amd64/Server/logs'),
              mock.call('Test', '1', '1',
-                       ['http://localhost/work/amd64/repo'],
+                       ['http://localhost/work/amd64/repo',
+                        'http://localhost/work/amd64/comps_repo_Client'],
                        buildinstall_topdir + '/amd64/Client/results',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],
@@ -481,10 +495,13 @@ class TestBuildinstallPhase(PungiTestCase):
 
         phase.run()
 
+        self.maxDiff = None
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo', "http://example.com/repo1"],
+                       [self.topdir + '/work/x86_64/repo',
+                        "http://example.com/repo1",
+                        self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -493,7 +510,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo'],
+                       [self.topdir + '/work/amd64/repo',
+                        self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Server', buildinstallpackages=['bash', 'vim'],
@@ -504,7 +522,8 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
                         "http://example.com/repo2",
-                        "http://example.com/repo3"],
+                        "http://example.com/repo3",
+                        self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
                        volid='vol_id', variant='Client', buildinstallpackages=[],

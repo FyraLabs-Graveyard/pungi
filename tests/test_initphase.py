@@ -34,7 +34,13 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(write_arch.mock_calls,
                               [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
         self.assertItemsEqual(create_comps.mock_calls,
-                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
+                              [mock.call(compose, 'x86_64', None), mock.call(compose, 'amd64', None),
+                               mock.call(compose, 'x86_64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Client']),
+                               mock.call(compose, 'x86_64', compose.variants['Everything']),
+                               mock.call(compose, 'amd64', compose.variants['Everything']),
+                               mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
         self.assertItemsEqual(write_variant.mock_calls,
                               [mock.call(compose, 'x86_64', compose.variants['Server']),
                                mock.call(compose, 'amd64', compose.variants['Server']),
@@ -63,7 +69,12 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(write_arch.mock_calls,
                               [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
         self.assertItemsEqual(create_comps.mock_calls,
-                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
+                              [mock.call(compose, 'x86_64', None), mock.call(compose, 'amd64', None),
+                               mock.call(compose, 'x86_64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Server']),
+                               mock.call(compose, 'amd64', compose.variants['Client']),
+                               mock.call(compose, 'x86_64', compose.variants['Everything']),
+                               mock.call(compose, 'amd64', compose.variants['Everything'])])
         self.assertItemsEqual(write_variant.mock_calls,
                               [mock.call(compose, 'x86_64', compose.variants['Server']),
                                mock.call(compose, 'amd64', compose.variants['Server']),
@@ -125,7 +136,7 @@ class TestCreateCompsRepo(PungiTestCase):
         })
         compose.DEBUG = False
 
-        init.create_comps_repo(compose, 'x86_64')
+        init.create_comps_repo(compose, 'x86_64', None)
 
         self.assertEqual(run.mock_calls,
                          [mock.call(['createrepo_c', self.topdir + '/work/x86_64/comps_repo', '--verbose',
@@ -144,7 +155,7 @@ class TestCreateCompsRepo(PungiTestCase):
         compose.DEBUG = True
         os.makedirs(self.topdir + '/work/x86_64/comps_repo/repodata')
 
-        init.create_comps_repo(compose, 'x86_64')
+        init.create_comps_repo(compose, 'x86_64', None)
 
         self.assertEqual(run.mock_calls, [])
 

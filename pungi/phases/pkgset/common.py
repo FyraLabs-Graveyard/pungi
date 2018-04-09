@@ -95,12 +95,9 @@ def create_arch_repos(compose, arch, path_prefix):
         return
 
     compose.log_info("[BEGIN] %s" % msg)
-    comps_path = None
-    if compose.has_comps:
-        comps_path = compose.paths.work.comps(arch=arch)
     cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True,
                                   pkglist=compose.paths.work.package_list(arch=arch), outputdir=repo_dir,
                                   baseurl="file://%s" % path_prefix, workers=compose.conf["createrepo_num_workers"],
-                                  groupfile=comps_path, update_md_path=repo_dir_global, checksum=createrepo_checksum)
+                                  update_md_path=repo_dir_global, checksum=createrepo_checksum)
     run(cmd, logfile=compose.paths.log.log_file(arch, "arch_repo"), show_cmd=True)
     compose.log_info("[DONE ] %s" % msg)

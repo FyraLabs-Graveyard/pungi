@@ -167,7 +167,15 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertTrue(os.path.isfile(extra_config_file))
         with open(extra_config_file, 'r') as f:
             extraconf_content = json.load(f)
-        proper_extraconf_content = json.loads('{"repo": [{"name": "http:__example.com_work__basearch_repo", "baseurl": "http://example.com/work/$basearch/repo"}]}')
+
+        proper_extraconf_content = {
+            "repo": [
+                {"name": "http:__example.com_work__basearch_repo",
+                 "baseurl": "http://example.com/work/$basearch/repo"},
+                {"name": "http:__example.com_work__basearch_comps_repo_Everything",
+                 "baseurl": "http://example.com/work/$basearch/comps_repo_Everything"}
+            ]
+        }
         self.assertEqual(proper_extraconf_content, extraconf_content)
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
@@ -453,7 +461,10 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         with open(extra_config_file, 'r') as extra_config_fd:
             extra_config = json.load(extra_config_fd)
         self.assertTrue(extra_config.get('keep_original_sources', False))
-        self.assertEqual(len(extra_config.get('repo', [])), 2)  # should equal to number of valid repositories in cfg['repo'] + default repository
+        # should equal to number of valid repositories in cfg['repo'] + default repository + comps repository
+        self.assertEqual(len(extra_config.get('repo', [])), 3)
+        self.assertEqual(extra_config.get('repo').pop()['baseurl'],
+                         'http://example.com/work/$basearch/comps_repo_Everything')
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/work/$basearch/repo')
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://url/to/repo/a')
 

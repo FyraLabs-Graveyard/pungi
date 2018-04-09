@@ -93,7 +93,16 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     compose.log_info(msg)
 
-    repos = {"pungi-repo": compose.paths.work.arch_repo(arch=arch)}
+    repos = {
+        "pungi-repo": compose.paths.work.arch_repo(arch=arch),
+        "comps-repo": compose.paths.work.comps_repo(arch=arch, variant=variant),
+    }
+    if variant.type == "optional":
+        for var in variant.parent.get_variants(
+                arch=arch, types=["self", "variant", "addon", "layered-product"]):
+            repos['%s-comps' % var.uid] = compose.paths.work.comps_repo(arch=arch, variant=var)
+    if variant.type in ["addon", "layered-product"]:
+        repos['parent-comps'] = compose.paths.work.comps_repo(arch=arch, variant=variant.parent)
 
     lookaside_repos = {}
     for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):

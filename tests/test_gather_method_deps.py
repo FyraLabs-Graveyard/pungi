@@ -37,7 +37,8 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            ks_path=self.topdir + '/work/x86_64/pungi/Server.x86_64.conf',
                            lookaside_repos={}, multilib_whitelist=white, multilib_blacklist=black,
                            groups=['grp1'], prepopulate=prepopulate,
-                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
+                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo',
+                                  'comps-repo': self.topdir + '/work/x86_64/comps_repo_Server'},
                            exclude_packages=['pkg3', 'pkg4.x86_64'],
                            fulltree_excludes=fulltree, package_whitelist=set())
 
@@ -53,7 +54,8 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            lookaside_repos={'lookaside-repo-0': 'http://example.com/repo'},
                            multilib_whitelist=[], multilib_blacklist=[],
                            groups=[], prepopulate=None,
-                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
+                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo',
+                                  'comps-repo': self.topdir + '/work/x86_64/comps_repo_Server'},
                            exclude_packages=[], fulltree_excludes=None,
                            package_whitelist=set())
         self.assertEqual(glr.call_args_list,
@@ -78,7 +80,8 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            ks_path=self.topdir + '/work/x86_64/pungi/Server.x86_64.conf',
                            lookaside_repos={}, multilib_whitelist=white, multilib_blacklist=black,
                            groups=['grp1'], prepopulate=prepopulate,
-                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo'},
+                           repos={'pungi-repo': self.topdir + '/work/x86_64/repo',
+                                  'comps-repo': self.topdir + '/work/x86_64/comps_repo_Server'},
                            exclude_packages=['pkg3', 'pkg4.x86_64'],
                            fulltree_excludes=fulltree,
                            package_whitelist=set(['pkg-0:1.0.0-1']))

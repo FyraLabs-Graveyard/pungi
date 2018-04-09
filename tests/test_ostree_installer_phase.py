@@ -159,7 +159,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(koji,
-                               'http://example.com/work/$basearch/repo',
+                               ['http://example.com/work/$basearch/repo',
+                                'http://example.com/work/$basearch/comps_repo_Everything'],
                                cfg['release'],
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
@@ -196,7 +197,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(koji,
                                ('http://example.com/repo/x86_64/',
-                                'http://example.com/work/$basearch/repo'),
+                                'http://example.com/work/$basearch/repo',
+                                'http://example.com/work/$basearch/comps_repo_Everything'),
                                cfg['release'],
                                isfinal=True,
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
@@ -237,6 +239,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'https://example.com/extra-repo1.repo',
             'https://example.com/extra-repo2.repo',
             'http://example.com/work/$basearch/repo',
+            'http://example.com/work/$basearch/comps_repo_Everything',
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
@@ -276,6 +279,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'https://example.com/extra-repo1.repo',
             'https://example.com/extra-repo2.repo',
             'http://example.com/work/$basearch/repo',
+            'http://example.com/work/$basearch/comps_repo_Everything',
         ]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
@@ -353,7 +357,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      'branch': 'f24', 'dir': '.'},
                                     templ_dir, logger=pool._logger)])
         self.assertRunrootCall(koji,
-                               'http://example.com/work/$basearch/repo',
+                               ['http://example.com/work/$basearch/repo',
+                                'http://example.com/work/$basearch/comps_repo_Everything'],
                                cfg['release'],
                                isfinal=True,
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
@@ -406,7 +411,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(
             koji,
-            'http://example.com/work/$basearch/repo',
+            ['http://example.com/work/$basearch/repo',
+             'http://example.com/work/$basearch/comps_repo_Everything'],
             '20151203.t.0',
             isfinal=True,
             extra=['--installpkgs=fedora-productimg-atomic',
@@ -467,7 +473,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
 
         self.assertRunrootCall(
             koji,
-            'http://example.com/work/$basearch/repo',
+            ['http://example.com/work/$basearch/repo',
+             'http://example.com/work/$basearch/comps_repo_Everything'],
             '20151203.t.0',
             isfinal=True,
             extra=['--installpkgs=fedora-productimg-atomic',

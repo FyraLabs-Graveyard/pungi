@@ -57,7 +57,7 @@ class BuildinstallPhase(PhaseBase):
             return True
         return False
 
-    def _get_lorax_cmd(self, repo_baseurl, output_dir, variant, arch, buildarch, volid):
+    def _get_lorax_cmd(self, repo_baseurl, output_dir, variant, arch, buildarch, volid, final_output_dir):
         noupgrade = True
         bugurl = None
         nomacboot = True
@@ -97,6 +97,11 @@ class BuildinstallPhase(PhaseBase):
 
         repos = [repo_baseurl] + get_arch_variant_data(self.compose.conf,
                                                        'lorax_extra_sources', arch, variant)
+        if self.compose.has_comps:
+            comps_repo = self.compose.paths.work.comps_repo(arch, variant)
+            if final_output_dir != output_dir:
+                comps_repo = translate_path(self.compose, comps_repo)
+            repos.append(comps_repo)
 
         lorax = LoraxWrapper()
         lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
@@ -152,7 +157,7 @@ class BuildinstallPhase(PhaseBase):
                     volid = get_volid(self.compose, arch, variant=variant, disc_type=disc_type)
                     commands.append(
                         (variant,
-                         self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid))
+                         self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid, final_output_dir))
                     )
             elif self.buildinstall_method == "buildinstall":
                 volid = get_volid(self.compose, arch, disc_type=disc_type)
