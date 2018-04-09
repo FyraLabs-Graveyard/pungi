@@ -14,7 +14,7 @@
       <packagereq arch="x86_64">dummy-icedtea-web</packagereq>
     </packagelist>
   </group>
-  <group>
+  <group variant="Client">
     <id>standard</id>
     <name>Standard</name>
     <description>Common set of utilities that extend the minimal installation.</description>
@@ -37,7 +37,7 @@
     <optionlist>
     </optionlist>
   </environment>
-  <environment>
+  <environment variant="Server">
     <id>desktop</id>
     <name>Desktop</name>
     <description>Desktop.</description>

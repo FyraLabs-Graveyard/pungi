@@ -118,6 +118,7 @@ def write_variant_comps(compose, arch, variant):
     compose.log_debug(msg)
     run(["comps_filter", "--arch=%s" % arch, "--keep-empty-group=conflicts",
          "--keep-empty-group=conflicts-%s" % variant.uid.lower(),
+         "--variant=%s" % variant.uid,
          "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
 
     comps = CompsWrapper(comps_file)

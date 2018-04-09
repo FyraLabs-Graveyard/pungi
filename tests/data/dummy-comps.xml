@@ -33,8 +33,8 @@
     <default>false</default>
     <uservisible>true</uservisible>
     <packagelist>
-      <packagereq type="optional">dummy-elinks</packagereq>
-      <packagereq type="optional">dummy-tftp</packagereq>
+      <packagereq type="optional" variant="Server">dummy-elinks</packagereq>
+      <packagereq type="optional" variant="Client">dummy-tftp</packagereq>
     </packagelist>
   </group>
 

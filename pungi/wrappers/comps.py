@@ -79,29 +79,36 @@ class CompsFilter(object):
                 # remove the attribute
                 del elem.attrib[attr_name]
 
-    def filter_packages(self, arch, only_arch=False):
+    def filter_packages(self, arch, variant, only_arch=False):
         """
         Filter packages according to arch.
         If only_arch is set, then only packages for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
         self._filter_elements_by_attr("/comps/group/packagelist/packagereq", 'arch', arch, only_arch)
+        if variant:
+            self._filter_elements_by_attr("/comps/group/packagelist/packagereq",
+                                          'variant', variant, only_arch)
 
-    def filter_groups(self, arch, only_arch=False):
+    def filter_groups(self, arch, variant, only_arch=False):
         """
         Filter groups according to arch.
         If only_arch is set, then only groups for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
         self._filter_elements_by_attr("/comps/group", 'arch', arch, only_arch)
+        if variant:
+            self._filter_elements_by_attr("/comps/group", 'variant', variant, only_arch)
 
-    def filter_environments(self, arch, only_arch=False):
+    def filter_environments(self, arch, variant, only_arch=False):
         """
         Filter environments according to arch.
         If only_arch is set, then only environments for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
         self._filter_elements_by_attr("/comps/environment", 'arch', arch, only_arch)
+        if variant:
+            self._filter_elements_by_attr("/comps/environment", 'variant', variant, only_arch)
 
     def filter_category_groups(self):
         """

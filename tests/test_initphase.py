@@ -206,6 +206,7 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(run.mock_calls,
                          [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
                                      '--keep-empty-group=conflicts-server',
+                                     '--variant=Server',
                                      '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
                                      self.topdir + '/work/global/comps/comps-global.xml'])])
         self.assertEqual(CompsWrapper.call_args_list,
@@ -230,6 +231,7 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(run.mock_calls,
                          [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
                                      '--keep-empty-group=conflicts-server',
+                                     '--variant=Server',
                                      '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
                                      self.topdir + '/work/global/comps/comps-global.xml'])])
         self.assertEqual(CompsWrapper.call_args_list,
@@ -255,6 +257,7 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(run.mock_calls,
                          [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
                                      '--keep-empty-group=conflicts-server',
+                                     '--variant=Server',
                                      '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
                                      self.topdir + '/work/global/comps/comps-global.xml'])])
         self.assertEqual(CompsWrapper.call_args_list,
@@ -278,6 +281,7 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(run.mock_calls,
                          [mock.call(['comps_filter', '--arch=x86_64', '--keep-empty-group=conflicts',
                                      '--keep-empty-group=conflicts-server',
+                                     '--variant=Server',
                                      '--output=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
                                      self.topdir + '/work/global/comps/comps-global.xml'])])
         self.assertEqual(CompsWrapper.call_args_list,

@@ -34,14 +34,16 @@ def main():
     parser.add_argument("--no-reindent", default=False, action="store_true",
                         help="don't re-indent the output")
     parser.add_argument("comps_file", metavar='COMPS_FILE')
+    parser.add_argument('--variant',
+                        help='filter groups and packages according to variant name')
 
     opts = parser.parse_args()
 
     with open(opts.comps_file, "rb") as file_obj:
         f = CompsFilter(file_obj, reindent=not opts.no_reindent)
-    f.filter_packages(opts.arch, opts.arch_only_packages)
-    f.filter_groups(opts.arch, opts.arch_only_groups)
-    f.filter_environments(opts.arch, opts.arch_only_environments)
+    f.filter_packages(opts.arch, opts.variant, opts.arch_only_packages)
+    f.filter_groups(opts.arch, opts.variant, opts.arch_only_groups)
+    f.filter_environments(opts.arch, opts.variant, opts.arch_only_environments)
 
     if not opts.no_cleanup:
         f.cleanup(opts.keep_empty_group)
