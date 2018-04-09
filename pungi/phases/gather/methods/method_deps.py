@@ -42,7 +42,7 @@ class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
         write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
                            multilib_whitelist, multilib_blacklist,
                            fulltree_excludes=fulltree_excludes, prepopulate=prepopulate,
-                           source_name=self.source_name)
+                           source_name=self.source_name, package_sets=package_sets)
         result, missing_deps = resolve_deps(self.compose, arch, variant, source_name=self.source_name)
         raise_on_invalid_sigkeys(arch, variant, package_sets, result)
         check_deps(self.compose, arch, variant, missing_deps)
@@ -81,7 +81,7 @@ def _format_packages(pkgs):
 
 def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
                        multilib_whitelist, multilib_blacklist, fulltree_excludes=None,
-                       prepopulate=None, source_name=None):
+                       prepopulate=None, source_name=None, package_sets=None):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch, source_name=source_name)
@@ -114,6 +114,22 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
             for rpm_obj in variant.pkgset.rpms_by_arch.get(i, []):
                 package_whitelist.add(
                     '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
+
+        # If the variant contains just modules or just comps groups, the pkgset
+        # is sufficient and contains all necessary packages.
+
+        if variant.groups and variant.modules is not None and package_sets:
+            # The variant is hybrid. The modular builds are already available.
+            # We need to add packages from base tag, but only if they are not
+            # already on the whitelist.
+            package_names = set(p.rsplit('-', 2)[0] for p in package_whitelist)
+            for i in get_valid_arches(arch, multilib=multilib, add_noarch=True, add_src=True):
+                for rpm_obj in package_sets[arch].rpms_by_arch.get(i, []):
+                    if rpm_obj.name in package_names:
+                        # We already have a package with this name in the whitelist, skip it.
+                        continue
+                    package_whitelist.add(
+                        '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
 
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
