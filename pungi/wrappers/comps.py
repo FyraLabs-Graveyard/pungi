@@ -63,22 +63,21 @@ class CompsFilter(object):
         self.tree = lxml.etree.parse(file_obj, parser=parser)
         self.encoding = "utf-8"
 
-    def _filter_elements_by_arch(self, xpath, arch, only_arch=False):
-        if only_arch:
-            # remove all elements without the 'arch' attribute
-            for i in self.tree.xpath(xpath + "[not(@arch)]"):
-                i.getparent().remove(i)
+    def _filter_elements_by_attr(self, xpath, attr_name, attr_val, only_attr=False):
+        if only_attr:
+            # Remove all elements without the attribute
+            for elem in self.tree.xpath("%s[not(@%s)]" % (xpath, attr_name)):
+                elem.getparent().remove(elem)
 
-        for i in self.tree.xpath(xpath + "[@arch]"):
-            arches = i.attrib.get("arch")
-            arches = re.split(r"[, ]+", arches)
-            arches = [j for j in arches if j]
-            if arch not in arches:
-                # remove elements not matching the arch
-                i.getparent().remove(i)
+        for elem in self.tree.xpath("%s[@%s]" % (xpath, attr_name)):
+            value = elem.attrib.get(attr_name)
+            values = [v for v in re.split(r"[, ]+", value) if v]
+            if attr_val not in values:
+                # remove elements not matching the given value
+                elem.getparent().remove(elem)
             else:
-                # remove the 'arch' attribute
-                del i.attrib["arch"]
+                # remove the attribute
+                del elem.attrib[attr_name]
 
     def filter_packages(self, arch, only_arch=False):
         """
@@ -86,7 +85,7 @@ class CompsFilter(object):
         If only_arch is set, then only packages for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_arch("/comps/group/packagelist/packagereq", arch, only_arch)
+        self._filter_elements_by_attr("/comps/group/packagelist/packagereq", 'arch', arch, only_arch)
 
     def filter_groups(self, arch, only_arch=False):
         """
@@ -94,7 +93,7 @@ class CompsFilter(object):
         If only_arch is set, then only groups for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_arch("/comps/group", arch, only_arch)
+        self._filter_elements_by_attr("/comps/group", 'arch', arch, only_arch)
 
     def filter_environments(self, arch, only_arch=False):
         """
@@ -102,7 +101,7 @@ class CompsFilter(object):
         If only_arch is set, then only environments for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_arch("/comps/environment", arch, only_arch)
+        self._filter_elements_by_attr("/comps/environment", 'arch', arch, only_arch)
 
     def filter_category_groups(self):
         """
