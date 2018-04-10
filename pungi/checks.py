@@ -1086,6 +1086,19 @@ def make_schema():
             "gather_lookaside_repos": _variant_arch_mapping({
                 "$ref": "#/definitions/strings",
             }),
+
+            "variant_as_lookaside": {
+                "type": "array",
+                "items": {
+                    "type": "array",
+                    "items": [
+                        {"type": "string"},
+                        {"type": "string"},
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+            },
         },
 
         "required": ["release_name", "release_short", "release_version",

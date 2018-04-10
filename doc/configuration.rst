@@ -703,6 +703,12 @@ Options
     performance profiling information at the end of its logs.  Only takes
     effect when ``gather_backend = "dnf"``.
 
+**variant_as_lookaside**
+    (*list*) -- a variant/variant mapping that tells one or more variants in compose
+    has other variant(s) in compose as a lookaside. Only top level variants are
+    supported (not addons/layered products). Format:
+    ``[(variant_uid, variant_uid)]``
+
 
 Example
 -------

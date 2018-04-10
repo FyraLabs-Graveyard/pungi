@@ -14,9 +14,9 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import json
 import os
 import shutil
-import json
 
 from kobo.rpmlib import parse_nvra
 from productmd.rpms import Rpms
@@ -24,10 +24,11 @@ from productmd.rpms import Rpms
 from pungi.wrappers.scm import get_file_from_scm
 from .link import link_files
 
-from pungi.util import get_arch_variant_data, get_arch_data, get_variant_data
-from pungi.phases.base import PhaseBase
-from pungi.arch import split_name_arch, get_compatible_arches
 from pungi import Modulemd
+from pungi.arch import get_compatible_arches, split_name_arch
+from pungi.graph import SimpleAcyclicOrientedGraph
+from pungi.phases.base import PhaseBase
+from pungi.util import get_arch_data, get_arch_variant_data, get_variant_data
 
 
 def get_gather_source(name):
@@ -74,6 +75,13 @@ class GatherPhase(PhaseBase):
             for variant in self.compose.variants.values():
                 if variant.modules:
                     errors.append('Modular compose requires pdc_client and libmodulemd packages.')
+
+        # check whether variants from configuration value 'variant_as_lookaside' are correct
+        variant_as_lookaside = self.compose.conf.get("variant_as_lookaside", [])
+        for variant_pair in variant_as_lookaside:
+            for variant_uid in variant_pair:
+                if variant_uid not in self.compose.all_variants:
+                    errors.append("Variant uid '%s' does't exists in 'variant_as_lookaside'" % variant_uid)
 
         if errors:
             raise ValueError('\n'.join(errors))
@@ -282,14 +290,42 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
     return addon_pkgs, move_to_parent_pkgs, removed_pkgs
 
 
+def _prepare_variant_as_lookaside(compose):
+    """
+    Configuration value 'variant_as_lookaside' contains variant pairs: <variant - its lookaside>
+    In that pair lookaside variant have to be processed first. Structure can be represented
+    as a oriented graph. Its spanning line shows order how to process this set of variants.
+    """
+    variant_as_lookaside = compose.conf.get("variant_as_lookaside", [])
+    graph = SimpleAcyclicOrientedGraph()
+    for variant, lookaside_variant in variant_as_lookaside:
+        try:
+            graph.add_edge(variant, lookaside_variant)
+        except ValueError as e:
+            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e.message)
+
+    variant_processing_order = reversed(graph.prune_graph())
+    return list(variant_processing_order)
+
+
 def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltree=False):
     """Run gathering on all arches of all variants of given type.
 
     If ``exclude_fulltree`` is set, all source packages from parent variants
     will be added to fulltree excludes for the processed variants.
     """
-    for arch in compose.get_arches():
-        for variant in compose.get_variants(arch=arch, types=[variant_type]):
+
+    ordered_variants_uids = _prepare_variant_as_lookaside(compose)
+    # Some variants were not mentioned in configuration value 'variant_as_lookaside'
+    # and its run order is not crucial (that means there are no dependencies inside this group).
+    # They will be processed first. A-Z sorting is for reproducibility.
+    unordered_variants_uids = sorted(set(compose.all_variants.keys()) - set(ordered_variants_uids))
+
+    for variant_uid in unordered_variants_uids + ordered_variants_uids:
+        variant = compose.all_variants[variant_uid]
+        if variant.type != variant_type:
+            continue
+        for arch in variant.arches:
             fulltree_excludes = set()
             if exclude_fulltree:
                 for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:

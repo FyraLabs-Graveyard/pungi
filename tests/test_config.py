@@ -406,5 +406,27 @@ class RepoclosureTestCase(ConfigTestCase):
             ["Failed validation in repoclosure_backend: 'fnd' is not one of %s" % options])
 
 
+class VariantAsLookasideTestCase(ConfigTestCase):
+    def test_empty(self):
+        variant_as_lookaside = []
+        cfg = load_config(
+            PKGSET_REPOS,
+            variant_as_lookaside=variant_as_lookaside,
+        )
+        self.assertValidation(cfg)
+
+    def test_basic(self):
+        variant_as_lookaside = [
+            ("Client", "Base"),
+            ("Server", "Client"),
+            ("Everything", "Spin"),
+        ]
+        cfg = load_config(
+            PKGSET_REPOS,
+            variant_as_lookaside=variant_as_lookaside,
+        )
+        self.assertValidation(cfg)
+
+
 if __name__ == '__main__':
     unittest.main()
