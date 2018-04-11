@@ -219,7 +219,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             modules.append(repo_mmd)
 
         module_names = set([x.get_name() for x in modules])
-        for mmddeffile in glob.glob(os.path.join(compose.config_dir, "module_defaults", "*.yaml")):
+        for mmddeffile in glob.glob(os.path.join(compose.paths.work.module_defaults_dir(), "*.yaml")):
             for mmddef in Modulemd.objects_from_file(mmddeffile):
                 if isinstance(mmddef, Modulemd.Defaults) and mmddef.peek_module_name() in module_names:
                     modules.append(mmddef)

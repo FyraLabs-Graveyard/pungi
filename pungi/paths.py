@@ -340,6 +340,14 @@ class WorkPaths(object):
         path = "%s.cfg" % path
         return path
 
+    def module_defaults_dir(self, create_dir=True):
+        """
+        """
+        path = os.path.join(self.topdir(create_dir=create_dir), 'module_defaults')
+        if create_dir:
+            makedirs(path)
+        return path
+
 
 class ComposePaths(object):
     def __init__(self, compose):
