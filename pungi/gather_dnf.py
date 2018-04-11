@@ -73,6 +73,23 @@ class GatherOptions(pungi.common.OptionsBase):
 
         self.merge_options(**kwargs)
 
+    def __str__(self):
+        lines = [
+            'fulltree=%s' % self.fulltree,
+            'fulltree_excludes=%d items' % len(self.fulltree_excludes),
+            'resolve_deps=%s' % self.resolve_deps,
+            'selfhosting=%s' % self.selfhosting,
+            'greedy_method=%s' % self.greedy_method,
+            'langpacks=%s' % self.langpacks,
+            'multilib_methods=%s' % self.multilib_methods,
+            'multilib_blacklist=%d items' % len(self.multilib_blacklist),
+            'multilib_whitelist=%d items' % len(self.multilib_whitelist),
+            'lookaside_repos=%s' % self.lookaside_repos,
+            'package_whitelist=%d items' % len(self.package_whitelist),
+            'prepopulate=%d items' % len(self.prepopulate)
+        ]
+        return '[\n%s\n]' % '\n'.join('    ' + l for l in lines)
+
 
 class QueryCache(object):
     def __init__(self, queue, *args, **kwargs):
@@ -175,7 +192,7 @@ class Gather(GatherBase):
                 self.logger.addHandler(handler)
 
         self.opts = gather_options
-        self.logger.debug("Gather received gather_options=%s" % gather_options.__dict__)
+        self.logger.debug("Gather received gather_options=%s" % gather_options)
         self._multilib = pungi.multilib_dnf.Multilib.from_globs(
             self.dnf._sack,
             gather_options.multilib_methods,
