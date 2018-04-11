@@ -678,6 +678,7 @@ def make_schema():
                 "type": "boolean",
                 "default": True
             },
+            "module_defaults_dir": {"$ref": "#/definitions/str_or_scm_dict"},
 
             "pkgset_repos": {
                 "type": "object",
