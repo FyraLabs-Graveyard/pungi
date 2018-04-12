@@ -160,4 +160,4 @@ def write_module_defaults(compose):
     with temp_dir(prefix="moduledefaults_") as tmp_dir:
         get_dir_from_scm(scm_dict, tmp_dir, logger=compose._logger)
         compose.log_debug("Writing module defaults")
-        shutil.copytree(tmp_dir, compose.paths.work.module_defaults_dir())
+        shutil.copytree(tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False))
