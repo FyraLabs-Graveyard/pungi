@@ -429,7 +429,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         # Ensure that every tag added to `variant_tags` is added also to
         # `compose_tags`.
         for variant_tag in variant_tags[variant]:
-            if not variant_tag in compose_tags:
+            if variant_tag not in compose_tags:
                 compose_tags.append(variant_tag)
 
         if variant.mmds:
