@@ -230,6 +230,12 @@ def _add_module_to_variant(variant, mmd, rpms, add_to_variant_modules=False):
         variant.modules.append(nsvc)
 
 
+def _log_modulemd(compose, variant, mmd):
+    """Dump module metadata to a log file for easy inspection."""
+    mmd.dump(compose.paths.log.log_file('global', 'modulemd-%s-%s'
+                                        % (variant.uid, mmd.dup_nsvc())))
+
+
 def _get_modules_from_pdc(compose, session, variant, variant_tags):
     """
     Loads modules for given `variant` from PDC `session`, adds them to
@@ -252,6 +258,7 @@ def _get_modules_from_pdc(compose, session, variant, variant_tags):
         mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])
         mmd.upgrade()
         _add_module_to_variant(variant, mmd, pdc_module["rpms"])
+        _log_modulemd(compose, variant, mmd)
 
         tag = pdc_module["koji_tag"]
         uid = ':'.join([pdc_module['variant_name'], pdc_module['variant_version'],
@@ -339,6 +346,7 @@ def _get_modules_from_koji_tags(
             mmd = Modulemd.Module.new_from_string(modulemd)
             mmd.upgrade()
             _add_module_to_variant(variant, mmd, rpms, True)
+            _log_modulemd(compose, variant, mmd)
 
             # Store mapping module-uid --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
