@@ -626,7 +626,6 @@ class TestVersionGenerator(unittest.TestCase):
         ci.respin = 0
         ci.id = 'RHEL-8.0-20180101.0'
         ci.release.version = '8'
-        ci.date = '20160101'
         ci.type = 'nightly'
         ci.type_suffix = ''
         ci.label = 'RC-1.0'
@@ -635,6 +634,7 @@ class TestVersionGenerator(unittest.TestCase):
         self.compose = mock.MagicMock()
         self.compose.ci_base = ci
         self.compose.compose_respin = 0
+        self.compose.compose_date = '20160101'
 
     def test_unknown_generator(self):
         compose = mock.Mock()
