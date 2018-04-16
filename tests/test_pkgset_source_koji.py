@@ -145,7 +145,17 @@ data:
             - MIT
 """
 
-        get_module.return_value = {'abc': 'def', 'modulemd': modulemd, 'rpms': [], 'koji_tag': 'taggg', 'variant_uid': 'modulenamefoo-rhel-1', 'variant_name': 'modulenamefoo', 'variant_version': 'rhel', 'variant_release': '1', 'variant_context': '00000000'}
+        get_module.return_value = {
+            'abc': 'def',
+            'modulemd': modulemd,
+            'rpms': [],
+            'koji_tag': 'taggg',
+            'uid': 'modulenamefoo:rhel:1:00000000',
+            'name': 'modulenamefoo',
+            'stream': 'rhel',
+            'version': '1',
+            'context': '00000000'
+        }
         for name, variant in self.compose.variants.items():
             variant.get_modules = mock.MagicMock()
             if name == 'Server':
@@ -303,39 +313,38 @@ class TestCorrectNVR(helpers.PungiTestCase):
 
     def test_nv(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nv)
-        expectedKeys = ["variant_version", "variant_id", "variant_type"]
+        expectedKeys = ["stream", "name"]
         self.assertItemsEqual(module_info.keys(), expectedKeys)
 
     def test_nvr(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
-        expectedKeys = ["variant_version", "variant_id", "variant_type", "variant_release"]
+        expectedKeys = ["stream", "name", "version"]
         self.assertItemsEqual(module_info.keys(), expectedKeys)
 
     def test_correct_release(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
-        self.assertIsNotNone(self.release_regex.match(module_info["variant_release"]))
+        self.assertIsNotNone(self.release_regex.match(module_info["version"]))
 
     def test_new_nv(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.new_nv)
         expected = {
-            'variant_id': 'base-runtime',
-            'variant_type': 'module',
-            'variant_version': 'f26'}
+            'name': 'base-runtime',
+            'stream': 'f26'}
 
         self.assertEqual(module_info, expected)
 
     def test_new_nvr(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.new_nvr)
         expected = {
-            'variant_id': 'base-runtime',
-            'variant_type': 'module',
-            'variant_version': 'f26',
-            'variant_release': '20170502134116'}
+            'name': 'base-runtime',
+            'stream': 'f26',
+            'version': '20170502134116'}
         self.assertEqual(module_info, expected)
 
     def test_new_nvrc(self):
         self.assertRaises(ValueError, source_koji.variant_dict_from_str,
                           self.compose, self.new_nvrc)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,7 +79,6 @@ def variant_dict_from_str(compose, module_str):
     # naming policy format.
     if module_str.find(":") != -1:
         module_info = {}
-        module_info['variant_type'] = 'module'
 
         nsv = module_str.split(":")
         if len(nsv) > 3:
@@ -87,10 +86,10 @@ def variant_dict_from_str(compose, module_str):
                 "Module string \"%s\" is not allowed. "
                 "Only NAME:STREAM or NAME:STREAM:VERSION is allowed.")
         if len(nsv) > 2:
-            module_info["variant_release"] = nsv[2]
+            module_info["version"] = nsv[2]
         if len(nsv) > 1:
-            module_info["variant_version"] = nsv[1]
-        module_info["variant_id"] = nsv[0]
+            module_info["stream"] = nsv[1]
+        module_info["name"] = nsv[0]
         return module_info
     else:
         # Fallback to previous old format with '-' delimiter.
@@ -107,14 +106,13 @@ def variant_dict_from_str(compose, module_str):
         section_start = module_str.rfind('-')
         module_str_first_part = module_str[section_start+1:]
         if release_regex.match(module_str_first_part):
-            module_info['variant_release'] = module_str_first_part
+            module_info['version'] = module_str_first_part
             module_str = module_str[:section_start]
             section_start = module_str.rfind('-')
-            module_info['variant_version'] = module_str[section_start+1:]
+            module_info['stream'] = module_str[section_start+1:]
         else:
-            module_info['variant_version'] = module_str_first_part
-        module_info['variant_id'] = module_str[:section_start]
-        module_info['variant_type'] = 'module'
+            module_info['stream'] = module_str_first_part
+        module_info['name'] = module_str[:section_start]
 
         return module_info
 
@@ -131,30 +129,30 @@ def get_module(compose, session, module_info):
     module_info = variant_dict_from_str(compose, module_info)
 
     query = dict(
-        variant_id=module_info['variant_id'],
-        variant_version=module_info['variant_version'],
+        name=module_info['name'],
+        stream=module_info['stream'],
         active=True,
     )
-    if module_info.get('variant_release'):
-        query['variant_release'] = module_info['variant_release']
+    if module_info.get('version'):
+        query['version'] = module_info['version']
 
-    retval = session['unreleasedvariants'](page_size=-1, **query)
+    retval = session['modules'](page_size=-1, **query)
 
     # Error reporting
     if not retval:
         raise ValueError("Failed to find module in PDC %r" % query)
 
     module = None
-    # If we specify 'variant_release', we expect only single module to be
+    # If we specify 'version', we expect only single module to be
     # returned, but otherwise we have to pick the one with the highest
     # release ourselves.
-    if 'variant_release' in query:
+    if 'version' in query:
         assert len(retval) <= 1, "More than one module returned from PDC: %s" % retval
         module = retval[0]
     else:
         module = retval[0]
         for m in retval:
-            if int(m['variant_release']) > int(module['variant_release']):
+            if int(m['version']) > int(module['version']):
                 module = m
 
     return module
@@ -261,8 +259,8 @@ def _get_modules_from_pdc(compose, session, variant, variant_tags):
         _log_modulemd(compose, variant, mmd)
 
         tag = pdc_module["koji_tag"]
-        uid = ':'.join([pdc_module['variant_name'], pdc_module['variant_version'],
-                        pdc_module['variant_release'], pdc_module['variant_context']])
+        uid = ':'.join([pdc_module['name'], pdc_module['stream'],
+                        pdc_module['version'], pdc_module['context']])
         variant_tags[variant].append(tag)
 
         # Store mapping module-uid --> koji_tag into variant.
