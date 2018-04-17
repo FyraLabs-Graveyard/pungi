@@ -121,6 +121,7 @@ class DummyCompose(object):
         checks.validate(self.conf)
         self.paths = paths.Paths(self)
         self._logger = mock.Mock()
+        self.has_comps = True
         self.variants = {
             'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
                                   type='variant'),
