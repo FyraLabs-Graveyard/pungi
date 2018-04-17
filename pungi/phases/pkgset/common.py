@@ -27,12 +27,13 @@ from pungi.util import is_arch_multilib, find_old_compose
 # TODO: per arch?
 def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
     result = {}
+    exclusive_noarch = compose.conf['pkgset_exclusive_arch_considers_noarch']
     for arch in compose.get_arches():
         compose.log_info("Populating package set for arch: %s" % arch)
         is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib, add_src=True)
         pkgset = pungi.phases.pkgset.pkgsets.PackageSetBase(compose.conf["sigkeys"], logger=compose._logger, arches=arches)
-        pkgset.merge(global_pkgset, arch, arches)
+        pkgset.merge(global_pkgset, arch, arches, exclusive_noarch=exclusive_noarch)
         pkgset.save_file_list(compose.paths.work.package_list(arch=arch), remove_path_prefix=path_prefix)
         result[arch] = pkgset
     return result

@@ -757,6 +757,10 @@ def make_schema():
                 "type": "boolean",
                 "default": False
             },
+            "pkgset_exclusive_arch_considers_noarch": {
+                "type": "boolean",
+                "default": True,
+            },
 
             "disc_types": {
                 "type": "object",

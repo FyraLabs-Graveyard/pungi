@@ -471,6 +471,12 @@ Options
     (*dict*) -- A mapping of architectures to repositories with RPMs: ``{arch:
     [repo]}``. Only use when ``pkgset_source = "repos"``.
 
+**pkgset_exclusive_arch_considers_noarch** = True
+    (*bool*) -- If a package includes ``noarch`` in its ``ExclusiveArch`` tag,
+    it will be included in all architectures since ``noarch`` is compatible
+    with everything. Set this option to ``False`` to ignore ``noarch`` in
+    ``ExclusiveArch`` and always consider only binary architectures.
+
 
 Example
 -------

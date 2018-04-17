@@ -161,7 +161,7 @@ class PackageSetBase(kobo.log.LoggingBase):
 
         return self.rpms_by_arch
 
-    def merge(self, other, primary_arch, arch_list):
+    def merge(self, other, primary_arch, arch_list, exclusive_noarch=True):
         """
         Merge ``other`` package set into this instance.
         """
@@ -184,6 +184,13 @@ class PackageSetBase(kobo.log.LoggingBase):
         if primary_arch:
             exclusivearch_list = get_valid_arches(
                 primary_arch, multilib=False, add_noarch=False, add_src=False)
+            # We don't want to consider noarch: if a package is true noarch
+            # build (not just a subpackage), it has to have noarch in
+            # ExclusiveArch otherwise rpm will refuse to build it.
+            # This should eventually become a default, but it could have a big
+            # impact and thus it's hidden behind an option.
+            if not exclusive_noarch and 'noarch' in exclusivearch_list:
+                exclusivearch_list.remove('noarch')
         else:
             exclusivearch_list = None
         for arch in arch_list:
