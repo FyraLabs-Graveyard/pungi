@@ -608,7 +608,8 @@ class Gather(GatherBase):
             if not source_pkg:
                 continue
 
-            if source_pkg.repoid in self.opts.lookaside_repos:
+            if (source_pkg.repoid in self.opts.lookaside_repos
+                    or pkg.repoid in self.opts.lookaside_repos):
                 self._set_flag(source_pkg, PkgFlag.lookaside)
             if source_pkg not in self.result_source_packages:
                 added.add(source_pkg)
@@ -641,6 +642,7 @@ class Gather(GatherBase):
                 continue
 
             debug_pkgs = []
+            pkg_in_lookaside = pkg.repoid in self.opts.lookaside_repos
             for i in candidates:
                 if pkg.arch == 'noarch' and i.arch != 'noarch':
                     # If the package is noarch, we will only pull debuginfo if
@@ -648,7 +650,7 @@ class Gather(GatherBase):
                     # means we don't for example pull debuginfo just because of
                     # -doc subpackage.
                     continue
-                if i.repoid in self.opts.lookaside_repos:
+                if i.repoid in self.opts.lookaside_repos or pkg_in_lookaside:
                     self._set_flag(i, PkgFlag.lookaside)
                 if i not in self.result_debug_packages:
                     added.add(i)
