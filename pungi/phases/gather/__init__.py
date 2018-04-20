@@ -19,16 +19,20 @@ import os
 import shutil
 
 from kobo.rpmlib import parse_nvra
+from kobo.shortcuts import run
 from productmd.rpms import Rpms
 
 from pungi.wrappers.scm import get_file_from_scm
 from .link import link_files
+from ...wrappers.createrepo import CreaterepoWrapper
+import pungi.wrappers.kojiwrapper
 
 from pungi import Modulemd
 from pungi.arch import get_compatible_arches, split_name_arch
 from pungi.graph import SimpleAcyclicOrientedGraph
 from pungi.phases.base import PhaseBase
-from pungi.util import get_arch_data, get_arch_variant_data, get_variant_data
+from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
+                        makedirs)
 
 
 def get_gather_source(name):
@@ -308,6 +312,77 @@ def _prepare_variant_as_lookaside(compose):
     return list(variant_processing_order)
 
 
+def _make_lookaside_repo(compose, variant, arch, pkg_map):
+    """
+    Create variant lookaside repo for given variant and architecture with
+    packages from the map. If the repo repo already exists, then nothing will
+    happen. This could happen if multiple variants depend on this one.
+    """
+    repo = compose.paths.work.lookaside_repo(arch, variant, create_dir=False)
+    if os.path.exists(repo):
+        # We have already generated this, nothing to do.
+        return repo
+
+    makedirs(repo)
+    msg = 'Generating lookaside repo from %s.%s' % (variant.uid, arch)
+    compose.log_info('[BEGIN] %s', msg)
+
+    prefixes = {
+        'repos': lambda: os.path.join(compose.paths.work.topdir(
+            arch="global"), "download") + "/",
+        'koji': lambda: pungi.wrappers.kojiwrapper.KojiWrapper(
+            compose.conf['koji_profile']).koji_module.config.topdir.rstrip("/") + "/"
+    }
+    path_prefix = prefixes[compose.conf['pkgset_source']]()
+    pkglist = compose.paths.work.lookaside_package_list(arch=arch, variant=variant)
+    with open(pkglist, 'w') as f:
+        for packages in pkg_map[arch][variant.uid].values():
+            for pkg in packages:
+                pkg = pkg['path']
+                if path_prefix and pkg.startswith(path_prefix):
+                    pkg = pkg[len(path_prefix):]
+                f.write('%s\n' % pkg)
+
+    cr = CreaterepoWrapper(compose.conf['createrepo_c'])
+    cmd = cr.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True,
+                                pkglist=pkglist,
+                                outputdir=repo,
+                                baseurl="file://%s" % path_prefix,
+                                workers=compose.conf["createrepo_num_workers"],
+                                update_md_path=compose.paths.work.arch_repo(arch))
+    run(cmd,
+        logfile=compose.paths.log.log_file(arch, "lookaside_repo_%s" % (variant.uid)),
+        show_cmd=True)
+    compose.log_info('[DONE ] %s', msg)
+
+    return repo
+
+
+def _update_config(compose, variant_uid, arch, repo):
+    """
+    Add the variant lookaside repository into the configuration.
+    """
+    lookasides = compose.conf.setdefault('gather_lookaside_repos', [])
+    lookasides.append(('^%s$' % variant_uid, {arch: repo}))
+
+
+def _update_lookaside_config(compose, variant, arch, pkg_map):
+    """
+    Make sure lookaside repo for all variants that the given one depends on
+    exist, and that configuration is updated to use those repos.
+    """
+    for dest, lookaside_variant_uid in compose.conf.get('variant_as_lookaside', []):
+        lookaside_variant = compose.all_variants[lookaside_variant_uid]
+        if dest != variant.uid:
+            continue
+        if arch not in lookaside_variant.arches:
+            compose.log_warning('[SKIP] Skipping lookaside from %s for %s.%s due to arch mismatch',
+                                lookaside_variant.uid, variant.uid, arch)
+            continue
+        repo = _make_lookaside_repo(compose, lookaside_variant, arch, pkg_map)
+        _update_config(compose, variant.uid, arch, repo)
+
+
 def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltree=False):
     """Run gathering on all arches of all variants of given type.
 
@@ -330,6 +405,12 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             if exclude_fulltree:
                 for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:
                     fulltree_excludes.add(pkg_name)
+
+            # Get lookaside repos for this variant from other variants. Based
+            # on the ordering we already know that we have the packages from
+            # there.
+            _update_lookaside_config(compose, variant, arch, result)
+
             pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
             result.setdefault(arch, {})[variant.uid] = pkg_map
 

@@ -901,3 +901,176 @@ class TestGetPackagesToGather(helpers.PungiTestCase):
 
         self.assertItemsEqual(packages, ["foo", "pkg", "foo2.x86_64"])
         self.assertItemsEqual(groups, ["core"])
+
+
+class TestUpdateConfig(unittest.TestCase):
+
+    def test_add_to_empty(self):
+        compose = mock.Mock(conf={})
+        gather._update_config(compose, 'Server', 'x86_64', '/tmp/foo')
+        self.assertEqual(compose.conf,
+                         {'gather_lookaside_repos': [
+                             ('^Server$', {'x86_64': '/tmp/foo'})
+                         ]})
+
+    def test_add_to_existing(self):
+        compose = mock.Mock(conf={'gather_lookaside_repos': [
+            ('^Server$', {'x86_64': '/tmp/bar'}),
+        ]})
+        gather._update_config(compose, 'Server', 'x86_64', '/tmp/foo')
+        self.assertEqual(compose.conf,
+                         {'gather_lookaside_repos': [
+                             ('^Server$', {'x86_64': '/tmp/bar'}),
+                             ('^Server$', {'x86_64': '/tmp/foo'})
+                         ]})
+
+
+class TestUpdateLookasideConfig(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(TestUpdateLookasideConfig, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {})
+        self.pkg_map = mock.Mock()
+
+    @mock.patch('pungi.phases.gather._update_config')
+    @mock.patch('pungi.phases.gather._make_lookaside_repo')
+    def test_no_config(self, mock_make_repo, mock_update_config):
+        gather._update_lookaside_config(self.compose, self.compose.variants['Server'],
+                                        'x86_64', self.pkg_map)
+        self.assertEqual(mock_make_repo.call_args_list, [])
+        self.assertEqual(mock_update_config.call_args_list, [])
+
+    @mock.patch('pungi.phases.gather._update_config')
+    @mock.patch('pungi.phases.gather._make_lookaside_repo')
+    def test_no_matching_config(self, mock_make_repo, mock_update_config):
+        self.compose.conf['variant_as_lookaside'] = [('Everything', 'Client')]
+        gather._update_lookaside_config(self.compose, self.compose.variants['Server'],
+                                        'x86_64', self.pkg_map)
+        self.assertEqual(mock_make_repo.call_args_list, [])
+        self.assertEqual(mock_update_config.call_args_list, [])
+
+    @mock.patch('pungi.phases.gather._update_config')
+    @mock.patch('pungi.phases.gather._make_lookaside_repo')
+    def test_missing_arch(self, mock_make_repo, mock_update_config):
+        # Client only has amd64
+        self.compose.conf['variant_as_lookaside'] = [('Server', 'Client')]
+        gather._update_lookaside_config(self.compose, self.compose.variants['Server'],
+                                        'x86_64', self.pkg_map)
+        self.assertEqual(len(self.compose.log_warning.call_args_list), 1)
+        self.assertEqual(mock_make_repo.call_args_list, [])
+        self.assertEqual(mock_update_config.call_args_list, [])
+
+    @mock.patch('pungi.phases.gather._update_config')
+    @mock.patch('pungi.phases.gather._make_lookaside_repo')
+    def test_match(self, mock_make_repo, mock_update_config):
+        self.compose.conf['variant_as_lookaside'] = [('Server', 'Everything')]
+        gather._update_lookaside_config(self.compose, self.compose.variants['Server'],
+                                        'x86_64', self.pkg_map)
+        self.assertEqual(len(self.compose.log_warning.call_args_list), 0)
+        self.assertEqual(mock_make_repo.call_args_list,
+                         [mock.call(self.compose,
+                                    self.compose.variants['Everything'],
+                                    'x86_64',
+                                    self.pkg_map)])
+        self.assertEqual(mock_update_config.call_args_list,
+                         [mock.call(self.compose, 'Server', 'x86_64',
+                                    mock_make_repo.return_value)])
+
+
+class TestMakeLookasideRepo(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(TestMakeLookasideRepo, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {})
+        self.variant = self.compose.variants['Server']
+        self.arch = 'x86_64'
+        self.repodir = self.compose.paths.work.lookaside_repo(self.arch, self.variant, create_dir=False)
+        self.pkglist = self.compose.paths.work.lookaside_package_list(self.arch, self.variant)
+
+    @mock.patch('pungi.phases.gather.run')
+    def test_existing_repo(self, mock_run):
+        helpers.touch(os.path.join(self.repodir, 'repodata', 'primary.xml'))
+        repopath = gather._make_lookaside_repo(self.compose, self.variant, self.arch, {})
+        self.assertEqual(self.repodir, repopath)
+        self.assertFalse(os.path.exists(self.pkglist))
+        self.assertEqual(mock_run.call_args_list, [])
+
+    def assertCorrect(self, repopath, path_prefix, MockCR, mock_run):
+        with open(self.pkglist) as f:
+            packages = f.read().splitlines()
+        self.assertItemsEqual(packages,
+                              ['pkg/pkg-1.0-1.x86_64.rpm',
+                               'pkg/pkg-debuginfo-1.0-1.x86_64.rpm',
+                               'pkg/pkg-1.0-1.src.rpm'])
+
+        self.assertEqual(self.repodir, repopath)
+        print(MockCR.return_value.get_createrepo_cmd.call_args_list)
+        print([mock.call(path_prefix, update=True, database=True, skip_stat=True,
+                         pkglist=self.pkglist, outputdir=repopath,
+                         baseurl="file://%s" % path_prefix, workers=3,
+                         update_md_path=self.compose.paths.work.arch_repo(self.arch))])
+        self.assertEqual(MockCR.return_value.get_createrepo_cmd.call_args_list,
+                         [mock.call(path_prefix, update=True, database=True, skip_stat=True,
+                                    pkglist=self.pkglist, outputdir=repopath,
+                                    baseurl="file://%s" % path_prefix, workers=3,
+                                    update_md_path=self.compose.paths.work.arch_repo(self.arch))])
+        self.assertEqual(mock_run.call_args_list,
+                         [mock.call(MockCR.return_value.get_createrepo_cmd.return_value,
+                                    logfile=os.path.join(
+                                        self.topdir, 'logs', self.arch,
+                                        'lookaside_repo_Server.%s.log' % self.arch),
+                                    show_cmd=True)])
+
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.phases.gather.CreaterepoWrapper')
+    @mock.patch('pungi.phases.gather.run')
+    def test_create_repo_koji_pkgset(self, mock_run, MockCR, MockKW):
+        self.compose.conf.update({
+            'pkgset_source': 'koji',
+            'koji_profile': 'koji',
+        })
+
+        pkg_map = {
+            self.arch: {
+                self.variant.uid: {
+                    'rpm': [{'path': '/tmp/packages/pkg/pkg-1.0-1.x86_64.rpm'}],
+                    'debuginfo': [{'path': '/tmp/packages/pkg/pkg-debuginfo-1.0-1.x86_64.rpm'}],
+                    'srpm': [{'path': '/tmp/packages/pkg/pkg-1.0-1.src.rpm'}],
+                }
+            }
+        }
+
+        MockKW.return_value.koji_module.config.topdir = '/tmp/packages'
+
+        repopath = gather._make_lookaside_repo(self.compose, self.variant, self.arch, pkg_map)
+
+        self.assertCorrect(repopath, '/tmp/packages/', MockCR, mock_run)
+
+    @mock.patch('pungi.phases.gather.CreaterepoWrapper')
+    @mock.patch('pungi.phases.gather.run')
+    def test_create_repo_repos_pkgset(self, mock_run, MockCR):
+        self.compose.conf.update({
+            'pkgset_source': 'repos',
+        })
+
+        dl_dir = self.compose.paths.work.topdir('global')
+
+        pkg_map = {
+            self.arch: {
+                self.variant.uid: {
+                    'rpm': [
+                        {'path': os.path.join(dl_dir, 'download/pkg/pkg-1.0-1.x86_64.rpm')}
+                    ],
+                    'debuginfo': [
+                        {'path': os.path.join(dl_dir, 'download/pkg/pkg-debuginfo-1.0-1.x86_64.rpm')}
+                    ],
+                    'srpm': [
+                        {'path': os.path.join(dl_dir, 'download/pkg/pkg-1.0-1.src.rpm')}
+                    ],
+                }
+            }
+        }
+
+        repopath = gather._make_lookaside_repo(self.compose, self.variant, self.arch, pkg_map)
+
+        self.assertCorrect(repopath, dl_dir + '/download/', MockCR, mock_run)

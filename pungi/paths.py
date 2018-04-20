@@ -179,6 +179,17 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
+    def lookaside_repo(self, arch, variant, create_dir=True):
+        """
+        Examples:
+            work/x86_64/Server/lookaside_repo
+        """
+        path = os.path.join(self.topdir(arch, create_dir=create_dir),
+                            variant.uid, "lookaside_repo")
+        if create_dir:
+            makedirs(path)
+        return path
+
     def package_list(self, arch=None, variant=None, pkg_type=None, create_dir=True):
         """
         Examples:
@@ -199,6 +210,13 @@ class WorkPaths(object):
             makedirs(path)
         path = os.path.join(path, file_name)
         return path
+
+    def lookaside_package_list(self, arch, variant, create_dir=True):
+        """
+        Examples:
+            work/x86_64/package_list/Server.x86_64.lookaside.conf
+        """
+        return self.package_list(arch, variant, pkg_type='lookaside', create_dir=create_dir)
 
     def pungi_download_dir(self, arch, create_dir=True):
         """
