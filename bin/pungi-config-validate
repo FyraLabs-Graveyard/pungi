@@ -70,6 +70,12 @@ def read_variants(compose, config):
             parser = VariantsXmlParser(file_obj, tree_arches, tree_variants)
             compose.variants = parser.parse()
 
+    compose.all_variants = {}
+    for variant in compose.variants.values():
+        compose.all_variants[variant.uid] = variant
+        for child in variant.get_variants():
+            compose.all_variants[child.uid] = child
+
 
 def run(config, topdir, has_old):
     conf = kobo.conf.PyConfigParser()
