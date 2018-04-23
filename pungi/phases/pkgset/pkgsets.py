@@ -21,6 +21,7 @@ It automatically finds a signed copies according to *sigkey_ordering*.
 
 import itertools
 import os
+from six.moves import cPickle as pickle
 
 import kobo.log
 import kobo.pkgset
@@ -50,7 +51,19 @@ class ReaderThread(WorkerThread):
         rpm_path = self.pool.package_set.get_package_path(item)
         if rpm_path is None:
             return
-        rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
+
+        # In case we have old file cache data, try to reuse it.
+        if self.pool.package_set.old_file_cache:
+            # The kobo.pkgset.FileCache does not have any method to check if
+            # the RPM is in cache. Instead it just re-uses the cached RPM data,
+            # if available, in .add() method.
+            # Therefore we call `old_file_cache.add()` which either returns the
+            # cached RPM object fast or just loads it from filesystem. We then
+            # add the returned RPM object to real `file_cache` directly.
+            rpm_obj = self.pool.package_set.old_file_cache.add(rpm_path)
+            self.pool.package_set.file_cache[rpm_path] = rpm_obj
+        else:
+            rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
         self.pool.package_set.rpms_by_arch.setdefault(rpm_obj.arch, []).append(rpm_obj)
 
         if pkg_is_srpm(rpm_obj):
@@ -71,6 +84,7 @@ class PackageSetBase(kobo.log.LoggingBase):
                  allow_invalid_sigkeys=False):
         super(PackageSetBase, self).__init__(logger=logger)
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
+        self.old_file_cache = None
         self.sigkey_ordering = sigkey_ordering or [None]
         self.arches = arches
         self.rpms_by_arch = {}
@@ -214,6 +228,20 @@ class PackageSetBase(kobo.log.LoggingBase):
                     if remove_path_prefix and rpm_path.startswith(remove_path_prefix):
                         rpm_path = rpm_path[len(remove_path_prefix):]
                     f.write("%s\n" % rpm_path)
+
+    def load_old_file_cache(self, file_path):
+        """
+        Loads the cached FileCache stored in pickle format in `file_path`.
+        """
+        with open(file_path, "rb") as f:
+            self.old_file_cache = pickle.load(f)
+
+    def save_file_cache(self, file_path):
+        """
+        Saves the current FileCache using the pickle module to `file_path`.
+        """
+        with open(file_path, 'wb') as f:
+            pickle.dump(self.file_cache, f)
 
 
 class FilelistPackageSet(PackageSetBase):

@@ -19,14 +19,14 @@ from six.moves import cPickle as pickle
 import json
 import re
 from itertools import groupby
-from kobo.shortcuts import force_list
+from kobo.shortcuts import force_list, relative_path
 from kobo.rpmlib import make_nvra
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
-from pungi.util import is_arch_multilib, retry
+from pungi.util import is_arch_multilib, retry, find_old_compose
 from pungi import Modulemd
 
 from pungi.phases.pkgset.common import create_arch_repos, create_global_repo, populate_arch_pkgsets
@@ -364,6 +364,30 @@ def _get_modules_from_koji_tags(
             compose.log_info("%s" % module_msg)
 
 
+def _find_old_file_cache_path(compose):
+    """
+    Finds the old compose with "pkgset_file_cache.pickled" and returns
+    the path to it. If no compose is found, returns None.
+    """
+    old_compose_path = find_old_compose(
+        compose.old_composes,
+        compose.ci_base.release.short,
+        compose.ci_base.release.version,
+        compose.ci_base.release.type_suffix if compose.conf['old_composes_per_release_type'] else None,
+        compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
+        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
+    )
+    if not old_compose_path:
+        return None
+
+    old_file_cache_dir = compose.paths.work.pkgset_file_cache()
+    rel_dir = relative_path(old_file_cache_dir, compose.topdir.rstrip('/') + '/')
+    old_file_cache_path = os.path.join(old_compose_path, rel_dir)
+    if not os.path.exists(old_file_cache_path):
+        return None
+    return old_file_cache_path
+
+
 def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     all_arches = set(["src"])
     for arch in compose.get_arches():
@@ -466,6 +490,10 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
             arches=all_arches)
+        old_file_cache_path = _find_old_file_cache_path(compose)
+        if old_file_cache_path:
+            compose.log_info("Reusing old PKGSET file cache from %s" % old_file_cache_path)
+            global_pkgset.load_old_file_cache(old_file_cache_path)
         # Get package set for each compose tag and merge it to global package
         # list. Also prepare per-variant pkgset, because we do not have list
         # of binary RPMs in module definition - there is just list of SRPMs.
@@ -477,6 +505,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 arches=all_arches, packages=packages_to_gather,
                 allow_invalid_sigkeys=allow_invalid_sigkeys,
                 populate_only_packages=populate_only_packages_to_gather)
+            if old_file_cache_path:
+                pkgset.load_old_file_cache(old_file_cache_path)
             # Create a filename for log with package-to-tag mapping. The tag
             # name is included in filename, so any slashes in it are replaced
             # with underscores just to be safe.
@@ -505,6 +535,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     global_pkgset.save_file_list(
         compose.paths.work.package_list(arch="global"),
         remove_path_prefix=path_prefix)
+    global_pkgset.save_file_cache(compose.paths.work.pkgset_file_cache())
     return global_pkgset
 
 
