@@ -182,7 +182,11 @@ class BuildinstallPhase(PhaseBase):
         self.pool.start()
 
     def succeeded(self, variant, arch):
-        return (variant.uid if self.used_lorax else None, arch) in self.pool.finished_tasks
+        # If the phase is skipped, we can treat it as successful. Either there
+        # will be no output, or it's a debug run of compose where anything can
+        # happen.
+        return (super(BuildinstallPhase, self).skip()
+                or (variant.uid if self.used_lorax else None, arch) in self.pool.finished_tasks)
 
     def copy_files(self):
         disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')

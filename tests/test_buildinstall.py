@@ -31,6 +31,8 @@ class BuildInstallCompose(DummyCompose):
         }
         self.all_variants = self.variants.copy()
         self.has_comps = True
+        self.just_phases = []
+        self.skip_phases = []
 
 
 class TestBuildinstallPhase(PungiTestCase):
