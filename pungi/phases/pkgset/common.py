@@ -74,7 +74,7 @@ def create_global_repo(compose, path_prefix):
                 update_md_path = old_repo_dir
 
     # IMPORTANT: must not use --skip-stat here -- to make sure that correctly signed files are pulled in
-    cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=False,
+    cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=False, skip_stat=False,
                                   pkglist=compose.paths.work.package_list(arch="global"), outputdir=repo_dir_global,
                                   baseurl="file://%s" % path_prefix, workers=compose.conf["createrepo_num_workers"],
                                   update_md_path=update_md_path, checksum=createrepo_checksum)
@@ -95,7 +95,7 @@ def create_arch_repos(compose, arch, path_prefix):
         return
 
     compose.log_info("[BEGIN] %s" % msg)
-    cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True,
+    cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=False, skip_stat=True,
                                   pkglist=compose.paths.work.package_list(arch=arch), outputdir=repo_dir,
                                   baseurl="file://%s" % path_prefix, workers=compose.conf["createrepo_num_workers"],
                                   update_md_path=repo_dir_global, checksum=createrepo_checksum)
