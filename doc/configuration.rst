@@ -458,6 +458,9 @@ Options
     (*bool*) -- inherit builds from parent tags; we can turn it off only if we
     have all builds tagged in a single tag
 
+**pkgset_koji_inherit_modules** = False
+    (*bool*) -- the same as above, but this only applies to modular tags
+
 **pkgset_repos**
     (*dict*) -- A mapping of architectures to repositories with RPMs: ``{arch:
     [repo]}``. Only use when ``pkgset_source = "repos"``.

@@ -484,6 +484,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             compose_tags.extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     inherit = compose.conf["pkgset_koji_inherit"]
+    inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
     global_pkgset_path = os.path.join(
         compose.paths.work.topdir(arch="global"), "pkgset_global.pickle")
     if compose.DEBUG and os.path.isfile(global_pkgset_path):
@@ -517,7 +518,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             # with underscores just to be safe.
             logfile = compose.paths.log.log_file(
                 None, 'packages_from_%s' % compose_tag.replace('/', '_'))
-            pkgset.populate(compose_tag, event_id, inherit=inherit, logfile=logfile)
+            is_traditional = compose_tag in compose.conf.get('pkgset_koji_tag', [])
+            should_inherit = inherit if is_traditional else inherit_modules
+            pkgset.populate(compose_tag, event_id, inherit=should_inherit, logfile=logfile)
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:
                     # Optimization for case where we have just single compose

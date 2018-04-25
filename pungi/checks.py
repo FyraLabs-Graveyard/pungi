@@ -748,6 +748,10 @@ def make_schema():
                 "type": "boolean",
                 "default": True
             },
+            "pkgset_koji_inherit_modules": {
+                "type": "boolean",
+                "default": False
+            },
 
             "disc_types": {
                 "type": "object",
