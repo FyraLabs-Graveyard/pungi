@@ -3,8 +3,9 @@
 
 from __future__ import print_function
 
-import os
 import argparse
+import os
+import sys
 
 import pungi.ks
 from pungi.dnf_wrapper import DnfWrapper, Conf
@@ -142,7 +143,7 @@ def main(persistdir, cachedir):
     else:
         print_rpms(g)
     if ns.profiler:
-        Profiler.print_results()
+        Profiler.print_results(stream=sys.stderr)
 
 
 def _get_flags(gather_obj, pkg):

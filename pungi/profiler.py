@@ -40,6 +40,7 @@ from __future__ import print_function
 
 
 import functools
+import sys
 import time
 
 
@@ -66,9 +67,10 @@ class Profiler(object):
         return decorated
 
     @classmethod
-    def print_results(cls):
-        print("Profiling results:")
+    def print_results(cls, stream=sys.stdout):
+        print("Profiling results:", file=sys.stdout)
         results = cls._data.items()
         results = sorted(results, key=lambda x: x[1]["time"], reverse=True)
         for name, data in results:
-            print("  %6.2f %5d %s" % (data["time"], data["calls"], name))
+            print("  %6.2f %5d %s" % (data["time"], data["calls"], name),
+                  file=sys.stdout)
