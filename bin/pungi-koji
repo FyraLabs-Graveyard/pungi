@@ -319,7 +319,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
         for i in errors:
             compose.log_error(i)
             print(i)
-        sys.exit(1)
+        raise RuntimeError('Configuration is not valid')
 
     # PREP
 
@@ -352,7 +352,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
                 err_msg = "Cannot load password from file specified by 'signing_key_password_file' option"
                 compose.log_error(err_msg)
                 print(err_msg)
-                sys.exit(1)
+                raise RuntimeError(err_msg)
 
         if signing_key_password:
             # Store the password
