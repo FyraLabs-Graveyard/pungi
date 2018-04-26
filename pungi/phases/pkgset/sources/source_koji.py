@@ -65,8 +65,7 @@ def variant_dict_from_str(compose, module_str):
     https://pagure.io/modularity/blob/master/f/source/development/
     building-modules/naming-policy.rst
 
-    Pungi supports only N:S and N:S:V, because other combinations do not
-    have sense for variant files.
+    Pungi supports N:S, N:S:V and N:S:V:C.
 
     Attributes:
         compose: compose for which the variant_dict is generated
@@ -81,10 +80,12 @@ def variant_dict_from_str(compose, module_str):
         module_info = {}
 
         nsv = module_str.split(":")
-        if len(nsv) > 3:
+        if len(nsv) > 4:
             raise ValueError(
-                "Module string \"%s\" is not allowed. "
-                "Only NAME:STREAM or NAME:STREAM:VERSION is allowed.")
+                "Module string \"%s\" is not recognized. "
+                "Only NAME:STREAM[:VERSION[:CONTEXT]] is allowed.")
+        if len(nsv) > 3:
+            module_info["context"] = nsv[3]
         if len(nsv) > 2:
             module_info["version"] = nsv[2]
         if len(nsv) > 1:
@@ -135,6 +136,8 @@ def get_module(compose, session, module_info):
     )
     if module_info.get('version'):
         query['version'] = module_info['version']
+    if module_info.get('context'):
+        query['context'] = module_info['context']
 
     retval = session['modules'](page_size=-1, **query)
 

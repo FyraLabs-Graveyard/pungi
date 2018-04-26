@@ -344,8 +344,17 @@ class TestCorrectNVR(helpers.PungiTestCase):
         self.assertEqual(module_info, expected)
 
     def test_new_nvrc(self):
+        module_info = source_koji.variant_dict_from_str(self.compose, self.new_nvrc)
+        expected = {
+            'name': 'base-runtime',
+            'stream': 'f26',
+            'version': '20170502134116',
+            'context': '0123abcd'}
+        self.assertEqual(module_info, expected)
+
+    def test_new_garbage_value(self):
         self.assertRaises(ValueError, source_koji.variant_dict_from_str,
-                          self.compose, self.new_nvrc)
+                          self.compose, 'foo:bar:baz:quux:qaar')
 
 
 if __name__ == "__main__":
