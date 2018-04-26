@@ -119,15 +119,15 @@ def variant_dict_from_str(compose, module_str):
 
 
 @retry(wait_on=IOError)
-def get_module(compose, session, module_info):
+def get_module(compose, session, module_info_str):
     """
     :param session : PDCClient instance
-    :param module_info: pdc variant_dict, str, mmd or module dict
+    :param module_info_str: pdc variant_dict, str, mmd or module dict
 
     :return final list of module_info which pass repoclosure
     """
 
-    module_info = variant_dict_from_str(compose, module_info)
+    module_info = variant_dict_from_str(compose, module_info_str)
 
     query = dict(
         name=module_info['name'],
@@ -150,7 +150,9 @@ def get_module(compose, session, module_info):
     # returned, but otherwise we have to pick the one with the highest
     # release ourselves.
     if 'version' in query:
-        assert len(retval) <= 1, "More than one module returned from PDC: %s" % retval
+        if len(retval) > 1:
+            raise RuntimeError("More than one module returned from PDC for %s: %s"
+                               % (module_info_str, retval))
         module = retval[0]
     else:
         module = retval[0]
