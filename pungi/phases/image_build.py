@@ -5,7 +5,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import makedirs, get_mtime, get_file_size, failable
+from pungi.util import makedirs, get_mtime, get_file_size, failable, log_failed_task
 from pungi.util import translate_path, get_repo_urls, version_generator
 from pungi.phases import base
 from pungi.linker import Linker
@@ -211,7 +211,10 @@ class CreateImageBuildThread(WorkerThread):
         # copy image to images/
         image_infos = []
 
-        paths = koji_wrapper.get_image_paths(output["task_id"])
+        paths = koji_wrapper.get_image_paths(
+            output["task_id"],
+            callback=lambda arch: log_failed_task(compose, variant, arch, 'image-build', subvariant)
+        )
 
         for arch, paths in paths.items():
             for path in paths:

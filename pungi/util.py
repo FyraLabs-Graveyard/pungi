@@ -475,7 +475,6 @@ def failable(compose, can_fail, variant, arch, deliverable, subvariant=None, log
     """If a deliverable can fail, log a message and go on as if it succeeded."""
     if not logger:
         logger = compose._logger
-    msg = deliverable.replace('-', ' ').capitalize()
     if can_fail:
         compose.attempt_deliverable(variant, arch, deliverable, subvariant)
     else:
@@ -486,15 +485,21 @@ def failable(compose, can_fail, variant, arch, deliverable, subvariant=None, log
         if not can_fail:
             raise
         else:
-            compose.fail_deliverable(variant, arch, deliverable, subvariant)
-            ident = 'variant %s, arch %s' % (variant.uid if variant else 'None', arch)
-            if subvariant:
-                ident += ', subvariant %s' % subvariant
-            logger.info('[FAIL] %s (%s) failed, but going on anyway.'
-                        % (msg, ident))
-            logger.info(str(exc))
-            tb = traceback.format_exc()
-            logger.debug(tb)
+            log_failed_task(compose, variant, arch, deliverable, subvariant, logger=logger, exc=exc)
+
+
+def log_failed_task(compose, variant, arch, deliverable, subvariant, logger=None, exc=None):
+    logger = logger or compose._logger
+    msg = deliverable.replace('-', ' ').capitalize()
+    compose.fail_deliverable(variant, arch, deliverable, subvariant)
+    ident = 'variant %s, arch %s' % (variant.uid if variant else 'None', arch)
+    if subvariant:
+        ident += ', subvariant %s' % subvariant
+    logger.info('[FAIL] %s (%s) failed, but going on anyway.' % (msg, ident))
+    if exc:
+        logger.info(str(exc))
+        tb = traceback.format_exc()
+        logger.debug(tb)
 
 
 def can_arch_fail(failable_arches, arch):

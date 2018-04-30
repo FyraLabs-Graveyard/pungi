@@ -493,7 +493,7 @@ class TestLiveMediaThread(PungiTestCase):
                                      'version': 'Rawhide',
                                      'can_fail': []})])
         self.assertEqual(get_image_paths.mock_calls,
-                         [mock.call(1234)])
+                         [mock.call(1234, callback=mock.ANY)])
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/x86_64/iso'))
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/amd64/iso'))
         link = Linker.return_value.link

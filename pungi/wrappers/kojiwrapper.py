@@ -348,10 +348,13 @@ class KojiWrapper(object):
         retcode, _ = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
         return retcode
 
-    def get_image_paths(self, task_id):
+    def get_image_paths(self, task_id, callback=None):
         """
         Given an image task in Koji, get a mapping from arches to a list of
         paths to results of the task.
+
+        If callback is given, it will be called once with arch of every failed
+        subtask.
         """
         result = {}
 
@@ -364,7 +367,9 @@ class KojiWrapper(object):
 
             if child_task['state'] != koji.TASK_STATES['CLOSED']:
                 # The subtask is failed, which can happen with the can_fail
-                # option. Let's ignore it then.
+                # option. If given, call the callback, and go to next child.
+                if callback:
+                    callback(child_task['arch'])
                 continue
 
             is_scratch = child_task['request'][-1].get('scratch', False)

@@ -4,7 +4,7 @@ import os
 import time
 from kobo import shortcuts
 
-from pungi.util import makedirs, get_mtime, get_file_size, failable
+from pungi.util import makedirs, get_mtime, get_file_size, failable, log_failed_task
 from pungi.util import translate_path, get_repo_urls
 from pungi.phases.base import ConfigGuardedPhase, ImageConfigMixin, PhaseLoggerMixin
 from pungi.linker import Linker
@@ -132,7 +132,10 @@ class LiveMediaThread(WorkerThread):
         # collect results and update manifest
         image_infos = []
 
-        paths = koji_wrapper.get_image_paths(output['task_id'])
+        paths = koji_wrapper.get_image_paths(
+            output['task_id'],
+            callback=lambda arch: log_failed_task(compose, variant, arch, 'live-media', subvariant)
+        )
 
         for arch, paths in paths.items():
             for path in paths:

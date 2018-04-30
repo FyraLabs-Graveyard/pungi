@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import json
 import mock
 try:
     import unittest2 as unittest
@@ -15,11 +16,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
 
+from .helpers import FIXTURE_DIR
+
 
 class DumbMock(object):
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+
+def mock_imagebuild_path(id):
+    if isinstance(id, int):
+        return '/koji/imagebuild/' + str(id)
+    return '/koji/imagebuild/' + str(hash(str(id)))
 
 
 class KojiWrapperBaseTestCase(unittest.TestCase):
@@ -38,7 +47,7 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
                     pathinfo=mock.Mock(
                         work=mock.Mock(return_value='/koji'),
                         taskrelpath=mock.Mock(side_effect=lambda id: 'task/' + str(id)),
-                        imagebuild=mock.Mock(side_effect=lambda id: '/koji/imagebuild/' + str(id)),
+                        imagebuild=mock.Mock(side_effect=mock_imagebuild_path),
                     )
                 )
             )
@@ -286,6 +295,30 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                                '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.qcow2',
                                '/koji/task/12387277/libvirt-raw-xz-x86_64.xml',
                                '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.raw.xz'])
+
+    def test_get_image_paths_failed_subtask(self):
+
+        failed = set()
+
+        def failed_callback(arch):
+            failed.add(arch)
+
+        with open(os.path.join(FIXTURE_DIR, 'task_children_25643870.json')) as f:
+            getTaskChildren_data = json.load(f)
+
+        with open(os.path.join(FIXTURE_DIR, 'children_task_results_25643870.json')) as f:
+            getTaskResult_data = json.load(f)
+
+        self.koji.koji_proxy = mock.Mock(
+            getTaskChildren=mock.Mock(return_value=getTaskChildren_data),
+            getTaskResult=mock.Mock(side_effect=lambda task_id: getTaskResult_data.get(str(task_id))),
+            getImageBuild=mock.Mock(side_effect=lambda name: {}),
+        )
+
+        result = self.koji.get_image_paths(25643870, callback=failed_callback)
+
+        self.assertItemsEqual(result.keys(), ['aarch64', 'armhfp', 'x86_64'])
+        self.assertItemsEqual(failed, ['ppc64le', 's390x'])
 
 
 class LiveMediaTestCase(KojiWrapperBaseTestCase):
