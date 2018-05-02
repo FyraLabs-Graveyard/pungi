@@ -111,7 +111,7 @@ class CompsFilterTest(unittest.TestCase):
         self.filter.write(self.output)
         self.output.flush()
         with open(self.output.name, 'r') as f:
-            actual = f.read().strip()
+            actual = f.read().strip().replace('utf-8', 'UTF-8')
         with open(filepath, 'r') as f:
             expected = f.read().strip()
         self.maxDiff = None
