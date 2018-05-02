@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.23
+Version:        4.1.24
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -104,6 +104,52 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed May 02 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.24-1
+- koji-wrapper: Log failed subtasks (lsedlar)
+- Update compose status when config validation fails (lsedlar)
+- pkgset: Allow different inheritance for modules (lsedlar)
+- ostree: Recognize force_new_commit option in old config (lsedlar)
+- modules: Correctly report error for unexpected modules (lsedlar)
+- modules: Allow context in variants XML (lsedlar)
+- gather: Print profiling information to stderr (lsedlar)
+- pkgset: Stop creating database for repodata (jkaluza)
+- gather: Use another variant as lookaside (lsedlar)
+- buildinstall: Use metadata if skipped (lsedlar)
+- Allow reusing pkgset FileCache from old composes. (jkaluza)
+- validation: Populate dict of all variants (lsedlar)
+- gather: Stop pulling debuginfo and source for lookaside packages (lsedlar)
+- Only use comps repo if we really have comps (lsedlar)
+- pkgset: Use modules PDC API (lsedlar)
+- Access ci_base date via compose (puiterwijk)
+- Allow filtering comps for different variants (lsedlar)
+- comps: Make filtering by attribute more generic (lsedlar)
+- pkgset: Dump downloaded modulemd to logs (lsedlar)
+- Fix PEP8 warning about if not x in y (lsedlar)
+- Variant as a lookaside - configuration (onosek)
+- Remove comps from arch repo (lsedlar)
+- init: Stop creating module defaults dir twice (lsedlar)
+- gather: Reduce logs from DNF gathering (lsedlar)
+- Clone module defaults into work/ directory (lsedlar)
+- Update the configuration JSON schema for module_defaults_dir (contyk)
+- Update configuration docs with module_defaults_dir (contyk)
+- Handle relative paths in module_defaults_dir (contyk)
+- Include module defaults in the repodata (contyk)
+- Add *.in fixtures to tarball (lsedlar)
+- init: Always filter comps file (lsedlar)
+- docs: Describe comps processing (lsedlar)
+- gather: Use comps for given variant (lsedlar)
+- docs: Fix typo (lsedlar)
+- Add all packages to whitelist for hybrid variant (lsedlar)
+- comps: Add tests for CompsFilter (lsedlar)
+- comps: Move filtering into wrapper module (lsedlar)
+- Tests fail if unittest2 library is missing (onosek)
+- Add unittest2 and rpmdevools to contributing doc (rmarshall)
+- pkgset: Construct UID for PDC modules (lsedlar)
+- gather: Simplify creating temporary directory (lsedlar)
+- buildinstall: Add extra repos (lsedlar)
+- tests: Use dummy modulesdir for DNF (lsedlar)
+- Update tests for Python 2.6 (onosek)
+
 * Thu Mar 29 2018 Ondrej Nosek - 4.1.23-1
 - Update documentation section 'contributing' (onosek)
 - Write module metadata (onosek)
