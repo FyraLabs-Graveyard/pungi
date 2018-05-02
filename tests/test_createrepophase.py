@@ -723,9 +723,9 @@ class TestCreateVariantRepo(PungiTestCase):
         variant = compose.variants['Server']
         variant.arch_mmds["x86_64"] = {}
         variant.arch_mmds["x86_64"]["test-f27"] = variant.add_fake_module(
-            "test:f27:1:2017", rpm_nvrs=["pkg-1.0.0-1"])
+            "test:f27:1:2017", rpm_nvrs=["pkg-0:1.0.0-1.x86_64"])
         variant.arch_mmds["x86_64"]["test-f28"] = variant.add_fake_module(
-            "test:f28:1:2017", rpm_nvrs=["pkg-2.0.0-1"])
+            "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"])
 
         def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
             modules = Modulemd.Module.new_all_from_file(mmd_path)
@@ -767,7 +767,7 @@ class TestCreateVariantRepo(PungiTestCase):
         variant.arch_mmds["x86_64"]["test-f27"] = variant.add_fake_module(
             "test:f27:1:2017", rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"])
         variant.arch_mmds["x86_64"]["test-f28"] = variant.add_fake_module(
-            "test:f28:1:2017", rpm_nvrs=["pkg-2.0.0-1"])
+            "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"])
 
         def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
             modules = Modulemd.Module.new_all_from_file(mmd_path)
