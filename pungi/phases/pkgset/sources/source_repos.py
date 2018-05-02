@@ -15,6 +15,7 @@
 
 
 import os
+import threading
 from six.moves import cPickle as pickle
 
 from kobo.shortcuts import run
@@ -24,7 +25,10 @@ from pungi.arch import get_valid_arches
 from pungi.util import makedirs, is_arch_multilib
 from pungi.wrappers.pungi import PungiWrapper
 
-from pungi.phases.pkgset.common import create_global_repo, create_arch_repos, populate_arch_pkgsets
+from pungi.phases.pkgset.common import (run_create_global_repo,
+                                        get_create_global_repo_cmd,
+                                        create_arch_repos,
+                                        populate_arch_pkgsets)
 from pungi.phases.gather import get_prepopulate_packages, get_packages_to_gather
 from pungi.linker import LinkerThread, LinkerPool
 
@@ -112,10 +116,16 @@ def get_pkgset_from_repos(compose):
 
     flist = sorted(set(flist))
     pkgset_global = populate_global_pkgset(compose, flist, path_prefix)
+
+    cmd = get_create_global_repo_cmd(compose, path_prefix)
+    t = threading.Thread(target=run_create_global_repo, args=(compose, cmd))
+    t.start()
+
 #    get_extra_packages(compose, pkgset_global)
     package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
 
-    create_global_repo(compose, path_prefix)
+    t.join()
+
     for arch in compose.get_arches():
         # TODO: threads? runroot?
         create_arch_repos(compose, arch, path_prefix)

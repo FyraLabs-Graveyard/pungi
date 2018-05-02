@@ -38,18 +38,15 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
     return result
 
 
-def create_global_repo(compose, path_prefix):
+def get_create_global_repo_cmd(compose, path_prefix):
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
-    msg = "Running createrepo for the global package set"
 
     if compose.DEBUG and os.path.isdir(os.path.join(repo_dir_global, "repodata")):
-        compose.log_warning("[SKIP ] %s" % msg)
+        compose.log_warning("[SKIP ] Running createrepo for the global package set")
         return
-
-    compose.log_info("[BEGIN] %s" % msg)
 
     # find an old compose suitable for repodata reuse
     old_compose_path = None
@@ -78,6 +75,13 @@ def create_global_repo(compose, path_prefix):
                                   pkglist=compose.paths.work.package_list(arch="global"), outputdir=repo_dir_global,
                                   baseurl="file://%s" % path_prefix, workers=compose.conf["createrepo_num_workers"],
                                   update_md_path=update_md_path, checksum=createrepo_checksum)
+    return cmd
+
+
+def run_create_global_repo(compose, cmd):
+    msg = "Running createrepo for the global package set"
+    compose.log_info("[BEGIN] %s" % msg)
+
     run(cmd, logfile=compose.paths.log.log_file("global", "arch_repo"), show_cmd=True)
     compose.log_info("[DONE ] %s" % msg)
 

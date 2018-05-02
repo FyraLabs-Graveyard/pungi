@@ -253,10 +253,11 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.getTag.return_value = TAG_INFO
 
     @mock.patch('pungi.phases.pkgset.sources.source_koji.create_arch_repos')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.create_global_repo')
+    @mock.patch('pungi.phases.pkgset.sources.source_koji.run_create_global_repo')
+    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_create_global_repo_cmd')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_arch_pkgsets')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_global_pkgset')
-    def test_get_package_sets(self, pgp, pap, cgr, car):
+    def test_get_package_sets(self, pgp, pap, gcgrc, rcgr, car):
         expected = {'x86_64': mock.Mock()}
         pap.return_value = expected
         expected['global'] = pgp.return_value
@@ -273,8 +274,10 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                                     EVENT_INFO)])
         self.assertEqual(pap.call_args_list,
                          [mock.call(self.compose, '/prefix', pgp.return_value)])
-        self.assertEqual(cgr.call_args_list,
+        self.assertEqual(gcgrc.call_args_list,
                          [mock.call(self.compose, '/prefix')])
+        self.assertEqual(rcgr.call_args_list,
+                         [mock.call(self.compose, gcgrc.return_value)])
         self.assertItemsEqual(car.call_args_list,
                               [mock.call(self.compose, 'x86_64', '/prefix'),
                                mock.call(self.compose, 'amd64', '/prefix')])
