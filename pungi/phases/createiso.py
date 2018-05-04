@@ -40,9 +40,10 @@ from .. import createiso
 class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
     name = "createiso"
 
-    def __init__(self, compose):
+    def __init__(self, compose, buildinstall_phase):
         super(CreateisoPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
+        self.bi = buildinstall_phase
 
     def _find_rpms(self, path):
         """Check if there are some RPMs in the path."""
@@ -87,6 +88,12 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                     continue
 
                 bootable = self._is_bootable(variant, arch)
+
+                if bootable and not self.bi.succeeded(variant, arch):
+                    self.logger.warning(
+                        'ISO should be bootable, but buildinstall failed. Skipping for %s.%s'
+                        % (variant, arch))
+                    continue
 
                 split_iso_data = split_iso(self.compose, arch, variant, no_split=bootable,
                                            logger=self.logger)
