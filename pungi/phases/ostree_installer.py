@@ -16,9 +16,10 @@ from ..wrappers import kojiwrapper, iso, lorax, scm
 class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     name = 'ostree_installer'
 
-    def __init__(self, compose):
+    def __init__(self, compose, buildinstall_phase):
         super(OstreeInstallerPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
+        self.bi = buildinstall_phase
 
     def validate(self):
         errors = []
@@ -27,14 +28,15 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         except ValueError as exc:
             errors = exc.message.split('\n')
 
-        for variant in self.compose.get_variants():
-            for arch in variant.arches:
-                conf = util.get_arch_variant_data(self.compose.conf, self.name,
-                                                  arch, variant)
-                if conf and not variant.is_empty:
-                    errors.append('Can not generate ostree installer for %s.%s: '
-                                  'it has buildinstall running already and the '
-                                  'files would clash.' % (variant.uid, arch))
+        if not self.bi._skipped:
+            for variant in self.compose.get_variants():
+                for arch in variant.arches:
+                    conf = util.get_arch_variant_data(self.compose.conf, self.name,
+                                                      arch, variant)
+                    if conf and not variant.is_empty:
+                        errors.append('Can not generate ostree installer for %s.%s: '
+                                      'it has buildinstall running already and the '
+                                      'files would clash.' % (variant.uid, arch))
 
         if errors:
             raise ValueError('\n'.join(errors))

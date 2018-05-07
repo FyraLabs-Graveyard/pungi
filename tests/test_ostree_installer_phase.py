@@ -33,7 +33,7 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OstreeInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose, mock.Mock())
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
@@ -45,8 +45,34 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
         compose.just_phases = None
         compose.skip_phases = []
-        phase = ostree.OstreeInstallerPhase(compose)
+        phase = ostree.OstreeInstallerPhase(compose, mock.Mock())
         self.assertTrue(phase.skip())
+
+    def test_validate_conflict_with_buildinstall(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree_installer': [
+                ('^Server$', {'x86_64': mock.Mock()})
+            ],
+        })
+
+        phase = ostree.OstreeInstallerPhase(compose, mock.Mock(_skipped=False))
+        with self.assertRaises(ValueError) as ctx:
+            phase.validate()
+
+        self.assertEqual(str(ctx.exception),
+                         'Can not generate ostree installer for Server.x86_64:'
+                         ' it has buildinstall running already and the files'
+                         ' would clash.')
+
+    def test_validate_buildinstall_skipped(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree_installer': [
+                ('^Server$', {'x86_64': mock.Mock()})
+            ],
+        })
+
+        phase = ostree.OstreeInstallerPhase(compose, mock.Mock(_skipped=True))
+        phase.validate()
 
 
 class OstreeThreadTest(helpers.PungiTestCase):
