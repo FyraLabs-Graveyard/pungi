@@ -74,6 +74,17 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
         phase = ostree.OstreeInstallerPhase(compose, mock.Mock(_skipped=True))
         phase.validate()
 
+    def test_validate_overwrite_enabled(self):
+        compose = helpers.DummyCompose(self.topdir, {
+            'ostree_installer_overwrite': True,
+            'ostree_installer': [
+                ('^Server$', {'x86_64': mock.Mock()})
+            ],
+        })
+
+        phase = ostree.OstreeInstallerPhase(compose, mock.Mock(_skipped=False))
+        phase.validate()
+
 
 class OstreeThreadTest(helpers.PungiTestCase):
 

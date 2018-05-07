@@ -1341,6 +1341,15 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     ``template_repo`` needs to point to a Git repository from which to take the
     templates.
 
+**ostree_installer_overwrite** = False
+    (*bool*) -- by default if a variant including OSTree installer also creates
+    regular installer images in buildinstall phase, there will be conflicts (as
+    the files are put in the same place) and Pungi will report an error and
+    fail the compose.
+
+    With this option it is possible to opt-in for the overwriting. The
+    traditional ``boot.iso`` will be in the ``iso/`` subdirectory.
+
 
 Example config
 --------------

@@ -968,6 +968,11 @@ def make_schema():
                 "additionalProperties": False,
             }),
 
+            "ostree_installer_overwrite": {
+                "type": "boolean",
+                "default": False,
+            },
+
             "live_images": _variant_arch_mapping(
                 _one_or_list({"$ref": "#/definitions/live_image_config"})
             ),
