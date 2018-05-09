@@ -99,6 +99,15 @@ packages fit on a single image.
 
 There can also be images with source repositories. These are never bootable.
 
+ExtraIsos
+---------
+
+This phase is very similar to ``createiso``, except it combines content from
+multiple variants onto a single image. Packages, repodata and extra files from
+each configured variant are put into a subdirectory. Additional extra files can
+be put into top level of the image. The image will be bootable if the main
+variant is bootable.
+
 LiveImages, LiveMedia
 ---------------------
 

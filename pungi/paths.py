@@ -264,6 +264,18 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
+    def extra_iso_extra_files_dir(self, arch, variant, create_dir=True):
+        """
+        Examples:
+            work/x86_64/Server/extra-iso-extra-files
+        """
+        if arch == "global":
+            raise RuntimeError("Global extra files dir makes no sense.")
+        path = os.path.join(self.topdir(arch, create_dir=create_dir), variant.uid, "extra-iso-extra-files")
+        if create_dir:
+            makedirs(path)
+        return path
+
     def repo_package_list(self, arch, variant, pkg_type=None, create_dir=True):
         """
         Examples:

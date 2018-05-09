@@ -1450,6 +1450,85 @@ Example config
     }
 
 
+Extra ISOs
+==========
+
+Create an ISO image that contains packages from multiple variants. Such ISO
+always belongs to one variant, and will be stored in ISO directory of that
+variant.
+
+The ISO will be bootable if buildinstall phase runs for the parent variant. It
+will reuse boot configuration from that variant.
+
+**extra_isos**
+    (*dict*) -- a mapping from variant UID regex to a list of configuration
+    blocks.
+
+    * ``include_variants`` -- (*list*) list of variant UIDs from which content
+      should be added to the ISO; the variant of this image is added
+      automatically.
+
+    Rest of configuration keys is optional.
+
+    * ``filename`` -- (*str*) template for naming the image. In addition to the
+      regular placeholders ``filename`` is available with the name generated
+      using ``image_name_format`` option.
+
+    * ``volid`` -- (*str*) template for generating volume ID. Again ``volid``
+      placeholder can be used similarly as for file name. This can also be a
+      list of templates that will be tried sequentially until one generates a
+      volume ID that fits into 32 character limit.
+
+    * ``extra_files`` -- (*list*) a list of :ref:`scm_dict <scm_support>`
+      objects. These files will be put in the top level directory of the image.
+
+    * ``arches`` -- (*list*) a list of architectures for which to build this
+      image. By default all arches from the variant will be used. This option
+      can be used to limit them.
+
+    * ``failable_arches`` -- (*list*) a list of architectures for which the
+      image can fail to be generated and not fail the entire compose.
+
+    * ``skip_src`` -- (*bool*) allows to disable creating an image with source
+      packages.
+
+Example config
+--------------
+::
+
+    extra_isos = {
+        'Server': [{
+            # Will generate foo-DP-1.0-20180510.t.43-Server-x86_64-dvd1.iso
+            'filename': 'foo-{filename}',
+            'volid': 'foo-{arch}',
+
+            'extra_files': [{
+                'scm': 'git',
+                'repo': 'https://pagure.io/pungi.git',
+                'file': 'setup.py'
+            }],
+
+            'include_variants': ['Client']
+        }]
+    }
+    # This should create image with the following layout:
+    #  .
+    #  ├── Client
+    #  │   ├── Packages
+    #  │   │   ├── a
+    #  │   │   └── b
+    #  │   └── repodata
+    #  ├── Server
+    #  │   ├── extra_files.json     # extra file from Server
+    #  │   ├── LICENSE              # extra file from Server
+    #  │   ├── Packages
+    #  │   │   ├── a
+    #  │   │   └── b
+    #  │   └── repodata
+    #  └── setup.py
+
+
+
 Media Checksums Settings
 ========================
 

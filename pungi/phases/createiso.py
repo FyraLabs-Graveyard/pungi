@@ -395,13 +395,7 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
         if i in ti.checksums.checksums.keys():
             del ti.checksums.checksums[i]
 
-    # make a copy of isolinux/isolinux.bin, images/boot.img - they get modified when mkisofs is called
-    for i in ("isolinux/isolinux.bin", "images/boot.img"):
-        src_path = os.path.join(tree_dir, i)
-        dst_path = os.path.join(iso_dir, i)
-        if os.path.exists(src_path):
-            makedirs(os.path.dirname(dst_path))
-            shutil.copy2(src_path, dst_path)
+    copy_boot_images(tree_dir, iso_dir)
 
     if disc_count > 1:
         # remove repodata/repomd.xml from checksums, create a new one later
@@ -454,3 +448,15 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     gp = "%s-graft-points" % iso_dir
     iso.write_graft_points(gp, data, exclude=["*/lost+found", "*/boot.iso"])
     return gp
+
+
+def copy_boot_images(src, dest):
+    """When mkisofs is called it tries to modify isolinux/isolinux.bin and
+    images/boot.img. Therefore we need to make copies of them.
+    """
+    for i in ("isolinux/isolinux.bin", "images/boot.img"):
+        src_path = os.path.join(src, i)
+        dst_path = os.path.join(dest, i)
+        if os.path.exists(src_path):
+            makedirs(os.path.dirname(dst_path))
+            shutil.copy2(src_path, dst_path)

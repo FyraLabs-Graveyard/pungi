@@ -107,6 +107,7 @@ def run(config, topdir, has_old):
         pungi.phases.OSTreePhase(compose),
         pungi.phases.ProductimgPhase(compose, pkgset_phase),
         pungi.phases.CreateisoPhase(compose, buildinstall_phase),
+        pungi.phases.ExtraIsosPhase(compose),
         pungi.phases.LiveImagesPhase(compose),
         pungi.phases.LiveMediaPhase(compose),
         pungi.phases.ImageBuildPhase(compose),

@@ -863,6 +863,47 @@ def make_schema():
                 "$ref": "#/definitions/list_of_strings"
             }),
 
+            "extra_isos": {
+                "type": "object",
+                "patternProperties": {
+                    # Warning: this pattern is a variant uid regex, but the
+                    # format does not let us validate it as there is no regular
+                    # expression to describe all regular expressions.
+                    ".+": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "include_variants": {"$ref": "#/definitions/strings"},
+                                "extra_files": _one_or_list({
+                                    "type": "object",
+                                    "properties": {
+                                        "scm": {"type": "string"},
+                                        "repo": {"type": "string"},
+                                        "branch": {"$ref": "#/definitions/optional_string"},
+                                        "file": {"$ref": "#/definitions/strings"},
+                                        "target": {"type": "string"},
+                                    },
+                                    "additionalProperties": False,
+                                }),
+                                "filename": {"type": "string"},
+                                "volid": {"$ref": "#/definitions/strings"},
+                                "arches": {"$ref": "#/definitions/list_of_strings"},
+                                "failable_arches": {
+                                    "$ref": "#/definitions/list_of_strings"
+                                },
+                                "skip_src": {
+                                    "type": "boolean",
+                                    "default": False,
+                                },
+                            },
+                            "required": ["include_variants"],
+                            "additionalProperties": False
+                        }
+                    }
+                }
+            },
+
             "live_media": {
                 "type": "object",
                 "patternProperties": {

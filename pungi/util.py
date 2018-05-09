@@ -330,7 +330,8 @@ def _apply_substitutions(compose, volid):
     return volid
 
 
-def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False):
+def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False,
+              formats=None, **kwargs):
     """Get ISO volume ID for arch and variant"""
     if variant and variant.type == "addon":
         # addons are part of parent variant media
@@ -359,9 +360,10 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
         all_products = layered_products + products
     else:
         all_products = products
+    formats = formats or all_products
 
     tried = set()
-    for i in all_products:
+    for i in formats:
         if not variant_uid and "%(variant)s" in i:
             continue
         try:
@@ -372,7 +374,8 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
                                      arch=arch,
                                      disc_type=disc_type or '',
                                      base_product_short=base_product_short,
-                                     base_product_version=base_product_version)
+                                     base_product_version=base_product_version,
+                                     **kwargs)
             volid = (i % args).format(**args)
         except KeyError as err:
             raise RuntimeError('Failed to create volume id: unknown format element: %s' % err)
