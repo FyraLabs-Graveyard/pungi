@@ -128,7 +128,12 @@ def write_variant_comps(compose, arch, variant):
         unmatched = comps.filter_groups(variant.groups)
         for grp in unmatched:
             compose.log_warning(UNMATCHED_GROUP_MSG % (variant.uid, arch, grp))
-    if compose.conf["comps_filter_environments"]:
+    contains_all = not variant.groups and not variant.environments
+    if compose.conf["comps_filter_environments"] and not contains_all:
+        # We only want to filter environments if it's enabled by configuration
+        # and it's a variant with some groups and environements defined. If
+        # there are none, all packages should go in there and also all
+        # environments should be preserved.
         comps.filter_environments(variant.environments)
     comps.write_comps()
 
