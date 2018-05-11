@@ -160,11 +160,6 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
 
         self.pool.start()
 
-    def stop(self, *args, **kwargs):
-        PhaseBase.stop(self, *args, **kwargs)
-        if self.skip():
-            return
-
 
 class CreateIsoThread(WorkerThread):
     def fail(self, compose, cmd, variant, arch):
