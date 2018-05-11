@@ -275,7 +275,7 @@ class Compose(kobo.log.LoggingBase):
                       f, indent=4)
 
     def write_status(self, stat_msg):
-        if stat_msg not in ("STARTED", "FINISHED", "DOOMED"):
+        if stat_msg not in ("STARTED", "FINISHED", "DOOMED", "TERMINATED"):
             self.log_warning("Writing nonstandard compose status: %s" % stat_msg)
         old_status = self.get_status()
         if stat_msg == old_status:

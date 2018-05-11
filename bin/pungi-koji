@@ -11,6 +11,8 @@ import locale
 import datetime
 import getpass
 import socket
+import signal
+import traceback
 from six.moves import shlex_quote
 import json
 
@@ -453,7 +455,23 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.log_info("Compose finished: %s" % compose.topdir)
 
 
+def sigterm_handler(signum, frame):
+    if COMPOSE:
+        COMPOSE.log_error("Compose run failed: signal %s" % signum)
+        COMPOSE.log_error("Traceback:\n%s"
+                          % '\n'.join(traceback.format_stack(frame)))
+        COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)
+        COMPOSE.write_status("TERMINATED")
+    else:
+        print("Signal %s captured" % signum)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(1)
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     try:
         main()
     except (Exception, KeyboardInterrupt) as ex:
