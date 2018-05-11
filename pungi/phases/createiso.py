@@ -201,89 +201,15 @@ class CreateIsoThread(WorkerThread):
             arch, variant, os.path.basename(cmd["iso_path"]))
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        if runroot:
-            # run in a koji build root
-            packages = ["coreutils", "genisoimage", "isomd5sum"]
-            if compose.conf['create_jigdo']:
-                packages.append('jigdo')
-            extra_packages = {
-                'lorax': ['lorax'],
-                'buildinstall': ['anaconda'],
-            }
-            if bootable:
-                packages.extend(extra_packages[compose.conf["buildinstall_method"]])
-
-            runroot_channel = compose.conf.get("runroot_channel")
-            runroot_tag = compose.conf["runroot_tag"]
-
-            # get info about build arches in buildroot_tag
-            koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-            koji_proxy = koji_wrapper.koji_proxy
-            tag_info = koji_proxy.getTag(runroot_tag)
-            if not tag_info:
-                raise RuntimeError('Tag "%s" does not exist.' % runroot_tag)
-            tag_arches = tag_info["arches"].split(" ")
-
-            build_arch = arch
-            if not bootable:
-                if "x86_64" in tag_arches:
-                    # assign non-bootable images to x86_64 if possible
-                    build_arch = "x86_64"
-                elif build_arch == "src":
-                    # pick random arch from available runroot tag arches
-                    build_arch = random.choice(tag_arches)
-
-            koji_cmd = koji_wrapper.get_runroot_cmd(
-                runroot_tag, build_arch, cmd["cmd"],
-                channel=runroot_channel, use_shell=True, task_id=True,
-                packages=packages, mounts=mounts,
-                weight=compose.conf['runroot_weights'].get('createiso')
-            )
-
-            # avoid race conditions?
-            # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
-            time.sleep(num * 3)
-
-            output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-            if output["retcode"] != 0:
-                self.fail(compose, cmd, variant, arch)
-                raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                                   % (output["task_id"], log_file))
-
-        else:
-            # run locally
-            try:
-                run(cmd["cmd"], show_cmd=True, logfile=log_file)
-            except:
-                self.fail(compose, cmd, variant, arch)
-                raise
-
-        img = Image(compose.im)
-        img.path = cmd["iso_path"].replace(compose.paths.compose.topdir(), '').lstrip('/')
-        img.mtime = get_mtime(cmd["iso_path"])
-        img.size = get_file_size(cmd["iso_path"])
-        img.arch = arch
-        # XXX: HARDCODED
-        img.type = "dvd"
-        img.format = "iso"
-        img.disc_number = cmd["disc_num"]
-        img.disc_count = cmd["disc_count"]
-        img.bootable = cmd["bootable"]
-        img.subvariant = variant.uid
-        img.implant_md5 = iso.get_implanted_md5(cmd["iso_path"], logger=compose._logger)
-        setattr(img, 'can_fail', compose.can_fail(variant, arch, 'iso'))
-        setattr(img, 'deliverable', 'iso')
         try:
-            img.volume_id = iso.get_volume_id(cmd["iso_path"])
-        except RuntimeError:
-            pass
-        if arch == "src":
-            for variant_arch in variant.arches:
-                compose.im.add(variant.uid, variant_arch, img)
-        else:
-            compose.im.add(variant.uid, arch, img)
-        # TODO: supported_iso_bit
-        # add: boot.iso
+            run_createiso_command(runroot, num, compose, bootable, arch,
+                                  cmd['cmd'], mounts, log_file)
+        except Exception:
+            self.fail(compose, cmd, variant, arch)
+            raise
+
+        add_iso_to_metadata(compose, variant, arch, cmd["iso_path"],
+                            cmd["bootable"], cmd["disc_num"], cmd["disc_count"])
 
         self.pool.log_info("[DONE ] %s" % msg)
         if compose.notifier:
@@ -291,6 +217,89 @@ class CreateIsoThread(WorkerThread):
                                   file=cmd['iso_path'],
                                   arch=arch,
                                   variant=str(variant))
+
+
+def add_iso_to_metadata(compose, variant, arch, iso_path, bootable, disc_num, disc_count):
+    img = Image(compose.im)
+    img.path = iso_path.replace(compose.paths.compose.topdir(), '').lstrip('/')
+    img.mtime = get_mtime(iso_path)
+    img.size = get_file_size(iso_path)
+    img.arch = arch
+    # XXX: HARDCODED
+    img.type = "dvd"
+    img.format = "iso"
+    img.disc_number = disc_num
+    img.disc_count = disc_count
+    img.bootable = bootable
+    img.subvariant = variant.uid
+    img.implant_md5 = iso.get_implanted_md5(iso_path, logger=compose._logger)
+    setattr(img, 'can_fail', compose.can_fail(variant, arch, 'iso'))
+    setattr(img, 'deliverable', 'iso')
+    try:
+        img.volume_id = iso.get_volume_id(iso_path)
+    except RuntimeError:
+        pass
+    if arch == "src":
+        for variant_arch in variant.arches:
+            compose.im.add(variant.uid, variant_arch, img)
+    else:
+        compose.im.add(variant.uid, arch, img)
+
+
+def run_createiso_command(runroot, num, compose, bootable, arch, cmd, mounts,
+                          log_file, with_jigdo=True):
+    if runroot:
+        # run in a koji build root
+        packages = ["coreutils", "genisoimage", "isomd5sum"]
+        if with_jigdo and compose.conf['create_jigdo']:
+            packages.append('jigdo')
+        if bootable:
+            extra_packages = {
+                'lorax': ['lorax'],
+                'buildinstall': ['anaconda'],
+            }
+            packages.extend(extra_packages[compose.conf["buildinstall_method"]])
+
+        runroot_channel = compose.conf.get("runroot_channel")
+        runroot_tag = compose.conf["runroot_tag"]
+
+        # get info about build arches in buildroot_tag
+        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+        koji_proxy = koji_wrapper.koji_proxy
+        tag_info = koji_proxy.getTag(runroot_tag)
+        if not tag_info:
+            raise RuntimeError('Tag "%s" does not exist.' % runroot_tag)
+        tag_arches = tag_info["arches"].split(" ")
+
+        build_arch = arch
+        if not bootable:
+            if "x86_64" in tag_arches:
+                # assign non-bootable images to x86_64 if possible
+                build_arch = "x86_64"
+            elif build_arch == "src":
+                # pick random arch from available runroot tag arches
+                build_arch = random.choice(tag_arches)
+
+        koji_cmd = koji_wrapper.get_runroot_cmd(
+            runroot_tag, build_arch, cmd,
+            channel=runroot_channel, use_shell=True, task_id=True,
+            packages=packages, mounts=mounts,
+            weight=compose.conf['runroot_weights'].get('createiso')
+        )
+
+        # This should avoid a possible race condition with multiple processes
+        # trying to get a kerberos ticket at the same time.
+        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        time.sleep(num * 3)
+
+        output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
+        if output["retcode"] != 0:
+            raise RuntimeError("Runroot task failed: %s. See %s for more details."
+                               % (output["task_id"], log_file))
+
+    else:
+        # run locally
+        run(cmd, show_cmd=True, logfile=log_file)
 
 
 def split_iso(compose, arch, variant, no_split=False, logger=None):
