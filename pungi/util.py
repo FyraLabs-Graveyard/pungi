@@ -375,7 +375,7 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False)
                                      base_product_version=base_product_version)
             volid = (i % args).format(**args)
         except KeyError as err:
-            raise RuntimeError('Failed to create volume id: unknown format element: %s' % err.message)
+            raise RuntimeError('Failed to create volume id: unknown format element: %s' % err)
         volid = _apply_substitutions(compose, volid)
         if len(volid) <= 32:
             break

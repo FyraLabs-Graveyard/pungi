@@ -54,10 +54,6 @@ class CreaterepoPhase(PhaseBase):
 
     def validate(self):
         errors = []
-        try:
-            super(CreaterepoPhase, self).validate()
-        except ValueError as exc:
-            errors = exc.message.split('\n')
 
         if not self.compose.old_composes and self.compose.conf.get('createrepo_deltas'):
             errors.append('Can not generate deltas without old compose')

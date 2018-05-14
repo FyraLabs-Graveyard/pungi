@@ -333,7 +333,7 @@ class Compose(kobo.log.LoggingBase):
         try:
             return (format % args).format(**args)
         except KeyError as err:
-            raise RuntimeError('Failed to create image name: unknown format element: %s' % err.message)
+            raise RuntimeError('Failed to create image name: unknown format element: %s' % err)
 
     def can_fail(self, variant, arch, deliverable):
         """Figure out if deliverable can fail on variant.arch.

@@ -35,10 +35,6 @@ class ImageChecksumPhase(PhaseBase):
 
     def validate(self):
         errors = []
-        try:
-            super(ImageChecksumPhase, self).validate()
-        except ValueError as exc:
-            errors = exc.message.split('\n')
 
         if self.one_file and len(self.checksums) != 1:
             errors.append(MULTIPLE_CHECKSUMS_ERROR)

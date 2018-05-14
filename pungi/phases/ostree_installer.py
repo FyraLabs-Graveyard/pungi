@@ -23,10 +23,6 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
 
     def validate(self):
         errors = []
-        try:
-            super(OstreeInstallerPhase, self).validate()
-        except ValueError as exc:
-            errors = exc.message.split('\n')
 
         if not self.compose.conf['ostree_installer_overwrite'] and not self.bi._skipped:
             for variant in self.compose.get_variants():

@@ -69,10 +69,6 @@ class GatherPhase(PhaseBase):
 
     def validate(self):
         errors = []
-        try:
-            super(GatherPhase, self).validate()
-        except ValueError as exc:
-            errors = exc.message.split('\n')
 
         if not Modulemd:
             # Modules are not supported, check if we need them
@@ -306,7 +302,7 @@ def _prepare_variant_as_lookaside(compose):
         try:
             graph.add_edge(variant, lookaside_variant)
         except ValueError as e:
-            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e.message)
+            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e)
 
     variant_processing_order = reversed(graph.prune_graph())
     return list(variant_processing_order)
