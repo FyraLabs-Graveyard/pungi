@@ -3,24 +3,26 @@
 
 from __future__ import print_function
 
-import os
-import sys
 import argparse
-import logging
-import locale
 import datetime
 import getpass
+import json
+import locale
+import logging
+import os
 import socket
 import signal
+import sys
 import traceback
+
 from six.moves import shlex_quote
-import json
 
 here = sys.path[0]
 if here != '/usr/bin':
     # Git checkout
     sys.path[0] = os.path.dirname(here)
 
+from pungi.phases import PHASES_NAMES
 from pungi import get_full_version
 
 
@@ -84,6 +86,7 @@ def main():
     parser.add_argument(
         "--skip-phase",
         metavar="PHASE",
+        choices=PHASES_NAMES,
         action="append",
         default=[],
         help="skip a compose phase",
@@ -91,6 +94,7 @@ def main():
     parser.add_argument(
         "--just-phase",
         metavar="PHASE",
+        choices=PHASES_NAMES,
         action="append",
         default=[],
         help="run only a specified compose phase",

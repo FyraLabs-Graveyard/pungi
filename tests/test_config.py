@@ -428,5 +428,37 @@ class VariantAsLookasideTestCase(ConfigTestCase):
         self.assertValidation(cfg)
 
 
+class SkipPhasesTestCase(ConfigTestCase):
+    def test_empty(self):
+        skip_phases = []
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
+        self.assertValidation(cfg)
+
+    def test_basic(self):
+        skip_phases = [
+            "buildinstall",
+            "gather",
+        ]
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
+        self.assertValidation(cfg)
+
+    def test_bad_phase_name(self):
+        skip_phases = [
+            "gather",
+            "non-existing-phase_name",
+        ]
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
+        self.assertNotEqual(checks.validate(cfg), ([], []))
+
+
 if __name__ == '__main__':
     unittest.main()

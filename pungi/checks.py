@@ -37,15 +37,17 @@ When a new config option is added, the schema must be updated (see the
 from __future__ import print_function
 
 import contextlib
+import multiprocessing
 import os.path
 import platform
 import re
+
 import jsonschema
 import six
 from kobo.shortcuts import force_list
+from pungi.phases import PHASES_NAMES
 from productmd.common import RELEASE_TYPES
 from productmd.composeinfo import COMPOSE_TYPES
-import multiprocessing
 
 from . import util
 
@@ -760,7 +762,11 @@ def make_schema():
 
             "paths_module": {"type": "string"},
             "skip_phases": {
-                "$ref": "#/definitions/list_of_strings",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": PHASES_NAMES,
+                },
                 "default": [],
             },
 

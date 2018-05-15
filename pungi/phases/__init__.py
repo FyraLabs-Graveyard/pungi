@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+import sys
 
 # phases in runtime order
 from .init import InitPhase  # noqa
@@ -32,3 +33,8 @@ from .livemedia_phase import LiveMediaPhase  # noqa
 from .ostree import OSTreePhase  # noqa
 from .ostree_installer import OstreeInstallerPhase  # noqa
 from .osbs import OSBSPhase  # noqa
+from .phases_metadata import gather_phases_metadata  # noqa
+
+
+this_module = sys.modules[__name__]
+PHASES_NAMES = gather_phases_metadata(this_module)
