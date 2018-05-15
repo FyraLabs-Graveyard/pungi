@@ -103,8 +103,7 @@ class OstreeInstallerThread(WorkerThread):
         os_path = compose.paths.compose.os_tree(arch, variant)
         boot_iso = os.path.join(output_dir, 'images', 'boot.iso')
 
-        shortcuts.run('cp -rv %s/* %s/' %
-                      (shlex_quote(output_dir), shlex_quote(os_path)))
+        util.copy_all(output_dir, os_path)
         try:
             os.link(boot_iso, iso_path)
         except OSError:
