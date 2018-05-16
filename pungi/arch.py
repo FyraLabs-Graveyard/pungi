@@ -17,7 +17,7 @@ from .arch_utils import arches as ALL_ARCHES
 from .arch_utils import getBaseArch, getMultiArchInfo, getArchList
 
 TREE_ARCH_YUM_ARCH_MAP = {
-    "i386": "athlon",
+    "i386": "i686",
     "ppc64": "ppc64p7",
     "sparc": "sparc64v",
     "arm": "armv7l",

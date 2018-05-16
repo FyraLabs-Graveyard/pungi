@@ -17,13 +17,13 @@ class TestArch(unittest.TestCase):
 
     def test_i386(self):
         arches = get_valid_arches("i386")
-        self.assertEqual(arches, ['athlon', 'i686', 'i586', 'i486', 'i386', 'noarch'])
+        self.assertEqual(arches, ['i686', 'i586', 'i486', 'i386', 'noarch'])
 
         arches = get_valid_arches("i386", multilib=False)
-        self.assertEqual(arches, ['athlon', 'i686', 'i586', 'i486', 'i386', 'noarch'])
+        self.assertEqual(arches, ['i686', 'i586', 'i486', 'i386', 'noarch'])
 
         arches = get_valid_arches("i386", add_src=True)
-        self.assertEqual(arches, ['athlon', 'i686', 'i586', 'i486', 'i386', 'noarch', 'src'])
+        self.assertEqual(arches, ['i686', 'i586', 'i486', 'i386', 'noarch', 'src'])
 
     def test_x86_64(self):
         arches = get_valid_arches("x86_64")
