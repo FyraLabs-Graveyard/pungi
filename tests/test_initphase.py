@@ -142,9 +142,27 @@ class TestCreateCompsRepo(PungiTestCase):
                          [mock.call(['createrepo_c', self.topdir + '/work/x86_64/comps_repo',
                                      '--outputdir=%s/work/x86_64/comps_repo' % self.topdir,
                                      '--groupfile=%s/work/x86_64/comps/comps-x86_64.xml' % self.topdir,
-                                     '--update', '--skip-stat', '--database', '--checksum=sha256',
+                                     '--update', '--no-database', '--checksum=sha256',
                                      '--unique-md-filenames'],
                                     logfile=self.topdir + '/logs/x86_64/comps_repo.x86_64.log',
+                                    show_cmd=True)])
+
+    @mock.patch('pungi.phases.init.run')
+    def test_run_with_variant(self, run):
+        compose = DummyCompose(self.topdir, {
+            'createrepo_checksum': 'sha256',
+        })
+        compose.DEBUG = False
+
+        init.create_comps_repo(compose, 'x86_64', compose.variants['Server'])
+
+        self.assertEqual(run.mock_calls,
+                         [mock.call(['createrepo_c', self.topdir + '/work/x86_64/comps_repo_Server',
+                                     '--outputdir=%s/work/x86_64/comps_repo_Server' % self.topdir,
+                                     '--groupfile=%s/work/x86_64/comps/comps-Server.x86_64.xml' % self.topdir,
+                                     '--update', '--no-database', '--checksum=sha256',
+                                     '--unique-md-filenames'],
+                                    logfile=self.topdir + '/logs/x86_64/comps_repo-Server.x86_64.log',
                                     show_cmd=True)])
 
     @mock.patch('pungi.phases.init.run')

@@ -149,10 +149,12 @@ def create_comps_repo(compose, arch, variant):
         compose.log_warning("[SKIP ] %s" % msg)
     else:
         compose.log_info("[BEGIN] %s" % msg)
-        cmd = repo.get_createrepo_cmd(comps_repo, update=True, database=True, skip_stat=True,
+        cmd = repo.get_createrepo_cmd(comps_repo, database=False,
                                       outputdir=comps_repo, groupfile=comps_path,
                                       checksum=createrepo_checksum)
-        run(cmd, logfile=compose.paths.log.log_file(arch, "comps_repo"), show_cmd=True)
+        logfile = 'comps_repo-%s' % variant if variant else 'comps_repo'
+        run(cmd, logfile=compose.paths.log.log_file(arch, logfile),
+            show_cmd=True)
         compose.log_info("[DONE ] %s" % msg)
 
 
