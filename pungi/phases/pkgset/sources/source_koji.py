@@ -124,7 +124,7 @@ def variant_dict_from_str(compose, module_str):
 
 
 @retry(wait_on=IOError)
-def get_module(compose, session, module_info_str):
+def get_pdc_modules(compose, session, module_info_str):
     """
     :param session : PDCClient instance
     :param module_info_str: pdc variant_dict, str, mmd or module dict
@@ -150,22 +150,19 @@ def get_module(compose, session, module_info_str):
     if not retval:
         raise ValueError("Failed to find module in PDC %r" % query)
 
-    module = None
-    # If we specify 'version', we expect only single module to be
-    # returned, but otherwise we have to pick the one with the highest
-    # release ourselves.
-    if 'version' in query:
-        if len(retval) > 1:
-            raise RuntimeError("More than one module returned from PDC for %s: %s"
-                               % (module_info_str, retval))
-        module = retval[0]
-    else:
-        module = retval[0]
-        for m in retval:
-            if int(m['version']) > int(module['version']):
-                module = m
+    modules = []
 
-    return module
+    # If there is version provided, then all modules with that version will go in.
+    # In case version is missing, we will find the latest version and include all modules with that version.
+    if 'version' in query:
+        modules = retval  # all found modules
+    else:
+        # select all found modules with latest version
+        sorted_retval = sorted(retval, key=lambda item: int(item['version']), reverse=True)
+        latest_version = int(sorted_retval[0]['version'])
+        modules = [module for module in sorted_retval if latest_version == int(module['version'])]
+
+    return modules
 
 
 class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
@@ -267,25 +264,26 @@ def _get_modules_from_pdc(compose, session, variant, variant_tags):
     # Find out all modules in every variant and add their Koji tags
     # to variant and variant_tags list.
     for module in variant.get_modules():
-        pdc_module = get_module(compose, session, module["name"])
+        pdc_modules = get_pdc_modules(compose, session, module["name"])
+        for pdc_module in pdc_modules:
 
-        mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])
-        mmd.upgrade()
-        _add_module_to_variant(variant, mmd, pdc_module["rpms"])
-        _log_modulemd(compose, variant, mmd)
+            mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])
+            mmd.upgrade()
+            _add_module_to_variant(variant, mmd, pdc_module["rpms"])
+            _log_modulemd(compose, variant, mmd)
 
-        tag = pdc_module["koji_tag"]
-        uid = ':'.join([pdc_module['name'], pdc_module['stream'],
-                        pdc_module['version'], pdc_module['context']])
-        variant_tags[variant].append(tag)
+            tag = pdc_module["koji_tag"]
+            uid = ':'.join([pdc_module['name'], pdc_module['stream'],
+                            pdc_module['version'], pdc_module['context']])
+            variant_tags[variant].append(tag)
 
-        # Store mapping module-uid --> koji_tag into variant.
-        # This is needed in createrepo phase where metadata is exposed by producmd
-        variant.module_uid_to_koji_tag[uid] = tag
+            # Store mapping module-uid --> koji_tag into variant.
+            # This is needed in createrepo phase where metadata is exposed by producmd
+            variant.module_uid_to_koji_tag[uid] = tag
 
-        module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
-            variant=variant, tag=tag, module=module["name"])
-        compose.log_info("%s" % module_msg)
+            module_msg = "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' (as a result of querying module '{module}')".format(
+                uid=uid, variant=variant, tag=tag, module=module["name"])
+            compose.log_info("%s" % module_msg)
 
 
 def _get_modules_from_koji_tags(

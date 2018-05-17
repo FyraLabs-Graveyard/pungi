@@ -126,13 +126,13 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     @unittest.skipUnless(Modulemd is not None, 'Modulemd not available')   # noqa
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_module')
+    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_modules')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_client_session')
-    def test_pdc_log(self, get_pdc_client_session, get_module, KojiPackageSet, pickle_dumps):
+    def test_pdc_log(self, get_pdc_client_session, get_pdc_modules, KojiPackageSet, pickle_dumps):
 
         pickle_dumps.return_value = b'DATA'
 
-        modulemd = """
+        modulemd1 = """
 document: modulemd
 version: 2
 data:
@@ -146,21 +146,48 @@ data:
             - MIT
 """
 
-        get_module.return_value = {
-            'abc': 'def',
-            'modulemd': modulemd,
-            'rpms': [],
-            'koji_tag': 'taggg',
-            'uid': 'modulenamefoo:rhel:1:00000000',
-            'name': 'modulenamefoo',
-            'stream': 'rhel',
-            'version': '1',
-            'context': '00000000'
-        }
+        modulemd2 = """
+document: modulemd
+version: 2
+data:
+    name: foo
+    stream: bar
+    version: 4
+    summary: foo
+    description: foo
+    license:
+        module:
+            - MIT
+"""
+
+        get_pdc_modules.return_value = [
+            {
+                'abc': 'def',
+                'modulemd': modulemd1,
+                'rpms': [],
+                'koji_tag': 'taggg',
+                'uid': 'modulenamefoo:rhel:1:00000000',
+                'name': 'modulenamefoo',
+                'stream': 'rhel',
+                'version': '1',
+                'context': '00000000'
+            },
+            {
+                'abc': 'def',
+                'modulemd': modulemd2,
+                'rpms': [],
+                'koji_tag': 'taggg',
+                'uid': 'modulenamefoo:rhel:4:00000000',
+                'name': 'modulenamefoo',
+                'stream': 'rhel',
+                'version': '4',
+                'context': '00000000'
+            },
+        ]
         for name, variant in self.compose.variants.items():
             variant.get_modules = mock.MagicMock()
             if name == 'Server':
-                variant.modules = [{'name': 'a'}]
+                variant.modules = [{'name': 'modulenamefoo'}]
                 variant.get_modules.return_value = variant.modules
 
         source_koji.populate_global_pkgset(
