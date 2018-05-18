@@ -412,6 +412,12 @@ Options
 **createrepo_num_workers**
     (*int*) -- how many concurrent ``createrepo`` workers to run. Value defaults to 3.
 
+**createrepo_database**
+    (*bool*) -- whether to create SQLite database as part of the repodata. This
+    is only useful as an optimization for clients using Yum to consume to the
+    repo. Default value depends on gather backend. For DNF it's turned off, for
+    Yum the default is ``True``.
+
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
     directory with certificates ``<variant_uid>-<arch>-*.pem``. This

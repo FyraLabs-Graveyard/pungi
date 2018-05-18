@@ -627,6 +627,9 @@ def make_schema():
                 "type": "number",
                 "default": 3,
             },
+            "createrepo_database": {
+                "type": "boolean",
+            },
             "repoclosure_strictness": _variant_arch_mapping({
                 "type": "string",
                 "default": "lenient",

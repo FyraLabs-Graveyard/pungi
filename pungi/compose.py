@@ -201,6 +201,16 @@ class Compose(kobo.log.LoggingBase):
     def config_dir(self):
         return os.path.dirname(self.conf._open_file or "")
 
+    @property
+    def should_create_yum_database(self):
+        """Explicit configuration trumps all. Otherwise check gather backend
+        and only create it for Yum.
+        """
+        config = self.conf.get('createrepo_database')
+        if config is not None:
+            return config
+        return self.conf['gather_backend'] == 'yum'
+
     def read_variants(self):
         # TODO: move to phases/init ?
         variants_file = self.paths.work.variants_file(arch="global")

@@ -163,7 +163,9 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
-    cmd = repo.get_createrepo_cmd(repo_dir, update=True, database=True, skip_stat=True,
+    cmd = repo.get_createrepo_cmd(repo_dir, update=True,
+                                  database=compose.should_create_yum_database,
+                                  skip_stat=True,
                                   pkglist=file_list, outputdir=repo_dir,
                                   workers=compose.conf["createrepo_num_workers"],
                                   groupfile=comps_path, update_md_path=repo_dir_arch,
