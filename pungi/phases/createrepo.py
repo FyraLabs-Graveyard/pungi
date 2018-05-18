@@ -35,6 +35,7 @@ from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
 from ..util import find_old_compose, temp_dir, get_arch_variant_data
 from pungi import Modulemd
+from pungi.arch import tree_arch_to_yum_arch
 
 import productmd.rpms
 import productmd.modules
@@ -194,6 +195,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
             repo_mmd = Modulemd.Module.new_from_string(mmd.dumps())
+            repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
             artifacts = repo_mmd.get_rpm_artifacts()
 
             # Modules without RPMs are also valid.
