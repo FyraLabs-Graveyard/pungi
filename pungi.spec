@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.24
+Version:        4.1.25
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -104,6 +104,34 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue May 22 2018 Ondřej Nosek <onosek@redhat.com> - 4.1.25-1
+- comps-wrapper: Make tests pass on EL6 (lsedlar)
+- pkgset: Add option to ignore noarch in ExclusiveArch (lsedlar)
+- Handling multiple modules with the same NSV - PDC (onosek)
+- createrepo: Allow disabling SQLite database (lsedlar)
+- init: Drop database from comps repo (lsedlar)
+- createrepo: Add module arch to metadata (lsedlar)
+- arch: Drop mapping ppc64 -> ppc64p7 (lsedlar)
+- arch: Make i386 map to i686 instead of athlon (lsedlar)
+- ostree-installer: Use Python function to copy (lsedlar)
+- Add a phase for creating extra ISOs (lsedlar)
+- Stop using .message attribute on exceptions (lsedlar)
+- Validation of parameter skip_phases (onosek)
+- Capture sigterm and mark the compose as DOOMED (puiterwijk)
+- createiso: Remove useless method (lsedlar)
+- createiso: Refactor code into smaller functions (lsedlar)
+- init: Stop filtering comps environments all the time (lsedlar)
+- Make wait-for-signed-ostree repeat the fedmsg in case the signer crashed
+  (puiterwijk)
+- arch: Remove mocks in tests (lsedlar)
+- ostree-installer: Allow overwriting buildinstall (lsedlar)
+- ostree-installer: Work with skipped buildinstall (lsedlar)
+- createrepo: Use less verbose logs (lsedlar)
+- pkgset: Create global repo in parallel to merging pkgsets (lsedlar)
+- ostree-installer: Copy files without owner (lsedlar)
+- createiso: Skip if buildinstall fails (lsedlar)
+- Update tests for libmodulemd 1.4.0 (lsedlar)
+
 * Wed May 02 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.24-1
 - koji-wrapper: Log failed subtasks (lsedlar)
 - Update compose status when config validation fails (lsedlar)
