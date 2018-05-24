@@ -24,7 +24,7 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     def validate(self):
         errors = []
 
-        if not self.compose.conf['ostree_installer_overwrite'] and not self.bi._skipped:
+        if not self.compose.conf['ostree_installer_overwrite'] and not self.bi.skip():
             for variant in self.compose.get_variants():
                 for arch in variant.arches:
                     conf = util.get_arch_variant_data(self.compose.conf, self.name,

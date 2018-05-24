@@ -55,7 +55,9 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
             ],
         })
 
-        phase = ostree.OstreeInstallerPhase(compose, mock.Mock(_skipped=False))
+        skipmock = mock.Mock()
+        skipmock.skip.return_value = False
+        phase = ostree.OstreeInstallerPhase(compose, skipmock)
         with self.assertRaises(ValueError) as ctx:
             phase.validate()
 

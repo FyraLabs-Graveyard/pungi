@@ -48,12 +48,16 @@ class BuildinstallPhase(PhaseBase):
         self.buildinstall_method = self.compose.conf.get("buildinstall_method")
         self.used_lorax = self.buildinstall_method == 'lorax'
 
+        self.warned_skipped = False
+
     def skip(self):
         if PhaseBase.skip(self):
             return True
         if not self.compose.conf.get("bootable"):
-            msg = "Not a bootable product. Skipping buildinstall."
-            self.compose.log_debug(msg)
+            if not self.warned_skipped:
+                msg = "Not a bootable product. Skipping buildinstall."
+                self.compose.log_debug(msg)
+                self.warned_skipped = True
             return True
         return False
 
