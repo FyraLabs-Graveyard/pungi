@@ -229,8 +229,9 @@ def main():
         sys.exit(1)
     pungi.checks.check_umask(logger)
     errors, warnings = pungi.checks.validate(conf)
-    for warning in warnings:
-        print(warning, file=sys.stderr)
+    if not opts.quiet:
+        for warning in warnings:
+            print(warning, file=sys.stderr)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)
