@@ -135,6 +135,7 @@ METADATA = {
         'name': 'my-name',
         'version': '1.0',
         'release': '1',
+        'nvr': 'my-name-1.0-1',
         'creation_time': BUILD_INFO['creation_time'],
         'filename': ARCHIVES[0]['filename'],
         'size': ARCHIVES[0]['size'],

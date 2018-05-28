@@ -102,6 +102,7 @@ class OSBSThread(WorkerThread):
                 'name': buildinfo['name'],
                 'version': buildinfo['version'],
                 'release': buildinfo['release'],
+                'nvr': '%(name)s-%(version)s-%(release)s' % buildinfo,
                 'creation_time': buildinfo['creation_time'],
             })
             for archive in archives:
