@@ -66,7 +66,9 @@ class KojiWrapper(object):
     def _get_cmd(self, *args):
         return ["koji", "--profile=%s" % self.profile] + list(args)
 
-    def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True, channel=None, packages=None, mounts=None, weight=None, task_id=True, new_chroot=False):
+    def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True,
+                        channel=None, packages=None, mounts=None, weight=None,
+                        task_id=True, new_chroot=False, destdir=None):
         cmd = self._get_cmd("runroot")
 
         if quiet:
@@ -109,6 +111,9 @@ class KojiWrapper(object):
 
         # HACK: remove rpmdb and yum cache
         command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
+
+        if destdir:
+            command += "; chmod a+r %s" % shlex_quote(destdir)
         cmd.append(command)
 
         return cmd

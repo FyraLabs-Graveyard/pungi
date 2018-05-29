@@ -416,6 +416,24 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                                '--task-id', '--weight=1000', '--package=some_other_package',
                                '--package=lorax', '--mount=/tmp'])
 
+    def test_with_destdir(self):
+        cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
+                                        quiet=True, channel='chan',
+                                        packages=['lorax', 'some_other_package'],
+                                        mounts=['/tmp'], weight=1000, destdir="/output dir")
+        self.assertEqual(len(cmd), 14)
+        self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
+        self.assertEqual(cmd[-3], 'tgt')
+        self.assertEqual(cmd[-2], 's390x')
+        self.assertEqual(
+            cmd[-1],
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&'; chmod a+r '/output dir'"
+        )
+        self.assertItemsEqual(cmd[3:-3],
+                              ['--channel-override=chan', '--quiet', '--use-shell',
+                               '--task-id', '--weight=1000', '--package=some_other_package',
+                               '--package=lorax', '--mount=/tmp'])
+
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_no_task_id(self, run):
         cmd = ['koji', 'runroot']
