@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-
+import argparse
 import fnmatch
+import json
 import subprocess
 import os
 import shutil
@@ -836,3 +837,21 @@ def get_tz_offset():
     hours = offset / 3600
     minutes = (offset / 60) % 60
     return "%+03d:%02d" % (hours, minutes)
+
+
+def parse_koji_event(event):
+    """Process event specification. If event looks like a number, it will be
+    used as is. If a string is given, it will be interpreted as a path to the
+    topdir of another compose, from which an even it will be extracted.
+    """
+    try:
+        return int(event)
+    except ValueError:
+        pass
+    try:
+        with open(os.path.join(event, "work/global/koji-event")) as f:
+            return json.load(f)["id"]
+    except (IOError, OSError, KeyError):
+        raise argparse.ArgumentTypeError(
+            "%s is not a number or path to compose with valid Koji event" % event
+        )

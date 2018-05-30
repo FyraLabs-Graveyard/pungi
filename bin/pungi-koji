@@ -23,7 +23,7 @@ if here != '/usr/bin':
     sys.path[0] = os.path.dirname(here)
 
 from pungi.phases import PHASES_NAMES
-from pungi import get_full_version
+from pungi import get_full_version, util
 
 
 # force C locales
@@ -130,8 +130,9 @@ def main():
     parser.add_argument(
         "--koji-event",
         metavar="ID",
-        type=int,
-        help="specify a koji event for populating package set",
+        type=util.parse_koji_event,
+        help="specify a koji event for populating package set, either as event ID "
+             "or a path to a compose from which to reuse the event",
     )
     parser.add_argument(
         "--version",

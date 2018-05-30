@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import argparse
 import mock
 import os
 import sys
@@ -683,6 +684,24 @@ class TestTZOffset(unittest.TestCase):
     @mock.patch('time.localtime', new=lambda: mock.Mock(tm_isdst=0))
     def test_utc(self):
         self.assertEqual(util.get_tz_offset(), "+00:00")
+
+
+class TestParseKojiEvent(PungiTestCase):
+
+    def test_number(self):
+        self.assertEqual(util.parse_koji_event("1234"), 1234)
+
+    def test_correct_path(self):
+        touch(
+            os.path.join(self.topdir, 'work/global/koji-event'),
+            '{"id": 19769058, "ts": 1527641311.22855}'
+        )
+
+        self.assertEqual(util.parse_koji_event(self.topdir), 19769058)
+
+    def test_bad_path(self):
+        with self.assertRaises(argparse.ArgumentTypeError):
+            util.parse_koji_event(self.topdir)
 
 
 if __name__ == "__main__":
