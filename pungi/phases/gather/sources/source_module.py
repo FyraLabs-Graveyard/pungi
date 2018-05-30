@@ -59,7 +59,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         for mmd in variant.mmds:
             mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
             if mmd_id not in variant.arch_mmds[arch]:
-                arch_mmd = Modulemd.Module.new_from_string(mmd.dumps())
+                arch_mmd = mmd.copy()
                 variant.arch_mmds[arch][mmd_id] = arch_mmd
 
         # Contains per-module RPMs added to variant.

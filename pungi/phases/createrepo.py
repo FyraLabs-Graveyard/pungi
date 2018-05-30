@@ -196,7 +196,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
         for module_id, mmd in variant.arch_mmds[arch].items():
             # Create copy of architecture specific mmd to filter out packages
             # which are not part of this particular repo.
-            repo_mmd = Modulemd.Module.new_from_string(mmd.dumps())
+            repo_mmd = mmd.copy()
             repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
             artifacts = repo_mmd.get_rpm_artifacts()
 
