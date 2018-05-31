@@ -427,7 +427,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(
             cmd[-1],
-            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&'; chmod a+r '/output dir'"
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod a+r '/output dir'"
         )
         self.assertItemsEqual(cmd[3:-3],
                               ['--channel-override=chan', '--quiet', '--use-shell',
