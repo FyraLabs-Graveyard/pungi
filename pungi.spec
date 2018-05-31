@@ -31,6 +31,7 @@ Requires:       python-productmd >= 1.11
 Requires:       python-kickstart
 Requires:       libselinux-python
 Requires:       createrepo_c
+Requires:       python3-createrepo_c
 Requires:       python-lxml
 Requires:       koji >= 1.10.1-13
 Requires:       jigdo
