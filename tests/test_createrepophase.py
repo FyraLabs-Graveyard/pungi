@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+from collections import namedtuple
 try:
     import unittest2 as unittest
 except ImportError:
@@ -17,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi.phases.createrepo import (CreaterepoPhase,
                                      create_variant_repo,
                                      get_productids_from_scm,
+                                     get_licenses_from_repo,
                                      ModulesMetadata)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
 from pungi import Modulemd
@@ -118,6 +120,7 @@ class TestCreaterepoPhase(PungiTestCase):
              mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata))])
 
 
+@mock.patch("pungi.phases.createrepo.get_licenses_from_repo", new=lambda path: {})
 class TestCreateVariantRepo(PungiTestCase):
 
     @mock.patch('pungi.phases.createrepo.run')
@@ -948,6 +951,37 @@ class TestGetProductIds(PungiTestCase):
         self.assertRegexpMatches(
             str(ctx.exception),
             'Multiple product certificates found.+')
+
+
+class TestGetLicenses(unittest.TestCase):
+
+    @mock.patch("pungi.phases.createrepo.cr.Metadata")
+    def test_get_licenses(self, MockMetadata):
+        path = "/my/path"
+        md = MockMetadata.return_value
+        md.keys.return_value = ["k1", "k2"]
+        Pkg = namedtuple(
+            "Pkg", ["name", "epoch", "version", "release", "arch", "rpm_license"]
+        )
+        md.get.side_effect = [
+            Pkg("foo", None, "1.0", "1", "x86_64", "GPLv2"),
+            Pkg("bar", "2", "1.0", "2", "src", "WTFPL"),
+        ]
+
+        res = get_licenses_from_repo(path)
+
+        self.assertEqual(
+            md.mock_calls,
+            [
+                mock.call.locate_and_load_xml(path),
+                mock.call.keys(),
+                mock.call.get("k1"),
+                mock.call.get("k2"),
+            ]
+        )
+        self.assertEqual(
+            res, {"foo-0:1.0-1.x86_64": "GPLv2", "bar-2:1.0-2.src": "WTFPL"}
+        )
 
 
 if __name__ == "__main__":
