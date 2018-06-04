@@ -113,7 +113,7 @@ class KojiWrapper(object):
         command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
 
         if destdir:
-            command += " && chmod a+r %s" % shlex_quote(destdir)
+            command += " && chmod -R a+r %s" % shlex_quote(destdir)
         cmd.append(command)
 
         return cmd
