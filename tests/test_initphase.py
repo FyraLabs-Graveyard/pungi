@@ -334,6 +334,78 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(comps.write_comps.mock_calls, [])
 
 
+@mock.patch("shutil.copytree")
+@mock.patch("pungi.phases.init.get_dir_from_scm")
+class TestWriteModuleDefaults(PungiTestCase):
+
+    def test_clone_git(self, gdfs, ct):
+        conf = {"scm": "git", "repo": "https://pagure.io/pungi.git", "dir": "."}
+        compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
+
+        init.write_module_defaults(compose)
+
+        self.assertEqual(
+            gdfs.call_args_list, [mock.call(conf, mock.ANY, logger=mock.ANY)]
+        )
+        self.assertEqual(
+            ct.call_args_list,
+            [
+                mock.call(
+                    gdfs.call_args_list[0][0][1],
+                    os.path.join(self.topdir, "work/global/module_defaults"),
+                )
+            ],
+        )
+
+    def test_clone_file_scm(self, gdfs, ct):
+        conf = {"scm": "file", "dir": "defaults"}
+        compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
+        compose.config_dir = "/home/releng/configs"
+
+        init.write_module_defaults(compose)
+
+        self.assertEqual(
+            gdfs.call_args_list,
+            [
+                mock.call(
+                    {"scm": "file", "dir": "/home/releng/configs/defaults"},
+                    mock.ANY,
+                    logger=mock.ANY,
+                )
+            ],
+        )
+        self.assertEqual(
+            ct.call_args_list,
+            [
+                mock.call(
+                    gdfs.call_args_list[0][0][1],
+                    os.path.join(self.topdir, "work/global/module_defaults"),
+                )
+            ],
+        )
+
+    def test_clone_file_str(self, gdfs, ct):
+        conf = "defaults"
+        compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
+        compose.config_dir = "/home/releng/configs"
+
+        init.write_module_defaults(compose)
+
+        self.assertEqual(
+            gdfs.call_args_list,
+            [mock.call("/home/releng/configs/defaults", mock.ANY, logger=mock.ANY)],
+        )
+        self.assertEqual(
+            ct.call_args_list,
+            [
+                mock.call(
+                    gdfs.call_args_list[0][0][1],
+                    os.path.join(self.topdir, "work/global/module_defaults"),
+                )
+            ],
+        )
+
+
 @unittest.skipUnless(Modulemd, "Skipped test, no module support.")
 class TestValidateModuleDefaults(PungiTestCase):
 
