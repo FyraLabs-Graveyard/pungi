@@ -63,13 +63,20 @@ class OstreeInstallerThread(WorkerThread):
         self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
 
         repo_baseurl = compose.paths.work.arch_repo('$basearch', create_dir=False)
-        comps_baseurl = compose.paths.work.comps_repo('$basearch', variant=variant, create_dir=False)
         repos = get_repo_urls(None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
                               shortcuts.force_list(config['repo'])
-                              + shortcuts.force_list(translate_path(compose, repo_baseurl))
-                              + shortcuts.force_list(translate_path(compose, comps_baseurl)),
+                              + shortcuts.force_list(translate_path(compose, repo_baseurl)),
                               arch=arch,
                               logger=self.pool)
+        if compose.has_comps:
+            repos.append(
+                translate_path(
+                    compose,
+                    compose.paths.work.comps_repo(
+                        '$basearch', variant=variant, create_dir=False
+                    ),
+                )
+            )
         repos = [url.replace('$arch', arch) for url in repos]
         output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
         util.makedirs(os.path.dirname(output_dir))

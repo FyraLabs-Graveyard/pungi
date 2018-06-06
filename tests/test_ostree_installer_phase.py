@@ -330,6 +330,40 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch('productmd.images.Image')
     @mock.patch('pungi.util.get_mtime')
     @mock.patch('pungi.util.get_file_size')
+    @mock.patch('pungi.phases.ostree_installer.iso')
+    @mock.patch('os.link')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_without_comps(
+        self, KojiWrapper, link, iso, get_file_size, get_mtime, ImageCls, copy_all
+    ):
+        self.compose.has_comps = False
+        pool = mock.Mock()
+        cfg = {
+            'release': '20160321.n.0',
+            'repo': [],
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            'task_id': 1234,
+            'retcode': 0,
+            'output': 'Foo bar\n',
+        }
+
+        t = ostree.OstreeInstallerThread(pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
+
+        sources = [
+            'http://example.com/work/$basearch/repo',
+        ]
+
+        self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
+                               extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
+
+    @mock.patch('pungi.util.copy_all')
+    @mock.patch('productmd.images.Image')
+    @mock.patch('pungi.util.get_mtime')
+    @mock.patch('pungi.util.get_file_size')
     @mock.patch('pungi.wrappers.iso')
     @mock.patch('os.link')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
