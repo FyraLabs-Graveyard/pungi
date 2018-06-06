@@ -10,6 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from pungi import Modulemd
 from pungi.phases import init
 from tests.helpers import DummyCompose, PungiTestCase, touch
 
@@ -331,6 +332,67 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(comps.filter_environments.mock_calls,
                          [mock.call(variant.environments)])
         self.assertEqual(comps.write_comps.mock_calls, [])
+
+
+@unittest.skipUnless(Modulemd, "Skipped test, no module support.")
+class TestValidateModuleDefaults(PungiTestCase):
+
+    def _write_defaults(self, defs):
+        for mod_name, streams in defs.items():
+            for stream in streams:
+                mmddef = Modulemd.Defaults.new()
+                mmddef.set_version(1)
+                mmddef.set_module_name(mod_name)
+                mmddef.set_default_stream(stream)
+                mmddef.dump(
+                    os.path.join(self.topdir, "%s-%s.yaml" % (mod_name, stream))
+                )
+
+    def test_valid_files(self):
+        self._write_defaults({"httpd": ["1"], "python": ["3.6"]})
+
+        init.validate_module_defaults(self.topdir)
+
+    def test_duplicated_stream(self):
+        self._write_defaults({"httpd": ["1"], "python": ["3.6", "3.5"]})
+
+        with self.assertRaises(RuntimeError) as ctx:
+            init.validate_module_defaults(self.topdir)
+
+        self.assertIn(
+            "Module python has multiple defaults: 3.5, 3.6", str(ctx.exception)
+        )
+
+    def test_reports_all(self):
+        self._write_defaults({"httpd": ["1", "2"], "python": ["3.6", "3.5"]})
+
+        with self.assertRaises(RuntimeError) as ctx:
+            init.validate_module_defaults(self.topdir)
+
+        self.assertIn("Module httpd has multiple defaults: 1, 2", str(ctx.exception))
+        self.assertIn(
+            "Module python has multiple defaults: 3.5, 3.6", str(ctx.exception)
+        )
+
+    def test_handles_non_defaults_file(self):
+        self._write_defaults({"httpd": ["1"], "python": ["3.6"]})
+        touch(
+            os.path.join(self.topdir, "boom.yaml"),
+            "\n".join(
+                [
+                    "document: modulemd",
+                    "version: 2",
+                    "data:",
+                    "  summary: dummy module",
+                    "  description: dummy module",
+                    "  license:",
+                    "    module: [GPL]",
+                    "    content: [GPL]",
+                ]
+            ),
+        )
+
+        init.validate_module_defaults(self.topdir)
 
 
 if __name__ == "__main__":

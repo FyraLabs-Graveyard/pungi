@@ -14,17 +14,20 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import collections
+import glob
 import os
 import shutil
 
 from kobo.shortcuts import run
 
+from pungi import Modulemd
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import write_prepopulate_file
-from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.wrappers.comps import CompsWrapper
-from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 from pungi.util import temp_dir
+from pungi.wrappers.comps import CompsWrapper
+from pungi.wrappers.createrepo import CreaterepoWrapper
+from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
 
 
 class InitPhase(PhaseBase):
@@ -55,6 +58,9 @@ class InitPhase(PhaseBase):
         # download module defaults
         if self.compose.has_module_defaults:
             write_module_defaults(self.compose)
+            validate_module_defaults(
+                self.compose.paths.work.module_defaults_dir(create_dir=False)
+            )
 
         # write prepopulate file
         write_prepopulate_file(self.compose)
@@ -170,3 +176,30 @@ def write_module_defaults(compose):
         get_dir_from_scm(scm_dict, tmp_dir, logger=compose._logger)
         compose.log_debug("Writing module defaults")
         shutil.copytree(tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False))
+
+
+def validate_module_defaults(path):
+    """Make sure there are no conflicting defaults. Each module name can only
+    have one default stream.
+
+    :param str path: directory with cloned module defaults
+    """
+    seen_defaults = collections.defaultdict(set)
+    for file in glob.glob(os.path.join(path, "*.yaml")):
+        for mmddef in Modulemd.objects_from_file(file):
+            if not isinstance(mmddef, Modulemd.Defaults):
+                continue
+            seen_defaults[mmddef.peek_module_name()].add(mmddef.peek_default_stream())
+
+    errors = []
+    for module_name, defaults in seen_defaults.items():
+        if len(defaults) > 1:
+            errors.append(
+                "Module %s has multiple defaults: %s"
+                % (module_name, ", ".join(sorted(defaults)))
+            )
+
+    if errors:
+        raise RuntimeError(
+            "There are duplicated module defaults:\n%s" % "\n".join(errors)
+        )
