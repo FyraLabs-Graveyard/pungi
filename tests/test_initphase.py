@@ -15,14 +15,25 @@ from pungi.phases import init
 from tests.helpers import DummyCompose, PungiTestCase, touch
 
 
+@mock.patch("pungi.phases.init.validate_module_defaults")
+@mock.patch("pungi.phases.init.write_module_defaults")
+@mock.patch("pungi.phases.init.write_global_comps")
+@mock.patch("pungi.phases.init.write_arch_comps")
+@mock.patch("pungi.phases.init.create_comps_repo")
+@mock.patch("pungi.phases.init.write_variant_comps")
+@mock.patch("pungi.phases.init.write_prepopulate_file")
 class TestInitPhase(PungiTestCase):
 
-    @mock.patch('pungi.phases.init.write_global_comps')
-    @mock.patch('pungi.phases.init.write_arch_comps')
-    @mock.patch('pungi.phases.init.create_comps_repo')
-    @mock.patch('pungi.phases.init.write_variant_comps')
-    @mock.patch('pungi.phases.init.write_prepopulate_file')
-    def test_run(self, write_prepopulate, write_variant, create_comps, write_arch, write_global):
+    def test_run(
+        self,
+        write_prepopulate,
+        write_variant,
+        create_comps,
+        write_arch,
+        write_global,
+        write_defaults,
+        validate_defaults,
+    ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
         compose.has_module_defaults = False
@@ -49,14 +60,19 @@ class TestInitPhase(PungiTestCase):
                                mock.call(compose, 'x86_64', compose.variants['Everything']),
                                mock.call(compose, 'amd64', compose.variants['Everything']),
                                mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
+        self.assertItemsEqual(write_defaults, [])
+        self.assertItemsEqual(validate_defaults, [])
 
-    @mock.patch('pungi.phases.init.write_global_comps')
-    @mock.patch('pungi.phases.init.write_arch_comps')
-    @mock.patch('pungi.phases.init.create_comps_repo')
-    @mock.patch('pungi.phases.init.write_variant_comps')
-    @mock.patch('pungi.phases.init.write_prepopulate_file')
-    def test_run_with_preserve(self, write_prepopulate, write_variant, create_comps,
-                               write_arch, write_global):
+    def test_run_with_preserve(
+        self,
+        write_prepopulate,
+        write_variant,
+        create_comps,
+        write_arch,
+        write_global,
+        write_defaults,
+        validate_defaults,
+    ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
         compose.has_module_defaults = False
@@ -82,14 +98,19 @@ class TestInitPhase(PungiTestCase):
                                mock.call(compose, 'amd64', compose.variants['Client']),
                                mock.call(compose, 'x86_64', compose.variants['Everything']),
                                mock.call(compose, 'amd64', compose.variants['Everything'])])
+        self.assertItemsEqual(write_defaults, [])
+        self.assertItemsEqual(validate_defaults, [])
 
-    @mock.patch('pungi.phases.init.write_global_comps')
-    @mock.patch('pungi.phases.init.write_arch_comps')
-    @mock.patch('pungi.phases.init.create_comps_repo')
-    @mock.patch('pungi.phases.init.write_variant_comps')
-    @mock.patch('pungi.phases.init.write_prepopulate_file')
-    def test_run_without_comps(self, write_prepopulate, write_variant, create_comps,
-                               write_arch, write_global):
+    def test_run_without_comps(
+        self,
+        write_prepopulate,
+        write_variant,
+        create_comps,
+        write_arch,
+        write_global,
+        write_defaults,
+        validate_defaults,
+    ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = False
         compose.has_module_defaults = False
@@ -101,6 +122,35 @@ class TestInitPhase(PungiTestCase):
         self.assertItemsEqual(write_arch.mock_calls, [])
         self.assertItemsEqual(create_comps.mock_calls, [])
         self.assertItemsEqual(write_variant.mock_calls, [])
+        self.assertItemsEqual(write_defaults, [])
+        self.assertItemsEqual(validate_defaults, [])
+
+    def test_with_module_defaults(
+        self,
+        write_prepopulate,
+        write_variant,
+        create_comps,
+        write_arch,
+        write_global,
+        write_defaults,
+        validate_defaults,
+    ):
+        compose = DummyCompose(self.topdir, {})
+        compose.has_comps = False
+        compose.has_module_defaults = True
+        phase = init.InitPhase(compose)
+        phase.run()
+
+        self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertItemsEqual(write_arch.mock_calls, [])
+        self.assertItemsEqual(create_comps.mock_calls, [])
+        self.assertItemsEqual(write_variant.mock_calls, [])
+        self.assertItemsEqual(write_defaults.call_args_list, [mock.call(compose)])
+        self.assertItemsEqual(
+            validate_defaults.call_args_list,
+            [mock.call(compose.paths.work.module_defaults_dir())],
+        )
 
 
 class TestWriteArchComps(PungiTestCase):
