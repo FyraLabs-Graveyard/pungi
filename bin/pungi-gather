@@ -107,10 +107,13 @@ def main(persistdir, cachedir):
 
     # read repos from ks
     for ks_repo in ksparser.handler.repo.repoList:
-        # HACK: lookaside repos first; this is workaround for no repo priority handling in hawkey
+        # HACK: lookaside repos first; this is workaround for no repo priority
+        # handling in hawkey
         if ks_repo.name not in gather_opts.lookaside_repos:
             continue
-        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, ks_repo.mirrorlist)
+        dnf_obj.add_repo(
+            ks_repo.name, ks_repo.baseurl, ks_repo.mirrorlist, enablegroups=False
+        )
 
     for ks_repo in ksparser.handler.repo.repoList:
         if ks_repo.name in gather_opts.lookaside_repos:
