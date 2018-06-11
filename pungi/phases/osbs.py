@@ -73,18 +73,23 @@ class OSBSThread(WorkerThread):
                                % (task_id, log_file))
 
         scratch = config.get('scratch', False)
-        self._add_metadata(koji.koji_proxy, variant, task_id, compose, scratch)
+        self._add_metadata(variant, task_id, compose, scratch)
 
         self.pool.log_info('[DONE ] %s' % msg)
 
-    def _add_metadata(self, koji_proxy, variant, task_id, compose, is_scratch):
+    def _add_metadata(self, variant, task_id, compose, is_scratch):
+        # Create new Koji session. The task could take so long to finish that
+        # our session will expire. This second session does not need to be
+        # authenticated since it will only do reading operations.
+        koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
+
         # Create metadata
         metadata = {
             'compose_id': compose.compose_id,
             'koji_task': task_id,
         }
 
-        result = koji_proxy.getTaskResult(task_id)
+        result = koji.koji_proxy.getTaskResult(task_id)
         if is_scratch:
             metadata.update({
                 'repositories': result['repositories'],
@@ -95,8 +100,8 @@ class OSBSThread(WorkerThread):
                 variant.uid, {}).setdefault('scratch', []).append(metadata)
         else:
             build_id = int(result['koji_builds'][0])
-            buildinfo = koji_proxy.getBuild(build_id)
-            archives = koji_proxy.listArchives(build_id)
+            buildinfo = koji.koji_proxy.getBuild(build_id)
+            archives = koji.koji_proxy.listArchives(build_id)
 
             metadata.update({
                 'name': buildinfo['name'],
