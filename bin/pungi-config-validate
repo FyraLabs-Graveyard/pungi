@@ -22,7 +22,7 @@ import pungi.paths
 import pungi.phases
 import pungi.wrappers.scm
 import pungi.util
-from pungi.wrappers.variants import VariantsXmlParser
+from pungi.wrappers.variants import VariantsXmlParser, VariantsValidationError
 
 
 class ValidationCompose(pungi.compose.Compose):
@@ -87,9 +87,12 @@ def run(config, topdir, has_old):
             print(error)
         sys.exit(1)
 
+    errors = []
     compose = ValidationCompose(conf, has_old, topdir)
     try:
         read_variants(compose, config)
+    except VariantsValidationError as exc:
+        errors.extend(str(exc).splitlines())
     except:
         # Failed to read variants, no big deal.
         pass
@@ -115,7 +118,6 @@ def run(config, topdir, has_old):
         pungi.phases.TestPhase(compose),
     ]
 
-    errors = []
     for phase in phases:
         if phase.skip():
             continue
