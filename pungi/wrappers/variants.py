@@ -39,6 +39,21 @@ def get_variants_dtd(logger=None):
     return variants_dtd
 
 
+class VariantsValidationError(ValueError):
+    pass
+
+
+NO_WHITESPACE_ELEMENTS = [
+    "arch",
+    "environment",
+    "group",
+    "kojitag",
+    "module",
+    "name",
+    "package",
+]
+
+
 class VariantsXmlParser(object):
     def __init__(self, file_obj, tree_arches=None, tree_variants=None, logger=None):
         self.tree = lxml.etree.parse(file_obj)
@@ -61,7 +76,24 @@ class VariantsXmlParser(object):
     def validate(self):
         if not self.dtd.validate(self.tree):
             errors = [str(i) for i in self.dtd.error_log.filter_from_errors()]
-            raise ValueError("Variants XML doesn't validate:\n%s" % "\n".join(errors))
+            raise VariantsValidationError(
+                "Variants XML doesn't validate:\n%s" % "\n".join(errors)
+            )
+
+        errors = []
+        for text in self.tree.xpath("//text()"):
+            if text != text.strip() and not text.is_tail:
+                e = text.getparent()
+                if e.tag in NO_WHITESPACE_ELEMENTS:
+                    errors.append(
+                        "Tag %s on line %s contains leading or trailing whitespace"
+                        % (e.tag, e.sourceline)
+                    )
+
+        if errors:
+            raise VariantsValidationError(
+                "Variants XML doesn't validate:\n%s" % "\n".join(errors)
+            )
 
     def parse_variant_node(self, variant_node, parent=None):
         variant_dict = {
