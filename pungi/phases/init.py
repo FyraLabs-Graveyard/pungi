@@ -42,7 +42,8 @@ class InitPhase(PhaseBase):
     def run(self):
         if self.compose.has_comps:
             # write global comps and arch comps, create comps repos
-            write_global_comps(self.compose)
+            global_comps = write_global_comps(self.compose)
+            validate_comps(global_comps)
             for arch in self.compose.get_arches():
                 write_arch_comps(self.compose, arch)
                 create_comps_repo(self.compose, arch, None)
@@ -87,6 +88,8 @@ def write_global_comps(compose):
         get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
         shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
         shutil.rmtree(tmp_dir)
+
+    return comps_file_global
 
 
 def write_arch_comps(compose, arch):
@@ -203,3 +206,9 @@ def validate_module_defaults(path):
         raise RuntimeError(
             "There are duplicated module defaults:\n%s" % "\n".join(errors)
         )
+
+
+def validate_comps(path):
+    """Check that there are whitespace issues in comps."""
+    wrapper = CompsWrapper(path)
+    wrapper.validate()

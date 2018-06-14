@@ -12,9 +12,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi import Modulemd
 from pungi.phases import init
-from tests.helpers import DummyCompose, PungiTestCase, touch
+from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
 
+@mock.patch("pungi.phases.init.validate_comps")
 @mock.patch("pungi.phases.init.validate_module_defaults")
 @mock.patch("pungi.phases.init.write_module_defaults")
 @mock.patch("pungi.phases.init.write_global_comps")
@@ -33,6 +34,7 @@ class TestInitPhase(PungiTestCase):
         write_global,
         write_defaults,
         validate_defaults,
+        validate_comps,
     ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
@@ -72,6 +74,7 @@ class TestInitPhase(PungiTestCase):
         write_global,
         write_defaults,
         validate_defaults,
+        validate_comps,
     ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = True
@@ -82,6 +85,9 @@ class TestInitPhase(PungiTestCase):
         phase.run()
 
         self.assertEqual(write_global.mock_calls, [mock.call(compose)])
+        self.assertEqual(
+            validate_comps.call_args_list, [mock.call(write_global.return_value)]
+        )
         self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
         self.assertItemsEqual(write_arch.mock_calls,
                               [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
@@ -110,6 +116,7 @@ class TestInitPhase(PungiTestCase):
         write_global,
         write_defaults,
         validate_defaults,
+        validate_comps,
     ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = False
@@ -118,6 +125,7 @@ class TestInitPhase(PungiTestCase):
         phase.run()
 
         self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertEqual(validate_comps.call_args_list, [])
         self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
         self.assertItemsEqual(write_arch.mock_calls, [])
         self.assertItemsEqual(create_comps.mock_calls, [])
@@ -134,6 +142,7 @@ class TestInitPhase(PungiTestCase):
         write_global,
         write_defaults,
         validate_defaults,
+        validate_comps,
     ):
         compose = DummyCompose(self.topdir, {})
         compose.has_comps = False
@@ -142,6 +151,7 @@ class TestInitPhase(PungiTestCase):
         phase.run()
 
         self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertEqual(validate_comps.call_args_list, [])
         self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
         self.assertItemsEqual(write_arch.mock_calls, [])
         self.assertItemsEqual(create_comps.mock_calls, [])
@@ -515,6 +525,26 @@ class TestValidateModuleDefaults(PungiTestCase):
         )
 
         init.validate_module_defaults(self.topdir)
+
+
+@mock.patch("pungi.phases.init.CompsWrapper")
+class TestValidateComps(unittest.TestCase):
+    def test_ok(self, CompsWrapper):
+        init.validate_comps("/path")
+
+        self.assertEqual(
+            CompsWrapper.mock_calls, [mock.call("/path"), mock.call().validate()]
+        )
+
+    def test_fail(self, CompsWrapper):
+        CompsWrapper.return_value.validate.side_effect = mk_boom()
+
+        with self.assertRaises(Exception):
+            init.validate_comps("/path")
+
+        self.assertEqual(
+            CompsWrapper.mock_calls, [mock.call("/path"), mock.call().validate()]
+        )
 
 
 if __name__ == "__main__":

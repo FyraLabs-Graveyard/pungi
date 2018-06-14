@@ -49,6 +49,10 @@ TYPE_MAPPING = collections.OrderedDict([
 ])
 
 
+class CompsValidationError(ValueError):
+    pass
+
+
 class CompsFilter(object):
     """
     Processor for extended comps file. This class treats the input as just an
@@ -229,6 +233,25 @@ class CompsWrapper(object):
             if grp.id == group:
                 return [pkg.name for pkg in grp.packages]
         raise KeyError('No such group %r' % group)
+
+    def validate(self):
+        """Check that no package name contains whitespace, and raise a
+        RuntimeError if there is a problem.
+        """
+        errors = []
+        for group in self.get_comps_groups():
+            for pkg in self.get_packages(group):
+                stripped_pkg = pkg.strip()
+                if pkg != stripped_pkg:
+                    errors.append(
+                        "Package name %s in group '%s' contains leading or trailing whitespace"
+                        % (stripped_pkg, group)
+                    )
+
+        if errors:
+            raise CompsValidationError(
+                "Comps file contains errors:\n%s" % "\n".join(errors)
+            )
 
     def write_comps(self, comps_obj=None, target_file=None):
         if not comps_obj:

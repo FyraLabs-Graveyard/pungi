@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi.wrappers.comps import CompsWrapper, CompsFilter
+from pungi.wrappers.comps import CompsWrapper, CompsFilter, CompsValidationError
 from tests.helpers import FIXTURE_DIR
 
 COMPS_FILE = os.path.join(FIXTURE_DIR, 'comps.xml')
@@ -20,6 +20,7 @@ COMPS_FORMATTED_FILE = os.path.join(FIXTURE_DIR, 'comps-formatted.xml')
 COMPS_GROUP_FILE = os.path.join(FIXTURE_DIR, 'comps-group.xml')
 COMPS_ENVIRONMENT_FILE = os.path.join(FIXTURE_DIR, 'comps-env.xml')
 COMPS_FILE_WITH_TYPO = os.path.join(FIXTURE_DIR, 'comps-typo.xml')
+COMPS_FILE_WITH_WHITESPACE = os.path.join(FIXTURE_DIR, 'comps-ws.xml')
 
 
 class CompsWrapperTest(unittest.TestCase):
@@ -97,6 +98,28 @@ class CompsWrapperTest(unittest.TestCase):
         self.assertIn(
             'Package dummy-bash in group core has unknown type',
             str(ctx.exception))
+
+    def test_validate_correct(self):
+        comps = CompsWrapper(COMPS_FILE)
+        comps.validate()
+
+    def test_validate_with_whitespace(self):
+        comps = CompsWrapper(COMPS_FILE_WITH_WHITESPACE)
+        with self.assertRaises(CompsValidationError) as ctx:
+            comps.validate()
+
+        self.assertIn(
+            "Package name foo in group 'core' contains leading or trailing whitespace",
+            str(ctx.exception),
+        )
+        self.assertIn(
+            "Package name bar in group 'core' contains leading or trailing whitespace",
+            str(ctx.exception),
+        )
+        self.assertIn(
+            "Package name baz in group 'core' contains leading or trailing whitespace",
+            str(ctx.exception),
+        )
 
 
 COMPS_IN_FILE = os.path.join(FIXTURE_DIR, 'comps.xml.in')
