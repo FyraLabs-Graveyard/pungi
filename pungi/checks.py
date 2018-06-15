@@ -741,9 +741,9 @@ def make_schema():
             "global_target": {"type": "string"},
             "global_release": {"$ref": "#/definitions/optional_string"},
 
-            "pdc_url": {"type": "string"},
-            "pdc_develop": {"type": "boolean", "default": False},
-            "pdc_insecure": {"type": "boolean", "default": False},
+            "pdc_url": {"deprecated": "Koji is queried instead"},
+            "pdc_develop": {"deprecated": "Koji is queried instead"},
+            "pdc_insecure": {"deprecated": "Koji is queried instead"},
 
             "koji_profile": {"type": "string"},
 

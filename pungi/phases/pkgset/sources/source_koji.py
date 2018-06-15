@@ -39,27 +39,6 @@ from pungi.phases.gather import get_packages_to_gather
 
 import pungi.phases.pkgset.source
 
-try:
-    from pdc_client import PDCClient
-    WITH_PDC = True
-except:
-    WITH_PDC = False
-
-
-def get_pdc_client_session(compose):
-    if not WITH_PDC:
-        compose.log_warning("pdc_client module is not installed, "
-                            "support for modules is disabled")
-        return None
-    try:
-        return PDCClient(
-            server=compose.conf['pdc_url'],
-            develop=compose.conf['pdc_develop'],
-            ssl_verify=not compose.conf['pdc_insecure'],
-        )
-    except KeyError:
-        return None
-
 
 def variant_dict_from_str(compose, module_str):
     """
@@ -124,43 +103,73 @@ def variant_dict_from_str(compose, module_str):
 
 
 @retry(wait_on=IOError)
-def get_pdc_modules(compose, session, module_info_str):
+def get_koji_modules(compose, koji_wrapper, module_info_str):
     """
-    :param session : PDCClient instance
-    :param module_info_str: pdc variant_dict, str, mmd or module dict
+    :param koji_wrapper : koji wrapper instance
+    :param module_info_str: str, mmd or module dict
 
     :return final list of module_info which pass repoclosure
     """
+    koji_proxy = koji_wrapper.koji_proxy
 
     module_info = variant_dict_from_str(compose, module_info_str)
 
-    query = dict(
-        name=module_info['name'],
-        stream=module_info['stream'],
-        active=True,
-    )
-    if module_info.get('version'):
-        query['version'] = module_info['version']
-    if module_info.get('context'):
-        query['context'] = module_info['context']
+    # we need to format the query string to koji reguirements
+    query_str = "%s-%s-%s.%s" % (module_info["name"], module_info["stream"],
+                                 module_info.get("version", "*"), module_info.get("context", "*"))
+    query_str = query_str.replace('*.*', '*')
 
-    retval = session['modules'](page_size=-1, **query)
-
+    koji_builds = koji_proxy.search(query_str, "build", "glob")
     # Error reporting
-    if not retval:
-        raise ValueError("Failed to find module in PDC %r" % query)
+    if not koji_builds:
+        raise ValueError("Failed to find modules in koji %s" % query_str)
 
     modules = []
+    for build in koji_builds:
+        md = koji_proxy.getBuild(build["id"])
 
-    # If there is version provided, then all modules with that version will go in.
-    # In case version is missing, we will find the latest version and include all modules with that version.
-    if 'version' in query:
-        modules = retval  # all found modules
-    else:
+        if not md["extra"]:
+            continue
+
+        try:
+            version, context = md["release"].split(".")
+        except ValueError:
+            version = md["release"]
+            context = "00000000"
+        md["stream"] = md["version"]
+        md["version"] = version
+        md["context"] = context
+
+        try:
+            md["modulemd"] = md["extra"]["typeinfo"]["module"]["modulemd_str"]
+            md["tag"] = md["extra"]["typeinfo"]["module"]["content_koji_tag"]
+        except KeyError:
+            continue
+
+        archives = koji_proxy.listArchives(md["id"])
+        if not archives:
+            continue
+
+        archive = [a for a in archives
+                   if a["btype"] == "module" and a["filename"] == "modulemd.txt"]
+
+        if not archive:
+            continue
+
+        image_id = archive[0]["id"]
+        rpms = koji_proxy.listRPMs(imageID=image_id)
+        md["rpms"] = [make_nvra(rpm, add_epoch=True, force_epoch=True, add_rpm=False)
+                      for rpm in rpms]
+        modules.append(md)
+
+    # If there is version provided, then all modules with that version will go
+    # in. In case version is missing, we will find the latest version and
+    # include all modules with that version.
+    if not module_info.get('version'):
         # select all found modules with latest version
-        sorted_retval = sorted(retval, key=lambda item: int(item['version']), reverse=True)
-        latest_version = int(sorted_retval[0]['version'])
-        modules = [module for module in sorted_retval if latest_version == int(module['version'])]
+        sorted_modules = sorted(modules, key=lambda item: int(item['version']), reverse=True)
+        latest_version = int(sorted_modules[0]['version'])
+        modules = [module for module in modules if latest_version == int(module['version'])]
 
     return modules
 
@@ -247,42 +256,41 @@ def _log_modulemd(compose, variant, mmd):
                                         % (variant.uid, mmd.dup_nsvc())))
 
 
-def _get_modules_from_pdc(compose, session, variant, variant_tags):
+def _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags):
     """
-    Loads modules for given `variant` from PDC `session`, adds them to
+    Loads modules for given `variant` from koji `session`, adds them to
     the `variant` and also to `variant_tags` dict.
 
     :param Compose compose: Compose for which the modules are found.
-    :param PDCClient session: PDC session.
+    :param koji_wrapper: We will obtain koji session from the wrapper.
     :param Variant variant: Variant with modules to find.
     :param dict variant_tags: Dict populated by this method. Key is `variant`
         and value is list of Koji tags to get the RPMs from.
     """
-    if not session:
-        return
 
     # Find out all modules in every variant and add their Koji tags
     # to variant and variant_tags list.
     for module in variant.get_modules():
-        pdc_modules = get_pdc_modules(compose, session, module["name"])
-        for pdc_module in pdc_modules:
-
-            mmd = Modulemd.Module.new_from_string(pdc_module["modulemd"])
+        koji_modules = get_koji_modules(compose, koji_wrapper, module["name"])
+        for koji_module in koji_modules:
+            mmd = Modulemd.Module.new_from_string(koji_module["modulemd"])
             mmd.upgrade()
-            _add_module_to_variant(variant, mmd, pdc_module["rpms"])
+            _add_module_to_variant(variant, mmd, koji_module["rpms"])
             _log_modulemd(compose, variant, mmd)
 
-            tag = pdc_module["koji_tag"]
-            uid = ':'.join([pdc_module['name'], pdc_module['stream'],
-                            pdc_module['version'], pdc_module['context']])
+            tag = koji_module["tag"]
+            uid = ':'.join([koji_module['name'], koji_module['stream'],
+                            koji_module['version'], koji_module['context']])
             variant_tags[variant].append(tag)
 
             # Store mapping module-uid --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
             variant.module_uid_to_koji_tag[uid] = tag
 
-            module_msg = "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' (as a result of querying module '{module}')".format(
-                uid=uid, variant=variant, tag=tag, module=module["name"])
+            module_msg = (
+                "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' "
+                "(as a result of querying module '{module}')"
+            ).format(uid=uid, variant=variant, tag=tag, module=module["name"])
             compose.log_info("%s" % module_msg)
 
 
@@ -441,7 +449,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     # there are some packages with invalid sigkeys, it raises an exception.
     allow_invalid_sigkeys = compose.conf["gather_method"] == "deps"
 
-    session = get_pdc_client_session(compose)
     for variant in compose.all_variants.values():
         # pkgset storing the packages belonging to this particular variant.
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
@@ -467,8 +474,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
         elif variant.modules:
             included_modules_file = os.path.join(
                 compose.paths.work.topdir(arch="global"),
-                "pdc-module-%s.yaml" % variant.uid)
-            _get_modules_from_pdc(compose, session, variant, variant_tags)
+                "koji-module-%s.yaml" % variant.uid)
+            _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags)
 
         # Ensure that every tag added to `variant_tags` is added also to
         # `compose_tags`.

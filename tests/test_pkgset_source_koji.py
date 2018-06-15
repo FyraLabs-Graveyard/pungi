@@ -97,7 +97,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.compose.DEBUG = False
         self.koji_wrapper = mock.Mock()
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
-        self.pdc_module_path = os.path.join(self.topdir, 'work', 'global', 'pdc-module-Server.yaml')
+        self.koji_module_path = os.path.join(self.topdir, 'work', 'global', 'koji-module-Server.yaml')
 
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
@@ -126,9 +126,8 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     @unittest.skipUnless(Modulemd is not None, 'Modulemd not available')   # noqa
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_modules')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pdc_client_session')
-    def test_pdc_log(self, get_pdc_client_session, get_pdc_modules, KojiPackageSet, pickle_dumps):
+    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_koji_modules')
+    def test_pdc_log(self, get_koji_modules, KojiPackageSet, pickle_dumps):
 
         pickle_dumps.return_value = b'DATA'
 
@@ -160,12 +159,12 @@ data:
             - MIT
 """
 
-        get_pdc_modules.return_value = [
+        get_koji_modules.return_value = [
             {
                 'abc': 'def',
                 'modulemd': modulemd1,
                 'rpms': [],
-                'koji_tag': 'taggg',
+                'tag': 'taggg',
                 'uid': 'modulenamefoo:rhel:1:00000000',
                 'name': 'modulenamefoo',
                 'stream': 'rhel',
@@ -176,7 +175,7 @@ data:
                 'abc': 'def',
                 'modulemd': modulemd2,
                 'rpms': [],
-                'koji_tag': 'taggg',
+                'tag': 'taggg',
                 'uid': 'modulenamefoo:rhel:4:00000000',
                 'name': 'modulenamefoo',
                 'stream': 'rhel',
@@ -192,7 +191,7 @@ data:
 
         source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, '/prefix', 123456)
-        mmds = Modulemd.Module.new_all_from_file(self.pdc_module_path)
+        mmds = Modulemd.Module.new_all_from_file(self.koji_module_path)
         self.assertEqual(mmds[0].get_name(), "foo")
 
     @mock.patch('six.moves.cPickle.dumps')
@@ -310,6 +309,196 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                                mock.call(self.compose, 'amd64', '/prefix')])
 
         self.assertEqual(pkgsets, expected)
+
+    def test_get_koji_modules(self):
+        mock_build_ids = [{'id': 1065873, 'name': 'testmodule2-master-20180406051653.96c371af'}]
+        mock_extra = {
+            'typeinfo': {
+                'module': {
+                    'content_koji_tag': 'module-b62270b82443edde',
+                    'modulemd_str': mock.Mock()}
+            }
+        }
+        mock_build_md = [
+            {
+                'id': 1065873,
+                'epoch': None,
+                'extra': mock_extra,
+                'name': 'testmodule2',
+                'nvr': 'testmodule2-master-20180406051653.2e6f5e0a',
+                'release': '20180406051653.2e6f5e0a',
+                'state': 1,
+                'version': 'master',
+            }
+        ]
+        mock_archives = [
+            {
+                "id": 108941,
+                "btype": "module",
+                "filename": "modulemd.txt"
+            }
+        ]
+
+        mock_rpms = [
+            {'arch': 'src',
+             'epoch': None,
+             'id': 13640896,
+             'name': 'perl-List-Compare',
+             'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
+             'release': '9.module_1612+b62270b8',
+             'version': '0.53'},
+            {'arch': 'noarch',
+             'epoch': None,
+             'id': 13640897,
+             'name': 'perl-List-Compare',
+             'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
+             'release': '9.module_1612+b62270b8',
+             'version': '0.53'}
+
+        ]
+
+        self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
+        self.koji_wrapper.koji_proxy.getBuild.return_value = mock_build_md[0]
+        self.koji_wrapper.koji_proxy.listArchives.return_value = mock_archives
+        self.koji_wrapper.koji_proxy.listRPMs.return_value = mock_rpms
+
+        module_info_str = "testmodule2:master:20180406051653:96c371af"
+        result = source_koji.get_koji_modules(self.compose, self.koji_wrapper, module_info_str)
+
+        assert type(result) is list
+        assert len(result) == 1
+        module = result[0]
+        assert type(module) is dict
+        assert "rpms" in module
+        assert len(module["rpms"]) == 2
+        assert "modulemd" in module
+        assert "stream" in module
+        assert "context" in module
+
+        expected_query = "testmodule2-master-20180406051653.96c371af"
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
+                                                                    "glob")
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.listArchives.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.listRPMs.assert_called_once_with(
+            imageID=mock_archives[0]["id"])
+
+    def test_get_koji_modules_no_version(self):
+        mock_build_ids = [
+            {'id': 1065873, 'name': 'testmodule2-master-20180406051653.2e6f5e0a'},
+            {'id': 1065874, 'name': 'testmodule2-master-20180406051653.96c371af'}
+        ]
+        mock_extra = [
+            {
+                'typeinfo': {
+                    'module': {
+                        'content_koji_tag': 'module-b62270b82443edde',
+                        'modulemd_str': mock.Mock()}
+                }
+            },
+            {
+                'typeinfo': {
+                    'module': {
+                        'content_koji_tag': 'module-52e40b9cdd3c0f7d',
+                        'modulemd_str': mock.Mock()}
+                }
+            }
+        ]
+        mock_build_md = [
+            {
+                'id': 1065873,
+                'epoch': None,
+                'extra': mock_extra[0],
+                'name': 'testmodule2',
+                'nvr': 'testmodule2-master-20180406051653.2e6f5e0a',
+                'release': '20180406051653.2e6f5e0a',
+                'state': 1,
+                'version': 'master',
+            },
+            {
+                'id': 1065874,
+                'epoch': None,
+                'extra': mock_extra[1],
+                'name': 'testmodule2',
+                'nvr': 'testmodule2-master-20180406051653.96c371af',
+                'release': '20180406051653.96c371af',
+                'state': 1,
+                'version': 'master',
+            }
+        ]
+        mock_archives = [
+            [{
+                "id": 108941,
+                "btype": "module",
+                "filename": "modulemd.txt"
+            }],
+            [{
+                "id": 108942,
+                "btype": "module",
+                "filename": "modulemd.txt"
+            }],
+        ]
+
+        mock_rpms = [
+            [{'arch': 'src',
+              'epoch': None,
+              'id': 13640896,
+              'name': 'perl-List-Compare',
+              'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
+              'release': '9.module_1612+b62270b8',
+              'version': '0.53'},
+             {'arch': 'noarch',
+              'epoch': None,
+              'id': 13640897,
+              'name': 'perl-List-Compare',
+              'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
+              'release': '9.module_1612+b62270b8',
+              'version': '0.53'}],
+            [{'arch': 'src',
+              'epoch': None,
+              'id': 13640900,
+              'name': 'perl-List-Compare',
+              'nvr': 'perl-List-Compare-0.53-9.module_1612+52e40b9c',
+              'release': '9.module_1612+52e40b9c',
+              'version': '0.53'},
+             {'arch': 'noarch',
+              'epoch': None,
+              'id': 13640901,
+              'name': 'perl-List-Compare',
+              'nvr': 'perl-List-Compare-0.53-9.module_1612+52e40b9c',
+              'release': '9.module_1612+52e40b9c',
+              'version': '0.53'}],
+        ]
+
+        self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
+        self.koji_wrapper.koji_proxy.getBuild.side_effect = mock_build_md
+        self.koji_wrapper.koji_proxy.listArchives.side_effect = mock_archives
+        self.koji_wrapper.koji_proxy.listRPMs.side_effect = mock_rpms
+
+        module_info_str = "testmodule2:master"
+        result = source_koji.get_koji_modules(self.compose, self.koji_wrapper, module_info_str)
+
+        assert type(result) is list
+        assert len(result) == 2
+        module = result[0]
+        for module in result:
+            assert type(module) is dict
+            assert "rpms" in module
+            assert len(module["rpms"]) == 2
+            assert "modulemd" in module
+            assert "stream" in module
+            assert "context" in module
+
+        expected_query = "testmodule2-master-*"
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
+                                                                    "glob")
+
+        expected_calls = [mock.call(mock_build_ids[0]["id"]), mock.call(mock_build_ids[1]["id"])]
+        self.koji_wrapper.koji_proxy.getBuild.mock_calls == expected_calls
+        self.koji_wrapper.koji_proxy.listArchives.mock_calls == expected_calls
+        expected_rpm_calls = [mock.call(imageID=mock_archives[0][0]["id"]),
+                              mock.call(imageID=mock_archives[1][0]["id"])]
+        self.koji_wrapper.koji_proxy.listRPMs.mock_calls = expected_rpm_calls
 
 
 class TestSourceKoji(helpers.PungiTestCase):
