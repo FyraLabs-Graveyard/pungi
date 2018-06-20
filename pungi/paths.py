@@ -276,6 +276,18 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
+    def iso_staging_dir(self, arch, variant, create_dir=True):
+        """
+        Examples:
+            work/x86_64/Server/iso-staging-dir
+        """
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir), variant.uid, "iso-staging-dir"
+        )
+        if create_dir:
+            makedirs(path)
+        return path
+
     def repo_package_list(self, arch, variant, pkg_type=None, create_dir=True):
         """
         Examples:

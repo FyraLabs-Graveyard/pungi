@@ -697,6 +697,10 @@ def make_schema():
             },
             "symlink_isos_to": {"type": "string"},
             "createiso_skip": _variant_arch_mapping({"type": "boolean"}),
+            "createiso_break_hardlinks": {
+                "type": "boolean",
+                "default": False,
+            },
             "multilib": _variant_arch_mapping({
                 "$ref": "#/definitions/list_of_strings"
             }),

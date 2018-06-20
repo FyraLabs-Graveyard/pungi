@@ -844,5 +844,43 @@ class SplitIsoTest(helpers.PungiTestCase):
         self.assertEqual(len(data), 1)
 
 
+class BreakHardlinksTest(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(BreakHardlinksTest, self).setUp()
+        self.src = os.path.join(self.topdir, "src")
+        self.stage = os.path.join(self.topdir, "stage")
+
+    def test_not_modify_dir(self):
+        p = os.path.join(self.src, "dir")
+        os.makedirs(p)
+
+        d = {"dir": p}
+        createiso.break_hardlinks(d, self.stage)
+
+        self.assertEqual(d, {"dir": p})
+
+    def test_not_copy_file_with_one(self):
+        f = os.path.join(self.src, "file")
+        helpers.touch(f)
+
+        d = {"f": f}
+        createiso.break_hardlinks(d, self.stage)
+
+        self.assertEqual(d, {"f": f})
+
+    def test_copy(self):
+        f = os.path.join(self.src, "file")
+        helpers.touch(f)
+        os.link(f, os.path.join(self.topdir, "file"))
+
+        d = {"f": f}
+        createiso.break_hardlinks(d, self.stage)
+
+        expected = self.stage + f
+        self.assertEqual(d, {"f": expected})
+        self.assertTrue(os.path.exists(expected))
+
+
 if __name__ == '__main__':
     unittest.main()

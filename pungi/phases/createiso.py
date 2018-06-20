@@ -18,6 +18,7 @@ import os
 import time
 import random
 import shutil
+import stat
 
 import productmd.treeinfo
 from productmd.images import Image
@@ -205,6 +206,11 @@ class CreateIsoThread(WorkerThread):
 
         add_iso_to_metadata(compose, variant, arch, cmd["iso_path"],
                             cmd["bootable"], cmd["disc_num"], cmd["disc_count"])
+
+        # Delete staging directory if present.
+        staging_dir = compose.paths.work.iso_staging_dir(arch, variant)
+        if os.path.exists(staging_dir):
+            shutil.rmtree(staging_dir)
 
         self.pool.log_info("[DONE ] %s" % msg)
         if compose.notifier:
@@ -444,6 +450,10 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     else:
         data = iso.get_graft_points([iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
 
+    if compose.conf["createiso_break_hardlinks"]:
+        compose.log_debug("Breaking hardlinks for ISO for %s.%s" % (variant, arch))
+        break_hardlinks(data, compose.paths.work.iso_staging_dir(arch, variant))
+
     # TODO: /content /graft-points
     gp = "%s-graft-points" % iso_dir
     iso.write_graft_points(gp, data, exclude=["*/lost+found", "*/boot.iso"])
@@ -460,3 +470,16 @@ def copy_boot_images(src, dest):
         if os.path.exists(src_path):
             makedirs(os.path.dirname(dst_path))
             shutil.copy2(src_path, dst_path)
+
+
+def break_hardlinks(graft_points, staging_dir):
+    """Iterate over graft points and copy any file that has more than 1
+    hardlink into the staging directory. Replace the entry in the dict.
+    """
+    for f in graft_points:
+        info = os.stat(graft_points[f])
+        if stat.S_ISREG(info.st_mode) and info.st_nlink > 1:
+            dest_path = os.path.join(staging_dir, graft_points[f].lstrip("/"))
+            makedirs(os.path.dirname(dest_path))
+            shutil.copy2(graft_points[f], dest_path)
+            graft_points[f] = dest_path

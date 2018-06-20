@@ -972,6 +972,16 @@ Options
     ``optional`` variants. By default only variants with type ``variant`` or
     ``layered-product`` will get ISOs.
 
+**createiso_break_hardlinks** = False
+    (*bool*) -- when set to ``True``, all files that should go on the ISO and
+    have a hardlink will be first copied into a staging directory. This should
+    work around a bug in ``genisoimage`` including incorrect link count in the
+    image, but it is at the cost of having to copy a potentially significant
+    amount of data.
+
+    The staging directory is deleted when ISO is successfully created. In that
+    case the same task to create the ISO will not be re-runnable.
+
 **iso_size** = 4700000000
     (*int|str*) -- size of ISO image. The value should either be an integer
     meaning size in bytes, or it can be a string with ``k``, ``M``, ``G``
