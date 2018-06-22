@@ -745,10 +745,12 @@ class TestCreateVariantRepo(PungiTestCase):
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')
 
     @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
+    @mock.patch('pungi.phases.createrepo.find_file_in_repodata')
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_modules_artifacts_not_in_compose(
-            self, CreaterepoWrapperCls, run):
+            self, CreaterepoWrapperCls, run, modulemd_filename
+    ):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
@@ -778,8 +780,10 @@ class TestCreateVariantRepo(PungiTestCase):
         repodata_dir = os.path.join(
             compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
             'repodata')
+        modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a7-modules.yaml.gz"
+        modules_metadata = mock.Mock()
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm', modules_metadata)
 
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,

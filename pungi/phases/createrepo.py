@@ -224,27 +224,23 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             artifacts = repo_mmd.get_rpm_artifacts()
 
             # Modules without RPMs are also valid.
-            if not artifacts or artifacts.size() == 0:
-                continue
-
             module_rpms = set()
-            repo_artifacts = Modulemd.SimpleSet()
-            rpm_licenses = Modulemd.SimpleSet()
-            for rpm_nevra in rpm_nevras:
-                if artifacts.contains(rpm_nevra):
-                    repo_artifacts.add(rpm_nevra)
-                    module_rpms.add(rpm_nevra)
-                    # Not all RPMs have license data (*-debuginfo does not),
-                    # so add any that do and don't worry about the remainder.
-                    if rpm_nevra in license_data:
-                        rpm_licenses.add(license_data[rpm_nevra])
-            repo_mmd.set_rpm_artifacts(repo_artifacts)
-            repo_mmd.set_content_licenses(rpm_licenses)
-            if module_rpms:  # do not create metadata if there is empty rpm list
-                if modules_metadata:  # some unittests call this method without parameter modules_metadata and its default is None
-                    metadata.append((module_id, module_rpms))
-                else:
-                    raise AttributeError("module_metadata parameter was not passed and it is needed for module processing")
+            if artifacts and artifacts.size() > 0:
+                repo_artifacts = Modulemd.SimpleSet()
+                rpm_licenses = Modulemd.SimpleSet()
+                for rpm_nevra in rpm_nevras:
+                    if artifacts.contains(rpm_nevra):
+                        repo_artifacts.add(rpm_nevra)
+                        module_rpms.add(rpm_nevra)
+                        # Not all RPMs have license data (*-debuginfo does not),
+                        # so add any that do and don't worry about the remainder.
+                        if rpm_nevra in license_data:
+                            rpm_licenses.add(license_data[rpm_nevra])
+                repo_mmd.set_rpm_artifacts(repo_artifacts)
+                repo_mmd.set_content_licenses(rpm_licenses)
+
+            if modules_metadata:
+                metadata.append((module_id, module_rpms))
             modules.append(repo_mmd)
 
         module_names = set([x.get_name() for x in modules])
