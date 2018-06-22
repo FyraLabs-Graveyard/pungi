@@ -15,16 +15,14 @@
 
 
 import collections
-import glob
 import os
 import shutil
 
 from kobo.shortcuts import run
 
-from pungi import Modulemd
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import write_prepopulate_file
-from pungi.util import temp_dir
+from pungi.util import temp_dir, iter_module_defaults
 from pungi.wrappers.comps import CompsWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
@@ -188,11 +186,9 @@ def validate_module_defaults(path):
     :param str path: directory with cloned module defaults
     """
     seen_defaults = collections.defaultdict(set)
-    for file in glob.glob(os.path.join(path, "*.yaml")):
-        for mmddef in Modulemd.objects_from_file(file):
-            if not isinstance(mmddef, Modulemd.Defaults):
-                continue
-            seen_defaults[mmddef.peek_module_name()].add(mmddef.peek_default_stream())
+
+    for mmddef in iter_module_defaults(path):
+        seen_defaults[mmddef.peek_module_name()].add(mmddef.peek_default_stream())
 
     errors = []
     for module_name, defaults in seen_defaults.items():

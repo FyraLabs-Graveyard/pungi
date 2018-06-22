@@ -33,7 +33,12 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import find_old_compose, temp_dir, get_arch_variant_data
+from ..util import (
+    find_old_compose,
+    get_arch_variant_data,
+    iter_module_defaults,
+    temp_dir,
+)
 from pungi import Modulemd
 from pungi.arch import tree_arch_to_yum_arch
 
@@ -244,10 +249,9 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             modules.append(repo_mmd)
 
         module_names = set([x.get_name() for x in modules])
-        for mmddeffile in glob.glob(os.path.join(compose.paths.work.module_defaults_dir(), "*.yaml")):
-            for mmddef in Modulemd.objects_from_file(mmddeffile):
-                if isinstance(mmddef, Modulemd.Defaults) and mmddef.peek_module_name() in module_names:
-                    modules.append(mmddef)
+        for mmddef in iter_module_defaults(compose.paths.work.module_defaults_dir()):
+            if mmddef.peek_module_name() in module_names:
+                modules.append(mmddef)
 
         with temp_dir() as tmp_dir:
             modules_path = os.path.join(tmp_dir, "modules.yaml")

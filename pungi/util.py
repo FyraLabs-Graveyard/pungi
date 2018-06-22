@@ -15,6 +15,7 @@
 
 import argparse
 import fnmatch
+import glob
 import json
 import subprocess
 import os
@@ -33,6 +34,8 @@ from six.moves import urllib, range, shlex_quote
 
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
+
+from pungi import Modulemd
 
 # Patterns that match all names of debuginfo packages
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
@@ -855,3 +858,12 @@ def parse_koji_event(event):
         raise argparse.ArgumentTypeError(
             "%s is not a number or path to compose with valid Koji event" % event
         )
+
+
+def iter_module_defaults(path):
+    """Given a path to a directory with yaml files, yield each module default in there.
+    """
+    for file in glob.glob(os.path.join(path, "*.yaml")):
+        for mmddef in Modulemd.objects_from_file(file):
+            if isinstance(mmddef, Modulemd.Defaults):
+                yield mmddef
