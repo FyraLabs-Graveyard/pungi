@@ -711,6 +711,31 @@ class TestGatherPackages(helpers.PungiTestCase):
         self.assertEqual(get_gather_method.call_args_list,
                          [mock.call('nodeps'), mock.call('deps'), mock.call('deps')])
 
+    @mock.patch("pungi.phases.gather.get_variant_packages")
+    @mock.patch("pungi.phases.gather.get_gather_method")
+    def test_hybrid_method(self, get_gather_method, get_variant_packages):
+        packages, groups, filters = mock.Mock(), mock.Mock(), mock.Mock()
+        get_variant_packages.side_effect = (
+            lambda c, v, a, s, p: (packages, groups, filters)
+            if s == "comps"
+            else (None, None, None)
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_method": "hybrid"})
+        variant = compose.variants["Server"]
+        pkg_set = mock.Mock()
+        gather.gather_packages(compose, "x86_64", variant, pkg_set),
+        self.assertItemsEqual(
+            get_variant_packages.call_args_list,
+            [
+                mock.call(compose, "x86_64", variant, "module", pkg_set),
+                mock.call(compose, "x86_64", variant, "comps", pkg_set)
+            ],
+        )
+        self.assertEqual(get_gather_method.call_args_list, [mock.call("hybrid")])
+        method_kwargs = get_gather_method.return_value.return_value.call_args_list[0][1]
+        self.assertEqual(method_kwargs["packages"], packages)
+        self.assertEqual(method_kwargs["groups"], groups)
+
 
 class TestWritePrepopulate(helpers.PungiTestCase):
     def test_without_config(self):

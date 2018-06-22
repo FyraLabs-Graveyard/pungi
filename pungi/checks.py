@@ -561,20 +561,28 @@ def make_schema():
                         "type": "object",
                         "patternProperties": {
                             ".+": {
-                                "type": "object",
-                                "patternProperties": {
-                                    "^module|comps|json$": {
+                                "oneOf": [
+                                    {
                                         "type": "string",
-                                        "enum": ["deps", "nodeps"],
+                                        "enum": ["hybrid"],
+                                    },
+                                    {
+                                        "type": "object",
+                                        "patternProperties": {
+                                            "^module|comps|json$": {
+                                                "type": "string",
+                                                "enum": ["deps", "nodeps"],
+                                            }
+                                        },
                                     }
-                                }
+                                ]
                             }
                         },
                         "additionalProperties": False,
                     },
                     {
                         "type": "string",
-                        "enum": ["deps", "nodeps"],
+                        "enum": ["deps", "nodeps", "hybrid"],
                     }
                 ],
             },

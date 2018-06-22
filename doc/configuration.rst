@@ -588,12 +588,14 @@ Options
 -------
 
 **gather_method** [mandatory]
-    (*str*|*dict*) -- Options are ``deps`` and ``nodeps``. Specifies whether
-    package dependencies should be pulled in as well. Either a single value or
-    a dictionary mapping variant UID and source type to a value. Make sure only
-    one regex matches each variant, as there is no guarantee which value will
-    be used if there are multiple matching ones. All used sources must have a
-    configured method.
+    (*str*|*dict*) -- Options are ``deps``, ``nodeps`` and ``hybrid``.
+    Specifies whether and how package dependencies should be pulled in.
+    Possible configuration can be one value for all variants, or if configured
+    per-variant it can be a simple string ``hybrid`` or a a dictionary mapping
+    source type to a value of ``deps`` or ``nodeps``. Make sure only one regex
+    matches each variant, as there is no guarantee which value will be used if
+    there are multiple matching ones. All used sources must have a configured
+    method unless hybrid solving is used.
 
 **gather_fulltree** = False
     (*bool*) -- When set to ``True`` all RPMs built from an SRPM will always be
@@ -745,6 +747,7 @@ Example
             "comps": "deps",
             "module": "nodeps"
         }
+        "^OtherMixed$": "hybrid",   # Using hybrid depsolver
     }
 
     additional_packages = [

@@ -162,31 +162,64 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     prepopulate = get_prepopulate_packages(compose, arch, variant)
     fulltree_excludes = fulltree_excludes or set()
 
-    for source_name in ('module', 'comps', 'json'):
+    if methods == "hybrid":
+        # This variant is using a hybrid solver. Gather all inputs and run the
+        # method once.
 
-        packages, groups, filter_packages = get_variant_packages(compose, arch, variant,
-                                                                 source_name, package_sets)
-        if not packages and not groups:
-            # No inputs, nothing to do really.
-            continue
+        packages = []
+        groups = []
+        filter_packages = []
 
-        try:
-            method_name = global_method_name or methods[source_name]
-        except KeyError:
-            raise RuntimeError("Variant %s has no configured gather_method for source %s"
-                               % (variant.uid, source_name))
+        # Run the module source. This is needed to set up module metadata for
+        # the variant, but we don't really care about the returned packages.
+        # They will be pulled in based on the actual module.
+        get_variant_packages(compose, arch, variant, "module", package_sets)
 
-        GatherMethod = get_gather_method(method_name)
-        method = GatherMethod(compose)
-        method.source_name = source_name
-        compose.log_debug("Gathering source %s, method %s" % (source_name, method_name))
-        pkg_map = method(arch, variant, packages, groups, filter_packages,
-                         multilib_whitelist, multilib_blacklist, package_sets,
-                         fulltree_excludes=fulltree_excludes,
-                         prepopulate=prepopulate if source_name == 'comps' else set())
+        # Here we do want to get list of comps groups and additional packages.
+        packages, groups, filter_packages = get_variant_packages(
+            compose, arch, variant, "comps", package_sets
+        )
 
-        for t in ('rpm', 'srpm', 'debuginfo'):
-            result[t].extend(pkg_map.get(t, []))
+        result = get_gather_method("hybrid")(compose)(
+            arch,
+            variant,
+            packages=packages,
+            groups=groups,
+            filter_packages=filter_packages,
+            multilib_whitelist=multilib_whitelist,
+            multilib_blacklist=multilib_blacklist,
+            package_sets=package_sets,
+            fulltree_excludes=fulltree_excludes,
+            prepopulate=prepopulate,
+        )
+
+    else:
+
+        for source_name in ('module', 'comps', 'json'):
+
+            packages, groups, filter_packages = get_variant_packages(compose, arch, variant,
+                                                                     source_name, package_sets)
+            if not packages and not groups:
+                # No inputs, nothing to do really.
+                continue
+
+            try:
+                method_name = global_method_name or methods[source_name]
+            except KeyError:
+                raise RuntimeError("Variant %s has no configured gather_method for source %s"
+                                   % (variant.uid, source_name))
+
+            GatherMethod = get_gather_method(method_name)
+            method = GatherMethod(compose)
+            method.source_name = source_name
+            compose.log_debug("Gathering source %s, method %s" % (source_name, method_name))
+            pkg_map = method(arch, variant, packages, groups, filter_packages,
+                             multilib_whitelist, multilib_blacklist, package_sets,
+                             fulltree_excludes=fulltree_excludes,
+                             prepopulate=prepopulate if source_name == 'comps' else set())
+
+            for t in ('rpm', 'srpm', 'debuginfo'):
+                result[t].extend(pkg_map.get(t, []))
 
     compose.log_info("[DONE ] %s" % msg)
     return result

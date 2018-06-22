@@ -117,7 +117,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
         return result
 
 
-def expand_groups(compose, arch, variant, groups):
+def expand_groups(compose, arch, variant, groups, set_pkg_arch=True):
     """Read comps file filtered for given architecture and variant and return
     all packages in given groups.
 
@@ -131,7 +131,9 @@ def expand_groups(compose, arch, variant, groups):
     comps = CompsWrapper(comps_file)
     packages = set()
 
+    pkg_arch = arch if set_pkg_arch else None
+
     for group in groups:
-        packages.update([(pkg, arch) for pkg in comps.get_packages(group)])
+        packages.update([(pkg, pkg_arch) for pkg in comps.get_packages(group)])
 
     return packages
