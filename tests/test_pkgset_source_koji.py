@@ -113,11 +113,23 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.assertIs(pkgset, orig_pkgset)
         self.assertEqual(
             pkgset.mock_calls,
-            [mock.call.populate('f25', 123456, inherit=True,
-                                logfile=self.topdir + '/logs/global/packages_from_f25.global.log'),
-             mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
-                                      remove_path_prefix='/prefix'),
-             mock.call.save_file_cache(self.topdir + '/work/global/pkgset_file_cache.pickle')])
+            [
+                mock.call.populate(
+                    'f25',
+                    123456,
+                    inherit=True,
+                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
+                    exclude_packages=None,
+                ),
+                mock.call.save_file_list(
+                    self.topdir + '/work/global/package_list/global.conf',
+                    remove_path_prefix='/prefix',
+                ),
+                mock.call.save_file_cache(
+                    self.topdir + '/work/global/pkgset_file_cache.pickle'
+                ),
+            ]
+        )
         self.assertItemsEqual(pickle_dumps.call_args_list,
                               [mock.call(orig_pkgset)])
         with open(self.pkgset_path) as f:
@@ -211,10 +223,28 @@ data:
             self.compose, self.koji_wrapper, '/prefix', 123456)
 
         self.assertIs(pkgset, orig_pkgset)
-        pkgset.assert_has_calls([mock.call.populate('f25', 123456, inherit=True,
-                                                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log')])
-        pkgset.assert_has_calls([mock.call.populate('f25-extra', 123456, inherit=True,
-                                                    logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log')])
+        pkgset.assert_has_calls(
+            [
+                mock.call.populate(
+                    'f25',
+                    123456,
+                    inherit=True,
+                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
+                    exclude_packages=None,
+                ),
+            ]
+        )
+        pkgset.assert_has_calls(
+            [
+                mock.call.populate(
+                    'f25-extra',
+                    123456,
+                    inherit=True,
+                    logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log',
+                    exclude_packages=None,
+                ),
+            ]
+        )
         pkgset.assert_has_calls([mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
                                                           remove_path_prefix='/prefix')])
         # for each tag, call pkgset.fast_merge once for each variant and once for global pkgset

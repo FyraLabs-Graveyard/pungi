@@ -256,7 +256,9 @@ def _log_modulemd(compose, variant, mmd):
                                         % (variant.uid, mmd.dup_nsvc())))
 
 
-def _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags):
+def _get_modules_from_koji(
+    compose, koji_wrapper, variant, variant_tags, module_tag_rpm_filter
+):
     """
     Loads modules for given `variant` from koji `session`, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -287,6 +289,8 @@ def _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags):
             # This is needed in createrepo phase where metadata is exposed by producmd
             variant.module_uid_to_koji_tag[uid] = tag
 
+            module_tag_rpm_filter[tag] = set(mmd.get_rpm_filter().get())
+
             module_msg = (
                 "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' "
                 "(as a result of querying module '{module}')"
@@ -295,7 +299,7 @@ def _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags):
 
 
 def _get_modules_from_koji_tags(
-        compose, koji_wrapper, event_id, variant, variant_tags):
+        compose, koji_wrapper, event_id, variant, variant_tags, module_tag_rpm_filter):
     """
     Loads modules for given `variant` from Koji, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -381,6 +385,8 @@ def _get_modules_from_koji_tags(
                     uid += ":{context}".format(**module_data)
             variant.module_uid_to_koji_tag[uid] = module_tag
 
+            module_tag_rpm_filter[module_tag] = set(mmd.get_rpm_filter().get())
+
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
                 variant=variant, tag=module_tag, module=build["nvr"])
             compose.log_info("%s" % module_msg)
@@ -449,6 +455,13 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
     # there are some packages with invalid sigkeys, it raises an exception.
     allow_invalid_sigkeys = compose.conf["gather_method"] == "deps"
 
+    # Mapping from koji tags to sets of package names that should be filtered
+    # out. This is basically a workaround for tagging working on build level,
+    # not rpm level. A module tag may build a package but not want it included.
+    # This should exclude it from the package set to avoid pulling it in as a
+    # dependency.
+    module_tag_rpm_filter = {}
+
     for variant in compose.all_variants.values():
         # pkgset storing the packages belonging to this particular variant.
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
@@ -470,12 +483,24 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 compose.paths.work.topdir(arch="global"),
                 "koji-tag-module-%s.yaml" % variant.uid)
             _get_modules_from_koji_tags(
-                compose, koji_wrapper, event_id, variant, variant_tags)
+                compose,
+                koji_wrapper,
+                event_id,
+                variant,
+                variant_tags,
+                module_tag_rpm_filter,
+            )
         elif variant.modules:
             included_modules_file = os.path.join(
                 compose.paths.work.topdir(arch="global"),
                 "koji-module-%s.yaml" % variant.uid)
-            _get_modules_from_koji(compose, koji_wrapper, variant, variant_tags)
+            _get_modules_from_koji(
+                compose,
+                koji_wrapper,
+                variant,
+                variant_tags,
+                module_tag_rpm_filter,
+            )
 
         # Ensure that every tag added to `variant_tags` is added also to
         # `compose_tags`.
@@ -536,7 +561,13 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 None, 'packages_from_%s' % compose_tag.replace('/', '_'))
             is_traditional = compose_tag in compose.conf.get('pkgset_koji_tag', [])
             should_inherit = inherit if is_traditional else inherit_modules
-            pkgset.populate(compose_tag, event_id, inherit=should_inherit, logfile=logfile)
+            pkgset.populate(
+                compose_tag,
+                event_id,
+                inherit=should_inherit,
+                logfile=logfile,
+                exclude_packages=module_tag_rpm_filter.get(compose_tag),
+            )
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:
                     # Optimization for case where we have just single compose

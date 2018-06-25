@@ -361,15 +361,19 @@ class KojiPackageSet(PackageSetBase):
                        % (rpm_info, self.sigkey_ordering, paths))
         return None
 
-    def populate(self, tag, event=None, inherit=True, logfile=None):
+    def populate(
+        self, tag, event=None, inherit=True, logfile=None, exclude_packages=None
+    ):
         """Populate the package set with packages from given tag.
 
         :param event: the Koji event to query at (or latest if not given)
         :param inherit: whether to enable tag inheritance
         :param logfile: path to file where package source tags should be logged
+        :param exclude_packages: an iterable of package names that should be ignored
         """
         result_rpms = []
         result_srpms = []
+        exclude_packages = set(exclude_packages or [])
 
         if type(event) is dict:
             event = event["id"]
@@ -396,6 +400,12 @@ class KojiPackageSet(PackageSetBase):
                 if rpm_info["arch"] not in skipped_arches:
                     self.log_debug("Skipping packages for arch: %s" % rpm_info["arch"])
                     skipped_arches.append(rpm_info["arch"])
+                continue
+
+            if exclude_packages and rpm_info["name"] in exclude_packages and rpm_info["arch"] != "src":
+                self.log_debug(
+                    "Skipping %(name)s-%(version)s-%(release)s.%(arch)s" % rpm_info
+                )
                 continue
 
             if (self.populate_only_packages and self.packages and
