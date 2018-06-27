@@ -212,7 +212,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
 
     # call modifyrepo to inject modulemd if needed
-    if arch in variant.arch_mmds and Modulemd is not None:
+    if pkg_type == "rpm" and arch in variant.arch_mmds and Modulemd is not None:
         modules = []
         metadata = []
 
