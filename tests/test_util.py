@@ -655,6 +655,18 @@ class TestVersionGenerator(unittest.TestCase):
         self.assertEqual(util.version_generator(self.compose, '!VERSION_FROM_VERSION_DATE_RESPIN'),
                          '8.20160101.0')
 
+    def test_release_from_date_respin(self):
+        self.assertEqual(
+            util.version_generator(self.compose, "!RELEASE_FROM_DATE_RESPIN"),
+            "20160101.0",
+        )
+
+    def test_version_from_version(self):
+        self.assertEqual(
+            util.version_generator(self.compose, "!VERSION_FROM_VERSION"),
+            "8",
+        )
+
 
 class TestTZOffset(unittest.TestCase):
     @mock.patch('time.daylight', new=False)

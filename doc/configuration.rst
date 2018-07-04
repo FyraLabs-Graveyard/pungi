@@ -1165,6 +1165,14 @@ Image Build Settings
     ``!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN``, it will be replaced with a value
     generated as described in :ref:`automatic versioning <auto-version>`.
 
+    If you explicitly set ``release`` to
+    ``!RELEASE_FROM_DATE_RESPIN``, it will be replaced with a value
+    generated as described in :ref:`automatic versioning <auto-version>`.
+
+    If you explicitly set ``version`` to
+    ``!VERSION_FROM_VERSION``, it will be replaced with a value
+    generated as described in :ref:`automatic versioning <auto-version>`.
+
     Please don't set ``install_tree``. This gets automatically set by *pungi*
     based on current variant. You can use ``install_tree_from`` key to use
     install tree from another variant.

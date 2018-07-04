@@ -150,7 +150,11 @@ class ImageConfigMixin(object):
         Get version from configuration hierarchy or fall back to release
         version.
         """
-        return self.get_config(cfg, 'version') or self.compose.image_version
+        return (
+            util.version_generator(self.compose, self.get_config(cfg, "version"))
+            or self.get_config(cfg, "version")
+            or self.compose.image_version
+        )
 
     def get_release(self, cfg):
         """

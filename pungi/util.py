@@ -797,10 +797,14 @@ def version_generator(compose, gen):
         return '%s.%s' % (compose.image_version, compose.image_release)
     elif gen == '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN':
         return compose.image_release
+    elif gen == '!RELEASE_FROM_DATE_RESPIN':
+        return '%s.%s' % (compose.compose_date, compose.compose_respin)
     elif gen == '!VERSION_FROM_VERSION_DATE_RESPIN':
         return '%s.%s.%s' % (compose.ci_base.release.version,
                              compose.compose_date,
                              compose.compose_respin)
+    elif gen == '!VERSION_FROM_VERSION':
+        return '%s' % (compose.ci_base.release.version)
     elif gen and gen[0] == '!':
         raise RuntimeError("Unknown version generator '%s'" % gen)
     return gen
