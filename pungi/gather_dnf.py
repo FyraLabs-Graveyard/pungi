@@ -227,10 +227,27 @@ class Gather(GatherBase):
         if not package_list:
             return []
 
+        # The list can contain packages from lookaside and outside of
+        # lookaside. If the package is in both, we want to prefer the version
+        # from lookaside. This can be achieved by removing any package that is
+        # also in lookaside from the list.
+        lookaside_pkgs = set()
+        for pkg in package_list:
+            if pkg.repoid in self.opts.lookaside_repos:
+                lookaside_pkgs.add("{0.name}-{0.evr}".format(pkg))
+
         if self.opts.greedy_method == "all":
             return list(package_list)
 
-        all_pkgs = list(package_list)
+        all_pkgs = []
+        for pkg in package_list:
+            # Remove packages that are also in lookaside
+            if (
+                "{0.name}-{0.evr}".format(pkg) not in lookaside_pkgs
+                or pkg.repoid in self.opts.lookaside_repos
+            ):
+                all_pkgs.append(pkg)
+
         native_pkgs = self.q_native_binary_packages.filter(pkg=all_pkgs).apply()
         multilib_pkgs = self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply()
 

@@ -22,6 +22,7 @@ os.environ['PATH'] = '%s:%s' % (BINDIR, os.environ['PATH'])
 
 from pungi.wrappers.pungi import PungiWrapper
 try:
+    from dnf import __version__ as dnf_version
     from pungi.dnf_wrapper import DnfWrapper, Conf
     from pungi.gather_dnf import Gather, GatherOptions, PkgFlag
     HAS_DNF = True
@@ -1810,7 +1811,10 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         conf = Conf(base_arch)
         conf.persistdir = persistdir
         conf.cachedir = self.cachedir
-        conf.modulesdir = os.path.join(persistdir, 'modules.d')
+        if int(dnf_version.split('.')[0]) < 3:
+            conf.modulesdir = os.path.join(persistdir, 'modules.d')
+        else:
+            conf.modulesdir._set(os.path.join(persistdir, 'modules.d'))
         if exclude:
             conf.exclude = exclude
         dnf = DnfWrapper(conf)
