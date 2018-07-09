@@ -142,12 +142,12 @@ class OSBSThread(WorkerThread):
         os_tree = compose.paths.compose.repository('$basearch', variant,
                                                    create_dir=False)
         repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),
-                                 'compose-rpms-%s.repo' % self.num)
+                                 'compose-rpms-%s-%s.repo' % (variant, self.num))
 
         gpgcheck = 1 if gpgkey else 0
         with open(repo_file, 'w') as f:
-            f.write('[%s]\n' % compose.compose_id)
-            f.write('name=Compose %s (RPMs)\n' % compose.compose_id)
+            f.write('[%s-%s-%s]\n' % (compose.compose_id, variant, self.num))
+            f.write('name=Compose %s (RPMs) - %s\n' % (compose.compose_id, variant))
             f.write('baseurl=%s\n' % util.translate_path(compose, os_tree))
             f.write('enabled=1\n')
             f.write('gpgcheck=%s\n' % gpgcheck)

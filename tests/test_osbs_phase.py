@@ -206,7 +206,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     def _assertCorrectCalls(self, opts, setupCalls=None, scratch=False):
         setupCalls = setupCalls or []
-        options = {'yum_repourls': ['http://root/work/global/tmp-Server/compose-rpms-1.repo']}
+        options = {'yum_repourls': ['http://root/work/global/tmp-Server/compose-rpms-Server-1.repo']}
         if scratch:
             options['scratch'] = True
         options.update(opts)
@@ -229,7 +229,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
     def _assertRepoFile(self, variants=None, gpgkey=None):
         variants = variants or ['Server']
         for variant in variants:
-            with open(self.topdir + '/work/global/tmp-%s/compose-rpms-1.repo' % variant) as f:
+            with open(self.topdir + '/work/global/tmp-%s/compose-rpms-%s-1.repo' % (variant, variant)) as f:
                 lines = f.read().split('\n')
                 self.assertIn('baseurl=http://root/compose/%s/$basearch/os' % variant, lines)
                 if gpgkey:
@@ -327,8 +327,8 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'version': '1.0',
             'git_branch': 'f24-docker',
             'yum_repourls': [
-                'http://root/work/global/tmp-Server/compose-rpms-1.repo',
-                'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
+                'http://root/work/global/tmp-Server/compose-rpms-Server-1.repo',
+                'http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo',
                 'http://pkgs.example.com/my.repo',
             ]
         }
@@ -357,9 +357,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'version': '1.0',
             'git_branch': 'f24-docker',
             'yum_repourls': [
-                'http://root/work/global/tmp-Server/compose-rpms-1.repo',
-                'http://root/work/global/tmp-Everything/compose-rpms-1.repo',
-                'http://root/work/global/tmp-Client/compose-rpms-1.repo',
+                'http://root/work/global/tmp-Server/compose-rpms-Server-1.repo',
+                'http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo',
+                'http://root/work/global/tmp-Client/compose-rpms-Client-1.repo',
                 'http://pkgs.example.com/my.repo',
             ]
         }
