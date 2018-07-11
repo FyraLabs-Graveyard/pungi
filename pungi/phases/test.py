@@ -60,9 +60,8 @@ def run_repoclosure(compose):
             repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
             repos[repo_id] = repo_dir
 
-            if compose.conf["release_is_layered"]:
-                for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
-                    lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
+            for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
+                lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
 
             cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf['repoclosure_backend'],
                                                   repos=repos, lookaside=lookaside, arch=arches)
@@ -74,8 +73,14 @@ def run_repoclosure(compose):
                 # cause any error to be printed directly to stderr.
                 #  https://github.com/release-engineering/kobo/pull/26
                 try:
-                    run(cmd, logfile=compose.paths.log.log_file(arch, "repoclosure-%s" % variant),
-                        workdir=tmp_dir)
+                    run(
+                        cmd,
+                        logfile=compose.paths.log.log_file(
+                            arch, "repoclosure-%s" % variant
+                        ),
+                        workdir=tmp_dir,
+                        show_cmd=True,
+                    )
                 except RuntimeError as exc:
                     if conf and conf[-1] == 'fatal':
                         raise
