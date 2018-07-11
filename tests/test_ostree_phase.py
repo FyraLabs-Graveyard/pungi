@@ -227,7 +227,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
-        self.compose._logger.info.assert_has_calls([
+        self.compose._logger.error.assert_has_calls([
             mock.call('[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s for more details.'
                       % (self.topdir + '/logs/x86_64/Everything/ostree-1/runroot.log'))
@@ -246,7 +246,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
-        self.compose._logger.info.assert_has_calls([
+        self.compose._logger.error.assert_has_calls([
             mock.call('[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])

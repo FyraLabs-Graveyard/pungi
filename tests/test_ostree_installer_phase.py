@@ -588,7 +588,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t = ostree.OstreeInstallerThread(pool)
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
-        pool._logger.info.assert_has_calls([
+        pool._logger.error.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
@@ -618,7 +618,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         t = ostree.OstreeInstallerThread(pool)
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
-        pool._logger.info.assert_has_calls([
+        pool._logger.error.assert_has_calls([
             mock.call('[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/%s/runroot.log for more details.'
                       % (self.topdir, LOG_PATH))

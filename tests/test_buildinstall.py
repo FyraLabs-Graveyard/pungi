@@ -826,7 +826,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, 'x86_64', None, self.cmd), 0)
 
-        compose._logger.info.assert_has_calls([
+        compose._logger.error.assert_has_calls([
             mock.call('[FAIL] Buildinstall (variant None, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details.'
                       % self.topdir)
@@ -861,7 +861,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
-        compose._logger.info.assert_has_calls([
+        compose._logger.error.assert_has_calls([
             mock.call('[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])

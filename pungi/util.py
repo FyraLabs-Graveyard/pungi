@@ -500,9 +500,9 @@ def log_failed_task(compose, variant, arch, deliverable, subvariant, logger=None
     ident = 'variant %s, arch %s' % (variant.uid if variant else 'None', arch)
     if subvariant:
         ident += ', subvariant %s' % subvariant
-    logger.info('[FAIL] %s (%s) failed, but going on anyway.' % (msg, ident))
+    logger.error('[FAIL] %s (%s) failed, but going on anyway.' % (msg, ident))
     if exc:
-        logger.info(str(exc))
+        logger.error(str(exc))
         tb = traceback.format_exc()
         logger.debug(tb)
 
