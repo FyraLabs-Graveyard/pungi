@@ -705,8 +705,8 @@ Options
 
 **require_all_comps_packages** = False
     (*bool*) -- Set to ``True`` to abort compose when package mentioned in
-    comps file can not be found in the package set. When disabled (the default,
-    such cases are still reported as warnings in the log.
+    comps file can not be found in the package set. When disabled (the
+    default), such cases are still reported as warnings in the log.
 
 **gather_source_mapping**
     (*str*) -- JSON mapping with initial packages for the compose. The value
