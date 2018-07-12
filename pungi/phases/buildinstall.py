@@ -316,7 +316,9 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
 
     # copy src to temp
     # TODO: place temp on the same device as buildinstall dir so we can hardlink
-    cmd = "cp -av --remove-destination %s/* %s/" % (shlex_quote(src), shlex_quote(tmp_dir))
+    cmd = "cp -dRv --preserve=mode,links,timestamps --remove-destination %s/* %s/" % (
+        shlex_quote(src), shlex_quote(tmp_dir)
+    )
     run(cmd)
 
     found_configs = tweak_configs(tmp_dir, volid, kickstart_file)
@@ -345,7 +347,9 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
     run("chmod -R a+rX %s" % shlex_quote(tmp_dir))
 
     # copy temp to dst
-    cmd = "cp -av --remove-destination %s/* %s/" % (shlex_quote(tmp_dir), shlex_quote(dst))
+    cmd = "cp -dRv --preserve=mode,links,timestamps --remove-destination %s/* %s/" % (
+        shlex_quote(tmp_dir), shlex_quote(dst)
+    )
     run(cmd)
 
     shutil.rmtree(tmp_dir)
