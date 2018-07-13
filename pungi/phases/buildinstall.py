@@ -465,7 +465,9 @@ class BuildinstallThread(WorkerThread):
                 channel=runroot_channel,
                 use_shell=True, task_id=True,
                 packages=packages, mounts=[compose.topdir],
-                weight=compose.conf['runroot_weights'].get('buildinstall'))
+                weight=compose.conf['runroot_weights'].get('buildinstall'),
+                destdir=output_dir,
+            )
 
             # avoid race conditions?
             # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)

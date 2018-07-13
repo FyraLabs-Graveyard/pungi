@@ -745,9 +745,12 @@ class BuildinstallThreadTestCase(PungiTestCase):
 
         self.assertItemsEqual(
             get_runroot_cmd.mock_calls,
-            [mock.call('rrt', 'x86_64', self.cmd, channel=None,
-                       use_shell=True, task_id=True,
-                       packages=['lorax'], mounts=[self.topdir], weight=123)])
+            [mock.call(
+                'rrt', 'x86_64', self.cmd, channel=None,
+                use_shell=True, task_id=True,
+                packages=['lorax'], mounts=[self.topdir], weight=123,
+                destdir=os.path.join(self.topdir, "work/x86_64/buildinstall/Server"),
+            )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -786,9 +789,12 @@ class BuildinstallThreadTestCase(PungiTestCase):
 
         self.assertItemsEqual(
             get_runroot_cmd.mock_calls,
-            [mock.call('rrt', 'x86_64', self.cmd, channel=None,
-                       use_shell=True, task_id=True,
-                       packages=['anaconda'], mounts=[self.topdir], weight=None)])
+            [mock.call(
+                'rrt', 'x86_64', self.cmd, channel=None,
+                use_shell=True, task_id=True,
+                packages=['anaconda'], mounts=[self.topdir], weight=None,
+                destdir=os.path.join(self.topdir, "work/x86_64/buildinstall"),
+            )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
@@ -929,9 +935,12 @@ class BuildinstallThreadTestCase(PungiTestCase):
 
         self.assertItemsEqual(
             get_runroot_cmd.mock_calls,
-            [mock.call('rrt', 'x86_64', self.cmd, channel=None,
-                       use_shell=True, task_id=True,
-                       packages=['lorax'], mounts=[self.topdir], weight=123)])
+            [mock.call(
+                'rrt', 'x86_64', self.cmd, channel=None,
+                use_shell=True, task_id=True,
+                packages=['lorax'], mounts=[self.topdir], weight=123,
+                destdir="/buildinstall_topdir/buildinstall-%s/x86_64/Server" % os.path.basename(self.topdir),
+            )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
