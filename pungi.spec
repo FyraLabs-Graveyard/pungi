@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.25
+Version:        4.1.26
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -105,6 +105,40 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Jul 16 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.26-1
+- gather: Add a hybrid depsolver backend (lsedlar)
+- Always use lookasides for repoclosure (lsedlar)
+- doc: closing parentheses for require_all_comps_packages (kdreyer)
+- osbs: Generate unique repo names (lsedlar)
+- Expand version field during image_build using version_generator (sinny)
+- createrepo: Stop including modulemd in debug repos (lsedlar)
+- Simplify iterating over module defaults (lsedlar)
+- pkgset: Apply module filters on pkgset level (lsedlar)
+- init: Validate whitespace in comps groups (lsedlar)
+- createrepo: Include empty modules (lsedlar)
+- createiso: Break hardlinks by copying files (lsedlar)
+- pkgset: Query Koji instead of PDC (mcurlej)
+- config: Report variants validity issues (lsedlar)
+- variants: Reject values with whitespace (lsedlar)
+- osbs: Fresh koji session for getting metadata (lsedlar)
+- gather: Ignore comps in lookaside repo (lsedlar)
+- init: Test that init phase correctly clones defaults (lsedlar)
+- init: Add tests for cloning module defaults (lsedlar)
+- init: Add validation for module defaults (lsedlar)
+- ostree-installer: Skip comps repo if there are no comps (lsedlar)
+- kojiwrapper: Call chmod recursively (lsedlar)
+- Add test for getting licenses from a repo (lsedlar)
+- Add content_licenses to module metadata (sgallagh)
+- Update virtualenv instructions (lsedlar)
+- kojiwrapper: Don't mark runroot as successful by chmod (lsedlar)
+- Allow extracting koji event from another compose (lsedlar)
+- Copy modules instead of reparsing them (sgallagh)
+- Silence config warnings in quiet mode (lsedlar)
+- kojiwrapper: Make result of runroot world readable (lsedlar)
+- osbs: Add nvr to metadata (lsedlar)
+- Always get old compose with release type suffix (patrick)
+- Make ostree_installer check if buildinstall is skipped correctly (puiterwijk)
+
 * Tue May 22 2018 Ondřej Nosek <onosek@redhat.com> - 4.1.25-1
 - comps-wrapper: Make tests pass on EL6 (lsedlar)
 - pkgset: Add option to ignore noarch in ExclusiveArch (lsedlar)
