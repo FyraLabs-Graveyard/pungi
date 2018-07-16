@@ -5,7 +5,6 @@ import re
 
 
 try:
-    from pdc_client import PDCClient
     import gi
     gi.require_version('Modulemd', '1.0') # noqa
     from gi.repository import Modulemd
