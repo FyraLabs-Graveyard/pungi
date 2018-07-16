@@ -19,6 +19,7 @@ BuildRequires:  python2-dnf
 BuildRequires:  python2-multilib
 BuildRequires:  python2-libcomps
 BuildRequires:  python2-six
+BuildRequires:  python2-multilib
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
