@@ -610,27 +610,23 @@ def get_variant_packages(compose, arch, variant, source_name, package_sets=None)
     When system-release packages should be filtered, the ``package_sets``
     argument is required.
     """
-    packages, groups, filter_packages = set(), set(), set()
+    filter_packages = set()
     GatherSource = get_gather_source(source_name)
     source = GatherSource(compose)
-    p, g = source(arch, variant)
+    packages, groups = source(arch, variant)
 
-    if source_name != "comps" and not p and not g:
-        # For modules and json source, if the source did not return anything,
-        # we should skip all further work. Additional packages and possibly
-        # system-release will be added to comps source.
+    if source_name != "comps":
+        # For modules and json source we want just the explicit packages.
+        # Additional packages and possibly system-release will be added to
+        # comps source.
         return packages, groups, filter_packages
-
-    packages |= p
-    groups |= g
 
     if variant is None:
         # no variant -> no parent -> we have everything we need
         # doesn't make sense to do any package filtering
         return packages, groups, filter_packages
 
-    if source_name == 'comps':
-        packages |= get_additional_packages(compose, arch, variant)
+    packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
     if compose.conf['filter_system_release_packages']:
