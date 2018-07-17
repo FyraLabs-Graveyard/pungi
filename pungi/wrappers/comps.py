@@ -234,6 +234,12 @@ class CompsWrapper(object):
                 return [pkg.name for pkg in grp.packages]
         raise KeyError('No such group %r' % group)
 
+    def get_langpacks(self):
+        langpacks = {}
+        for pack in self.comps.langpacks:
+            langpacks[pack] = self.comps.langpacks[pack]
+        return langpacks
+
     def validate(self):
         """Check that no package name contains whitespace, and raise a
         RuntimeError if there is a problem.

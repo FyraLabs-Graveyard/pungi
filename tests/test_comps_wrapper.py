@@ -48,6 +48,17 @@ class CompsWrapperTest(unittest.TestCase):
             sorted(comps.get_packages('text-internet')),
             sorted(['dummy-elinks', 'dummy-tftp']))
 
+    def test_get_langpacks(self):
+        comps = CompsWrapper(COMPS_FILE)
+        self.assertEqual(
+            comps.get_langpacks(),
+            {
+                "aspell": "aspell-%s",
+                "firefox": "firefox-langpack-%s",
+                "kdelibs": "kde-l10n-%s",
+            }
+        )
+
     def test_get_packages_for_non_existing_group(self):
         comps = CompsWrapper(COMPS_FILE)
         with self.assertRaises(KeyError):

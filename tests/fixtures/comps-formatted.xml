@@ -113,27 +113,8 @@
     </grouplist>
   </environment>
   <langpacks>
-    <match install="LabPlot-doc-%s" name="LabPlot-doc"/>
     <match install="aspell-%s" name="aspell"/>
-    <match install="autocorr-%s" name="autocorr-en"/>
-    <match install="calligra-l10n-%s" name="calligra-core"/>
-    <match install="childsplay-alphabet_sounds_%s" name="childsplay"/>
-    <match install="dummy-release-notes-%s" name="dummy-release-notes"/>
-    <match install="eclipse-nls-%s" name="eclipse-platform"/>
     <match install="firefox-langpack-%s" name="firefox"/>
-    <match install="gcompris-sound-%s" name="gcompris"/>
-    <match install="gimp-help-%s" name="gimp-help"/>
-    <match install="hunspell-%s" name="hunspell"/>
-    <match install="hyphen-%s" name="hyphen"/>
     <match install="kde-l10n-%s" name="kdelibs"/>
-    <match install="kde-i18n-%s" name="kdelibs3"/>
-    <match install="libreoffice-langpack-%s" name="libreoffice-core"/>
-    <match install="man-pages-%s" name="man-pages"/>
-    <match install="moodle-%s" name="moodle"/>
-    <match install="mythes-%s" name="mythes"/>
-    <match install="nqc-doc-%s" name="nqc-doc"/>
-    <match install="openoffice.org-langpack-%s" name="openoffice.org-core"/>
-    <match install="tesseract-langpack-%s" name="tesseract"/>
-    <match install="tkgate-%s" name="tkgate"/>
   </langpacks>
 </comps>
