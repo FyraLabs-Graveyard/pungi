@@ -17,6 +17,7 @@ from collections import defaultdict
 import os
 from kobo.shortcuts import run
 import kobo.rpmlib
+from fnmatch import fnmatch
 
 import pungi.phases.gather.method
 from pungi import Modulemd, multilib_dnf
@@ -29,6 +30,7 @@ from pungi.util import (
     temp_dir,
 )
 from pungi.wrappers import fus
+from pungi.wrappers.comps import CompsWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
 
 from .method_nodeps import expand_groups
@@ -68,6 +70,11 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         super(GatherMethodHybrid, self).__init__(*args, **kwargs)
         self.package_maps = {}
         self.packages = {}
+        # Mapping from package name to set of langpack packages (stored as
+        # names).
+        self.langpacks = {}
+        # Set of packages for which we already added langpacks.
+        self.added_langpacks = set()
 
     def _get_pkg_map(self, arch):
         """Create a mapping from NEVRA to actual package object. This will be
@@ -100,6 +107,25 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self._prepare_packages()
         return self.packages[nevra]
 
+    def prepare_langpacks(self, arch, variant):
+        if not self.compose.has_comps:
+            return
+        comps_file = self.compose.paths.work.comps(arch, variant, create_dir=False)
+        comps = CompsWrapper(comps_file)
+
+        for name, install in comps.get_langpacks().items():
+            # Replace %s with * for fnmatch.
+            install_match = install % "*"
+            self.langpacks[name] = set()
+            for pkg_arch in self.package_sets[arch].rpms_by_arch:
+                for pkg in self.package_sets[arch].rpms_by_arch[pkg_arch]:
+                    if not fnmatch(pkg.name, install_match):
+                        # Does not match the pattern, ignore...
+                        continue
+                    if pkg.name.endswith("-devel") or pkg.name.endswith("-static"):
+                        continue
+                    self.langpacks[name].add(pkg.name)
+
     def __call__(
         self,
         arch,
@@ -114,6 +140,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         self.arch = arch
         self.valid_arches = get_valid_arches(arch, multilib=True)
         self.package_sets = package_sets
+
+        self.prepare_langpacks(arch, variant)
 
         self.multilib_methods = get_arch_variant_data(
             self.compose.conf, "multilib", arch, variant
@@ -169,13 +197,19 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             run(cmd, logfile=logfile, show_cmd=True)
             output, output_modules = fus.parse_output(logfile)
             new_multilib = self.add_multilib(variant, arch, output, modular_rpms)
-            if not new_multilib:
-                # No new multilib packages were added, we're done.
-                break
+            if new_multilib:
+                input_packages.extend(
+                    _fmt_pkg(pkg_name, pkg_arch) for pkg_name, pkg_arch in new_multilib
+                )
+                continue
 
-            input_packages.extend(
-                _fmt_pkg(pkg_name, pkg_arch) for pkg_name, pkg_arch in new_multilib
-            )
+            new_langpacks = self.add_langpacks(output)
+            if new_langpacks:
+                input_packages.extend(new_langpacks)
+                continue
+
+            # Nothing new was added, we can stop now.
+            break
 
         return output, output_modules
 
@@ -209,6 +243,20 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             existing = (nvr.rsplit("-", 2)[0], pkg_arch)
             if existing in added:
                 added.remove(existing)
+
+        return sorted(added)
+
+    def add_langpacks(self, nvrs):
+        if not self.langpacks:
+            return set()
+        added = set()
+        for nvr, pkg_arch in nvrs:
+            name = nvr.rsplit("-", 2)[0]
+            if name in self.added_langpacks:
+                # This package is already processed.
+                continue
+            added.update(self.langpacks.get(name, []))
+            self.added_langpacks.add(name)
 
         return sorted(added)
 

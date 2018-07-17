@@ -24,11 +24,12 @@ class NamedMock(mock.Mock):
 
 
 class TestMethodHybrid(helpers.PungiTestCase):
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.CompsWrapper")
     @mock.patch("pungi.phases.gather.get_lookaside_repos")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_groups")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_packages")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.create_module_repo")
-    def test_call_method(self, cmr, ep, eg, glr):
+    def test_call_method(self, cmr, ep, eg, glr, CW):
         compose = helpers.DummyCompose(self.topdir, {})
         cmr.return_value = (mock.Mock(), mock.Mock())
         m = hybrid.GatherMethodHybrid(compose)
@@ -42,6 +43,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
             sourcerpm=None,
             file_path=None,
         )
+        CW.return_value.get_langpacks.return_value = {"glibc": "glibc-langpack-%s"}
         eg.return_value = ["foo", "bar"]
         package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": [pkg]})}
         arch = "x86_64"
@@ -71,6 +73,62 @@ class TestMethodHybrid(helpers.PungiTestCase):
             eg.call_args_list,
             [mock.call(compose, arch, variant, ["standard"], set_pkg_arch=False)],
         )
+        print(CW.mock_calls)
+        self.assertEqual(
+            CW.mock_calls,
+            [
+                mock.call(
+                    os.path.join(
+                        self.topdir, "work/x86_64/comps/comps-Server.x86_64.xml"
+                    )
+                ),
+                mock.call().get_langpacks(),
+            ],
+        )
+
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.CompsWrapper")
+    def test_prepare_langpacks(self, CW):
+        compose = helpers.DummyCompose(self.topdir, {})
+        CW.return_value.get_langpacks.return_value = {"foo": "foo-%s"}
+        m = hybrid.GatherMethodHybrid(compose)
+        m.package_sets = {
+            "x86_64": mock.Mock(
+                rpms_by_arch={
+                    "x86_64": [
+                        MockPkg(
+                            name="foo",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                        MockPkg(
+                            name="foo-en",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                        MockPkg(
+                            name="foo-devel",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                    ]
+                }
+            )
+        }
+        m.prepare_langpacks("x86_64", compose.variants["Server"])
+
+        self.assertEqual(m.langpacks, {"foo": set(["foo-en"])})
 
 
 class MockModule(object):
@@ -212,7 +270,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         )
 
     def test_with_modules(self, run, gc, po):
-        self.compose.has_comps = None
+        self.compose.has_comps = False
         self.compose.variants["Server"].arch_mmds["x86_64"] = {
             "mod:master": mock.Mock(
                 peek_name=mock.Mock(return_value="mod"),
@@ -268,6 +326,47 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(
             gc.call_args_list,
             [mock.call("x86_64", [self._repo("repo")], [], ["pkg"], [], platform=None)],
+        )
+
+    def test_with_langpacks(self, run, gc, po):
+        self.phase.langpacks = {"pkg": set(["pkg-en"])}
+        final = ([("pkg-1.0-1", "x86_64"), ("pkg-en-1.0-1", "noarch")], set())
+        po.side_effect = [([("pkg-1.0-1", "x86_64")], set()), final]
+
+        res = self.phase.run_solver(
+            self.compose.variants["Server"],
+            "x86_64",
+            [("pkg", None)],
+            platform=None,
+            modular_rpms=[],
+        )
+
+        self.assertEqual(res, final)
+        self.assertEqual(
+            po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
+        )
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True),
+                mock.call(gc.return_value, logfile=self.logfile2, show_cmd=True),
+            ],
+        )
+        self.assertEqual(
+            gc.call_args_list,
+            [
+                mock.call(
+                    "x86_64", [self._repo("repo")], [], ["pkg"], [], platform=None
+                ),
+                mock.call(
+                    "x86_64",
+                    [self._repo("repo")],
+                    [],
+                    ["pkg", "pkg-en"],
+                    [],
+                    platform=None,
+                ),
+            ],
         )
 
     @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
