@@ -341,7 +341,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.assertEqual(pkgsets, expected)
 
     def test_get_koji_modules(self):
-        mock_build_ids = [{'id': 1065873, 'name': 'testmodule2-master-20180406051653.96c371af'}]
+        mock_build_ids = [{'id': 1065873, 'name': 'testmodule2-master_dash-20180406051653.96c371af'}]
         mock_extra = {
             'typeinfo': {
                 'module': {
@@ -355,10 +355,10 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'epoch': None,
                 'extra': mock_extra,
                 'name': 'testmodule2',
-                'nvr': 'testmodule2-master-20180406051653.2e6f5e0a',
+                'nvr': 'testmodule2-master_dash-20180406051653.2e6f5e0a',
                 'release': '20180406051653.2e6f5e0a',
                 'state': 1,
-                'version': 'master',
+                'version': 'master_dash',
             }
         ]
         mock_archives = [
@@ -392,7 +392,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.listArchives.return_value = mock_archives
         self.koji_wrapper.koji_proxy.listRPMs.return_value = mock_rpms
 
-        module_info_str = "testmodule2:master:20180406051653:96c371af"
+        module_info_str = "testmodule2:master-dash:20180406051653:96c371af"
         result = source_koji.get_koji_modules(self.compose, self.koji_wrapper, module_info_str)
 
         assert type(result) is list
@@ -405,7 +405,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         assert "stream" in module
         assert "context" in module
 
-        expected_query = "testmodule2-master-20180406051653.96c371af"
+        expected_query = "testmodule2-master_dash-20180406051653.96c371af"
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
                                                                     "glob")
         self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])

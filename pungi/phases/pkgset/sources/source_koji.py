@@ -114,9 +114,15 @@ def get_koji_modules(compose, koji_wrapper, module_info_str):
 
     module_info = variant_dict_from_str(compose, module_info_str)
 
-    # we need to format the query string to koji reguirements
-    query_str = "%s-%s-%s.%s" % (module_info["name"], module_info["stream"],
-                                 module_info.get("version", "*"), module_info.get("context", "*"))
+    # We need to format the query string to koji reguirements. The
+    # transformation to NVR for use in Koji has to match what MBS is doing when
+    # importing the build.
+    query_str = "%s-%s-%s.%s" % (
+        module_info["name"],
+        module_info["stream"].replace("-", "_"),
+        module_info.get("version", "*"),
+        module_info.get("context", "*"),
+    )
     query_str = query_str.replace('*.*', '*')
 
     koji_builds = koji_proxy.search(query_str, "build", "glob")
