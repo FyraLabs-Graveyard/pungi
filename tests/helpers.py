@@ -33,7 +33,7 @@ class PungiTestCase(unittest.TestCase):
 
 
 class MockVariant(mock.Mock):
-    def __init__(self, is_empty=False, *args, **kwargs):
+    def __init__(self, is_empty=False, name=None, *args, **kwargs):
         super(MockVariant, self).__init__(*args, is_empty=is_empty, **kwargs)
         self.parent = kwargs.get('parent', None)
         self.mmds = []
@@ -42,6 +42,7 @@ class MockVariant(mock.Mock):
         self.variants = {}
         self.pkgset = mock.Mock(rpms_by_arch={})
         self.modules = None
+        self.name = name
 
     def __str__(self):
         return self.uid
@@ -125,11 +126,11 @@ class DummyCompose(object):
         self.has_comps = True
         self.variants = {
             'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
-                                  type='variant'),
+                                  type='variant', id='Server', name='Server'),
             'Client': MockVariant(uid='Client', arches=['amd64'],
-                                  type='variant'),
+                                  type='variant', id='Client', name='Client'),
             'Everything': MockVariant(uid='Everything', arches=['x86_64', 'amd64'],
-                                      type='variant'),
+                                      type='variant', id='Everything', name='Everything'),
         }
         self.all_variants = self.variants.copy()
 

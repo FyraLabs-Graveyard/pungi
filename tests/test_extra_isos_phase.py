@@ -323,6 +323,7 @@ class GetExtraFilesTest(helpers.PungiTestCase):
                                     logger=self.compose._logger)])
 
 
+@mock.patch("pungi.phases.extra_isos.tweak_treeinfo")
 @mock.patch('pungi.wrappers.iso.write_graft_points')
 @mock.patch('pungi.wrappers.iso.get_graft_points')
 class GetIsoContentsTest(helpers.PungiTestCase):
@@ -332,7 +333,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         self.compose = helpers.DummyCompose(self.topdir, {})
         self.variant = self.compose.variants['Server']
 
-    def test_non_bootable_binary(self, ggp, wgp):
+    def test_non_bootable_binary(self, ggp, wgp, tt):
         gp = {
             'compose/Client/x86_64/os/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
             'compose/Client/x86_64/os/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
@@ -371,7 +372,23 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
         self.assertEqual(wgp.call_args_list[0][1], {'exclude': ["*/lost+found", "*/boot.iso"]})
 
-    def test_source(self, ggp, wgp):
+        # Check correct call to tweak_treeinfo
+        self.assertEqual(
+            tt.call_args_list,
+            [
+                mock.call(
+                    self.compose,
+                    ["Client"],
+                    os.path.join(self.topdir, "compose/Server/x86_64/os/.treeinfo"),
+                    os.path.join(
+                        self.topdir,
+                        "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
+                    )
+                ),
+            ],
+        )
+
+    def test_source(self, ggp, wgp, tt):
         gp = {
             'compose/Client/source/tree/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
             'compose/Client/source/tree/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
@@ -410,7 +427,23 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
         self.assertEqual(wgp.call_args_list[0][1], {'exclude': ["*/lost+found", "*/boot.iso"]})
 
-    def test_bootable(self, ggp, wgp):
+        # Check correct call to tweak_treeinfo
+        self.assertEqual(
+            tt.call_args_list,
+            [
+                mock.call(
+                    self.compose,
+                    ["Client"],
+                    os.path.join(self.topdir, "compose/Server/source/tree/.treeinfo"),
+                    os.path.join(
+                        self.topdir,
+                        "work/src/Server/extra-iso-extra-files/.treeinfo",
+                    )
+                ),
+            ],
+        )
+
+    def test_bootable(self, ggp, wgp, tt):
         self.compose.conf['buildinstall_method'] = 'lorax'
 
         bi_dir = os.path.join(self.topdir, 'work/x86_64/buildinstall/Server')
@@ -436,8 +469,13 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
 
         self.assertEqual(
-            extra_isos.get_iso_contents(self.compose, self.variant, 'x86_64',
-                                        ['Client'], 'my.iso', True),
+            extra_isos.get_iso_contents(
+                self.compose,
+                self.variant,
+                'x86_64',
+                ['Client'],
+                'my.iso',
+                True),
             gp_file
         )
 
@@ -467,6 +505,22 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         # Check files were copied to temp directory
         self.assertTrue(os.path.exists(os.path.join(iso_dir, 'isolinux/isolinux.bin')))
         self.assertTrue(os.path.exists(os.path.join(iso_dir, 'images/boot.img')))
+
+        # Check correct call to tweak_treeinfo
+        self.assertEqual(
+            tt.call_args_list,
+            [
+                mock.call(
+                    self.compose,
+                    ["Client"],
+                    os.path.join(self.topdir, "compose/Server/x86_64/os/.treeinfo"),
+                    os.path.join(
+                        self.topdir,
+                        "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
+                    )
+                ),
+            ],
+        )
 
 
 class GetFilenameTest(helpers.PungiTestCase):
@@ -523,6 +577,23 @@ class GetVolumeIDTest(helpers.PungiTestCase):
                                      'x86_64', 'f-{boom}')
 
         self.assertIn('boom', str(ctx.exception))
+
+
+class TweakTreeinfoTest(helpers.PungiTestCase):
+    def test_tweak(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        input = os.path.join(helpers.FIXTURE_DIR, "treeinfo")
+        output = os.path.join(self.topdir, "actual-treeinfo")
+        expected = os.path.join(helpers.FIXTURE_DIR, "treeinfo-expected")
+        extra_isos.tweak_treeinfo(compose, ["Client"], input, output)
+
+        with open(expected) as f:
+            expected = f.read()
+        with open(output) as f:
+            actual = f.read()
+
+        self.maxDiff = None
+        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':

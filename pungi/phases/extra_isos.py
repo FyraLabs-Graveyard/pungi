@@ -17,6 +17,7 @@ import os
 
 from kobo.shortcuts import force_list
 from kobo.threads import ThreadPool, WorkerThread
+import productmd.treeinfo
 
 from pungi import createiso
 from pungi.phases.base import ConfigGuardedPhase, PhaseBase, PhaseLoggerMixin
@@ -163,13 +164,44 @@ def get_iso_contents(compose, variant, arch, include_variants, filename, bootabl
         for k, v in iso.get_graft_points([extra_files_dir]).items():
             files[os.path.join(var.uid, k)] = v
 
-    # Add extra files specific for the ISO
     extra_files_dir = compose.paths.work.extra_iso_extra_files_dir(arch, variant)
+
+    original_treeinfo = os.path.join(
+        compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo"
+    )
+    tweak_treeinfo(
+        compose,
+        include_variants,
+        original_treeinfo,
+        os.path.join(extra_files_dir, ".treeinfo"),
+    )
+
+    # Add extra files specific for the ISO
     files.update(iso.get_graft_points([extra_files_dir]))
 
     gp = "%s-graft-points" % iso_dir
     iso.write_graft_points(gp, files, exclude=["*/lost+found", "*/boot.iso"])
     return gp
+
+
+def tweak_treeinfo(compose, include_variants, source_file, dest_file):
+    ti = productmd.treeinfo.TreeInfo()
+    ti.load(source_file)
+    for variant_uid in include_variants:
+        variant = compose.all_variants[variant_uid]
+        var = productmd.treeinfo.Variant(ti)
+        var.id = variant.id
+        var.uid = variant.uid
+        var.name = variant.name
+        var.type = variant.type
+        ti.variants.add(var)
+
+    for variant_id in ti.variants:
+        var = ti.variants[variant_id]
+        var.paths.packages = os.path.join(var.uid, "Packages")
+        var.paths.repository = var.uid
+
+    ti.dump(dest_file)
 
 
 def get_filename(compose, variant, arch, format):
