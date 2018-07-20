@@ -950,9 +950,6 @@ class Pungi(PungiBase):
                     if name_arch in prepopulate_packages:
                         self.prepopulate_packages.add(po)
 
-        if not self.po_list:
-            raise RuntimeError("No packages found")
-
         self.logger.info('Finished gathering package objects.')
 
     def gather(self):
