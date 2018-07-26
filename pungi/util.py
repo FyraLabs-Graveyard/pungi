@@ -392,8 +392,14 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False,
         raise ValueError("Could not create volume ID longer than 32 bytes, options are %r",
                          sorted(tried, key=len))
 
+    if compose.conf["restricted_volid"]:
+        # Replace all non-alphanumeric characters and non-underscores) with
+        # dashes.
+        volid = re.sub(r"\W", "-", volid, flags=re.I)
+
     if volid and escape_spaces:
         volid = volid.replace(" ", r"\x20")
+
     return volid
 
 

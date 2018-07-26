@@ -275,6 +275,11 @@ There a couple common format specifiers available for both the options:
     (*list*) -- A list of format strings for generating volume id for layered
     products. The keys available are the same as for ``image_volid_formats``.
 
+**restricted_volid** = False
+    (*bool*) -- New versions of lorax replace all non-alphanumerical characters
+    with dashes (underscores are preserved). This option will mimic similar
+    behaviour in Pungi.
+
 **volume_id_substitutions** [optional]
     (*dict*) -- A mapping of string replacements to shorten the volume id.
 

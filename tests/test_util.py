@@ -182,6 +182,43 @@ class TestVolumeIdGenerator(unittest.TestCase):
                 'image_volid_formats': [format],
                 'image_volid_layered_product_formats': [],
                 'volume_id_substitutions': {},
+                'restricted_volid': False,
+            }
+            variant = mock.Mock(uid='Server', type='variant')
+            ci.return_value.compose.respin = 2
+            ci.return_value.compose.id = 'compose_id'
+            ci.return_value.compose.date = '20160107'
+            ci.return_value.compose.type = 'nightly'
+            ci.return_value.compose.type_suffix = '.n'
+            ci.return_value.compose.label = 'RC-1.0'
+            ci.return_value.compose.label_major_version = '1'
+
+            ci.return_value.release.version = '3.0'
+            ci.return_value.release.short = 'rel_short'
+
+            c = compose.Compose(conf, self.tmp_dir)
+
+            volid = util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
+
+            self.assertEqual(volid, expected)
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_restricted_volid(self, ci):
+        all_keys = [
+            (['arch', 'compose_id', 'date', 'disc_type'], 'x86_64-compose_id-20160107-'),
+            (['label', 'label_major_version', 'release_short', 'respin'], 'RC-1-0-1-rel_short2-2'),
+            (['type', 'type_suffix', 'variant', 'version'], 'nightly--n-Server-6-0')
+        ]
+        for keys, expected in all_keys:
+            format = '-'.join(['%(' + k + ')s' for k in keys])
+            conf = {
+                'release_short': 'rel_short2',
+                'release_version': '6.0',
+                'release_is_layered': False,
+                'image_volid_formats': [format],
+                'image_volid_layered_product_formats': [],
+                'volume_id_substitutions': {},
+                'restricted_volid': True,
             }
             variant = mock.Mock(uid='Server', type='variant')
             ci.return_value.compose.respin = 2

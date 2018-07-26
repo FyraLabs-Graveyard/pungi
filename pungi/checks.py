@@ -803,6 +803,10 @@ def make_schema():
                     "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",
                 ],
             },
+            "restricted_volid": {
+                "type": "boolean",
+                "default": False,
+            },
             "volume_id_substitutions": {
                 "type": "object",
                 "default": {},
