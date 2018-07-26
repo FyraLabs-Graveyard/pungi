@@ -13,6 +13,7 @@ import socket
 import signal
 import sys
 import traceback
+import shutil
 
 from six.moves import shlex_quote
 
@@ -285,13 +286,11 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.read_variants()
 
     # dump the config file
+    config_copy_path = os.path.join(compose.paths.log.topdir(), "config-copy")
+    if not os.path.exists(config_copy_path):
+        os.makedirs(config_copy_path)
     for config_file in compose.conf.opened_files:
-        config_dump = compose.paths.log.log_file(
-            "global", "config-copy_%s" % os.path.basename(config_file)
-        )
-        with open(config_dump, "w") as dest:
-            with open(config_file, 'r') as src:
-                dest.write(src.read())
+        shutil.copy2(config_file, config_copy_path)
     config_dump_full = compose.paths.log.log_file("global", "config-dump")
     with open(config_dump_full, "w") as f:
         json.dump(compose.conf, f, sort_keys=True, indent=4)
