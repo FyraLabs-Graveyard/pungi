@@ -25,8 +25,10 @@ def get_full_version():
         output, _ = proc.communicate()
         return re.sub(r'-1.fc\d\d?', '', output.strip().replace('pungi-', ''))
     else:
-        import pkg_resources
-        try:
-            return pkg_resources.get_distribution('pungi').version
-        except pkg_resources.DistributionNotFound:
+        import subprocess
+        proc = subprocess.Popen(["rpm", "-q", "pungi"], stdout=subprocess.PIPE)
+        (output, err) = proc.communicate()
+        if not err:
+            return output.rstrip()
+        else:
             return 'unknown'
