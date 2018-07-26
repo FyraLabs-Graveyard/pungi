@@ -128,7 +128,11 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         # If the variant contains just modules or just comps groups, the pkgset
         # is sufficient and contains all necessary packages.
 
-        if variant.groups and variant.modules is not None and package_sets:
+        has_additional_pkgs = get_arch_variant_data(
+            compose.conf, "additional_packages", arch, variant
+        )
+        has_traditional_content = variant.groups or has_additional_pkgs
+        if has_traditional_content and variant.modules is not None and package_sets:
             # The variant is hybrid. The modular builds are already available.
             # We need to add packages from base tag, but only if they are not
             # already on the whitelist.
