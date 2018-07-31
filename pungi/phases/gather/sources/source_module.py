@@ -80,12 +80,24 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             for mmd in variant.mmds:
                 mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
                 arch_mmd = variant.arch_mmds[arch][mmd_id]
-
-                # Skip this mmd if this RPM does not belong to it.
                 srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
-                if (srpm not in mmd.get_rpm_components().keys() or
-                        rpm_obj.nevra not in mmd.get_rpm_artifacts().get()):
-                    continue
+
+                filtered = False
+                buildopts = mmd.get_buildopts()
+                if buildopts:
+                    whitelist = buildopts.get_rpm_whitelist()
+                    if whitelist:
+                        # We have whitelist, no filtering against components.
+                        filtered = True
+                        if srpm not in whitelist:
+                            # Package is not on the list, skip it.
+                            continue
+
+                if not filtered:
+                    # Skip this mmd if this RPM does not belong to it.
+                    if (srpm not in mmd.get_rpm_components().keys() or
+                            rpm_obj.nevra not in mmd.get_rpm_artifacts().get()):
+                        continue
 
                 # Filter out the RPM from artifacts if its filtered in MMD.
                 if rpm_obj.name in mmd.get_rpm_filter().get():
@@ -96,11 +108,16 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 
                 # Skip the rpm_obj if it's built for multilib arch, but
                 # multilib is not enabled for this srpm in MMD.
-                mmd_component = mmd.get_rpm_components()[srpm]
-                multilib = mmd_component.get_multilib()
-                multilib = multilib.get() if multilib else set()
-                if arch not in multilib and rpm_obj.arch in multilib_arches:
-                    continue
+                try:
+                    mmd_component = mmd.get_rpm_components()[srpm]
+                    multilib = mmd_component.get_multilib()
+                    multilib = multilib.get() if multilib else set()
+                    if arch not in multilib and rpm_obj.arch in multilib_arches:
+                        continue
+                except KeyError:
+                    # No such component, disable any multilib
+                    if rpm_obj.arch not in ("noarch", arch):
+                        continue
 
                 # Add RPM to packages.
                 packages.add((rpm_obj, None))
