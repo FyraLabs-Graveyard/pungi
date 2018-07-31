@@ -150,23 +150,22 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self.multilib_methods, multilib_blacklist, multilib_whitelist
         )
 
-        platform, modular_rpms = create_module_repo(self.compose, variant, arch)
+        platform = create_module_repo(self.compose, variant, arch)
 
         packages.update(
             expand_groups(self.compose, arch, variant, groups, set_pkg_arch=False)
         )
 
-        nvrs, modules = self.run_solver(variant, arch, packages, platform, modular_rpms)
+        nvrs = self.run_solver(variant, arch, packages, platform)
         return expand_packages(
             self._get_pkg_map(arch),
             variant.arch_mmds.get(arch, {}),
             pungi.phases.gather.get_lookaside_repos(self.compose, arch, variant),
             nvrs,
-            modules,
         )
         # maybe check invalid sigkeys
 
-    def run_solver(self, variant, arch, packages, platform, modular_rpms):
+    def run_solver(self, variant, arch, packages, platform):
         repos = [self.compose.paths.work.arch_repo(arch=arch)]
 
         modules = []
@@ -195,8 +194,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                 arch, "hybrid-depsolver-%s-iter-%d" % (variant, step)
             )
             run(cmd, logfile=logfile, show_cmd=True)
-            output, output_modules = fus.parse_output(logfile)
-            new_multilib = self.add_multilib(variant, arch, output, modular_rpms)
+            output = fus.parse_output(logfile)
+            new_multilib = self.add_multilib(variant, arch, output)
             if new_multilib:
                 input_packages.extend(
                     _fmt_pkg(pkg_name, pkg_arch) for pkg_name, pkg_arch in new_multilib
@@ -211,14 +210,17 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             # Nothing new was added, we can stop now.
             break
 
-        return output, output_modules
+        return output
 
-    def add_multilib(self, variant, arch, nvrs, modular_rpms):
+    def add_multilib(self, variant, arch, nvrs):
         added = set()
         if not self.multilib_methods:
             return []
 
-        for nvr, pkg_arch in nvrs:
+        for nvr, pkg_arch, flags in nvrs:
+            if "modular" in flags:
+                continue
+
             if pkg_arch != arch:
                 # Not a native package, not checking to add multilib
                 continue
@@ -226,10 +228,6 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             nevr = kobo.rpmlib.parse_nvr(nvr)
             nevr_copy = nevr.copy()
             nevr_copy["arch"] = pkg_arch
-
-            if kobo.rpmlib.make_nvra(nevr_copy, force_epoch=True) in modular_rpms:
-                # Skip modular package
-                continue
 
             if self.multilib.is_multilib(self._get_package("%s.%s" % (nvr, pkg_arch))):
                 for add_arch in self.valid_arches:
@@ -239,7 +237,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                         added.add((nevr["name"], add_arch))
 
         # Remove packages that are already present
-        for nvr, pkg_arch in nvrs:
+        for nvr, pkg_arch, flags in nvrs:
             existing = (nvr.rsplit("-", 2)[0], pkg_arch)
             if existing in added:
                 added.remove(existing)
@@ -250,7 +248,9 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         if not self.langpacks:
             return set()
         added = set()
-        for nvr, pkg_arch in nvrs:
+        for nvr, pkg_arch, flags in nvrs:
+            if "modular" in flags:
+                continue
             name = nvr.rsplit("-", 2)[0]
             if name in self.added_langpacks:
                 # This package is already processed.
@@ -274,7 +274,6 @@ def create_module_repo(compose, variant, arch):
     compose.log_debug("[BEGIN] %s" % msg)
 
     platforms = set()
-    modular_rpms = set()
 
     repo_path = compose.paths.work.module_repo(arch, variant)
 
@@ -290,11 +289,6 @@ def create_module_repo(compose, variant, arch):
             streams = dep.peek_requires().get("platform")
             if streams:
                 platforms.update(streams.dup())
-
-        # Collect all modular NEVRAs
-        artifacts = repo_mmd.get_rpm_artifacts()
-        if artifacts:
-            modular_rpms.update(artifacts.dup())
 
         modules.append(repo_mmd)
 
@@ -331,7 +325,7 @@ def create_module_repo(compose, variant, arch):
         run(cmd, logfile=log_file, show_cmd=True)
 
     compose.log_debug("[DONE ] %s" % msg)
-    return list(platforms)[0] if platforms else None, modular_rpms
+    return list(platforms)[0] if platforms else None
 
 
 def _fmt_pkg(pkg_name, arch):
@@ -366,7 +360,7 @@ def _make_result(paths):
     return [{"path": path, "flags": []} for path in sorted(paths)]
 
 
-def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, modules):
+def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
     """For each package add source RPM and possibly also debuginfo."""
     # This will server as the final result. We collect sets of paths to the
     # packages.
@@ -399,46 +393,29 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, modules):
         )
         variant_mmd[nsvc] = mmd
 
-    for module in modules:
-        mmd = variant_mmd.get(module)
-        if not mmd:
-            continue
-        artifacts = mmd.get_rpm_artifacts()
-        if not artifacts:
-            continue
-        for rpm in artifacts.dup():
-            pkg = nevra_to_pkg[_nevra(**kobo.rpmlib.parse_nvra(rpm))]
-            if pkg_is_debug(pkg):
-                debuginfo.add(pkg.file_path)
-            else:
-                rpms.add(pkg.file_path)
-            # Add source package. We don't need modular packages, those are
-            # listed in modulemd.
-            try:
-                srpm_nevra = _get_srpm_nevra(pkg)
-                srpm = nevra_to_pkg[srpm_nevra]
-                if srpm.file_path not in lookaside_packages:
-                    srpms.add(srpm.file_path)
-            except KeyError:
-                # Didn't find source RPM.. this should be logged
-                pass
-
     # This is used to figure out which debuginfo packages to include. We keep
     # track of package architectures from each SRPM.
     srpm_arches = defaultdict(set)
 
-    for nvr, arch in nvrs:
+    for nvr, arch, flags in nvrs:
         pkg = nevra_to_pkg["%s.%s" % (nvr, arch)]
         if pkg.file_path in lookaside_packages:
             # Package is in lookaside, don't add it and ignore sources and
             # debuginfo too.
             continue
-        rpms.add(pkg.file_path)
+        if pkg_is_debug(pkg):
+            debuginfo.add(pkg.file_path)
+        else:
+            rpms.add(pkg.file_path)
 
         try:
             srpm_nevra = _get_srpm_nevra(pkg)
             srpm = nevra_to_pkg[srpm_nevra]
-            srpm_arches[srpm_nevra].add(arch)
+            if "modular" not in flags:
+                # Only mark the arch for sources of non-modular packages. The
+                # debuginfo is explicitly listed in the output, and we don't
+                # want anything more.
+                srpm_arches[srpm_nevra].add(arch)
             if srpm.file_path not in lookaside_packages:
                 srpms.add(srpm.file_path)
         except KeyError:

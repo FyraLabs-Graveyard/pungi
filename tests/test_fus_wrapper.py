@@ -57,21 +57,21 @@ class TestParseOutput(unittest.TestCase):
 
     def test_skips_debug_line(self):
         touch(self.file, "debug line\n")
-        packages, modules = fus.parse_output(self.file)
+        packages = fus.parse_output(self.file)
         self.assertItemsEqual(packages, [])
-        self.assertItemsEqual(modules, [])
 
     def test_separates_arch(self):
         touch(self.file, "pkg-1.0-1.x86_64@repo-0\npkg-1.0-1.i686@repo-0\n")
-        packages, modules = fus.parse_output(self.file)
+        packages = fus.parse_output(self.file)
         self.assertItemsEqual(
             packages,
-            [("pkg-1.0-1", "x86_64"), ("pkg-1.0-1", "i686")],
+            [("pkg-1.0-1", "x86_64", frozenset()), ("pkg-1.0-1", "i686", frozenset())],
         )
-        self.assertItemsEqual(modules, [])
 
-    def test_returns_modules(self):
-        touch(self.file, "module:foo:1:201807131350:deadcafe.x86_64@repo-0\n")
-        packages, modules = fus.parse_output(self.file)
-        self.assertItemsEqual(packages, [])
-        self.assertItemsEqual(modules, ["foo:1:201807131350:deadcafe"])
+    def test_marks_modular(self):
+        touch(self.file, "*pkg-1.0-1.x86_64@repo-0\n")
+        packages = fus.parse_output(self.file)
+        self.assertItemsEqual(
+            packages,
+            [("pkg-1.0-1", "x86_64", frozenset(["modular"]))],
+        )

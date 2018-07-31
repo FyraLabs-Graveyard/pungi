@@ -54,17 +54,19 @@ def get_cmd(
 
 def parse_output(output):
     """Read output of fus from the given filepath, and return a set of tuples
-    (NVR, arch) and a set of module NSVCs.
+    (NVR, arch, flags) and a set of module NSVCs.
     """
     packages = set()
-    modules = set()
     with open(output) as f:
         for line in f:
             if " " in line or "@" not in line:
                 continue
             nevra, _ = line.strip().rsplit("@", 1)
-            if nevra.startswith("module:"):
-                modules.add(nevra[7:].rsplit(".", 1)[0])
-            else:
-                packages.add(tuple(nevra.rsplit(".", 1)))
-    return packages, modules
+            if not nevra.startswith("module:"):
+                flags = set()
+                name, arch = nevra.rsplit(".", 1)
+                if name.startswith("*"):
+                    flags.add("modular")
+                    name = name[1:]
+                packages.add((name, arch, frozenset(flags)))
+    return packages

@@ -31,9 +31,8 @@ class TestMethodHybrid(helpers.PungiTestCase):
     @mock.patch("pungi.phases.gather.methods.method_hybrid.create_module_repo")
     def test_call_method(self, cmr, ep, eg, glr, CW):
         compose = helpers.DummyCompose(self.topdir, {})
-        cmr.return_value = (mock.Mock(), mock.Mock())
         m = hybrid.GatherMethodHybrid(compose)
-        m.run_solver = mock.Mock(return_value=(mock.Mock(), mock.Mock()))
+        m.run_solver = mock.Mock()
         pkg = MockPkg(
             name="pkg",
             version="1",
@@ -55,7 +54,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
         self.assertEqual(cmr.call_args_list, [mock.call(compose, variant, arch)])
         self.assertEqual(
             m.run_solver.call_args_list,
-            [mock.call(variant, arch, set(["pkg", "foo", "bar"]), *cmr.return_value)],
+            [mock.call(variant, arch, set(["pkg", "foo", "bar"]), cmr.return_value)],
         )
         self.assertEqual(
             ep.call_args_list,
@@ -64,8 +63,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
                     {"pkg-3:1-2.x86_64": pkg},
                     {},
                     glr.return_value,
-                    m.run_solver.return_value[0],
-                    m.run_solver.return_value[1],
+                    m.run_solver.return_value,
                 )
             ],
         )
@@ -221,10 +219,9 @@ class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
         default = mock.Mock(peek_module_name=mock.Mock(return_value="mod"))
         imd.return_value = [default]
 
-        plat, pkgs = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
+        plat = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
 
         self.assertEqual(plat, "f29")
-        self.assertItemsEqual(pkgs, ["pkg-1.0-1.x86_64"])
 
         self.assertEqual(
             Modulemd.mock_calls, [mock.call.dump([mod, default], mock.ANY)]
@@ -284,7 +281,6 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [],
             platform="pl",
-            modular_rpms=[],
         )
 
         self.assertEqual(res, po.return_value)
@@ -314,7 +310,6 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg", None)],
             platform=None,
-            modular_rpms=[],
         )
 
         self.assertEqual(res, po.return_value)
@@ -330,15 +325,14 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
 
     def test_with_langpacks(self, run, gc, po):
         self.phase.langpacks = {"pkg": set(["pkg-en"])}
-        final = ([("pkg-1.0-1", "x86_64"), ("pkg-en-1.0-1", "noarch")], set())
-        po.side_effect = [([("pkg-1.0-1", "x86_64")], set()), final]
+        final = [("pkg-1.0-1", "x86_64", []), ("pkg-en-1.0-1", "noarch", [])]
+        po.side_effect = [[("pkg-1.0-1", "x86_64", [])], final]
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],
             "x86_64",
             [("pkg", None)],
             platform=None,
-            modular_rpms=[],
         )
 
         self.assertEqual(res, final)
@@ -388,13 +382,12 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         }
         self.phase.packages = self.phase.package_maps["x86_64"]
         final = [
-            ("pkg-devel-1.0-1", "x86_64"),
-            ("foo-1.0-1", "x86_64"),
-            ("pkg-devel-1.0-1", "i686"),
+            ("pkg-devel-1.0-1", "x86_64", []),
+            ("foo-1.0-1", "x86_64", []),
+            ("pkg-devel-1.0-1", "i686", []),
         ]
         po.side_effect = [
-            [[("pkg-devel-1.0-1", "x86_64"), ("foo-1.0-1", "x86_64")], set()],
-            [final, set()],
+            [("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], final
         ]
 
         res = self.phase.run_solver(
@@ -402,10 +395,9 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg-devel", None), ("foo", None)],
             platform=None,
-            modular_rpms=[],
         )
 
-        self.assertEqual(res, (final, set()))
+        self.assertEqual(res, final)
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -483,13 +475,12 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             }
         }
         final = [
-            ("pkg-devel-1.0-1", "x86_64"),
-            ("foo-1.0-1", "x86_64"),
-            ("foo-1.0-1", "i686"),
+            ("pkg-devel-1.0-1", "x86_64", []),
+            ("foo-1.0-1", "x86_64", []),
+            ("foo-1.0-1", "i686", []),
         ]
         po.side_effect = [
-            ([("pkg-devel-1.0-1", "x86_64"), ("foo-1.0-1", "x86_64")], set()),
-            (final, set()),
+            [("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], final
         ]
 
         res = self.phase.run_solver(
@@ -497,10 +488,9 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg-devel", None), ("foo", None)],
             platform=None,
-            modular_rpms=[],
         )
 
-        self.assertEqual(res, (final, set()))
+        self.assertEqual(res, final)
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -560,7 +550,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages()
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64")], []
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
         )
 
         self.assertEqual(
@@ -576,7 +566,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64")], []
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
         )
 
         self.assertEqual(
@@ -588,11 +578,43 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
+    def test_modular_include_src_but_not_debuginfo(self):
+        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+
+        res = hybrid.expand_packages(
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", ["modular"])]
+        )
+
+        self.assertEqual(
+            res,
+            {
+                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
+                "debuginfo": [],
+            },
+        )
+
+    def test_modular_debug_in_correct_place(self):
+        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+
+        res = hybrid.expand_packages(
+            nevra_to_pkg, {}, [], [("pkg-debuginfo-3:1-2", "x86_64", ["modular"])]
+        )
+
+        self.assertEqual(
+            res,
+            {
+                "rpm": [],
+                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
+                "debuginfo": [{"path": "/tmp/d1.rpm", "flags": []}],
+            },
+        )
+
     def test_skip_debuginfo_for_different_arch(self):
         nevra_to_pkg = self._mk_packages(debug_arch="i686")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64")], []
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
         )
 
         self.assertEqual(
@@ -626,7 +648,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64")], []
+            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])]
         )
 
         self.assertEqual(
@@ -654,30 +676,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64")], []
+            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])]
         )
 
         self.assertEqual(res, {"rpm": [], "srpm": [], "debuginfo": []})
-
-    def test_expand_module_packages(self):
-        nevra_to_pkg = self._mk_packages(src=True)
-        mod = MockModule(
-            "foo",
-            stream="1.0",
-            version="201807131350",
-            context="deadcafe",
-            rpms=["pkg-3:1-2.x86_64"],
-        )
-
-        res = hybrid.expand_packages(
-            nevra_to_pkg, {"foo-1.0": mod}, [], [], ["foo:1.0:201807131350:deadcafe"]
-        )
-
-        self.assertEqual(
-            res,
-            {
-                "rpm": [{"flags": [], "path": "/tmp/pkg.rpm"}],
-                "srpm": [{"flags": [], "path": "/tmp/spkg.rpm"}],
-                "debuginfo": [],
-            },
-        )
