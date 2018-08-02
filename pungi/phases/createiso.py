@@ -208,7 +208,9 @@ class CreateIsoThread(WorkerThread):
                             cmd["bootable"], cmd["disc_num"], cmd["disc_count"])
 
         # Delete staging directory if present.
-        staging_dir = compose.paths.work.iso_staging_dir(arch, variant)
+        staging_dir = compose.paths.work.iso_staging_dir(
+            arch, variant, filename=os.path.basename(cmd["iso_path"])
+        )
         if os.path.exists(staging_dir):
             shutil.rmtree(staging_dir)
 
@@ -451,8 +453,12 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
         data = iso.get_graft_points([iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
 
     if compose.conf["createiso_break_hardlinks"]:
-        compose.log_debug("Breaking hardlinks for ISO for %s.%s" % (variant, arch))
-        break_hardlinks(data, compose.paths.work.iso_staging_dir(arch, variant))
+        compose.log_debug(
+            "Breaking hardlinks for ISO %s for %s.%s" % (filename, variant, arch)
+        )
+        break_hardlinks(
+            data, compose.paths.work.iso_staging_dir(arch, variant, filename)
+        )
 
     # TODO: /content /graft-points
     gp = "%s-graft-points" % iso_dir

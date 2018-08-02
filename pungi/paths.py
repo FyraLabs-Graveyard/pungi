@@ -287,13 +287,16 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def iso_staging_dir(self, arch, variant, create_dir=True):
+    def iso_staging_dir(self, arch, variant, filename, create_dir=True):
         """
         Examples:
-            work/x86_64/Server/iso-staging-dir
+            work/x86_64/Server/iso-staging-dir/file.iso/
         """
         path = os.path.join(
-            self.topdir(arch, create_dir=create_dir), variant.uid, "iso-staging-dir"
+            self.topdir(arch, create_dir=create_dir),
+            variant.uid,
+            "iso-staging-dir",
+            filename
         )
         if create_dir:
             makedirs(path)
