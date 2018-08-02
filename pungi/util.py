@@ -334,7 +334,7 @@ def _apply_substitutions(compose, volid):
     return volid
 
 
-def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False,
+def get_volid(compose, arch, variant=None, disc_type=False,
               formats=None, **kwargs):
     """Get ISO volume ID for arch and variant"""
     if variant and variant.type == "addon":
@@ -396,9 +396,6 @@ def get_volid(compose, arch, variant=None, escape_spaces=False, disc_type=False,
         # Replace all non-alphanumeric characters and non-underscores) with
         # dashes.
         volid = re.sub(r"\W", "-", volid, flags=re.I)
-
-    if volid and escape_spaces:
-        volid = volid.replace(" ", r"\x20")
 
     return volid
 

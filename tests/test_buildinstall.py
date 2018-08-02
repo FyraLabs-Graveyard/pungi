@@ -550,7 +550,7 @@ class TestCopyFiles(PungiTestCase):
         })
 
         get_volid.side_effect = (
-            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+            lambda compose, arch, variant, disc_type: "%s.%s" % (variant.uid, arch)
         )
         get_kickstart_file.return_value = 'kickstart'
 
@@ -560,9 +560,9 @@ class TestCopyFiles(PungiTestCase):
 
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
             [mock.call(compose,
@@ -612,7 +612,7 @@ class TestCopyFiles(PungiTestCase):
         })
 
         get_volid.side_effect = (
-            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+            lambda compose, arch, variant, disc_type: "%s.%s" % (variant.uid, arch)
         )
         get_kickstart_file.return_value = 'kickstart'
 
@@ -622,9 +622,9 @@ class TestCopyFiles(PungiTestCase):
 
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
             [mock.call(compose,
@@ -677,7 +677,7 @@ class TestCopyFiles(PungiTestCase):
         })
 
         get_volid.side_effect = (
-            lambda compose, arch, variant, escape_spaces, disc_type: "%s.%s" % (variant.uid, arch)
+            lambda compose, arch, variant, disc_type: "%s.%s" % (variant.uid, arch)
         )
         get_kickstart_file.return_value = 'kickstart'
         tweak_buildinstall.side_effect = boom
@@ -688,9 +688,9 @@ class TestCopyFiles(PungiTestCase):
 
         self.assertItemsEqual(
             get_volid.mock_calls,
-            [mock.call(compose, 'x86_64', compose.variants['Server'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Client'], escape_spaces=False, disc_type='dvd'),
-             mock.call(compose, 'amd64', compose.variants['Server'], escape_spaces=False, disc_type='dvd')])
+            [mock.call(compose, 'x86_64', compose.variants['Server'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Client'], disc_type='dvd'),
+             mock.call(compose, 'amd64', compose.variants['Server'], disc_type='dvd')])
         self.assertItemsEqual(
             tweak_buildinstall.mock_calls,
             [mock.call(compose,

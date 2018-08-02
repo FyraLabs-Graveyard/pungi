@@ -220,7 +220,7 @@ class BuildinstallPhase(PhaseBase):
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
                 # TODO: label is not used
                 label = ""
-                volid = get_volid(self.compose, arch, variant, escape_spaces=False, disc_type=disc_type)
+                volid = get_volid(self.compose, arch, variant, disc_type=disc_type)
                 can_fail = self.compose.can_fail(variant, arch, 'buildinstall')
                 with failable(self.compose, can_fail, variant, arch, 'buildinstall'):
                     tweak_buildinstall(self.compose, buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)

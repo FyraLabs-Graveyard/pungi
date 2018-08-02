@@ -198,7 +198,7 @@ class TestVolumeIdGenerator(unittest.TestCase):
 
             c = compose.Compose(conf, self.tmp_dir)
 
-            volid = util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
+            volid = util.get_volid(c, 'x86_64', variant, disc_type=False)
 
             self.assertEqual(volid, expected)
 
@@ -234,7 +234,7 @@ class TestVolumeIdGenerator(unittest.TestCase):
 
             c = compose.Compose(conf, self.tmp_dir)
 
-            volid = util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
+            volid = util.get_volid(c, 'x86_64', variant, disc_type=False)
 
             self.assertEqual(volid, expected)
 
@@ -255,7 +255,7 @@ class TestVolumeIdGenerator(unittest.TestCase):
         c = compose.Compose(conf, self.tmp_dir)
 
         with self.assertRaises(ValueError) as ctx:
-            util.get_volid(c, 'x86_64', variant, escape_spaces=False, disc_type=False)
+            util.get_volid(c, 'x86_64', variant, disc_type=False)
 
         self.assertIn('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', str(ctx.exception))
         self.assertIn('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', str(ctx.exception))
