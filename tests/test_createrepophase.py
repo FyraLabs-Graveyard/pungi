@@ -147,7 +147,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -179,7 +179,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -210,7 +210,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/global/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -244,7 +244,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -276,7 +276,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -310,7 +310,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -342,7 +342,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
-                       oldpackagedirs=None, use_xz=True)])
+                       oldpackagedirs=None, use_xz=True, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -377,7 +377,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=None, deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages',
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -412,7 +412,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=None, deltas=True,
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages',
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -446,7 +446,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -481,7 +481,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -524,7 +524,7 @@ class TestCreateVariantRepo(PungiTestCase):
                            self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/a',
                            self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/b',
                        ],
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -561,7 +561,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
                        oldpackagedirs=[],
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -596,7 +596,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/global/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -633,7 +633,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo',
-                       deltas=False, oldpackagedirs=None, use_xz=False)])
+                       deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [])
@@ -673,7 +673,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
                        oldpackagedirs=None,
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [mock.call(repodata_dir, product_id, compress_type='gz')])
@@ -707,7 +707,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
                        oldpackagedirs=None,
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
@@ -739,7 +739,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        pkglist=list_file, skip_stat=True, update=True,
                        update_md_path=self.topdir + '/work/global/repo', deltas=False,
                        oldpackagedirs=None,
-                       use_xz=False)])
+                       use_xz=False, extra_args=[])])
         self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
         with open(list_file) as f:
             self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')

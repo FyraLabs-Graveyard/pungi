@@ -423,6 +423,11 @@ Options
     repo. Default value depends on gather backend. For DNF it's turned off, for
     Yum the default is ``True``.
 
+**createrepo_extra_args**
+    (*[str]*) -- a list of extra arguments passed on to ``createrepo`` or
+    ``createrepo_c`` executable. This could be useful for enabling zchunk
+    generation and pointing it to correct dictionaries.
+
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
     directory with certificates ``<variant_uid>-<arch>-*.pem``. This

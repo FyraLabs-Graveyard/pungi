@@ -32,7 +32,8 @@ class CreateRepoWrapperTest(unittest.TestCase):
             split=True, pretty=False, database=False, checksum='sha256', unique_md_filenames=False,
             distro='Fedora', content=['c1', 'c2'], repo=['r1', 'r2'], revision='rev', deltas=True,
             oldpackagedirs='/test/old', num_deltas=2, workers=3, outputdir='/test/output',
-            use_xz=True
+            use_xz=True,
+            extra_args=["--zck", "--zck-primary-dict=/foo/bar"],
         )
         self.maxDiff = None
 
@@ -44,7 +45,7 @@ class CreateRepoWrapperTest(unittest.TestCase):
                                '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
                                '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
                                '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
-                               '--outputdir=/test/output', '--xz'])
+                               '--outputdir=/test/output', '--xz', "--zck", "--zck-primary-dict=/foo/bar"])
 
     def test_get_createrepo_cmd_minimal(self):
         repo = CreaterepoWrapper(False)

@@ -33,7 +33,8 @@ class CreaterepoWrapper(object):
                            update_md_path=None, skip_stat=False, checkts=False, split=False,
                            pretty=True, database=True, checksum=None, unique_md_filenames=True,
                            distro=None, content=None, repo=None, revision=None, deltas=False,
-                           oldpackagedirs=None, num_deltas=None, workers=None, use_xz=False):
+                           oldpackagedirs=None, num_deltas=None, workers=None, use_xz=False,
+                           extra_args=None):
         # groupfile = /path/to/comps.xml
 
         cmd = [self.createrepo, directory]
@@ -116,6 +117,9 @@ class CreaterepoWrapper(object):
 
         if use_xz:
             cmd.append("--xz")
+
+        if extra_args:
+            cmd.extend(force_list(extra_args))
 
         return cmd
 

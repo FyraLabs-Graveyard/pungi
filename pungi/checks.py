@@ -638,6 +638,13 @@ def make_schema():
             "createrepo_database": {
                 "type": "boolean",
             },
+            "createrepo_extra_args": {
+                "type": "array",
+                "default": [],
+                "items": {
+                    "type": "string",
+                },
+            },
             "repoclosure_strictness": _variant_arch_mapping({
                 "type": "string",
                 "default": "lenient",
