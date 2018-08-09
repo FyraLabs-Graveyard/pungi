@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import yaml
 import json
 import logging
 import os
@@ -72,12 +73,19 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
     Additionally, other values can be passed to method by 'update_dict' parameter to
     update treefile content.
     """
-    treeconf_dir = os.path.dirname(treeconf)
-    with open(treeconf, 'r') as f:
-        treeconf_content = json.load(f)
 
     # backup the old tree config
     os.rename(treeconf, '{0}.bak'.format(treeconf))
+
+    treeconf_dir = os.path.dirname(treeconf)
+    with open(treeconf, 'r') as f:
+        # rpm-ostree now supports YAML: https://github.com/projectatomic/rpm-ostree/pull/1377
+        # but we'll end up converting it to JSON.
+        if treeconf.endswith('.yaml'):
+            treeconf_content = yaml.load(f)
+            treeconf = treeconf.replace('.yaml', '.json')
+        else:
+            treeconf_content = json.load(f)
 
     repos = []
     if source_repos:
@@ -114,3 +122,4 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
     # update tree config to add new repos
     with open(treeconf, 'w') as f:
         json.dump(treeconf_content, f, indent=4)
+    return treeconf
