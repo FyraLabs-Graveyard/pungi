@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 
-import mock
-
-import os
 import json
+import os
 import sys
+
+import mock
+import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'bin'))
@@ -21,6 +22,9 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         helpers.touch(os.path.join(path, 'fedora-atomic-docker-host.json'),
                       json.dumps({'ref': 'fedora-atomic/25/x86_64',
                                   'repos': ['fedora-rawhide', 'fedora-24', 'fedora-23']}))
+        helpers.touch(os.path.join(path, 'fedora-atomic-docker-host.yaml'),
+                      yaml.dump({'ref': 'fedora-atomic/25/x86_64',
+                                 'repos': ['fedora-rawhide', 'fedora-24', 'fedora-23']}))
         helpers.touch(os.path.join(path, 'fedora-rawhide.repo'),
                       '[fedora-rawhide]\nmirrorlist=mirror-mirror-on-the-wall')
         helpers.touch(os.path.join(path, 'fedora-24.repo'),
@@ -154,6 +158,39 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         ])
 
         with open(treefile, 'r') as f:
+            treefile_content = json.load(f)
+        new_repos = treefile_content['repos']
+        new_ref = treefile_content['ref']
+
+        # ref value in treefile should be overrided with new ref
+        self.assertEqual(replacing_ref, new_ref)
+        # repos should stay unchanged
+        self.assertEqual(original_repos, new_repos)
+
+    @mock.patch('kobo.shortcuts.run')
+    def test_run_with_yaml_file(self, run):
+        repo = os.path.join(self.topdir, 'atomic')
+
+        self._make_dummy_config_dir(self.topdir)
+        treefile = os.path.join(self.topdir, 'fedora-atomic-docker-host.yaml')
+
+        with open(treefile, 'r') as f:
+            # Read initial content from YAML file
+            treefile_content = yaml.load(f)
+        original_repos = treefile_content['repos']
+        original_ref = treefile_content['ref']
+        replacing_ref = original_ref + '-changed'
+
+        ostree.main([
+            'tree',
+            '--repo=%s' % repo,
+            '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
+            '--treefile=%s' % treefile,
+            '--ostree-ref=%s' % replacing_ref,
+        ])
+
+        with open(treefile.replace(".yaml", ".json"), 'r') as f:
+            # There is now a tweaked JSON file
             treefile_content = json.load(f)
         new_repos = treefile_content['repos']
         new_ref = treefile_content['ref']

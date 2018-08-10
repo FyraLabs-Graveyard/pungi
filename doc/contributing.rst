@@ -32,6 +32,7 @@ These packages will have to installed:
  * python-lxml
  * python2-multilib
  * python-productmd
+ * PyYAML
  * repoview
  * rpm-devel
  * syslinux
@@ -59,7 +60,7 @@ packages above as they are used by calling an executable. ::
     $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install beanbag jsonschema 'kobo>=0.6.0' lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set koji
+    $ pip install beanbag jsonschema 'kobo>=0.6.0' lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set koji PyYAML
 
 Now you should be able to run all existing tests.
 

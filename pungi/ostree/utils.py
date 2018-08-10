@@ -14,10 +14,12 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import yaml
 import json
 import logging
 import os
+import shutil
+
+import yaml
 
 from pungi.arch_utils import getBaseArch
 from pungi.util import makedirs
@@ -75,12 +77,12 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
     """
 
     # backup the old tree config
-    os.rename(treeconf, '{0}.bak'.format(treeconf))
+    shutil.copy2(treeconf, '{0}.bak'.format(treeconf))
 
     treeconf_dir = os.path.dirname(treeconf)
     with open(treeconf, 'r') as f:
-        # rpm-ostree now supports YAML: https://github.com/projectatomic/rpm-ostree/pull/1377
-        # but we'll end up converting it to JSON.
+        # rpm-ostree now supports YAML, but we'll end up converting it to JSON.
+        # https://github.com/projectatomic/rpm-ostree/pull/1377
         if treeconf.endswith('.yaml'):
             treeconf_content = yaml.load(f)
             treeconf = treeconf.replace('.yaml', '.json')

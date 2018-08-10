@@ -101,7 +101,12 @@ class Tree(OSTree):
                 # override ref value in treefile
                 update_dict['ref'] = self.ostree_ref
 
-            self.treefile = tweak_treeconf(self.treefile, source_repos=repos, keep_original_sources=keep_original_sources, update_dict=update_dict)
+            self.treefile = tweak_treeconf(
+                self.treefile,
+                source_repos=repos,
+                keep_original_sources=keep_original_sources,
+                update_dict=update_dict
+            )
 
         self.commitid_file = make_log_file(self.logdir, 'commitid')
 
