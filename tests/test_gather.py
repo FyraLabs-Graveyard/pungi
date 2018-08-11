@@ -1696,6 +1696,10 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         super(PungiYumDepsolvingTestCase, self).setUp()
         self.ks = os.path.join(self.tmp_dir, "ks")
         self.out = os.path.join(self.tmp_dir, "out")
+        self.cwd = os.path.join(self.tmp_dir, "cwd")
+        os.mkdir(self.cwd)
+        self.old_cwd = os.getcwd()
+        os.chdir(self.cwd)
 
         logger = logging.getLogger('Pungi')
         if not logger.handlers:
@@ -1704,6 +1708,10 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
             console.setFormatter(formatter)
             console.setLevel(logging.INFO)
             logger.addHandler(console)
+
+    def tearDown(self):
+        os.chdir(self.old_cwd)
+        super(PungiYumDepsolvingTestCase, self).tearDown()
 
     def go(self, packages, groups, lookaside=None, prepopulate=None,
            fulltree_excludes=None, multilib_blacklist=None,
