@@ -11,6 +11,7 @@ except ImportError:
 import json
 import tempfile
 import re
+from dogpile.cache import make_region
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -322,6 +323,52 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                                 'i686': ['rpms/bash@4.3.42@4.fc24@i686'],
                                 'x86_64': ['rpms/bash@4.3.42@4.fc24@x86_64']})
 
+    def test_get_latest_rpms_cache(self):
+        self._touch_files([
+            'rpms/bash@4.3.42@4.fc24@x86_64',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+        ])
+
+        cache_region = make_region().configure("dogpile.cache.memory")
+        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None], arches=['x86_64'],
+                                        cache_region=cache_region)
+
+        # Try calling the populate twice, but expect just single listTaggedRPMs
+        # call - that means the caching worked.
+        for i in range(2):
+            result = pkgset.populate('f25')
+            self.assertEqual(
+                self.koji_wrapper.koji_proxy.mock_calls,
+                [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
+            self.assertPkgsetEqual(
+                result,
+                {'x86_64': ['rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+                            'rpms/bash@4.3.42@4.fc24@x86_64']})
+
+    def test_get_latest_rpms_cache_different_id(self):
+        self._touch_files([
+            'rpms/bash@4.3.42@4.fc24@x86_64',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+        ])
+
+        cache_region = make_region().configure("dogpile.cache.memory")
+        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None], arches=['x86_64'],
+                                        cache_region=cache_region)
+
+        # Try calling the populate twice with different event id. It must not
+        # cache anything.
+        expected_calls = []
+        for i in range(2):
+            expected_calls.append(
+                mock.call.listTaggedRPMS('f25', event=i, inherit=True, latest=True))
+            result = pkgset.populate('f25', event={"id": i})
+            self.assertEqual(
+                self.koji_wrapper.koji_proxy.mock_calls,
+                expected_calls)
+            self.assertPkgsetEqual(
+                result,
+                {'x86_64': ['rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+                            'rpms/bash@4.3.42@4.fc24@x86_64']})
 
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):

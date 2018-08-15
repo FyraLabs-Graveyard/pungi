@@ -560,7 +560,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
                 arches=all_arches, packages=packages_to_gather,
                 allow_invalid_sigkeys=allow_invalid_sigkeys,
-                populate_only_packages=populate_only_packages_to_gather)
+                populate_only_packages=populate_only_packages_to_gather,
+                cache_region=compose.cache_region)
             if old_file_cache_path:
                 pkgset.load_old_file_cache(old_file_cache_path)
             # Create a filename for log with package-to-tag mapping. The tag

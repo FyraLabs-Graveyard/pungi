@@ -62,6 +62,7 @@ setup(
         "lxml",
         "productmd",
         "six",
+        'dogpile.cache',
         ],
     tests_require = [
         "mock",

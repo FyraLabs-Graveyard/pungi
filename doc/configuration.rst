@@ -1674,3 +1674,29 @@ Miscellaneous Settings
     (*str*) -- If set, the ISO files from ``buildinstall``, ``createiso`` and
     ``live_images`` phases will be put into this destination, and a symlink
     pointing to this location will be created in actual compose directory.
+
+**dogpile_cache_backend**
+    (*str*) -- If set, Pungi will use the configured Dogpile cache backend to
+    cache various data between multiple Pungi calls. This can make Pungi
+    faster in case more similar composes are running regularly in short time.
+
+    For list of available backends, please see the
+    https://dogpilecache.readthedocs.io documentation.
+
+    Most typical configuration uses the ``dogpile.cache.dbm`` backend.
+
+**dogpile_cache_arguments**
+    (*dict*) -- Arguments to be used when creating the Dogpile cache backend.
+    See the particular backend's configuration for the list of possible
+    key/value pairs.
+
+    For the ``dogpile.cache.dbm`` backend, the value can be for example
+    following: ::
+
+        {
+            "filename": "/tmp/pungi_cache_file.dbm"
+        }
+
+**dogpile_cache_expiration_time**
+    (*int*) -- Defines the default expiration time in seconds of data stored
+    in the Dogpile cache. Defaults to 3600 seconds.

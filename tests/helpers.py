@@ -152,6 +152,7 @@ class DummyCompose(object):
         self.fail_deliverable = mock.Mock()
         self.require_deliverable = mock.Mock()
         self.should_create_yum_database = True
+        self.cache_region = None
 
         self.DEBUG = False
 

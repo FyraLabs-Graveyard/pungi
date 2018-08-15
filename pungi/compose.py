@@ -29,6 +29,8 @@ import json
 import kobo.log
 from productmd.composeinfo import ComposeInfo
 from productmd.images import Images
+from dogpile.cache import make_region
+
 
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
@@ -155,6 +157,15 @@ class Compose(kobo.log.LoggingBase):
         self.failed_deliverables = {}
         self.attempted_deliverables = {}
         self.required_deliverables = {}
+
+        if self.conf.get("dogpile_cache_backend", None):
+            self.cache_region = make_region().configure(
+                self.conf.get("dogpile_cache_backend"),
+                expiration_time=self.conf.get("dogpile_cache_expiration_time", 3600),
+                arguments=self.conf.get("dogpile_cache_arguments", {})
+            )
+        else:
+            self.cache_region = make_region().configure('dogpile.cache.null')
 
     get_compose_dir = staticmethod(get_compose_dir)
 

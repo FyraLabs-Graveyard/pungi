@@ -275,7 +275,7 @@ class FilelistPackageSet(PackageSetBase):
 class KojiPackageSet(PackageSetBase):
     def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
                  packages=None, allow_invalid_sigkeys=False,
-                 populate_only_packages=False):
+                 populate_only_packages=False, cache_region=None):
         """
         Creates new KojiPackageSet.
 
@@ -298,6 +298,10 @@ class KojiPackageSet(PackageSetBase):
             when generating compose from predefined list of packages from big
             Koji tag.
             When False, all packages from Koji tag are added to KojiPackageSet.
+        :param dogpile.cache.CacheRegion cache_region: If set, the CacheRegion
+            will be used to cache the list of RPMs per Koji tag, so next calls
+            of the KojiPackageSet.populate(...) method won't try fetching it
+            again.
         """
         super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
                                              arches=arches, logger=logger,
@@ -306,12 +310,14 @@ class KojiPackageSet(PackageSetBase):
         # Names of packages to look for in the Koji tag.
         self.packages = set(packages or [])
         self.populate_only_packages = populate_only_packages
+        self.cache_region = cache_region
 
     def __getstate__(self):
         result = self.__dict__.copy()
         result["koji_profile"] = self.koji_wrapper.profile
         del result["koji_wrapper"]
         del result["_logger"]
+        del result["cache_region"]
         return result
 
     def __setstate__(self, data):
@@ -325,7 +331,20 @@ class KojiPackageSet(PackageSetBase):
         return self.koji_wrapper.koji_proxy
 
     def get_latest_rpms(self, tag, event, inherit=True):
-        return self.koji_proxy.listTaggedRPMS(tag, event=event, inherit=inherit, latest=True)
+        if self.cache_region:
+            cache_key = "KojiPackageSet.get_latest_rpms_%s_%s_%s" % (
+                tag, str(event), str(inherit))
+            cached_response = self.cache_region.get(cache_key)
+            if cached_response:
+                return cached_response
+            else:
+                response = self.koji_proxy.listTaggedRPMS(
+                    tag, event=event, inherit=inherit, latest=True)
+                self.cache_region.set(cache_key, response)
+                return response
+        else:
+            return self.koji_proxy.listTaggedRPMS(
+                tag, event=event, inherit=inherit, latest=True)
 
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item

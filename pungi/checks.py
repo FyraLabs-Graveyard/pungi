@@ -711,6 +711,12 @@ def make_schema():
                 "default": False
             },
             "symlink_isos_to": {"type": "string"},
+            "dogpile_cache_backend": {"type": "string"},
+            "dogpile_cache_expiration_time": {"type": "number"},
+            "dogpile_cache_arguments": {
+                "type": "object",
+                "default": {},
+            },
             "createiso_skip": _variant_arch_mapping({"type": "boolean"}),
             "createiso_break_hardlinks": {
                 "type": "boolean",
