@@ -582,9 +582,9 @@ class GetVolumeIDTest(helpers.PungiTestCase):
 class TweakTreeinfoTest(helpers.PungiTestCase):
     def test_tweak(self):
         compose = helpers.DummyCompose(self.topdir, {})
-        input = os.path.join(helpers.FIXTURE_DIR, "treeinfo")
+        input = os.path.join(helpers.FIXTURE_DIR, "extraiso.treeinfo")
         output = os.path.join(self.topdir, "actual-treeinfo")
-        expected = os.path.join(helpers.FIXTURE_DIR, "treeinfo-expected")
+        expected = os.path.join(helpers.FIXTURE_DIR, "extraiso-expected.treeinfo")
         extra_isos.tweak_treeinfo(compose, ["Client"], input, output)
 
         with open(expected) as f:
