@@ -35,7 +35,7 @@ def emit(f, cmd):
 
 
 FIND_TEMPLATE_SNIPPET = """
-if ! TEMPLATE="$(python3 -c 'import pylorax; print(pylorax.find_templates())')"; then
+if ! TEMPLATE="$($(head -n1 $(which lorax) | cut -c3-) -c 'import pylorax; print(pylorax.find_templates())')"; then
   TEMPLATE=/usr/share/lorax;
 fi
 """.replace('\n', '')

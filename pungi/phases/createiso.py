@@ -258,7 +258,7 @@ def run_createiso_command(runroot, num, compose, bootable, arch, cmd, mounts,
             packages.append('jigdo')
         if bootable:
             extra_packages = {
-                'lorax': ['lorax'],
+                'lorax': ['lorax', 'which'],
                 'buildinstall': ['anaconda'],
             }
             packages.extend(extra_packages[compose.conf["buildinstall_method"]])
