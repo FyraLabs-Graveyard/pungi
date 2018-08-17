@@ -395,7 +395,7 @@ def get_volid(compose, arch, variant=None, disc_type=False,
     if compose.conf["restricted_volid"]:
         # Replace all non-alphanumeric characters and non-underscores) with
         # dashes.
-        volid = re.sub(r"\W", "-", volid, flags=re.I)
+        volid = re.sub(r"\W", "-", volid)
 
     return volid
 
