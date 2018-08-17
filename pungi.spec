@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.26
+Version:        4.1.27
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -106,6 +106,33 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Aug 17 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.27-1
+- extra-iso: Rename test data file (lsedlar)
+- createiso: Use correct python version (lsedlar)
+- ostree: Update tests for working with YAML file (lsedlar)
+- pungi/ostree: Convert rpm-ostree YAML to JSON (walters)
+- createrepo: Allow passing arbitrary arguments (lsedlar)
+- gather: Get modular packages from fus (lsedlar)
+- util: Remove escaping spaces from volume ID (lsedlar)
+- Allow removing non-alnum chars from volid (lsedlar)
+- extra-isos: Include treeinfo pointing to all variants (lsedlar)
+- createiso: Use unique paths for breaking hardlinks (lsedlar)
+- gather: Detect hybrid variant with additional packages (lsedlar)
+- Include exact version of pungi in the logs (mboddu)
+- gather: Allow empty result for gather (lsedlar)
+- gather: Add langpacks in hybrid solver (lsedlar)
+- comps: Add get_langpacks function (lsedlar)
+- pungi-legacy: Add --joliet-long option (lsedlar)
+- Fix tests for DNF 3 (lsedlar)
+- gather: Early exit for non-comps sources (lsedlar)
+- tests: Use unittest2 when available (lsedlar)
+- Fix Koji search for modules with dash in stream (jkaluza)
+- buildinstall: Make output world readable (lsedlar)
+- buildinstall: Copy file without preserving owner (lsedlar)
+- Report failed failable deliverables as errors (lsedlar)
+- Stop importing PDCClient (lsedlar)
+- spec: build require python-multilib (lsedlar)
+
 * Mon Jul 16 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.26-1
 - gather: Add a hybrid depsolver backend (lsedlar)
 - Always use lookasides for repoclosure (lsedlar)
