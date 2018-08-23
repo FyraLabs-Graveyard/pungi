@@ -19,6 +19,7 @@ import os
 import shutil
 
 from kobo.shortcuts import run
+from kobo.threads import run_in_threads
 
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import write_prepopulate_file
@@ -42,15 +43,23 @@ class InitPhase(PhaseBase):
             # write global comps and arch comps, create comps repos
             global_comps = write_global_comps(self.compose)
             validate_comps(global_comps)
-            for arch in self.compose.get_arches():
-                write_arch_comps(self.compose, arch)
-                create_comps_repo(self.compose, arch, None)
+            num_workers = self.compose.conf['createrepo_num_threads']
+            run_in_threads(
+                _arch_worker,
+                [(self.compose, arch) for arch in self.compose.get_arches()],
+                threads=num_workers,
+            )
 
             # write variant comps
-            for variant in self.compose.get_variants():
-                for arch in variant.arches:
-                    write_variant_comps(self.compose, arch, variant)
-                    create_comps_repo(self.compose, arch, variant)
+            run_in_threads(
+                _variant_worker,
+                [
+                    (self.compose, arch, variant)
+                    for variant in self.compose.get_variants()
+                    for arch in variant.arches
+                ],
+                threads=num_workers,
+            )
 
         # download variants.xml / product.xml?
 
@@ -63,6 +72,18 @@ class InitPhase(PhaseBase):
 
         # write prepopulate file
         write_prepopulate_file(self.compose)
+
+
+def _arch_worker(_, args, num):
+    compose, arch = args
+    write_arch_comps(compose, arch)
+    create_comps_repo(compose, arch, None)
+
+
+def _variant_worker(_, args, num):
+    compose, arch, variant = args
+    write_variant_comps(compose, arch, variant)
+    create_comps_repo(compose, arch, variant)
 
 
 def write_global_comps(compose):
