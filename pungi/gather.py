@@ -631,7 +631,10 @@ class Pungi(PungiBase):
                 deps = self.ayum.whatProvides(r, f, v).returnPackages()
                 deps = self.excludePackages(deps)
                 if not deps:
-                    self.logger.warn("Unresolvable dependency %s in %s.%s" % (r, po.name, po.arch))
+                    self.logger.warn(
+                        "Unresolvable dependency %s in %s.%s"
+                        % (Req(req), po.name, po.arch)
+                    )
                     continue
 
                 if self.greedy_method == "all":
