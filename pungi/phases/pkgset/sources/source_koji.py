@@ -128,7 +128,10 @@ def get_koji_modules(compose, koji_wrapper, module_info_str):
     koji_builds = koji_proxy.search(query_str, "build", "glob")
     # Error reporting
     if not koji_builds:
-        raise ValueError("Failed to find modules in koji %s" % query_str)
+        raise ValueError(
+            "No module build found for %r (queried for %r)"
+            % (module_info_str, query_str)
+        )
 
     modules = []
     for build in koji_builds:
