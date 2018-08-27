@@ -59,6 +59,10 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
             return False
         if variant.type != "variant":
             return False
+        skip = get_arch_variant_data(self.compose.conf, "buildinstall_skip", arch, variant)
+        if skip == [True]:
+            # Buildinstall is skipped for this tree. Can't create a bootable ISO.
+            return False
         return self.compose.conf["bootable"]
 
     def run(self):

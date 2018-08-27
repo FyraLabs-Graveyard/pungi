@@ -272,6 +272,69 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                         'src'))]
         )
 
+    @mock.patch('pungi.createiso.write_script')
+    @mock.patch('pungi.phases.createiso.prepare_iso')
+    @mock.patch('pungi.phases.createiso.split_iso')
+    @mock.patch('pungi.phases.createiso.ThreadPool')
+    def test_bootable_product_but_not_variant(
+        self, ThreadPool, split_iso, prepare_iso, write_script
+    ):
+        compose = helpers.DummyCompose(self.topdir, {
+            'release_short': 'test',
+            'release_version': '1.0',
+            'release_is_layered': False,
+            'buildinstall_method': 'lorax',
+            'bootable': True,
+            'createiso_skip': [],
+            'buildinstall_skip': [('Server', {'*': True})],
+        })
+        helpers.touch(os.path.join(
+            compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
+            'dummy.rpm'))
+        disc_data = mock.Mock()
+        split_iso.return_value = [disc_data]
+        prepare_iso.return_value = 'dummy-graft-points'
+
+        pool = ThreadPool.return_value
+
+        mock_bi = mock.Mock(succeeded=lambda v, a: False)
+
+        phase = createiso.CreateisoPhase(compose, mock_bi)
+        phase.logger = mock.Mock()
+        phase.run()
+
+        self.maxDiff = None
+        self.assertItemsEqual(
+            prepare_iso.call_args_list,
+            [mock.call(compose, 'x86_64', compose.variants['Server'],
+                       disc_count=1, disc_num=1, split_iso_data=disc_data)])
+        self.assertItemsEqual(
+            split_iso.call_args_list,
+            [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False, logger=phase.logger)])
+        self.assertEqual(len(pool.add.call_args_list), 1)
+        self.assertItemsEqual(
+            [x[0][0] for x in write_script.call_args_list],
+            [CreateIsoOpts(output_dir='%s/compose/Server/x86_64/iso' % self.topdir,
+                           iso_name='image-name',
+                           volid='test-1.0 Server.x86_64',
+                           graft_points='dummy-graft-points',
+                           arch='x86_64',
+                           supported=True,
+                           jigdo_dir='%s/compose/Server/x86_64/jigdo' % self.topdir,
+                           os_tree='%s/compose/Server/x86_64/os' % self.topdir)])
+        self.assertItemsEqual(
+            pool.queue_put.call_args_list,
+            [mock.call((compose,
+                        {'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
+                         'bootable': False,
+                         'cmd': ['bash', self.topdir + '/work/x86_64/tmp-Server/createiso-image-name.sh'],
+                         'label': '',
+                         'disc_num': 1,
+                         'disc_count': 1},
+                        compose.variants['Server'],
+                        'x86_64'))]
+        )
+
 
 class CreateisoThreadTest(helpers.PungiTestCase):
 
