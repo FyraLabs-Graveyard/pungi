@@ -668,19 +668,23 @@ Options
      * ``yaboot`` -- only ``yaboot`` package on ``ppc`` arch matches this (only
        in ``yum`` backend)
 
+.. _additional_packages:
+
 **additional_packages**
     (*list*) -- additional packages to be included in a variant and
     architecture; format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
     The packages specified here are matched against RPM names, not any other
-    provides in the package not the name of source package.
+    provides in the package not the name of source package. Shell globbing is
+    used, so wildcards are possible. The package can be specified as name only
+    or ``name.arch``.
 
 **filter_packages**
     (*list*) -- packages to be excluded from a variant and architecture;
     format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
-    The packages specified here are matched against RPM names, not any other
-    provides in the package not the name of source package.
+    See :ref:`additional_packages <additional_packages>` for details about
+    package specification.
 
 **filter_system_release_packages**
     (*bool*) -- for each variant, figure out the best system release package
@@ -694,9 +698,10 @@ Options
     through this option can not be removed by ``filter_packages``.
 
 **multilib_blacklist**
-    (*dict*) -- multilib blacklist; format: ``{arch|*: [package_globs]}``. The
-    patterns are tested with ``fnmatch``, so shell globbing is used (not
-    regular expression).
+    (*dict*) -- multilib blacklist; format: ``{arch|*: [package_globs]}``.
+
+    See :ref:`additional_packages <additional_packages>` for details about
+    package specification.
 
 **multilib_whitelist**
     (*dict*) -- multilib blacklist; format: ``{arch|*: [package_names]}``. The
