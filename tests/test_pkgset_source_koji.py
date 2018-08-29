@@ -44,7 +44,6 @@ class TestGetKojiEvent(helpers.PungiTestCase):
     def test_use_preconfigured_event(self):
         koji_wrapper = mock.Mock()
         self.compose.koji_event = 123456
-        self.compose.DEBUG = False
 
         koji_wrapper.koji_proxy.getEvent.return_value = EVENT_INFO
 
@@ -58,7 +57,6 @@ class TestGetKojiEvent(helpers.PungiTestCase):
             self.assertEqual(json.load(f), EVENT_INFO)
 
     def test_gets_last_event(self):
-        self.compose.DEBUG = False
         self.compose.koji_event = None
         koji_wrapper = mock.Mock()
 
@@ -94,7 +92,6 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
             'pkgset_koji_tag': 'f25',
             'sigkeys': mock.Mock(),
         })
-        self.compose.DEBUG = False
         self.koji_wrapper = mock.Mock()
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
         self.koji_module_path = os.path.join(self.topdir, 'work', 'global', 'koji-module-Server.yaml')
@@ -213,7 +210,6 @@ data:
             'pkgset_koji_tag': ['f25', 'f25-extra'],
             'sigkeys': mock.Mock(),
         })
-        self.compose.DEBUG = False
 
         pickle_dumps.return_value = b'DATA'
 
@@ -288,7 +284,6 @@ data:
                 ('.*', {'*': ['pkg', 'foo.x86_64']}),
             ]
         })
-        self.compose.DEBUG = False
         pickle_dumps.return_value = b'DATA'
 
         pkgset = source_koji.populate_global_pkgset(
@@ -303,7 +298,6 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
             'pkgset_koji_tag': 'f25',
         })
         self.compose.koji_event = None
-        self.compose.DEBUG = False
         self.koji_wrapper = mock.Mock()
         self.koji_wrapper.koji_proxy.getLastEvent.return_value = EVENT_INFO
         self.koji_wrapper.koji_proxy.getTag.return_value = TAG_INFO

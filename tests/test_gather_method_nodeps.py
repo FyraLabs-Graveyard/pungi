@@ -16,7 +16,6 @@ class TestWritePungiConfig(helpers.PungiTestCase):
     def setUp(self):
         super(TestWritePungiConfig, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
-        self.compose.DEBUG = False
         self.compose.paths.work.comps = mock.Mock(return_value=COMPS_FILE)
 
     def test_expand_group(self):

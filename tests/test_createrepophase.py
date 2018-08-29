@@ -129,7 +129,6 @@ class TestCreateVariantRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -161,7 +160,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
         })
         compose.should_create_yum_database = False
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -192,7 +190,6 @@ class TestCreateVariantRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -225,7 +222,6 @@ class TestCreateVariantRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -258,7 +254,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_c': False,
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -290,7 +285,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_num_workers': 10,
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -324,7 +318,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_use_xz': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -356,7 +349,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -391,7 +383,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': [('^Server$', {'*': True})],
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -426,7 +417,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': [('^Everything$', {'x86_64': True})],
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -461,7 +451,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': [('^Server$', {'s390x': True})],
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -496,7 +485,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_deltas': True,
             'hashed_directories': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -539,7 +527,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_deltas': True,
             'hashed_directories': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -576,7 +563,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -613,7 +599,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'createrepo_deltas': True,
         })
-        compose.DEBUG = False
         compose.has_comps = False
         compose.old_composes = [self.topdir + '/old']
         touch(os.path.join(self.topdir, 'old', 'test-1.0-20151203.0', 'STATUS'), 'FINISHED')
@@ -647,7 +632,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'product_id': 'yes',    # Truthy value is enough for this test
         })
-        compose.DEBUG = False
         compose.has_comps = False
         product_id = compose.paths.work.product_id('x86_64', compose.variants['Server'])
         repodata_dir = os.path.join(
@@ -687,7 +671,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'product_id': 'yes',    # Truthy value is enough for this test
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -719,7 +702,6 @@ class TestCreateVariantRepo(PungiTestCase):
             'createrepo_checksum': 'sha256',
             'product_id': 'yes',    # Truthy value is enough for this test
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -754,7 +736,6 @@ class TestCreateVariantRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         variant = compose.variants['Server']
@@ -798,7 +779,6 @@ class TestCreateVariantRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
         compose.has_comps = False
 
         variant = compose.variants['Server']

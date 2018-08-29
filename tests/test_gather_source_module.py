@@ -22,7 +22,6 @@ class TestGatherSourceModule(helpers.PungiTestCase):
         super(TestGatherSourceModule, self).setUp()
 
         self.compose = helpers.DummyCompose(self.topdir, {})
-        self.compose.DEBUG = False
         self.mmd = self.compose.variants["Server"].add_fake_module(
             "testmodule:master:1:2017", rpm_nvrs=["pkg-0:1.0.0-1.x86_64", "pkg-0:1.0.0-1.i686"])
 

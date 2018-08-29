@@ -14,7 +14,6 @@ class TestWritePungiConfig(helpers.PungiTestCase):
     def setUp(self):
         super(TestWritePungiConfig, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
-        self.compose.DEBUG = False
 
     def assertWritten(self, PungiWrapper, **kwargs):
         wrapper = PungiWrapper.return_value

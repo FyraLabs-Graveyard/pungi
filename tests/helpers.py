@@ -153,6 +153,8 @@ class DummyCompose(object):
         self.require_deliverable = mock.Mock()
         self.should_create_yum_database = True
 
+        self.DEBUG = False
+
     def setup_optional(self):
         self.all_variants['Server-optional'] = MockVariant(
             uid='Server-optional', arches=['x86_64'], type='optional')

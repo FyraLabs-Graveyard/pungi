@@ -171,7 +171,6 @@ class TestWriteArchComps(PungiTestCase):
     @mock.patch('pungi.phases.init.run')
     def test_run(self, run):
         compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = False
 
         init.write_arch_comps(compose, 'x86_64')
 
@@ -198,7 +197,6 @@ class TestCreateCompsRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
 
         init.create_comps_repo(compose, 'x86_64', None)
 
@@ -216,7 +214,6 @@ class TestCreateCompsRepo(PungiTestCase):
         compose = DummyCompose(self.topdir, {
             'createrepo_checksum': 'sha256',
         })
-        compose.DEBUG = False
 
         init.create_comps_repo(compose, 'x86_64', compose.variants['Server'])
 
@@ -259,7 +256,6 @@ class TestWriteGlobalComps(PungiTestCase):
     @mock.patch('pungi.phases.init.get_file_from_scm')
     def test_run_local_file(self, get_file):
         compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
-        compose.DEBUG = False
 
         def gen_file(src, dest, logger=None):
             self.assertEqual(src, '/home/releng/config/some-file.xml')
@@ -278,7 +274,6 @@ class TestWriteVariantComps(PungiTestCase):
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = False
         variant = compose.variants['Server']
         comps = CompsWrapper.return_value
         comps.filter_groups.return_value = []
@@ -302,7 +297,6 @@ class TestWriteVariantComps(PungiTestCase):
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run_no_filter_without_groups(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = False
         variant = compose.variants['Server']
         variant.groups = []
         comps = CompsWrapper.return_value
@@ -327,7 +321,6 @@ class TestWriteVariantComps(PungiTestCase):
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run_filter_for_modular(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = False
         variant = compose.variants['Server']
         variant.groups = []
         variant.modules = ['testmodule:2.0']
@@ -353,7 +346,6 @@ class TestWriteVariantComps(PungiTestCase):
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run_report_unmatched(self, CompsWrapper, run):
         compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = False
         variant = compose.variants['Server']
         comps = CompsWrapper.return_value
         comps.filter_groups.return_value = ['foo', 'bar']

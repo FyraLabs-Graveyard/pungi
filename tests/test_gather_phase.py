@@ -747,7 +747,6 @@ class TestWritePrepopulate(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'gather_prepopulate': 'input-prepopulate.json',
         })
-        compose.DEBUG = False
         compose.config_dir = self.topdir
         helpers.copy_fixture('prepopulate.json', os.path.join(self.topdir, 'input-prepopulate.json'))
 
@@ -762,7 +761,6 @@ class TestWritePrepopulate(helpers.PungiTestCase):
                 'repo': None,
             }
         })
-        compose.DEBUG = False
         compose.config_dir = self.topdir
         helpers.copy_fixture('prepopulate.json', os.path.join(self.topdir, 'input-prepopulate.json'))
 
