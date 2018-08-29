@@ -854,6 +854,26 @@ class TestGatherPhase(helpers.PungiTestCase):
         self.assertEqual(gather_wrapper.call_args_list, [])
         self.assertTrue(os.path.isfile(os.path.join(self.topdir, 'compose', 'metadata', 'rpms.json')))
 
+    @mock.patch('pungi.phases.gather.link_files')
+    @mock.patch('pungi.phases.gather.gather_wrapper')
+    def test_does_not_write_in_debug_mode(self, gather_wrapper, link_files):
+        pkgset_phase = mock.Mock()
+        compose = helpers.DummyCompose(self.topdir, {})
+        compose.notifier = mock.Mock()
+        compose.DEBUG = True
+
+        rpms_file = helpers.touch(
+            os.path.join(self.topdir, 'compose', 'metadata', 'rpms.json'), "hello"
+        )
+
+        phase = gather.GatherPhase(compose, pkgset_phase)
+        phase.stop()
+
+        self.assertEqual(gather_wrapper.call_args_list, [])
+        self.assertTrue(os.path.isfile(rpms_file))
+        with open(rpms_file) as fh:
+            self.assertEqual(fh.read(), "hello")
+
 
 class TestGetPackagesToGather(helpers.PungiTestCase):
     def setUp(self):

@@ -87,8 +87,13 @@ class GatherPhase(PhaseBase):
             raise ValueError('\n'.join(errors))
 
     def _write_manifest(self):
-        self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
-        self.manifest.dump(self.manifest_file)
+        if self.compose.DEBUG and os.path.isfile(self.manifest_file):
+            self.compose.log_info(
+                "Skipping writing RPM manifest, already exists: %s" % self.manifest_file
+            )
+        else:
+            self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
+            self.manifest.dump(self.manifest_file)
 
     def run(self):
         pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets,
