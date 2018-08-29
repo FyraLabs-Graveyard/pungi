@@ -103,9 +103,10 @@ def variant_dict_from_str(compose, module_str):
 
 
 @retry(wait_on=IOError)
-def get_koji_modules(compose, koji_wrapper, module_info_str):
+def get_koji_modules(compose, koji_wrapper, event, module_info_str):
     """
-    :param koji_wrapper : koji wrapper instance
+    :param koji_wrapper: koji wrapper instance
+    :param event: event at which to perform the query
     :param module_info_str: str, mmd or module dict
 
     :return final list of module_info which pass repoclosure
@@ -126,16 +127,18 @@ def get_koji_modules(compose, koji_wrapper, module_info_str):
     query_str = query_str.replace('*.*', '*')
 
     koji_builds = koji_proxy.search(query_str, "build", "glob")
-    # Error reporting
-    if not koji_builds:
-        raise ValueError(
-            "No module build found for %r (queried for %r)"
-            % (module_info_str, query_str)
-        )
 
     modules = []
     for build in koji_builds:
         md = koji_proxy.getBuild(build["id"])
+
+        if md["completion_ts"] > event["ts"]:
+            # The build finished after the event at which we are limited to,
+            # ignore it.
+            compose.log_debug(
+                "Module build %s is too new, ignoring it." % build["name"]
+            )
+            continue
 
         if not md["extra"]:
             continue
@@ -170,6 +173,12 @@ def get_koji_modules(compose, koji_wrapper, module_info_str):
         md["rpms"] = [make_nvra(rpm, add_epoch=True, force_epoch=True, add_rpm=False)
                       for rpm in rpms]
         modules.append(md)
+
+    if not modules:
+        raise ValueError(
+            "No module build found for %r (queried for %r)"
+            % (module_info_str, query_str)
+        )
 
     # If there is version provided, then all modules with that version will go
     # in. In case version is missing, we will find the latest version and
@@ -266,7 +275,7 @@ def _log_modulemd(compose, variant, mmd):
 
 
 def _get_modules_from_koji(
-    compose, koji_wrapper, variant, variant_tags, module_tag_rpm_filter
+    compose, koji_wrapper, event, variant, variant_tags, module_tag_rpm_filter
 ):
     """
     Loads modules for given `variant` from koji `session`, adds them to
@@ -282,7 +291,7 @@ def _get_modules_from_koji(
     # Find out all modules in every variant and add their Koji tags
     # to variant and variant_tags list.
     for module in variant.get_modules():
-        koji_modules = get_koji_modules(compose, koji_wrapper, module["name"])
+        koji_modules = get_koji_modules(compose, koji_wrapper, event, module["name"])
         for koji_module in koji_modules:
             mmd = Modulemd.Module.new_from_string(koji_module["modulemd"])
             mmd.upgrade()
@@ -425,7 +434,7 @@ def _find_old_file_cache_path(compose):
     return old_file_cache_path
 
 
-def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
+def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     all_arches = set(["src"])
     for arch in compose.get_arches():
         is_multilib = is_arch_multilib(compose.conf, arch)
@@ -494,7 +503,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             _get_modules_from_koji_tags(
                 compose,
                 koji_wrapper,
-                event_id,
+                event,
                 variant,
                 variant_tags,
                 module_tag_rpm_filter,
@@ -506,6 +515,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             _get_modules_from_koji(
                 compose,
                 koji_wrapper,
+                event,
                 variant,
                 variant_tags,
                 module_tag_rpm_filter,
@@ -573,7 +583,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event_id):
             should_inherit = inherit if is_traditional else inherit_modules
             pkgset.populate(
                 compose_tag,
-                event_id,
+                event,
                 inherit=should_inherit,
                 logfile=logfile,
                 exclude_packages=module_tag_rpm_filter.get(compose_tag),

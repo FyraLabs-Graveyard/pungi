@@ -353,6 +353,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'release': '20180406051653.2e6f5e0a',
                 'state': 1,
                 'version': 'master_dash',
+                'completion_ts': 1433473124.0,
             }
         ]
         mock_archives = [
@@ -385,9 +386,12 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.getBuild.return_value = mock_build_md[0]
         self.koji_wrapper.koji_proxy.listArchives.return_value = mock_archives
         self.koji_wrapper.koji_proxy.listRPMs.return_value = mock_rpms
+        event = {"id": 12345, "ts": 1533473124.0}
 
         module_info_str = "testmodule2:master-dash:20180406051653:96c371af"
-        result = source_koji.get_koji_modules(self.compose, self.koji_wrapper, module_info_str)
+        result = source_koji.get_koji_modules(
+            self.compose, self.koji_wrapper, event, module_info_str
+        )
 
         assert type(result) is list
         assert len(result) == 1
@@ -406,6 +410,49 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.listArchives.assert_called_once_with(mock_build_ids[0]["id"])
         self.koji_wrapper.koji_proxy.listRPMs.assert_called_once_with(
             imageID=mock_archives[0]["id"])
+
+    def test_get_koji_modules_filter_by_event(self):
+        mock_build_ids = [
+            {"id": 1065873, "name": "testmodule2-master_dash-20180406051653.96c371af"}
+        ]
+        mock_extra = {
+            "typeinfo": {
+                "module": {
+                    "content_koji_tag": "module-b62270b82443edde",
+                    "modulemd_str": mock.Mock()}
+            }
+        }
+        mock_build_md = [
+            {
+                "id": 1065873,
+                "epoch": None,
+                "extra": mock_extra,
+                "name": "testmodule2",
+                "nvr": "testmodule2-master_dash-20180406051653.2e6f5e0a",
+                "release": "20180406051653.2e6f5e0a",
+                "state": 1,
+                "version": "master_dash",
+                "completion_ts": 1633473124.0,
+            }
+        ]
+
+        self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
+        self.koji_wrapper.koji_proxy.getBuild.return_value = mock_build_md[0]
+        event = {"id": 12345, "ts": 1533473124.0}
+
+        with self.assertRaises(ValueError) as ctx:
+            source_koji.get_koji_modules(
+                self.compose, self.koji_wrapper, event, "testmodule2:master-dash"
+            )
+
+        self.assertIn("No module build found", str(ctx.exception))
+
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(
+            "testmodule2-master_dash-*", "build", "glob"
+        )
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.listArchives.assert_not_called()
+        self.koji_wrapper.koji_proxy.listRPMs.assert_not_called()
 
     def test_get_koji_modules_no_version(self):
         mock_build_ids = [
@@ -438,6 +485,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'release': '20180406051653.2e6f5e0a',
                 'state': 1,
                 'version': 'master',
+                'completion_ts': 1433473124.0,
             },
             {
                 'id': 1065874,
@@ -448,6 +496,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'release': '20180406051653.96c371af',
                 'state': 1,
                 'version': 'master',
+                'completion_ts': 1433473124.0,
             }
         ]
         mock_archives = [
@@ -499,8 +548,12 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.listArchives.side_effect = mock_archives
         self.koji_wrapper.koji_proxy.listRPMs.side_effect = mock_rpms
 
+        event = {"id": 12345, "ts": 1533473124.0}
+
         module_info_str = "testmodule2:master"
-        result = source_koji.get_koji_modules(self.compose, self.koji_wrapper, module_info_str)
+        result = source_koji.get_koji_modules(
+            self.compose, self.koji_wrapper, event, module_info_str
+        )
 
         assert type(result) is list
         assert len(result) == 2
