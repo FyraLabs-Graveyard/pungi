@@ -653,5 +653,137 @@ class TestCorrectNVR(helpers.PungiTestCase):
                           self.compose, 'foo:bar:baz:quux:qaar')
 
 
+class TestFilterInherited(unittest.TestCase):
+
+    def test_empty_module_list(self):
+        event = {"id": 123456}
+        koji_proxy = mock.Mock()
+        module_builds = []
+        top_tag = "top-tag"
+
+        koji_proxy.getFullInheritance.return_value = [
+            {"name": "middle-tag"}, {"name": "bottom-tag"}
+        ]
+
+        result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
+
+        self.assertItemsEqual(result, [])
+        self.assertEqual(
+            koji_proxy.mock_calls,
+            [mock.call.getFullInheritance("top-tag", event=123456)],
+        )
+
+    def test_exclude_middle_and_bottom_tag(self):
+        event = {"id": 123456}
+        koji_proxy = mock.Mock()
+        top_tag = "top-tag"
+
+        koji_proxy.getFullInheritance.return_value = [
+            {"name": "middle-tag"}, {"name": "bottom-tag"}
+        ]
+        module_builds = [
+            {"name": "foo", "version": "1", "release": "1", "tag_name": "top-tag"},
+            {"name": "foo", "version": "1", "release": "2", "tag_name": "bottom-tag"},
+            {"name": "foo", "version": "1", "release": "3", "tag_name": "middle-tag"},
+        ]
+
+        result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
+
+        self.assertItemsEqual(
+            result,
+            [{"name": "foo", "version": "1", "release": "1", "tag_name": "top-tag"}],
+        )
+        self.assertEqual(
+            koji_proxy.mock_calls,
+            [mock.call.getFullInheritance("top-tag", event=123456)],
+        )
+
+    def test_missing_from_top_tag(self):
+        event = {"id": 123456}
+        koji_proxy = mock.Mock()
+        top_tag = "top-tag"
+
+        koji_proxy.getFullInheritance.return_value = [
+            {"name": "middle-tag"}, {"name": "bottom-tag"}
+        ]
+        module_builds = [
+            {"name": "foo", "version": "1", "release": "2", "tag_name": "bottom-tag"},
+            {"name": "foo", "version": "1", "release": "3", "tag_name": "middle-tag"},
+        ]
+
+        result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
+
+        self.assertItemsEqual(
+            result,
+            [{"name": "foo", "version": "1", "release": "3", "tag_name": "middle-tag"}],
+        )
+        self.assertEqual(
+            koji_proxy.mock_calls,
+            [mock.call.getFullInheritance("top-tag", event=123456)],
+        )
+
+
+class TestFilterByWhitelist(unittest.TestCase):
+    def test_no_modules(self):
+        compose = mock.Mock()
+        module_builds = []
+        input_modules = [{"name": "foo:1"}]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+
+        self.assertIn("patterns (foo:1) that don't match", str(ctx.exception))
+
+    def test_filter_by_NS(self):
+        compose = mock.Mock()
+        module_builds = [
+            {"nvr": "foo-1-201809031048.cafebabe"},
+            {"nvr": "foo-1-201809031047.deadbeef"},
+            {"nvr": "foo-2-201809031047.deadbeef"},
+        ]
+        input_modules = [{"name": "foo:1"}]
+
+        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+
+        self.assertItemsEqual(
+            result,
+            [
+                {"nvr": "foo-1-201809031048.cafebabe"},
+                {"nvr": "foo-1-201809031047.deadbeef"},
+            ],
+        )
+
+    def test_filter_by_NSV(self):
+        compose = mock.Mock()
+        module_builds = [
+            {"nvr": "foo-1-201809031048.cafebabe"},
+            {"nvr": "foo-1-201809031047.deadbeef"},
+            {"nvr": "foo-2-201809031047.deadbeef"},
+        ]
+        input_modules = [{"name": "foo:1:201809031047"}]
+
+        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+
+        self.assertItemsEqual(
+            result, [{"nvr": "foo-1-201809031047.deadbeef"}]
+        )
+
+    def test_filter_by_NSVC(self):
+        compose = mock.Mock()
+        module_builds = [
+            {"nvr": "foo-1-201809031048.cafebabe"},
+            {"nvr": "foo-1-201809031047.deadbeef"},
+            {"nvr": "foo-1-201809031047.cafebabe"},
+            {"nvr": "foo-2-201809031047.deadbeef"},
+        ]
+        input_modules = [{"name": "foo:1:201809031047:deadbeef"}]
+
+        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+
+        self.assertItemsEqual(
+            result, [{"nvr": "foo-1-201809031047.deadbeef"}]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -470,12 +470,20 @@ Options
     (*str|[str]*) -- tag(s) to read package set from. This option can be
     omitted for modular composes.
 
+**pkgset_koji_module_tag**
+   (*str|[str]*) -- tags to read module from. This option works similarly to
+   listing tags in variants XML. If tags are specified and variants XML
+   specifies some modules via NSVC (or part of), only modules matching that
+   list will be used (and taken from the tag). Inheritance is used
+   automatically.
+
 **pkgset_koji_inherit** = True
     (*bool*) -- inherit builds from parent tags; we can turn it off only if we
     have all builds tagged in a single tag
 
 **pkgset_koji_inherit_modules** = False
-    (*bool*) -- the same as above, but this only applies to modular tags
+    (*bool*) -- the same as above, but this only applies to modular tags. This
+    option applies to the content tags that contain the RPMs.
 
 **pkgset_repos**
     (*dict*) -- A mapping of architectures to repositories with RPMs: ``{arch:

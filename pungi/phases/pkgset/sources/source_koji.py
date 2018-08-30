@@ -316,6 +316,75 @@ def _get_modules_from_koji(
             compose.log_info("%s" % module_msg)
 
 
+def filter_inherited(koji_proxy, event, module_builds, top_tag):
+    """Look at the tag inheritance and keep builds only from the topmost tag.
+
+    Using latest=True for listTagged() call would automatically do this, but it
+    does not understand streams, so we have to reimplement it here.
+    """
+    inheritance = [
+        tag["name"] for tag in koji_proxy.getFullInheritance(top_tag, event=event["id"])
+    ]
+
+    def keyfunc(mb):
+        return (mb["name"], mb["version"])
+
+    result = []
+
+    # Group modules by Name-Stream
+    for _, builds in groupby(sorted(module_builds, key=keyfunc), keyfunc):
+        builds = list(builds)
+        # For each N-S combination find out which tags it's in
+        available_in = set(build["tag_name"] for build in builds)
+
+        # And find out which is the topmost tag
+        for tag in [top_tag] + inheritance:
+            if tag in available_in:
+                break
+
+        # And keep only builds from that topmost tag
+        result.extend(build for build in builds if build["tag_name"] == tag)
+
+    return result
+
+
+def filter_by_whitelist(compose, module_builds, input_modules):
+    """
+    Exclude modules from the list that do not match any pattern specified in
+    input_modules. Order may not be preserved.
+    """
+    specs = set()
+    nvr_prefixes = set()
+    for spec in input_modules:
+        info = variant_dict_from_str(compose, spec["name"])
+        prefix = ("%s-%s-%s.%s" % (
+            info["name"],
+            info["stream"].replace("-", "_"),
+            info.get("version", ""),
+            info.get("context", ""),
+        )).rstrip("-.")
+        nvr_prefixes.add((prefix, spec["name"]))
+        specs.add(spec["name"])
+
+    modules_to_keep = []
+    used = set()
+
+    for mb in module_builds:
+        for (prefix, spec) in nvr_prefixes:
+            if mb["nvr"].startswith(prefix):
+                modules_to_keep.append(mb)
+                used.add(spec)
+                break
+
+    if used != specs:
+        raise RuntimeError(
+            "Configuration specified patterns (%s) that don't match any modules in the configured tags."
+            % ", ".join(specs - used)
+        )
+
+    return modules_to_keep
+
+
 def _get_modules_from_koji_tags(
         compose, koji_wrapper, event_id, variant, variant_tags, module_tag_rpm_filter):
     """
@@ -329,10 +398,14 @@ def _get_modules_from_koji_tags(
     :param dict variant_tags: Dict populated by this method. Key is `variant`
         and value is list of Koji tags to get the RPMs from.
     """
+    # Compose tags from configuration
+    compose_tags = [
+        {"name": tag} for tag in force_list(compose.conf["pkgset_koji_module_tag"])
+    ]
     # Find out all modules in every variant and add their Koji tags
     # to variant and variant_tags list.
     koji_proxy = koji_wrapper.koji_proxy
-    for modular_koji_tag in variant.get_modular_koji_tags():
+    for modular_koji_tag in variant.get_modular_koji_tags() + compose_tags:
         tag = modular_koji_tag["name"]
 
         # List all the modular builds in the modular Koji tag.
@@ -342,6 +415,14 @@ def _get_modules_from_koji_tags(
         # only builds with highest release.
         module_builds = koji_proxy.listTagged(
             tag, event=event_id["id"], inherit=True, type="module")
+
+        # Filter out builds inherited from non-top tag
+        module_builds = filter_inherited(koji_proxy, event_id, module_builds, tag)
+
+        # Apply whitelist of modules if specified.
+        variant_modules = variant.get_modules()
+        if variant_modules:
+            module_builds = filter_by_whitelist(compose, module_builds, variant_modules)
 
         # Find the latest builds of all modules. This does following:
         # - Sorts the module_builds descending by Koji NVR (which maps to NSV
@@ -496,7 +577,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 "support for modules is disabled, but compose contains "
                 "modules.")
 
-        if modular_koji_tags:
+        if modular_koji_tags or (compose.conf["pkgset_koji_module_tag"] and variant.modules):
             included_modules_file = os.path.join(
                 compose.paths.work.topdir(arch="global"),
                 "koji-tag-module-%s.yaml" % variant.uid)
