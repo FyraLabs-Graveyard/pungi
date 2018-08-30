@@ -226,7 +226,9 @@ class CreateIsoThread(WorkerThread):
                                   variant=str(variant))
 
 
-def add_iso_to_metadata(compose, variant, arch, iso_path, bootable, disc_num, disc_count):
+def add_iso_to_metadata(
+    compose, variant, arch, iso_path, bootable, disc_num, disc_count, unified=False
+):
     img = Image(compose.im)
     img.path = iso_path.replace(compose.paths.compose.topdir(), '').lstrip('/')
     img.mtime = get_mtime(iso_path)
@@ -240,6 +242,7 @@ def add_iso_to_metadata(compose, variant, arch, iso_path, bootable, disc_num, di
     img.bootable = bootable
     img.subvariant = variant.uid
     img.implant_md5 = iso.get_implanted_md5(iso_path, logger=compose._logger)
+    img.unified = unified
     setattr(img, 'can_fail', compose.can_fail(variant, arch, 'iso'))
     setattr(img, 'deliverable', 'iso')
     try:

@@ -147,7 +147,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
             aitm.call_args_list,
             [mock.call(compose, server, 'x86_64',
                        os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
-                       True, 1, 1)]
+                       True, 1, 1, unified=True)]
         )
 
     def test_binary_image_custom_naming(self, aitm, rcc, gef, gic, gfn, gvi):
@@ -188,7 +188,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
             aitm.call_args_list,
             [mock.call(compose, server, 'x86_64',
                        os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
-                       False, 1, 1)]
+                       False, 1, 1, unified=True)]
         )
 
     def test_source_is_not_bootable(self, aitm, rcc, gef, gic, gfn, gvi):
@@ -230,7 +230,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
             aitm.call_args_list,
             [mock.call(compose, server, 'src',
                        os.path.join(self.topdir, 'compose/Server/source/iso/my.iso'),
-                       False, 1, 1)]
+                       False, 1, 1, unified=True)]
         )
 
     def test_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi):

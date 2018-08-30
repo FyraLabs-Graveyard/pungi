@@ -112,7 +112,9 @@ class ExtraIsosThread(WorkerThread):
                                   arch, "extraiso-%s" % os.path.basename(iso_path)),
                               with_jigdo=False)
 
-        add_iso_to_metadata(compose, variant, arch, iso_path, bootable, 1, 1)
+        add_iso_to_metadata(
+            compose, variant, arch, iso_path, bootable, 1, 1, unified=True
+        )
 
         self.pool.log_info("[DONE ] %s" % msg)
 
