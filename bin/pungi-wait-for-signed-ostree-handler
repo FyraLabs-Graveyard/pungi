@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Messaging hook to block compose progress until an ostree commit is signed.
+
+The signing is implemented by robosignatory, which listens on the message bus
+and reacts to messages about new commits. It will create a signature and then
+update the ref in the repo to point to the new commit.
+
+This script should not be used if Pungi is updating the reference on its own
+(since that does not leave time for the signature).
+"""
+
 from __future__ import print_function
 
 import argparse
@@ -10,6 +21,22 @@ import json
 import os
 import sys
 import time
+
+
+def is_ref_updated(ref_file, commit):
+    """The ref is updated when the file points to the correct commit."""
+    try:
+        with open(ref_file) as f:
+            return f.read().strip() == commit
+    except IOError:
+        # Failed to open the file, probably it does not exist, so let's just
+        # wait more.
+        return False
+
+
+def ts_log(msg):
+    print("%s: %s" % (datetime.datetime.utcnow(), msg))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -38,8 +65,7 @@ if __name__ == '__main__':
 
     count = 0
     while not os.path.exists(path):
-        print('%s: Commit not signed yet, waiting...'
-              % datetime.datetime.utcnow())
+        ts_log("Commit not signed yet, waiting...")
         count += 1
         if count >= 60:  # Repeat every 5 minutes
             print('Repeating notification')
@@ -47,4 +73,11 @@ if __name__ == '__main__':
             count = 0
         time.sleep(5)
 
-    print('Found signature.')
+    print("Found signature, waiting for ref to be updated.")
+
+    ref_file = os.path.join(repo, "refs/heads", data["ref"])
+    while not is_ref_updated(ref_file, commit):
+        ts_log("Ref is not yet up-to-date, waiting...")
+        time.sleep(5)
+
+    print("Ref is up-to-date. All done!")
