@@ -241,15 +241,16 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                 continue
 
             nevr = kobo.rpmlib.parse_nvr(nvr)
-            nevr_copy = nevr.copy()
-            nevr_copy["arch"] = pkg_arch
 
-            if self.multilib.is_multilib(self._get_package("%s.%s" % (nvr, pkg_arch))):
-                for add_arch in self.valid_arches:
-                    if add_arch == arch:
-                        continue
-                    if _nevra(arch=add_arch, **nevr) in self._get_pkg_map(arch):
-                        added.add((nevr["name"], add_arch))
+            for add_arch in self.valid_arches:
+                if add_arch == arch:
+                    continue
+                try:
+                    multilib_candidate = self._get_package("%s.%s" % (nvr, add_arch))
+                except KeyError:
+                    continue
+                if self.multilib.is_multilib(multilib_candidate):
+                    added.add((nevr["name"], add_arch))
 
         # Remove packages that are already present
         for nvr, pkg_arch, flags in nvrs:
