@@ -782,11 +782,18 @@ class TestCreateVariantRepo(PungiTestCase):
         compose.has_comps = False
 
         variant = compose.variants['Server']
-        variant.arch_mmds["x86_64"] = {}
-        variant.arch_mmds["x86_64"]["test-f27"] = variant.add_fake_module(
-            "test:f27:1:2017", rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"])
-        variant.arch_mmds["x86_64"]["test-f28"] = variant.add_fake_module(
-            "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"])
+        variant.arch_mmds["x86_64"] = {
+            "test:f27:2018:cafe": variant.add_fake_module(
+                "test:f27:1:2017", rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"]
+            ),
+            "test:f28:2018:beef": variant.add_fake_module(
+                "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"]
+            ),
+        }
+        variant.module_uid_to_koji_tag = {
+            "test:f28:2018:beef": "tag-1",
+            "test:f27:2018:cafe": "tag-2",
+        }
 
         def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
             modules = Modulemd.Module.new_all_from_file(mmd_path)

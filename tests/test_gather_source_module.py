@@ -46,7 +46,7 @@ class TestGatherSourceModule(helpers.PungiTestCase):
         self.assertEqual(len(groups), 0)
 
         variant = self.compose.variants["Server"]
-        arch_mmd = variant.arch_mmds["x86_64"]["testmodule-master"]
+        arch_mmd = variant.arch_mmds["x86_64"]["testmodule:master:1:2017"]
         self.assertEqual(set(arch_mmd.get_rpm_artifacts().get()),
                          set(["pkg-0:1.0.0-1.x86_64"]))
 
@@ -63,7 +63,7 @@ class TestGatherSourceModule(helpers.PungiTestCase):
         self.assertEqual(len(groups), 0)
 
         variant = self.compose.variants["Server"]
-        arch_mmd = variant.arch_mmds["x86_64"]["testmodule-master"]
+        arch_mmd = variant.arch_mmds["x86_64"]["testmodule:master:1:2017"]
         self.assertEqual(set(arch_mmd.get_rpm_artifacts().get()),
                          set(["pkg-0:1.0.0-1.x86_64", "pkg-0:1.0.0-1.i686"]))
 
@@ -78,5 +78,5 @@ class TestGatherSourceModule(helpers.PungiTestCase):
         self.assertEqual(len(groups), 0)
 
         variant = self.compose.variants["Server"]
-        arch_mmd = variant.arch_mmds["x86_64"]["testmodule-master"]
+        arch_mmd = variant.arch_mmds["x86_64"]["testmodule:master:1:2017"]
         self.assertEqual(len(arch_mmd.get_rpm_artifacts().get()), 0)

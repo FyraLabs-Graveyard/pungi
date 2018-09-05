@@ -272,6 +272,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "mod:master": mock.Mock(
                 peek_name=mock.Mock(return_value="mod"),
                 peek_stream=mock.Mock(return_value="master"),
+                peek_version=mock.Mock(return_value="ver"),
+                peek_context=mock.Mock(return_value="ctx"),
             )
         }
         po.return_value = (mock.Mock(), mock.Mock())

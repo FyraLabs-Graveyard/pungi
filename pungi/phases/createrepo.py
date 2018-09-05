@@ -401,13 +401,12 @@ class ModulesMetadata(object):
         self.compose.log_info("Writing modules metadata: %s" % self.modules_metadata_file)
         self.productmd_modules_metadata.dump(self.modules_metadata_file)
 
-    def prepare_module_metadata(self, variant, arch, module_id, modulemd_path, category, module_rpms):
+    def prepare_module_metadata(self, variant, arch, nsvc, modulemd_path, category, module_rpms):
         """
-        find uid/koji_tag which is correstponding with variant object and
-        add record(s) into module metadata structure
+        Find koji tag which corresponds to the module and add record into
+        module metadata structure.
         """
-        for uid, koji_tag in variant.module_uid_to_koji_tag.items():
-            uid_dict = self.productmd_modules_metadata.parse_uid(uid)
-            if module_id == '{module_name}-{stream}'.format(**uid_dict):
-                self.productmd_modules_metadata.add(variant.uid, arch, uid, koji_tag, modulemd_path, category, module_rpms)
-                break
+        koji_tag = variant.module_uid_to_koji_tag[nsvc]
+        self.productmd_modules_metadata.add(
+            variant.uid, arch, nsvc, koji_tag, modulemd_path, category, module_rpms
+        )

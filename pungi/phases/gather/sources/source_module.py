@@ -57,7 +57,12 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # store per-architecture artifacts there later.
         variant.arch_mmds.setdefault(arch, {})
         for mmd in variant.mmds:
-            mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
+            mmd_id = "%s:%s:%s:%s" % (
+                mmd.peek_name(),
+                mmd.peek_stream(),
+                mmd.peek_version(),
+                mmd.peek_context(),
+            )
             if mmd_id not in variant.arch_mmds[arch]:
                 arch_mmd = mmd.copy()
                 variant.arch_mmds[arch][mmd_id] = arch_mmd
@@ -78,7 +83,12 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 continue
 
             for mmd in variant.mmds:
-                mmd_id = "%s-%s" % (mmd.get_name(), mmd.get_stream())
+                mmd_id = "%s:%s:%s:%s" % (
+                    mmd.peek_name(),
+                    mmd.peek_stream(),
+                    mmd.peek_version(),
+                    mmd.peek_context(),
+                )
                 arch_mmd = variant.arch_mmds[arch][mmd_id]
                 srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
 
