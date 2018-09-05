@@ -107,6 +107,19 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self._prepare_packages()
         return self.packages[nevra]
 
+    def expand_list(self, arch, patterns):
+        """Given a list of globs, create a list of package names matching any
+        of the pattern.
+        """
+        expanded = set()
+        for pkg_arch in self.package_sets[arch].rpms_by_arch:
+            for pkg in self.package_sets[arch].rpms_by_arch[pkg_arch]:
+                for pattern in patterns:
+                    if fnmatch(pkg.name, pattern):
+                        expanded.add(pkg.name)
+                        break
+        return expanded
+
     def prepare_langpacks(self, arch, variant):
         if not self.compose.has_comps:
             return
@@ -147,7 +160,9 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self.compose.conf, "multilib", arch, variant
         )
         self.multilib = multilib_dnf.Multilib(
-            self.multilib_methods, multilib_blacklist, multilib_whitelist
+            self.multilib_methods,
+            self.expand_list(arch, multilib_blacklist),
+            self.expand_list(arch, multilib_whitelist),
         )
 
         platform = create_module_repo(self.compose, variant, arch)

@@ -128,6 +128,48 @@ class TestMethodHybrid(helpers.PungiTestCase):
 
         self.assertEqual(m.langpacks, {"foo": set(["foo-en"])})
 
+    def test_expand_list(self):
+        compose = helpers.DummyCompose(self.topdir, {})
+        m = hybrid.GatherMethodHybrid(compose)
+        m.package_sets = {
+            "x86_64": mock.Mock(
+                rpms_by_arch={
+                    "x86_64": [
+                        MockPkg(
+                            name="foo",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                        MockPkg(
+                            name="foo-en",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                        MockPkg(
+                            name="bar",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
+                    ]
+                }
+            )
+        }
+        expanded = m.expand_list("x86_64", ["foo*"])
+
+        self.assertItemsEqual(expanded, ["foo", "foo-en"])
+
 
 class MockModule(object):
     def __init__(
