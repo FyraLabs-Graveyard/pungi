@@ -694,22 +694,30 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 
 
 def get_koji_event_info(compose, koji_wrapper):
-    koji_proxy = koji_wrapper.koji_proxy
     event_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-event")
-
-    if compose.koji_event:
-        koji_event = koji_proxy.getEvent(compose.koji_event)
-        compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
-        json.dump(koji_event, open(event_file, "w"))
-        return koji_event
 
     msg = "Getting koji event"
     if compose.DEBUG and os.path.exists(event_file):
         compose.log_warning("[SKIP ] %s" % msg)
         result = json.load(open(event_file, "r"))
     else:
-        compose.log_info(msg)
-        result = koji_proxy.getLastEvent()
-        json.dump(result, open(event_file, "w"))
-    compose.log_info("Koji event: %s" % result["id"])
+        result = get_koji_event_raw(koji_wrapper, compose.koji_event, event_file)
+        if compose.koji_event:
+            compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
+        else:
+            compose.log_info(msg)
+            compose.log_info("Koji event: %s" % result["id"])
+
     return result
+
+
+def get_koji_event_raw(koji_wrapper, event_id, event_file):
+    if event_id:
+        koji_event = koji_wrapper.koji_proxy.getEvent(event_id)
+    else:
+        koji_event = koji_wrapper.koji_proxy.getLastEvent()
+
+    with open(event_file, "w") as f:
+        json.dump(koji_event, f)
+
+    return koji_event

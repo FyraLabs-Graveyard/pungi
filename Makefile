@@ -104,5 +104,8 @@ test-data:
 test-compose:
 	cd tests && ./test_compose.sh
 
+test-multi-compose:
+	PYTHONPATH=$$(pwd) PATH=$$(pwd)/bin:$$PATH pungi-orchestrate --debug start tests/data/multi-compose.conf
+
 doc:
 	cd doc; make html

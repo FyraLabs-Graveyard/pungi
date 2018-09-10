@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import contextlib
 import errno
 import os
 import shutil
@@ -37,6 +38,17 @@ class LinkerPool(ThreadPool):
         for _ in range(num_workers):
             pool.add(LinkerThread(pool))
         return pool
+
+
+@contextlib.contextmanager
+def linker_pool(link_type="hardlink-or-copy", num_workers=10):
+    """Create a linker and make sure it is stopped no matter what."""
+    linker = LinkerPool.with_workers(num_workers=num_workers, link_type=link_type)
+    linker.start()
+    try:
+        yield linker
+    finally:
+        linker.stop()
 
 
 class LinkerThread(WorkerThread):

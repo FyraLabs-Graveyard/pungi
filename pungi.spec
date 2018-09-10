@@ -21,6 +21,7 @@ BuildRequires:  python2-libcomps
 BuildRequires:  python2-six
 BuildRequires:  python2-multilib
 BuildRequires:  python2-dogpile-cache
+BuildRequires:  python2-parameterized
 
 Requires:       yum => 3.4.3-28
 Requires:       lorax >= 22.1
