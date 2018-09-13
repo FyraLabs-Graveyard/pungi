@@ -1,7 +1,6 @@
 include AUTHORS
 include COPYING
 include GPL
-include RELEASE-NOTES
 include pungi.spec
 include tox.ini
 include share/*
