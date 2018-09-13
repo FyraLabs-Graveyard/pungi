@@ -55,6 +55,10 @@ if __name__ == '__main__':
 
     repo = data['local_repo_path']
     commit = data['commitid']
+    if not commit:
+        print("No new commit was created, nothing will get signed.")
+        sys.exit(0)
+
     path = '%s/objects/%s/%s.commitmeta' % (repo, commit[:2], commit[2:])
 
     config = fedmsg.config.load_config()
