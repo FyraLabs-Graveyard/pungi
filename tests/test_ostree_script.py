@@ -18,6 +18,10 @@ from pungi import ostree
 
 class OstreeTreeScriptTest(helpers.PungiTestCase):
 
+    def setUp(self):
+        super(OstreeTreeScriptTest, self).setUp()
+        self.repo = os.path.join(self.topdir, "atomic")
+
     def _make_dummy_config_dir(self, path):
         helpers.touch(os.path.join(path, 'fedora-atomic-docker-host.json'),
                       json.dumps({'ref': 'fedora-atomic/25/x86_64',
@@ -32,118 +36,101 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         helpers.touch(os.path.join(path, 'fedora-23.repo'),
                       '[fedora-23]\nbaseurl=why-not-zoidberg?')
 
+    def assertCorrectCall(self, mock_run, extra_calls=[], extra_args=[]):
+        self.assertItemsEqual(
+            mock_run.call_args_list,
+            [
+                mock.call(
+                    [
+                        "rpm-ostree",
+                        "compose",
+                        "tree",
+                        "--repo=%s" % self.repo,
+                        "--write-commitid-to=%s" % (self.topdir + "/logs/Atomic/commitid.log"),
+                        "--touch-if-changed=%s.stamp" % (self.topdir + "/logs/Atomic/commitid.log"),
+                    ] + extra_args + [
+                        self.topdir + "/fedora-atomic-docker-host.json"
+                    ],
+                    logfile=self.topdir + "/logs/Atomic/create-ostree-repo.log",
+                    show_cmd=True,
+                    stdout=True,
+                )
+            ] + extra_calls
+        )
+
     @mock.patch('kobo.shortcuts.run')
     def test_full_run(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--touch-if-changed=%s.stamp' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+        self.assertCorrectCall(run)
 
     @mock.patch('kobo.shortcuts.run')
     def test_run_on_existing_empty_dir(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
-        os.mkdir(repo)
+        os.mkdir(self.repo)
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+        self.assertCorrectCall(run)
 
     @mock.patch('kobo.shortcuts.run')
     def test_run_on_initialized_repo(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
-        helpers.touch(os.path.join(repo, 'initialized'))
+        helpers.touch(os.path.join(self.repo, 'initialized'))
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--touch-if-changed=%s.stamp' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+        self.assertCorrectCall(run)
 
     @mock.patch('kobo.shortcuts.run')
     def test_update_summary(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
             '--update-summary',
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--touch-if-changed=%s.stamp' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True),
-             mock.call(['ostree', 'summary', '-u', '--repo=%s' % repo],
-                       logfile=self.topdir + '/logs/Atomic/ostree-summary.log', show_cmd=True, stdout=True)]),
+        self.assertCorrectCall(
+            run,
+            extra_calls=[
+                mock.call(
+                    ["ostree", "summary", "-u", "--repo=%s" % self.repo],
+                    logfile=self.topdir + "/logs/Atomic/ostree-summary.log",
+                    show_cmd=True,
+                    stdout=True,
+                )
+            ]
+        )
 
     @mock.patch('kobo.shortcuts.run')
     def test_versioning_metadata(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
             '--version=24',
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--touch-if-changed=%s.stamp' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--add-metadata-string=version=24',
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+        self.assertCorrectCall(run, extra_args=["--add-metadata-string=version=24"])
 
     @mock.patch('kobo.shortcuts.run')
     def test_ostree_ref(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
         self._make_dummy_config_dir(self.topdir)
         treefile = os.path.join(self.topdir, 'fedora-atomic-docker-host.json')
 
@@ -155,7 +142,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s' % treefile,
             '--ostree-ref=%s' % replacing_ref,
@@ -173,8 +160,6 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
     @mock.patch('kobo.shortcuts.run')
     def test_run_with_yaml_file(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
         self._make_dummy_config_dir(self.topdir)
         treefile = os.path.join(self.topdir, 'fedora-atomic-docker-host.yaml')
 
@@ -187,7 +172,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s' % treefile,
             '--ostree-ref=%s' % replacing_ref,
@@ -206,36 +191,23 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
     @mock.patch('kobo.shortcuts.run')
     def test_force_new_commit(self, run):
-        repo = os.path.join(self.topdir, 'atomic')
-
-        helpers.touch(os.path.join(repo, 'initialized'))
+        helpers.touch(os.path.join(self.repo, 'initialized'))
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s/fedora-atomic-docker-host.json' % self.topdir,
             '--force-new-commit',
         ])
 
-        self.maxDiff = None
-        self.assertItemsEqual(
-            run.call_args_list,
-            [mock.call(['rpm-ostree', 'compose', 'tree', '--repo=%s' % repo,
-                        '--write-commitid-to=%s' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--touch-if-changed=%s.stamp' % (self.topdir + '/logs/Atomic/commitid.log'),
-                        '--force-nocache',
-                        self.topdir + '/fedora-atomic-docker-host.json'],
-                       logfile=self.topdir + '/logs/Atomic/create-ostree-repo.log', show_cmd=True, stdout=True)])
+        self.assertCorrectCall(run, extra_args=["--force-nocache"])
 
     @mock.patch('kobo.shortcuts.run')
     def test_extra_config_with_extra_repos(self, run):
-
         configdir = os.path.join(self.topdir, 'config')
         self._make_dummy_config_dir(configdir)
         treefile = os.path.join(configdir, 'fedora-atomic-docker-host.json')
-
-        repo = os.path.join(self.topdir, 'atomic')
 
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
@@ -260,7 +232,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s' % treefile,
             '--extra-config=%s' % extra_config_file,
@@ -301,8 +273,6 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
         self._make_dummy_config_dir(configdir)
         treefile = os.path.join(configdir, 'fedora-atomic-docker-host.json')
 
-        repo = os.path.join(self.topdir, 'atomic')
-
         extra_config_file = os.path.join(self.topdir, 'extra_config.json')
         extra_config = {
             "repo": [
@@ -327,7 +297,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         ostree.main([
             'tree',
-            '--repo=%s' % repo,
+            '--repo=%s' % self.repo,
             '--log-dir=%s' % os.path.join(self.topdir, 'logs', 'Atomic'),
             '--treefile=%s' % treefile,
             '--extra-config=%s' % extra_config_file,
