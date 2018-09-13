@@ -145,6 +145,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                 for filename in writefiles:
                     helpers.touch(os.path.join(logdir, filename),
                                   '\n'.join(writefiles[filename]))
+                    helpers.touch(os.path.join(logdir, filename + ".stamp"))
             return {'task_id': 1234, 'retcode': retcode, 'output': 'Foo bar\n'}
         return fake_runroot
 

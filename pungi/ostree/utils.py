@@ -56,16 +56,13 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
     return ref
 
 
-def get_commitid_from_commitid_file(commitid_file, logger=None):
+def get_commitid_from_commitid_file(commitid_file):
     """Return commit id which is read from the commitid file"""
-    logger = logger or logging.getLogger(__name__)
-    commitid = None
-    if os.path.isfile(commitid_file):
-        with open(commitid_file, 'r') as f:
-            commitid = f.read().replace('\n', '')
-    else:
-        logger.error('Unable to find commitid file')
-    return commitid
+    if not os.path.exists(commitid_file + ".stamp"):
+        # The stamp does not exist, so no new commit.
+        return None
+    with open(commitid_file, 'r') as f:
+        return f.read().replace('\n', '')
 
 
 def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, update_dict=None):

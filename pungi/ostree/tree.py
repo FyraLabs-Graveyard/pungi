@@ -28,8 +28,17 @@ class Tree(OSTree):
     def _make_tree(self):
         """Compose OSTree tree"""
         log_file = make_log_file(self.logdir, 'create-ostree-repo')
-        cmd = ['rpm-ostree', 'compose', 'tree', '--repo=%s' % self.repo,
-               '--write-commitid-to=%s' % self.commitid_file]
+        cmd = [
+            "rpm-ostree",
+            "compose",
+            "tree",
+            "--repo=%s" % self.repo,
+            "--write-commitid-to=%s" % self.commitid_file,
+            # Touch the file if a new commit was created. This can help us tell
+            # if the commitid file is missing because no commit was created or
+            # because something went wrong.
+            "--touch-if-changed=%s.stamp" % self.commitid_file,
+        ]
         if self.version:
             # Add versioning metadata
             cmd.append('--add-metadata-string=version=%s' % self.version)
