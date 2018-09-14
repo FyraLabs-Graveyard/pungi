@@ -52,6 +52,9 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
         multilib_arches = set(compatible_arches) - set(
             pungi.arch.get_compatible_arches(arch))
+        exclusivearchlist = pungi.arch.get_valid_arches(
+            arch, multilib=False, add_noarch=False
+        )
 
         # Generate architecture specific modulemd metadata, so we can
         # store per-architecture artifacts there later.
@@ -78,7 +81,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             log.write('Examining %s for inclusion\n' % rpm_obj)
             # Skip the RPM if it is excluded on this arch or exclusive
             # for different arch.
-            if pungi.arch.is_excluded(rpm_obj, compatible_arches):
+            if pungi.arch.is_excluded(rpm_obj, exclusivearchlist):
                 log.write('Skipping %s due to incompatible arch\n' % rpm_obj)
                 continue
 
