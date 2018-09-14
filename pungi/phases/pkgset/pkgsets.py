@@ -275,7 +275,8 @@ class FilelistPackageSet(PackageSetBase):
 class KojiPackageSet(PackageSetBase):
     def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
                  packages=None, allow_invalid_sigkeys=False,
-                 populate_only_packages=False, cache_region=None):
+                 populate_only_packages=False, cache_region=None,
+                 extra_builds=None):
         """
         Creates new KojiPackageSet.
 
@@ -302,6 +303,8 @@ class KojiPackageSet(PackageSetBase):
             will be used to cache the list of RPMs per Koji tag, so next calls
             of the KojiPackageSet.populate(...) method won't try fetching it
             again.
+        :param list extra_builds: Extra builds NVRs to get from Koji and include
+            in the package set.
         """
         super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
                                              arches=arches, logger=logger,
@@ -311,6 +314,7 @@ class KojiPackageSet(PackageSetBase):
         self.packages = set(packages or [])
         self.populate_only_packages = populate_only_packages
         self.cache_region = cache_region
+        self.extra_builds = extra_builds or []
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -330,7 +334,27 @@ class KojiPackageSet(PackageSetBase):
     def koji_proxy(self):
         return self.koji_wrapper.koji_proxy
 
+    def get_extra_rpms(self):
+        if not self.extra_builds:
+            return [], []
+
+        rpms = []
+        builds = []
+
+        builds = self.koji_wrapper.retrying_multicall_map(
+            self.koji_proxy, self.koji_proxy.getBuild, list_of_args=self.extra_builds)
+        rpms_in_builds = self.koji_wrapper.retrying_multicall_map(
+            self.koji_proxy, self.koji_proxy.listBuildRPMs, list_of_args=self.extra_builds)
+
+        rpms = []
+        for rpms_in_build in rpms_in_builds:
+            rpms += rpms_in_build
+        return rpms, builds
+
     def get_latest_rpms(self, tag, event, inherit=True):
+        if not tag:
+            return [], []
+
         if self.cache_region:
             cache_key = "KojiPackageSet.get_latest_rpms_%s_%s_%s" % (
                 tag, str(event), str(inherit))
@@ -400,6 +424,9 @@ class KojiPackageSet(PackageSetBase):
         msg = "Getting latest RPMs (tag: %s, event: %s, inherit: %s)" % (tag, event, inherit)
         self.log_info("[BEGIN] %s" % msg)
         rpms, builds = self.get_latest_rpms(tag, event, inherit=inherit)
+        extra_rpms, extra_builds = self.get_extra_rpms()
+        rpms += extra_rpms
+        builds += extra_builds
 
         builds_by_id = {}
         for build_info in builds:
@@ -460,8 +487,12 @@ class KojiPackageSet(PackageSetBase):
             with open(logfile, 'w') as f:
                 for rpm in rpms:
                     build = builds_by_id[rpm['build_id']]
-                    f.write('{name}-{ep}:{version}-{release}.{arch}: {tag} [{tag_id}]\n'.format(
-                        tag=build['tag_name'], tag_id=build['tag_id'], ep=rpm['epoch'] or 0, **rpm))
+                    if 'tag_name' in build and 'tag_id' in build:
+                        f.write('{name}-{ep}:{version}-{release}.{arch}: {tag} [{tag_id}]\n'.format(
+                            tag=build['tag_name'], tag_id=build['tag_id'], ep=rpm['epoch'] or 0, **rpm))
+                    else:
+                        f.write('{name}-{ep}:{version}-{release}.{arch}: [pkgset_koji_builds]\n'.format(
+                            ep=rpm['epoch'] or 0, **rpm))
 
         self.log_info("[DONE ] %s" % msg)
         return result

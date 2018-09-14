@@ -528,7 +528,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # List of compose_tags per variant
     variant_tags = {}
 
-    # In case we use "nodeps" gather_method, we might now the final list of
+    # In case we use "nodeps" gather_method, we might know the final list of
     # packages which will end up in the compose even now, so instead of reading
     # all the packages from Koji tag, we can just cherry-pick the ones which
     # are really needed to do the compose and safe lot of time and resources
@@ -652,7 +652,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 arches=all_arches, packages=packages_to_gather,
                 allow_invalid_sigkeys=allow_invalid_sigkeys,
                 populate_only_packages=populate_only_packages_to_gather,
-                cache_region=compose.cache_region)
+                cache_region=compose.cache_region,
+                extra_builds=force_list(compose.conf.get("pkgset_koji_builds", [])))
             if old_file_cache_path:
                 pkgset.load_old_file_cache(old_file_cache_path)
             # Create a filename for log with package-to-tag mapping. The tag

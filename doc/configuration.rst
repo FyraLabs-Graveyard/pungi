@@ -470,6 +470,9 @@ Options
     (*str|[str]*) -- tag(s) to read package set from. This option can be
     omitted for modular composes.
 
+**pkgset_koji_builds**
+    (*str|[str]*) -- extra build(s) to include in a package set defined as NVRs.
+
 **pkgset_koji_module_tag**
    (*str|[str]*) -- tags to read module from. This option works similarly to
    listing tags in variants XML. If tags are specified and variants XML

@@ -24,6 +24,7 @@ import koji
 from kobo.shortcuts import run
 import six
 from six.moves import configparser, shlex_quote
+import six.moves.xmlrpc_client as xmlrpclib
 
 from .. import util
 from ..arch_utils import getBaseArch
@@ -509,6 +510,88 @@ class KojiWrapper(object):
     def get_build_nvrs(self, task_id):
         builds = self.koji_proxy.listBuilds(taskID=task_id)
         return [build.get("nvr") for build in builds if build.get("nvr")]
+
+    def multicall_map(self, koji_session, koji_session_fnc, list_of_args=None, list_of_kwargs=None):
+        """
+        Calls the `koji_session_fnc` using Koji multicall feature N times based on the list of
+        arguments passed in `list_of_args` and `list_of_kwargs`.
+        Returns list of responses sorted the same way as input args/kwargs. In case of error,
+        the error message is logged and None is returned.
+
+        For example to get the package ids of "httpd" and "apr" packages:
+            ids = multicall_map(session, session.getPackageID, ["httpd", "apr"])
+            # ids is now [280, 632]
+
+        :param KojiSessions koji_session: KojiSession to use for multicall.
+        :param object koji_session_fnc: Python object representing the KojiSession method to call.
+        :param list list_of_args: List of args which are passed to each call of koji_session_fnc.
+        :param list list_of_kwargs: List of kwargs which are passed to each call of koji_session_fnc.
+        """
+        if list_of_args is None and list_of_kwargs is None:
+            raise ValueError("One of list_of_args or list_of_kwargs must be set.")
+
+        if (type(list_of_args) not in [type(None), list] or
+                type(list_of_kwargs) not in [type(None), list]):
+            raise ValueError("list_of_args and list_of_kwargs must be list or None.")
+
+        if list_of_kwargs is None:
+            list_of_kwargs = [{}] * len(list_of_args)
+        if list_of_args is None:
+            list_of_args = [[]] * len(list_of_kwargs)
+
+        if len(list_of_args) != len(list_of_kwargs):
+            raise ValueError("Length of list_of_args and list_of_kwargs must be the same.")
+
+        koji_session.multicall = True
+        for args, kwargs in zip(list_of_args, list_of_kwargs):
+            if type(args) != list:
+                args = [args]
+            if type(kwargs) != dict:
+                raise ValueError("Every item in list_of_kwargs must be a dict")
+            koji_session_fnc(*args, **kwargs)
+
+        responses = koji_session.multiCall(strict=True)
+
+        if not responses:
+            return None
+        if type(responses) != list:
+            raise ValueError(
+                "Fault element was returned for multicall of method %r: %r" % (
+                    koji_session_fnc, responses))
+
+        results = []
+
+        # For the response specification, see
+        # https://web.archive.org/web/20060624230303/http://www.xmlrpc.com/discuss/msgReader$1208?mode=topic
+        # Relevant part of this:
+        # Multicall returns an array of responses. There will be one response for each call in
+        # the original array. The result will either be a one-item array containing the result value,
+        # or a struct of the form found inside the standard <fault> element.
+        for response, args, kwargs in zip(responses, list_of_args, list_of_kwargs):
+            if type(response) == list:
+                if not response:
+                    raise ValueError(
+                        "Empty list returned for multicall of method %r with args %r, %r" % (
+                        koji_session_fnc, args, kwargs))
+                results.append(response[0])
+            else:
+                raise ValueError(
+                    "Unexpected data returned for multicall of method %r with args %r, %r: %r" % (
+                        koji_session_fnc, args, kwargs, response))
+
+        return results
+
+
+    @util.retry(wait_on=(xmlrpclib.ProtocolError, koji.GenericError))
+    def retrying_multicall_map(self, *args, **kwargs):
+        """
+        Retrying version of multicall_map. This tries to retry the Koji call
+        in case of koji.GenericError or xmlrpclib.ProtocolError.
+
+        Please refer to koji_multicall_map for further specification of arguments.
+        """
+        return self.multicall_map(*args, **kwargs)
+
 
 
 def get_buildroot_rpms(compose, task_id):

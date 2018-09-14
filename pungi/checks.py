@@ -773,6 +773,7 @@ def make_schema():
             "koji_profile": {"type": "string"},
 
             "pkgset_koji_tag": {"$ref": "#/definitions/strings"},
+            "pkgset_koji_builds": {"$ref": "#/definitions/strings"},
             "pkgset_koji_module_tag": {
                 "$ref": "#/definitions/strings",
                 "default": [],

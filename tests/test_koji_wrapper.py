@@ -320,6 +320,20 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertItemsEqual(result.keys(), ['aarch64', 'armhfp', 'x86_64'])
         self.assertItemsEqual(failed, ['ppc64le', 's390x'])
 
+    def test_multicall_map(self):
+        self.koji.koji_proxy = mock.Mock()
+        self.koji.koji_proxy.multiCall.return_value = [[1], [2]]
+
+        ret = self.koji.multicall_map(
+            self.koji.koji_proxy, self.koji.koji_proxy.getBuild, ["foo", "bar"],
+            [{"x":1}, {"x":2}])
+
+        self.assertItemsEqual(
+            self.koji.koji_proxy.getBuild.mock_calls,
+            [mock.call("foo", x=1), mock.call("bar", x=2)])
+        self.koji.koji_proxy.multiCall.assert_called_with(strict=True)
+        self.assertEqual(ret, [1, 2])
+
 
 class LiveMediaTestCase(KojiWrapperBaseTestCase):
     def test_get_live_media_cmd_minimal(self):

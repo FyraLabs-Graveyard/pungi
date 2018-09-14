@@ -370,6 +370,52 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                 {'x86_64': ['rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
                             'rpms/bash@4.3.42@4.fc24@x86_64']})
 
+    def test_extra_builds_attribute(self):
+        self._touch_files([
+            'rpms/pungi@4.1.3@3.fc25@noarch',
+            'rpms/pungi@4.1.3@3.fc25@src',
+            'rpms/bash@4.3.42@4.fc24@i686',
+            'rpms/bash@4.3.42@4.fc24@x86_64',
+            'rpms/bash@4.3.42@4.fc24@src',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@i686',
+            'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
+        ])
+
+        # Return "pungi" RPMs and builds using "get_latest_rpms" which gets
+        # them from Koji multiCall.
+        extra_rpms = [rpm for rpm in self.tagged_rpms[0]
+                      if rpm["name"] == "pungi"]
+        extra_builds = [build for build in self.tagged_rpms[1]
+                        if build["package_name"] == "pungi"]
+        self.koji_wrapper.retrying_multicall_map.side_effect = [
+            extra_builds, [extra_rpms]]
+
+        # Do not return "pungi" RPMs and builds using the listTaggedRPMs, so
+        # we can be sure "pungi" gets into compose using the `extra_builds`.
+        self.koji_wrapper.koji_proxy.listTaggedRPMS.return_value = [
+            [rpm for rpm in self.tagged_rpms[0] if rpm["name"] != "pungi"],
+            [b for b in self.tagged_rpms[1] if b["package_name"] != "pungi"]]
+
+        pkgset = pkgsets.KojiPackageSet(
+            self.koji_wrapper, [None],
+            extra_builds=["pungi-4.1.3-3.fc25"])
+
+        result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS('f25', event=None, inherit=True, latest=True)])
+
+        self.assertPkgsetEqual(result,
+                               {'src': ['rpms/pungi@4.1.3@3.fc25@src',
+                                        'rpms/bash@4.3.42@4.fc24@src'],
+                                'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch'],
+                                'i686': ['rpms/bash@4.3.42@4.fc24@i686',
+                                         'rpms/bash-debuginfo@4.3.42@4.fc24@i686'],
+                                'x86_64': ['rpms/bash@4.3.42@4.fc24@x86_64',
+                                           'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64']})
+
+
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
     def test_merge_in_another_arch(self):
