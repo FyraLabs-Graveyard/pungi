@@ -331,7 +331,11 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
-            [mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True)],
+            [
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                )
+            ],
         )
         self.assertEqual(
             gc.call_args_list,
@@ -360,7 +364,11 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
-            [mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True)],
+            [
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                )
+            ],
         )
         self.assertEqual(
             gc.call_args_list,
@@ -386,8 +394,12 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(
             run.call_args_list,
             [
-                mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True),
-                mock.call(gc.return_value, logfile=self.logfile2, show_cmd=True),
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                ),
+                mock.call(
+                    gc.return_value, logfile=self.logfile2, show_cmd=True, env=mock.ANY
+                ),
             ],
         )
         self.assertEqual(
@@ -448,8 +460,12 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(
             run.call_args_list,
             [
-                mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True),
-                mock.call(gc.return_value, logfile=self.logfile2, show_cmd=True),
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                ),
+                mock.call(
+                    gc.return_value, logfile=self.logfile2, show_cmd=True, env=mock.ANY
+                ),
             ],
         )
         self.assertEqual(
@@ -541,8 +557,12 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(
             run.call_args_list,
             [
-                mock.call(gc.return_value, logfile=self.logfile1, show_cmd=True),
-                mock.call(gc.return_value, logfile=self.logfile2, show_cmd=True),
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                ),
+                mock.call(
+                    gc.return_value, logfile=self.logfile2, show_cmd=True, env=mock.ANY
+                ),
             ],
         )
         self.assertEqual(
