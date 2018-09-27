@@ -360,6 +360,11 @@ class UnifiedISO(object):
                     variant_img = copy.deepcopy(img)
                     variant_img.parent = im
                     variant_img.subvariant = variant.id
+                    variant_img.additional_variants = [
+                        var.uid
+                        for var in self.ci.get_variants(recursive=False)
+                        if var.uid != variant_uid
+                    ]
                     paths_attr = 'isos' if arch != 'src' else 'source_isos'
                     paths = getattr(self.ci.variants[variant.uid].paths, paths_attr)
                     path = paths.get(tree_arch, os.path.join(variant.uid, tree_arch, "iso"))
