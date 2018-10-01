@@ -30,7 +30,7 @@ from pungi.phases.pkgset.common import (run_create_global_repo,
                                         create_arch_repos,
                                         populate_arch_pkgsets)
 from pungi.phases.gather import get_prepopulate_packages, get_packages_to_gather
-from pungi.linker import LinkerThread, LinkerPool
+from pungi.linker import LinkerPool
 
 
 import pungi.phases.pkgset.source
@@ -52,9 +52,7 @@ def get_pkgset_from_repos(compose):
     profiler = compose.conf["gather_profiler"]
 
     link_type = compose.conf["link_type"]
-    pool = LinkerPool(link_type, logger=compose._logger)
-    for i in range(10):
-        pool.add(LinkerThread(pool))
+    pool = LinkerPool.with_workers(10, link_type, logger=compose._logger)
 
     path_prefix = os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
     makedirs(path_prefix)

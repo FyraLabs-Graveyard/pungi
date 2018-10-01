@@ -31,6 +31,13 @@ class LinkerPool(ThreadPool):
         self.link_type = link_type
         self.linker = Linker()
 
+    @classmethod
+    def with_workers(cls, num_workers, *args, **kwargs):
+        pool = cls(*args, **kwargs)
+        for _ in range(num_workers):
+            pool.add(LinkerThread(pool))
+        return pool
+
 
 class LinkerThread(WorkerThread):
     def process(self, item, num):

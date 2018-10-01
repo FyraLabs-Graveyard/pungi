@@ -18,7 +18,7 @@ import os
 
 import kobo.rpmlib
 
-from pungi.linker import LinkerThread, LinkerPool
+from pungi.linker import LinkerPool
 
 
 # TODO: global Linker instance - to keep hardlinks on dest?
@@ -61,9 +61,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     compose.log_info("[BEGIN] %s" % msg)
     link_type = compose.conf["link_type"]
 
-    pool = LinkerPool(link_type, logger=compose._logger)
-    for i in range(10):
-        pool.add(LinkerThread(pool))
+    pool = LinkerPool.with_workers(10, link_type, logger=compose._logger)
 
     hashed_directories = compose.conf["hashed_directories"]
 
