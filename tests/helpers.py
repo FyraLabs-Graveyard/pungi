@@ -43,6 +43,7 @@ class MockVariant(mock.Mock):
         self.pkgset = mock.Mock(rpms_by_arch={})
         self.modules = None
         self.name = name
+        self.nsvc_to_pkgset = {}
 
     def __str__(self):
         return self.uid

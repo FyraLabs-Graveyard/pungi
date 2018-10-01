@@ -267,6 +267,7 @@ class Variant(object):
         self.mmds = []
         self.arch_mmds = {}
         self.module_uid_to_koji_tag = {}
+        self.nsvc_to_pkgset = {}
 
     def __getitem__(self, name):
         return self.variants[name]

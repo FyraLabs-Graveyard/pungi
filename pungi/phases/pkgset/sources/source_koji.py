@@ -672,6 +672,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             )
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:
+
+                    # If it's a modular tag, store the package set for the module.
+                    for nsvc, koji_tag in variant.module_uid_to_koji_tag.items():
+                        if compose_tag == koji_tag:
+                            variant.nsvc_to_pkgset[nsvc] = pkgset
+
                     # Optimization for case where we have just single compose
                     # tag - we do not have to merge in this case...
                     if len(variant_tags[variant]) == 1:
