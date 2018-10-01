@@ -60,84 +60,76 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # store per-architecture artifacts there later.
         variant.arch_mmds.setdefault(arch, {})
         for mmd in variant.mmds:
-            mmd_id = "%s:%s:%s:%s" % (
+            nsvc = "%s:%s:%s:%s" % (
                 mmd.peek_name(),
                 mmd.peek_stream(),
                 mmd.peek_version(),
                 mmd.peek_context(),
             )
-            if mmd_id not in variant.arch_mmds[arch]:
+            if nsvc not in variant.arch_mmds[arch]:
                 arch_mmd = mmd.copy()
-                variant.arch_mmds[arch][mmd_id] = arch_mmd
+                variant.arch_mmds[arch][nsvc] = arch_mmd
+
+            devel_nsvc = "%s-devel:%s:%s:%s" % (
+                mmd.peek_name(),
+                mmd.peek_stream(),
+                mmd.peek_version(),
+                mmd.peek_context(),
+            )
+            if devel_nsvc not in variant.arch_mmds[arch]:
+                arch_mmd = mmd.copy()
+                arch_mmd.set_name(arch_mmd.peek_name() + "-devel")
+                # Depend on the actual module
+                for dep in arch_mmd.get_dependencies():
+                    dep.add_requires_single(mmd.peek_name(), mmd.peek_stream())
+                # Delete API and profiles
+                arch_mmd.set_rpm_api(Modulemd.SimpleSet())
+                arch_mmd.clear_profiles()
+                # Store the new modulemd
+                variant.arch_mmds[arch][devel_nsvc] = arch_mmd
+                variant.module_uid_to_koji_tag[devel_nsvc] = variant.module_uid_to_koji_tag.get(nsvc)
 
         # Contains per-module RPMs added to variant.
         added_rpms = {}
 
-        rpms = sum([
-            variant.pkgset.rpms_by_arch.get(a, [])
-            for a in compatible_arches
-        ], [])
-        for rpm_obj in rpms:
-            log.write('Examining %s for inclusion\n' % rpm_obj)
-            # Skip the RPM if it is excluded on this arch or exclusive
-            # for different arch.
-            if pungi.arch.is_excluded(rpm_obj, exclusivearchlist):
-                log.write('Skipping %s due to incompatible arch\n' % rpm_obj)
-                continue
+        for mmd in variant.mmds:
+            nsvc = "%s:%s:%s:%s" % (
+                mmd.peek_name(),
+                mmd.peek_stream(),
+                mmd.peek_version(),
+                mmd.peek_context(),
+            )
+            arch_mmd = variant.arch_mmds[arch][nsvc]
 
-            for mmd in variant.mmds:
-                mmd_id = "%s:%s:%s:%s" % (
-                    mmd.peek_name(),
-                    mmd.peek_stream(),
-                    mmd.peek_version(),
-                    mmd.peek_context(),
-                )
-                arch_mmd = variant.arch_mmds[arch][mmd_id]
-                srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
-
-                filtered = False
-                buildopts = mmd.get_buildopts()
-                if buildopts:
-                    whitelist = buildopts.get_rpm_whitelist()
-                    if whitelist:
-                        # We have whitelist, no filtering against components.
-                        filtered = True
-                        if srpm not in whitelist:
-                            # Package is not on the list, skip it.
-                            continue
-
-                if not filtered:
-                    # Skip this mmd if this RPM does not belong to it.
-                    if (srpm not in mmd.get_rpm_components().keys() or
-                            rpm_obj.nevra not in mmd.get_rpm_artifacts().get()):
-                        continue
-
-                # Filter out the RPM from artifacts if its filtered in MMD.
-                if rpm_obj.name in mmd.get_rpm_filter().get():
-                    # No need to check if the rpm_obj is in rpm artifacts,
-                    # the .remove() method does that anyway.
-                    arch_mmd.get_rpm_artifacts().remove(str(rpm_obj.nevra))
+            rpms = sum([
+                variant.nsvc_to_pkgset[nsvc].rpms_by_arch.get(a, [])
+                for a in compatible_arches
+            ], [])
+            for rpm_obj in rpms:
+                log.write('Examining %s for inclusion\n' % rpm_obj)
+                # Skip the RPM if it is excluded on this arch or exclusive
+                # for different arch.
+                if pungi.arch.is_excluded(rpm_obj, exclusivearchlist):
+                    log.write('Skipping %s due to incompatible arch\n' % rpm_obj)
                     continue
 
-                # Skip the rpm_obj if it's built for multilib arch, but
-                # multilib is not enabled for this srpm in MMD.
-                try:
-                    mmd_component = mmd.get_rpm_components()[srpm]
-                    multilib = mmd_component.get_multilib()
-                    multilib = multilib.get() if multilib else set()
-                    if arch not in multilib and rpm_obj.arch in multilib_arches:
-                        continue
-                except KeyError:
-                    # No such component, disable any multilib
-                    if rpm_obj.arch not in ("noarch", arch):
-                        continue
-
-                # Add RPM to packages.
-                packages.add((rpm_obj, None))
-                added_rpms.setdefault(mmd_id, [])
-                added_rpms[mmd_id].append(str(rpm_obj.nevra))
-                log.write('Adding %s because it is in %s\n'
-                          % (rpm_obj, mmd_id))
+                if should_include(rpm_obj, arch, arch_mmd, multilib_arches):
+                    # Add RPM to packages.
+                    packages.add((rpm_obj, None))
+                    added_rpms.setdefault(nsvc, [])
+                    added_rpms[nsvc].append(str(rpm_obj.nevra))
+                    log.write('Adding %s because it is in %s\n'
+                              % (rpm_obj, nsvc))
+                else:
+                    nsvc_devel = "%s-devel:%s:%s:%s" % (
+                        mmd.peek_name(),
+                        mmd.peek_stream(),
+                        mmd.peek_version(),
+                        mmd.peek_context(),
+                    )
+                    added_rpms.setdefault(nsvc_devel, [])
+                    added_rpms[nsvc_devel].append(str(rpm_obj.nevra))
+                    log.write("Adding %s to %s module\n" % (rpm_obj, nsvc_devel))
 
         # GatherSource returns all the packages in variant and does not
         # care which package is in which module, but for modular metadata
@@ -147,8 +139,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # particular module and use them to filter out the packages which
         # have not been added to variant from the `arch_mmd`. This package
         # list is later used in createrepo phase to generated modules.yaml.
-        for mmd_id, rpm_nevras in added_rpms.items():
-            arch_mmd = variant.arch_mmds[arch][mmd_id]
+        for nsvc, rpm_nevras in added_rpms.items():
+            arch_mmd = variant.arch_mmds[arch][nsvc]
             artifacts = arch_mmd.get_rpm_artifacts()
 
             # Modules without artifacts are also valid.
@@ -162,3 +154,46 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
             arch_mmd.set_rpm_artifacts(added_artifacts)
 
         return packages, groups
+
+
+def should_include(rpm_obj, arch, arch_mmd, multilib_arches):
+    srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
+
+    filtered = False
+    buildopts = arch_mmd.get_buildopts()
+    if buildopts:
+        whitelist = buildopts.get_rpm_whitelist()
+        if whitelist:
+            # We have whitelist, no filtering against components.
+            filtered = True
+            if srpm not in whitelist:
+                # Package is not on the list, skip it.
+                return False
+
+    if not filtered:
+        # Skip this mmd if this RPM does not belong to it.
+        if (srpm not in arch_mmd.get_rpm_components().keys() or
+                rpm_obj.nevra not in arch_mmd.get_rpm_artifacts().get()):
+            return False
+
+    # Filter out the RPM from artifacts if its filtered in MMD.
+    if rpm_obj.name in arch_mmd.get_rpm_filter().get():
+        # No need to check if the rpm_obj is in rpm artifacts,
+        # the .remove() method does that anyway.
+        arch_mmd.get_rpm_artifacts().remove(str(rpm_obj.nevra))
+        return False
+
+    # Skip the rpm_obj if it's built for multilib arch, but multilib is not
+    # enabled for this srpm in MMD.
+    try:
+        mmd_component = arch_mmd.get_rpm_components()[srpm]
+        multilib = mmd_component.get_multilib()
+        multilib = multilib.get() if multilib else set()
+        if arch not in multilib and rpm_obj.arch in multilib_arches:
+            return False
+    except KeyError:
+        # No such component, disable any multilib
+        if rpm_obj.arch not in ("noarch", arch):
+            return False
+
+    return True

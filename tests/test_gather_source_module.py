@@ -30,13 +30,13 @@ class TestGatherSourceModule(helpers.PungiTestCase):
                              sourcerpm='pkg-1.0.0-1', nevra='pkg-0:1.0.0-1.x86_64',
                              arch="x86_64")
         mock_rpm.name = 'pkg'
-        self.compose.variants['Server'].pkgset.rpms_by_arch['x86_64'] = [mock_rpm]
+        self.compose.variants['Server'].nsvc_to_pkgset["testmodule:master:1:2017"].rpms_by_arch['x86_64'] = [mock_rpm]
         mock_rpm = mock.Mock(version='1.0.0', release='1',
                              epoch=0, excludearch=None, exclusivearch=None,
                              sourcerpm='pkg-1.0.0-1', nevra='pkg-0:1.0.0-1.i686',
                              arch="i686")
         mock_rpm.name = 'pkg'
-        self.compose.variants['Server'].pkgset.rpms_by_arch['i686'] = [mock_rpm]
+        self.compose.variants['Server'].nsvc_to_pkgset["testmodule:master:1:2017"].rpms_by_arch['i686'] = [mock_rpm]
 
     def test_gather_module(self):
         source = GatherSourceModule(self.compose)

@@ -12,6 +12,7 @@ import errno
 import imp
 import six
 from kobo.rpmlib import parse_nvr
+from collections import defaultdict
 
 from pungi.util import get_arch_variant_data
 from pungi import paths, checks, Modulemd
@@ -43,7 +44,7 @@ class MockVariant(mock.Mock):
         self.pkgset = mock.Mock(rpms_by_arch={})
         self.modules = None
         self.name = name
-        self.nsvc_to_pkgset = {}
+        self.nsvc_to_pkgset = defaultdict(lambda: mock.Mock(rpms_by_arch={}))
 
     def __str__(self):
         return self.uid
