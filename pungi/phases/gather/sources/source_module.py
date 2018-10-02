@@ -70,24 +70,25 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 arch_mmd = mmd.copy()
                 variant.arch_mmds[arch][nsvc] = arch_mmd
 
-            devel_nsvc = "%s-devel:%s:%s:%s" % (
-                mmd.peek_name(),
-                mmd.peek_stream(),
-                mmd.peek_version(),
-                mmd.peek_context(),
-            )
-            if devel_nsvc not in variant.arch_mmds[arch]:
-                arch_mmd = mmd.copy()
-                arch_mmd.set_name(arch_mmd.peek_name() + "-devel")
-                # Depend on the actual module
-                for dep in arch_mmd.get_dependencies():
-                    dep.add_requires_single(mmd.peek_name(), mmd.peek_stream())
-                # Delete API and profiles
-                arch_mmd.set_rpm_api(Modulemd.SimpleSet())
-                arch_mmd.clear_profiles()
-                # Store the new modulemd
-                variant.arch_mmds[arch][devel_nsvc] = arch_mmd
-                variant.module_uid_to_koji_tag[devel_nsvc] = variant.module_uid_to_koji_tag.get(nsvc)
+            if self.compose.conf["include_devel_modules"]:
+                devel_nsvc = "%s-devel:%s:%s:%s" % (
+                    mmd.peek_name(),
+                    mmd.peek_stream(),
+                    mmd.peek_version(),
+                    mmd.peek_context(),
+                )
+                if devel_nsvc not in variant.arch_mmds[arch]:
+                    arch_mmd = mmd.copy()
+                    arch_mmd.set_name(arch_mmd.peek_name() + "-devel")
+                    # Depend on the actual module
+                    for dep in arch_mmd.get_dependencies():
+                        dep.add_requires_single(mmd.peek_name(), mmd.peek_stream())
+                    # Delete API and profiles
+                    arch_mmd.set_rpm_api(Modulemd.SimpleSet())
+                    arch_mmd.clear_profiles()
+                    # Store the new modulemd
+                    variant.arch_mmds[arch][devel_nsvc] = arch_mmd
+                    variant.module_uid_to_koji_tag[devel_nsvc] = variant.module_uid_to_koji_tag.get(nsvc)
 
         # Contains per-module RPMs added to variant.
         added_rpms = {}
@@ -120,7 +121,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     added_rpms[nsvc].append(str(rpm_obj.nevra))
                     log.write('Adding %s because it is in %s\n'
                               % (rpm_obj, nsvc))
-                else:
+                elif self.compose.conf["include_devel_modules"]:
                     nsvc_devel = "%s-devel:%s:%s:%s" % (
                         mmd.peek_name(),
                         mmd.peek_stream(),

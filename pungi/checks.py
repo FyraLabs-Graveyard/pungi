@@ -608,6 +608,10 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "include_devel_modules": {
+                "type": "boolean",
+                "default": False,
+            },
 
             "pkgset_source": {
                 "type": "string",

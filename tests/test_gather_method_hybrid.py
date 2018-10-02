@@ -318,6 +318,14 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 peek_context=mock.Mock(return_value="ctx"),
             )
         }
+        self.compose.variants["Server"].mmds = [
+            mock.Mock(
+                peek_name=mock.Mock(return_value="mod"),
+                peek_stream=mock.Mock(return_value="master"),
+                peek_version=mock.Mock(return_value="ver"),
+                peek_context=mock.Mock(return_value="ctx"),
+            )
+        ]
         po.return_value = (mock.Mock(), mock.Mock())
 
         res = self.phase.run_solver(
@@ -346,6 +354,55 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     [],
                     [],
                     ["mod:master"],
+                    platform="pl",
+                )
+            ],
+        )
+
+    def test_with_modules_with_devel(self, run, gc, po):
+        self.compose.has_comps = False
+        self.compose.variants["Server"].arch_mmds["x86_64"] = {
+            "mod:master": mock.Mock(
+                peek_name=mock.Mock(return_value="mod"),
+                peek_stream=mock.Mock(return_value="master"),
+                peek_version=mock.Mock(return_value="ver"),
+                peek_context=mock.Mock(return_value="ctx"),
+            ),
+            "mod-devel:master": mock.Mock(
+                peek_name=mock.Mock(return_value="mod-devel"),
+                peek_stream=mock.Mock(return_value="master"),
+                peek_version=mock.Mock(return_value="ver"),
+                peek_context=mock.Mock(return_value="ctx"),
+            ),
+        }
+        po.return_value = (mock.Mock(), mock.Mock())
+
+        res = self.phase.run_solver(
+            self.compose.variants["Server"],
+            "x86_64",
+            [],
+            platform="pl",
+        )
+
+        self.assertEqual(res, po.return_value)
+        self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                )
+            ],
+        )
+        self.assertEqual(
+            gc.call_args_list,
+            [
+                mock.call(
+                    "x86_64",
+                    [self._repo("repo"), self._repo("module_repo_Server")],
+                    [],
+                    [],
+                    ["mod:master", "mod-devel:master"],
                     platform="pl",
                 )
             ],
