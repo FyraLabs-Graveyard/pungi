@@ -784,10 +784,14 @@ class TestCreateVariantRepo(PungiTestCase):
         variant = compose.variants['Server']
         variant.arch_mmds["x86_64"] = {
             "test:f27:2018:cafe": variant.add_fake_module(
-                "test:f27:1:2017", rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"]
+                "test:f27:1:2017",
+                rpm_nvrs=["bash-0:4.3.30-2.fc21.x86_64"],
+                with_artifacts=True,
             ),
             "test:f28:2018:beef": variant.add_fake_module(
-                "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"]
+                "test:f28:1:2017",
+                rpm_nvrs=["pkg-0:2.0.0-1.x86_64"],
+                with_artifacts=True,
             ),
         }
         variant.module_uid_to_koji_tag = {

@@ -254,14 +254,6 @@ def _add_module_to_variant(variant, mmd, rpms, add_to_variant_modules=False):
             "but according to modulemd, there should be some."
             % nsvc)
 
-    # Add RPMs from build systemto modulemd, so we can track
-    # what RPM is in which module later in gather phase.
-    rpm_artifacts = mmd.get_rpm_artifacts()
-    for rpm_nevra in rpms:
-        if rpm_nevra.endswith(".rpm"):
-            rpm_nevra = rpm_nevra[:-len(".rpm")]
-        rpm_artifacts.add(str(rpm_nevra))
-    mmd.set_rpm_artifacts(rpm_artifacts)
     variant.mmds.append(mmd)
 
     if add_to_variant_modules:

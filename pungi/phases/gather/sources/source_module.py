@@ -141,16 +141,10 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # list is later used in createrepo phase to generated modules.yaml.
         for nsvc, rpm_nevras in added_rpms.items():
             arch_mmd = variant.arch_mmds[arch][nsvc]
-            artifacts = arch_mmd.get_rpm_artifacts()
-
-            # Modules without artifacts are also valid.
-            if not artifacts or artifacts.size() == 0:
-                continue
 
             added_artifacts = Modulemd.SimpleSet()
             for rpm_nevra in rpm_nevras:
-                if artifacts.contains(rpm_nevra):
-                    added_artifacts.add(rpm_nevra)
+                added_artifacts.add(rpm_nevra)
             arch_mmd.set_rpm_artifacts(added_artifacts)
 
         return packages, groups
@@ -159,28 +153,17 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 def should_include(rpm_obj, arch, arch_mmd, multilib_arches):
     srpm = kobo.rpmlib.parse_nvr(rpm_obj.sourcerpm)["name"]
 
-    filtered = False
     buildopts = arch_mmd.get_buildopts()
     if buildopts:
         whitelist = buildopts.get_rpm_whitelist()
         if whitelist:
             # We have whitelist, no filtering against components.
-            filtered = True
             if srpm not in whitelist:
                 # Package is not on the list, skip it.
                 return False
 
-    if not filtered:
-        # Skip this mmd if this RPM does not belong to it.
-        if (srpm not in arch_mmd.get_rpm_components().keys() or
-                rpm_obj.nevra not in arch_mmd.get_rpm_artifacts().get()):
-            return False
-
     # Filter out the RPM from artifacts if its filtered in MMD.
     if rpm_obj.name in arch_mmd.get_rpm_filter().get():
-        # No need to check if the rpm_obj is in rpm artifacts,
-        # the .remove() method does that anyway.
-        arch_mmd.get_rpm_artifacts().remove(str(rpm_obj.nevra))
         return False
 
     # Skip the rpm_obj if it's built for multilib arch, but multilib is not

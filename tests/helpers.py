@@ -59,7 +59,7 @@ class MockVariant(mock.Mock):
     def get_modular_koji_tags(self, arch=None, types=None):
         return []
 
-    def add_fake_module(self, nsvc, rpm_nvrs=None):
+    def add_fake_module(self, nsvc, rpm_nvrs=None, with_artifacts=False):
         if not Modulemd:
             # No support for modules
             return
@@ -85,7 +85,8 @@ class MockVariant(mock.Mock):
                 component.set_name(rpm_name)
                 component.set_rationale("Needed for test")
                 mmd.add_rpm_component(component)
-            mmd.set_rpm_artifacts(artifacts)
+            if with_artifacts:
+                mmd.set_rpm_artifacts(artifacts)
 
         if self.modules is None:
             self.modules = []
