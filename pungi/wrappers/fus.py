@@ -37,9 +37,9 @@ def get_cmd(
     cmd = ["fus", "--verbose", "--arch", arch]
 
     for idx, repo in enumerate(repos):
-        cmd.append("--repo=repo-%s,repo,%s" % (idx, repo))
+        cmd.append("--repo=repo-%s,repo,%s" % (idx, _prep_path(repo)))
     for idx, repo in enumerate(lookasides):
-        cmd.append("--repo=lookaside-%s,lookaside,%s" % (idx, repo))
+        cmd.append("--repo=lookaside-%s,lookaside,%s" % (idx, _prep_path(repo)))
 
     if platform:
         cmd.append("--platform=%s" % platform)
@@ -50,6 +50,17 @@ def get_cmd(
     cmd.extend(packages)
 
     return cmd
+
+
+def _prep_path(path):
+    """Strip file:// from the path if present or raise exception for other
+    protocols.
+    """
+    if "://" in path:
+        proto, path = path.split("://", 2)
+        if proto != "file":
+            raise ValueError("Only repositories on local filesystem are supported.")
+    return path
 
 
 def parse_output(output):

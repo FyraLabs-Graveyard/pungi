@@ -47,6 +47,27 @@ class TestGetCmd(unittest.TestCase):
             ],
         )
 
+    def test_strip_file_protocol(self):
+        cmd = fus.get_cmd("x86_64", ["file:///tmp"], [], [], [], [])
+        self.assertEqual(
+            cmd, ["fus", "--verbose", "--arch", "x86_64", "--repo=repo-0,repo,/tmp"]
+        )
+
+    def test_fail_on_http_repo(self):
+        with self.assertRaises(ValueError):
+            fus.get_cmd("x86_64", ["http:///tmp"], [], [], [], [])
+
+    def test_strip_file_protocol_lookaside(self):
+        cmd = fus.get_cmd("x86_64", [], ["file:///r"], [], [], [])
+        self.assertEqual(
+            cmd,
+            ["fus", "--verbose", "--arch", "x86_64", "--repo=lookaside-0,lookaside,/r"]
+        )
+
+    def test_fail_on_http_repo_lookaside(self):
+        with self.assertRaises(ValueError):
+            fus.get_cmd("x86_64", [], ["http:///tmp"], [], [], [])
+
 
 class TestParseOutput(unittest.TestCase):
     def setUp(self):
