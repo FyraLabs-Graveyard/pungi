@@ -399,7 +399,7 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
         md.locate_and_load_xml(repo)
         for key in md.keys():
             pkg = md.get(key)
-            url = os.path.join(pkg.location_base, pkg.location_href)
+            url = os.path.join(pkg.location_base or repo, pkg.location_href)
             # Strip file:// prefix
             lookaside_packages.add(url[7:])
 
