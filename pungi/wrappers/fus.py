@@ -36,10 +36,12 @@ def get_cmd(
 ):
     cmd = ["fus", "--verbose", "--arch", arch]
 
-    for idx, repo in enumerate(repos):
-        cmd.append("--repo=repo-%s,repo,%s" % (idx, _prep_path(repo)))
+    # Lookaside repos should be first. If the same package is present in
+    # multiple repos, libsolv gives priority to the first repo.
     for idx, repo in enumerate(lookasides):
         cmd.append("--repo=lookaside-%s,lookaside,%s" % (idx, _prep_path(repo)))
+    for idx, repo in enumerate(repos):
+        cmd.append("--repo=repo-%s,repo,%s" % (idx, _prep_path(repo)))
 
     if platform:
         cmd.append("--platform=%s" % platform)
