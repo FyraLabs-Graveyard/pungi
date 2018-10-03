@@ -32,7 +32,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
     def test_call_method(self, cmr, ep, eg, glr, CW):
         compose = helpers.DummyCompose(self.topdir, {})
         m = hybrid.GatherMethodHybrid(compose)
-        m.run_solver = mock.Mock()
+        m.run_solver = mock.Mock(return_value=(mock.Mock(), mock.Mock()))
         pkg = MockPkg(
             name="pkg",
             version="1",
@@ -63,7 +63,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
                     {"pkg-3:1-2.x86_64": pkg},
                     {},
                     glr.return_value,
-                    m.run_solver.return_value,
+                    m.run_solver.return_value[0],
                 )
             ],
         )
@@ -435,7 +435,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
     def test_with_langpacks(self, run, gc, po):
         self.phase.langpacks = {"pkg": set(["pkg-en"])}
         final = [("pkg-1.0-1", "x86_64", []), ("pkg-en-1.0-1", "noarch", [])]
-        po.side_effect = [[("pkg-1.0-1", "x86_64", [])], final]
+        po.side_effect = [([("pkg-1.0-1", "x86_64", [])], set()), (final, [])]
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],
@@ -444,7 +444,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             platform=None,
         )
 
-        self.assertEqual(res, final)
+        self.assertEqual(res, (final, []))
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -500,7 +500,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ("pkg-devel-1.0-1", "i686", []),
         ]
         po.side_effect = [
-            [("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], final
+            ([("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], []),
+            (final, []),
         ]
 
         res = self.phase.run_solver(
@@ -510,7 +511,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             platform=None,
         )
 
-        self.assertEqual(res, final)
+        self.assertEqual(res, (final, []))
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -597,7 +598,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ("foo-1.0-1", "i686", []),
         ]
         po.side_effect = [
-            [("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], final
+            ([("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], []),
+            (final, []),
         ]
 
         res = self.phase.run_solver(
@@ -607,7 +609,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             platform=None,
         )
 
-        self.assertEqual(res, final)
+        self.assertEqual(res, (final, []))
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -801,3 +803,17 @@ class TestExpandPackages(helpers.PungiTestCase):
         )
 
         self.assertEqual(res, {"rpm": [], "srpm": [], "debuginfo": []})
+
+
+class TestFilterModules(helpers.PungiTestCase):
+    def test_remove_one(self):
+        self.compose = helpers.DummyCompose(self.topdir, {})
+        self.variant = self.compose.variants["Server"]
+        self.variant.arch_mmds["x86_64"] = {
+            "mod:1": MockModule("mod", platform="f29"),
+            "mod:2": MockModule("mod", platform="f30"),
+        }
+
+        hybrid.filter_modules(self.variant, "x86_64", ["mod:1"])
+
+        self.assertItemsEqual(self.variant.arch_mmds["x86_64"].keys(), ["mod:1"])

@@ -70,6 +70,7 @@ def parse_output(output):
     (NVR, arch, flags) and a set of module NSVCs.
     """
     packages = set()
+    modules = set()
     with open(output) as f:
         for line in f:
             if " " in line or "@" not in line:
@@ -82,4 +83,7 @@ def parse_output(output):
                     flags.add("modular")
                     name = name[1:]
                 packages.add((name, arch, frozenset(flags)))
-    return packages
+            else:
+                name, arch = nevra.rsplit(".", 1)
+                modules.add(name.split(":", 1)[1])
+    return packages, modules

@@ -171,7 +171,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             expand_groups(self.compose, arch, variant, groups, set_pkg_arch=False)
         )
 
-        nvrs = self.run_solver(variant, arch, packages, platform)
+        nvrs, out_modules = self.run_solver(variant, arch, packages, platform)
+        filter_modules(variant, arch, out_modules)
         return expand_packages(
             self._get_pkg_map(arch),
             variant.arch_mmds.get(arch, {}),
@@ -214,7 +215,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             env = os.environ.copy()
             env["G_MESSAGES_PREFIXED"] = ""
             run(cmd, logfile=logfile, show_cmd=True, env=env)
-            output = fus.parse_output(logfile)
+            output, out_modules = fus.parse_output(logfile)
             new_multilib = self.add_multilib(variant, arch, output)
             if new_multilib:
                 input_packages.extend(
@@ -230,7 +231,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             # Nothing new was added, we can stop now.
             break
 
-        return output
+        return output, out_modules
 
     def add_multilib(self, variant, arch, nvrs):
         added = set()
@@ -452,3 +453,13 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
                 debuginfo.add(pkg.file_path)
 
     return _mk_pkg_map(_make_result(rpms), _make_result(srpms), _make_result(debuginfo))
+
+
+def filter_modules(variant, arch, nsvcs_to_keep):
+    """Remove any arch-specific module metadata from the module if it's not
+    listed in the list to keep. This will ultimately cause the module to not be
+    included in the final repodata and module metadata.
+    """
+    for nsvc in list(variant.arch_mmds.get(arch, {}).keys()):
+        if nsvc not in nsvcs_to_keep:
+            del variant.arch_mmds[arch][nsvc]

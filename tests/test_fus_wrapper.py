@@ -78,21 +78,30 @@ class TestParseOutput(unittest.TestCase):
 
     def test_skips_debug_line(self):
         touch(self.file, "debug line\n")
-        packages = fus.parse_output(self.file)
+        packages, modules = fus.parse_output(self.file)
         self.assertItemsEqual(packages, [])
+        self.assertItemsEqual(modules, [])
 
     def test_separates_arch(self):
         touch(self.file, "pkg-1.0-1.x86_64@repo-0\npkg-1.0-1.i686@repo-0\n")
-        packages = fus.parse_output(self.file)
+        packages, modules = fus.parse_output(self.file)
         self.assertItemsEqual(
             packages,
             [("pkg-1.0-1", "x86_64", frozenset()), ("pkg-1.0-1", "i686", frozenset())],
         )
+        self.assertItemsEqual(modules, [])
 
     def test_marks_modular(self):
         touch(self.file, "*pkg-1.0-1.x86_64@repo-0\n")
-        packages = fus.parse_output(self.file)
+        packages, modules = fus.parse_output(self.file)
         self.assertItemsEqual(
             packages,
             [("pkg-1.0-1", "x86_64", frozenset(["modular"]))],
         )
+        self.assertItemsEqual(modules, [])
+
+    def test_extracts_modules(self):
+        touch(self.file, "module:mod:master:20181003:cafebeef.x86_64@repo-0\n")
+        packages, modules = fus.parse_output(self.file)
+        self.assertItemsEqual(packages, [])
+        self.assertItemsEqual(modules, ["mod:master:20181003:cafebeef"])
