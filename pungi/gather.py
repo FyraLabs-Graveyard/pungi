@@ -1440,6 +1440,9 @@ class Pungi(PungiBase):
             conf.baseurl = baseurl
         if compress_type:
             conf.compress_type = compress_type
+        if 'SOURCE_DATE_EPOCH' in os.environ:
+            conf.revision = os.environ['SOURCE_DATE_EPOCH']
+            conf.clamp_mtime_to = int(os.environ['SOURCE_DATE_EPOCH'])
         repomatic = createrepo.MetaDataGenerator(conf)
         self.logger.info('Making repodata')
         repomatic.doPkgMetadata()
