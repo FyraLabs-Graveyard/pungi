@@ -63,6 +63,7 @@ setup(
         "productmd",
         "six",
         'dogpile.cache',
+        'dict.sorted',
         ],
     tests_require = [
         "mock",

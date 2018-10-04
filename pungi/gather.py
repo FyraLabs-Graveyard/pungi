@@ -26,6 +26,7 @@ import urlgrabber.progress
 import subprocess
 import createrepo
 import ConfigParser
+from sdict import AlphaSortedDict
 from fnmatch import fnmatch
 
 import arch as arch_module
@@ -88,6 +89,10 @@ def is_package(po):
 
 class MyConfigParser(ConfigParser.ConfigParser):
     """A subclass of ConfigParser which does not lowercase options"""
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dict_type'] = AlphaSortedDict
+        ConfigParser.ConfigParser.__init__(self, *args, **kwargs)
 
     def optionxform(self, optionstr):
         return optionstr
