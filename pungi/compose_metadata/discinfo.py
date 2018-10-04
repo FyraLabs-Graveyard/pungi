@@ -32,6 +32,7 @@ __all__ = (
 )
 
 
+import os
 import time
 
 
@@ -43,7 +44,7 @@ def write_discinfo(file_path, description, arch, disc_numbers=None, timestamp=No
     if not isinstance(disc_numbers, list):
         raise TypeError("Invalid type: disc_numbers type is %s; expected: <list>" % type(disc_numbers))
     if not timestamp:
-        timestamp = "%f" % time.time()
+        timestamp = os.environ.get('SOURCE_DATE_EPOCH', "%f" % time.time())
     with open(file_path, "w") as f:
         f.write("%s\n" % timestamp)
         f.write("%s\n" % description)
