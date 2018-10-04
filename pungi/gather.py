@@ -1762,6 +1762,7 @@ class Pungi(PungiBase):
         ppcbootargs.append('-hfs-bless') # must be last
 
         isohybrid = ['/usr/bin/isohybrid']
+        isohybrid.extend(['--id', '42'])
 
         # Check the size of the tree
         # This size checking method may be bunk, accepting patches...
