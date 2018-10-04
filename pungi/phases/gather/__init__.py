@@ -448,6 +448,9 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
             result.setdefault(arch, {})[variant.uid] = pkg_map
 
+        # Remove the module -> pkgset mapping to save memory
+        variant.nsvc_to_pkgset = None
+
 
 def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_parent=True):
     """Trim all varians of given type.
