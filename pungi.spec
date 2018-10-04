@@ -40,7 +40,7 @@ Requires:       jigdo
 Requires:       cvs
 Requires:       yum-utils
 Requires:       isomd5sum
-Requires:       genisoimage
+Requires:       xorriso
 Requires:       gettext
 Requires:       syslinux
 Requires:       git

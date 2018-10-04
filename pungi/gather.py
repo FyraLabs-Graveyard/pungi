@@ -1740,7 +1740,7 @@ class Pungi(PungiBase):
                            clean=True) # This is risky...
 
         # setup the base command
-        mkisofs = ['/usr/bin/mkisofs']
+        mkisofs = ['/usr/bin/xorriso', '-as', 'mkisofs']
         mkisofs.extend(['-v', '-U', '-J', '--joliet-long', '-R', '-T', '-m', 'repoview', '-m', 'boot.iso']) # common mkisofs flags
 
         x86bootargs = ['-b', 'isolinux/isolinux.bin', '-c', 'isolinux/boot.cat', 
