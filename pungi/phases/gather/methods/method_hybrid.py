@@ -18,6 +18,7 @@ import os
 from kobo.shortcuts import run
 import kobo.rpmlib
 from fnmatch import fnmatch
+import gzip
 
 import pungi.phases.gather.method
 from pungi import Modulemd, multilib_dnf
@@ -283,6 +284,33 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         return sorted(added)
 
 
+def get_lookaside_modules(lookasides):
+    """Get list of NSVC of all modules in all lookaside repos."""
+    modules = set()
+    for repo in lookasides:
+        repo = fus._prep_path(repo)
+        repomd = cr.Repomd(os.path.join(repo, "repodata/repomd.xml"))
+        for rec in repomd.records:
+            if rec.type != "modules":
+                continue
+            with gzip.GzipFile(os.path.join(repo, rec.location_href), "r") as f:
+                # This can't use _from_stream, since gobject-introspection
+                # refuses to pass a file object.
+                mmds = Modulemd.objects_from_string(f.read())
+            for mmd in mmds:
+                if isinstance(mmd, Modulemd.Module):
+                    modules.add(
+                        "%s:%s:%s:%s"
+                        % (
+                            mmd.peek_name(),
+                            mmd.peek_stream(),
+                            mmd.peek_version(),
+                            mmd.peek_context(),
+                        )
+                    )
+    return modules
+
+
 def create_module_repo(compose, variant, arch):
     """Create repository with module metadata. There are no packages otherwise."""
     createrepo_c = compose.conf["createrepo_c"]
@@ -299,6 +327,10 @@ def create_module_repo(compose, variant, arch):
 
     repo_path = compose.paths.work.module_repo(arch, variant)
 
+    lookaside_modules = get_lookaside_modules(
+        pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
+    )
+
     # Add modular metadata to it
     modules = []
 
@@ -312,7 +344,14 @@ def create_module_repo(compose, variant, arch):
             if streams:
                 platforms.update(streams.dup())
 
-        modules.append(repo_mmd)
+        nsvc = "%s:%s:%s:%s" % (
+            repo_mmd.peek_name(),
+            repo_mmd.peek_stream(),
+            repo_mmd.peek_version(),
+            repo_mmd.peek_context(),
+        )
+        if nsvc not in lookaside_modules:
+            modules.append(repo_mmd)
 
     if len(platforms) > 1:
         raise RuntimeError("There are conflicting requests for platform.")
