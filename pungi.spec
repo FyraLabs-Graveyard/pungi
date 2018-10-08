@@ -21,7 +21,6 @@ BuildRequires:  python2-libcomps
 BuildRequires:  python2-six
 BuildRequires:  python2-multilib
 BuildRequires:  python2-dogpile-cache
-BuildRequires:  python2-dict-sorted
 
 Requires:       createrepo >= 0.4.11
 Requires:       yum => 3.4.3-28
@@ -52,7 +51,6 @@ Requires:       python2-multilib
 Requires:       python2-libcomps
 Requires:       python2-six
 Requires:       python2-dogpile-cache
-Requires:       python2-dict-sorted
 
 BuildArch:      noarch
 

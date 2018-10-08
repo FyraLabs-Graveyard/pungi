@@ -14,23 +14,23 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import yum
+import logging
 import os
 import re
 import shutil
-import sys
-import pungi.util
-import lockfile
-import logging
-import urlgrabber.progress
 import subprocess
-import createrepo
-import ConfigParser
-from sdict import AlphaSortedDict
+import sys
 from fnmatch import fnmatch
+
+import createrepo
+import lockfile
+import urlgrabber.progress
+import yum
+from productmd.common import SortedConfigParser
 
 import arch as arch_module
 import multilib_yum as multilib
+import pungi.util
 
 
 class ReentrantYumLock(object):
@@ -85,17 +85,6 @@ def is_package(po):
     if is_source(po):
         return False
     return True
-
-
-class MyConfigParser(ConfigParser.ConfigParser):
-    """A subclass of ConfigParser which does not lowercase options"""
-
-    def __init__(self, *args, **kwargs):
-        kwargs['dict_type'] = AlphaSortedDict
-        ConfigParser.ConfigParser.__init__(self, *args, **kwargs)
-
-    def optionxform(self, optionstr):
-        return optionstr
 
 
 FLAGS = {
@@ -1611,7 +1600,7 @@ class Pungi(PungiBase):
 
         # Create a ConfigParser object out of the contents so that we can
         # write it back out later and not worry about formatting
-        treeinfo = MyConfigParser()
+        treeinfo = SortedConfigParser()
         treeinfo.readfp(treefile)
         treefile.close()
         treeinfo.add_section('checksums')
