@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.28
+Version:        4.1.29
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -108,6 +108,35 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Oct 10 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.29-1
+- hybrid: Only include modules that are not in lookaside (lsedlar)
+- Try to be more conservative about memory usage (lsedlar)
+- hybrid: Remove modules not listed by fus (lsedlar)
+- gather: Make devel modules configurable (lsedlar)
+- pkgset: Stop prefilling RPM artifacts (lsedlar)
+- gather: Create devel module for each normal module (lsedlar)
+- pkgset: Save package set for each module (lsedlar)
+- fus: List lookaside repos first (lsedlar)
+- gather: Work with repos without location_base (lsedlar)
+- Remove extra dependencies (lsedlar)
+- Set repodata mtime to SOURCE_DATE_EPOCH (marmarek)
+- Make sure .treeinfo file is sorted (marmarek)
+- Use constant MBR ID for isohybrid (marmarek)
+- Use xorriso instead of genisoimage (marmarek)
+- Use $SOURCE_DATE_EPOCH (if set) in discinfo file (marmarek)
+- unified_isos: Add extra variants to metadata (lsedlar)
+- extra_iso: Add list of variants to metadata (lsedlar)
+- linker: Simplify creating pool (lsedlar)
+- gather: Hide pid of fus process (lsedlar)
+- fus: Strip protocol from repo path (lsedlar)
+- Add 'pkgset_koji_builds' option to include extra builds in a compose
+  (jkaluza)
+- ostree: Reduce duplication in tests (lsedlar)
+- ostree: Use --touch-if-changed (lsedlar)
+- ostree: Fix handler crash without commit ID (lsedlar)
+- gather: Filter arches similarly to pkgset (lsedlar)
+- Stop shipping and remove RELEASE-NOTES (pbrobinson)
+
 * Thu Sep 06 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.28-1
 - gather: Fix multilib query for hybrid solver (lsedlar)
 - gather: Expand multilib lists for hybrid method (lsedlar)
