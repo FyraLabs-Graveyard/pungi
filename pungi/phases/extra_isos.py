@@ -97,6 +97,10 @@ class ExtraIsosThread(WorkerThread):
             arch=arch,
             supported=compose.supported,
         )
+        if compose.conf['create_jigdo']:
+            jigdo_dir = compose.paths.compose.jigdo_dir(arch, variant)
+            os_tree = compose.paths.compose.os_tree(arch, variant)
+            opts = opts._replace(jigdo_dir=jigdo_dir, os_tree=os_tree)
 
         if bootable:
             opts = opts._replace(buildinstall_method=compose.conf['buildinstall_method'])
@@ -110,7 +114,7 @@ class ExtraIsosThread(WorkerThread):
                               ['bash', script_file], [compose.topdir],
                               log_file=compose.paths.log.log_file(
                                   arch, "extraiso-%s" % os.path.basename(iso_path)),
-                              with_jigdo=False)
+                              with_jigdo=compose.conf['create_jigdo'])
 
         add_iso_to_metadata(
             compose,
