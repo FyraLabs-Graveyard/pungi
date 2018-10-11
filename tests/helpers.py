@@ -1,24 +1,39 @@
 # -*- coding: utf-8 -*-
 
-import mock
+import difflib
+import errno
+import imp
 import os
+import shutil
+import tempfile
+from collections import defaultdict
+
+import mock
+import six
+from kobo.rpmlib import parse_nvr
+
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-import tempfile
-import shutil
-import errno
-import imp
-import six
-from kobo.rpmlib import parse_nvr
-from collections import defaultdict
 
 from pungi.util import get_arch_variant_data
 from pungi import paths, checks, Modulemd
 
 
-class PungiTestCase(unittest.TestCase):
+class BaseTestCase(unittest.TestCase):
+
+    def assertFilesEqual(self, fn1, fn2):
+        with open(fn1, 'rb') as f1:
+            lines1 = f1.read().decode('utf-8').splitlines()
+        with open(fn2, 'rb') as f2:
+            lines2 = f2.read().decode('utf-8').splitlines()
+        diff = '\n'.join(difflib.unified_diff(lines1, lines2,
+                                              fromfile='EXPECTED', tofile='ACTUAL'))
+        self.assertEqual(diff, '', 'Files differ:\n' + diff)
+
+
+class PungiTestCase(BaseTestCase):
     def setUp(self):
         self.topdir = tempfile.mkdtemp()
 

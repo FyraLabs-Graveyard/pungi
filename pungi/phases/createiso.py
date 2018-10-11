@@ -403,21 +403,7 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
 
     # modify treeinfo
     ti_path = os.path.join(tree_dir, ".treeinfo")
-    ti = productmd.treeinfo.TreeInfo()
-    ti.load(ti_path)
-    ti.media.totaldiscs = disc_count or 1
-    ti.media.discnum = disc_num
-
-    # remove boot.iso from all sections
-    paths = set()
-    for platform in ti.images.images:
-        if "boot.iso" in ti.images.images[platform]:
-            paths.add(ti.images.images[platform].pop("boot.iso"))
-
-    # remove boot.iso from checksums
-    for i in paths:
-        if i in ti.checksums.checksums.keys():
-            del ti.checksums.checksums[i]
+    ti = load_and_tweak_treeinfo(ti_path, disc_num, disc_count)
 
     copy_boot_images(tree_dir, iso_dir)
 
@@ -447,8 +433,16 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             run("cp -a %s/repodata %s/" % (shlex_quote(tree_dir), shlex_quote(iso_dir)))
             with open(file_list, "w") as f:
                 f.write("\n".join(file_list_content))
-            cmd = repo.get_createrepo_cmd(tree_dir, update=True, database=True, skip_stat=True, pkglist=file_list, outputdir=iso_dir,
-                                          workers=compose.conf["createrepo_num_workers"], checksum=createrepo_checksum)
+            cmd = repo.get_createrepo_cmd(
+                tree_dir,
+                update=True,
+                database=True,
+                skip_stat=True,
+                pkglist=file_list,
+                outputdir=iso_dir,
+                workers=compose.conf["createrepo_num_workers"],
+                checksum=createrepo_checksum,
+            )
             run(cmd)
             # add repodata/repomd.xml back to checksums
             ti.checksums.add("repodata/repomd.xml", "sha256", root_dir=iso_dir)
@@ -480,6 +474,29 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     gp = "%s-graft-points" % iso_dir
     iso.write_graft_points(gp, data, exclude=["*/lost+found", "*/boot.iso"])
     return gp
+
+
+def load_and_tweak_treeinfo(ti_path, disc_num=1, disc_count=1):
+    """Treeinfo on the media should not contain any reference to boot.iso and
+    it should also have a valid [media] section.
+    """
+    ti = productmd.treeinfo.TreeInfo()
+    ti.load(ti_path)
+    ti.media.totaldiscs = disc_count or 1
+    ti.media.discnum = disc_num
+
+    # remove boot.iso from all sections
+    paths = set()
+    for platform in ti.images.images:
+        if "boot.iso" in ti.images.images[platform]:
+            paths.add(ti.images.images[platform].pop("boot.iso"))
+
+    # remove boot.iso from checksums
+    for i in paths:
+        if i in ti.checksums.checksums.keys():
+            del ti.checksums.checksums[i]
+
+    return ti
 
 
 def copy_boot_images(src, dest):

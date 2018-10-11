@@ -945,5 +945,17 @@ class BreakHardlinksTest(helpers.PungiTestCase):
         self.assertTrue(os.path.exists(expected))
 
 
+class TweakTreeinfo(helpers.PungiTestCase):
+    def test_tweaking(self):
+        input = os.path.join(helpers.FIXTURE_DIR, "original-treeinfo")
+        expected = os.path.join(helpers.FIXTURE_DIR, "expected-treeinfo")
+        output = os.path.join(self.topdir, "output")
+
+        ti = createiso.load_and_tweak_treeinfo(input)
+        ti.dump(output)
+
+        self.assertFilesEqual(output, expected)
+
+
 if __name__ == '__main__':
     unittest.main()

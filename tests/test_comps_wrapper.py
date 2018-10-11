@@ -5,7 +5,6 @@ try:
 except ImportError:
     import unittest
 import tempfile
-import difflib
 
 import os
 import sys
@@ -13,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.wrappers.comps import CompsWrapper, CompsFilter, CompsValidationError
-from tests.helpers import FIXTURE_DIR
+from tests.helpers import BaseTestCase, FIXTURE_DIR
 
 COMPS_FILE = os.path.join(FIXTURE_DIR, 'comps.xml')
 COMPS_FORMATTED_FILE = os.path.join(FIXTURE_DIR, 'comps-formatted.xml')
@@ -23,18 +22,9 @@ COMPS_FILE_WITH_TYPO = os.path.join(FIXTURE_DIR, 'comps-typo.xml')
 COMPS_FILE_WITH_WHITESPACE = os.path.join(FIXTURE_DIR, 'comps-ws.xml')
 
 
-class CompsWrapperTest(unittest.TestCase):
+class CompsWrapperTest(BaseTestCase):
     def setUp(self):
         self.file = tempfile.NamedTemporaryFile(prefix='comps-wrapper-test-')
-
-    def assertFilesEqual(self, fn1, fn2):
-        with open(fn1, 'rb') as f1:
-            lines1 = f1.read().decode('utf-8').splitlines()
-        with open(fn2, 'rb') as f2:
-            lines2 = f2.read().decode('utf-8').splitlines()
-        diff = '\n'.join(difflib.unified_diff(lines1, lines2,
-                                              fromfile='EXPECTED', tofile='ACTUAL'))
-        self.assertEqual(diff, '', 'Files differ:\n' + diff)
 
     def test_get_groups(self):
         comps = CompsWrapper(COMPS_FILE)
