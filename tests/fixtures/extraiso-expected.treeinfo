@@ -1,6 +1,3 @@
-[checksums]
-images/boot.iso = sha256:fc8a4be604b6425746f12fa706116eb940f93358f036b8fbbe518b516cb6870c
-
 [general]
 ; WARNING.0 = This section provides compatibility with pre-productmd treeinfos.
 ; WARNING.1 = Read productmd documentation for details about new format.
@@ -20,11 +17,14 @@ type = productmd.treeinfo
 version = 1.2
 
 [images-x86_64]
-boot.iso = images/boot.iso
 
 [images-xen]
 initrd = images/pxeboot/initrd.img
 kernel = images/pxeboot/vmlinuz
+
+[media]
+discnum = 1
+totaldiscs = 1
 
 [release]
 name = Test

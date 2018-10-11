@@ -22,7 +22,7 @@ import productmd.treeinfo
 from pungi import createiso
 from pungi.phases.base import ConfigGuardedPhase, PhaseBase, PhaseLoggerMixin
 from pungi.phases.createiso import (add_iso_to_metadata, copy_boot_images,
-                                    run_createiso_command)
+                                    run_createiso_command, load_and_tweak_treeinfo)
 from pungi.util import failable, get_format_substs, get_variant_data, get_volid
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
@@ -196,8 +196,7 @@ def get_iso_contents(compose, variant, arch, include_variants, filename, bootabl
 
 
 def tweak_treeinfo(compose, include_variants, source_file, dest_file):
-    ti = productmd.treeinfo.TreeInfo()
-    ti.load(source_file)
+    ti = load_and_tweak_treeinfo(source_file)
     for variant_uid in include_variants:
         variant = compose.all_variants[variant_uid]
         var = productmd.treeinfo.Variant(ti)

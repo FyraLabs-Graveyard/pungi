@@ -630,13 +630,7 @@ class TweakTreeinfoTest(helpers.PungiTestCase):
         expected = os.path.join(helpers.FIXTURE_DIR, "extraiso-expected.treeinfo")
         extra_isos.tweak_treeinfo(compose, ["Client"], input, output)
 
-        with open(expected) as f:
-            expected = f.read()
-        with open(output) as f:
-            actual = f.read()
-
-        self.maxDiff = None
-        self.assertEqual(expected, actual)
+        self.assertFilesEqual(output, expected)
 
 
 if __name__ == '__main__':
