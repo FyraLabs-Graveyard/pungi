@@ -493,6 +493,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         iso_dir = os.path.join(self.topdir, 'work/x86_64/iso/my.iso')
         helpers.touch(os.path.join(bi_dir, 'isolinux/isolinux.bin'))
         helpers.touch(os.path.join(bi_dir, 'images/boot.img'))
+        helpers.touch(os.path.join(bi_dir, 'images/efiboot.img'))
 
         gp = {
             'compose/Client/x86_64/os/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
@@ -506,6 +507,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         bi_gp = {
             'isolinux/isolinux.bin': os.path.join(iso_dir, 'isolinux/isolinux.bin'),
             'images/boot.img': os.path.join(iso_dir, 'images/boot.img'),
+            'images/efiboot.img': os.path.join(iso_dir, 'images/efiboot.img'),
         }
 
         ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]] if len(x) == 1 else bi_gp
@@ -534,6 +536,9 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
             'isolinux/isolinux.bin': os.path.join(iso_dir, 'isolinux/isolinux.bin'),
             'images/boot.img': os.path.join(iso_dir, 'images/boot.img'),
+            'images/efiboot.img': os.path.join(
+                self.topdir, 'compose', self.variant.uid, 'x86_64/os/images/efiboot.img',
+            ),
         }
 
         self.assertItemsEqual(

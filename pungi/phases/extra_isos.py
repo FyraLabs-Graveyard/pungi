@@ -155,6 +155,14 @@ def get_iso_contents(compose, variant, arch, include_variants, filename, bootabl
         copy_boot_images(buildinstall_dir, iso_dir)
         files = iso.get_graft_points([buildinstall_dir, iso_dir])
 
+        # We need to point efiboot.img to compose/ tree, because it was
+        # modified in buildinstall phase and the file in work/ has different
+        # checksum to what is in the .treeinfo.
+        if "images/efiboot.img" in files:
+            files["images/efiboot.img"] = os.path.join(
+                compose.paths.compose.os_tree(arch, variant), "images/efiboot.img"
+            )
+
     variants = [variant.uid] + include_variants
     for variant_uid in variants:
         var = compose.all_variants[variant_uid]
