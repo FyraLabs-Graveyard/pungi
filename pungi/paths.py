@@ -127,6 +127,17 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
+    def fus_conf(self, arch, variant, iteration, create_dir=True):
+        """
+        Examples:
+            work/x86_64/fus/Server-solvables.x86_64.conf
+        """
+        file_name = "%s-solvables-%d.%s.conf" % (variant.uid, iteration, arch)
+        path = os.path.join(self.topdir(arch, create_dir=create_dir), "fus")
+        if create_dir:
+            makedirs(path)
+        return os.path.join(path, file_name)
+
     def pungi_log(self, arch=None, variant=None, create_dir=True, source_name=None):
         """
         Examples:

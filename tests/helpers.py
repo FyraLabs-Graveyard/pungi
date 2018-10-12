@@ -32,6 +32,14 @@ class BaseTestCase(unittest.TestCase):
                                               fromfile='EXPECTED', tofile='ACTUAL'))
         self.assertEqual(diff, '', 'Files differ:\n' + diff)
 
+    def assertFileContent(self, fn, expected):
+        with open(fn, 'rb') as f:
+            lines = f.read().decode('utf-8').splitlines()
+        diff = '\n'.join(difflib.unified_diff(
+            lines, expected.splitlines(), fromfile='EXPECTED', tofile='ACTUAL')
+        )
+        self.assertEqual(diff, '', 'Files differ:\n' + diff)
+
 
 class PungiTestCase(BaseTestCase):
     def setUp(self):

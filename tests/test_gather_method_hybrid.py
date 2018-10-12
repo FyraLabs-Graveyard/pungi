@@ -292,6 +292,7 @@ class ModifiedMagicMock(mock.MagicMock):
         )
 
 
+@mock.patch("pungi.wrappers.fus.write_config")
 @mock.patch("pungi.wrappers.fus.parse_output")
 @mock.patch("pungi.wrappers.fus.get_cmd", new_callable=ModifiedMagicMock)
 @mock.patch("pungi.phases.gather.methods.method_hybrid.run")
@@ -307,8 +308,14 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.logfile2 = os.path.join(
             self.compose.topdir, "logs/x86_64/hybrid-depsolver-Server-iter-2.x86_64.log"
         )
+        self.config1 = os.path.join(
+            self.compose.topdir, "work/x86_64/fus/Server-solvables-1.x86_64.conf"
+        )
+        self.config2 = os.path.join(
+            self.compose.topdir, "work/x86_64/fus/Server-solvables-2.x86_64.conf"
+        )
 
-    def test_with_modules(self, run, gc, po):
+    def test_with_modules(self, run, gc, po, wc):
         self.compose.has_comps = False
         self.compose.variants["Server"].arch_mmds["x86_64"] = {
             "mod:master": mock.Mock(
@@ -347,21 +354,23 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list, [mock.call(self.config1, ["mod:master"], [])],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo"), self._repo("module_repo_Server")],
                     [],
-                    [],
-                    ["mod:master"],
                     platform="pl",
                     filter_packages=["foo"],
                 )
             ],
         )
 
-    def test_with_modules_with_devel(self, run, gc, po):
+    def test_with_modules_with_devel(self, run, gc, po, wc):
         self.compose.has_comps = False
         self.compose.variants["Server"].arch_mmds["x86_64"] = {
             "mod:master": mock.Mock(
@@ -398,21 +407,24 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list,
+            [mock.call(self.config1, ["mod-devel:master", "mod:master"], [])],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo"), self._repo("module_repo_Server")],
                     [],
-                    [],
-                    ["mod:master", "mod-devel:master"],
                     platform="pl",
                     filter_packages=["foo"],
                 )
             ],
         )
 
-    def test_with_comps(self, run, gc, po):
+    def test_with_comps(self, run, gc, po, wc):
         po.return_value = (mock.Mock(), mock.Mock())
         res = self.phase.run_solver(
             self.compose.variants["Server"],
@@ -433,13 +445,15 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list, [mock.call(self.config1, [], ["pkg"])],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg"],
                     [],
                     platform=None,
                     filter_packages=[],
@@ -447,7 +461,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
 
-    def test_with_langpacks(self, run, gc, po):
+    def test_with_langpacks(self, run, gc, po, wc):
         self.phase.langpacks = {"pkg": set(["pkg-en"])}
         final = [("pkg-1.0-1", "x86_64", []), ("pkg-en-1.0-1", "noarch", [])]
         po.side_effect = [([("pkg-1.0-1", "x86_64", [])], set()), (final, [])]
@@ -476,22 +490,27 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list,
+            [
+                mock.call(self.config1, [], ["pkg"]),
+                mock.call(self.config2, [], ["pkg", "pkg-en"]),
+            ],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg"],
                     [],
                     platform=None,
                     filter_packages=["foo"],
                 ),
                 mock.call(
+                    self.config2,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg", "pkg-en"],
                     [],
                     platform=None,
                     filter_packages=["foo"],
@@ -500,7 +519,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         )
 
     @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
-    def test_multilib_devel(self, cr, run, gc, po):
+    def test_multilib_devel(self, cr, run, gc, po, wc):
         self.phase.arch = "x86_64"
         self.phase.multilib_methods = ["devel"]
         self.phase.multilib = mock.Mock()
@@ -551,22 +570,27 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list,
+            [
+                mock.call(self.config1, [], ["foo", "pkg-devel"]),
+                mock.call(self.config2, [], ["foo", "pkg-devel", "pkg-devel.i686"]),
+            ],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg-devel", "foo"],
                     [],
                     platform=None,
                     filter_packages=[],
                 ),
                 mock.call(
+                    self.config2,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg-devel", "foo", "pkg-devel.i686"],
                     [],
                     platform=None,
                     filter_packages=[],
@@ -575,7 +599,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         )
 
     @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
-    def test_multilib_runtime(self, cr, run, gc, po):
+    def test_multilib_runtime(self, cr, run, gc, po, wc):
         packages = {
             "abc": NamedMock(
                 name="foo",
@@ -652,22 +676,27 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
+            wc.call_args_list,
+            [
+                mock.call(self.config1, [], ["foo", "pkg-devel"]),
+                mock.call(self.config2, [], ["foo", "foo.i686", "pkg-devel"]),
+            ],
+        )
+        self.assertEqual(
             gc.call_args_list,
             [
                 mock.call(
+                    self.config1,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg-devel", "foo"],
                     [],
                     platform=None,
                     filter_packages=[],
                 ),
                 mock.call(
+                    self.config2,
                     "x86_64",
                     [self._repo("repo")],
-                    [],
-                    ["pkg-devel", "foo", "foo.i686"],
                     [],
                     platform=None,
                     filter_packages=[],

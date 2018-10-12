@@ -206,12 +206,13 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
         while True:
             step += 1
+            conf_file = self.compose.paths.work.fus_conf(arch, variant, step)
+            fus.write_config(conf_file, sorted(modules), sorted(input_packages))
             cmd = fus.get_cmd(
+                conf_file,
                 tree_arch_to_yum_arch(arch),
                 repos,
                 pungi.phases.gather.get_lookaside_repos(self.compose, arch, variant),
-                input_packages,
-                modules,
                 platform=platform,
                 filter_packages=filter_packages,
             )

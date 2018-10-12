@@ -5,6 +5,7 @@ try:
 except ImportError:
     import unittest
 import tempfile
+from textwrap import dedent
 
 import os
 import sys
@@ -13,21 +14,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.wrappers import fus
 
-from .helpers import touch
+from .helpers import touch, PungiTestCase
 
 
 class TestGetCmd(unittest.TestCase):
     def test_minimum_command(self):
-        cmd = fus.get_cmd("x86_64", [], [], [], [], [])
-        self.assertEqual(cmd, ["fus", "--verbose", "--arch", "x86_64"])
+        cmd = fus.get_cmd("conf", "x86_64", repos=[], lookasides=[])
+        self.assertEqual(cmd, ["fus", "--verbose", "--arch", "x86_64", "@conf"])
 
     def test_full_command(self):
         cmd = fus.get_cmd(
+            "conf",
             "x86_64",
             ["/tmp/first", "/tmp/second"],
             ["/tmp/fst", "/tmp/snd"],
-            ["pkg"],
-            ["mod:1.0"],
             platform="f29",
             filter_packages=["foo", "bar"],
         )
@@ -45,31 +45,62 @@ class TestGetCmd(unittest.TestCase):
                 "--platform=f29",
                 "--exclude=bar",
                 "--exclude=foo",
-                "module(mod:1.0)",
-                "pkg",
+                "@conf",
             ],
         )
 
     def test_strip_file_protocol(self):
-        cmd = fus.get_cmd("x86_64", ["file:///tmp"], [], [], [], [])
+        cmd = fus.get_cmd("conf", "x86_64", ["file:///tmp"], [])
         self.assertEqual(
-            cmd, ["fus", "--verbose", "--arch", "x86_64", "--repo=repo-0,repo,/tmp"]
+            cmd,
+            [
+                "fus",
+                "--verbose",
+                "--arch",
+                "x86_64",
+                "--repo=repo-0,repo,/tmp",
+                "@conf",
+            ],
         )
 
     def test_fail_on_http_repo(self):
         with self.assertRaises(ValueError):
-            fus.get_cmd("x86_64", ["http:///tmp"], [], [], [], [])
+            fus.get_cmd("conf", "x86_64", ["http:///tmp"], [])
 
     def test_strip_file_protocol_lookaside(self):
-        cmd = fus.get_cmd("x86_64", [], ["file:///r"], [], [], [])
+        cmd = fus.get_cmd("conf", "x86_64", [], ["file:///r"])
         self.assertEqual(
             cmd,
-            ["fus", "--verbose", "--arch", "x86_64", "--repo=lookaside-0,lookaside,/r"]
+            [
+                "fus",
+                "--verbose",
+                "--arch",
+                "x86_64",
+                "--repo=lookaside-0,lookaside,/r",
+                "@conf",
+            ],
         )
 
     def test_fail_on_http_repo_lookaside(self):
         with self.assertRaises(ValueError):
-            fus.get_cmd("x86_64", [], ["http:///tmp"], [], [], [])
+            fus.get_cmd("conf", "x86_64", [], ["http:///tmp"])
+
+
+class TestWriteConfig(PungiTestCase):
+
+    def test_write_sorted_mix(self):
+        f = os.path.join(self.topdir, "solvables")
+        fus.write_config(f, ["moda:master"], ["pkg", "foo"])
+        self.assertFileContent(
+            f,
+            dedent(
+                """\
+                module(moda:master)
+                pkg
+                foo
+                """
+            ),
+        )
 
 
 class TestParseOutput(unittest.TestCase):

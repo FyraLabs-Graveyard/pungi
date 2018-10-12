@@ -26,11 +26,10 @@ Pungi).
 
 
 def get_cmd(
+    conf_file,
     arch,
     repos,
     lookasides,
-    packages,
-    modules,
     platform=None,
     filter_packages=None,
 ):
@@ -49,12 +48,17 @@ def get_cmd(
     for pkg in sorted(filter_packages or []):
         cmd.append("--exclude=%s" % pkg)
 
-    for module in modules:
-        cmd.append("module(%s)" % module)
-
-    cmd.extend(packages)
+    cmd.append("@%s" % conf_file)
 
     return cmd
+
+
+def write_config(conf_file, modules, packages):
+    with open(conf_file, "w") as f:
+        for module in modules:
+            f.write("module(%s)\n" % module)
+        for pkg in packages:
+            f.write("%s\n" % pkg)
 
 
 def _prep_path(path):
