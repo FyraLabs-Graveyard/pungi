@@ -145,9 +145,6 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
                     package_whitelist.add(
                         '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
 
-        # Drop the packageset to hopefully save some memory
-        variant.pkgset.rpms_by_arch[arch] = None
-
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
         exclude_packages=filter_packages_str,
