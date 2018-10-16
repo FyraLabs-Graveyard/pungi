@@ -149,6 +149,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         groups=[],
         multilib_whitelist=[],
         multilib_blacklist=[],
+        filter_packages=[],
         **kwargs
     ):
         self.arch = arch
@@ -172,7 +173,13 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             expand_groups(self.compose, arch, variant, groups, set_pkg_arch=False)
         )
 
-        nvrs, out_modules = self.run_solver(variant, arch, packages, platform)
+        # Filters are received as tuples (name, arch), we should convert it to
+        # strings.
+        filter_packages = [_fmt_pkg(*p) for p in filter_packages]
+
+        nvrs, out_modules = self.run_solver(
+            variant, arch, packages, platform, filter_packages
+        )
         filter_modules(variant, arch, out_modules)
         return expand_packages(
             self._get_pkg_map(arch),
@@ -182,7 +189,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         )
         # maybe check invalid sigkeys
 
-    def run_solver(self, variant, arch, packages, platform):
+    def run_solver(self, variant, arch, packages, platform, filter_packages):
         repos = [self.compose.paths.work.arch_repo(arch=arch)]
 
         modules = []
@@ -206,6 +213,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                 input_packages,
                 modules,
                 platform=platform,
+                filter_packages=filter_packages,
             )
             logfile = self.compose.paths.log.log_file(
                 arch, "hybrid-depsolver-%s-iter-%d" % (variant, step)

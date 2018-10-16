@@ -32,7 +32,7 @@ def get_cmd(
     packages,
     modules,
     platform=None,
-    filter_packages=None,  # TODO not supported yet
+    filter_packages=None,
 ):
     cmd = ["fus", "--verbose", "--arch", arch]
 
@@ -45,6 +45,9 @@ def get_cmd(
 
     if platform:
         cmd.append("--platform=%s" % platform)
+
+    for pkg in sorted(filter_packages or []):
+        cmd.append("--exclude=%s" % pkg)
 
     for module in modules:
         cmd.append("module(%s)" % module)

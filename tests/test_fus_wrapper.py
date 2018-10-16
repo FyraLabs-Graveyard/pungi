@@ -29,6 +29,7 @@ class TestGetCmd(unittest.TestCase):
             ["pkg"],
             ["mod:1.0"],
             platform="f29",
+            filter_packages=["foo", "bar"],
         )
         self.assertEqual(
             cmd,
@@ -42,6 +43,8 @@ class TestGetCmd(unittest.TestCase):
                 "--repo=repo-0,repo,/tmp/first",
                 "--repo=repo-1,repo,/tmp/second",
                 "--platform=f29",
+                "--exclude=bar",
+                "--exclude=foo",
                 "module(mod:1.0)",
                 "pkg",
             ],

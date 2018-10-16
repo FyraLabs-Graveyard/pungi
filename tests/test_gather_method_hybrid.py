@@ -54,7 +54,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
         self.assertEqual(cmr.call_args_list, [mock.call(compose, variant, arch)])
         self.assertEqual(
             m.run_solver.call_args_list,
-            [mock.call(variant, arch, set(["pkg", "foo", "bar"]), cmr.return_value)],
+            [mock.call(variant, arch, set(["pkg", "foo", "bar"]), cmr.return_value, [])],
         )
         self.assertEqual(
             ep.call_args_list,
@@ -333,6 +333,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [],
             platform="pl",
+            filter_packages=["foo"],
         )
 
         self.assertEqual(res, po.return_value)
@@ -355,6 +356,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     [],
                     ["mod:master"],
                     platform="pl",
+                    filter_packages=["foo"],
                 )
             ],
         )
@@ -382,6 +384,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [],
             platform="pl",
+            filter_packages=["foo"],
         )
 
         self.assertEqual(res, po.return_value)
@@ -404,6 +407,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     [],
                     ["mod:master", "mod-devel:master"],
                     platform="pl",
+                    filter_packages=["foo"],
                 )
             ],
         )
@@ -415,6 +419,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg", None)],
             platform=None,
+            filter_packages=[],
         )
 
         self.assertEqual(res, po.return_value)
@@ -429,7 +434,17 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         )
         self.assertEqual(
             gc.call_args_list,
-            [mock.call("x86_64", [self._repo("repo")], [], ["pkg"], [], platform=None)],
+            [
+                mock.call(
+                    "x86_64",
+                    [self._repo("repo")],
+                    [],
+                    ["pkg"],
+                    [],
+                    platform=None,
+                    filter_packages=[],
+                )
+            ],
         )
 
     def test_with_langpacks(self, run, gc, po):
@@ -442,6 +457,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg", None)],
             platform=None,
+            filter_packages=["foo"],
         )
 
         self.assertEqual(res, (final, []))
@@ -463,7 +479,13 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             gc.call_args_list,
             [
                 mock.call(
-                    "x86_64", [self._repo("repo")], [], ["pkg"], [], platform=None
+                    "x86_64",
+                    [self._repo("repo")],
+                    [],
+                    ["pkg"],
+                    [],
+                    platform=None,
+                    filter_packages=["foo"],
                 ),
                 mock.call(
                     "x86_64",
@@ -472,6 +494,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     ["pkg", "pkg-en"],
                     [],
                     platform=None,
+                    filter_packages=["foo"],
                 ),
             ],
         )
@@ -509,6 +532,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg-devel", None), ("foo", None)],
             platform=None,
+            filter_packages=[],
         )
 
         self.assertEqual(res, (final, []))
@@ -536,6 +560,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     ["pkg-devel", "foo"],
                     [],
                     platform=None,
+                    filter_packages=[],
                 ),
                 mock.call(
                     "x86_64",
@@ -544,6 +569,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     ["pkg-devel", "foo", "pkg-devel.i686"],
                     [],
                     platform=None,
+                    filter_packages=[],
                 ),
             ],
         )
@@ -607,6 +633,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [("pkg-devel", None), ("foo", None)],
             platform=None,
+            filter_packages=[],
         )
 
         self.assertEqual(res, (final, []))
@@ -634,6 +661,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     ["pkg-devel", "foo"],
                     [],
                     platform=None,
+                    filter_packages=[],
                 ),
                 mock.call(
                     "x86_64",
@@ -642,6 +670,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     ["pkg-devel", "foo", "foo.i686"],
                     [],
                     platform=None,
+                    filter_packages=[],
                 ),
             ],
         )
