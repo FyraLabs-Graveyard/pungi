@@ -100,6 +100,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         )
 
 
+@mock.patch('pungi.phases.extra_isos.prepare_media_metadata')
 @mock.patch('pungi.phases.extra_isos.get_volume_id')
 @mock.patch('pungi.phases.extra_isos.get_filename')
 @mock.patch('pungi.phases.extra_isos.get_iso_contents')
@@ -108,7 +109,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
 @mock.patch('pungi.phases.extra_isos.add_iso_to_metadata')
 class ExtraIsosThreadTest(helpers.PungiTestCase):
 
-    def test_binary_bootable_image(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_binary_bootable_image(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {
             'bootable': True,
             'buildinstall_method': 'lorax'
@@ -149,8 +150,9 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                        os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
                        True, additional_variants=["Client"])]
         )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
-    def test_binary_bootable_image_without_jigdo(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_binary_bootable_image_without_jigdo(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {
             'bootable': True,
             'buildinstall_method': 'lorax',
@@ -192,8 +194,9 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                        os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
                        True, additional_variants=["Client"])]
         )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
-    def test_binary_image_custom_naming(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_binary_image_custom_naming(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
         server = compose.variants['Server']
         cfg = {
@@ -233,8 +236,9 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                        os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
                        False, additional_variants=["Client"])]
         )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
-    def test_source_is_not_bootable(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_source_is_not_bootable(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {
             'bootable': True,
             'buildinstall_method': 'lorax'
@@ -275,8 +279,9 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                        os.path.join(self.topdir, 'compose/Server/source/iso/my.iso'),
                        False, additional_variants=["Client"])]
         )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "src")])
 
-    def test_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
         server = compose.variants['Server']
         cfg = {
@@ -295,7 +300,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
 
         self.assertEqual(aitm.call_args_list, [])
 
-    def test_non_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi):
+    def test_non_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
         server = compose.variants['Server']
         cfg = {
@@ -636,6 +641,48 @@ class TweakTreeinfoTest(helpers.PungiTestCase):
         extra_isos.tweak_treeinfo(compose, ["Client"], input, output)
 
         self.assertFilesEqual(output, expected)
+
+
+class PrepareMetadataTest(helpers.PungiTestCase):
+    @mock.patch("pungi.metadata.create_media_repo")
+    @mock.patch("pungi.metadata.create_discinfo")
+    @mock.patch("pungi.metadata.get_description")
+    def test_write_files(self, get_description, create_discinfo, create_media_repo):
+        compose = helpers.DummyCompose(self.topdir, {})
+        variant = compose.variants["Server"]
+        arch = "x86_64"
+
+        extra_isos.prepare_media_metadata(compose, variant, arch)
+
+        self.assertEqual(
+            get_description.call_args_list, [mock.call(compose, variant, arch)]
+        )
+        self.assertEqual(
+            create_discinfo.call_args_list,
+            [
+                mock.call(
+                    os.path.join(
+                        self.topdir,
+                        "work/x86_64/Server/extra-iso-extra-files/.discinfo",
+                    ),
+                    get_description.return_value,
+                    arch,
+                )
+            ],
+        )
+        self.assertEqual(
+            create_media_repo.call_args_list,
+            [
+                mock.call(
+                    os.path.join(
+                        self.topdir,
+                        "work/x86_64/Server/extra-iso-extra-files/media.repo",
+                    ),
+                    get_description.return_value,
+                    timestamp=None,
+                ),
+            ],
+        )
 
 
 if __name__ == '__main__':

@@ -20,6 +20,7 @@ from kobo.threads import ThreadPool, WorkerThread
 import productmd.treeinfo
 
 from pungi import createiso
+from pungi import metadata
 from pungi.phases.base import ConfigGuardedPhase, PhaseBase, PhaseLoggerMixin
 from pungi.phases.createiso import (add_iso_to_metadata, copy_boot_images,
                                     run_createiso_command, load_and_tweak_treeinfo)
@@ -77,6 +78,8 @@ class ExtraIsosThread(WorkerThread):
         volid = get_volume_id(compose, variant, arch, config.get('volid', []))
         iso_dir = compose.paths.compose.iso_dir(arch, variant)
         iso_path = os.path.join(iso_dir, filename)
+
+        prepare_media_metadata(compose, variant, arch)
 
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (arch, variant, filename)
         self.pool.log_info("[BEGIN] %s" % msg)
@@ -249,3 +252,16 @@ def get_volume_id(compose, variant, arch, formats):
     volid = get_volid(compose, arch, variant, disc_type=disc_type)
     return get_volid(compose, arch, variant, disc_type=disc_type,
                      formats=force_list(formats), volid=volid)
+
+
+def prepare_media_metadata(compose, variant, arch):
+    """Write a .discinfo and media.repo files to a directory that will be
+    included on the ISO. It's possible to overwrite the files by using extra
+    files.
+    """
+    md_dir = compose.paths.work.extra_iso_extra_files_dir(arch, variant)
+    description = metadata.get_description(compose, variant, arch)
+    metadata.create_media_repo(
+        os.path.join(md_dir, "media.repo"), description, timestamp=None
+    )
+    metadata.create_discinfo(os.path.join(md_dir, ".discinfo"), description, arch)
