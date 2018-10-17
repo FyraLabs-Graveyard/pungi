@@ -120,6 +120,15 @@ class TestMethodHybrid(helpers.PungiTestCase):
                             sourcerpm=None,
                             file_path=None,
                         ),
+                        MockPkg(
+                            name="foo-debuginfo",
+                            version="1",
+                            release="2",
+                            arch="x86_64",
+                            epoch=0,
+                            sourcerpm=None,
+                            file_path=None,
+                        ),
                     ]
                 }
             )

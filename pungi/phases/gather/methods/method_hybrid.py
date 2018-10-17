@@ -138,6 +138,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                         continue
                     if pkg.name.endswith("-devel") or pkg.name.endswith("-static"):
                         continue
+                    if pkg_is_debug(pkg):
+                        continue
                     self.langpacks[name].add(pkg.name)
 
     def __call__(
