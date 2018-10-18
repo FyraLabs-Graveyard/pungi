@@ -243,10 +243,9 @@ class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
         self.variant = self.compose.variants["Server"]
 
     def test_no_modules(self, run, Modulemd):
-        plat, pkgs = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
+        plat = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
 
         self.assertIsNone(plat)
-        self.assertItemsEqual(pkgs, [])
         self.assertEqual(run.call_args_list, [])
         self.assertEqual(Modulemd.mock_calls, [])
 

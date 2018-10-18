@@ -328,15 +328,11 @@ def create_module_repo(compose, variant, arch):
     createrepo_checksum = compose.conf["createrepo_checksum"]
     msg = "Creating repo with modular metadata for %s.%s" % (variant, arch)
 
-    if not variant.arch_mmds.get(arch):
-        compose.log_debug("[SKIP ] %s: no modules found" % msg)
-        return None, []
+    repo_path = compose.paths.work.module_repo(arch, variant)
 
     compose.log_debug("[BEGIN] %s" % msg)
 
     platforms = set()
-
-    repo_path = compose.paths.work.module_repo(arch, variant)
 
     lookaside_modules = get_lookaside_modules(
         pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
@@ -345,24 +341,27 @@ def create_module_repo(compose, variant, arch):
     # Add modular metadata to it
     modules = []
 
-    for mmd in variant.arch_mmds[arch].values():
-        # Set the arch field, but no other changes are needed.
-        repo_mmd = mmd.copy()
-        repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
+    # We need to include metadata for all variants. The packages are in the
+    # set, so we need their metadata.
+    for var in compose.all_variants.values():
+        for mmd in var.arch_mmds.get(arch, {}).values():
+            # Set the arch field, but no other changes are needed.
+            repo_mmd = mmd.copy()
+            repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
 
-        for dep in repo_mmd.peek_dependencies():
-            streams = dep.peek_requires().get("platform")
-            if streams:
-                platforms.update(streams.dup())
+            for dep in repo_mmd.peek_dependencies():
+                streams = dep.peek_requires().get("platform")
+                if streams:
+                    platforms.update(streams.dup())
 
-        nsvc = "%s:%s:%s:%s" % (
-            repo_mmd.peek_name(),
-            repo_mmd.peek_stream(),
-            repo_mmd.peek_version(),
-            repo_mmd.peek_context(),
-        )
-        if nsvc not in lookaside_modules:
-            modules.append(repo_mmd)
+            nsvc = "%s:%s:%s:%s" % (
+                repo_mmd.peek_name(),
+                repo_mmd.peek_stream(),
+                repo_mmd.peek_version(),
+                repo_mmd.peek_context(),
+            )
+            if nsvc not in lookaside_modules:
+                modules.append(repo_mmd)
 
     if len(platforms) > 1:
         raise RuntimeError("There are conflicting requests for platform.")
@@ -373,28 +372,29 @@ def create_module_repo(compose, variant, arch):
         if mmddef.peek_module_name() in module_names:
             modules.append(mmddef)
 
-    # Initialize empty repo
-    repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-    cmd = repo.get_createrepo_cmd(
-        repo_path, database=False, outputdir=repo_path, checksum=createrepo_checksum
-    )
-    logfile = "module_repo-%s" % variant
-    run(cmd, logfile=compose.paths.log.log_file(arch, logfile), show_cmd=True)
-
-    with temp_dir() as tmp_dir:
-        modules_path = os.path.join(tmp_dir, "modules.yaml")
-        Modulemd.dump(modules, modules_path)
-
-        cmd = repo.get_modifyrepo_cmd(
-            os.path.join(repo_path, "repodata"),
-            modules_path,
-            mdtype="modules",
-            compress_type="gz",
+    if modules:
+        # Initialize empty repo
+        repo = CreaterepoWrapper(createrepo_c=createrepo_c)
+        cmd = repo.get_createrepo_cmd(
+            repo_path, database=False, outputdir=repo_path, checksum=createrepo_checksum
         )
-        log_file = compose.paths.log.log_file(
-            arch, "gather-modifyrepo-modules-%s" % variant
-        )
-        run(cmd, logfile=log_file, show_cmd=True)
+        logfile = "module_repo-%s" % variant
+        run(cmd, logfile=compose.paths.log.log_file(arch, logfile), show_cmd=True)
+
+        with temp_dir() as tmp_dir:
+            modules_path = os.path.join(tmp_dir, "modules.yaml")
+            Modulemd.dump(modules, modules_path)
+
+            cmd = repo.get_modifyrepo_cmd(
+                os.path.join(repo_path, "repodata"),
+                modules_path,
+                mdtype="modules",
+                compress_type="gz",
+            )
+            log_file = compose.paths.log.log_file(
+                arch, "gather-modifyrepo-modules-%s" % variant
+            )
+            run(cmd, logfile=log_file, show_cmd=True)
 
     compose.log_debug("[DONE ] %s" % msg)
     return list(platforms)[0] if platforms else None
