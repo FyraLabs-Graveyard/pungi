@@ -121,6 +121,20 @@ def _mk_pkg_map(rpm=None, srpm=None, debuginfo=None, iterable_class=list):
     }
 
 
+def prepare_module_metadata(compose, package_sets):
+    """Populate metadata about modules in each variant. This has to be done
+    before we try running the hybrid solver for any variant. Otherwise there
+    will be modular packages without metadata and they will be incorrectly
+    considered as bare RPMs.
+    """
+    for arch in compose.get_arches():
+        for variant in compose.get_variants(arch=arch):
+            # Run the module source. This is needed to set up module metadata
+            # for the variant, but we don't really care about the returned
+            # packages. They will be pulled in based on the actual module.
+            get_variant_packages(compose, arch, variant, "module", package_sets)
+
+
 def get_parent_pkgs(arch, variant, result_dict):
     """Find packages for parent variant (if any).
 
@@ -174,11 +188,6 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
         packages = []
         groups = []
         filter_packages = []
-
-        # Run the module source. This is needed to set up module metadata for
-        # the variant, but we don't really care about the returned packages.
-        # They will be pulled in based on the actual module.
-        get_variant_packages(compose, arch, variant, "module", package_sets)
 
         # Here we do want to get list of comps groups and additional packages.
         packages, groups, filter_packages = get_variant_packages(
@@ -483,6 +492,8 @@ def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_pare
 
 def gather_wrapper(compose, package_sets, path_prefix):
     result = {}
+
+    prepare_module_metadata(compose, package_sets)
 
     _gather_variants(result, compose, 'variant', package_sets)
     _gather_variants(result, compose, 'addon', package_sets, exclude_fulltree=True)

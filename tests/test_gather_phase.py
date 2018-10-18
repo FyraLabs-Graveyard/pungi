@@ -727,7 +727,6 @@ class TestGatherPackages(helpers.PungiTestCase):
         self.assertItemsEqual(
             get_variant_packages.call_args_list,
             [
-                mock.call(compose, "x86_64", variant, "module", pkg_set),
                 mock.call(compose, "x86_64", variant, "comps", pkg_set)
             ],
         )
