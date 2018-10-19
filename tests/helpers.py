@@ -62,6 +62,7 @@ class MockVariant(mock.Mock):
         self.parent = kwargs.get('parent', None)
         self.mmds = []
         self.arch_mmds = {}
+        self.dev_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.variants = {}
         self.pkgset = mock.Mock(rpms_by_arch={})

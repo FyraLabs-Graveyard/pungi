@@ -609,8 +609,8 @@ def make_schema():
                 "default": False,
             },
             "include_devel_modules": {
-                "type": "boolean",
-                "default": False,
+                "type": "object",
+                "default": {},
             },
 
             "pkgset_source": {

@@ -13,30 +13,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-from collections import defaultdict
-import os
-from kobo.shortcuts import run
-import kobo.rpmlib
-from fnmatch import fnmatch
 import gzip
+import os
+from collections import defaultdict
+from fnmatch import fnmatch
+from itertools import chain
+
+import createrepo_c as cr
+import kobo.rpmlib
+from kobo.shortcuts import run
 
 import pungi.phases.gather.method
 from pungi import Modulemd, multilib_dnf
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
+from pungi.phases.createrepo import add_modular_metadata
 from pungi.util import (
     get_arch_variant_data,
     iter_module_defaults,
     pkg_is_debug,
-    temp_dir,
 )
 from pungi.wrappers import fus
 from pungi.wrappers.comps import CompsWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
 
 from .method_nodeps import expand_groups
-
-import createrepo_c as cr
 
 
 class FakePackage(object):
@@ -126,6 +127,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
     def prepare_modular_packages(self):
         for var in self.compose.all_variants.values():
             for mmd in var.arch_mmds.get(self.arch, {}).values():
+                self.modular_packages.update(mmd.get_rpm_artifacts().dup())
+            for mmd in var.dev_mmds.get(self.arch, {}).values():
                 self.modular_packages.update(mmd.get_rpm_artifacts().dup())
 
     def prepare_langpacks(self, arch, variant):
@@ -236,8 +239,10 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             # useless for us anyway).
             env = os.environ.copy()
             env["G_MESSAGES_PREFIXED"] = ""
+            self.compose.log_debug("[BEGIN] Running fus")
             run(cmd, logfile=logfile, show_cmd=True, env=env)
             output, out_modules = fus.parse_output(logfile)
+            self.compose.log_debug("[DONE ] Running fus")
             new_multilib = self.add_multilib(variant, arch, output, old_multilib)
             old_multilib = new_multilib
             if new_multilib:
@@ -287,6 +292,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
     def add_langpacks(self, nvrs):
         if not self.langpacks:
             return set()
+
         added = set()
         for nvr, pkg_arch, flags in nvrs:
             if "modular" in flags:
@@ -376,12 +382,15 @@ def create_module_repo(compose, variant, arch):
     )
 
     # Add modular metadata to it
+    included = set()
     modules = []
 
     # We need to include metadata for all variants. The packages are in the
     # set, so we need their metadata.
     for var in compose.all_variants.values():
-        for mmd in var.arch_mmds.get(arch, {}).values():
+        for mmd in chain(
+            var.arch_mmds.get(arch, {}).values(), var.dev_mmds.get(arch, {}).values()
+        ):
             # Set the arch field, but no other changes are needed.
             repo_mmd = mmd.copy()
             repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
@@ -397,8 +406,9 @@ def create_module_repo(compose, variant, arch):
                 repo_mmd.peek_version(),
                 repo_mmd.peek_context(),
             )
-            if nsvc not in lookaside_modules:
+            if nsvc not in lookaside_modules and nsvc not in included:
                 modules.append(repo_mmd)
+                included.add(nsvc)
 
     if len(platforms) > 1:
         raise RuntimeError("There are conflicting requests for platform.")
@@ -418,20 +428,10 @@ def create_module_repo(compose, variant, arch):
         logfile = "module_repo-%s" % variant
         run(cmd, logfile=compose.paths.log.log_file(arch, logfile), show_cmd=True)
 
-        with temp_dir() as tmp_dir:
-            modules_path = os.path.join(tmp_dir, "modules.yaml")
-            Modulemd.dump(modules, modules_path)
-
-            cmd = repo.get_modifyrepo_cmd(
-                os.path.join(repo_path, "repodata"),
-                modules_path,
-                mdtype="modules",
-                compress_type="gz",
-            )
-            log_file = compose.paths.log.log_file(
-                arch, "gather-modifyrepo-modules-%s" % variant
-            )
-            run(cmd, logfile=log_file, show_cmd=True)
+        log_file = compose.paths.log.log_file(
+            arch, "gather-modifyrepo-modules-%s" % variant
+        )
+        add_modular_metadata(repo, repo_path, modules, log_file)
 
     compose.log_debug("[DONE ] %s" % msg)
     return list(platforms)[0] if platforms else None

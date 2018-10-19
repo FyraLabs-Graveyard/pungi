@@ -59,6 +59,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # Generate architecture specific modulemd metadata, so we can
         # store per-architecture artifacts there later.
         variant.arch_mmds.setdefault(arch, {})
+        variant.dev_mmds.setdefault(arch, {})
+        include_devel = self.compose.conf.get("include_devel_modules", {}).get(variant.uid, [])
         for mmd in variant.mmds:
             nsvc = "%s:%s:%s:%s" % (
                 mmd.peek_name(),
@@ -70,14 +72,18 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 arch_mmd = mmd.copy()
                 variant.arch_mmds[arch][nsvc] = arch_mmd
 
-            if self.compose.conf["include_devel_modules"]:
+            if self.compose.conf.get("include_devel_modules"):
+                # Devel modules are enabled, we need to create it.
                 devel_nsvc = "%s-devel:%s:%s:%s" % (
                     mmd.peek_name(),
                     mmd.peek_stream(),
                     mmd.peek_version(),
                     mmd.peek_context(),
                 )
-                if devel_nsvc not in variant.arch_mmds[arch]:
+                if (
+                    devel_nsvc not in variant.arch_mmds[arch]
+                    and devel_nsvc not in variant.dev_mmds[arch]
+                ):
                     arch_mmd = mmd.copy()
                     arch_mmd.set_name(arch_mmd.peek_name() + "-devel")
                     # Depend on the actual module
@@ -86,9 +92,15 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     # Delete API and profiles
                     arch_mmd.set_rpm_api(Modulemd.SimpleSet())
                     arch_mmd.clear_profiles()
+
+                    ns = "%s:%s" % (arch_mmd.peek_name(), arch_mmd.peek_stream())
+
                     # Store the new modulemd
-                    variant.arch_mmds[arch][devel_nsvc] = arch_mmd
                     variant.module_uid_to_koji_tag[devel_nsvc] = variant.module_uid_to_koji_tag.get(nsvc)
+                    if ns in include_devel:
+                        variant.arch_mmds[arch][devel_nsvc] = arch_mmd
+                    else:
+                        variant.dev_mmds[arch][devel_nsvc] = arch_mmd
 
         # Contains per-module RPMs added to variant.
         added_rpms = {}
@@ -121,7 +133,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     added_rpms[nsvc].append(str(rpm_obj.nevra))
                     log.write('Adding %s because it is in %s\n'
                               % (rpm_obj, nsvc))
-                elif self.compose.conf["include_devel_modules"]:
+                elif self.compose.conf.get("include_devel_modules"):
                     nsvc_devel = "%s-devel:%s:%s:%s" % (
                         mmd.peek_name(),
                         mmd.peek_stream(),
@@ -141,7 +153,12 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         # have not been added to variant from the `arch_mmd`. This package
         # list is later used in createrepo phase to generated modules.yaml.
         for nsvc, rpm_nevras in added_rpms.items():
-            arch_mmd = variant.arch_mmds[arch][nsvc]
+            # If we added some RPMs from a module, that module must exist in
+            # exactly one of the dicts. We need to find the metadata object for
+            # it.
+            arch_mmd = variant.arch_mmds[arch].get(nsvc) or variant.dev_mmds[arch].get(
+                nsvc
+            )
 
             added_artifacts = Modulemd.SimpleSet()
             for rpm_nevra in rpm_nevras:

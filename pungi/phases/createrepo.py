@@ -254,22 +254,39 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             if mmddef.peek_module_name() in module_names:
                 modules.append(mmddef)
 
-        with temp_dir() as tmp_dir:
-            modules_path = os.path.join(tmp_dir, "modules.yaml")
-            Modulemd.dump(modules, modules_path)
+        log_file = compose.paths.log.log_file(arch, "modifyrepo-modules-%s" % variant)
+        add_modular_metadata(repo, repo_dir, modules, log_file)
 
-            cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"),
-                                          modules_path, mdtype="modules",
-                                          compress_type="gz")
-            log_file = compose.paths.log.log_file(
-                arch, "modifyrepo-modules-%s" % variant)
-            run(cmd, logfile=log_file, show_cmd=True)
-
-            for module_id, module_rpms in metadata:
-                modulemd_path = os.path.join(types[pkg_type][1](relative=True), find_file_in_repodata(repo_dir, 'modules'))
-                modules_metadata.prepare_module_metadata(variant, arch, module_id, modulemd_path, types[pkg_type][0], list(module_rpms))
+        for module_id, module_rpms in metadata:
+            modulemd_path = os.path.join(
+                types[pkg_type][1](relative=True),
+                find_file_in_repodata(repo_dir, 'modules'),
+            )
+            modules_metadata.prepare_module_metadata(
+                variant,
+                arch,
+                module_id,
+                modulemd_path,
+                types[pkg_type][0],
+                list(module_rpms),
+            )
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def add_modular_metadata(repo, repo_path, mmd, log_file):
+    """Add modular metadata into a repository."""
+    with temp_dir() as tmp_dir:
+        modules_path = os.path.join(tmp_dir, "modules.yaml")
+        Modulemd.dump(mmd, modules_path)
+
+        cmd = repo.get_modifyrepo_cmd(
+            os.path.join(repo_path, "repodata"),
+            modules_path,
+            mdtype="modules",
+            compress_type="gz"
+        )
+        run(cmd, logfile=log_file, show_cmd=True)
 
 
 def find_file_in_repodata(repo_path, type_):

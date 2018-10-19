@@ -266,6 +266,7 @@ class Variant(object):
         self.pkgset = None
         self.mmds = []
         self.arch_mmds = {}
+        self.dev_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.nsvc_to_pkgset = {}
 

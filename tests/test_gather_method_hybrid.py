@@ -235,7 +235,7 @@ class HelperMixin(object):
         return os.path.join(self.compose.topdir, "work/x86_64/%s" % name)
 
 
-@mock.patch("pungi.phases.gather.methods.method_hybrid.Modulemd")
+@mock.patch("pungi.phases.gather.methods.method_hybrid.add_modular_metadata")
 @mock.patch("pungi.phases.gather.methods.method_hybrid.run")
 class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
     def setUp(self):
@@ -250,7 +250,7 @@ class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(run.call_args_list, [])
         self.assertEqual(Modulemd.mock_calls, [])
 
-    def test_more_than_one_platform(self, run, Modulemd):
+    def test_more_than_one_platform(self, run, add_modular_metadata):
         self.variant.arch_mmds["x86_64"] = {
             "mod:1": MockModule("mod", platform="f29"),
             "mod:2": MockModule("mod", platform="f30"),
@@ -261,10 +261,10 @@ class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
 
         self.assertIn("conflicting requests for platform", str(ctx.exception))
         self.assertEqual(run.call_args_list, [])
-        self.assertEqual(Modulemd.mock_calls, [])
+        self.assertEqual(add_modular_metadata.mock_calls, [])
 
     @mock.patch("pungi.phases.gather.methods.method_hybrid.iter_module_defaults")
-    def test_creating_repo_with_module_and_default(self, imd, run, Modulemd):
+    def test_creating_repo_with_module_and_default(self, imd, run, add_modular_metadata):
         mod = MockModule("mod", platform="f29")
         self.variant.arch_mmds["x86_64"] = {"mod:1": mod}
         default = mock.Mock(peek_module_name=mock.Mock(return_value="mod"))
@@ -275,20 +275,21 @@ class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(plat, "f29")
 
         self.assertEqual(
-            Modulemd.mock_calls, [mock.call.dump([mod, default], mock.ANY)]
-        )
-        create, modify = run.call_args_list
-        self.assertEqual(
-            create[0][0][:2], ["createrepo_c", self._repo("module_repo_Server")]
-        )
-        self.assertEqual(
-            modify[0][0][:4],
+            add_modular_metadata.call_args_list,
             [
-                "modifyrepo_c",
-                Modulemd.mock_calls[0][1][1],
-                self._repo("module_repo_Server/repodata"),
-                "--mdtype=modules",
+                mock.call(
+                    mock.ANY,
+                    self._repo("module_repo_Server"),
+                    [mod, default],
+                    mock.ANY,
+                ),
             ],
+        )
+        self.assertEqual(
+            # Get first positional argument of the first call, and since it's
+            # an array, take first two elements.
+            run.call_args_list[0][0][0][:2],
+            ["createrepo_c", self._repo("module_repo_Server")]
         )
 
 
