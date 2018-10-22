@@ -151,10 +151,7 @@ def get_parent_pkgs(arch, variant, result_dict):
     return result
 
 
-def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None):
-    # multilib white/black-list is per-arch, common for all variants
-    multilib_whitelist = get_multilib_whitelist(compose, arch)
-    multilib_blacklist = get_multilib_blacklist(compose, arch)
+def get_gather_methods(compose, variant):
     methods = compose.conf["gather_method"]
     global_method_name = methods
     if isinstance(methods, dict):
@@ -163,6 +160,14 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
             global_method_name = None
         except IndexError:
             raise RuntimeError("Variant %s has no configured gather_method" % variant.uid)
+    return global_method_name, methods
+
+
+def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None):
+    # multilib white/black-list is per-arch, common for all variants
+    multilib_whitelist = get_multilib_whitelist(compose, arch)
+    multilib_blacklist = get_multilib_blacklist(compose, arch)
+    global_method_name, methods = get_gather_methods(compose, variant)
 
     msg = "Gathering packages (arch: %s, variant: %s)" % (arch, variant)
 

@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
+import glob
 import os
 
 from kobo.shortcuts import run
@@ -21,7 +22,7 @@ from kobo.shortcuts import run
 from pungi.wrappers import repoclosure
 from pungi.arch import get_valid_arches
 from pungi.phases.base import PhaseBase
-from pungi.phases.gather import get_lookaside_repos
+from pungi.phases.gather import get_lookaside_repos, get_gather_methods
 from pungi.util import is_arch_multilib, failable, temp_dir, get_arch_variant_data
 
 
@@ -63,32 +64,40 @@ def run_repoclosure(compose):
             for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
                 lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
 
-            cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf['repoclosure_backend'],
-                                                  repos=repos, lookaside=lookaside, arch=arches)
-            # Use temp working directory directory as workaround for
-            # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-            with temp_dir(prefix='repoclosure_') as tmp_dir:
-                # Ideally we would want show_cmd=True here to include the
-                # command in the logfile, but due to a bug in Kobo that would
-                # cause any error to be printed directly to stderr.
-                #  https://github.com/release-engineering/kobo/pull/26
-                try:
-                    run(
-                        cmd,
-                        logfile=compose.paths.log.log_file(
-                            arch, "repoclosure-%s" % variant
-                        ),
-                        workdir=tmp_dir,
-                        show_cmd=True,
+            logfile = compose.paths.log.log_file(arch, "repoclosure-%s" % variant)
+
+            try:
+                _, methods = get_gather_methods(compose, variant)
+                if methods == "hybrid":
+                    # Using hybrid solver, no repoclosure command is available.
+                    pattern = compose.paths.log.log_file(
+                        arch, "hybrid-depsolver-%s-iter-*" % variant
                     )
-                except RuntimeError as exc:
-                    if conf and conf[-1] == 'fatal':
-                        raise
-                    else:
-                        compose.log_warning('Repoclosure failed for %s.%s\n%s'
-                                            % (variant.uid, arch, exc))
+                    fus_log = sorted(glob.glob(pattern))[-1]
+                    repoclosure.extract_from_fus_log(fus_log, logfile)
+                else:
+                    _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile)
+            except RuntimeError as exc:
+                if conf and conf[-1] == 'fatal':
+                    raise
+                else:
+                    compose.log_warning('Repoclosure failed for %s.%s\n%s'
+                                        % (variant.uid, arch, exc))
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
+    cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf["repoclosure_backend"],
+                                          repos=repos, lookaside=lookaside, arch=arches)
+    # Use temp working directory directory as workaround for
+    # https://bugzilla.redhat.com/show_bug.cgi?id=795137
+    with temp_dir(prefix="repoclosure_") as tmp_dir:
+        # Ideally we would want show_cmd=True here to include the
+        # command in the logfile, but due to a bug in Kobo that would
+        # cause any error to be printed directly to stderr.
+        #  https://github.com/release-engineering/kobo/pull/26
+        run(cmd, logfile=logfile, workdir=tmp_dir, show_cmd=True)
 
 
 def check_image_sanity(compose):

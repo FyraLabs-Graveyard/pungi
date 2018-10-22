@@ -229,6 +229,34 @@ class TestRepoclosure(PungiTestCase):
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo('Everything', 'x86_64'))])
 
+    @mock.patch("glob.glob")
+    @mock.patch("pungi.wrappers.repoclosure.extract_from_fus_log")
+    @mock.patch("pungi.wrappers.repoclosure.get_repoclosure_cmd")
+    @mock.patch("pungi.phases.test.run")
+    def test_repoclosure_hybrid_variant(self, mock_run, mock_grc, effl, glob):
+        compose = DummyCompose(
+            self.topdir, {"repoclosure_backend": "dnf", "gather_method": "hybrid"}
+        )
+        f = mock.Mock()
+        glob.return_value = [f]
+
+        def _log(a, v):
+            return compose.paths.log.log_file(a, "repoclosure-%s" % compose.variants[v])
+
+        test_phase.run_repoclosure(compose)
+
+        self.assertEqual(mock_grc.call_args_list, [])
+        self.assertItemsEqual(
+            effl.call_args_list,
+            [
+                mock.call(f, _log("amd64", "Everything")),
+                mock.call(f, _log("amd64", "Client")),
+                mock.call(f, _log("amd64", "Server")),
+                mock.call(f, _log("x86_64", "Server")),
+                mock.call(f, _log("x86_64", "Everything")),
+            ]
+        )
+
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
     def test_repoclosure_report_error(self, mock_run, mock_grc):
