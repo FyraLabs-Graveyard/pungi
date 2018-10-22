@@ -206,6 +206,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
         step = 0
 
+        old_multilib = set()
+
         while True:
             step += 1
             conf_file = self.compose.paths.work.fus_conf(arch, variant, step)
@@ -228,10 +230,12 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             env["G_MESSAGES_PREFIXED"] = ""
             run(cmd, logfile=logfile, show_cmd=True, env=env)
             output, out_modules = fus.parse_output(logfile)
-            new_multilib = self.add_multilib(variant, arch, output)
+            new_multilib = self.add_multilib(variant, arch, output, old_multilib)
+            old_multilib = new_multilib
             if new_multilib:
                 input_packages.extend(
-                    _fmt_pkg(pkg_name, pkg_arch) for pkg_name, pkg_arch in new_multilib
+                    _fmt_pkg(pkg_name, pkg_arch)
+                    for pkg_name, pkg_arch in sorted(new_multilib)
                 )
                 continue
 
@@ -245,7 +249,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
         return output, out_modules
 
-    def add_multilib(self, variant, arch, nvrs):
+    def add_multilib(self, variant, arch, nvrs, old_multilib):
         added = set()
         if not self.multilib_methods:
             return []
@@ -270,13 +274,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                 if self.multilib.is_multilib(multilib_candidate):
                     added.add((nevr["name"], add_arch))
 
-        # Remove packages that are already present
-        for nvr, pkg_arch, flags in nvrs:
-            existing = (nvr.rsplit("-", 2)[0], pkg_arch)
-            if existing in added:
-                added.remove(existing)
-
-        return sorted(added)
+        return added - old_multilib
 
     def add_langpacks(self, nvrs):
         if not self.langpacks:
