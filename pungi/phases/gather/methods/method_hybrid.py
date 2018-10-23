@@ -76,6 +76,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         self.langpacks = {}
         # Set of packages for which we already added langpacks.
         self.added_langpacks = set()
+        # Set of NEVRAs of modular packages
+        self.modular_packages = set()
 
     def _get_pkg_map(self, arch):
         """Create a mapping from NEVRA to actual package object. This will be
@@ -108,18 +110,23 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self._prepare_packages()
         return self.packages[nevra]
 
-    def expand_list(self, arch, patterns):
+    def expand_list(self, patterns):
         """Given a list of globs, create a list of package names matching any
         of the pattern.
         """
         expanded = set()
-        for pkg_arch in self.package_sets[arch].rpms_by_arch:
-            for pkg in self.package_sets[arch].rpms_by_arch[pkg_arch]:
+        for pkg_arch in self.package_sets[self.arch].rpms_by_arch:
+            for pkg in self.package_sets[self.arch].rpms_by_arch[pkg_arch]:
                 for pattern in patterns:
                     if fnmatch(pkg.name, pattern):
-                        expanded.add(pkg.name)
+                        expanded.add(pkg)
                         break
         return expanded
+
+    def prepare_modular_packages(self):
+        for var in self.compose.all_variants.values():
+            for mmd in var.arch_mmds.get(self.arch, {}).values():
+                self.modular_packages.update(mmd.get_rpm_artifacts().dup())
 
     def prepare_langpacks(self, arch, variant):
         if not self.compose.has_comps:
@@ -159,14 +166,15 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         self.package_sets = package_sets
 
         self.prepare_langpacks(arch, variant)
+        self.prepare_modular_packages()
 
         self.multilib_methods = get_arch_variant_data(
             self.compose.conf, "multilib", arch, variant
         )
         self.multilib = multilib_dnf.Multilib(
             self.multilib_methods,
-            self.expand_list(arch, multilib_blacklist),
-            self.expand_list(arch, multilib_whitelist),
+            set(p.name for p in self.expand_list(multilib_blacklist)),
+            set(p.name for p in self.expand_list(multilib_whitelist)),
         )
 
         platform = create_module_repo(self.compose, variant, arch)
@@ -200,9 +208,9 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             for mmd in variant.arch_mmds[arch].values():
                 modules.append("%s:%s" % (mmd.peek_name(), mmd.peek_stream()))
 
-        input_packages = [
-            _fmt_pkg(pkg_name, pkg_arch) for pkg_name, pkg_arch in packages
-        ]
+        input_packages = []
+        for pkg_name, pkg_arch in packages:
+            input_packages.extend(self._expand_wildcard(pkg_name, pkg_arch))
 
         step = 0
 
@@ -291,6 +299,37 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             self.added_langpacks.add(name)
 
         return sorted(added)
+
+    def _expand_wildcard(self, pkg_name, pkg_arch):
+        if "*" not in pkg_name:
+            return [_fmt_pkg(pkg_name, pkg_arch)]
+
+        packages = []
+
+        for pkg in self.expand_list([pkg_name]):
+            if pkg_is_debug(pkg):
+                # No debuginfo
+                continue
+
+            if pkg_arch:
+                if pkg_arch != pkg.arch:
+                    # Arch is specified and does not match, skip the package.
+                    continue
+            else:
+                if pkg.arch not in ("noarch", self.arch):
+                    # No arch specified and package does not match
+                    continue
+
+            strict_nevra = "%s-%s:%s-%s.%s" % (
+                pkg.name, pkg.epoch or "0", pkg.version, pkg.release, pkg.arch
+            )
+            if strict_nevra in self.modular_packages:
+                # Wildcards should not match modular packages.
+                continue
+
+            packages.append(_fmt_nevra(pkg, pkg.arch))
+
+        return packages
 
 
 def get_lookaside_modules(lookasides):

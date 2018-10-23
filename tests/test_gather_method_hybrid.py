@@ -140,6 +140,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
     def test_expand_list(self):
         compose = helpers.DummyCompose(self.topdir, {})
         m = hybrid.GatherMethodHybrid(compose)
+        m.arch = "x86_64"
         m.package_sets = {
             "x86_64": mock.Mock(
                 rpms_by_arch={
@@ -175,9 +176,9 @@ class TestMethodHybrid(helpers.PungiTestCase):
                 }
             )
         }
-        expanded = m.expand_list("x86_64", ["foo*"])
+        expanded = m.expand_list(["foo*"])
 
-        self.assertItemsEqual(expanded, ["foo", "foo-en"])
+        self.assertItemsEqual([p.name for p in expanded], ["foo", "foo-en"])
 
 
 class MockModule(object):
