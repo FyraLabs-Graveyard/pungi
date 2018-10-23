@@ -340,7 +340,12 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
             'typeinfo': {
                 'module': {
                     'content_koji_tag': 'module-b62270b82443edde',
-                    'modulemd_str': mock.Mock()}
+                    'modulemd_str': mock.Mock(),
+                    'name': 'testmodule2',
+                    'stream': 'master',
+                    'version': '20180406051653',
+                    'context': '96c371af',
+                }
             }
         }
         mock_build_md = [
@@ -464,14 +469,24 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'typeinfo': {
                     'module': {
                         'content_koji_tag': 'module-b62270b82443edde',
-                        'modulemd_str': mock.Mock()}
+                        'modulemd_str': mock.Mock(),
+                        'name': 'testmodule2',
+                        'stream': 'master',
+                        'version': '20180406051653',
+                        'context': '2e6f5e0a',
+                    }
                 }
             },
             {
                 'typeinfo': {
                     'module': {
                         'content_koji_tag': 'module-52e40b9cdd3c0f7d',
-                        'modulemd_str': mock.Mock()}
+                        'modulemd_str': mock.Mock(),
+                        'name': 'testmodule2',
+                        'stream': 'master',
+                        'version': '20180406051653',
+                        'context': '96c371af',
+                    }
                 }
             }
         ]

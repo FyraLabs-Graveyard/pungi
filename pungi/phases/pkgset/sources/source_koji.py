@@ -148,13 +148,15 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
         except ValueError:
             version = md["release"]
             context = "00000000"
-        md["stream"] = md["version"]
-        md["version"] = version
-        md["context"] = context
-
         try:
             md["modulemd"] = md["extra"]["typeinfo"]["module"]["modulemd_str"]
             md["tag"] = md["extra"]["typeinfo"]["module"]["content_koji_tag"]
+            # Get the NSVC from module metadata, because the original Koji build
+            # has '-' replaced with "_".
+            md["name"] = md["extra"]["typeinfo"]["module"]["name"]
+            md["stream"] = md["extra"]["typeinfo"]["module"]["stream"]
+            md["version"] = md["extra"]["typeinfo"]["module"]["version"]
+            md["context"] = md["extra"]["typeinfo"]["module"]["context"]
         except KeyError:
             continue
 
