@@ -144,11 +144,6 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
             continue
 
         try:
-            version, context = md["release"].split(".")
-        except ValueError:
-            version = md["release"]
-            context = "00000000"
-        try:
             md["modulemd"] = md["extra"]["typeinfo"]["module"]["modulemd_str"]
             md["tag"] = md["extra"]["typeinfo"]["module"]["content_koji_tag"]
             # Get the NSVC from module metadata, because the original Koji build
