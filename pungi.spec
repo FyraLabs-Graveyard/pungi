@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.29
+Version:        4.1.30
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -108,6 +108,25 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Oct 26 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.30-1
+- gather: Expand wildcards in Pungi (lsedlar)
+- repoclosure: Extract logs from hybrid solver (lsedlar)
+- gather: Track multilib that doesn't exist (lsedlar)
+- Get the NSVC from Koji module CG build metadata (jkaluza)
+- gather: Prepare module metadata before starting depsolving (lsedlar)
+- hybrid: Include modulemd from all variants in temporary repo (lsedlar)
+- extra_iso: Include media.repo and .discinfo (lsedlar)
+- hybrid: Don't add debuginfo as langpacks (lsedlar)
+- fus: Write solvables to file (lsedlar)
+- hybrid: Honor filter_packages (lsedlar)
+- Include all test fixtures in source tarball (lsedlar)
+- Drop the memory saving code (lsedlar)
+- Save memory less agressively (lsedlar)
+- extra-iso: Use correct efiboot.img file (lsedlar)
+- extra-iso: Fix treeinfo (lsedlar)
+- createiso: Move code for tweaking treeinfo into a function (lsedlar)
+- extra-iso: Generate jigdo by default (lsedlar)
+
 * Wed Oct 10 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.29-1
 - hybrid: Only include modules that are not in lookaside (lsedlar)
 - Try to be more conservative about memory usage (lsedlar)
