@@ -491,17 +491,6 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
             # Strip file:// prefix
             lookaside_packages.add(url[7:])
 
-    # Get all packages in modules and include them in rpms or debuginfo.
-    variant_mmd = {}
-    for mmd in variant_modules.values():
-        nsvc = "%s:%s:%s:%s" % (
-            mmd.peek_name(),
-            mmd.peek_stream(),
-            mmd.peek_version(),
-            mmd.peek_context(),
-        )
-        variant_mmd[nsvc] = mmd
-
     # This is used to figure out which debuginfo packages to include. We keep
     # track of package architectures from each SRPM.
     srpm_arches = defaultdict(set)
