@@ -38,7 +38,12 @@ from pungi.wrappers.scm import get_file_from_scm
 from pungi.util import makedirs, get_arch_variant_data, get_format_substs
 from pungi.metadata import compose_to_composeinfo
 
-SUPPORTED_MILESTONES = ["RC", "Update"]
+try:
+    # This is available since productmd >= 1.18
+    # TODO: remove this once the version is distributed widely enough
+    from productmd.composeinfo import SUPPORTED_MILESTONES
+except ImportError:
+    SUPPORTED_MILESTONES = ["RC", "Update", "SecurityFix"]
 
 
 def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):
