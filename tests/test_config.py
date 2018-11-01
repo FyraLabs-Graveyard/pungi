@@ -104,6 +104,24 @@ class ReleaseConfigTestCase(ConfigTestCase):
              checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_version')])
 
 
+class ImageNameConfigTestCase(ConfigTestCase):
+    def test_image_name_simple_string(self):
+        cfg = load_config(
+            PKGSET_REPOS,
+            image_name_format="foobar",
+        )
+
+        self.assertValidation(cfg, [])
+
+    def test_image_name_variant_mapping(self):
+        cfg = load_config(
+            PKGSET_REPOS,
+            image_name_format={"^Server$": "foobar"},
+        )
+
+        self.assertValidation(cfg, [])
+
+
 class RunrootConfigTestCase(ConfigTestCase):
     def test_runroot_without_deps(self):
         cfg = load_config(

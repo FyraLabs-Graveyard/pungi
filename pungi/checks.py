@@ -810,7 +810,23 @@ def make_schema():
                 "default": [],
             },
 
-            "image_name_format": {"type": "string"},
+            "image_name_format": {
+                "oneOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "object",
+                        "patternProperties": {
+                            # Warning: this pattern is a variant uid regex, but the
+                            # format does not let us validate it as there is no regular
+                            # expression to describe all regular expressions.
+                            ".+": _one_or_list({"type": "string"}),
+                        },
+                        "additionalProperties": False,
+                    },
+                ],
+            },
             "image_volid_formats": {
                 "$ref": "#/definitions/list_of_strings",
                 "default": [

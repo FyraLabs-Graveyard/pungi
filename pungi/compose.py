@@ -35,7 +35,9 @@ from dogpile.cache import make_region
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
-from pungi.util import makedirs, get_arch_variant_data, get_format_substs
+from pungi.util import (
+    makedirs, get_arch_variant_data, get_format_substs, get_variant_data
+)
 from pungi.metadata import compose_to_composeinfo
 
 try:
@@ -335,6 +337,10 @@ class Compose(kobo.log.LoggingBase):
         """
         default_format = "{compose_id}-{variant}-{arch}-{disc_type}{disc_num}{suffix}"
         format = format or self.conf.get('image_name_format', default_format)
+
+        if isinstance(format, dict):
+            conf = get_variant_data(self.conf, "image_name_format", variant)
+            format = conf[0] if conf else default_format
 
         if arch == "src":
             arch = "source"

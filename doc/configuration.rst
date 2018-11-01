@@ -255,7 +255,10 @@ There a couple common format specifiers available for both the options:
  * ``disc_type``
 
 **image_name_format** [optional]
-    (*str*) -- Python's format string to serve as template for image names
+    (*str|dict*) -- Python's format string to serve as template for image
+    names. The value can also be a dict mapping variant UID regexes to the
+    format string. The pattern should not overlap, otherwise it is undefined
+    which one will be used.
 
     This format will be used for all phases generating images. Currently that
     means ``createiso``, ``live_images`` and ``buildinstall``.

@@ -81,6 +81,32 @@ class ComposeTestCase(unittest.TestCase):
                                          '.n', 'Server', '3.0']))
 
     @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_image_name_variant_mapping(self, ci):
+        conf = {"image_name_format": {"^Server$": "whatever"}}
+        variant = mock.Mock(uid='Server', type='variant')
+
+        compose = Compose(conf, self.tmp_dir)
+
+        name = compose.get_image_name(
+            'x86_64', variant, disc_num=7, disc_type='live', suffix='.iso'
+        )
+
+        self.assertEqual(name, "whatever")
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_get_image_name_variant_mapping_no_match(self, ci):
+        conf = {"image_name_format": {"^Client$": "whatever"}}
+        variant = mock.Mock(uid='Server', type='variant')
+        ci.return_value.compose.id = 'compose_id'
+
+        compose = Compose(conf, self.tmp_dir)
+        name = compose.get_image_name(
+            'x86_64', variant, disc_num=7, disc_type='live', suffix='.iso'
+        )
+
+        self.assertEqual(name, "compose_id-Server-x86_64-live7.iso")
+
+    @mock.patch('pungi.compose.ComposeInfo')
     def test_get_image_name_layered_product(self, ci):
         conf = {}
         variant = mock.Mock(uid='Server-LP', type='layered-product')
