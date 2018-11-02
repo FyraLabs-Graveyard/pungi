@@ -107,6 +107,19 @@ def write_arch_comps(compose, arch):
 UNMATCHED_GROUP_MSG = 'Variant %s.%s requires comps group %s which does not match anything in input comps file'
 
 
+def get_lookaside_groups(compose, variant):
+    """Find all groups listed in parent variant."""
+    groups = set()
+    if variant.parent:
+        groups.update(g["name"] for g in variant.parent.groups)
+
+    for var, lookaside in compose.conf.get("variant_as_lookaside", []):
+        if var == variant.uid:
+            lookaside_variant = compose.all_variants[lookaside]
+            groups.update(g["name"] for g in lookaside_variant.groups)
+    return groups
+
+
 def write_variant_comps(compose, arch, variant):
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
     msg = "Writing comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
@@ -123,10 +136,18 @@ def write_variant_comps(compose, arch, variant):
         return
 
     compose.log_debug(msg)
-    run(["comps_filter", "--arch=%s" % arch, "--keep-empty-group=conflicts",
-         "--keep-empty-group=conflicts-%s" % variant.uid.lower(),
-         "--variant=%s" % variant.uid,
-         "--output=%s" % comps_file, compose.paths.work.comps(arch="global")])
+    cmd = [
+        "comps_filter",
+        "--arch=%s" % arch,
+        "--keep-empty-group=conflicts",
+        "--keep-empty-group=conflicts-%s" % variant.uid.lower(),
+        "--variant=%s" % variant.uid,
+        "--output=%s" % comps_file,
+        compose.paths.work.comps(arch="global")
+    ]
+    for group in get_lookaside_groups(compose, variant):
+        cmd.append("--lookaside-group=%s" % group)
+    run(cmd)
 
     comps = CompsWrapper(comps_file)
     if variant.groups or variant.modules is not None or variant.type != 'variant':

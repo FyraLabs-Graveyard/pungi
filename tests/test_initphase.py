@@ -293,6 +293,48 @@ class TestWriteVariantComps(PungiTestCase):
                          [mock.call(variant.environments)])
         self.assertEqual(comps.write_comps.mock_calls, [mock.call()])
 
+    @mock.patch("pungi.phases.init.get_lookaside_groups")
+    @mock.patch("pungi.phases.init.run")
+    @mock.patch("pungi.phases.init.CompsWrapper")
+    def test_run_with_lookaside_groups(self, CompsWrapper, run, glg):
+        compose = DummyCompose(self.topdir, {})
+        variant = compose.variants["Server"]
+        comps = CompsWrapper.return_value
+        comps.filter_groups.return_value = []
+        glg.return_value = ["foo", "bar"]
+
+        init.write_variant_comps(compose, "x86_64", variant)
+
+        self.assertEqual(
+            run.mock_calls,
+            [
+                mock.call(
+                    [
+                        "comps_filter",
+                        "--arch=x86_64",
+                        "--keep-empty-group=conflicts",
+                        "--keep-empty-group=conflicts-server",
+                        "--variant=Server",
+                        "--output=%s/work/x86_64/comps/comps-Server.x86_64.xml" % self.topdir,
+                        self.topdir + "/work/global/comps/comps-global.xml",
+                        "--lookaside-group=foo",
+                        "--lookaside-group=bar",
+                    ]
+                ),
+            ],
+        )
+        self.assertEqual(
+            CompsWrapper.call_args_list,
+            [mock.call(self.topdir + "/work/x86_64/comps/comps-Server.x86_64.xml")],
+        )
+        self.assertEqual(
+            comps.filter_groups.call_args_list, [mock.call(variant.groups)]
+        )
+        self.assertEqual(
+            comps.filter_environments.mock_calls, [mock.call(variant.environments)]
+        )
+        self.assertEqual(comps.write_comps.mock_calls, [mock.call()])
+
     @mock.patch('pungi.phases.init.run')
     @mock.patch('pungi.phases.init.CompsWrapper')
     def test_run_no_filter_without_groups(self, CompsWrapper, run):
@@ -387,6 +429,33 @@ class TestWriteVariantComps(PungiTestCase):
         self.assertEqual(comps.filter_environments.mock_calls,
                          [mock.call(variant.environments)])
         self.assertEqual(comps.write_comps.mock_calls, [])
+
+
+class TestGetLookasideGroups(PungiTestCase):
+    def test_toplevel_variant(self):
+        compose = DummyCompose(self.topdir, {})
+        self.assertItemsEqual(
+            init.get_lookaside_groups(compose, compose.variants["Server"]), []
+        )
+
+    def test_classic_addon(self):
+        compose = DummyCompose(self.topdir, {})
+        compose.setup_addon()
+        compose.variants["Server"].groups = [{"name": "foo"}]
+        self.assertItemsEqual(
+            init.get_lookaside_groups(compose, compose.all_variants["Server-HA"]),
+            ["foo"],
+        )
+
+    def test_variant_as_lookaside(self):
+        compose = DummyCompose(
+            self.topdir, {"variant_as_lookaside": [("Server", "Client")]}
+        )
+        compose.variants["Client"].groups = [{"name": "foo"}]
+        self.assertItemsEqual(
+            init.get_lookaside_groups(compose, compose.variants["Server"]),
+            ["foo"],
+        )
 
 
 @mock.patch("shutil.copytree")

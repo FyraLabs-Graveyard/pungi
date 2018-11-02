@@ -135,6 +135,17 @@
     </grouplist>
   </environment>
 
+  <environment>
+    <id>foobar</id>
+    <name>Foo Bar</name>
+    <description>Referencing a group from parent variant</description>
+    <display_order>10</display_order>
+    <grouplist>
+      <groupid>resilient-storage</groupid>
+      <groupid>text-internet</groupid>
+    </grouplist>
+  </environment>
+
   <!-- LANGPACKS -->
 
   <langpacks>

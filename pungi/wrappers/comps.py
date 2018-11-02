@@ -169,11 +169,11 @@ class CompsFilter(object):
         for i in self.tree.xpath("//*[@xml:lang]"):
             i.getparent().remove(i)
 
-    def filter_environment_groups(self):
+    def filter_environment_groups(self, lookaside_groups=[]):
         """
         Remove undefined groups from environments.
         """
-        all_groups = self.tree.xpath("/comps/group/id/text()")
+        all_groups = self.tree.xpath("/comps/group/id/text()") + lookaside_groups
         for environment in self.tree.xpath("/comps/environment"):
             for group in environment.xpath("grouplist/groupid"):
                 if group.text not in all_groups:
@@ -199,15 +199,18 @@ class CompsFilter(object):
         self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
         file_obj.write(b"\n")
 
-    def cleanup(self, keep_groups=[]):
+    def cleanup(self, keep_groups=[], lookaside_groups=[]):
         """
         Remove empty groups, categories and environment from the comps file.
         Groups given in ``keep_groups`` will be preserved even if empty.
+        Lookaside groups are groups that are available in parent variant and
+        can be referenced in environments even if they are not directly defined
+        in the same comps file.
         """
         self.remove_empty_groups(keep_groups)
         self.filter_category_groups()
         self.remove_empty_categories()
-        self.filter_environment_groups()
+        self.filter_environment_groups(lookaside_groups)
         self.remove_empty_environments()
 
 
@@ -319,7 +322,7 @@ class CompsWrapper(object):
             append_grouplist(doc, cat_node, groups)
 
         for environment in sorted(self.comps.environments, key=attrgetter('id')):
-            groups = set(x.name for x in environment.group_ids) & set(self.get_comps_groups())
+            groups = set(x.name for x in environment.group_ids)
             if not groups:
                 continue
             env_node = doc.createElement("environment")

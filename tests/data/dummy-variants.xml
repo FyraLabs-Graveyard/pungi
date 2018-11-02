@@ -9,6 +9,9 @@
     <groups>
       <group default="true">resilient-storage</group>
     </groups>
+    <environments>
+      <environment>foobar</environment>
+    </environments>
   </variant>
 
   <variant id="Live" name="Live" type="variant" is_empty="true">

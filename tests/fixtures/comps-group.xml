@@ -66,6 +66,15 @@
     </optionlist>
   </environment>
   <environment>
+    <id>empty</id>
+    <name>Empty</name>
+    <description>Should not appear in the repos.</description>
+    <display_order>10</display_order>
+    <grouplist>
+      <groupid>does-not-exist</groupid>
+    </grouplist>
+  </environment>
+  <environment>
     <id>minimal</id>
     <name>Minimal install</name>
     <name xml:lang="bg">Минимална инсталация</name>

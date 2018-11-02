@@ -29,6 +29,13 @@ def main():
                         help="remove all environment sections")
     parser.add_argument("--keep-empty-group", default=[], action="append", metavar="GROUPID",
                         help="keep groups even if they are empty")
+    parser.add_argument(
+        "--lookaside-group",
+        default=[],
+        action="append",
+        metavar="GROUPID",
+        help="keep this group in environments even if they are not defined in the comps",
+    )
     parser.add_argument("--no-cleanup", default=False, action="store_true",
                         help="don't remove empty groups and categories")
     parser.add_argument("--no-reindent", default=False, action="store_true",
@@ -46,7 +53,7 @@ def main():
     f.filter_environments(opts.arch, opts.variant, opts.arch_only_environments)
 
     if not opts.no_cleanup:
-        f.cleanup(opts.keep_empty_group)
+        f.cleanup(opts.keep_empty_group, opts.lookaside_group)
 
     if opts.remove_categories:
         f.remove_categories()
