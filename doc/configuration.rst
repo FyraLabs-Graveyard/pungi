@@ -1554,6 +1554,10 @@ will reuse boot configuration from that variant.
     * ``skip_src`` -- (*bool*) allows to disable creating an image with source
       packages.
 
+    * ``inherit_extra_files`` -- (*bool*) by default extra files in variants
+      are ignored. If you want to include them in the ISO, set this option to
+      ``True``.
+
 Example config
 --------------
 ::
@@ -1581,8 +1585,6 @@ Example config
     #  │   │   └── b
     #  │   └── repodata
     #  ├── Server
-    #  │   ├── extra_files.json     # extra file from Server
-    #  │   ├── LICENSE              # extra file from Server
     #  │   ├── Packages
     #  │   │   ├── a
     #  │   │   └── b

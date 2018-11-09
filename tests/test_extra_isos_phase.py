@@ -133,8 +133,20 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                          [mock.call(compose, server, 'x86_64', [])])
         self.assertEqual(gef.call_args_list,
                          [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(gic.call_args_list,
-                         [mock.call(compose, server, 'x86_64', ['Client'], 'my.iso', True)])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    'x86_64',
+                    ['Client'],
+                    'my.iso',
+                    bootable=True,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
         self.assertEqual(
             rcc.call_args_list,
             [mock.call(False, 1, compose, True, 'x86_64',
@@ -177,8 +189,20 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                          [mock.call(compose, server, 'x86_64', [])])
         self.assertEqual(gef.call_args_list,
                          [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(gic.call_args_list,
-                         [mock.call(compose, server, 'x86_64', ['Client'], 'my.iso', True)])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    'x86_64',
+                    ['Client'],
+                    'my.iso',
+                    bootable=True,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
         self.assertEqual(
             rcc.call_args_list,
             [mock.call(False, 1, compose, True, 'x86_64',
@@ -219,8 +243,20 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                          [mock.call(compose, server, 'x86_64', ['v1', 'v2'])])
         self.assertEqual(gef.call_args_list,
                          [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(gic.call_args_list,
-                         [mock.call(compose, server, 'x86_64', ['Client'], 'my.iso', False)])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    'x86_64',
+                    ['Client'],
+                    'my.iso',
+                    bootable=False,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
         self.assertEqual(
             rcc.call_args_list,
             [mock.call(False, 1, compose, False, 'x86_64',
@@ -262,8 +298,20 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                          [mock.call(compose, server, 'src', [])])
         self.assertEqual(gef.call_args_list,
                          [mock.call(compose, server, 'src', [])])
-        self.assertEqual(gic.call_args_list,
-                         [mock.call(compose, server, 'src', ['Client'], 'my.iso', False)])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    'src',
+                    ['Client'],
+                    'my.iso',
+                    bootable=False,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
         self.assertEqual(
             rcc.call_args_list,
             [mock.call(False, 1, compose, False, 'src',
@@ -387,8 +435,6 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'compose/Client/x86_64/os/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
             'compose/Server/x86_64/os/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
             'compose/Server/x86_64/os/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/x86_64/Client/extra-files': {'GPL': '/mnt/GPL'},
-            'work/x86_64/Server/extra-files': {'AUTHORS': '/mnt/AUTHORS'},
             'work/x86_64/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
         }
 
@@ -396,17 +442,22 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
 
         self.assertEqual(
-            extra_isos.get_iso_contents(self.compose, self.variant, 'x86_64',
-                                        ['Client'], 'my.iso', False),
-            gp_file
+            extra_isos.get_iso_contents(
+                self.compose,
+                self.variant,
+                'x86_64',
+                ['Client'],
+                'my.iso',
+                False,
+                inherit_extra_files=False,
+            ),
+            gp_file,
         )
 
         expected = {
-            'Client/GPL': '/mnt/GPL',
             'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
             'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
             'EULA': '/mnt/EULA',
-            'Server/AUTHORS': '/mnt/AUTHORS',
             'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
         }
@@ -436,14 +487,74 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             ],
         )
 
+    def test_inherit_extra_files(self, ggp, wgp, tt):
+        gp = {
+            "compose/Client/x86_64/os/Packages": {"f/foo.rpm": "/mnt/f/foo.rpm"},
+            "compose/Client/x86_64/os/repodata": {"primary.xml": "/mnt/repodata/primary.xml"},
+            "compose/Server/x86_64/os/Packages": {"b/bar.rpm": "/mnt/b/bar.rpm"},
+            "compose/Server/x86_64/os/repodata": {"repomd.xml": "/mnt/repodata/repomd.xml"},
+            "work/x86_64/Client/extra-files": {"GPL": "/mnt/GPL"},
+            "work/x86_64/Server/extra-files": {"AUTHORS": "/mnt/AUTHORS"},
+            "work/x86_64/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
+        }
+
+        ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]]
+        gp_file = os.path.join(self.topdir, "work/x86_64/iso/my.iso-graft-points")
+
+        self.assertEqual(
+            extra_isos.get_iso_contents(
+                self.compose,
+                self.variant,
+                "x86_64",
+                ["Client"],
+                "my.iso",
+                False,
+                inherit_extra_files=True,
+            ),
+            gp_file,
+        )
+
+        expected = {
+            "Client/GPL": "/mnt/GPL",
+            "Client/Packages/f/foo.rpm": "/mnt/f/foo.rpm",
+            "Client/repodata/primary.xml": "/mnt/repodata/primary.xml",
+            "EULA": "/mnt/EULA",
+            "Server/AUTHORS": "/mnt/AUTHORS",
+            "Server/Packages/b/bar.rpm": "/mnt/b/bar.rpm",
+            "Server/repodata/repomd.xml": "/mnt/repodata/repomd.xml",
+        }
+
+        self.assertItemsEqual(
+            ggp.call_args_list,
+            [mock.call([os.path.join(self.topdir, x)]) for x in gp]
+        )
+        self.assertEqual(len(wgp.call_args_list), 1)
+        self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
+        self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
+        self.assertEqual(wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]})
+
+        # Check correct call to tweak_treeinfo
+        self.assertEqual(
+            tt.call_args_list,
+            [
+                mock.call(
+                    self.compose,
+                    ["Client"],
+                    os.path.join(self.topdir, "compose/Server/x86_64/os/.treeinfo"),
+                    os.path.join(
+                        self.topdir,
+                        "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
+                    )
+                ),
+            ],
+        )
+
     def test_source(self, ggp, wgp, tt):
         gp = {
             'compose/Client/source/tree/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
             'compose/Client/source/tree/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
             'compose/Server/source/tree/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
             'compose/Server/source/tree/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/src/Client/extra-files': {'GPL': '/mnt/GPL'},
-            'work/src/Server/extra-files': {'AUTHORS': '/mnt/AUTHORS'},
             'work/src/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
         }
 
@@ -451,17 +562,22 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         gp_file = os.path.join(self.topdir, 'work/src/iso/my.iso-graft-points')
 
         self.assertEqual(
-            extra_isos.get_iso_contents(self.compose, self.variant, 'src',
-                                        ['Client'], 'my.iso', False),
-            gp_file
+            extra_isos.get_iso_contents(
+                self.compose,
+                self.variant,
+                'src',
+                ['Client'],
+                'my.iso',
+                bootable=False,
+                inherit_extra_files=False,
+            ),
+            gp_file,
         )
 
         expected = {
-            'Client/GPL': '/mnt/GPL',
             'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
             'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
             'EULA': '/mnt/EULA',
-            'Server/AUTHORS': '/mnt/AUTHORS',
             'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
         }
@@ -505,8 +621,6 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'compose/Client/x86_64/os/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
             'compose/Server/x86_64/os/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
             'compose/Server/x86_64/os/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/x86_64/Client/extra-files': {'GPL': '/mnt/GPL'},
-            'work/x86_64/Server/extra-files': {'AUTHORS': '/mnt/AUTHORS'},
             'work/x86_64/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
         }
         bi_gp = {
@@ -525,18 +639,18 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                 'x86_64',
                 ['Client'],
                 'my.iso',
-                True),
-            gp_file
+                bootable=True,
+                inherit_extra_files=False,
+            ),
+            gp_file,
         )
 
         self.maxDiff = None
 
         expected = {
-            'Client/GPL': '/mnt/GPL',
             'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
             'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
             'EULA': '/mnt/EULA',
-            'Server/AUTHORS': '/mnt/AUTHORS',
             'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
             'isolinux/isolinux.bin': os.path.join(iso_dir, 'isolinux/isolinux.bin'),

@@ -956,6 +956,10 @@ def make_schema():
                                     "type": "boolean",
                                     "default": False,
                                 },
+                                "inherit_extra_files": {
+                                    "type": "boolean",
+                                    "default": False,
+                                },
                             },
                             "required": ["include_variants"],
                             "additionalProperties": False

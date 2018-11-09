@@ -88,9 +88,15 @@ class ExtraIsosThread(WorkerThread):
 
         bootable = arch != "src" and compose.conf['bootable']
 
-        graft_points = get_iso_contents(compose, variant, arch,
-                                        config['include_variants'],
-                                        filename, bootable)
+        graft_points = get_iso_contents(
+            compose,
+            variant,
+            arch,
+            config['include_variants'],
+            filename,
+            bootable=bootable,
+            inherit_extra_files=config.get("inherit_extra_files", False),
+        )
 
         opts = createiso.CreateIsoOpts(
             output_dir=iso_dir,
@@ -142,7 +148,9 @@ def get_extra_files(compose, variant, arch, extra_files):
         getter(scm_dict, target_path, logger=compose._logger)
 
 
-def get_iso_contents(compose, variant, arch, include_variants, filename, bootable):
+def get_iso_contents(
+    compose, variant, arch, include_variants, filename, bootable, inherit_extra_files
+):
     """Find all files that should be on the ISO. For bootable image we start
     with the boot configuration. Then for each variant we add packages,
     repodata and extra files. Finally we add top-level extra files.
@@ -181,10 +189,11 @@ def get_iso_contents(compose, variant, arch, include_variants, filename, bootabl
         for k, v in iso.get_graft_points([repo_dir]).items():
             files[os.path.join(var.uid, 'repodata', k)] = v
 
-        # Get extra files...
-        extra_files_dir = compose.paths.work.extra_files_dir(arch, var)
-        for k, v in iso.get_graft_points([extra_files_dir]).items():
-            files[os.path.join(var.uid, k)] = v
+        if inherit_extra_files:
+            # Get extra files...
+            extra_files_dir = compose.paths.work.extra_files_dir(arch, var)
+            for k, v in iso.get_graft_points([extra_files_dir]).items():
+                files[os.path.join(var.uid, k)] = v
 
     extra_files_dir = compose.paths.work.extra_iso_extra_files_dir(arch, variant)
 
