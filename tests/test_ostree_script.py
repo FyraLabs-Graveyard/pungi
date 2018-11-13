@@ -165,7 +165,7 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
 
         with open(treefile, 'r') as f:
             # Read initial content from YAML file
-            treefile_content = yaml.load(f)
+            treefile_content = yaml.safe_load(f)
         original_repos = treefile_content['repos']
         original_ref = treefile_content['ref']
         replacing_ref = original_ref + '-changed'

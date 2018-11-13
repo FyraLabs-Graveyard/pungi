@@ -81,7 +81,7 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
         # rpm-ostree now supports YAML, but we'll end up converting it to JSON.
         # https://github.com/projectatomic/rpm-ostree/pull/1377
         if treeconf.endswith('.yaml'):
-            treeconf_content = yaml.load(f)
+            treeconf_content = yaml.safe_load(f)
             treeconf = treeconf.replace('.yaml', '.json')
         else:
             treeconf_content = json.load(f)
