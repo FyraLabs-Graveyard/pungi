@@ -114,7 +114,10 @@ class KojiWrapper(object):
         command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
 
         if destdir:
+            # Make the files world readable
             command += " && chmod -R a+r %s" % shlex_quote(destdir)
+            # and owned by the same user that is running the process
+            command += " && chown -R %d %s" % (os.getuid(), shlex_quote(destdir))
         cmd.append(command)
 
         return cmd

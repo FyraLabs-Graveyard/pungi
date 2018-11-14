@@ -430,6 +430,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                                '--task-id', '--weight=1000', '--package=some_other_package',
                                '--package=lorax', '--mount=/tmp'])
 
+    @mock.patch("os.getuid", new=lambda: 1010)
     def test_with_destdir(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
                                         quiet=True, channel='chan',
@@ -441,7 +442,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(
             cmd[-1],
-            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir'"
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir' && chown -R 1010 '/output dir'"
         )
         self.assertItemsEqual(cmd[3:-3],
                               ['--channel-override=chan', '--quiet', '--use-shell',
