@@ -149,7 +149,6 @@ class DummyCompose(object):
         self.conf = load_config(PKGSET_REPOS, **config)
         checks.validate(self.conf)
         self.paths = paths.Paths(self)
-        self._logger = mock.Mock()
         self.has_comps = True
         self.variants = {
             'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
@@ -162,7 +161,7 @@ class DummyCompose(object):
         self.all_variants = self.variants.copy()
 
         # for PhaseLoggerMixin
-        self._logger = mock.Mock()
+        self._logger = mock.Mock(name="compose._logger")
         self._logger.handlers = [mock.Mock()]
 
         self.log_info = mock.Mock()
