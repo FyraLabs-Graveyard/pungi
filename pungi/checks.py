@@ -942,6 +942,7 @@ def make_schema():
                                         "repo": {"type": "string"},
                                         "branch": {"$ref": "#/definitions/optional_string"},
                                         "file": {"$ref": "#/definitions/strings"},
+                                        "dir": {"$ref": "#/definitions/strings"},
                                         "target": {"type": "string"},
                                     },
                                     "additionalProperties": False,
