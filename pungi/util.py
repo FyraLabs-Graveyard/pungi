@@ -564,7 +564,11 @@ def copy_all(src, dest):
         if os.path.isdir(source):
             shutil.copytree(source, destination)
         else:
-            shutil.copy2(source, destination)
+            if os.path.islink(source):
+                # It's a symlink, we should preserve it instead of resolving.
+                os.symlink(os.readlink(source), destination)
+            else:
+                shutil.copy2(source, destination)
 
     return recursive_file_list(src)
 

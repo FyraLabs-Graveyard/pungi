@@ -753,5 +753,32 @@ class TestParseKojiEvent(PungiTestCase):
             util.parse_koji_event(self.topdir)
 
 
+class TestCopyAll(PungiTestCase):
+
+    def setUp(self):
+        super(TestCopyAll, self).setUp()
+        self.src = os.path.join(self.topdir, "src")
+        self.dst = os.path.join(self.topdir, "dst")
+        util.makedirs(self.src)
+
+    def test_preserve_symlink(self):
+        touch(os.path.join(self.src, "target"))
+        os.symlink("target", os.path.join(self.src, "symlink"))
+
+        util.copy_all(self.src, self.dst)
+
+        self.assertTrue(os.path.isfile(os.path.join(self.dst, "target")))
+        self.assertTrue(os.path.islink(os.path.join(self.dst, "symlink")))
+        self.assertEqual(os.readlink(os.path.join(self.dst, "symlink")), "target")
+
+    def test_copy_broken_symlink(self):
+        os.symlink("broken", os.path.join(self.src, "symlink"))
+
+        util.copy_all(self.src, self.dst)
+
+        self.assertTrue(os.path.islink(os.path.join(self.dst, "symlink")))
+        self.assertEqual(os.readlink(os.path.join(self.dst, "symlink")), "broken")
+
+
 if __name__ == "__main__":
     unittest.main()
