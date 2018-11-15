@@ -4,7 +4,6 @@
 from __future__ import print_function
 
 import argparse
-import datetime
 import getpass
 import json
 import locale
@@ -286,14 +285,14 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     compose.read_variants()
 
     # dump the config file
-    date_str = datetime.datetime.strftime(datetime.datetime.now(), "%F_%X").replace(":", "-")
     for config_file in compose.conf.opened_files:
-        config_dump = compose.paths.log.log_file("global", "config-copy_%s_%s"
-                                                 % (os.path.basename(config_file), date_str))
+        config_dump = compose.paths.log.log_file(
+            "global", "config-copy_%s" % os.path.basename(config_file)
+        )
         with open(config_dump, "w") as dest:
             with open(config_file, 'r') as src:
                 dest.write(src.read())
-    config_dump_full = compose.paths.log.log_file("global", "config-dump_%s" % date_str)
+    config_dump_full = compose.paths.log.log_file("global", "config-dump")
     with open(config_dump_full, "w") as f:
         json.dump(compose.conf, f, sort_keys=True, indent=4)
 
