@@ -43,7 +43,12 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
     if os.path.isfile(treefile):
         with open(treefile, 'r') as f:
             try:
-                parsed = json.loads(f.read())
+                # rpm-ostree now supports YAML
+                #   https://github.com/projectatomic/rpm-ostree/pull/1377
+                if treefile.endswith(".yaml"):
+                    parsed = yaml.safe_load(f)
+                else:
+                    parsed = json.loads(f.read())
                 if arch is None:
                     basearch = getBaseArch()
                 else:
