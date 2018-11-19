@@ -39,7 +39,6 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
     the basearch of the architecture we are running on or of the passed in arch.
     """
     logger = logger or logging.getLogger(__name__)
-    ref = None
     if os.path.isfile(treefile):
         with open(treefile, 'r') as f:
             try:
@@ -48,17 +47,13 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
                 if treefile.endswith(".yaml"):
                     parsed = yaml.safe_load(f)
                 else:
-                    parsed = json.loads(f.read())
-                if arch is None:
-                    basearch = getBaseArch()
-                else:
-                    basearch = getBaseArch(arch)
-                ref = parsed['ref'].replace('${basearch}', basearch)
+                    parsed = json.load(f)
+                return parsed["ref"].replace("${basearch}", getBaseArch(arch))
             except Exception as e:
                 logger.error('Unable to get ref from treefile: %s' % e)
     else:
         logger.error('Unable to open treefile')
-    return ref
+    return None
 
 
 def get_commitid_from_commitid_file(commitid_file):
