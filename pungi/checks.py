@@ -36,7 +36,6 @@ When a new config option is added, the schema must be updated (see the
 
 from __future__ import print_function
 
-import contextlib
 import multiprocessing
 import os.path
 import platform
@@ -166,16 +165,19 @@ def _check_dep(name, value, lst, matcher, fmt):
             yield fmt.format(name, value, dep)
 
 
-def validate(config):
+def validate(config, offline=False):
     """Test the configuration against schema.
 
     Undefined values for which a default value exists will be filled in.
     """
     schema = make_schema()
-    DefaultValidator = _extend_with_default_and_alias(jsonschema.Draft4Validator)
-    validator = DefaultValidator(schema,
-                                 {'array': (tuple, list),
-                                  'regex': six.string_types})
+    DefaultValidator = _extend_with_default_and_alias(
+        jsonschema.Draft4Validator, offline=offline
+    )
+    validator = DefaultValidator(
+        schema,
+        {"array": (tuple, list), "regex": six.string_types, "url": six.string_types}
+    )
     errors = []
     warnings = []
     for error in validator.iter_errors(config):
@@ -224,18 +226,17 @@ UNKNOWN = 'WARNING: Unrecognized config option: {0}.'
 UNKNOWN_SUGGEST = 'WARNING: Unrecognized config option: {0}. Did you mean {1}?'
 
 
-def _extend_with_default_and_alias(validator_class):
+def _extend_with_default_and_alias(validator_class, offline=False):
     validate_properties = validator_class.VALIDATORS["properties"]
     validate_type = validator_class.VALIDATORS['type']
     validate_required = validator_class.VALIDATORS['required']
     validate_additional_properties = validator_class.VALIDATORS['additionalProperties']
+    resolver = util.GitUrlResolver(offline=offline)
 
-    @contextlib.contextmanager
     def _hook_errors(properties, instance, schema):
         """
         Hook the instance and yield errors and warnings.
         """
-        errors = []
         for property, subschema in properties.items():
             # update instance for alias option
             # If alias option for the property is present and property is not specified,
@@ -245,11 +246,11 @@ def _extend_with_default_and_alias(validator_class):
                     msg = "WARNING: Config option '%s' is deprecated and now an alias to '%s', " \
                           "please use '%s' instead. " \
                           "In:\n%s" % (subschema['alias'], property, property, instance)
-                    errors.append(ConfigOptionWarning(msg))
+                    yield ConfigOptionWarning(msg)
                     if property in instance:
                         msg = "ERROR: Config option '%s' is an alias of '%s', only one can be used." \
                               % (subschema['alias'], property)
-                        errors.append(ConfigOptionError(msg))
+                        yield ConfigOptionError(msg)
                         instance.pop(subschema['alias'])
                     else:
                         instance.setdefault(property, instance.pop(subschema['alias']))
@@ -263,50 +264,53 @@ def _extend_with_default_and_alias(validator_class):
                     if append in instance:
                         msg = "WARNING: Config option '%s' is deprecated, its value will be appended to option '%s'. " \
                               "In:\n%s" % (append, property, instance)
-                        errors.append(ConfigOptionWarning(msg))
+                        yield ConfigOptionWarning(msg)
                         if property in instance:
                             msg = "WARNING: Value from config option '%s' is now appended to option '%s'." \
                                   % (append, property)
-                            errors.append(ConfigOptionWarning(msg))
+                            yield ConfigOptionWarning(msg)
                             instance[property] = force_list(instance[property])
                             instance[property].extend(force_list(instance.pop(append)))
                         else:
                             msg = "WARNING: Config option '%s' is not found, but '%s' is specified, value from '%s' " \
                                   "is now added as '%s'." % (property, append, append, property)
-                            errors.append(ConfigOptionWarning(msg))
+                            yield ConfigOptionWarning(msg)
                             instance[property] = instance.pop(append)
-        yield errors
 
-    def _set_defaults(validator, properties, instance, schema):
+    def properties_validator(validator, properties, instance, schema):
         """
         Assign default values to options that have them defined and are not
-        specified.
+        specified. Resolve URLs to Git repos
         """
         for property, subschema in properties.items():
             if "default" in subschema and property not in instance:
                 instance.setdefault(property, subschema["default"])
 
-        with _hook_errors(properties, instance, schema) as errors:
-            for error in errors:
-                yield error
+            # Resolve git URL references to actual commit hashes
+            if subschema.get("type") == "url" and property in instance:
+                try:
+                    instance[property] = resolver(instance[property])
+                except util.GitUrlResolveError as exc:
+                    yield ConfigOptionError(exc)
+
+        for error in _hook_errors(properties, instance, schema):
+            yield error
 
         for error in validate_properties(validator, properties, instance, schema):
             yield error
 
     def _validate_additional_properties(validator, aP, instance, schema):
         properties = schema.get("properties", {})
-        with _hook_errors(properties, instance, schema) as errors:
-            for error in errors:
-                yield error
+        for error in _hook_errors(properties, instance, schema):
+            yield error
 
         for error in validate_additional_properties(validator, aP, instance, schema):
             yield error
 
     def _validate_required(validator, required, instance, schema):
         properties = schema.get("properties", {})
-        with _hook_errors(properties, instance, schema) as errors:
-            for error in errors:
-                yield error
+        for error in _hook_errors(properties, instance, schema):
+            yield error
 
         for error in validate_required(validator, required, instance, schema):
             yield error
@@ -355,12 +359,15 @@ def _extend_with_default_and_alias(validator_class):
             )
 
     return jsonschema.validators.extend(
-        validator_class, {"properties": _set_defaults,
-                          "deprecated": error_on_deprecated,
-                          "type": validate_regex_type,
-                          "required": _validate_required,
-                          "additionalProperties": _validate_additional_properties,
-                          "anyOf": _validate_any_of},
+        validator_class,
+        {
+            "properties": properties_validator,
+            "deprecated": error_on_deprecated,
+            "type": validate_regex_type,
+            "required": _validate_required,
+            "additionalProperties": _validate_additional_properties,
+            "anyOf": _validate_any_of,
+        },
     )
 
 
@@ -457,7 +464,7 @@ def make_schema():
                 "type": "object",
                 "properties": {
                     "kickstart": {"type": "string"},
-                    "ksurl": {"type": "string"},
+                    "ksurl": {"type": "url"},
                     "name": {"type": "string"},
                     "subvariant": {"type": "string"},
                     "target": {"type": "string"},
@@ -478,7 +485,7 @@ def make_schema():
             "osbs_config": {
                 "type": "object",
                 "properties": {
-                    "url": {"type": "string"},
+                    "url": {"type": "url"},
                     "target": {"type": "string"},
                     "name": {"type": "string"},
                     "version": {"type": "string"},
@@ -765,7 +772,7 @@ def make_schema():
             "buildinstall_use_guestmount": {"type": "boolean", "default": True},
             "buildinstall_skip": _variant_arch_mapping({"type": "boolean"}),
 
-            "global_ksurl": {"type": "string"},
+            "global_ksurl": {"type": "url"},
             "global_version": {"type": "string"},
             "global_target": {"type": "string"},
             "global_release": {"$ref": "#/definitions/optional_string"},
@@ -854,17 +861,17 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
-            "live_images_ksurl": {"type": "string"},
+            "live_images_ksurl": {"type": "url"},
             "live_images_target": {"type": "string"},
             "live_images_release": {"$ref": "#/definitions/optional_string"},
             "live_images_version": {"type": "string"},
 
-            "image_build_ksurl": {"type": "string"},
+            "image_build_ksurl": {"type": "url"},
             "image_build_target": {"type": "string"},
             "image_build_release": {"$ref": "#/definitions/optional_string"},
             "image_build_version": {"type": "string"},
 
-            "live_media_ksurl": {"type": "string"},
+            "live_media_ksurl": {"type": "url"},
             "live_media_target": {"type": "string"},
             "live_media_release": {"$ref": "#/definitions/optional_string"},
             "live_media_version": {"type": "string"},
@@ -983,7 +990,7 @@ def make_schema():
                                 "install_tree_from": {"type": "string"},
                                 "kickstart": {"type": "string"},
                                 "ksversion": {"type": "string"},
-                                "ksurl": {"type": "string"},
+                                "ksurl": {"type": "url"},
                                 "version": {"type": "string"},
                                 "scratch": {"type": "boolean"},
                                 "skip_tag": {"type": "boolean"},

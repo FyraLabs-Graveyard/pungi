@@ -241,14 +241,13 @@ class TestLiveImagesPhase(PungiTestCase):
                                           'amd64'))])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.util.resolve_git_url')
-    def test_spin_appliance(self, resolve_git_url, ThreadPool):
+    def test_spin_appliance(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
             'live_images': [
                 ('^Client$', {
                     'amd64': {
                         'kickstart': 'test.ks',
-                        'ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
+                        'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
                         'repo': ['http://example.com/repo/', 'Everything'],
                         'type': 'appliance',
                         'target': 'f27',
@@ -258,8 +257,6 @@ class TestLiveImagesPhase(PungiTestCase):
         })
 
         self.assertValidConfig(compose.conf)
-
-        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
 
         phase = LiveImagesPhase(compose)
 
@@ -291,14 +288,11 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
-        self.assertEqual(resolve_git_url.mock_calls,
-                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.util.resolve_git_url')
-    def test_spin_appliance_phase_global_settings(self, resolve_git_url, ThreadPool):
+    def test_spin_appliance_phase_global_settings(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
-            'live_images_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
+            'live_images_ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'live_images_release': None,
             'live_images_version': 'Rawhide',
             'live_images_target': 'f27',
@@ -315,8 +309,6 @@ class TestLiveImagesPhase(PungiTestCase):
 
         self.assertValidConfig(compose.conf)
 
-        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
-
         phase = LiveImagesPhase(compose)
 
         phase.run()
@@ -347,14 +339,11 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
-        self.assertEqual(resolve_git_url.mock_calls,
-                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
-    @mock.patch('pungi.util.resolve_git_url')
-    def test_spin_appliance_global_settings(self, resolve_git_url, ThreadPool):
+    def test_spin_appliance_global_settings(self, ThreadPool):
         compose = DummyCompose(self.topdir, {
-            'global_ksurl': 'https://git.example.com/kickstarts.git?#HEAD',
+            'global_ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE',
             'global_release': None,
             'global_version': 'Rawhide',
             'global_target': 'f27',
@@ -371,8 +360,6 @@ class TestLiveImagesPhase(PungiTestCase):
 
         self.assertValidConfig(compose.conf)
 
-        resolve_git_url.return_value = 'https://git.example.com/kickstarts.git?#CAFEBABE'
-
         phase = LiveImagesPhase(compose)
 
         phase.run()
@@ -403,8 +390,6 @@ class TestLiveImagesPhase(PungiTestCase):
                                            'ksurl': 'https://git.example.com/kickstarts.git?#CAFEBABE'},
                                           compose.variants['Client'],
                                           'amd64'))])
-        self.assertEqual(resolve_git_url.mock_calls,
-                         [mock.call('https://git.example.com/kickstarts.git?#HEAD')])
 
     @mock.patch('pungi.phases.live_images.ThreadPool')
     def test_live_image_build_custom_type(self, ThreadPool):

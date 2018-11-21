@@ -50,7 +50,7 @@ class OSBSThread(WorkerThread):
         koji.login()
 
         # Start task
-        source = util.resolve_git_url(config.pop('url'))
+        source = config.pop('url')
         target = config.pop('target')
         priority = config.pop('priority', None)
         gpgkey = config.pop('gpgkey', None)

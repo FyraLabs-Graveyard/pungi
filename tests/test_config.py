@@ -372,7 +372,8 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
 
 
 class LiveMediaConfigTestCase(ConfigTestCase):
-    def test_global_config_validation(self):
+    @mock.patch("pungi.util.resolve_git_url")
+    def test_global_config_validation(self, resolve_git_url):
         cfg = load_config(
             PKGSET_REPOS,
             live_media_ksurl='git://example.com/repo.git#HEAD',
@@ -381,7 +382,10 @@ class LiveMediaConfigTestCase(ConfigTestCase):
             live_media_version='Rawhide',
         )
 
+        resolve_git_url.side_effect = lambda x: x.replace("HEAD", "CAFE")
+
         self.assertValidation(cfg)
+        self.assertEqual(cfg["live_media_ksurl"], "git://example.com/repo.git#CAFE")
 
     def test_global_config_null_release(self):
         cfg = load_config(

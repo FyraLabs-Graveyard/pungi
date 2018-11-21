@@ -53,7 +53,7 @@ class PungiTestCase(BaseTestCase):
                 raise
 
     def assertValidConfig(self, conf):
-        self.assertEqual(checks.validate(conf), ([], []))
+        self.assertEqual(checks.validate(conf, offline=True), ([], []))
 
 
 class MockVariant(mock.Mock):
@@ -147,7 +147,7 @@ class DummyCompose(object):
         )
         self.topdir = topdir
         self.conf = load_config(PKGSET_REPOS, **config)
-        checks.validate(self.conf)
+        checks.validate(self.conf, offline=True)
         self.paths = paths.Paths(self)
         self.has_comps = True
         self.variants = {

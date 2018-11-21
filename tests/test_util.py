@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from pungi import compose
 from pungi import util
 
-from tests.helpers import touch, PungiTestCase
+from tests.helpers import touch, PungiTestCase, mk_boom
 
 
 class TestGitRefResolver(unittest.TestCase):
@@ -133,6 +133,17 @@ class TestGitRefResolver(unittest.TestCase):
         self.assertEqual(resolver(url1), "1")
         self.assertEqual(resolver(url2), "2")
         self.assertEqual(mock_resolve.call_args_list, [mock.call(url1), mock.call(url2)])
+
+    @mock.patch("pungi.util.resolve_git_url")
+    def test_resolver_caches_failure(self, mock_resolve):
+        url = "http://example.com/repo.git#HEAD"
+        mock_resolve.side_effect = mk_boom(util.GitUrlResolveError, "failed")
+        resolver = util.GitUrlResolver()
+        with self.assertRaises(util.GitUrlResolveError):
+            resolver(url)
+        with self.assertRaises(util.GitUrlResolveError):
+            resolver(url)
+        self.assertEqual(mock_resolve.call_args_list, [mock.call(url)])
 
 
 class TestGetVariantData(unittest.TestCase):

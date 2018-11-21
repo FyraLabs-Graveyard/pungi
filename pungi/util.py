@@ -246,6 +246,10 @@ def _get_git_ref(fragment):
     return None
 
 
+class GitUrlResolveError(RuntimeError):
+    pass
+
+
 def resolve_git_url(url):
     """Given a url to a Git repo specifying HEAD or origin/<branch> as a ref,
     replace that specifier with actual SHA1 of the commit.
@@ -270,12 +274,13 @@ def resolve_git_url(url):
     lines = [line for line in output.split('\n') if line]
     if len(lines) == 0:
         # Branch does not exist in remote repo
-        raise RuntimeError('Failed to resolve %s: ref does not exist in remote repo'
-                           % url)
+        raise GitUrlResolveError(
+            "Failed to resolve %s: ref does not exist in remote repo" % url
+        )
     if len(lines) != 1:
         # This should never happen. HEAD can not match multiple commits in a
         # single repo, and there can not be a repo without a HEAD.
-        raise RuntimeError('Failed to resolve %s', url)
+        raise GitUrlResolveError("Failed to resolve %s", url)
 
     fragment = lines[0].split()[0]
     result = urllib.parse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
@@ -297,7 +302,12 @@ class GitUrlResolver(object):
         if self.offline:
             return url
         if url not in self.cache:
-            self.cache[url] = resolve_git_url(url)
+            try:
+                self.cache[url] = resolve_git_url(url)
+            except GitUrlResolveError as exc:
+                self.cache[url] = exc
+        if isinstance(self.cache[url], GitUrlResolveError):
+            raise self.cache[url]
         return self.cache[url]
 
 

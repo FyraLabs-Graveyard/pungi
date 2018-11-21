@@ -178,8 +178,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             ]
         })
 
-    def _setupMock(self, KojiWrapper, resolve_git_url, scratch=False):
-        resolve_git_url.return_value = 'git://example.com/repo?#BEEFCAFE'
+    def _setupMock(self, KojiWrapper, scratch=False):
         self.wrapper = KojiWrapper.return_value
         self.wrapper.koji_proxy.buildContainer.return_value = 12345
         if scratch:
@@ -241,7 +240,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         config['osbs'] = {
             '^Server$': cfg
         }
-        self.assertEqual(([], []), checks.validate(config))
+        self.assertEqual(([], []), checks.validate(config, offline=True))
 
     def _assertConfigMissing(self, cfg, key):
         config = copy.deepcopy(self.compose.conf)
@@ -250,17 +249,16 @@ class OSBSThreadTest(helpers.PungiTestCase):
         }
         self.assertEqual(
             (['Failed validation in osbs.^Server$: %r is not valid under any of the given schemas' % cfg], []),
-            checks.validate(config))
+            checks.validate(config, offline=True))
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_minimal_run(self, KojiWrapper, resolve_git_url):
+    def test_minimal_run(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
         }
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
@@ -269,16 +267,15 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_failable(self, KojiWrapper, resolve_git_url):
+    def test_run_failable(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'failable': ['*']
         }
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
@@ -287,17 +284,16 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_with_more_args(self, KojiWrapper, resolve_git_url):
+    def test_run_with_more_args(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
         }
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
@@ -306,18 +302,17 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_with_extra_repos(self, KojiWrapper, resolve_git_url):
+    def test_run_with_extra_repos(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
             'repo': ['Everything', 'http://pkgs.example.com/my.repo']
         }
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
@@ -336,11 +331,10 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile(['Server', 'Everything'])
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_with_extra_repos_in_list(self, KojiWrapper, resolve_git_url):
+    def test_run_with_extra_repos_in_list(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'name': 'my-name',
@@ -348,7 +342,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'repo': ['Everything', 'Client', 'http://pkgs.example.com/my.repo'],
         }
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
@@ -367,12 +361,11 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile(['Server', 'Everything', 'Client'])
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_with_gpgkey_enabled(self, KojiWrapper, resolve_git_url):
+    def test_run_with_gpgkey_enabled(self, KojiWrapper):
         gpgkey = 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'name': 'my-name',
@@ -381,17 +374,16 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'gpgkey': gpgkey,
         }
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
         self._assertRepoFile(['Server', 'Everything', 'Client'], gpgkey=gpgkey)
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_run_with_extra_repos_missing_variant(self, KojiWrapper, resolve_git_url):
+    def test_run_with_extra_repos_missing_variant(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'name': 'my-name',
@@ -399,7 +391,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'repo': 'Gold',
         }
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
 
         with self.assertRaises(RuntimeError) as ctx:
             self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
@@ -416,7 +408,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     def test_run_with_missing_target(self):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'git_branch': 'f24-docker',
             'name': 'my-name',
         }
@@ -424,21 +416,20 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     def test_run_with_missing_git_branch(self):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
         }
         self._assertConfigMissing(cfg, 'git_branch')
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_failing_task(self, KojiWrapper, resolve_git_url):
+    def test_failing_task(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'fedora-24-docker-candidate',
             'git_branch': 'f24-docker',
         }
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self.wrapper.watch_task.return_value = 1
 
         with self.assertRaises(RuntimeError) as ctx:
@@ -446,31 +437,29 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.assertRegexpMatches(str(ctx.exception), r"task 12345 failed: see .+ for details")
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_failing_task_with_failable(self, KojiWrapper, resolve_git_url):
+    def test_failing_task_with_failable(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'fedora-24-docker-candidate',
             'git_branch': 'f24-docker',
             'failable': ['*']
         }
         self._assertConfigCorrect(cfg)
-        self._setupMock(KojiWrapper, resolve_git_url)
+        self._setupMock(KojiWrapper)
         self.wrapper.watch_task.return_value = 1
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)
 
-    @mock.patch('pungi.util.resolve_git_url')
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
-    def test_scratch_metadata(self, KojiWrapper, resolve_git_url):
+    def test_scratch_metadata(self, KojiWrapper):
         cfg = {
-            'url': 'git://example.com/repo?#HEAD',
+            'url': 'git://example.com/repo?#BEEFCAFE',
             'target': 'f24-docker-candidate',
             'git_branch': 'f24-docker',
             'scratch': True,
         }
-        self._setupMock(KojiWrapper, resolve_git_url, scratch=True)
+        self._setupMock(KojiWrapper, scratch=True)
         self._assertConfigCorrect(cfg)
 
         self.t.process((self.compose, self.compose.variants['Server'], cfg), 1)

@@ -77,11 +77,11 @@ def read_variants(compose, config):
             compose.all_variants[child.uid] = child
 
 
-def run(config, topdir, has_old):
+def run(config, topdir, has_old, offline):
     conf = kobo.conf.PyConfigParser()
     conf.load_from_file(config)
 
-    errors, warnings = pungi.checks.validate(conf)
+    errors, warnings = pungi.checks.validate(conf, offline=offline)
     if errors or warnings:
         for error in errors + warnings:
             print(error)
@@ -146,10 +146,15 @@ def main(args=None):
                         help='configuration file to validate')
     parser.add_argument('--old-composes', action='store_true',
                         help='indicate if pungi-koji will be run with --old-composes option')
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Do not validate git references in URLs",
+    )
     opts = parser.parse_args(args)
 
     with pungi.util.temp_dir() as topdir:
-        errors = run(opts.config, topdir, opts.old_composes)
+        errors = run(opts.config, topdir, opts.old_composes, opts.offline)
 
     for msg in errors:
         print(msg)

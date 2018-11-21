@@ -528,6 +528,38 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*")
         self.assertEqual(config.get("live_images")[0][1]['armhfp']['repo'], 'Everything')
 
+    @mock.patch("pungi.util.resolve_git_url")
+    @mock.patch('pungi.checks.make_schema')
+    def test_resolve_url(self, make_schema, resolve_git_url):
+        resolve_git_url.return_value = "git://example.com/repo.git#CAFE"
+        make_schema.return_value = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {"foo": {"type": "url"}},
+        }
+        config = self._load_conf_from_string("foo = 'git://example.com/repo.git#HEAD'")
+        errors, warnings = checks.validate(config)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(config["foo"], resolve_git_url.return_value)
+
+    @mock.patch("pungi.util.resolve_git_url")
+    @mock.patch('pungi.checks.make_schema')
+    def test_resolve_url_when_offline(self, make_schema, resolve_git_url):
+        make_schema.return_value = {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "title": "Pungi Configuration",
+            "type": "object",
+            "properties": {"foo": {"type": "url"}},
+        }
+        config = self._load_conf_from_string("foo = 'git://example.com/repo.git#HEAD'")
+        errors, warnings = checks.validate(config, offline=True)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(config["foo"], "git://example.com/repo.git#HEAD")
+        self.assertEqual(resolve_git_url.call_args_list, [])
+
 
 class TestUmask(unittest.TestCase):
     def setUp(self):
