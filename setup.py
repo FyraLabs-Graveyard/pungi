@@ -36,6 +36,7 @@ setup(
     scripts         = [
         'bin/comps_filter',
         'bin/pungi',
+        'bin/pungi-config-dump',
         'bin/pungi-config-validate',
         'bin/pungi-create-unified-isos',
         'bin/pungi-fedmsg-notification',

@@ -96,6 +96,7 @@ rm -rf %{buildroot}
 %files utils
 %{python_sitelib}/%{name}_utils
 %{_bindir}/%{name}-create-unified-isos
+%{_bindir}/%{name}-config-dump
 %{_bindir}/%{name}-config-validate
 %{_bindir}/%{name}-fedmsg-notification
 %{_bindir}/%{name}-patch-iso
