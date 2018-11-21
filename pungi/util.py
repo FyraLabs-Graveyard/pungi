@@ -285,6 +285,22 @@ def resolve_git_url(url):
     return result
 
 
+class GitUrlResolver(object):
+    """A wrapper for resolve_git_url that checks each url only once. In offline
+    mode it does not actually do anything, returning original input urls.
+    """
+    def __init__(self, offline=False):
+        self.offline = offline
+        self.cache = {}
+
+    def __call__(self, url):
+        if self.offline:
+            return url
+        if url not in self.cache:
+            self.cache[url] = resolve_git_url(url)
+        return self.cache[url]
+
+
 # fomat: {arch|*: [data]}
 def get_arch_data(conf, var_name, arch):
     result = []

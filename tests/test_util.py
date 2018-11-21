@@ -112,6 +112,28 @@ class TestGitRefResolver(unittest.TestCase):
                          [mock.call(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
                                     universal_newlines=True)] * 2)
 
+    @mock.patch("pungi.util.resolve_git_url")
+    def test_resolver_offline(self, mock_resolve):
+        resolver = util.GitUrlResolver(offline=True)
+        self.assertEqual(
+            resolver("http://example.com/repo.git#HEAD"),
+            "http://example.com/repo.git#HEAD",
+        )
+        self.assertEqual(mock_resolve.call_args_list, [])
+
+    @mock.patch("pungi.util.resolve_git_url")
+    def test_resolver_caches_calls(self, mock_resolve):
+        url1 = "http://example.com/repo.git#HEAD"
+        url2 = "http://example.com/repo.git#master"
+        mock_resolve.side_effect = ["1", "2"]
+        resolver = util.GitUrlResolver()
+        self.assertEqual(resolver(url1), "1")
+        self.assertEqual(resolver(url1), "1")
+        self.assertEqual(resolver(url2), "2")
+        self.assertEqual(resolver(url1), "1")
+        self.assertEqual(resolver(url2), "2")
+        self.assertEqual(mock_resolve.call_args_list, [mock.call(url1), mock.call(url2)])
+
 
 class TestGetVariantData(unittest.TestCase):
     def test_get_simple(self):
