@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.30
+Version:        4.1.31
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -109,6 +109,29 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Nov 26 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.31-1
+- Add script to merge and dump multiple configuration files (lsedlar)
+- Move resolving git reference to config validation (lsedlar)
+- util: Add a cache for resolved git urls (lsedlar)
+- Copy config files into logs/global/config-copy/ directory (mboddu)
+- Remove timestamp from config dump (lsedlar)
+- extra_iso: Support extra files in directory (lsedlar)
+- extra_iso: Include extra_files.json metadata (lsedlar)
+- Allow reading configuration from JSON (lsedlar)
+- Cleanup parsing treefile (lsedlar)
+- Fix convert rpm_ostree config to YAML (mboddu)
+- koji_wrapper: Change owner of runroot output (lsedlar)
+- util: Preserve symlinks when copying (lsedlar)
+- Move from yaml.load to yaml.safe_load (patrick)
+- extra_iso: Stop including variant extra files (lsedlar)
+- gather: Expand wildcards in package names for nodeps (lsedlar)
+- Configure image name per variant (lsedlar)
+- init: Keep parent groups in addon comps environments (lsedlar)
+- Support more specific config for devel modules (lsedlar)
+- Load supported milestones from productmd (lsedlar)
+- hybrid: Remove dead code (lsedlar)
+- Remove dead code (lsedlar)
+
 * Fri Oct 26 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.30-1
 - gather: Expand wildcards in Pungi (lsedlar)
 - repoclosure: Extract logs from hybrid solver (lsedlar)
