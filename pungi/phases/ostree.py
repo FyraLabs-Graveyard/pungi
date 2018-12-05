@@ -93,8 +93,12 @@ class OSTreeThread(WorkerThread):
                                        extra_config_file=extra_config_file)
 
         if compose.notifier:
-            ref = get_ref_from_treefile(os.path.join(repodir, config['treefile']),
-                                        arch, logger=self.pool._logger)
+            original_ref = get_ref_from_treefile(
+                os.path.join(repodir, config["treefile"]),
+                arch,
+                logger=self.pool._logger,
+            )
+            ref = config.get("ostree_ref") or original_ref
             # 'pungi-make-ostree tree' writes commitid to commitid.log in
             # logdir, except if there was no new commit we will get None
             # instead. If the commit id could not be read, an exception will be
