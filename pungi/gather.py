@@ -22,7 +22,6 @@ import subprocess
 import sys
 from fnmatch import fnmatch
 
-import createrepo
 import lockfile
 import urlgrabber.progress
 import yum
@@ -32,7 +31,7 @@ import ConfigParser
 import arch as arch_module
 import multilib_yum as multilib
 import pungi.util
-
+from pungi.wrappers.createrepo import CreaterepoWrapper
 
 class ReentrantYumLock(object):
     """ A lock that can be acquired multiple times by the same process. """
@@ -1406,39 +1405,33 @@ class Pungi(PungiBase):
         basedir = os.path.join(self.destdir, self.config.get('pungi', 'version'))
         if subfile.startswith(basedir):
             return subfile.replace(basedir + os.path.sep, '')
-        
+
     def _makeMetadata(self, path, cachedir, comps=False, repoview=False, repoviewtitle=False,
                       baseurl=False, output=False, basedir=False, update=True,
                       compress_type=None):
         """Create repodata and repoview."""
-        
-        conf = createrepo.MetaDataConfig()
-        conf.cachedir = os.path.join(cachedir, 'createrepocache')
-        conf.update = update
-        conf.unique_md_filenames = True
+
+        # Define outputdir
         if output:
-            conf.outputdir = output
+            outputdir = output
         else:
-            conf.outputdir = path
-        conf.directory = path
-        conf.database = True
-        if comps:
-            conf.groupfile = comps
-        if basedir:
-            conf.basedir = basedir
-        if baseurl:
-            conf.baseurl = baseurl
-        if compress_type:
-            conf.compress_type = compress_type
+            outputdir = path
+
+        # Define revision if SOURCE_DATE_EPOCH exists in env
         if 'SOURCE_DATE_EPOCH' in os.environ:
-            conf.revision = os.environ['SOURCE_DATE_EPOCH']
-            conf.clamp_mtime_to = int(os.environ['SOURCE_DATE_EPOCH'])
-        repomatic = createrepo.MetaDataGenerator(conf)
+            revision = os.environ['SOURCE_DATE_EPOCH']
+        else:
+            revision = None
+
+        createrepo_wrapper = CreaterepoWrapper(createrepo_c=True)
+        createrepo = createrepo_wrapper.get_createrepo_cmd(directory=path, update=update, outputdir=outputdir,
+                                                           unique_md_filenames=True, database=True, groupfile=comps,
+                                                           basedir=basedir, baseurl=baseurl, revision=revision,
+                                                           compress_type=compress_type)
+
         self.logger.info('Making repodata')
-        repomatic.doPkgMetadata()
-        repomatic.doRepoMetadata()
-        repomatic.doFinalMove()
-        
+        pungi.util._doRunCommand(createrepo, self.logger)
+
         if repoview:
             # setup the repoview call
             repoview = ['/usr/bin/repoview']
