@@ -27,6 +27,7 @@ import lockfile
 import urlgrabber.progress
 import yum
 from productmd.common import SortedConfigParser
+import ConfigParser
 
 import arch as arch_module
 import multilib_yum as multilib
