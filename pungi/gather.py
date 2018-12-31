@@ -1634,6 +1634,54 @@ class Pungi(PungiBase):
         for path, sum in sums:
             treeinfo.set('checksums', path, sum)
 
+        # Extract name of kernel images
+        pr = re.compile('images-(.*)')
+        images = []
+        for img in treeinfo.sections():
+            if pr.match(img):
+                images.append(pr.match(img).group(1))
+
+        # Extract information from pre-productmd treeinfos 'general' section
+        name = treeinfo.get('general', 'family')
+        version = treeinfo.get('general', 'version')
+        arch = treeinfo.get('general', 'arch')
+        platforms = ','.join(images)
+        timestamp = int(float(treeinfo.get('general', 'timestamp')))
+
+        # Set/modify 'general' section
+        treeinfo.set('general', 'variant', name)
+        treeinfo.set('general', 'timestamp', timestamp)
+        treeinfo.set('general', 'packagedir', 'Packages')
+        treeinfo.set('general', 'repository', '.')
+        treeinfo.set('general', 'platforms', platforms)
+
+        # Add 'header' section
+        treeinfo.add_section('header')
+        treeinfo.set('header', 'version', '1.0')
+
+        # Add 'release' section
+        treeinfo.add_section('release')
+        treeinfo.set('release', 'name', name)
+        treeinfo.set('release', 'short', name)
+        treeinfo.set('release', 'version', version)
+
+        # Add 'tree' section
+        treeinfo.add_section('tree')
+        treeinfo.set('tree', 'arch', arch)
+        treeinfo.set('tree', 'build_timestamp', timestamp)
+        treeinfo.set('tree', 'platforms', platforms)
+        treeinfo.set('tree', 'variants', name)
+
+        # Add 'variant-VARIANTNAME' section
+        variant_section_name = 'variant-' + name
+        treeinfo.add_section(variant_section_name)
+        treeinfo.set(variant_section_name, 'id', name)
+        treeinfo.set(variant_section_name, 'name', name)
+        treeinfo.set(variant_section_name, 'packages', 'Packages')
+        treeinfo.set(variant_section_name, 'repository', '.')
+        treeinfo.set(variant_section_name, 'type', 'variant')
+        treeinfo.set(variant_section_name, 'uid', name)
+
         treeinfo.write(treefile)
         treefile.close()
 
