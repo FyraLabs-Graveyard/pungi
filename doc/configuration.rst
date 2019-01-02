@@ -433,8 +433,13 @@ Options
 
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
-    directory with certificates ``<variant_uid>-<arch>-*.pem``. This
-    certificate will be injected into the repository.
+    directory with certificates ``<variant_uid>-<arch>-*.pem``. Pungi will
+    copy each certificate file into the relevant Yum repositories as a
+    ``productid`` file in the ``repodata`` directories. The purpose of these
+    ``productid`` files is to expose the product data to `subscription-manager
+    <https://github.com/candlepin/subscription-manager>`_.
+    subscription-manager inclues a "product-id" Yum plugin that can read these
+    ``productid`` certificate files from each Yum repository.
 
 **product_id_allow_missing** = False
     (*bool*) -- When ``product_id`` is used and a certificate for some variant
