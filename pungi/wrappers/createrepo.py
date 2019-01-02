@@ -28,13 +28,13 @@ class CreaterepoWrapper(object):
             self.mergerepo = "mergerepo"
             self.modifyrepo = "modifyrepo"
 
-    def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, excludes=None,
+    def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, basedir=None, excludes=None,
                            pkglist=None, groupfile=None, cachedir=None, update=True,
                            update_md_path=None, skip_stat=False, checkts=False, split=False,
                            pretty=True, database=True, checksum=None, unique_md_filenames=True,
                            distro=None, content=None, repo=None, revision=None, deltas=False,
                            oldpackagedirs=None, num_deltas=None, workers=None, use_xz=False,
-                           extra_args=None):
+                           compress_type=None, extra_args=None):
         # groupfile = /path/to/comps.xml
 
         cmd = [self.createrepo, directory]
@@ -44,6 +44,9 @@ class CreaterepoWrapper(object):
 
         if outputdir:
             cmd.append("--outputdir=%s" % outputdir)
+
+        if basedir:
+            cmd.append("--basedir=%s" % basedir)
 
         for i in force_list(excludes or []):
             cmd.append("--excludes=%s" % i)
@@ -117,6 +120,9 @@ class CreaterepoWrapper(object):
 
         if use_xz:
             cmd.append("--xz")
+
+        if compress_type:
+            cmd.append("--compress-type=%s" % compress_type)
 
         if extra_args:
             cmd.extend(force_list(extra_args))
