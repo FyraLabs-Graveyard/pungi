@@ -443,8 +443,9 @@ Options
 
 **product_id_allow_missing** = False
     (*bool*) -- When ``product_id`` is used and a certificate for some variant
-    is missing, an error will be reported by default. Use this option to
-    instead ignore the missing certificate.
+    and architecture is missing, Pungi will exit with an error by default.
+    When you set this option to ``True``, Pungi will ignore the missing
+    certificate and simply log a warning message.
 
 
 Example
