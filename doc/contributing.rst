@@ -9,7 +9,6 @@ Set up development environment
 In order to work on *Pungi*, you should install recent version of *Fedora*.
 These packages will have to installed:
 
- * createrepo
  * createrepo_c
  * cvs
  * gcc
@@ -57,7 +56,7 @@ preferably from PyPI or from tarball. You will still need to install all of the 
 packages above as they are used by calling an executable. ::
 
     $ mkvirtualenv pungienv
-    $ for pkg in createrepo gi libcomps pykickstart rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print(os.path.dirname('$pkg'.__file__))')" "$(virtualenvwrapper_get_site_packages_dir)"; done
+    $ for pkg in gi libcomps pykickstart rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print(os.path.dirname('$pkg'.__file__))')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
