@@ -69,6 +69,7 @@ class BuildinstallPhase(PhaseBase):
         add_arch_template = []
         add_template_var = []
         add_arch_template_var = []
+        rootfs_size = None
         for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
             if not data.get('noupgrade', True):
                 noupgrade = False
@@ -80,6 +81,7 @@ class BuildinstallPhase(PhaseBase):
             add_arch_template.extend(data.get('add_arch_template', []))
             add_template_var.extend(data.get('add_template_var', []))
             add_arch_template_var.extend(data.get('add_arch_template_var', []))
+            rootfs_size = data.get("rootfs_size")
         output_dir = os.path.join(output_dir, variant.uid)
         output_topdir = output_dir
 
@@ -125,6 +127,7 @@ class BuildinstallPhase(PhaseBase):
                                         add_template_var=add_template_var,
                                         add_arch_template_var=add_arch_template_var,
                                         noupgrade=noupgrade,
+                                        rootfs_size=rootfs_size,
                                         log_dir=log_dir)
         return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
                                     ' '.join([shlex_quote(x) for x in lorax_cmd]))

@@ -125,6 +125,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -135,6 +136,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -145,6 +147,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
         self.assertItemsEqual(
             get_volid.mock_calls,
@@ -191,6 +194,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')],
             any_order=True)
         self.assertItemsEqual(
@@ -254,6 +258,7 @@ class TestBuildinstallPhase(PungiTestCase):
                         'add_arch_template': ['bar'],
                         'add_template_var': ['baz=1'],
                         'add_arch_template_var': ['quux=2'],
+                        "rootfs_size": 3,
                     },
                     'amd64': {'noupgrade': False}
                 }),
@@ -292,6 +297,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template=['foo', 'FOO'], add_arch_template=['bar'],
                        add_template_var=['baz=1'], add_arch_template_var=['quux=2'],
                        bugurl='http://example.com',
+                       rootfs_size=3,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -302,6 +308,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -312,6 +319,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
         self.assertItemsEqual(
             get_volid.mock_calls,
@@ -367,6 +375,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -377,6 +386,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -387,6 +397,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
         self.assertItemsEqual(
             get_volid.mock_calls,
@@ -442,6 +453,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
                        bugurl=None,
+                       rootfs_size=None,
                        log_dir=buildinstall_topdir + '/x86_64/Server/logs'),
              mock.call('Test', '1', '1',
                        ['http://localhost/work/amd64/repo',
@@ -452,6 +464,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=buildinstall_topdir + '/amd64/Server/logs'),
              mock.call('Test', '1', '1',
                        ['http://localhost/work/amd64/repo',
@@ -462,6 +475,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=buildinstall_topdir + '/amd64/Client/logs')])
         self.assertItemsEqual(
             get_volid.mock_calls,
@@ -510,6 +524,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
                        bugurl=None,
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -520,6 +535,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
                        [self.topdir + '/work/amd64/repo',
@@ -532,6 +548,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        bugurl=None,
                        add_template=[], add_arch_template=[],
                        add_template_var=[], add_arch_template_var=[],
+                       rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
 
 

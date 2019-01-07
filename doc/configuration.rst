@@ -543,6 +543,7 @@ Options
       * ``add_arch_template`` -- *[str]* (default empty)
       * ``add_template_var`` -- *[str]* (default empty)
       * ``add_arch_template_var`` -- *[str]* (default empty)
+      * ``rootfs_size`` -- [*int*] (default empty)
 **lorax_extra_sources**
     (*list*) -- a variant/arch mapping with urls for extra source repositories
     added to Lorax command line. Either one repo or a list can be specified.
