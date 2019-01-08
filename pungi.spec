@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.31
+Version:        4.1.32
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -99,6 +99,7 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}-config-dump
 %{_bindir}/%{name}-config-validate
 %{_bindir}/%{name}-fedmsg-notification
+%{_bindir}/%{name}-orchestrate
 %{_bindir}/%{name}-patch-iso
 %{_bindir}/%{name}-compare-depsolving
 %{_bindir}/%{name}-wait-for-signed-ostree-handler
@@ -109,6 +110,22 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue Jan 08 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.32-1
+- Add script to orchestrate multiple composes (lsedlar)
+- buildinstall: Expose lorax's --rootfs-size argument (lsedlar)
+- Support for pungi-legacy with productmd format (frederic.pierret)
+- Unify update-docs.sh script with rpkg (onosek)
+- Remove createrepo references from doc and spec (lsedlar)
+- CreaterepoWrapper: add 'basedir' and 'compress-type' args for createrepo_c
+  (frederic.pierret)
+- gather.py: use createrepo_c for creating repodata instead of obsolete
+  createrepo python library (frederic.epitre)
+- Fix import of ConfigParser for NoSectionError and NoOptionError
+  (frederic.pierret)
+- doc: explain product_id_allow_missing results in detail (kdreyer)
+- doc: describe product_id's output and purpose (kdreyer)
+- ostree: Send correct ref in the message (lsedlar)
+
 * Mon Nov 26 2018 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.31-1
 - Add script to merge and dump multiple configuration files (lsedlar)
 - Move resolving git reference to config validation (lsedlar)
