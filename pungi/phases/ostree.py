@@ -6,6 +6,7 @@ import os
 from kobo import shortcuts
 from kobo.threads import ThreadPool, WorkerThread
 
+from pungi.arch_utils import getBaseArch
 from .base import ConfigGuardedPhase
 from .. import util
 from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
@@ -99,6 +100,7 @@ class OSTreeThread(WorkerThread):
                 logger=self.pool._logger,
             )
             ref = config.get("ostree_ref") or original_ref
+            ref = ref.replace("${basearch}", getBaseArch(arch))
             # 'pungi-make-ostree tree' writes commitid to commitid.log in
             # logdir, except if there was no new commit we will get None
             # instead. If the commit id could not be read, an exception will be
