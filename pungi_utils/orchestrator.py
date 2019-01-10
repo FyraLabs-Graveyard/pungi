@@ -106,7 +106,7 @@ class ComposePart(object):
             self.status = Status.READY
 
     def setup_start(self, global_config, parts):
-        substitutions = {name: p.path for name, p in parts.items() if p.is_finished()}
+        substitutions = dict((name, p.path) for name, p in parts.items() if p.is_finished())
         substitutions["configdir"] = global_config.config_dir
 
         config = kobo.conf.PyConfigParser()
