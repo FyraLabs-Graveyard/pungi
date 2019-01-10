@@ -281,6 +281,34 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
     @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    def test_run_send_message_custom_ref(self, KojiWrapper, get_dir_from_scm):
+        get_dir_from_scm.side_effect = self._dummy_config_repo
+        self.cfg["ostree_ref"] = "my/${basearch}"
+
+        self.compose.notifier = mock.Mock()
+        self.compose.conf['translate_paths'] = [(self.topdir, 'http://example.com/')]
+
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.side_effect = self._mock_runroot(
+            0,
+            {'commitid.log': 'fca3465861a',
+             'create-ostree-repo.log':
+                ['Doing work', 'fedora-atomic/25/x86_64 -> fca3465861a']})
+        t = ostree.OSTreeThread(self.pool)
+
+        t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
+
+        self.assertEqual(self.compose.notifier.send.mock_calls,
+                         [mock.call('ostree',
+                                    variant='Everything',
+                                    arch='x86_64',
+                                    ref='my/x86_64',
+                                    commitid='fca3465861a',
+                                    repo_path='http://example.com/place/for/atomic',
+                                    local_repo_path=self.repo)])
+
+    @mock.patch('pungi.wrappers.scm.get_dir_from_scm')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_run_send_message_without_commit_id(self, KojiWrapper, get_dir_from_scm):
         get_dir_from_scm.side_effect = self._dummy_config_repo
 
