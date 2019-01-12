@@ -138,8 +138,6 @@ class PungiBase(object):
                                     self.config.get('pungi', 'variant'),
                                     self.tree_arch)
 
-
-
     def doLoggerSetup(self):
         """Setup our logger"""
 
@@ -301,6 +299,9 @@ class Pungi(PungiBase):
         self.is_resolve_deps = self.config.getboolean("pungi", "resolve_deps")
 
         self.fulltree_excludes = set(self.ksparser.handler.fulltree_excludes)
+
+        # rootfs image size
+        self.rootfs_size = self.config.get('pungi', 'rootfs_size')
 
     def _add_yum_repo(self, name, url, mirrorlist=False, groups=True,
                       cost=1000, includepkgs=None, excludepkgs=None,
@@ -1569,6 +1570,9 @@ class Pungi(PungiBase):
             cmd.extend(["--installpkgs", self.config.get('lorax', 'installpkgs')])
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
+
+        if self.rootfs_size != "False":
+            cmd.extend(["--rootfs-size", self.rootfs_size])
 
         # Allow the output directory to exist.
         cmd.append("--force")

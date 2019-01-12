@@ -65,6 +65,7 @@ class Config(SafeConfigParser):
         self.set('pungi', 'resolve_deps', "True")
         self.set('pungi', 'no_dvd', "False")
         self.set('pungi', 'nomacboot', "False")
+        self.set('pungi', 'rootfs_size', "False")
 
         # if missing, self.read() is a noop, else change 'defaults'
         if pungirc:

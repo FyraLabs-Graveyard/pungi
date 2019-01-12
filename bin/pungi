@@ -331,6 +331,11 @@ if __name__ == '__main__':
             help='Which files are the release notes -- GPL EULA')
         parser.add_argument("--nomacboot", action="store_true", dest="nomacboot",
                             help='disable setting up macboot as no hfs support ')
+
+        parser.add_argument(
+            "--rootfs-size", dest="rootfs_size", action=SetConfig, default=False,
+            help='Size of root filesystem in GiB. If not specified, use lorax default value')
+
         parser.add_argument(
             "--pungirc", dest="pungirc", default='~/.pungirc', action=SetConfig,
             help='Read pungi options from config file ')
