@@ -57,7 +57,6 @@ setup(
     ],
     test_suite      = "tests",
     install_requires = [
-        "enum34",
         "jsonschema",
         "kobo",
         "lockfile",
@@ -67,6 +66,11 @@ setup(
         'dogpile.cache',
         'dict.sorted',
         ],
+    extras_require={
+        ':python_version=="2.7"': [
+            'enum34'
+        ]
+    },
     tests_require = [
         "mock",
         "nose",
