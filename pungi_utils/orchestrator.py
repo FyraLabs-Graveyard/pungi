@@ -510,7 +510,7 @@ def run(work_dir, main_config_file, args):
         parts[section] = ComposePart.from_config(parser, section, config_dir)
 
     if hasattr(args, "part"):
-        setup_for_restart()
+        setup_for_restart(global_config, parts, args.part)
 
     return run_all(global_config, parts)
 
