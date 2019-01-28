@@ -9,6 +9,7 @@ from kobo import shortcuts
 
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
+from ..arch import get_valid_arches
 from ..util import get_volid, get_repo_urls, version_generator, translate_path
 from ..wrappers import kojiwrapper, iso, lorax, scm
 
@@ -166,6 +167,7 @@ class OstreeInstallerThread(WorkerThread):
             variant=variant.uid,
             nomacboot=True,
             volid=volid,
+            buildarch=get_valid_arches(arch)[0],
             buildinstallpackages=config.get('installpkgs'),
             add_template=self._get_templates(config, 'add_template'),
             add_arch_template=self._get_templates(config, 'add_arch_template'),

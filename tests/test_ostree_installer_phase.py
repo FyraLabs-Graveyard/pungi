@@ -135,6 +135,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         if isfinal:
             lorax_cmd.append('--isfinal')
 
+        lorax_cmd.append("--buildarch=x86_64")
         lorax_cmd.append('--volid=test-Everything-x86_64')
 
         if extra:
