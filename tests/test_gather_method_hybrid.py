@@ -48,13 +48,28 @@ class TestMethodHybrid(helpers.PungiTestCase):
         arch = "x86_64"
         variant = compose.variants["Server"]
 
-        res = m(arch, variant, package_sets, set(["pkg"]), ["standard"])
+        res = m(
+            arch,
+            variant,
+            package_sets,
+            set(["pkg"]),
+            ["standard"],
+            prepopulate=["prep.noarch"],
+        )
 
         self.assertEqual(res, ep.return_value)
         self.assertEqual(cmr.call_args_list, [mock.call(compose, variant, arch)])
         self.assertEqual(
             m.run_solver.call_args_list,
-            [mock.call(variant, arch, set(["pkg", "foo", "bar"]), cmr.return_value, [])],
+            [
+                mock.call(
+                    variant,
+                    arch,
+                    set(["pkg", "foo", "bar", ("prep", "noarch")]),
+                    cmr.return_value,
+                    [],
+                )
+            ],
         )
         self.assertEqual(
             ep.call_args_list,

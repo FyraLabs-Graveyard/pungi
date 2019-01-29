@@ -162,6 +162,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         multilib_whitelist=[],
         multilib_blacklist=[],
         filter_packages=[],
+        prepopulate=[],
         **kwargs
     ):
         self.arch = arch
@@ -185,6 +186,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         packages.update(
             expand_groups(self.compose, arch, variant, groups, set_pkg_arch=False)
         )
+
+        packages.update(tuple(pkg.rsplit(".", 1)) for pkg in prepopulate)
 
         # Filters are received as tuples (name, arch), we should convert it to
         # strings.
