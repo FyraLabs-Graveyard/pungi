@@ -28,8 +28,8 @@ from ...wrappers.createrepo import CreaterepoWrapper
 import pungi.wrappers.kojiwrapper
 
 from pungi import Modulemd
+from pungi.compose import get_ordered_variant_uids
 from pungi.arch import get_compatible_arches, split_name_arch, tree_arch_to_yum_arch
-from pungi.graph import SimpleAcyclicOrientedGraph
 from pungi.phases.base import PhaseBase
 from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
                         makedirs, iter_module_defaults)
@@ -100,10 +100,11 @@ class GatherPhase(PhaseBase):
         pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets,
                                  self.pkgset_phase.path_prefix)
 
-        for arch in self.compose.get_arches():
-            for variant in self.compose.get_variants(arch=arch):
-                if variant.is_empty:
-                    continue
+        for variant_uid in get_ordered_variant_uids(self.compose):
+            variant = self.compose.all_variants[variant_uid]
+            if variant.is_empty:
+                continue
+            for arch in variant.arches:
                 link_files(self.compose, arch, variant,
                            pkg_map[arch][variant.uid],
                            self.pkgset_phase.package_sets,
@@ -343,24 +344,6 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
     return addon_pkgs, move_to_parent_pkgs, removed_pkgs
 
 
-def _prepare_variant_as_lookaside(compose):
-    """
-    Configuration value 'variant_as_lookaside' contains variant pairs: <variant - its lookaside>
-    In that pair lookaside variant have to be processed first. Structure can be represented
-    as a oriented graph. Its spanning line shows order how to process this set of variants.
-    """
-    variant_as_lookaside = compose.conf.get("variant_as_lookaside", [])
-    graph = SimpleAcyclicOrientedGraph()
-    for variant, lookaside_variant in variant_as_lookaside:
-        try:
-            graph.add_edge(variant, lookaside_variant)
-        except ValueError as e:
-            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e)
-
-    variant_processing_order = reversed(graph.prune_graph())
-    return list(variant_processing_order)
-
-
 def _make_lookaside_repo(compose, variant, arch, pkg_map):
     """
     Create variant lookaside repo for given variant and architecture with
@@ -460,13 +443,7 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
     will be added to fulltree excludes for the processed variants.
     """
 
-    ordered_variants_uids = _prepare_variant_as_lookaside(compose)
-    # Some variants were not mentioned in configuration value 'variant_as_lookaside'
-    # and its run order is not crucial (that means there are no dependencies inside this group).
-    # They will be processed first. A-Z sorting is for reproducibility.
-    unordered_variants_uids = sorted(set(compose.all_variants.keys()) - set(ordered_variants_uids))
-
-    for variant_uid in unordered_variants_uids + ordered_variants_uids:
+    for variant_uid in get_ordered_variant_uids(compose):
         variant = compose.all_variants[variant_uid]
         if variant.type != variant_type:
             continue

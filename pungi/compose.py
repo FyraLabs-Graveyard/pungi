@@ -32,6 +32,7 @@ from productmd.images import Images
 from dogpile.cache import make_region
 
 
+from pungi.graph import SimpleAcyclicOrientedGraph
 from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
@@ -428,3 +429,40 @@ class Compose(kobo.log.LoggingBase):
         """
         path = os.path.join(self.paths.work.tmp_dir(arch=arch, variant=variant))
         return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=path)
+
+
+def get_ordered_variant_uids(compose):
+    if not hasattr(compose, "_ordered_variant_uids"):
+        ordered_variant_uids = _prepare_variant_as_lookaside(compose)
+        # Some variants were not mentioned in configuration value
+        # 'variant_as_lookaside' and its run order is not crucial (that
+        # means there are no dependencies inside this group). They will be
+        # processed first. A-Z sorting is for reproducibility.
+        unordered_variant_uids = sorted(
+            set(compose.all_variants.keys()) - set(ordered_variant_uids)
+        )
+        setattr(
+            compose,
+            "_ordered_variant_uids",
+            unordered_variant_uids + ordered_variant_uids
+        )
+    return getattr(compose, "_ordered_variant_uids")
+
+
+def _prepare_variant_as_lookaside(compose):
+    """
+    Configuration value 'variant_as_lookaside' contains variant pairs <variant,
+    its lookaside>. In that pair lookaside variant have to be processed first.
+    Structure can be represented as a oriented graph. Its spanning line shows
+    order how to process this set of variants.
+    """
+    variant_as_lookaside = compose.conf.get("variant_as_lookaside", [])
+    graph = SimpleAcyclicOrientedGraph()
+    for variant, lookaside_variant in variant_as_lookaside:
+        try:
+            graph.add_edge(variant, lookaside_variant)
+        except ValueError as e:
+            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e)
+
+    variant_processing_order = reversed(graph.prune_graph())
+    return list(variant_processing_order)
