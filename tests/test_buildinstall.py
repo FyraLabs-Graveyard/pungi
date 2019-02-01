@@ -251,6 +251,7 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'lorax_options': [
+                ('^.*$', {'*': {}}),
                 ('^Server$', {
                     'x86_64': {
                         'bugurl': 'http://example.com',
@@ -265,6 +266,7 @@ class TestBuildinstallPhase(PungiTestCase):
                 ('^Client$', {
                     '*': {'nomacboot': False}
                 }),
+                ('^.*$', {'*': {}}),
             ]
         })
 

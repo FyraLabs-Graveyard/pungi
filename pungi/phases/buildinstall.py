@@ -77,11 +77,12 @@ class BuildinstallPhase(PhaseBase):
                 bugurl = data.get('bugurl')
             if not data.get('nomacboot', True):
                 nomacboot = False
+            if "rootfs_size" in data:
+                rootfs_size = data.get("rootfs_size")
             add_template.extend(data.get('add_template', []))
             add_arch_template.extend(data.get('add_arch_template', []))
             add_template_var.extend(data.get('add_template_var', []))
             add_arch_template_var.extend(data.get('add_arch_template_var', []))
-            rootfs_size = data.get("rootfs_size")
         output_dir = os.path.join(output_dir, variant.uid)
         output_topdir = output_dir
 
