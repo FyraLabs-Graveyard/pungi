@@ -799,6 +799,26 @@ class TestFilterByWhitelist(unittest.TestCase):
             result, [{"nvr": "foo-1-201809031047.deadbeef"}]
         )
 
+    def test_filter_by_wildcard(self):
+        compose = mock.Mock()
+        module_builds = [
+            {"nvr": "foo-1-201809031048.cafebabe"},
+            {"nvr": "foo-1-201809031047.deadbeef"},
+            {"nvr": "foo-2-201809031047.deadbeef"},
+        ]
+        input_modules = [{"name": "*"}]
+
+        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+
+        self.assertItemsEqual(
+            result,
+            [
+                {"nvr": "foo-1-201809031048.cafebabe"},
+                {"nvr": "foo-1-201809031047.deadbeef"},
+                {"nvr": "foo-2-201809031047.deadbeef"},
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -345,6 +345,10 @@ def filter_by_whitelist(compose, module_builds, input_modules):
     specs = set()
     nvr_prefixes = set()
     for spec in input_modules:
+        # Do not do any filtering in case variant wants all the modules.
+        if spec["name"] == "*":
+            return module_builds
+
         info = variant_dict_from_str(compose, spec["name"])
         prefix = ("%s-%s-%s.%s" % (
             info["name"],
