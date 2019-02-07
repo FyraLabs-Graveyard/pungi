@@ -430,6 +430,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     test_phase.stop()
 
     compose.write_status("FINISHED")
+    osbs_phase.request_push()
     latest_link = False
     if create_latest_link:
         if latest_link_status is None:

@@ -1455,12 +1455,12 @@ Example config
 OSBS Settings
 =============
 
-*Pungi* can build docker images in OSBS. The build is initiated through Koji
+*Pungi* can build container images in OSBS. The build is initiated through Koji
 ``container-build`` plugin. The base image will be using RPMs from the current
 compose and a ``Dockerfile`` from specified Git repository.
 
-Please note that the image is uploaded to a Docker v2 registry and not exported
-into compose directory. There will be a metadata file in
+Please note that the image is uploaded to a registry and not exported into
+compose directory. There will be a metadata file in
 ``compose/metadata/osbs.json`` with details about the built images (assuming
 they are not scratch builds).
 
@@ -1486,6 +1486,15 @@ they are not scratch builds).
         Once OSBS gains support for multiple architectures, the usage of this
         option will most likely change to list architectures that are allowed
         to fail.
+
+    It is possible to configure extra information about where to push the image
+    (unless it is a scratch build). Pungi will take any value in ``registry``
+    key in the configuration and collect them across all built images. The data
+    will be saved into ``logs/global/osbs-registries.json`` as a mapping from
+    Koji NVR to the registry data. The same data is also sent to the message
+    bus on ``osbs-request-push`` topic once the compose finishes successfully.
+    Handling the message and performing the actual push is outside of scope for
+    Pungi.
 
     The configuration will pass other attributes directly to the Koji task.
     This includes ``name``, ``version``, ``scratch`` and ``priority``.

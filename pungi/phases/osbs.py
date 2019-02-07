@@ -17,6 +17,7 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         super(OSBSPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
         self.pool.metadata = {}
+        self.pool.registries = {}
 
     def run(self):
         for variant in self.compose.get_variants():
@@ -33,6 +34,28 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         with open(self.compose.paths.compose.metadata('osbs.json'), 'w') as f:
             json.dump(self.pool.metadata, f, indent=4, sort_keys=True,
                       separators=(',', ': '))
+
+    def request_push(self):
+        """Store configuration data about where to push the created images and
+        then send the same data to message bus.
+        """
+        if not self.pool.registries:
+            return
+
+        # Write the data into a file.
+        registry_file = os.path.join(
+            self.compose.paths.log.topdir(), "osbs-registries.json"
+        )
+        with open(registry_file, "w") as fh:
+            json.dump(self.pool.registries, fh)
+
+        # Send a message with the data
+        if self.compose.notifier:
+            self.compose.notifier.send(
+                "osbs-request-push",
+                config_location=util.translate_path(self.compose, registry_file),
+                config=self.pool.registries,
+            )
 
 
 class OSBSThread(WorkerThread):
@@ -56,6 +79,7 @@ class OSBSThread(WorkerThread):
         gpgkey = config.pop('gpgkey', None)
         repos = [self._get_repo(compose, v, gpgkey=gpgkey)
                  for v in [variant.uid] + shortcuts.force_list(config.pop('repo', []))]
+        registry = config.pop("registry", None)
 
         config['yum_repourls'] = repos
 
@@ -73,7 +97,9 @@ class OSBSThread(WorkerThread):
                                % (task_id, log_file))
 
         scratch = config.get('scratch', False)
-        self._add_metadata(variant, task_id, compose, scratch)
+        nvr = self._add_metadata(variant, task_id, compose, scratch)
+        if nvr and registry:
+            self.pool.registries[nvr] = registry
 
         self.pool.log_info('[DONE ] %s' % msg)
 
@@ -98,16 +124,20 @@ class OSBSThread(WorkerThread):
             # in same data structure as real builds.
             self.pool.metadata.setdefault(
                 variant.uid, {}).setdefault('scratch', []).append(metadata)
+            return None
+
         else:
             build_id = int(result['koji_builds'][0])
             buildinfo = koji.koji_proxy.getBuild(build_id)
             archives = koji.koji_proxy.listArchives(build_id)
 
+            nvr = "%(name)s-%(version)s-%(release)s" % buildinfo
+
             metadata.update({
                 'name': buildinfo['name'],
                 'version': buildinfo['version'],
                 'release': buildinfo['release'],
-                'nvr': '%(name)s-%(version)s-%(release)s' % buildinfo,
+                'nvr': nvr,
                 'creation_time': buildinfo['creation_time'],
             })
             for archive in archives:
@@ -123,6 +153,7 @@ class OSBSThread(WorkerThread):
                     metadata['name'], metadata['version'], metadata['release'], arch))
                 self.pool.metadata.setdefault(
                     variant.uid, {}).setdefault(arch, []).append(data)
+            return nvr
 
     def _get_repo(self, compose, repo, gpgkey=None):
         """

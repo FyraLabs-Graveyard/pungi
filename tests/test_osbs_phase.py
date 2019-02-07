@@ -75,6 +75,29 @@ class OSBSPhaseTest(helpers.PungiTestCase):
 
         self.assertFalse(os.path.isfile(self.topdir + '/compose/metadata/osbs.json'))
 
+    @mock.patch("pungi.phases.osbs.ThreadPool")
+    def test_request_push(self, ThreadPool):
+        compose = helpers.DummyCompose(self.topdir, {
+            "osbs": {"^Everything$": {}}
+        })
+        compose.just_phases = None
+        compose.skip_phases = []
+        compose.notifier = mock.Mock()
+        phase = osbs.OSBSPhase(compose)
+        phase.start()
+        phase.stop()
+        phase.pool.registries = {"foo": "bar"}
+        phase.request_push()
+
+        with open(os.path.join(self.topdir, "logs/global/osbs-registries.json")) as f:
+            data = json.load(f)
+            self.assertEqual(data, phase.pool.registries)
+
+        self.assertEqual(
+            compose.notifier.call_args_list,
+            [],
+        )
+
 
 TASK_RESULT = {
     'koji_builds': ['54321'],
@@ -169,7 +192,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
     def setUp(self):
         super(OSBSThreadTest, self).setUp()
-        self.pool = mock.Mock(metadata={})
+        self.pool = mock.Mock(metadata={}, registries={})
         self.t = osbs.OSBSThread(self.pool)
         self.compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
@@ -330,6 +353,37 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
         self._assertRepoFile(['Server', 'Everything'])
+
+    @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
+    def test_run_with_registry(self, KojiWrapper):
+        cfg = {
+            "url": "git://example.com/repo?#BEEFCAFE",
+            "target": "f24-docker-candidate",
+            "git_branch": "f24-docker",
+            "name": "my-name",
+            "version": "1.0",
+            "repo": ["Everything", "http://pkgs.example.com/my.repo"],
+            "registry": {"foo": "bar"},
+        }
+        self._setupMock(KojiWrapper)
+        self._assertConfigCorrect(cfg)
+
+        self.t.process((self.compose, self.compose.variants["Server"], cfg), 1)
+
+        options = {
+            "name": "my-name",
+            "version": "1.0",
+            "git_branch": "f24-docker",
+            "yum_repourls": [
+                "http://root/work/global/tmp-Server/compose-rpms-Server-1.repo",
+                "http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo",
+                "http://pkgs.example.com/my.repo",
+            ]
+        }
+        self._assertCorrectCalls(options)
+        self._assertCorrectMetadata()
+        self._assertRepoFile(["Server", "Everything"])
+        self.assertEqual(self.t.pool.registries, {"my-name-1.0-1": {"foo": "bar"}})
 
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_run_with_extra_repos_in_list(self, KojiWrapper):

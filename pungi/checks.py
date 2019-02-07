@@ -497,6 +497,7 @@ def make_schema():
                     },
                     "gpgkey": {"type": "string"},
                     "git_branch": {"type": "string"},
+                    "registry": {"type": "object"},
                 },
                 "required": ["url", "target", "git_branch"]
             },
