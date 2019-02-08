@@ -191,17 +191,16 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
         # Filters are received as tuples (name, arch), we should convert it to
         # strings.
-        filter_packages = [_fmt_pkg(*p) for p in filter_packages]
+        filters = [_fmt_pkg(*p) for p in filter_packages]
 
-        nvrs, out_modules = self.run_solver(
-            variant, arch, packages, platform, filter_packages
-        )
+        nvrs, out_modules = self.run_solver(variant, arch, packages, platform, filters)
         filter_modules(variant, arch, out_modules)
         return expand_packages(
             self._get_pkg_map(arch),
             variant.arch_mmds.get(arch, {}),
             pungi.phases.gather.get_lookaside_repos(self.compose, arch, variant),
             nvrs,
+            filter_packages=filter_packages,
         )
         # maybe check invalid sigkeys
 
@@ -475,13 +474,15 @@ def _make_result(paths):
     return [{"path": path, "flags": []} for path in sorted(paths)]
 
 
-def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
+def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_packages):
     """For each package add source RPM and possibly also debuginfo."""
     # This will server as the final result. We collect sets of paths to the
     # packages.
     rpms = set()
     srpms = set()
     debuginfo = set()
+
+    filters = set(filter_packages)
 
     # Collect list of all packages in lookaside. These will not be added to the
     # result. Fus handles this in part: if a package is explicitly mentioned as
@@ -520,6 +521,9 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
                 # debuginfo is explicitly listed in the output, and we don't
                 # want anything more.
                 srpm_arches[srpm_nevra].add(arch)
+            if (srpm.name, "src") in filters:
+                # Filtered package, skipping
+                continue
             if srpm.file_path not in lookaside_packages:
                 srpms.add(srpm.file_path)
         except KeyError:
@@ -531,6 +535,9 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs):
     # for architecture that has at least one binary package, we include it too.
     for pkg in nevra_to_pkg.values():
         if pkg_is_debug(pkg) and pkg.arch in srpm_arches[_get_srpm_nevra(pkg)]:
+            if set([(pkg.name, pkg.arch), (pkg.name, None)]) & filters:
+                # Filtered package, skipping
+                continue
             if pkg.file_path not in lookaside_packages:
                 debuginfo.add(pkg.file_path)
 

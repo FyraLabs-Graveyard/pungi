@@ -79,6 +79,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
                     {},
                     glr.return_value,
                     m.run_solver.return_value[0],
+                    filter_packages=[],
                 )
             ],
         )
@@ -365,7 +366,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "x86_64",
             [],
             platform="pl",
-            filter_packages=["foo"],
+            filter_packages=[("foo", None)],
         )
 
         self.assertEqual(res, po.return_value)
@@ -390,7 +391,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                     [self._repo("repo"), self._repo("module_repo_Server")],
                     [],
                     platform="pl",
-                    filter_packages=["foo"],
+                    filter_packages=[("foo", None)],
                 )
             ],
         )
@@ -744,11 +745,13 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = {"pkg-3:1-2.x86_64": pkg}
         if src or debug_arch:
             nevra_to_pkg["pkg-3:1-2.src"] = pkg._replace(
-                arch="src", file_path="/tmp/spkg.rpm"
+                name="pkg", arch="src", file_path="/tmp/pkg.src.rpm"
             )
         if debug_arch:
             nevra_to_pkg["pkg-debuginfo-3:1-2.%s" % debug_arch] = pkg._replace(
-                name="pkg-debuginfo", arch=debug_arch, file_path="/tmp/d1.rpm"
+                name="pkg-debuginfo",
+                arch=debug_arch,
+                file_path="/tmp/pkg-debuginfo.%s.rpm" % debug_arch
             )
         return nevra_to_pkg
 
@@ -756,7 +759,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages()
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
@@ -772,15 +775,75 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
             res,
             {
                 "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
-                "debuginfo": [{"path": "/tmp/d1.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
+                "debuginfo": [{"path": "/tmp/pkg-debuginfo.x86_64.rpm", "flags": []}],
+            },
+        )
+
+    def test_filter_src_and_debuginfo(self):
+        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+
+        res = hybrid.expand_packages(
+            nevra_to_pkg,
+            {},
+            [],
+            [("pkg-3:1-2", "x86_64", [])],
+            filter_packages=[("pkg-debuginfo", "x86_64"), ("pkg", "src")],
+        )
+
+        self.assertEqual(
+            res,
+            {
+                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
+                "srpm": [],
+                "debuginfo": [],
+            },
+        )
+
+    def test_filter_debuginfo_missing_arch(self):
+        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+
+        res = hybrid.expand_packages(
+            nevra_to_pkg,
+            {},
+            [],
+            [("pkg-3:1-2", "x86_64", [])],
+            filter_packages=[("pkg-debuginfo", None)],
+        )
+
+        self.assertEqual(
+            res,
+            {
+                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
+                "debuginfo": [],
+            },
+        )
+
+    def test_filter_debuginfo_different_arch(self):
+        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+
+        res = hybrid.expand_packages(
+            nevra_to_pkg,
+            {},
+            [],
+            [("pkg-3:1-2", "x86_64", [])],
+            filter_packages=[("pkg-debuginfo", "aarch64")],
+        )
+
+        self.assertEqual(
+            res,
+            {
+                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
+                "debuginfo": [{"path": "/tmp/pkg-debuginfo.x86_64.rpm", "flags": []}],
             },
         )
 
@@ -788,14 +851,14 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", ["modular"])]
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", ["modular"])], []
         )
 
         self.assertEqual(
             res,
             {
                 "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
                 "debuginfo": [],
             },
         )
@@ -804,15 +867,15 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-debuginfo-3:1-2", "x86_64", ["modular"])]
+            nevra_to_pkg, {}, [], [("pkg-debuginfo-3:1-2", "x86_64", ["modular"])], []
         )
 
         self.assertEqual(
             res,
             {
                 "rpm": [],
-                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
-                "debuginfo": [{"path": "/tmp/d1.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
+                "debuginfo": [{"path": "/tmp/pkg-debuginfo.x86_64.rpm", "flags": []}],
             },
         )
 
@@ -820,14 +883,14 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="i686")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])]
+            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
             res,
             {
                 "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/spkg.rpm", "flags": []}],
+                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
                 "debuginfo": [],
             },
         )
@@ -841,20 +904,20 @@ class TestExpandPackages(helpers.PungiTestCase):
                 name="pkg",
                 arch="src",
                 location_base="file:///tmp/",
-                location_href="spkg.rpm",
+                location_href="pkg.src.rpm",
             ),
             "def": NamedMock(
                 name="pkg-debuginfo",
                 arch="x86_64",
                 location_base="file:///tmp/",
-                location_href="d1.rpm",
+                location_href="pkg-debuginfo.x86_64.rpm",
             ),
         }
         cr.Metadata.return_value.keys.return_value = repo.keys()
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])]
+            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
@@ -882,7 +945,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])]
+            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(res, {"rpm": [], "srpm": [], "debuginfo": []})
