@@ -80,3 +80,25 @@ class TestGatherSourceModule(helpers.PungiTestCase):
         variant = self.compose.variants["Server"]
         arch_mmd = variant.arch_mmds["x86_64"]["testmodule:master:1:2017"]
         self.assertEqual(len(arch_mmd.get_rpm_artifacts().get()), 0)
+
+    def test_gather_filtered_module_include_devel_modules(self):
+        self.compose.conf['include_devel_modules'] = {
+            "Server": ["testmodule-devel:master"]}
+
+        filter_set = Modulemd.SimpleSet()
+        filter_set.add("pkg")
+        self.mmd.set_rpm_filter(filter_set)
+
+        source = GatherSourceModule(self.compose)
+        packages, groups = source("x86_64", self.compose.variants["Server"])
+
+        # Two packages, because -devel for x86_64 includes both x86_64
+        # and i686.
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(len(groups), 0)
+
+        variant = self.compose.variants["Server"]
+        arch_mmd = variant.arch_mmds["x86_64"]["testmodule:master:1:2017"]
+        self.assertEqual(len(arch_mmd.get_rpm_artifacts().get()), 0)
+        arch_mmd = variant.arch_mmds["x86_64"]["testmodule-devel:master:1:2017"]
+        self.assertEqual(len(arch_mmd.get_rpm_artifacts().get()), 2)

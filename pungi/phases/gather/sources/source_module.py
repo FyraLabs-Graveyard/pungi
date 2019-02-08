@@ -142,6 +142,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                     )
                     added_rpms.setdefault(nsvc_devel, [])
                     added_rpms[nsvc_devel].append(str(rpm_obj.nevra))
+                    packages.add((rpm_obj, None))
                     log.write("Adding %s to %s module\n" % (rpm_obj, nsvc_devel))
 
         # GatherSource returns all the packages in variant and does not
