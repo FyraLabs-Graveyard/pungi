@@ -344,6 +344,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 def get_lookaside_modules(lookasides):
     """Get list of NSVC of all modules in all lookaside repos."""
     modules = set()
+    platforms = set()
     for repo in lookasides:
         repo = fus._prep_path(repo)
         repomd = cr.Repomd(os.path.join(repo, "repodata/repomd.xml"))
@@ -365,7 +366,11 @@ def get_lookaside_modules(lookasides):
                             mmd.peek_context(),
                         )
                     )
-    return modules
+                    for dep in mmd.peek_dependencies():
+                        streams = dep.peek_requires().get("platform")
+                        if streams:
+                            platforms.update(streams.dup())
+    return modules, platforms
 
 
 def create_module_repo(compose, variant, arch):
@@ -378,9 +383,7 @@ def create_module_repo(compose, variant, arch):
 
     compose.log_debug("[BEGIN] %s" % msg)
 
-    platforms = set()
-
-    lookaside_modules = get_lookaside_modules(
+    lookaside_modules, platforms = get_lookaside_modules(
         pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
     )
 
