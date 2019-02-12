@@ -125,7 +125,7 @@ class ExtraIsosThread(WorkerThread):
                                   arch, "extraiso-%s" % os.path.basename(iso_path)),
                               with_jigdo=compose.conf['create_jigdo'])
 
-        add_iso_to_metadata(
+        img = add_iso_to_metadata(
             compose,
             variant,
             arch,
@@ -133,6 +133,7 @@ class ExtraIsosThread(WorkerThread):
             bootable,
             additional_variants=config["include_variants"],
         )
+        img._max_size = config.get("max_size")
 
         self.pool.log_info("[DONE ] %s" % msg)
 

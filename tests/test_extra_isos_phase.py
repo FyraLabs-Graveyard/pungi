@@ -220,6 +220,63 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
+    def test_image_with_max_size(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
+        compose = helpers.DummyCompose(self.topdir, {
+            "bootable": True,
+            "buildinstall_method": "lorax"
+        })
+        server = compose.variants["Server"]
+        cfg = {
+            "include_variants": ["Client"],
+            "max_size": 15,
+        }
+
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
+
+        t = extra_isos.ExtraIsosThread(mock.Mock())
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "x86_64"), 1)
+
+        self.assertEqual(gfn.call_args_list,
+                         [mock.call(compose, server, "x86_64", None)])
+        self.assertEqual(gvi.call_args_list,
+                         [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(gef.call_args_list,
+                         [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    ["Client"],
+                    "my.iso",
+                    bootable=True,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
+        self.assertEqual(
+            rcc.call_args_list,
+            [mock.call(False, 1, compose, True, "x86_64",
+                       ["bash", os.path.join(self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh")],
+                       [self.topdir],
+                       log_file=os.path.join(self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"),
+                       with_jigdo=True)]
+
+        )
+        self.assertEqual(
+            aitm.call_args_list,
+            [mock.call(compose, server, "x86_64",
+                       os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
+                       True, additional_variants=["Client"])]
+        )
+        self.assertEqual(aitm.return_value._max_size, 15)
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
+
     def test_binary_image_custom_naming(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
         server = compose.variants['Server']

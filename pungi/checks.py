@@ -730,6 +730,7 @@ def make_schema():
                 "default": {},
             },
             "createiso_skip": _variant_arch_mapping({"type": "boolean"}),
+            "createiso_max_size": _variant_arch_mapping({"type": "number"}),
             "createiso_break_hardlinks": {
                 "type": "boolean",
                 "default": False,
@@ -969,6 +970,7 @@ def make_schema():
                                     "type": "boolean",
                                     "default": False,
                                 },
+                                "max_size": {"type": "number"},
                             },
                             "required": ["include_variants"],
                             "additionalProperties": False

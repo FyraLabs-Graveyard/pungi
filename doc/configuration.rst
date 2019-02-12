@@ -1003,6 +1003,12 @@ Options
 **createiso_skip** = False
     (*list*) -- mapping that defines which variants and arches to skip during createiso; format: [(variant_uid_regex, {arch|*: True})]
 
+**createiso_max_size**
+    (*list*) -- mapping that defines maximum expected size for each variant and
+    arch. If the ISO is larger than the limit, a warning will be issued.
+
+    Format: ``[(variant_uid_regex, {arch|*: number})]``
+
 **create_jigdo** = True
     (*bool*) -- controls the creation of jigdo from ISO
 
@@ -1573,6 +1579,9 @@ will reuse boot configuration from that variant.
     * ``inherit_extra_files`` -- (*bool*) by default extra files in variants
       are ignored. If you want to include them in the ISO, set this option to
       ``True``.
+
+    * ``max_size`` -- (*int*) expected maximum size in bytes. If the final
+      image is larger, a warning will be issued.
 
 Example config
 --------------

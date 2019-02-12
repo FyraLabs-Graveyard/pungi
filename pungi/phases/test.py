@@ -114,10 +114,11 @@ def check_image_sanity(compose):
             if arch not in im.images[variant.uid]:
                 continue
             for img in im.images[variant.uid][arch]:
-                check(compose, variant, arch, img)
+                check_sanity(compose, variant, arch, img)
+                check_size_limit(compose, variant, arch, img)
 
 
-def check(compose, variant, arch, image):
+def check_sanity(compose, variant, arch, image):
     path = os.path.join(compose.paths.compose.topdir(), image.path)
     deliverable = getattr(image, 'deliverable')
     can_fail = getattr(image, 'can_fail', False)
@@ -159,3 +160,22 @@ def has_gpt(f):
 
 def has_eltorito(f):
     return _check_magic(f, 0x8801, b'CD001\1EL TORITO SPECIFICATION')
+
+
+def check_size_limit(compose, variant, arch, img):
+    """If a size of the ISO image is over the configured limit, report a
+    warning. Do nothing for other types of images.
+    """
+    if img.format != "iso":
+        return
+    limits = get_arch_variant_data(compose.conf, "createiso_max_size", arch, variant)
+    if not limits and not getattr(img, "_max_size", None):
+        return
+    # For ISOs created in extra_isos phase we add an attribute with the limit,
+    # and there is a global option otherwise.
+    limit = getattr(img, "_max_size", None) or limits[0]
+
+    if img.size > limit:
+        compose.log_warning(
+            "ISO %s is too big. Expected max %dB, got %dB" % (img.path, limit, img.size)
+        )

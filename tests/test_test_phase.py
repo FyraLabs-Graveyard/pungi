@@ -166,6 +166,60 @@ class TestCheckImageSanity(PungiTestCase):
         except Exception:
             self.fail('Checking optional variant must not raise')
 
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_too_big_iso(self):
+        compose = DummyCompose(self.topdir, {"createiso_max_size": [(".*", {"*": 10})]})
+        compose.image.format = 'iso'
+        compose.image.bootable = False
+        compose.image.size = 20
+
+        test_phase.check_image_sanity(compose)
+
+        warnings = [call[0][0] for call in compose.log_warning.call_args_list]
+        self.assertIn(
+            "ISO Client/i386/iso/image.iso is too big. Expected max 10B, got 20B",
+            warnings,
+        )
+
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_too_big_unified(self):
+        compose = DummyCompose(self.topdir, {})
+        compose.image.format = 'iso'
+        compose.image.bootable = False
+        compose.image.size = 20
+        compose.image.unified = True
+        setattr(compose.image, "_max_size", 10)
+
+        test_phase.check_image_sanity(compose)
+
+        warnings = [call[0][0] for call in compose.log_warning.call_args_list]
+        self.assertIn(
+            "ISO Client/i386/iso/image.iso is too big. Expected max 10B, got 20B",
+            warnings,
+        )
+
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_fits_in_limit(self):
+        compose = DummyCompose(self.topdir, {"createiso_max_size": [(".*", {"*": 20})]})
+        compose.image.format = 'iso'
+        compose.image.bootable = False
+        compose.image.size = 5
+
+        test_phase.check_image_sanity(compose)
+
+        self.assertEqual(compose.log_warning.call_args_list, [])
+
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_non_iso(self):
+        compose = DummyCompose(self.topdir, {"createiso_max_size": [(".*", {"*": 10})]})
+        compose.image.format = 'qcow2'
+        compose.image.bootable = False
+        compose.image.size = 20
+
+        test_phase.check_image_sanity(compose)
+
+        self.assertEqual(compose.log_warning.call_args_list, [])
+
 
 class TestRepoclosure(PungiTestCase):
 

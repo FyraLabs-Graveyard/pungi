@@ -263,6 +263,7 @@ def add_iso_to_metadata(
             compose.im.add(variant.uid, variant_arch, img)
     else:
         compose.im.add(variant.uid, arch, img)
+    return img
 
 
 def run_createiso_command(runroot, num, compose, bootable, arch, cmd, mounts,
