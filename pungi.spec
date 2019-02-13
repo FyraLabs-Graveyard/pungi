@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.32
+Version:        4.1.33
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -110,7 +110,26 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
-* Tue Jan 08 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.32-1
+* Wed Feb 13 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.33-1
+- isos: Check maximum expected size (lsedlar)
+- osbs: Process data about pushing images to registries (lsedlar)
+- hybrid: Apply filters to debuginfo and source packages (lsedlar)
+- hybrid: Get platform from lookaside repos (lsedlar)
+- Return RPMs added to -devel module in GatherSourceModule. (jkaluza)
+- Allow setting wildcard as a module name in variants to include all
+  the modules. (jkaluza)
+- gather: Link files in order for dependant variants (lsedlar)
+- buildinstall: Pick correct config with rootfs_size (lsedlar)
+- hybrid: Add packages from prepopulate to input (lsedlar)
+- ostree_installer: Pass --buildarch to lorax (lsedlar)
+- orchestrator: Add missing function arguments (lsedlar)
+- orchestrator: Compatibility with Python 2.6 (lsedlar)
+- pungi-legacy: expose lorax's --rootfs-size argument (frederic.pierret)
+- Only require enum34 on Legacy Python (miro)
+- ostree: Add test for expanding basearch for message (lsedlar)
+- Make sure ${basearch} is also replaced with config['ostree_ref'] (patrick)
+
+* Tue Jan 08 2019 Lubomír Sedlář <lsedlar@redhat.com> - Version:        4.1.33-1
 - Add script to orchestrate multiple composes (lsedlar)
 - buildinstall: Expose lorax's --rootfs-size argument (lsedlar)
 - Support for pungi-legacy with productmd format (frederic.pierret)
