@@ -31,6 +31,7 @@ also moves the artifacts to correct locations.
 
 ## Links
 
+- Documentation: https://docs.pagure.org/pungi/
 - Upstream GIT: https://pagure.io/pungi/
 - Issue tracker: https://pagure.io/pungi/issues
 - Questions can be asked on *#fedora-releng* IRC channel on FreeNode
