@@ -63,7 +63,7 @@ def get_boot_options(arch, createfrom, efi=True):
         ]
         return result
 
-    if arch in ("ppc", "ppc64", "ppc64le"):
+    if arch in ("ppc", "ppc64"):
         result = [
             '-part',
             '-hfs',
@@ -75,6 +75,15 @@ def get_boot_options(arch, createfrom, efi=True):
             '-chrp-boot',
             "-map", os.path.join(createfrom, 'mapping'),  # -map %s/ppc/mapping
             '-hfs-bless', "/ppc/mac",  # must be the last
+        ]
+        return result
+
+    if arch == "ppc64le":
+        result = [
+            '-r',
+            '-l',
+            '-sysid', 'PPC',
+            '-chrp-boot',
         ]
         return result
 
