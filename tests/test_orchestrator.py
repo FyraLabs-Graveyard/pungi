@@ -184,7 +184,7 @@ class TestComposePart(PungiTestCase):
         self.assertEqual(part.log_file, pth("tgt", "logs", "test.log"))
         self.assertEqual(
             ficf.call_args_list,
-            [mock.call("foo.conf", {"base": "/base", "configdir": pth("cfg")})],
+            [mock.call("foo.conf", {"part-base": "/base", "configdir": pth("cfg")})],
         )
         self.assertEqual(
             gcd.call_args_list,
