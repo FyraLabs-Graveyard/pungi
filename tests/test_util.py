@@ -626,6 +626,10 @@ class GetRepoFuncsTestCase(unittest.TestCase):
         url = util.get_repo_url(self.compose, 'http://example.com/repo')
         self.assertEqual(url, 'http://example.com/repo')
 
+    def test_get_repo_url_from_path(self):
+        url = util.get_repo_url(self.compose, os.path.join(self.tmp_dir, "repo"))
+        self.assertEqual(url, "http://example.com/repo")
+
     def test_get_repo_url_from_variant_uid(self):
         url = util.get_repo_url(self.compose, 'Server')
         self.assertEqual(url, 'http://example.com/RHEL-8.0-20180101.n.0/compose/Server/$basearch/os')

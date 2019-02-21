@@ -60,7 +60,12 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
 
         install_tree_from = image_conf.pop('install_tree_from', variant.uid)
         if '://' in install_tree_from:
+            # It's a URL, return it unchanged
             return install_tree_from
+        if install_tree_from.startswith("/"):
+            # It's a path on local filesystem.
+            return translate_path(self.compose, install_tree_from)
+
         install_tree_source = self.compose.all_variants.get(install_tree_from)
         if not install_tree_source:
             raise RuntimeError(

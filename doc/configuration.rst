@@ -1227,6 +1227,14 @@ Image Build Settings
     based on current variant. You can use ``install_tree_from`` key to use
     install tree from another variant.
 
+    Both the install tree and repos can use one of following formats:
+
+     * URL to the location
+     * name of variant in the current compose
+     * absolute path on local filesystem (which will be translated using
+       configured mappings or used unchanged, in which case you have to ensure
+       the koji builders can access it)
+
     You can set either a single format, or a list of formats. For available
     values see help output for ``koji image-build`` command.
 

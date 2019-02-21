@@ -731,6 +731,9 @@ def get_repo_url(compose, repo, arch='$basearch'):
             repo = repo['baseurl']
         except KeyError:
             raise RuntimeError('Baseurl is required in repo dict %s' % str(repo))
+    if repo.startswith("/"):
+        # It's an absolute path, translate it and return it
+        return translate_path(compose, repo)
     if '://' not in repo:
         # this is a variant name
         if compose is not None:
