@@ -109,7 +109,9 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                 arch='x86_64',
                 supported=True,
                 jigdo_dir='%s/compose/Server/x86_64/jigdo' % self.topdir,
-                os_tree='%s/compose/Server/x86_64/os' % self.topdir)])
+                os_tree='%s/compose/Server/x86_64/os' % self.topdir,
+                hfs_compat=True,
+            )])
         self.assertItemsEqual(
             pool.queue_put.call_args_list,
             [mock.call((
@@ -178,7 +180,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            buildinstall_method='lorax',
                            supported=True,
                            jigdo_dir='%s/compose/Server/x86_64/jigdo' % self.topdir,
-                           os_tree='%s/compose/Server/x86_64/os' % self.topdir),
+                           os_tree='%s/compose/Server/x86_64/os' % self.topdir,
+                           hfs_compat=True),
              CreateIsoOpts(output_dir='%s/compose/Server/source/iso' % self.topdir,
                            iso_name='image-name',
                            volid='test-1.0 Server.src',
@@ -186,7 +189,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            arch='src',
                            supported=True,
                            jigdo_dir='%s/compose/Server/source/jigdo' % self.topdir,
-                           os_tree='%s/compose/Server/source/tree' % self.topdir)])
+                           os_tree='%s/compose/Server/source/tree' % self.topdir,
+                           hfs_compat=True)])
         self.assertItemsEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,
@@ -258,7 +262,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            arch='src',
                            supported=True,
                            jigdo_dir='%s/compose/Server/source/jigdo' % self.topdir,
-                           os_tree='%s/compose/Server/source/tree' % self.topdir)])
+                           os_tree='%s/compose/Server/source/tree' % self.topdir,
+                           hfs_compat=True)])
         self.assertItemsEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,
@@ -287,6 +292,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
             'bootable': True,
             'createiso_skip': [],
             'buildinstall_skip': [('Server', {'*': True})],
+            "iso_hfs_ppc64le_compatible": False,
         })
         helpers.touch(os.path.join(
             compose.paths.compose.os_tree('x86_64', compose.variants['Server']),
@@ -321,7 +327,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            arch='x86_64',
                            supported=True,
                            jigdo_dir='%s/compose/Server/x86_64/jigdo' % self.topdir,
-                           os_tree='%s/compose/Server/x86_64/os' % self.topdir)])
+                           os_tree='%s/compose/Server/x86_64/os' % self.topdir,
+                           hfs_compat=False)])
         self.assertItemsEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,

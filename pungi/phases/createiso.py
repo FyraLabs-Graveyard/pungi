@@ -140,6 +140,7 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                         graft_points=graft_points,
                         arch=arch,
                         supported=self.compose.supported,
+                        hfs_compat=self.compose.conf["iso_hfs_ppc64le_compatible"],
                     )
 
                     if bootable:

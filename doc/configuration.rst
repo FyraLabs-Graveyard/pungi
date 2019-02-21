@@ -1036,6 +1036,11 @@ Options
     (*int|str*) -- how much free space should be left on each disk. The format
     is the same as for ``iso_size`` option.
 
+**iso_hfs_ppc64le_compatible** = True
+    (*bool*) -- when set to False, the Apple/HFS compatibility is turned off
+    for ppc64le ISOs. This option only makes sense for bootable products, and
+    affects images produced in *createiso* and *extra_isos* phases.
+
 .. note::
 
     Source architecture needs to be listed explicitly.

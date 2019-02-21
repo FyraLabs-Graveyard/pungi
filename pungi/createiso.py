@@ -13,7 +13,8 @@ from .wrappers.jigdo import JigdoWrapper
 
 CreateIsoOpts = namedtuple('CreateIsoOpts',
                            ['buildinstall_method', 'arch', 'output_dir', 'jigdo_dir',
-                            'iso_name', 'volid', 'graft_points', 'supported', 'os_tree'])
+                            'iso_name', 'volid', 'graft_points', 'supported', 'os_tree',
+                            "hfs_compat"])
 CreateIsoOpts.__new__.__defaults__ = (None,) * len(CreateIsoOpts._fields)
 
 
@@ -48,7 +49,10 @@ def make_image(f, opts):
         if opts.buildinstall_method == 'lorax':
             emit(f, FIND_TEMPLATE_SNIPPET)
             mkisofs_kwargs["boot_args"] = iso.get_boot_options(
-                opts.arch, os.path.join('$TEMPLATE', 'config_files/ppc'))
+                opts.arch,
+                os.path.join("$TEMPLATE", "config_files/ppc"),
+                hfs_compat=opts.hfs_compat,
+            )
         elif opts.buildinstall_method == 'buildinstall':
             mkisofs_kwargs["boot_args"] = iso.get_boot_options(
                 opts.arch, "/usr/lib/anaconda-runtime/boot")

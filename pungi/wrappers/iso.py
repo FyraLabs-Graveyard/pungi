@@ -23,7 +23,7 @@ from kobo.shortcuts import force_list, relative_path, run
 from pungi import util
 
 
-def get_boot_options(arch, createfrom, efi=True):
+def get_boot_options(arch, createfrom, efi=True, hfs_compat=True):
     """Checks to see what we need as the -b option for mkisofs"""
 
     if arch in ("arm", "armhfp"):
@@ -63,7 +63,7 @@ def get_boot_options(arch, createfrom, efi=True):
         ]
         return result
 
-    if arch in ("ppc", "ppc64"):
+    if arch in ("ppc", "ppc64") or (arch == "ppc64le" and hfs_compat):
         result = [
             '-part',
             '-hfs',
@@ -78,7 +78,7 @@ def get_boot_options(arch, createfrom, efi=True):
         ]
         return result
 
-    if arch == "ppc64le":
+    if arch == "ppc64le" and not hfs_compat:
         result = [
             '-r',
             '-l',

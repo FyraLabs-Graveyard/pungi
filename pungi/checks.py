@@ -735,6 +735,7 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "iso_hfs_ppc64le_compatible": {"type": "boolean", "default": True},
             "multilib": _variant_arch_mapping({
                 "$ref": "#/definitions/list_of_strings"
             }),
