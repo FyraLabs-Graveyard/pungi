@@ -157,29 +157,44 @@ class OSBSThread(WorkerThread):
 
     def _get_repo(self, compose, repo, gpgkey=None):
         """
-        Return repo file URL of repo, if repo contains "://", it's already
-        a URL of repo file. Or it's a variant UID, then write a .repo file
-        pointing to current variant and return the URL to .repo file.
+        Return repo file URL of repo, if repo contains "://", it's already a
+        URL of repo file. Or it's a variant UID or local path, then write a .repo
+        file pointing to that location and return the URL to .repo file.
         """
         if "://" in repo:
             return repo
 
-        try:
-            variant = compose.all_variants[repo]
-        except KeyError:
-            raise RuntimeError(
-                'There is no variant %s to get repo from to pass to OSBS.'
-                % (repo))
-        os_tree = compose.paths.compose.repository('$basearch', variant,
-                                                   create_dir=False)
-        repo_file = os.path.join(compose.paths.work.tmp_dir(None, variant),
-                                 'compose-rpms-%s-%s.repo' % (variant, self.num))
+        if repo.startswith("/"):
+            # The repo is an absolute path on the filesystem
+            repo_path = repo
+            variant = "local"
+            repo_file = os.path.join(
+                compose.paths.work.tmp_dir(None, None),
+                "compose-rpms-%s-%s.repo" % (variant, self.num),
+            )
+
+        else:
+            # We got a variant name and have to find the repository for that variant.
+            try:
+                variant = compose.all_variants[repo]
+            except KeyError:
+                raise RuntimeError(
+                    "There is no variant %s to get repo from to pass to OSBS." % repo
+                )
+            repo_path = compose.paths.compose.repository(
+                "$basearch", variant, create_dir=False
+            )
+
+            repo_file = os.path.join(
+                compose.paths.work.tmp_dir(None, variant),
+                'compose-rpms-%s-%s.repo' % (variant, self.num),
+            )
 
         gpgcheck = 1 if gpgkey else 0
         with open(repo_file, 'w') as f:
             f.write('[%s-%s-%s]\n' % (compose.compose_id, variant, self.num))
             f.write('name=Compose %s (RPMs) - %s\n' % (compose.compose_id, variant))
-            f.write('baseurl=%s\n' % util.translate_path(compose, os_tree))
+            f.write('baseurl=%s\n' % util.translate_path(compose, repo_path))
             f.write('enabled=1\n')
             f.write('gpgcheck=%s\n' % gpgcheck)
             if gpgcheck:

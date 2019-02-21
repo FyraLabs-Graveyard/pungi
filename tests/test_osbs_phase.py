@@ -333,8 +333,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
             'git_branch': 'f24-docker',
             'name': 'my-name',
             'version': '1.0',
-            'repo': ['Everything', 'http://pkgs.example.com/my.repo']
+            "repo": ["Everything", "http://pkgs.example.com/my.repo", "/extra/repo"],
         }
+        self.compose.conf["translate_paths"].append(("/extra", "http://example.com"))
         self._setupMock(KojiWrapper)
         self._assertConfigCorrect(cfg)
 
@@ -348,11 +349,15 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 'http://root/work/global/tmp-Server/compose-rpms-Server-1.repo',
                 'http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo',
                 'http://pkgs.example.com/my.repo',
+                "http://root/work/global/tmp/compose-rpms-local-1.repo",
             ]
         }
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
         self._assertRepoFile(['Server', 'Everything'])
+
+        with open(os.path.join(self.topdir, "work/global/tmp/compose-rpms-local-1.repo")) as f:
+            self.assertIn("baseurl=http://example.com/repo\n", f)
 
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
     def test_run_with_registry(self, KojiWrapper):
