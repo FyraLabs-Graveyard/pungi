@@ -293,6 +293,21 @@ def _extend_with_default_and_alias(validator_class, offline=False):
                 except util.GitUrlResolveError as exc:
                     yield ConfigOptionError(exc)
 
+            # Resolve branch in scm dicts.
+            if (
+                # Schema says it can be an scm dict
+                subschema.get("$ref") == "#/definitions/str_or_scm_dict"
+                # and the data is actually a dict
+                and isinstance(instance.get(property), dict)
+                # and it's git
+                and instance[property]["scm"] == "git"
+                # and there's a repo URL specified
+                and "repo" in instance[property]
+            ):
+                instance[property]["branch"] = util.resolve_git_ref(
+                    instance[property]["repo"], instance[property].get("branch", "HEAD")
+                )
+
         for error in _hook_errors(properties, instance, schema):
             yield error
 
