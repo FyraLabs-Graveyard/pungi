@@ -1134,6 +1134,7 @@ def make_schema():
                                         "distro": {"type": "string"},
                                         "name": {"type": "string"},
                                         "kickstart": {"type": "string"},
+                                        "ksurl": {"type": "url"},
                                         "arches": {"$ref": "#/definitions/list_of_strings"},
                                         "repo": {
                                             "$ref": "#/definitions/repos",
