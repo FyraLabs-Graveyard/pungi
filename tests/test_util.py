@@ -43,6 +43,10 @@ class TestGitRefResolver(unittest.TestCase):
         run.assert_called_once_with(['git', 'ls-remote', 'https://git.example.com/repo.git', 'refs/heads/f24'],
                                     universal_newlines=True)
 
+    def test_resolve_ref_with_commit_id(self):
+        ref = util.resolve_git_ref("https://git.example.com/repo.git", "a" * 40)
+        self.assertEqual(ref, "a" * 40)
+
     @mock.patch('pungi.util.run')
     def test_resolve_missing_spec(self, run):
         url = util.resolve_git_url('https://git.example.com/repo.git')
@@ -121,18 +125,34 @@ class TestGitRefResolver(unittest.TestCase):
         )
         self.assertEqual(mock_resolve.call_args_list, [])
 
+    @mock.patch("pungi.util.resolve_git_ref")
     @mock.patch("pungi.util.resolve_git_url")
-    def test_resolver_caches_calls(self, mock_resolve):
+    def test_resolver_caches_calls(self, mock_resolve_url, mock_resolve_ref):
         url1 = "http://example.com/repo.git#HEAD"
         url2 = "http://example.com/repo.git#master"
-        mock_resolve.side_effect = ["1", "2"]
+        url3 = "http://example.com/repo.git"
+        ref1 = "foo"
+        ref2 = "bar"
+        mock_resolve_url.side_effect = ["1", "2"]
+        mock_resolve_ref.side_effect = ["cafe", "beef"]
         resolver = util.GitUrlResolver()
         self.assertEqual(resolver(url1), "1")
         self.assertEqual(resolver(url1), "1")
+        self.assertEqual(resolver(url3, ref1), "cafe")
+        self.assertEqual(resolver(url3, ref2), "beef")
         self.assertEqual(resolver(url2), "2")
+        self.assertEqual(resolver(url3, ref1), "cafe")
         self.assertEqual(resolver(url1), "1")
+        self.assertEqual(resolver(url3, ref2), "beef")
         self.assertEqual(resolver(url2), "2")
-        self.assertEqual(mock_resolve.call_args_list, [mock.call(url1), mock.call(url2)])
+        self.assertEqual(resolver(url3, ref2), "beef")
+        self.assertEqual(
+            mock_resolve_url.call_args_list, [mock.call(url1), mock.call(url2)]
+        )
+        self.assertEqual(
+            mock_resolve_ref.call_args_list,
+            [mock.call(url3, ref1), mock.call(url3, ref2)],
+        )
 
     @mock.patch("pungi.util.resolve_git_url")
     def test_resolver_caches_failure(self, mock_resolve):

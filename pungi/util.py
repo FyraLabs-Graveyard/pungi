@@ -250,6 +250,32 @@ class GitUrlResolveError(RuntimeError):
     pass
 
 
+def resolve_git_ref(repourl, ref):
+    """Resolve a reference in a Git repo to a commit.
+
+    Raises RuntimeError if there was an error. Most likely cause is failure to
+    run git command.
+    """
+    if re.match(r"^[a-f0-9]{40}$", ref):
+        # This looks like a commit ID already.
+        return ref
+
+    _, output = git_ls_remote(repourl, ref)
+
+    lines = [line for line in output.split('\n') if line]
+    if len(lines) == 0:
+        # Branch does not exist in remote repo
+        raise GitUrlResolveError(
+            "Failed to resolve %s: ref does not exist in remote repo" % repourl
+        )
+    if len(lines) != 1:
+        # This should never happen. HEAD can not match multiple commits in a
+        # single repo, and there can not be a repo without a HEAD.
+        raise GitUrlResolveError("Failed to resolve %s", repourl)
+
+    return lines[0].split()[0]
+
+
 def resolve_git_url(url):
     """Given a url to a Git repo specifying HEAD or origin/<branch> as a ref,
     replace that specifier with actual SHA1 of the commit.
@@ -269,20 +295,8 @@ def resolve_git_url(url):
     scheme = r.scheme.replace('git+', '')
 
     baseurl = urllib.parse.urlunsplit((scheme, r.netloc, r.path, '', ''))
-    _, output = git_ls_remote(baseurl, ref)
+    fragment = resolve_git_ref(baseurl, ref)
 
-    lines = [line for line in output.split('\n') if line]
-    if len(lines) == 0:
-        # Branch does not exist in remote repo
-        raise GitUrlResolveError(
-            "Failed to resolve %s: ref does not exist in remote repo" % url
-        )
-    if len(lines) != 1:
-        # This should never happen. HEAD can not match multiple commits in a
-        # single repo, and there can not be a repo without a HEAD.
-        raise GitUrlResolveError("Failed to resolve %s", url)
-
-    fragment = lines[0].split()[0]
     result = urllib.parse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
     if '?#' in url:
         # The urllib library drops empty query string. This hack puts it back in.
@@ -298,17 +312,19 @@ class GitUrlResolver(object):
         self.offline = offline
         self.cache = {}
 
-    def __call__(self, url):
+    def __call__(self, url, branch=None):
         if self.offline:
             return url
-        if url not in self.cache:
+        key = (url, branch)
+        if key not in self.cache:
             try:
-                self.cache[url] = resolve_git_url(url)
+                res = resolve_git_ref(url, branch) if branch else resolve_git_url(url)
+                self.cache[key] = res
             except GitUrlResolveError as exc:
-                self.cache[url] = exc
-        if isinstance(self.cache[url], GitUrlResolveError):
-            raise self.cache[url]
-        return self.cache[url]
+                self.cache[key] = exc
+        if isinstance(self.cache[key], GitUrlResolveError):
+            raise self.cache[key]
+        return self.cache[key]
 
 
 # fomat: {arch|*: [data]}
