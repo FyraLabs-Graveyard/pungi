@@ -100,26 +100,62 @@ class CvsWrapper(ScmBase):
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
+class FetchUnsupportedError(Exception):
+    """Raised when git-fetch does not support getting particular commit by hash."""
+    pass
+
+
 class GitWrapper(ScmBase):
+    @retry(interval=60, timeout=300, wait_on=RuntimeError)
+    def _try_fetch(self, repo, branch, destdir):
+        """Attempt to run git-fetch to get only the relevant commit. This
+        requires git >= 2.5. On unsupported versions it does not return any
+        error message (at least with 1.8.3). We can check that and fall back to
+        full clone then.
+        """
+        try:
+            return run(["git", "fetch", "--depth=1", repo, branch], workdir=destdir)
+        except RuntimeError as exc:
+            if exc.output:
+                # We have some error message, so re-raise the error to retry.
+                raise
+            raise FetchUnsupportedError()
+
+    def _clone(self, repo, branch, destdir):
+        """Get a single commit from a repository.
+
+        We can't use git-archive as that does not support arbitrary hash as
+        commit, and git-clone can only get a branch too. Thus the workaround is
+        to create a new local repo, fetch the commit from remote and then check
+        it out. If that fails, we get a full clone.
+
+        Finally the post-processing command is ran.
+        """
+        if "://" not in repo:
+            repo = "file://%s" % repo
+
+        run(["git", "init"], workdir=destdir)
+        try:
+            self._try_fetch(repo, branch, destdir)
+            run(["git", "checkout", "FETCH_HEAD"], workdir=destdir)
+        except FetchUnsupportedError:
+            # Fetch failed, to do a full clone we add a remote to our empty
+            # repo, get its content and check out the reference we want.
+            run(["git", "remote", "add", "origin", repo], workdir=destdir)
+            self.retry_run(["git", "remote", "update", "origin"], workdir=destdir)
+            run(["git", "checkout", branch], workdir=destdir)
+
+        self.run_process_command(destdir)
+
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "master"
 
         with temp_dir() as tmp_dir:
-            if "://" not in scm_root:
-                scm_root = "file://%s" % scm_root
-
             self.log_debug("Exporting directory %s from git %s (branch %s)..."
                            % (scm_dir, scm_root, scm_branch))
-            cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
-                   % (shlex_quote(scm_root), shlex_quote(scm_branch), shlex_quote(scm_dir)))
-            # git archive is not supported by http/https
-            # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-            if scm_root.startswith("http") or self.command:
-                cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
-                       % (shlex_quote(scm_branch), shlex_quote(scm_root), shlex_quote(tmp_dir)))
-            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
-            self.run_process_command(tmp_dir)
+
+            self._clone(scm_root, scm_branch, tmp_dir)
 
             copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
@@ -130,20 +166,10 @@ class GitWrapper(ScmBase):
         with temp_dir() as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
 
-            if "://" not in scm_root:
-                scm_root = "file://%s" % scm_root
-
             self.log_debug("Exporting file %s from git %s (branch %s)..."
                            % (scm_file, scm_root, scm_branch))
-            cmd = ("/usr/bin/git archive --remote=%s %s %s | tar xf -"
-                   % (shlex_quote(scm_root), shlex_quote(scm_branch), shlex_quote(scm_file)))
-            # git archive is not supported by http/https
-            # or by smart http https://git-scm.com/book/en/v2/Git-on-the-Server-Smart-HTTP
-            if scm_root.startswith("http") or self.command:
-                cmd = ("/usr/bin/git clone --depth 1 --branch=%s %s %s"
-                       % (shlex_quote(scm_branch), shlex_quote(scm_root), shlex_quote(tmp_dir)))
-            self.retry_run(cmd, workdir=tmp_dir, show_cmd=True)
-            self.run_process_command(tmp_dir)
+
+            self._clone(scm_root, scm_branch, tmp_dir)
 
             makedirs(target_dir)
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
