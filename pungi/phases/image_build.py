@@ -33,7 +33,7 @@ EXTENSIONS = {
     'vagrant-virtualbox': ['vagrant-virtualbox.box'],
     'vagrant-vmware-fusion': ['vagrant-vmware-fusion.box'],
     'vdi': ['vdi'],
-    'vmdk': ['vdmk'],
+    'vmdk': ['vmdk'],
     'vpc': ['vhd'],
     'vsphere-ova': ['vsphere.ova'],
 }
