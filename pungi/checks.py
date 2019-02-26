@@ -784,6 +784,7 @@ def make_schema():
             "pdc_insecure": {"deprecated": "Koji is queried instead"},
 
             "koji_profile": {"type": "string"},
+            "koji_event": {"type": "number"},
 
             "pkgset_koji_tag": {"$ref": "#/definitions/strings"},
             "pkgset_koji_builds": {"$ref": "#/definitions/strings"},
