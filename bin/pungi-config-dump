@@ -10,6 +10,7 @@ import sys
 
 import kobo.conf
 import pungi.checks
+import pungi.util
 
 
 def load_file(source, conf):
@@ -38,6 +39,15 @@ def main():
             "or arbitrary number of config files."
         ),
     )
+    parser.add_argument(
+        "--freeze-event",
+        metavar="ID",
+        type=pungi.util.parse_koji_event,
+        help=(
+            "Include this koji event in the created config; "
+            "takes either event ID or path to a compose"
+        ),
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--just-dump",
@@ -64,6 +74,9 @@ def main():
             for error in errors:
                 print(error, file=sys.stderr)
             return False
+
+    if args.freeze_event:
+        conf["koji_event"] = args.freeze_event
 
     json.dump(conf, sys.stdout, sort_keys=True, indent=4)
     return True
