@@ -79,6 +79,12 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         self.added_langpacks = set()
         # Set of NEVRAs of modular packages
         self.modular_packages = set()
+        # Arch -> pkg name -> set of pkg object
+        self.debuginfo = defaultdict(lambda: defaultdict(set))
+
+        # caches for processed packages
+        self.processed_multilib = set()
+        self.processed_debuginfo = set()
 
     def _get_pkg_map(self, arch):
         """Create a mapping from NEVRA to actual package object. This will be
@@ -110,6 +116,20 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         if not self.packages:
             self._prepare_packages()
         return self.packages[nevra]
+
+    def _prepare_debuginfo(self):
+        """Prepare cache of debuginfo packages for easy access. The cache is
+        indexed by package architecture and then by package name. There can be
+        more than one debuginfo package with the same name.
+        """
+        for pkg_arch in self.package_sets[self.arch].rpms_by_arch:
+            for pkg in self.package_sets[self.arch].rpms_by_arch[pkg_arch]:
+                self.debuginfo[pkg.arch][pkg.name].add(pkg)
+
+    def _get_debuginfo(self, name, arch):
+        if not self.debuginfo:
+            self._prepare_debuginfo()
+        return self.debuginfo.get(arch, {}).get(name, set())
 
     def expand_list(self, patterns):
         """Given a list of globs, create a list of package names matching any
@@ -206,6 +226,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
     def run_solver(self, variant, arch, packages, platform, filter_packages):
         repos = [self.compose.paths.work.arch_repo(arch=arch)]
+        results = set()
+        result_modules = set()
 
         modules = []
         if variant.arch_mmds.get(arch):
@@ -218,8 +240,6 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             input_packages.extend(self._expand_wildcard(pkg_name, pkg_arch))
 
         step = 0
-
-        old_multilib = set()
 
         while True:
             step += 1
@@ -245,31 +265,45 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             run(cmd, logfile=logfile, show_cmd=True, env=env)
             output, out_modules = fus.parse_output(logfile)
             self.compose.log_debug("[DONE ] Running fus")
-            new_multilib = self.add_multilib(variant, arch, output, old_multilib)
-            old_multilib = new_multilib
-            if new_multilib:
-                input_packages.extend(
-                    _fmt_pkg(pkg_name, pkg_arch)
-                    for pkg_name, pkg_arch in sorted(new_multilib)
-                )
-                continue
+            # No need to resolve modules again. They are not going to change.
+            modules = []
+            # Reset input packages as well to only solve newly added things.
+            input_packages = []
+            # Preserve the results from this iteration.
+            results.update(output)
+            result_modules.update(out_modules)
+
+            new_multilib = self.add_multilib(variant, arch, output)
+            input_packages.extend(
+                _fmt_pkg(pkg_name, pkg_arch)
+                for pkg_name, pkg_arch in sorted(new_multilib)
+            )
+
+            new_debuginfo = self.add_debuginfo(arch, output)
+            input_packages.extend(
+                _fmt_pkg(pkg_name, pkg_arch)
+                for pkg_name, pkg_arch in sorted(new_debuginfo)
+            )
 
             new_langpacks = self.add_langpacks(output)
-            if new_langpacks:
-                input_packages.extend(new_langpacks)
-                continue
+            input_packages.extend(new_langpacks)
 
-            # Nothing new was added, we can stop now.
-            break
+            if not input_packages:
+                # Nothing new was added, we can stop now.
+                break
 
-        return output, out_modules
+        return results, result_modules
 
-    def add_multilib(self, variant, arch, nvrs, old_multilib):
+    def add_multilib(self, variant, arch, nvrs):
         added = set()
         if not self.multilib_methods:
             return []
 
         for nvr, pkg_arch, flags in nvrs:
+            if (nvr, pkg_arch) in self.processed_multilib:
+                continue
+            self.processed_multilib.add((nvr, pkg_arch))
+
             if "modular" in flags:
                 continue
 
@@ -289,7 +323,34 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
                 if self.multilib.is_multilib(multilib_candidate):
                     added.add((nevr["name"], add_arch))
 
-        return added - old_multilib
+        return added
+
+    def add_debuginfo(self, arch, nvrs):
+        added = set()
+
+        for nvr, pkg_arch, flags in nvrs:
+            if (nvr, pkg_arch) in self.processed_debuginfo:
+                continue
+            self.processed_debuginfo.add((nvr, pkg_arch))
+
+            if "modular" in flags:
+                continue
+
+            pkg = self._get_package("%s.%s" % (nvr, pkg_arch))
+
+            # There are two ways how the debuginfo package can be named. We
+            # want to get them all.
+            for pattern in ["%s-debuginfo", "%s-debugsource"]:
+                debuginfo_name = pattern % pkg.name
+                debuginfo = self._get_debuginfo(debuginfo_name, pkg_arch)
+                for dbg in debuginfo:
+                    # For each debuginfo package that matches on name and
+                    # architecture, we also need to check if it comes from the
+                    # same build.
+                    if dbg.sourcerpm == pkg.rpm_sourcerpm:
+                        added.add((dbg.name, dbg.arch))
+
+        return added
 
     def add_langpacks(self, nvrs):
         if not self.langpacks:
@@ -477,8 +538,8 @@ def _make_result(paths):
 
 
 def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_packages):
-    """For each package add source RPM and possibly also debuginfo."""
-    # This will server as the final result. We collect sets of paths to the
+    """For each package add source RPM."""
+    # This will serve as the final result. We collect sets of paths to the
     # packages.
     rpms = set()
     srpms = set()
@@ -500,12 +561,8 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_pack
             # Strip file:// prefix
             lookaside_packages.add(url[7:])
 
-    # This is used to figure out which debuginfo packages to include. We keep
-    # track of package architectures from each SRPM.
-    srpm_arches = defaultdict(set)
-
-    for nvr, arch, flags in nvrs:
-        pkg = nevra_to_pkg["%s.%s" % (nvr, arch)]
+    for nvr, pkg_arch, flags in nvrs:
+        pkg = nevra_to_pkg["%s.%s" % (nvr, pkg_arch)]
         if pkg.file_path in lookaside_packages:
             # Package is in lookaside, don't add it and ignore sources and
             # debuginfo too.
@@ -518,11 +575,6 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_pack
         try:
             srpm_nevra = _get_srpm_nevra(pkg)
             srpm = nevra_to_pkg[srpm_nevra]
-            if "modular" not in flags:
-                # Only mark the arch for sources of non-modular packages. The
-                # debuginfo is explicitly listed in the output, and we don't
-                # want anything more.
-                srpm_arches[srpm_nevra].add(arch)
             if (srpm.name, "src") in filters:
                 # Filtered package, skipping
                 continue
@@ -531,17 +583,6 @@ def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_pack
         except KeyError:
             # Didn't find source RPM.. this should be logged
             pass
-
-    # Get all debuginfo packages from all included sources. We iterate over all
-    # available packages and if we see a debug package from included SRPM built
-    # for architecture that has at least one binary package, we include it too.
-    for pkg in nevra_to_pkg.values():
-        if pkg_is_debug(pkg) and pkg.arch in srpm_arches[_get_srpm_nevra(pkg)]:
-            if set([(pkg.name, pkg.arch), (pkg.name, None)]) & filters:
-                # Filtered package, skipping
-                continue
-            if pkg.file_path not in lookaside_packages:
-                debuginfo.add(pkg.file_path)
 
     return _mk_pkg_map(_make_result(rpms), _make_result(srpms), _make_result(debuginfo))
 

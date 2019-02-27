@@ -87,7 +87,6 @@ class TestMethodHybrid(helpers.PungiTestCase):
             eg.call_args_list,
             [mock.call(compose, arch, variant, ["standard"], set_pkg_arch=False)],
         )
-        print(CW.mock_calls)
         self.assertEqual(
             CW.mock_calls,
             [
@@ -328,6 +327,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.compose = helpers.DummyCompose(self.topdir, {})
         self.phase = hybrid.GatherMethodHybrid(self.compose)
         self.phase.multilib_methods = []
+        self.phase.arch = "x86_64"
         self.logfile1 = os.path.join(
             self.compose.topdir, "logs/x86_64/hybrid-depsolver-Server-iter-1.x86_64.log"
         )
@@ -359,7 +359,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 peek_context=mock.Mock(return_value="ctx"),
             )
         ]
-        po.return_value = (mock.Mock(), mock.Mock())
+        po.return_value = ([], ["m1"])
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],
@@ -369,7 +369,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[("foo", None)],
         )
 
-        self.assertEqual(res, po.return_value)
+        self.assertItemsEqual(res[0], [])
+        self.assertItemsEqual(res[1], ["m1"])
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
@@ -412,7 +413,9 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 peek_context=mock.Mock(return_value="ctx"),
             ),
         }
-        po.return_value = (mock.Mock(), mock.Mock())
+        po.return_value = ([("p-1-1", "x86_64", frozenset())], ["m1"])
+        self.phase.packages = {"p-1-1.x86_64": mock.Mock()}
+        self.phase.package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],
@@ -422,7 +425,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=["foo"],
         )
 
-        self.assertEqual(res, po.return_value)
+        self.assertEqual(res, (set([("p-1-1", "x86_64", frozenset())]), set(["m1"])))
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
@@ -451,7 +454,9 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         )
 
     def test_with_comps(self, run, gc, po, wc):
-        po.return_value = (mock.Mock(), mock.Mock())
+        self.phase.packages = {"pkg-1.0-1.x86_64": mock.Mock()}
+        self.phase.debuginfo = {"x86_64": {}}
+        po.return_value = ([("pkg-1.0-1", "x86_64", frozenset())], [])
         res = self.phase.run_solver(
             self.compose.variants["Server"],
             "x86_64",
@@ -460,7 +465,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertEqual(res, po.return_value)
+        self.assertItemsEqual(res[0], po.return_value[0])
+        self.assertItemsEqual(res[1], [])
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
@@ -487,20 +493,41 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
 
-    def test_with_langpacks(self, run, gc, po, wc):
-        self.phase.langpacks = {"pkg": set(["pkg-en"])}
-        final = [("pkg-1.0-1", "x86_64", []), ("pkg-en-1.0-1", "noarch", [])]
-        po.side_effect = [([("pkg-1.0-1", "x86_64", [])], set()), (final, [])]
-
+    def test_with_comps_with_debuginfo(self, run, gc, po, wc):
+        dbg1 = NamedMock(name="pkg-debuginfo", arch="x86_64", sourcerpm="pkg.src.rpm")
+        dbg2 = NamedMock(name="pkg-debuginfo", arch="x86_64", sourcerpm="x.src.rpm")
+        self.phase.packages = {
+            "pkg-1.0-1.x86_64": NamedMock(
+                name="pkg", arch="x86_64", rpm_sourcerpm="pkg.src.rpm"
+            ),
+            "pkg-debuginfo-1.0-1.x86_64": dbg1,
+            "pkg-debuginfo-1.0-2.x86_64": dbg2,
+        }
+        self.phase.debuginfo = {
+            "x86_64": {
+                "pkg-debuginfo": [dbg1, dbg2],
+            },
+        }
+        po.side_effect = [
+            ([("pkg-1.0-1", "x86_64", frozenset())], []),
+            ([("pkg-debuginfo-1.0-1", "x86_64", frozenset())], []),
+        ]
         res = self.phase.run_solver(
             self.compose.variants["Server"],
             "x86_64",
             [("pkg", None)],
             platform=None,
-            filter_packages=["foo"],
+            filter_packages=[],
         )
 
-        self.assertEqual(res, (final, []))
+        self.assertItemsEqual(
+            res[0],
+            [
+                ("pkg-1.0-1", "x86_64", frozenset()),
+                ("pkg-debuginfo-1.0-1", "x86_64", frozenset()),
+            ],
+        )
+        self.assertItemsEqual(res[1], [])
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -519,7 +546,73 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             wc.call_args_list,
             [
                 mock.call(self.config1, [], ["pkg"]),
-                mock.call(self.config2, [], ["pkg", "pkg-en"]),
+                mock.call(self.config2, [], ["pkg-debuginfo.x86_64"]),
+            ],
+        )
+        self.assertEqual(
+            gc.call_args_list,
+            [
+                mock.call(
+                    self.config1,
+                    "x86_64",
+                    [self._repo("repo")],
+                    [],
+                    platform=None,
+                    filter_packages=[],
+                ),
+                mock.call(
+                    self.config2,
+                    "x86_64",
+                    [self._repo("repo")],
+                    [],
+                    platform=None,
+                    filter_packages=[],
+                ),
+            ],
+        )
+
+    def test_with_langpacks(self, run, gc, po, wc):
+        self.phase.langpacks = {"pkg": set(["pkg-en"])}
+        final = [
+            ("pkg-1.0-1", "x86_64", frozenset()),
+            ("pkg-en-1.0-1", "noarch", frozenset()),
+        ]
+        po.side_effect = [([("pkg-1.0-1", "x86_64", frozenset())], []), (final, [])]
+        self.phase.packages = {
+            "pkg-1.0-1.x86_64": mock.Mock(),
+            "pkg-en-1.0-1.noarch": mock.Mock(),
+        }
+        self.phase.package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}
+
+        res = self.phase.run_solver(
+            self.compose.variants["Server"],
+            "x86_64",
+            [("pkg", None)],
+            platform=None,
+            filter_packages=["foo"],
+        )
+
+        self.assertItemsEqual(res[0], final)
+        self.assertItemsEqual(res[1], [])
+        self.assertEqual(
+            po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
+        )
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(
+                    gc.return_value, logfile=self.logfile1, show_cmd=True, env=mock.ANY
+                ),
+                mock.call(
+                    gc.return_value, logfile=self.logfile2, show_cmd=True, env=mock.ANY
+                ),
+            ],
+        )
+        self.assertEqual(
+            wc.call_args_list,
+            [
+                mock.call(self.config1, [], ["pkg"]),
+                mock.call(self.config2, [], ["pkg-en"]),
             ],
         )
         self.assertEqual(
@@ -562,14 +655,20 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             }
         }
         self.phase.packages = self.phase.package_maps["x86_64"]
-        final = [
-            ("pkg-devel-1.0-1", "x86_64", []),
-            ("foo-1.0-1", "x86_64", []),
-            ("pkg-devel-1.0-1", "i686", []),
-        ]
+        self.phase.debuginfo = {"x86_64": {}}
         po.side_effect = [
-            ([("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], []),
-            (final, []),
+            (
+                [
+                    ("pkg-devel-1.0-1", "x86_64", frozenset()),
+                    ("foo-1.0-1", "x86_64", frozenset())
+                ],
+                frozenset()),
+            (
+                [
+                    ("pkg-devel-1.0-1", "i686", frozenset()),
+                ],
+                [],
+            ),
         ]
 
         res = self.phase.run_solver(
@@ -580,7 +679,15 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertEqual(res, (final, []))
+        self.assertItemsEqual(
+            res[0],
+            [
+                ("pkg-devel-1.0-1", "x86_64", frozenset()),
+                ("foo-1.0-1", "x86_64", frozenset()),
+                ("pkg-devel-1.0-1", "i686", frozenset()),
+            ]
+        )
+        self.assertItemsEqual(res[1], [])
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -599,7 +706,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             wc.call_args_list,
             [
                 mock.call(self.config1, [], ["foo", "pkg-devel"]),
-                mock.call(self.config2, [], ["foo", "pkg-devel", "pkg-devel.i686"]),
+                mock.call(self.config2, [], ["pkg-devel.i686"]),
             ],
         )
         self.assertEqual(
@@ -668,14 +775,21 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 "foo-1.0-1.i686": mock.Mock(),
             }
         }
-        final = [
-            ("pkg-devel-1.0-1", "x86_64", []),
-            ("foo-1.0-1", "x86_64", []),
-            ("foo-1.0-1", "i686", []),
-        ]
+        self.phase.debuginfo = {"x86_64": {}}
         po.side_effect = [
-            ([("pkg-devel-1.0-1", "x86_64", []), ("foo-1.0-1", "x86_64", [])], []),
-            (final, []),
+            (
+                [
+                    ("pkg-devel-1.0-1", "x86_64", frozenset()),
+                    ("foo-1.0-1", "x86_64", frozenset())
+                ],
+                [],
+            ),
+            (
+                [
+                    ("foo-1.0-1", "i686", frozenset()),
+                ],
+                [],
+            ),
         ]
 
         res = self.phase.run_solver(
@@ -686,7 +800,15 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertEqual(res, (final, []))
+        self.assertItemsEqual(
+            res[0],
+            [
+                ("pkg-devel-1.0-1", "x86_64", frozenset()),
+                ("foo-1.0-1", "x86_64", frozenset()),
+                ("foo-1.0-1", "i686", frozenset()),
+            ],
+        )
+        self.assertItemsEqual(res[1], [])
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -705,7 +827,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             wc.call_args_list,
             [
                 mock.call(self.config1, [], ["foo", "pkg-devel"]),
-                mock.call(self.config2, [], ["foo", "foo.i686", "pkg-devel"]),
+                mock.call(self.config2, [], ["foo.i686"]),
             ],
         )
         self.assertEqual(
@@ -771,8 +893,8 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
-    def test_include_src_and_debuginfo(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+    def test_include_src(self):
+        nevra_to_pkg = self._mk_packages(src=True)
 
         res = hybrid.expand_packages(
             nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
@@ -783,19 +905,19 @@ class TestExpandPackages(helpers.PungiTestCase):
             {
                 "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
                 "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
-                "debuginfo": [{"path": "/tmp/pkg-debuginfo.x86_64.rpm", "flags": []}],
+                "debuginfo": [],
             },
         )
 
-    def test_filter_src_and_debuginfo(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+    def test_filter_src(self):
+        nevra_to_pkg = self._mk_packages(src=True)
 
         res = hybrid.expand_packages(
             nevra_to_pkg,
             {},
             [],
             [("pkg-3:1-2", "x86_64", [])],
-            filter_packages=[("pkg-debuginfo", "x86_64"), ("pkg", "src")],
+            filter_packages=[("pkg", "src")],
         )
 
         self.assertEqual(
@@ -807,48 +929,8 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
-    def test_filter_debuginfo_missing_arch(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
-
-        res = hybrid.expand_packages(
-            nevra_to_pkg,
-            {},
-            [],
-            [("pkg-3:1-2", "x86_64", [])],
-            filter_packages=[("pkg-debuginfo", None)],
-        )
-
-        self.assertEqual(
-            res,
-            {
-                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
-                "debuginfo": [],
-            },
-        )
-
-    def test_filter_debuginfo_different_arch(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
-
-        res = hybrid.expand_packages(
-            nevra_to_pkg,
-            {},
-            [],
-            [("pkg-3:1-2", "x86_64", [])],
-            filter_packages=[("pkg-debuginfo", "aarch64")],
-        )
-
-        self.assertEqual(
-            res,
-            {
-                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
-                "debuginfo": [{"path": "/tmp/pkg-debuginfo.x86_64.rpm", "flags": []}],
-            },
-        )
-
-    def test_modular_include_src_but_not_debuginfo(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+    def test_modular_include_src(self):
+        nevra_to_pkg = self._mk_packages(src=True)
 
         res = hybrid.expand_packages(
             nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", ["modular"])], []
@@ -879,25 +961,9 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
-    def test_skip_debuginfo_for_different_arch(self):
-        nevra_to_pkg = self._mk_packages(debug_arch="i686")
-
-        res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
-        )
-
-        self.assertEqual(
-            res,
-            {
-                "rpm": [{"path": "/tmp/pkg.rpm", "flags": []}],
-                "srpm": [{"path": "/tmp/pkg.src.rpm", "flags": []}],
-                "debuginfo": [],
-            },
-        )
-
     @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
-    def test_skip_lookaside_source_and_debuginfo(self, cr):
-        nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
+    def test_skip_lookaside_source(self, cr):
+        nevra_to_pkg = self._mk_packages(src=True)
         lookasides = [mock.Mock()]
         repo = {
             "abc": NamedMock(
@@ -905,12 +971,6 @@ class TestExpandPackages(helpers.PungiTestCase):
                 arch="src",
                 location_base="file:///tmp/",
                 location_href="pkg.src.rpm",
-            ),
-            "def": NamedMock(
-                name="pkg-debuginfo",
-                arch="x86_64",
-                location_base="file:///tmp/",
-                location_href="pkg-debuginfo.x86_64.rpm",
             ),
         }
         cr.Metadata.return_value.keys.return_value = repo.keys()
