@@ -544,5 +544,9 @@ def main(argv=None):
     main_config_file = os.path.abspath(args.config)
 
     with temp_dir() as work_dir:
-        if not run(work_dir, main_config_file, args):
+        try:
+            if not run(work_dir, main_config_file, args):
+                sys.exit(1)
+        except Exception:
+            log.exception("Unhandled exception!")
             sys.exit(1)
