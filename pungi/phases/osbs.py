@@ -67,7 +67,7 @@ class OSBSThread(WorkerThread):
             self.worker(compose, variant, config)
 
     def worker(self, compose, variant, config):
-        msg = 'OSBS phase for variant %s' % variant.uid
+        msg = 'OSBS task for variant %s' % variant.uid
         self.pool.log_info('[BEGIN] %s' % msg)
         koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
         koji.login()
