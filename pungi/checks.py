@@ -516,7 +516,7 @@ def make_schema():
                 "required": ["url", "target", "git_branch"]
             },
 
-            "string_tuples": {
+            "string_pairs": {
                 "type": "array",
                 "items": {
                     "type": "array",
@@ -940,7 +940,7 @@ def make_schema():
             },
 
             "translate_paths": {
-                "$ref": "#/definitions/string_tuples",
+                "$ref": "#/definitions/string_pairs",
                 "default": [],
             },
 
@@ -1145,7 +1145,7 @@ def make_schema():
                                         "format": {
                                             "anyOf": [
                                                 # The variant with explicit extension is deprecated.
-                                                {"$ref": "#/definitions/string_tuples"},
+                                                {"$ref": "#/definitions/string_pairs"},
                                                 {"$ref": "#/definitions/strings"}
                                             ]
                                         },

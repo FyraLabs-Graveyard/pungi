@@ -136,7 +136,7 @@ class ImageBuildPhase(base.PhaseLoggerMixin, base.ImageConfigMixin, base.ConfigG
                 # just list of formats, or a single format.
                 formats = []
                 for format in force_list(image_conf["image-build"]["format"]):
-                    formats.append(format[0] if isinstance(format, tuple) else format)
+                    formats.append(format[0] if isinstance(format, (tuple, list)) else format)
                 image_conf["image-build"]["format"] = formats
                 image_conf["image-build"]['repo'] = self._get_repo(image_conf['image-build'], variant)
 
