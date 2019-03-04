@@ -79,7 +79,13 @@ def read_variants(compose, config):
 
 def run(config, topdir, has_old, offline):
     conf = kobo.conf.PyConfigParser()
-    conf.load_from_file(config)
+    if config.endswith(".json"):
+        with open(config) as f:
+            conf.load_from_dict(json.load(f))
+        conf.opened_files = [config]
+        conf._open_file = config
+    else:
+        conf.load_from_file(config)
 
     errors, warnings = pungi.checks.validate(conf, offline=offline)
     if errors or warnings:
