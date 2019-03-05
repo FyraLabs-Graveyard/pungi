@@ -304,7 +304,7 @@ def _extend_with_default_and_alias(validator_class, offline=False):
                 # and there's a repo URL specified
                 and "repo" in instance[property]
             ):
-                instance[property]["branch"] = util.resolve_git_ref(
+                instance[property]["branch"] = resolver(
                     instance[property]["repo"], instance[property].get("branch", "HEAD")
                 )
 
