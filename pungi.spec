@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.33
+Version:        4.1.34
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -110,6 +110,26 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue Mar 05 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.34-1
+- config: Allow validating configuration in JSON (lsedlar)
+- image-build: Accept formats in lists (lsedlar)
+- image-build: Resolve git ref in ksurl (lsedlar)
+- Resolve git branches in scm_dict (lsedlar)
+- util: Refactor resolving git url (lsedlar)
+- scm-wrapper: Refactor getting files from Git (lsedlar)
+- osbs: Fix wrong message in logs (lsedlar)
+- orchestrator: Log exception to log file (lsedlar)
+- config-dump: Allow freezing koji event (lsedlar)
+- Read koji event from config file (lsedlar)
+- image-build: Fix typo in file extension for vmdk image (lsedlar)
+- osbs: Accept local paths as repo URLs (lsedlar)
+- image-build: Support repo/install_tree as path (lsedlar)
+- osbs: Remove format requirement for registry (lsedlar)
+- Make the Apple/HFS compatibility configurable (lsedlar)
+- update iso creation for ppc64le (dan)
+- orchestrator: Use prefix for config substitutions (lsedlar)
+- README: add link to documentation (kdreyer)
+
 * Wed Feb 13 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.33-1
 - isos: Check maximum expected size (lsedlar)
 - osbs: Process data about pushing images to registries (lsedlar)
@@ -129,7 +149,7 @@ cd tests && ./test_compose.sh
 - ostree: Add test for expanding basearch for message (lsedlar)
 - Make sure ${basearch} is also replaced with config['ostree_ref'] (patrick)
 
-* Tue Jan 08 2019 Lubomír Sedlář <lsedlar@redhat.com> - Version:        4.1.33-1
+* Tue Jan 08 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.32-1
 - Add script to orchestrate multiple composes (lsedlar)
 - buildinstall: Expose lorax's --rootfs-size argument (lsedlar)
 - Support for pungi-legacy with productmd format (frederic.pierret)
