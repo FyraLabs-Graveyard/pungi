@@ -47,6 +47,35 @@ General settings
 **kerberos_principal**
    Kerberos principal for the ticket
 
+**pre_compose_script**
+   Commands to execute before first part is started. Can contain multiple
+   commands on separate lines.
+**post_compose_script**
+   Commands to execute after the last part finishes and final status is
+   updated. Can contain multiple commands on separate lines. ::
+
+      post_compose_script =
+          compose-latest-symlink $COMPOSE_PATH
+          custom-post-compose-script.sh
+
+   Multiple environment variables are defined for the scripts:
+
+    * ``COMPOSE_PATH``
+    * ``COMPOSE_ID``
+    * ``COMPOSE_DATE``
+    * ``COMPOSE_TYPE``
+    * ``COMPOSE_RESPIN``
+    * ``COMPOSE_LABEL``
+    * ``RELEASE_ID``
+    * ``RELEASE_NAME``
+    * ``RELEASE_SHORT``
+    * ``RELEASE_VERSION``
+    * ``RELEASE_TYPE``
+    * ``RELEASE_IS_LAYERED`` – ``YES`` for layered products, empty otherwise
+    * ``BASE_PRODUCT_NAME`` – only set for layered products
+    * ``BASE_PRODUCT_SHORT`` – only set for layered products
+    * ``BASE_PRODUCT_VERSION`` – only set for layered products
+    * ``BASE_PRODUCT_TYPE`` – only set for layered products
 
 Partial compose settings
 ------------------------

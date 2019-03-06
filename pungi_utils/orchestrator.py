@@ -484,12 +484,58 @@ def run_kinit(config):
     atexit.register(os.remove, fname)
 
 
+def get_script_env(compose_path):
+    env = os.environ.copy()
+    env["COMPOSE_PATH"] = compose_path
+    try:
+        compose = productmd.compose.Compose(compose_path)
+        env.update({
+            "COMPOSE_ID": compose.info.compose.id,
+            "COMPOSE_DATE": compose.info.compose.date,
+            "COMPOSE_TYPE": compose.info.compose.type,
+            "COMPOSE_RESPIN": str(compose.info.compose.respin),
+            "COMPOSE_LABEL": compose.info.compose.label or "",
+            "RELEASE_ID": compose.info.release_id,
+            "RELEASE_NAME": compose.info.release.name,
+            "RELEASE_SHORT": compose.info.release.short,
+            "RELEASE_VERSION": compose.info.release.version,
+            "RELEASE_TYPE": compose.info.release.type,
+            "RELEASE_IS_LAYERED": "YES" if compose.info.release.is_layered else "",
+        })
+        if compose.info.release.is_layered:
+            env.update({
+                "BASE_PRODUCT_NAME": compose.info.base_product.name,
+                "BASE_PRODUCT_SHORT": compose.info.base_product.short,
+                "BASE_PRODUCT_VERSION": compose.info.base_product.version,
+                "BASE_PRODUCT_TYPE": compose.info.base_product.type,
+            })
+    except Exception as exc:
+        pass
+    return env
+
+
+def run_scripts(prefix, compose_dir, scripts):
+    env = get_script_env(compose_dir)
+    for idx, script in enumerate(scripts.strip().splitlines()):
+        command = script.strip()
+        logfile = os.path.join(compose_dir, "logs", "%s%s.log" % (prefix, idx))
+        log.debug("Running command: %r", command)
+        log.debug("See output in %s", logfile)
+        shortcuts.run(command, env=env, logfile=logfile)
+
+
 def run(work_dir, main_config_file, args):
     config_dir = os.path.join(work_dir, "config")
     shutil.copytree(os.path.dirname(main_config_file), config_dir)
 
     # Read main config
-    parser = configparser.RawConfigParser(defaults={"kerberos": "false"})
+    parser = configparser.RawConfigParser(
+        defaults={
+            "kerberos": "false",
+            "pre_compose_script": "",
+            "post_compose_script": "",
+        }
+    )
     parser.read(main_config_file)
 
     # Create kerberos ticket
@@ -501,6 +547,8 @@ def run(work_dir, main_config_file, args):
     target_dir = prepare_compose_dir(parser, args, main_config_file, compose_info)
     kobo.log.add_file_logger(log, os.path.join(target_dir, "logs", "orchestrator.log"))
     log.info("Composing %s", target_dir)
+
+    run_scripts("pre_compose_", target_dir, parser.get("general", "pre_compose_script"))
 
     old_compose = find_old_compose(
         os.path.dirname(target_dir),
@@ -536,7 +584,15 @@ def run(work_dir, main_config_file, args):
     if hasattr(args, "part"):
         setup_for_restart(global_config, parts, args.part)
 
-    return run_all(global_config, parts)
+    retcode = run_all(global_config, parts)
+
+    if retcode:
+        # Only run the script if we are not doomed.
+        run_scripts(
+            "post_compose_", target_dir, parser.get("general", "post_compose_script")
+        )
+
+    return retcode
 
 
 def parse_args(argv):

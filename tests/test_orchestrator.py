@@ -833,3 +833,60 @@ class TestRunKinit(BaseTestCase):
         self.assertEqual(
             register.call_args_list, [mock.call(os.remove, os.environ["KRB5CCNAME"])]
         )
+
+
+@mock.patch.dict("os.environ", {}, clear=True)
+class TestGetScriptEnv(BaseTestCase):
+    def test_without_metadata(self):
+        env = o.get_script_env("/foobar")
+        self.assertEqual(env, {"COMPOSE_PATH": "/foobar"})
+
+    def test_with_metadata(self):
+        compose_dir = os.path.join(FIXTURE_DIR, "DP-1.0-20161013.t.4")
+        env = o.get_script_env(compose_dir)
+        self.maxDiff = None
+        self.assertEqual(
+            env,
+            {
+                "COMPOSE_PATH": compose_dir,
+                "COMPOSE_ID": "DP-1.0-20161013.t.4",
+                "COMPOSE_DATE": "20161013",
+                "COMPOSE_TYPE": "test",
+                "COMPOSE_RESPIN": "4",
+                "COMPOSE_LABEL": "",
+                "RELEASE_ID": "DP-1.0",
+                "RELEASE_NAME": "Dummy Product",
+                "RELEASE_SHORT": "DP",
+                "RELEASE_VERSION": "1.0",
+                "RELEASE_TYPE": "ga",
+                "RELEASE_IS_LAYERED": "",
+            },
+        )
+
+
+class TestRunScripts(BaseTestCase):
+    @mock.patch("pungi_utils.orchestrator.get_script_env")
+    @mock.patch("kobo.shortcuts.run")
+    def test_run_scripts(self, run, get_env):
+        commands = """
+           date
+           env
+           """
+
+        o.run_scripts("pref_", "/tmp/compose", commands)
+
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(
+                    "date",
+                    logfile="/tmp/compose/logs/pref_0.log",
+                    env=get_env.return_value,
+                ),
+                mock.call(
+                    "env",
+                    logfile="/tmp/compose/logs/pref_1.log",
+                    env=get_env.return_value,
+                ),
+            ],
+        )
