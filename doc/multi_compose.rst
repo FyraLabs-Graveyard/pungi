@@ -39,6 +39,14 @@ General settings
    If specified, a current event will be retrieved from the Koji instance and
    used for all parts.
 
+**kerberos**
+   If set to yes, a kerberos ticket will be automatically created at the start.
+   Set keytab and principal as well.
+**kerberos_keytab**
+   Path to keytab file used to create the kerberos ticket.
+**kerberos_principal**
+   Kerberos principal for the ticket
+
 
 Partial compose settings
 ------------------------

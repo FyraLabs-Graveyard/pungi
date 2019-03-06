@@ -804,3 +804,32 @@ class TestSetupForRestart(BaseTestCase):
         self.assertEqual(parts["p1"].path, "/p1")
         self.assertEqual(parts["p2"].status, "WAITING")
         self.assertEqual(parts["p2"].path, None)
+
+
+@mock.patch("atexit.register")
+@mock.patch("kobo.shortcuts.run")
+class TestRunKinit(BaseTestCase):
+    def test_without_config(self, run, register):
+        conf = mock.Mock()
+        conf.getboolean.return_value = False
+
+        o.run_kinit(conf)
+
+        self.assertEqual(run.call_args_list, [])
+        self.assertEqual(register.call_args_list, [])
+
+    @mock.patch.dict("os.environ")
+    def test_with_config(self, run, register):
+        conf = mock.Mock()
+        conf.getboolean.return_value = True
+        conf.get.side_effect = lambda section, option: option
+
+        o.run_kinit(conf)
+
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(["kinit", "-k", "-t", "kerberos_keytab", "kerberos_principal"])],
+        )
+        self.assertEqual(
+            register.call_args_list, [mock.call(os.remove, os.environ["KRB5CCNAME"])]
+        )

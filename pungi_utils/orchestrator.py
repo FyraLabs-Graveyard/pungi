@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import atexit
 import errno
 import json
 import logging
@@ -11,11 +12,13 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections import namedtuple
 
 import kobo.conf
 import kobo.log
 import productmd
+from kobo import shortcuts
 from six.moves import configparser, shlex_quote
 
 from pungi.compose import get_compose_dir
@@ -465,13 +468,32 @@ def setup_for_restart(global_config, parts, to_restart):
         raise RuntimeError("All restarted parts are blocked. Nothing to do.")
 
 
+def run_kinit(config):
+    if not config.getboolean("general", "kerberos"):
+        return
+
+    keytab = config.get("general", "kerberos_keytab")
+    principal = config.get("general", "kerberos_principal")
+
+    fd, fname = tempfile.mkstemp(prefix="krb5cc_pungi-orchestrate_")
+    os.close(fd)
+    os.environ["KRB5CCNAME"] = fname
+    shortcuts.run(["kinit", "-k", "-t", keytab, principal])
+    log.debug("Created a kerberos ticket for %s", principal)
+
+    atexit.register(os.remove, fname)
+
+
 def run(work_dir, main_config_file, args):
     config_dir = os.path.join(work_dir, "config")
     shutil.copytree(os.path.dirname(main_config_file), config_dir)
 
     # Read main config
-    parser = configparser.RawConfigParser()
+    parser = configparser.RawConfigParser(defaults={"kerberos": "false"})
     parser.read(main_config_file)
+
+    # Create kerberos ticket
+    run_kinit(parser)
 
     compose_info = dict(parser.items("general"))
     compose_type = parser.get("general", "compose_type")
