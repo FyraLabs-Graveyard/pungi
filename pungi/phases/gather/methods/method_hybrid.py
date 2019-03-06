@@ -350,10 +350,12 @@ def get_lookaside_modules(lookasides):
         for rec in repomd.records:
             if rec.type != "modules":
                 continue
-            with gzip.GzipFile(os.path.join(repo, rec.location_href), "r") as f:
-                # This can't use _from_stream, since gobject-introspection
-                # refuses to pass a file object.
-                mmds = Modulemd.objects_from_string(f.read())
+            # No with statement on Python 2.6 for GzipFile...
+            gzipped_file = gzip.GzipFile(os.path.join(repo, rec.location_href), "r")
+            # This can't use _from_stream, since gobject-introspection
+            # refuses to pass a file object.
+            mmds = Modulemd.objects_from_string(gzipped_file.read())
+            gzipped_file.close()
             for mmd in mmds:
                 if isinstance(mmd, Modulemd.Module):
                     modules.add(
