@@ -77,6 +77,16 @@ General settings
     * ``BASE_PRODUCT_VERSION`` – only set for layered products
     * ``BASE_PRODUCT_TYPE`` – only set for layered products
 
+**notification_script**
+   Executable name (or path to a script) that will be used to send a message
+   once the compose is finished. In order for a valid URL to be included in the
+   message, at least one part must configure path translation that would apply
+   to location of main compose.
+
+   Only two messages will be sent, one for start and one for finish (either
+   successful or not).
+
+
 Partial compose settings
 ------------------------
 

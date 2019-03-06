@@ -217,14 +217,7 @@ def main():
     if not opts.quiet:
         kobo.log.add_stderr_logger(logger)
 
-    conf = kobo.conf.PyConfigParser()
-    if opts.config.endswith(".json"):
-        with open(opts.config) as f:
-            conf.load_from_dict(json.load(f))
-        conf.opened_files = [opts.config]
-        conf._open_file = opts.config
-    else:
-        conf.load_from_file(opts.config)
+    conf = util.load_config(opts.config)
 
     compose_type = opts.compose_type or conf.get('compose_type', 'production')
     if compose_type == "production" and not opts.label and not opts.no_label:

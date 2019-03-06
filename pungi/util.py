@@ -32,6 +32,7 @@ import time
 import functools
 from six.moves import urllib, range, shlex_quote
 
+import kobo.conf
 from kobo.shortcuts import run, force_list
 from productmd.common import get_major_version
 
@@ -711,14 +712,8 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     raise RuntimeError('Failed to run %r: Device or resource busy.' % cmd)
 
 
-def translate_path(compose, path):
-    """
-    @param compose - required for access to config
-    @param path
-    """
+def translate_path_raw(mapping, path):
     normpath = os.path.normpath(path)
-    mapping = compose.conf["translate_paths"]
-
     for prefix, newvalue in mapping:
         prefix = os.path.normpath(prefix)
         # Strip trailing slashes: the prefix has them stripped by `normpath`.
@@ -728,8 +723,16 @@ def translate_path(compose, path):
             # a path - http:// would get changed to  http:/ and so on.
             # Only the first occurance should be replaced.
             return normpath.replace(prefix, newvalue, 1)
-
     return normpath
+
+
+def translate_path(compose, path):
+    """
+    @param compose - required for access to config
+    @param path
+    """
+    mapping = compose.conf["translate_paths"]
+    return translate_path_raw(mapping, path)
 
 
 def get_repo_url(compose, repo, arch='$basearch'):
@@ -923,3 +926,16 @@ def iter_module_defaults(path):
         for mmddef in Modulemd.objects_from_file(file):
             if isinstance(mmddef, Modulemd.Defaults):
                 yield mmddef
+
+
+def load_config(file_path):
+    """Open and load configuration file form .conf or .json file."""
+    conf = kobo.conf.PyConfigParser()
+    if file_path.endswith(".json"):
+        with open(file_path) as f:
+            conf.load_from_dict(json.load(f))
+        conf.opened_files = [file_path]
+        conf._open_file = file_path
+    else:
+        conf.load_from_file(file_path)
+    return conf

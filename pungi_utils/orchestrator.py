@@ -21,6 +21,7 @@ import productmd
 from kobo import shortcuts
 from six.moves import configparser, shlex_quote
 
+import pungi.util
 from pungi.compose import get_compose_dir
 from pungi.linker import linker_pool
 from pungi.phases.pkgset.sources.source_koji import get_koji_event_raw
@@ -114,8 +115,7 @@ class ComposePart(object):
         )
         substitutions["configdir"] = global_config.config_dir
 
-        config = kobo.conf.PyConfigParser()
-        config.load_from_file(self.config)
+        config = pungi.util.load_config(self.config)
 
         for f in config.opened_files:
             # apply substitutions
@@ -417,6 +417,8 @@ def prepare_compose_dir(config, args, main_config_file, compose_info):
             except OSError as exc:
                 if exc.errno != errno.EEXIST:
                     raise
+        with open(os.path.join(target_dir, "STATUS"), "w") as fh:
+            fh.write("STARTED")
         # Copy initial composeinfo for new compose
         shutil.copy(
             os.path.join(target_dir, "work/global/composeinfo-base.json"),
@@ -484,33 +486,42 @@ def run_kinit(config):
     atexit.register(os.remove, fname)
 
 
+def get_compose_data(compose_path):
+    try:
+        compose = productmd.compose.Compose(compose_path)
+        data = {
+            "compose_id": compose.info.compose.id,
+            "compose_date": compose.info.compose.date,
+            "compose_type": compose.info.compose.type,
+            "compose_respin": str(compose.info.compose.respin),
+            "compose_label": compose.info.compose.label,
+            "release_id": compose.info.release_id,
+            "release_name": compose.info.release.name,
+            "release_short": compose.info.release.short,
+            "release_version": compose.info.release.version,
+            "release_type": compose.info.release.type,
+            "release_is_layered": compose.info.release.is_layered,
+        }
+        if compose.info.release.is_layered:
+            data.update({
+                "base_product_name": compose.info.base_product.name,
+                "base_product_short": compose.info.base_product.short,
+                "base_product_version": compose.info.base_product.version,
+                "base_product_type": compose.info.base_product.type,
+            })
+        return data
+    except Exception as exc:
+        return {}
+
+
 def get_script_env(compose_path):
     env = os.environ.copy()
     env["COMPOSE_PATH"] = compose_path
-    try:
-        compose = productmd.compose.Compose(compose_path)
-        env.update({
-            "COMPOSE_ID": compose.info.compose.id,
-            "COMPOSE_DATE": compose.info.compose.date,
-            "COMPOSE_TYPE": compose.info.compose.type,
-            "COMPOSE_RESPIN": str(compose.info.compose.respin),
-            "COMPOSE_LABEL": compose.info.compose.label or "",
-            "RELEASE_ID": compose.info.release_id,
-            "RELEASE_NAME": compose.info.release.name,
-            "RELEASE_SHORT": compose.info.release.short,
-            "RELEASE_VERSION": compose.info.release.version,
-            "RELEASE_TYPE": compose.info.release.type,
-            "RELEASE_IS_LAYERED": "YES" if compose.info.release.is_layered else "",
-        })
-        if compose.info.release.is_layered:
-            env.update({
-                "BASE_PRODUCT_NAME": compose.info.base_product.name,
-                "BASE_PRODUCT_SHORT": compose.info.base_product.short,
-                "BASE_PRODUCT_VERSION": compose.info.base_product.version,
-                "BASE_PRODUCT_TYPE": compose.info.base_product.type,
-            })
-    except Exception as exc:
-        pass
+    for key, value in get_compose_data(compose_path).items():
+        if isinstance(value, bool):
+            env[key.upper()] = "YES" if value else ""
+        else:
+            env[key.upper()] = str(value) if value else ""
     return env
 
 
@@ -524,6 +535,26 @@ def run_scripts(prefix, compose_dir, scripts):
         shortcuts.run(command, env=env, logfile=logfile)
 
 
+def try_translate_path(parts, path):
+    translation = []
+    for part in parts.values():
+        conf = pungi.util.load_config(part.config)
+        translation.extend(conf.get("translate_paths", []))
+    return pungi.util.translate_path_raw(translation, path)
+
+
+def send_notification(compose_dir, command, parts):
+    if not command:
+        return
+    from pungi.notifier import PungiNotifier
+    data = get_compose_data(compose_dir)
+    data["location"] = try_translate_path(parts, compose_dir)
+    notifier = PungiNotifier([command])
+    with open(os.path.join(compose_dir, "STATUS")) as f:
+        status = f.read().strip()
+    notifier.send("status-change", workdir=compose_dir, status=status, **data)
+
+
 def run(work_dir, main_config_file, args):
     config_dir = os.path.join(work_dir, "config")
     shutil.copytree(os.path.dirname(main_config_file), config_dir)
@@ -534,6 +565,7 @@ def run(work_dir, main_config_file, args):
             "kerberos": "false",
             "pre_compose_script": "",
             "post_compose_script": "",
+            "notification_script": "",
         }
     )
     parser.read(main_config_file)
@@ -584,6 +616,8 @@ def run(work_dir, main_config_file, args):
     if hasattr(args, "part"):
         setup_for_restart(global_config, parts, args.part)
 
+    send_notification(target_dir, parser.get("general", "notification_script"), parts)
+
     retcode = run_all(global_config, parts)
 
     if retcode:
@@ -591,6 +625,8 @@ def run(work_dir, main_config_file, args):
         run_scripts(
             "post_compose_", target_dir, parser.get("general", "post_compose_script")
         )
+
+    send_notification(target_dir, parser.get("general", "notification_script"), parts)
 
     return retcode
 

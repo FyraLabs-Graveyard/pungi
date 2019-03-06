@@ -730,6 +730,9 @@ class TestPrepareComposeDir(PungiTestCase):
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "logs")))
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "parts")))
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "work/global")))
+        self.assertFileContent(
+            os.path.join(self.topdir, "STATUS"), "STARTED"
+        )
 
     def test_restarting_compose(self, gtd):
         args = mock.Mock(name="args", spec=["label", "compose_path"])
@@ -890,3 +893,45 @@ class TestRunScripts(BaseTestCase):
                 ),
             ],
         )
+
+
+@mock.patch("pungi.notifier.PungiNotifier")
+class TestSendNotification(BaseTestCase):
+    def test_no_command(self, notif):
+        o.send_notification("/foobar", None, None)
+        self.assertEqual(notif.mock_calls, [])
+
+    @mock.patch("pungi.util.load_config")
+    def test_with_command_and_translate(self, load_config, notif):
+        compose_dir = os.path.join(FIXTURE_DIR, "DP-1.0-20161013.t.4")
+        load_config.return_value = {
+            "translate_paths": [(os.path.dirname(compose_dir), "http://example.com")],
+        }
+        parts = {"foo": mock.Mock()}
+
+        o.send_notification(compose_dir, "handler", parts)
+
+        self.assertEqual(len(notif.mock_calls), 2)
+        self.assertEqual(notif.mock_calls[0], mock.call(["handler"]))
+        _, args, kwargs = notif.mock_calls[1]
+        self.assertEqual(args, ("status-change", ))
+        self.assertEqual(
+            kwargs,
+            {
+                "status": "FINISHED",
+                "workdir": compose_dir,
+                "location": "http://example.com/DP-1.0-20161013.t.4",
+                "compose_id": "DP-1.0-20161013.t.4",
+                "compose_date": "20161013",
+                "compose_type": "test",
+                "compose_respin": "4",
+                "compose_label": None,
+                "release_id": "DP-1.0",
+                "release_name": "Dummy Product",
+                "release_short": "DP",
+                "release_version": "1.0",
+                "release_type": "ga",
+                "release_is_layered": False,
+            },
+        )
+        self.assertEqual(load_config.call_args_list, [mock.call(parts["foo"].config)])
