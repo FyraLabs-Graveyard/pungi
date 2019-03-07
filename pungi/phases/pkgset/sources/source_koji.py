@@ -617,10 +617,16 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
         global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
             arches=all_arches)
+
         old_file_cache_path = _find_old_file_cache_path(compose)
+        old_file_cache = None
         if old_file_cache_path:
             compose.log_info("Reusing old PKGSET file cache from %s" % old_file_cache_path)
-            global_pkgset.load_old_file_cache(old_file_cache_path)
+            old_file_cache = pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(
+                old_file_cache_path
+            )
+            global_pkgset.set_old_file_cache(old_file_cache)
+
         # Get package set for each compose tag and merge it to global package
         # list. Also prepare per-variant pkgset, because we do not have list
         # of binary RPMs in module definition - there is just list of SRPMs.
@@ -638,8 +644,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 populate_only_packages=populate_only_packages_to_gather,
                 cache_region=compose.cache_region,
                 extra_builds=extra_builds)
-            if old_file_cache_path:
-                pkgset.load_old_file_cache(old_file_cache_path)
+            if old_file_cache:
+                pkgset.set_old_file_cache(old_file_cache)
             # Create a filename for log with package-to-tag mapping. The tag
             # name is included in filename, so any slashes in it are replaced
             # with underscores just to be safe.

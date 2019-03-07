@@ -236,12 +236,17 @@ class PackageSetBase(kobo.log.LoggingBase):
                         rpm_path = rpm_path[len(remove_path_prefix):]
                     f.write("%s\n" % rpm_path)
 
-    def load_old_file_cache(self, file_path):
+    @staticmethod
+    def load_old_file_cache(file_path):
         """
         Loads the cached FileCache stored in pickle format in `file_path`.
         """
         with open(file_path, "rb") as f:
-            self.old_file_cache = pickle.load(f)
+            return pickle.load(f)
+
+    def set_old_file_cache(self, old_file_cache):
+        """Set cache of old files."""
+        self.old_file_cache = old_file_cache
 
     def save_file_cache(self, file_path):
         """
