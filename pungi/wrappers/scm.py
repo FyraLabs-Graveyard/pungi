@@ -100,26 +100,7 @@ class CvsWrapper(ScmBase):
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
-class FetchUnsupportedError(Exception):
-    """Raised when git-fetch does not support getting particular commit by hash."""
-    pass
-
-
 class GitWrapper(ScmBase):
-    @retry(interval=60, timeout=300, wait_on=RuntimeError)
-    def _try_fetch(self, repo, branch, destdir):
-        """Attempt to run git-fetch to get only the relevant commit. This
-        requires git >= 2.5. On unsupported versions it does not return any
-        error message (at least with 1.8.3). We can check that and fall back to
-        full clone then.
-        """
-        try:
-            return run(["git", "fetch", "--depth=1", repo, branch], workdir=destdir)
-        except RuntimeError as exc:
-            if exc.output:
-                # We have some error message, so re-raise the error to retry.
-                raise
-            raise FetchUnsupportedError()
 
     def _clone(self, repo, branch, destdir):
         """Get a single commit from a repository.
@@ -136,9 +117,9 @@ class GitWrapper(ScmBase):
 
         run(["git", "init"], workdir=destdir)
         try:
-            self._try_fetch(repo, branch, destdir)
+            run(["git", "fetch", "--depth=1", repo, branch], workdir=destdir)
             run(["git", "checkout", "FETCH_HEAD"], workdir=destdir)
-        except FetchUnsupportedError:
+        except RuntimeError:
             # Fetch failed, to do a full clone we add a remote to our empty
             # repo, get its content and check out the reference we want.
             run(["git", "remote", "add", "origin", repo], workdir=destdir)
