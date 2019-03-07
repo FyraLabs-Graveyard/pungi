@@ -40,12 +40,9 @@ from ..util import (
     temp_dir,
 )
 from pungi import Modulemd
-from pungi.arch import tree_arch_to_yum_arch
 
 import productmd.rpms
 import productmd.modules
-
-import createrepo_c as cr
 
 
 createrepo_lock = threading.Lock()
@@ -87,21 +84,6 @@ class CreaterepoPhase(PhaseBase):
     def stop(self):
         super(CreaterepoPhase, self).stop()
         self.modules_metadata.write_modules_metadata()
-
-
-def get_licenses_from_repo(repo_path):
-    result = {}
-    md = cr.Metadata()
-    md.locate_and_load_xml(repo_path)
-    for key in md.keys():
-        pkg = md.get(key)
-        nevra = "%s-%s:%s-%s.%s" % (pkg.name,
-                                    pkg.epoch if pkg.epoch else "0",
-                                    pkg.version,
-                                    pkg.release,
-                                    pkg.arch)
-        result[nevra] = pkg.rpm_license
-    return result
 
 
 def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None):
@@ -217,37 +199,11 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
         modules = []
         metadata = []
 
-        # Interrogate the RPM repodata and add all licenses for these RPMs to the
-        # module metadata
-        license_data = get_licenses_from_repo(
-            compose.paths.work.arch_repo(arch))
-
         for module_id, mmd in variant.arch_mmds[arch].items():
-            # Create copy of architecture specific mmd to filter out packages
-            # which are not part of this particular repo.
-            repo_mmd = mmd.copy()
-            repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
-            artifacts = repo_mmd.get_rpm_artifacts()
-
-            # Modules without RPMs are also valid.
-            module_rpms = set()
-            if artifacts and artifacts.size() > 0:
-                repo_artifacts = Modulemd.SimpleSet()
-                rpm_licenses = Modulemd.SimpleSet()
-                for rpm_nevra in rpm_nevras:
-                    if artifacts.contains(rpm_nevra):
-                        repo_artifacts.add(rpm_nevra)
-                        module_rpms.add(rpm_nevra)
-                        # Not all RPMs have license data (*-debuginfo does not),
-                        # so add any that do and don't worry about the remainder.
-                        if rpm_nevra in license_data:
-                            rpm_licenses.add(license_data[rpm_nevra])
-                repo_mmd.set_rpm_artifacts(repo_artifacts)
-                repo_mmd.set_content_licenses(rpm_licenses)
-
             if modules_metadata:
+                module_rpms = mmd.peek_rpm_artifacts().dup()
                 metadata.append((module_id, module_rpms))
-            modules.append(repo_mmd)
+            modules.append(mmd)
 
         module_names = set([x.get_name() for x in modules])
         for mmddef in iter_module_defaults(compose.paths.work.module_defaults_dir()):
