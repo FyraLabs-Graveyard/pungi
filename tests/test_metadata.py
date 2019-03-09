@@ -14,17 +14,13 @@ from pungi import metadata
 from pungi.compose_metadata import discinfo
 
 
-def mock_time():
-    return 101010101.01
-
-
 class DiscInfoTestCase(helpers.PungiTestCase):
 
     def setUp(self):
         super(DiscInfoTestCase, self).setUp()
+        os.environ['SOURCE_DATE_EPOCH'] = '101010101'
         self.path = os.path.join(self.topdir, 'compose/Server/x86_64/os/.discinfo')
 
-    @mock.patch('time.time', new=mock_time)
     def test_write_discinfo_variant(self):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
@@ -36,18 +32,17 @@ class DiscInfoTestCase(helpers.PungiTestCase):
 
         with open(self.path) as f:
             self.assertEqual(f.read().strip().split('\n'),
-                             ['101010101.010000',
+                             ['101010101',
                               'Test 1.0',
                               'x86_64',
                               'ALL'])
 
         self.assertEqual(discinfo.read_discinfo(self.path),
-                         {'timestamp': '101010101.010000',
+                         {'timestamp': '101010101',
                           'description': 'Test 1.0',
                           'disc_numbers': ['ALL'],
                           'arch': 'x86_64'})
 
-    @mock.patch('time.time', new=mock_time)
     def test_write_discinfo_custom_description(self):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
@@ -60,12 +55,11 @@ class DiscInfoTestCase(helpers.PungiTestCase):
 
         with open(self.path) as f:
             self.assertEqual(f.read().strip().split('\n'),
-                             ['101010101.010000',
+                             ['101010101',
                               'Fuzzy Server.x86_64',
                               'x86_64',
                               'ALL'])
 
-    @mock.patch('time.time', new=mock_time)
     def test_write_discinfo_layered_product(self):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
@@ -79,12 +73,11 @@ class DiscInfoTestCase(helpers.PungiTestCase):
 
         with open(self.path) as f:
             self.assertEqual(f.read().strip().split('\n'),
-                             ['101010101.010000',
+                             ['101010101',
                               'Test 1.0 for Base 42',
                               'x86_64',
                               'ALL'])
 
-    @mock.patch('time.time', new=mock_time)
     def test_write_discinfo_integrated_layered_product(self):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
@@ -100,12 +93,11 @@ class DiscInfoTestCase(helpers.PungiTestCase):
 
         with open(self.path) as f:
             self.assertEqual(f.read().strip().split('\n'),
-                             ['101010101.010000',
+                             ['101010101',
                               'Integrated 2.1 for Test 1',
                               'x86_64',
                               'ALL'])
 
-    @mock.patch('time.time', new=mock_time)
     def test_addons_dont_have_discinfo(self):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
