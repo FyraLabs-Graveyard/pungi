@@ -172,7 +172,6 @@ data:
             {
                 'abc': 'def',
                 'modulemd': modulemd1,
-                'rpms': [],
                 'tag': 'taggg',
                 'uid': 'modulenamefoo:rhel:1:00000000',
                 'name': 'modulenamefoo',
@@ -183,7 +182,6 @@ data:
             {
                 'abc': 'def',
                 'modulemd': modulemd2,
-                'rpms': [],
                 'tag': 'taggg',
                 'uid': 'modulenamefoo:rhel:4:00000000',
                 'name': 'modulenamefoo',
@@ -361,36 +359,9 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'completion_ts': 1433473124.0,
             }
         ]
-        mock_archives = [
-            {
-                "id": 108941,
-                "btype": "module",
-                "filename": "modulemd.txt"
-            }
-        ]
-
-        mock_rpms = [
-            {'arch': 'src',
-             'epoch': None,
-             'id': 13640896,
-             'name': 'perl-List-Compare',
-             'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
-             'release': '9.module_1612+b62270b8',
-             'version': '0.53'},
-            {'arch': 'noarch',
-             'epoch': None,
-             'id': 13640897,
-             'name': 'perl-List-Compare',
-             'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
-             'release': '9.module_1612+b62270b8',
-             'version': '0.53'}
-
-        ]
 
         self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
         self.koji_wrapper.koji_proxy.getBuild.return_value = mock_build_md[0]
-        self.koji_wrapper.koji_proxy.listArchives.return_value = mock_archives
-        self.koji_wrapper.koji_proxy.listRPMs.return_value = mock_rpms
         event = {"id": 12345, "ts": 1533473124.0}
 
         module_info_str = "testmodule2:master-dash:20180406051653:96c371af"
@@ -402,8 +373,6 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         assert len(result) == 1
         module = result[0]
         assert type(module) is dict
-        assert "rpms" in module
-        assert len(module["rpms"]) == 2
         assert "modulemd" in module
         assert "stream" in module
         assert "context" in module
@@ -412,9 +381,6 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
                                                                     "glob")
         self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
-        self.koji_wrapper.koji_proxy.listArchives.assert_called_once_with(mock_build_ids[0]["id"])
-        self.koji_wrapper.koji_proxy.listRPMs.assert_called_once_with(
-            imageID=mock_archives[0]["id"])
 
     def test_get_koji_modules_filter_by_event(self):
         mock_build_ids = [
@@ -514,54 +480,9 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                 'completion_ts': 1433473124.0,
             }
         ]
-        mock_archives = [
-            [{
-                "id": 108941,
-                "btype": "module",
-                "filename": "modulemd.txt"
-            }],
-            [{
-                "id": 108942,
-                "btype": "module",
-                "filename": "modulemd.txt"
-            }],
-        ]
-
-        mock_rpms = [
-            [{'arch': 'src',
-              'epoch': None,
-              'id': 13640896,
-              'name': 'perl-List-Compare',
-              'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
-              'release': '9.module_1612+b62270b8',
-              'version': '0.53'},
-             {'arch': 'noarch',
-              'epoch': None,
-              'id': 13640897,
-              'name': 'perl-List-Compare',
-              'nvr': 'perl-List-Compare-0.53-9.module_1612+b62270b8',
-              'release': '9.module_1612+b62270b8',
-              'version': '0.53'}],
-            [{'arch': 'src',
-              'epoch': None,
-              'id': 13640900,
-              'name': 'perl-List-Compare',
-              'nvr': 'perl-List-Compare-0.53-9.module_1612+52e40b9c',
-              'release': '9.module_1612+52e40b9c',
-              'version': '0.53'},
-             {'arch': 'noarch',
-              'epoch': None,
-              'id': 13640901,
-              'name': 'perl-List-Compare',
-              'nvr': 'perl-List-Compare-0.53-9.module_1612+52e40b9c',
-              'release': '9.module_1612+52e40b9c',
-              'version': '0.53'}],
-        ]
 
         self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
         self.koji_wrapper.koji_proxy.getBuild.side_effect = mock_build_md
-        self.koji_wrapper.koji_proxy.listArchives.side_effect = mock_archives
-        self.koji_wrapper.koji_proxy.listRPMs.side_effect = mock_rpms
 
         event = {"id": 12345, "ts": 1533473124.0}
 
@@ -575,8 +496,6 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         module = result[0]
         for module in result:
             assert type(module) is dict
-            assert "rpms" in module
-            assert len(module["rpms"]) == 2
             assert "modulemd" in module
             assert "stream" in module
             assert "context" in module
@@ -587,10 +506,6 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
 
         expected_calls = [mock.call(mock_build_ids[0]["id"]), mock.call(mock_build_ids[1]["id"])]
         self.koji_wrapper.koji_proxy.getBuild.mock_calls == expected_calls
-        self.koji_wrapper.koji_proxy.listArchives.mock_calls == expected_calls
-        expected_rpm_calls = [mock.call(imageID=mock_archives[0][0]["id"]),
-                              mock.call(imageID=mock_archives[1][0]["id"])]
-        self.koji_wrapper.koji_proxy.listRPMs.mock_calls = expected_rpm_calls
 
 
 class TestSourceKoji(helpers.PungiTestCase):

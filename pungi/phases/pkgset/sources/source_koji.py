@@ -22,7 +22,6 @@ from itertools import groupby
 import threading
 
 from kobo.shortcuts import force_list, relative_path
-from kobo.rpmlib import make_nvra
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
@@ -155,20 +154,6 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
         except KeyError:
             continue
 
-        archives = koji_proxy.listArchives(md["id"])
-        if not archives:
-            continue
-
-        archive = [a for a in archives
-                   if a["btype"] == "module" and a["filename"] == "modulemd.txt"]
-
-        if not archive:
-            continue
-
-        image_id = archive[0]["id"]
-        rpms = koji_proxy.listRPMs(imageID=image_id)
-        md["rpms"] = [make_nvra(rpm, add_epoch=True, force_epoch=True, add_rpm=False)
-                      for rpm in rpms]
         modules.append(md)
 
     if not modules:
