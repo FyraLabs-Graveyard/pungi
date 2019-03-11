@@ -222,13 +222,12 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     return package_sets
 
 
-def _add_module_to_variant(variant, mmd, rpms, add_to_variant_modules=False):
+def _add_module_to_variant(variant, mmd, add_to_variant_modules=False):
     """
     Adds module defined by Modulemd.Module `mmd` to variant.
 
     :param Variant variant: Variant to add the module to.
     :param Modulemd.Module: Modulemd instance defining the module.
-    :param list rpms: List of NEVRAs to add to variant along with a module.
     :param bool add_to_variant_modules: Adds the modules also to
         variant.modules.
     """
@@ -242,14 +241,6 @@ def _add_module_to_variant(variant, mmd, rpms, add_to_variant_modules=False):
     if mmd.get_context():
         nsvc_list.append(mmd.get_context())
     nsvc = ":".join(nsvc_list)
-
-    # Catch the issue when build system does not contain RPMs, but
-    # the module definition says there should be some.
-    if not rpms and mmd.get_rpm_components():
-        raise ValueError(
-            "Module %s does not have any rpms in 'rpms' in build system,"
-            "but according to modulemd, there should be some."
-            % nsvc)
 
     variant.mmds.append(mmd)
 
@@ -284,7 +275,7 @@ def _get_modules_from_koji(
         for koji_module in koji_modules:
             mmd = Modulemd.Module.new_from_string(koji_module["modulemd"])
             mmd.upgrade()
-            _add_module_to_variant(variant, mmd, koji_module["rpms"])
+            _add_module_to_variant(variant, mmd)
             _log_modulemd(compose, variant, mmd)
 
             tag = koji_module["tag"]
@@ -453,15 +444,9 @@ def _get_modules_from_koji_tags(
 
             variant_tags[variant].append(module_tag)
 
-            # Get the list of all RPMs which are tagged in the modular
-            # Koji tag for this NSVC and add them to variant.
-            tagged_rpms = koji_proxy.listTaggedRPMS(
-                module_tag, event=event_id["id"], inherit=True, latest=True)[0]
-            rpms = [make_nvra(rpm, add_epoch=True, force_epoch=True) for rpm in
-                    tagged_rpms]
             mmd = Modulemd.Module.new_from_string(modulemd)
             mmd.upgrade()
-            _add_module_to_variant(variant, mmd, rpms, True)
+            _add_module_to_variant(variant, mmd, True)
             _log_modulemd(compose, variant, mmd)
 
             # Store mapping module-uid --> koji_tag into variant.
@@ -607,6 +592,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     # Add global tag(s) if supplied.
+    pkgset_koji_tags = []
     if 'pkgset_koji_tag' in compose.conf:
         if compose.conf["pkgset_koji_tag"] == "not-used":
             # The magic value is used for modular composes to avoid errors
@@ -615,7 +601,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                                 'option is no longer required. Remove it from '
                                 'the configuration.')
         else:
-            compose_tags.extend(force_list(compose.conf["pkgset_koji_tag"]))
+            pkgset_koji_tags = force_list(compose.conf["pkgset_koji_tag"])
+            compose_tags.extend(pkgset_koji_tags)
 
     inherit = compose.conf["pkgset_koji_inherit"]
     inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
@@ -640,13 +627,17 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
         for compose_tag in compose_tags:
             compose.log_info("Populating the global package set from tag "
                              "'%s'" % compose_tag)
+            if compose_tag in pkgset_koji_tags:
+                extra_builds = force_list(compose.conf.get("pkgset_koji_builds", []))
+            else:
+                extra_builds = []
             pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
                 koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
                 arches=all_arches, packages=packages_to_gather,
                 allow_invalid_sigkeys=allow_invalid_sigkeys,
                 populate_only_packages=populate_only_packages_to_gather,
                 cache_region=compose.cache_region,
-                extra_builds=force_list(compose.conf.get("pkgset_koji_builds", [])))
+                extra_builds=extra_builds)
             if old_file_cache_path:
                 pkgset.load_old_file_cache(old_file_cache_path)
             # Create a filename for log with package-to-tag mapping. The tag
