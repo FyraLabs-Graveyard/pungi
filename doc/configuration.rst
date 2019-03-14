@@ -848,7 +848,11 @@ Options
 -------
 
 **koji_profile**
-    (*str*) -- koji profile name
+    (*str*) -- koji profile name. This tells Pungi how to communicate with
+    your chosen Koji instance. See `Koji's documentation about profiles
+    <https://docs.pagure.org/koji/profiles/>`_ for more information about how
+    to set up your Koji client profile. In the examples, the profile name is
+    "koji", which points to Fedora's koji.fedoraproject.org.
 
 **runroot** [mandatory]
     (*bool*) -- run some tasks such as buildinstall or createiso in koji build root (True) or locally (False)
