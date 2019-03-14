@@ -26,7 +26,7 @@ from kobo.shortcuts import force_list, relative_path
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
-from pungi.arch import get_valid_arches
+from pungi.arch import get_valid_arches, getBaseArch
 from pungi.util import is_arch_multilib, retry, find_old_compose
 from pungi import Modulemd
 
@@ -207,36 +207,46 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     return package_sets
 
 
-def _add_module_to_variant(variant, mmd, add_to_variant_modules=False):
+def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=False):
     """
-    Adds module defined by Modulemd.Module `mmd` to variant.
+    Adds module defined by Koji build info to variant.
 
     :param Variant variant: Variant to add the module to.
-    :param Modulemd.Module: Modulemd instance defining the module.
+    :param int: build id
     :param bool add_to_variant_modules: Adds the modules also to
         variant.modules.
     """
-    # Get the NSVC of module and handle the case where for some reason the
-    # name/strea/version is not set.
-    if not mmd.get_name() or not mmd.get_stream() or not mmd.get_version():
-        raise ValueError(
-            "Input module %s does not name or stream or version set."
-            % mmd.dumps())
-    nsvc_list = [mmd.get_name(), mmd.get_stream(), str(mmd.get_version())]
-    if mmd.get_context():
-        nsvc_list.append(mmd.get_context())
-    nsvc = ":".join(nsvc_list)
+    mmds = {}
+    archives = koji_wrapper.koji_proxy.listArchives(build["id"])
+    for archive in archives:
+        if archive["btype"] != "module":
+            # Skip non module archives
+            continue
+        typedir = koji_wrapper.koji_module.pathinfo.typedir(build, archive["btype"])
+        filename = archive["filename"]
+        file_path = os.path.join(typedir, filename)
+        try:
+            # If there are two dots, the arch is in the middle. MBS uploads
+            # files with actual architecture in the filename, but Pungi deals
+            # in basearch. This assumes that each arch in the build maps to a
+            # unique basearch.
+            _, arch, _ = filename.split(".")
+            filename = "modulemd.%s.txt" % getBaseArch(arch)
+        except ValueError:
+            pass
+        mmds[filename] = Modulemd.Module.new_from_file(file_path)
 
-    variant.mmds.append(mmd)
+    source_mmd = mmds["modulemd.txt"]
+    nsvc = source_mmd.dup_nsvc()
+
+    variant.mmds.append(source_mmd)
+    for arch in variant.arches:
+        variant.arch_mmds.setdefault(arch, {})[nsvc] = mmds["modulemd.%s.txt" % arch]
 
     if add_to_variant_modules:
         variant.modules.append(nsvc)
 
-
-def _log_modulemd(compose, variant, mmd):
-    """Dump module metadata to a log file for easy inspection."""
-    mmd.dump(compose.paths.log.log_file('global', 'modulemd-%s-%s'
-                                        % (variant.uid, mmd.dup_nsvc())))
+    return source_mmd
 
 
 def _get_modules_from_koji(
@@ -258,10 +268,7 @@ def _get_modules_from_koji(
     for module in variant.get_modules():
         koji_modules = get_koji_modules(compose, koji_wrapper, event, module["name"])
         for koji_module in koji_modules:
-            mmd = Modulemd.Module.new_from_string(koji_module["modulemd"])
-            mmd.upgrade()
-            _add_module_to_variant(variant, mmd)
-            _log_modulemd(compose, variant, mmd)
+            mmd = _add_module_to_variant(koji_wrapper, variant, koji_module)
 
             tag = koji_module["tag"]
             uid = ':'.join([koji_module['name'], koji_module['stream'],
@@ -422,17 +429,10 @@ def _get_modules_from_koji_tags(
             build = koji_proxy.getBuild(build["build_id"])
             module_tag = build.get("extra", {}).get("typeinfo", {}).get(
                 "module", {}).get("content_koji_tag", "")
-            modulemd = build.get("extra", {}).get("typeinfo", {}).get(
-                "module", {}).get("modulemd_str", "")
-            if not module_tag or not modulemd:
-                continue
 
             variant_tags[variant].append(module_tag)
 
-            mmd = Modulemd.Module.new_from_string(modulemd)
-            mmd.upgrade()
-            _add_module_to_variant(variant, mmd, True)
-            _log_modulemd(compose, variant, mmd)
+            mmd = _add_module_to_variant(koji_wrapper, variant, build, True)
 
             # Store mapping module-uid --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd

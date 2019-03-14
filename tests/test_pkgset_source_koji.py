@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import json
@@ -131,75 +130,6 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                               [mock.call(orig_pkgset)])
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
-
-    @unittest.skipUnless(Modulemd is not None, 'Modulemd not available')   # noqa
-    @mock.patch('six.moves.cPickle.dumps')
-    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_koji_modules')
-    def test_pdc_log(self, get_koji_modules, KojiPackageSet, pickle_dumps):
-
-        pickle_dumps.return_value = b'DATA'
-
-        modulemd1 = """
-document: modulemd
-version: 2
-data:
-    name: foo
-    stream: bar
-    version: 1
-    summary: foo
-    description: foo
-    license:
-        module:
-            - MIT
-"""
-
-        modulemd2 = """
-document: modulemd
-version: 2
-data:
-    name: foo
-    stream: bar
-    version: 4
-    summary: foo
-    description: foo
-    license:
-        module:
-            - MIT
-"""
-
-        get_koji_modules.return_value = [
-            {
-                'abc': 'def',
-                'modulemd': modulemd1,
-                'tag': 'taggg',
-                'uid': 'modulenamefoo:rhel:1:00000000',
-                'name': 'modulenamefoo',
-                'stream': 'rhel',
-                'version': '1',
-                'context': '00000000'
-            },
-            {
-                'abc': 'def',
-                'modulemd': modulemd2,
-                'tag': 'taggg',
-                'uid': 'modulenamefoo:rhel:4:00000000',
-                'name': 'modulenamefoo',
-                'stream': 'rhel',
-                'version': '4',
-                'context': '00000000'
-            },
-        ]
-        for name, variant in self.compose.variants.items():
-            variant.get_modules = mock.MagicMock()
-            if name == 'Server':
-                variant.modules = [{'name': 'modulenamefoo'}]
-                variant.get_modules.return_value = variant.modules
-
-        source_koji.populate_global_pkgset(
-            self.compose, self.koji_wrapper, '/prefix', 123456)
-        mmds = Modulemd.Module.new_all_from_file(self.koji_module_path)
-        self.assertEqual(mmds[0].get_name(), "foo")
 
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
@@ -735,5 +665,138 @@ class TestFilterByWhitelist(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":
-    unittest.main()
+class MockModule(object):
+    def __init__(self, path):
+        self.path = path
+
+    def __repr__(self):
+        return "MockModule(%r)" % self.path
+
+    def __eq__(self, other):
+        return self.path == other.path
+
+    def dup_nsvc(self):
+        return "module:master:20190318.abcdef"
+
+
+@mock.patch("pungi.Modulemd.Module.new_from_file", new=MockModule)
+class TestAddModuleToVariant(unittest.TestCase):
+
+    def setUp(self):
+        self.koji = mock.Mock()
+        self.koji.koji_module.pathinfo.typedir.return_value = "/koji"
+        files = ["modulemd.x86_64.txt", "modulemd.armv7hl.txt", "modulemd.txt"]
+        self.koji.koji_proxy.listArchives.return_value = [
+            {"btype": "module", "filename": fname} for fname in files
+        ] + [{"btype": "foo"}]
+
+    def test_adding_module(self):
+        build = {"id": 1234}
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
+        )
+
+        source_koji._add_module_to_variant(self.koji, variant, build)
+
+        self.assertEqual(variant.mmds, [MockModule("/koji/modulemd.txt")])
+        self.assertEqual(
+            variant.arch_mmds,
+            {
+                "armhfp": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                },
+                "x86_64": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                },
+            },
+        )
+        self.assertEqual(variant.modules, [])
+
+    def test_adding_module_to_existing(self):
+        build = {"id": 1234}
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"],
+            mmds=[MockModule("/koji/m1.txt")],
+            arch_mmds={
+                "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
+            },
+            modules=["m1:latest-20190101.cafe"],
+        )
+
+        source_koji._add_module_to_variant(self.koji, variant, build)
+
+        self.assertEqual(
+            variant.mmds, [MockModule("/koji/m1.txt"), MockModule("/koji/modulemd.txt")]
+        )
+        self.assertEqual(
+            variant.arch_mmds,
+            {
+                "armhfp": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                },
+                "x86_64": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt"),
+                },
+            },
+        )
+        self.assertEqual(variant.modules, ["m1:latest-20190101.cafe"])
+
+    def test_adding_module_with_add_module(self):
+        build = {"id": 1234}
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
+        )
+
+        source_koji._add_module_to_variant(
+            self.koji, variant, build, add_to_variant_modules=True
+        )
+
+        self.assertEqual(variant.mmds, [MockModule("/koji/modulemd.txt")])
+        self.assertEqual(
+            variant.arch_mmds,
+            {
+                "armhfp": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                },
+                "x86_64": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                },
+            },
+        )
+        self.assertEqual(variant.modules, ["module:master:20190318.abcdef"])
+
+    def test_adding_module_to_existing_with_add_module(self):
+        build = {"id": 1234}
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"],
+            mmds=[MockModule("/koji/m1.txt")],
+            arch_mmds={
+                "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
+            },
+            modules=["m1:latest-20190101.cafe"],
+        )
+
+        source_koji._add_module_to_variant(
+            self.koji, variant, build, add_to_variant_modules=True
+        )
+
+        self.assertEqual(
+            variant.mmds, [MockModule("/koji/m1.txt"), MockModule("/koji/modulemd.txt")]
+        )
+        self.assertEqual(
+            variant.arch_mmds,
+            {
+                "armhfp": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                },
+                "x86_64": {
+                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt"),
+                },
+            },
+        )
+        self.assertEqual(
+            variant.modules,
+            ["m1:latest-20190101.cafe", "module:master:20190318.abcdef"],
+        )
