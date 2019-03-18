@@ -410,18 +410,19 @@ class KojiPackageSet(PackageSetBase):
         return None
 
     def populate(
-        self, tag, event=None, inherit=True, logfile=None, exclude_packages=None
+        self, tag, event=None, inherit=True, logfile=None, include_packages=None,
     ):
         """Populate the package set with packages from given tag.
 
         :param event: the Koji event to query at (or latest if not given)
         :param inherit: whether to enable tag inheritance
         :param logfile: path to file where package source tags should be logged
-        :param exclude_packages: an iterable of package names that should be ignored
+        :param include_packages: an iterable of package names that should be
+                                 included, all others are skipped.
         """
         result_rpms = []
         result_srpms = []
-        exclude_packages = set(exclude_packages or [])
+        include_packages = set(include_packages or [])
 
         if type(event) is dict:
             event = event["id"]
@@ -453,7 +454,7 @@ class KojiPackageSet(PackageSetBase):
                     skipped_arches.append(rpm_info["arch"])
                 continue
 
-            if exclude_packages and rpm_info["name"] in exclude_packages and rpm_info["arch"] != "src":
+            if include_packages and rpm_info["name"] not in include_packages and rpm_info["arch"] != "src":
                 self.log_debug(
                     "Skipping %(name)s-%(version)s-%(release)s.%(arch)s" % rpm_info
                 )

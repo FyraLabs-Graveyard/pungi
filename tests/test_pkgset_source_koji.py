@@ -115,7 +115,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                     123456,
                     inherit=True,
                     logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
-                    exclude_packages=None,
+                    include_packages=set(),
                 ),
                 mock.call.save_file_list(
                     self.topdir + '/work/global/package_list/global.conf',
@@ -154,7 +154,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                     123456,
                     inherit=True,
                     logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
-                    exclude_packages=None,
+                    include_packages=set(),
                 ),
             ]
         )
@@ -165,7 +165,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                     123456,
                     inherit=True,
                     logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log',
-                    exclude_packages=None,
+                    include_packages=set(),
                 ),
             ]
         )

@@ -249,9 +249,7 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
     return source_mmd
 
 
-def _get_modules_from_koji(
-    compose, koji_wrapper, event, variant, variant_tags, module_tag_rpm_filter
-):
+def _get_modules_from_koji(compose, koji_wrapper, event, variant, variant_tags):
     """
     Loads modules for given `variant` from koji `session`, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -271,20 +269,17 @@ def _get_modules_from_koji(
             mmd = _add_module_to_variant(koji_wrapper, variant, koji_module)
 
             tag = koji_module["tag"]
-            uid = ':'.join([koji_module['name'], koji_module['stream'],
-                            koji_module['version'], koji_module['context']])
+            nsvc = mmd.dup_nsvc()
             variant_tags[variant].append(tag)
 
-            # Store mapping module-uid --> koji_tag into variant.
+            # Store mapping NSVC --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
-            variant.module_uid_to_koji_tag[uid] = tag
-
-            module_tag_rpm_filter[tag] = set(mmd.get_rpm_filter().get())
+            variant.module_uid_to_koji_tag[nsvc] = tag
 
             module_msg = (
                 "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' "
                 "(as a result of querying module '{module}')"
-            ).format(uid=uid, variant=variant, tag=tag, module=module["name"])
+            ).format(uid=nsvc, variant=variant, tag=tag, module=module["name"])
             compose.log_info("%s" % module_msg)
 
 
@@ -361,8 +356,7 @@ def filter_by_whitelist(compose, module_builds, input_modules):
     return modules_to_keep
 
 
-def _get_modules_from_koji_tags(
-        compose, koji_wrapper, event_id, variant, variant_tags, module_tag_rpm_filter):
+def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, variant_tags):
     """
     Loads modules for given `variant` from Koji, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -436,18 +430,8 @@ def _get_modules_from_koji_tags(
 
             # Store mapping module-uid --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
-            module_data = build.get("extra", {}).get("typeinfo", {}).get("module", {})
-            try:
-                uid = "{name}:{stream}".format(**module_data)
-            except KeyError as e:
-                raise KeyError("Unable to create uid in format name:stream %s" % e)
-            if module_data.get("version"):
-                uid += ":{version}".format(**module_data)
-                if module_data.get("context"):
-                    uid += ":{context}".format(**module_data)
-            variant.module_uid_to_koji_tag[uid] = module_tag
-
-            module_tag_rpm_filter[module_tag] = set(mmd.get_rpm_filter().get())
+            nsvc = mmd.dup_nsvc()
+            variant.module_uid_to_koji_tag[nsvc] = module_tag
 
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
                 variant=variant, tag=module_tag, module=build["nvr"])
@@ -517,13 +501,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # there are some packages with invalid sigkeys, it raises an exception.
     allow_invalid_sigkeys = compose.conf["gather_method"] == "deps"
 
-    # Mapping from koji tags to sets of package names that should be filtered
-    # out. This is basically a workaround for tagging working on build level,
-    # not rpm level. A module tag may build a package but not want it included.
-    # This should exclude it from the package set to avoid pulling it in as a
-    # dependency.
-    module_tag_rpm_filter = {}
-
     for variant in compose.all_variants.values():
         # pkgset storing the packages belonging to this particular variant.
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
@@ -550,7 +527,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 event,
                 variant,
                 variant_tags,
-                module_tag_rpm_filter,
             )
         elif variant.modules:
             included_modules_file = os.path.join(
@@ -562,7 +538,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 event,
                 variant,
                 variant_tags,
-                module_tag_rpm_filter,
             )
 
         # Ensure that every tag added to `variant_tags` is added also to
@@ -638,12 +613,36 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 None, 'packages_from_%s' % compose_tag.replace('/', '_'))
             is_traditional = compose_tag in compose.conf.get('pkgset_koji_tag', [])
             should_inherit = inherit if is_traditional else inherit_modules
+
+            # If we're processing a modular tag, we have an exact list of
+            # packages that will be used. This is basically a workaround for
+            # tagging working on build level, not rpm level. A module tag may
+            # build a package but not want it included. This should include
+            # only packages that are actually in modules. It's possible two
+            # module builds will use the same tag, particularly a -devel module
+            # is sharing a tag with its regular version.
+            # The ultimate goal of the mapping is to avoid a package built in modular
+            # tag to be used as a dependency of some non-modular package.
+            modular_packages = set()
+            for variant in compose.all_variants.values():
+                for nsvc, modular_tag in variant.module_uid_to_koji_tag.items():
+                    if modular_tag != compose_tag:
+                        # Not current tag, skip it
+                        continue
+                    for arch_modules in variant.arch_mmds.values():
+                        arch_mmd = arch_modules[nsvc]
+                        if arch_mmd:
+                            modular_packages.update(
+                                nevra.rsplit("-", 2)[0]
+                                for nevra in arch_mmd.get_rpm_artifacts().get()
+                            )
+
             pkgset.populate(
                 compose_tag,
                 event,
                 inherit=should_inherit,
                 logfile=logfile,
-                exclude_packages=module_tag_rpm_filter.get(compose_tag),
+                include_packages=modular_packages,
             )
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:
