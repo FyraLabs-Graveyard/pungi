@@ -643,9 +643,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 event,
                 inherit=should_inherit,
                 logfile=logfile,
-                exclude_packages=module_tag_rpm_filter.get(compose_tag)
-                if not compose.conf["include_devel_modules"]
-                else None,
+                exclude_packages=module_tag_rpm_filter.get(compose_tag),
             )
             for variant in compose.all_variants.values():
                 if compose_tag in variant_tags[variant]:

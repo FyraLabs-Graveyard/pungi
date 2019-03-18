@@ -634,10 +634,6 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
-            "include_devel_modules": {
-                "type": "object",
-                "default": {},
-            },
 
             "pkgset_source": {
                 "type": "string",
