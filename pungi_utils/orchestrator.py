@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import threading
 from collections import namedtuple
 
 import kobo.conf
@@ -555,6 +557,39 @@ def send_notification(compose_dir, command, parts):
     notifier.send("status-change", workdir=compose_dir, status=status, **data)
 
 
+def setup_progress_monitor(global_config, parts):
+    """Update configuration so that each part send notifications about its
+    progress to the orchestrator.
+
+    There is a file to which the notification is written. The orchestrator is
+    reading it and mapping the entries to particular parts. The path to this
+    file is stored in an environment variable.
+    """
+    tmp_file = tempfile.NamedTemporaryFile(prefix="pungi-progress-monitor_")
+    os.environ["_PUNGI_ORCHESTRATOR_PROGRESS_MONITOR"] = tmp_file.name
+    atexit.register(os.remove, tmp_file.name)
+
+    global_config.extra_args.append(
+        "--notification-script=pungi-notification-report-progress"
+    )
+
+    def reader():
+        while True:
+            line = tmp_file.readline()
+            if not line:
+                time.sleep(0.1)
+                continue
+            path, msg = line.split(":", 1)
+            for part in parts:
+                if parts[part].path == os.path.dirname(path):
+                    log.debug("%s: %s", part, msg.strip())
+                    break
+
+    monitor = threading.Thread(target=reader)
+    monitor.daemon = True
+    monitor.start()
+
+
 def run(work_dir, main_config_file, args):
     config_dir = os.path.join(work_dir, "config")
     shutil.copytree(os.path.dirname(main_config_file), config_dir)
@@ -615,6 +650,8 @@ def run(work_dir, main_config_file, args):
 
     if hasattr(args, "part"):
         setup_for_restart(global_config, parts, args.part)
+
+    setup_progress_monitor(global_config, parts)
 
     send_notification(target_dir, parser.get("general", "notification_script"), parts)
 

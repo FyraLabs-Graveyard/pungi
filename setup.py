@@ -43,6 +43,7 @@ setup(
         'bin/pungi-gather',
         'bin/pungi-koji',
         'bin/pungi-make-ostree',
+        'bin/pungi-notification-report-progress',
         'bin/pungi-orchestrate',
         'bin/pungi-patch-iso',
         'bin/pungi-wait-for-signed-ostree-handler',
