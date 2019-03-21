@@ -28,7 +28,8 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'ostree_installer': [
                 ('^Everything$', {'x86_64': cfg})
-            ]
+            ],
+            'runroot': True,
         })
 
         pool = ThreadPool.return_value
@@ -101,6 +102,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'translate_paths': [
                 (self.topdir + '/work', 'http://example.com/work')
             ],
+            'runroot': True,
         })
 
     def assertImageAdded(self, compose, ImageCls, iso):

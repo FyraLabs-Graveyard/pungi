@@ -30,10 +30,10 @@ from pungi.util import get_volid, get_arch_variant_data
 from pungi.util import get_file_size, get_mtime, failable, makedirs
 from pungi.util import copy_all, translate_path
 from pungi.wrappers.lorax import LoraxWrapper
-from pungi.wrappers.kojiwrapper import get_buildroot_rpms, KojiWrapper
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.phases.base import PhaseBase
+from pungi.runroot import Runroot
 
 
 class BuildinstallPhase(PhaseBase):
@@ -452,40 +452,24 @@ class BuildinstallThread(WorkerThread):
 
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        task_id = None
-        if runroot:
-            # run in a koji build root
-            packages = []
-            if buildinstall_method == "lorax":
-                packages += ["lorax"]
-            elif buildinstall_method == "buildinstall":
-                packages += ["anaconda"]
-            runroot_channel = compose.conf.get("runroot_channel")
-            runroot_tag = compose.conf["runroot_tag"]
+        # Get list of packages which are neded in runroot.
+        packages = []
+        if buildinstall_method == "lorax":
+            packages += ["lorax"]
+        elif buildinstall_method == "buildinstall":
+            packages += ["anaconda"]
 
-            koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
-            koji_cmd = koji_wrapper.get_runroot_cmd(
-                runroot_tag, arch, cmd,
-                channel=runroot_channel,
-                use_shell=True, task_id=True,
-                packages=packages, mounts=[compose.topdir],
-                weight=compose.conf['runroot_weights'].get('buildinstall'),
-                destdir=output_dir,
-            )
+        # This should avoid a possible race condition with multiple processes
+        # trying to get a kerberos ticket at the same time.
+        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        time.sleep(num * 3)
 
-            # avoid race conditions?
-            # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
-            time.sleep(num * 3)
-
-            output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-            if output["retcode"] != 0:
-                raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                                   % (output["task_id"], log_file))
-            task_id = output["task_id"]
-
-        else:
-            # run locally
-            run(cmd, show_cmd=True, logfile=log_file)
+        # Start the runroot task.
+        runroot = Runroot(compose)
+        runroot.run(
+            cmd, log_file=log_file, arch=arch, packages=packages,
+            mounts=[compose.topdir], output_dir=output_dir,
+            weight=compose.conf['runroot_weights'].get('buildinstall'))
 
         if final_output_dir != output_dir:
             if not os.path.exists(final_output_dir):
@@ -502,7 +486,7 @@ class BuildinstallThread(WorkerThread):
             copy_all(log_dir, final_log_dir)
 
         log_file = compose.paths.log.log_file(arch, log_filename + '-RPMs')
-        rpms = get_buildroot_rpms(compose, task_id)
+        rpms = runroot.get_buildroot_rpms()
         with open(log_file, "w") as f:
             f.write("\n".join(rpms))
 

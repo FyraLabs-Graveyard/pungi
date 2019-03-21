@@ -11,7 +11,8 @@ from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
 from ..arch import get_valid_arches
 from ..util import get_volid, get_repo_urls, version_generator, translate_path
-from ..wrappers import kojiwrapper, iso, lorax, scm
+from ..wrappers import iso, lorax, scm
+from ..runroot import Runroot
 
 
 class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
@@ -87,12 +88,12 @@ class OstreeInstallerThread(WorkerThread):
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
-        task_id = self._run_ostree_cmd(compose, variant, arch, config, repos, output_dir, volid)
+        self._run_ostree_cmd(compose, variant, arch, config, repos, output_dir, volid)
 
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
-        self.pool.log_info('[DONE ] %s, (task id: %s)' % (msg, task_id))
+        self.pool.log_info('[DONE ] %s' % (msg))
 
     def _clone_templates(self, url, branch='master'):
         if not url:
@@ -180,20 +181,11 @@ class OstreeInstallerThread(WorkerThread):
         cmd = 'rm -rf %s && %s' % (shlex_quote(output_dir),
                                    ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
-        runroot_channel = compose.conf.get("runroot_channel")
-        runroot_tag = compose.conf["runroot_tag"]
-
         packages = ['pungi', 'lorax', 'ostree']
         log_file = os.path.join(self.logdir, 'runroot.log')
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
-        koji_cmd = koji.get_runroot_cmd(runroot_tag, arch, cmd,
-                                        channel=runroot_channel,
-                                        use_shell=True, task_id=True,
-                                        packages=packages, mounts=[compose.topdir],
-                                        weight=compose.conf['runroot_weights'].get('ostree_installer'),
-                                        destdir=output_dir)
-        output = koji.run_runroot_cmd(koji_cmd, log_file=log_file)
-        if output["retcode"] != 0:
-            raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                               % (output["task_id"], log_file))
-        return output['task_id']
+
+        runroot = Runroot(compose)
+        runroot.run(
+            cmd, log_file=log_file, arch=arch, packages=packages,
+            mounts=[compose.topdir], output_dir=output_dir,
+            weight=compose.conf['runroot_weights'].get('ostree_installer'))

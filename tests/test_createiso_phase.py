@@ -348,7 +348,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_in_runroot(self, KojiWrapper, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -412,7 +412,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_source_iso(self, KojiWrapper, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -477,7 +477,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_bootable(self, KojiWrapper, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -513,7 +513,8 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd, compose.variants['Server'], 'x86_64'), 1)
 
-        self.assertEqual(getTag.call_args_list, [mock.call('f25-build')])
+        # There is no need to call getTag if `bootable` is True.
+        self.assertEqual(getTag.call_args_list, [])
         self.assertEqual(get_runroot_cmd.call_args_list,
                          [mock.call('f25-build', 'x86_64', cmd['cmd'], channel=None,
                                     mounts=[self.topdir],
@@ -543,7 +544,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_in_runroot_non_existing_tag(self, KojiWrapper, get_file_size,
                                                  get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
@@ -575,7 +576,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_in_runroot_crash(self, KojiWrapper, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -614,7 +615,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_in_runroot_fail(self, KojiWrapper, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -658,8 +659,8 @@ class CreateisoThreadTest(helpers.PungiTestCase):
     @mock.patch('pungi.phases.createiso.iso')
     @mock.patch('pungi.phases.createiso.get_mtime')
     @mock.patch('pungi.phases.createiso.get_file_size')
-    @mock.patch('pungi.phases.createiso.run')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.runroot.run')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_locally(self, KojiWrapper, run, get_file_size, get_mtime, iso):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
@@ -703,8 +704,8 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         self.assertEqual(image.type, 'dvd')
         self.assertEqual(image.subvariant, 'Server')
 
-    @mock.patch('pungi.phases.createiso.run')
-    @mock.patch('pungi.phases.createiso.KojiWrapper')
+    @mock.patch('pungi.runroot.run')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     def test_process_locally_crash(self, KojiWrapper, run):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',

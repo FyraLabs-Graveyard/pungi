@@ -15,7 +15,6 @@
 
 
 import os
-import time
 import random
 import shutil
 import stat
@@ -28,12 +27,13 @@ from six.moves import shlex_quote
 
 from pungi.wrappers import iso
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.wrappers.kojiwrapper import KojiWrapper
+from pungi.wrappers import kojiwrapper
 from pungi.phases.base import PhaseBase, PhaseLoggerMixin
 from pungi.util import (makedirs, get_volid, get_arch_variant_data, failable,
                         get_file_size, get_mtime)
 from pungi.media_split import MediaSplitter, convert_media_size
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
+from pungi.runroot import Runroot
 
 from .. import createiso
 
@@ -269,58 +269,38 @@ def add_iso_to_metadata(
 
 def run_createiso_command(runroot, num, compose, bootable, arch, cmd, mounts,
                           log_file, with_jigdo=True):
-    if runroot:
-        # run in a koji build root
-        packages = ["coreutils", "genisoimage", "isomd5sum"]
-        if with_jigdo and compose.conf['create_jigdo']:
-            packages.append('jigdo')
-        if bootable:
-            extra_packages = {
-                'lorax': ['lorax', 'which'],
-                'buildinstall': ['anaconda'],
-            }
-            packages.extend(extra_packages[compose.conf["buildinstall_method"]])
+    packages = ["coreutils", "genisoimage", "isomd5sum"]
+    if with_jigdo and compose.conf['create_jigdo']:
+        packages.append('jigdo')
+    if bootable:
+        extra_packages = {
+            'lorax': ['lorax', 'which'],
+            'buildinstall': ['anaconda'],
+        }
+        packages.extend(extra_packages[compose.conf["buildinstall_method"]])
 
-        runroot_channel = compose.conf.get("runroot_channel")
+    runroot = Runroot(compose)
+
+    build_arch = arch
+    if runroot.runroot_method == "koji" and not bootable:
         runroot_tag = compose.conf["runroot_tag"]
-
-        # get info about build arches in buildroot_tag
-        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
         koji_proxy = koji_wrapper.koji_proxy
         tag_info = koji_proxy.getTag(runroot_tag)
         if not tag_info:
             raise RuntimeError('Tag "%s" does not exist.' % runroot_tag)
         tag_arches = tag_info["arches"].split(" ")
 
-        build_arch = arch
-        if not bootable:
-            if "x86_64" in tag_arches:
-                # assign non-bootable images to x86_64 if possible
-                build_arch = "x86_64"
-            elif build_arch == "src":
-                # pick random arch from available runroot tag arches
-                build_arch = random.choice(tag_arches)
+        if "x86_64" in tag_arches:
+            # assign non-bootable images to x86_64 if possible
+            build_arch = "x86_64"
+        elif build_arch == "src":
+            # pick random arch from available runroot tag arches
+            build_arch = random.choice(tag_arches)
 
-        koji_cmd = koji_wrapper.get_runroot_cmd(
-            runroot_tag, build_arch, cmd,
-            channel=runroot_channel, use_shell=True, task_id=True,
-            packages=packages, mounts=mounts,
-            weight=compose.conf['runroot_weights'].get('createiso')
-        )
-
-        # This should avoid a possible race condition with multiple processes
-        # trying to get a kerberos ticket at the same time.
-        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
-        time.sleep(num * 3)
-
-        output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-        if output["retcode"] != 0:
-            raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                               % (output["task_id"], log_file))
-
-    else:
-        # run locally
-        run(cmd, show_cmd=True, logfile=log_file)
+    runroot.run(
+        cmd, log_file=log_file, arch=build_arch, packages=packages, mounts=mounts,
+        weight=compose.conf['runroot_weights'].get('createiso'))
 
 
 def split_iso(compose, arch, variant, no_split=False, logger=None):

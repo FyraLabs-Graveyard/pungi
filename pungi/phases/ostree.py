@@ -7,11 +7,12 @@ from kobo import shortcuts
 from kobo.threads import ThreadPool, WorkerThread
 
 from pungi.arch_utils import getBaseArch
+from pungi.runroot import Runroot
 from .base import ConfigGuardedPhase
 from .. import util
 from ..ostree.utils import get_ref_from_treefile, get_commitid_from_commitid_file
 from ..util import get_repo_dicts, translate_path
-from ..wrappers import kojiwrapper, scm
+from ..wrappers import scm
 
 
 class OSTreePhase(ConfigGuardedPhase):
@@ -90,7 +91,7 @@ class OSTreeThread(WorkerThread):
         # mount it.
         util.makedirs(config['ostree_repo'])
 
-        task_id = self._run_ostree_cmd(compose, variant, arch, config, repodir,
+        self._run_ostree_cmd(compose, variant, arch, config, repodir,
                                        extra_config_file=extra_config_file)
 
         if compose.notifier:
@@ -116,7 +117,7 @@ class OSTreeThread(WorkerThread):
                                   repo_path=translate_path(compose, config['ostree_repo']),
                                   local_repo_path=config['ostree_repo'])
 
-        self.pool.log_info('[DONE ] %s (task id: %s)' % (msg, task_id))
+        self.pool.log_info('[DONE ] %s' % (msg))
 
     def _run_ostree_cmd(self, compose, variant, arch, config, config_repo, extra_config_file=None):
         cmd = [
@@ -144,24 +145,15 @@ class OSTreeThread(WorkerThread):
         if config.get('force_new_commit', False):
             cmd.append('--force-new-commit')
 
-        runroot_channel = compose.conf.get("runroot_channel")
-        runroot_tag = compose.conf["runroot_tag"]
-
         packages = ['pungi', 'ostree', 'rpm-ostree']
         log_file = os.path.join(self.logdir, 'runroot.log')
         mounts = [compose.topdir, config['ostree_repo']]
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
-        koji_cmd = koji.get_runroot_cmd(runroot_tag, arch, cmd,
-                                        channel=runroot_channel,
-                                        use_shell=True, task_id=True,
-                                        packages=packages, mounts=mounts,
-                                        new_chroot=True,
-                                        weight=compose.conf["runroot_weights"].get('ostree'))
-        output = koji.run_runroot_cmd(koji_cmd, log_file=log_file)
-        if output["retcode"] != 0:
-            raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                               % (output["task_id"], log_file))
-        return output['task_id']
+
+        runroot = Runroot(compose)
+        runroot.run(
+            cmd, log_file=log_file, arch=arch, packages=packages,
+            mounts=mounts, new_chroot=True,
+            weight=compose.conf['runroot_weights'].get('ostree'))
 
     def _clone_repo(self, repodir, url, branch):
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},

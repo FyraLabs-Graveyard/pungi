@@ -734,8 +734,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.pool = mock.Mock(finished_tasks=set())
         self.cmd = mock.Mock()
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_thread_with_lorax_in_runroot(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
@@ -779,8 +779,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
         self.assertItemsEqual(self.pool.finished_tasks, [('Server', 'x86_64')])
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_thread_with_buildinstall_in_runroot(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
@@ -823,8 +823,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertItemsEqual(rpms, ['bash', 'zsh'])
         self.assertItemsEqual(self.pool.finished_tasks, [(None, 'x86_64')])
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_buildinstall_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
@@ -858,8 +858,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         ])
         self.assertItemsEqual(self.pool.finished_tasks, [])
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_lorax_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
@@ -892,8 +892,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         ])
         self.assertItemsEqual(self.pool.finished_tasks, [])
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     def test_skips_on_existing_output_dir(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
@@ -921,8 +921,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertTrue(os.path.exists(dummy_file))
         self.assertItemsEqual(self.pool.finished_tasks, [])
 
-    @mock.patch('pungi.phases.buildinstall.KojiWrapper')
-    @mock.patch('pungi.phases.buildinstall.get_buildroot_rpms')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
     @mock.patch('pungi.phases.buildinstall.run')
     @mock.patch('pungi.phases.buildinstall.copy_all')
     def test_buildinstall_thread_with_lorax_custom_buildinstall_topdir(

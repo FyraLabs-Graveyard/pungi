@@ -560,6 +560,10 @@ def make_schema():
                 "type": "boolean",
                 "default": False,
             },
+            "runroot_method": {
+                "type": "string",
+                "enum": ["local", "koji"],
+            },
             "create_jigdo": {
                 "type": "boolean",
                 "default": True,

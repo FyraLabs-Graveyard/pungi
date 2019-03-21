@@ -23,7 +23,8 @@ class OSTreePhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'ostree': [
                 ('^Everything$', {'x86_64': cfg})
-            ]
+            ],
+            'runroot': True,
         })
 
         pool = ThreadPool.return_value
@@ -112,14 +113,15 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'config_url': 'https://git.fedorahosted.org/git/fedora-atomic.git',
             'config_branch': 'f24',
             'treefile': 'fedora-atomic-docker-host.json',
-            'ostree_repo': self.repo
+            'ostree_repo': self.repo,
         }
         self.compose = helpers.DummyCompose(self.topdir, {
             'koji_profile': 'koji',
             'runroot_tag': 'rrt',
             'translate_paths': [
                 (self.topdir, 'http://example.com')
-            ]
+            ],
+            'runroot': True
         })
         self.pool = mock.Mock()
 

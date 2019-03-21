@@ -855,7 +855,16 @@ Options
     "koji", which points to Fedora's koji.fedoraproject.org.
 
 **runroot** [mandatory]
-    (*bool*) -- run some tasks such as buildinstall or createiso in koji build root (True) or locally (False)
+    (*bool*) -- run some tasks such as buildinstall or createiso in koji build root (True) or locally (False).
+    There might also be other runroot methods available. These can be chosen by ``runroot_method`` option.
+
+**runroot_method**
+    (*str*) -- Runroot method to use. It can further specify the runroot method
+    in case the ``runroot`` is set to True.
+
+    Available methods are:
+     * ``local`` -- runroot tasks are run locally
+     * ``koji`` -- runroot tasks are run in Koji
 
 **runroot_channel**
     (*str*) -- name of koji channel
