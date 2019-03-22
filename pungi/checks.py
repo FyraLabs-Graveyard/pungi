@@ -1178,6 +1178,7 @@ def make_schema():
                     'add_template_var': {"$ref": "#/definitions/list_of_strings"},
                     'add_arch_template_var': {"$ref": "#/definitions/list_of_strings"},
                     "rootfs_size": {"type": "integer"},
+                    "version": {"type": "string"},
                 },
                 "additionalProperties": False,
             }),

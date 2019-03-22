@@ -260,6 +260,7 @@ class TestBuildinstallPhase(PungiTestCase):
                         'add_template_var': ['baz=1'],
                         'add_arch_template_var': ['quux=2'],
                         "rootfs_size": 3,
+                        "version": "1.2.3",
                     },
                     'amd64': {'noupgrade': False}
                 }),
@@ -290,7 +291,7 @@ class TestBuildinstallPhase(PungiTestCase):
         # Obtained correct lorax commands.
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
-            [mock.call('Test', '1', '1',
+            [mock.call('Test', '1.2.3', '1.2.3',
                        [self.topdir + '/work/x86_64/repo',
                         self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',

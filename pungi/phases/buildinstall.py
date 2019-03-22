@@ -70,6 +70,7 @@ class BuildinstallPhase(PhaseBase):
         add_template_var = []
         add_arch_template_var = []
         rootfs_size = None
+        version = self.compose.conf["release_version"]
         for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
             if not data.get('noupgrade', True):
                 noupgrade = False
@@ -83,6 +84,8 @@ class BuildinstallPhase(PhaseBase):
             add_arch_template.extend(data.get('add_arch_template', []))
             add_template_var.extend(data.get('add_template_var', []))
             add_arch_template_var.extend(data.get('add_arch_template_var', []))
+            if "version" in data:
+                version = data["version"]
         output_dir = os.path.join(output_dir, variant.uid)
         output_topdir = output_dir
 
@@ -112,8 +115,8 @@ class BuildinstallPhase(PhaseBase):
 
         lorax = LoraxWrapper()
         lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
-                                        self.compose.conf["release_version"],
-                                        self.compose.conf["release_version"],
+                                        version,
+                                        version,
                                         repos,
                                         output_dir,
                                         variant=variant.uid,
