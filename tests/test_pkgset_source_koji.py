@@ -680,6 +680,7 @@ class MockModule(object):
 
 
 @mock.patch("pungi.Modulemd.Module.new_from_file", new=MockModule)
+@unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
 class TestAddModuleToVariant(unittest.TestCase):
 
     def setUp(self):
