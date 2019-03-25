@@ -6,6 +6,7 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import re
 import sys
 
 import kobo.conf
@@ -28,6 +29,17 @@ def load_source(source, conf):
         load_file(os.path.join(source, "logs/global/config-dump.global.log"), conf)
 
 
+def validate_definition(value):
+    """Check that the variable name is a valid Python variable name, and that
+    there is an equals sign. The value can by anything non-empty.
+    """
+    if not re.match(r"^[a-z_]\w*=.+$", value):
+        raise argparse.ArgumentTypeError(
+            "definition should be in var=value format: %r" % value
+        )
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -48,6 +60,17 @@ def main():
             "takes either event ID or path to a compose"
         ),
     )
+    parser.add_argument(
+        "-e",
+        "--define",
+        action="append",
+        metavar="VAR=VALUE",
+        type=validate_definition,
+        help=(
+            "Define a variable on command line and inject it into the config file. "
+            "Can be used multiple times."
+        ),
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--just-dump",
@@ -63,7 +86,10 @@ def main():
 
     args = parser.parse_args()
 
+    defines = dict(var.split("=", 1) for var in args.define)
+
     conf = kobo.conf.PyConfigParser()
+    conf.load_from_dict(defines)
 
     for source in args.sources:
         load_source(source, conf)
@@ -77,6 +103,11 @@ def main():
 
     if args.freeze_event:
         conf["koji_event"] = args.freeze_event
+
+    # Clean up defines from the final final config. We don't want to keep them
+    # as they would cause warnings during validation.
+    for key in defines:
+        del conf[key]
 
     json.dump(conf, sys.stdout, sort_keys=True, indent=4)
     return True
