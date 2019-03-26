@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.34
+Version:        4.1.35
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,31 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue Mar 26 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.35-1
+- orchestrator: Monitor status of parts (lsedlar)
+- tests: Skip tests if libmodulemd is not available (lsedlar)
+- pkgset: Refactor hiding unused modular packages (lsedlar)
+- Remove configuration for devel modules (lsedlar)
+- gather: Remove module source (lsedlar)
+- createrepo: Stop processing modulemd (lsedlar)
+- pkgset: Load final modulemd files from Koji (lsedlar)
+- buildinstall: Allow overwriting version for lorax (lsedlar)
+- Create new Runroot class and use it everywhere where runroot task is
+  executed. (jkaluza)
+- orchestrator: Send messages about the main compose (lsedlar)
+- orchestrator: Support generic pre- and post- scripts (lsedlar)
+- orchestrator: Support getting kerberos ticket (lsedlar)
+- hybrid: Refactor handling debuginfo packages (lsedlar)
+- doc: explain koji_profile (kdreyer)
+- pkgset: Stop loading list of module RPMs (lsedlar)
+- pkgset: Only load cache once (lsedlar)
+- Do not add pkgset_koji_builds to modules, but only to pkgset_koji_tag tags.
+  (jkaluza)
+- scm: Don't retry git fetch (lsedlar)
+- tests: fix metadata tests when SOURCE_DATE_EPOCH is set (marmarek)
+- checks: Use GitResolver for scm dicts (lsedlar)
+- hybrid: Fix opening gzipped files on Python 2.6 (lsedlar)
+
 * Tue Mar 05 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.34-1
 - config: Allow validating configuration in JSON (lsedlar)
 - image-build: Accept formats in lists (lsedlar)
