@@ -112,13 +112,13 @@ def main(persistdir, cachedir):
         if ks_repo.name not in gather_opts.lookaside_repos:
             continue
         dnf_obj.add_repo(
-            ks_repo.name, ks_repo.baseurl, ks_repo.mirrorlist, enablegroups=False
+            ks_repo.name, ks_repo.baseurl, enablegroups=False
         )
 
     for ks_repo in ksparser.handler.repo.repoList:
         if ks_repo.name in gather_opts.lookaside_repos:
             continue
-        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, ks_repo.mirrorlist)
+        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
 
     with Profiler("DnfWrapper.fill_sack()"):
         dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)

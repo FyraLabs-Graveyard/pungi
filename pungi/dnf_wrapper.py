@@ -55,21 +55,14 @@ class DnfWrapper(dnf.Base):
         self.arch_wrapper = ArchWrapper(self.conf.substitutions["arch"])
         self.comps_wrapper = CompsWrapper(self)
 
-    def add_repo(
-        self, repoid, baseurl=None, mirrorlist=None, enablegroups=True, lookaside=False
-    ):
-        if "://" not in baseurl:
-            baseurl = "file://%s" % os.path.abspath(baseurl)
-        if LooseVersion(dnf.__version__) < LooseVersion("2.0.0"):
-            repo = dnf.repo.Repo(repoid, self.conf.cachedir)
-        else:
-            repo = dnf.repo.Repo(repoid, self.conf)
-        repo.baseurl = baseurl
-        repo.mirrorlist = mirrorlist
-        repo.enablegroups = enablegroups
-        repo.enable()
-        self.repos.add(repo)
-        repo.priority = 10 if lookaside else 20
+    def add_repo(self, repoid, baseurl=None, enablegroups=True, lookaside=False):
+        self.repos.add_new_repo(
+            repoid,
+            self.conf,
+            baseurl=[baseurl],
+            enabledgroups=enablegroups,
+            priority=10 if lookaside else 20,
+        )
 
 
 class CompsWrapper(object):
