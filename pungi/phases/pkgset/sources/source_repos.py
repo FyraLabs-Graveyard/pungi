@@ -61,7 +61,9 @@ def get_pkgset_from_repos(compose):
     for arch in compose.get_arches():
         # write a pungi config for remote repos and a local comps repo
         repos = {}
-        for num, repo in enumerate(compose.conf["pkgset_repos"][arch]):
+        for num, repo in enumerate(
+            compose.conf["pkgset_repos"].get(arch, []) + compose.conf["pkgset_repos"].get("*", [])
+        ):
             repo_path = repo
             if "://" not in repo_path:
                 repo_path = os.path.join(compose.config_dir, repo)
