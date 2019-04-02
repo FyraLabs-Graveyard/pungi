@@ -60,16 +60,16 @@ setup(
     install_requires = [
         "jsonschema",
         "kobo",
-        "lockfile",
         "lxml",
         "productmd",
         "six",
         'dogpile.cache',
-        'dict.sorted',
         ],
     extras_require={
         ':python_version=="2.7"': [
             'enum34'
+            "lockfile",
+            'dict.sorted',
         ]
     },
     tests_require = [
