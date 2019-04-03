@@ -64,6 +64,7 @@ def main():
         "-e",
         "--define",
         action="append",
+        default=[],
         metavar="VAR=VALUE",
         type=validate_definition,
         help=(
