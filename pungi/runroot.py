@@ -78,9 +78,35 @@ class Runroot(kobo.log.LoggingBase):
 
         output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
         if output["retcode"] != 0:
-            raise RuntimeError("Runroot task failed: %s. See %s for more details."
-                                % (output["task_id"], log_file))
+            raise RuntimeError(
+                "Runroot task failed: %s. See %s for more details."
+                % (output["task_id"], log_file)
+            )
         self._result = output
+
+    def _run_openssh(self, command, log_file=None, arch=None, **kwargs):
+        """
+        Runs the runroot command on remote machine using ssh.
+        """
+        runroot_ssh_hostnames = self.compose.conf.get("runroot_ssh_hostnames", {})
+        if arch not in runroot_ssh_hostnames:
+            raise ValueError("The arch %r not in runroot_ssh_hostnames." % arch)
+
+        hostname = runroot_ssh_hostnames[arch]
+        user = self.compose.conf.get("runroot_ssh_username", "root")
+
+        ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname, command]
+        run(ssh_cmd, show_cmd=True, logfile=log_file)
+
+        # Get the buildroot RPMs.
+        ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname,
+                   "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"]
+        output = run(ssh_cmd, show_cmd=True)[1]
+        self._result = []
+        for i in output.splitlines():
+            if not i:
+                continue
+            self._result.append(i)
 
     def run(self, command, log_file=None, packages=None, arch=None,
             output_dir=None, **kwargs):
@@ -112,6 +138,10 @@ class Runroot(kobo.log.LoggingBase):
             self._run_koji(
                 command, log_file=log_file, packages=packages, arch=arch,
                 output_dir=output_dir, **kwargs)
+        elif self.runroot_method == "openssh":
+            self._run_openssh(
+                command, log_file=log_file, packages=packages, arch=arch,
+                output_dir=output_dir, **kwargs)
         else:
             raise ValueError("Unknown runroot_method %r." % self.runroot_method)
 
@@ -127,12 +157,17 @@ class Runroot(kobo.log.LoggingBase):
         :return: List of RPMs in buildroot in which the runroot task run.
         """
         if not self._result:
-            raise ValueError("Runroot.get_build_rpms before runroot task finished.")
+            raise ValueError(
+                "Runroot.get_buildroot_rpms called before runroot task "
+                "finished.")
         if self.runroot_method in ["local", "koji"]:
             if self.runroot_method == "local":
                 task_id = None
             else:
                 task_id = self._result["task_id"]
             return kojiwrapper.get_buildroot_rpms(self.compose, task_id)
+        elif self.runroot_method == "openssh":
+            # For openssh runroot_method, the result is list of buildroot_rpms.
+            return self._result
         else:
             raise ValueError("Unknown runroot_method %r." % self.runroot_method)

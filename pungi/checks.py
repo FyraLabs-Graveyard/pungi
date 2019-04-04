@@ -562,7 +562,15 @@ def make_schema():
             },
             "runroot_method": {
                 "type": "string",
-                "enum": ["local", "koji"],
+                "enum": ["local", "koji", "openssh"],
+            },
+            "runroot_ssh_username": {
+                "type": "string",
+                "default": "root",
+            },
+            "runroot_ssh_hostnames": {
+                "type": "object",
+                "default": {},
             },
             "create_jigdo": {
                 "type": "boolean",

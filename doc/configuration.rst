@@ -867,6 +867,10 @@ Options
     Available methods are:
      * ``local`` -- runroot tasks are run locally
      * ``koji`` -- runroot tasks are run in Koji
+     * ``openssh`` -- runroot tasks are run on remote machine connected using OpenSSH.
+       The ``runroot_ssh_hostnames`` for each architecture must be set and the
+       user under which Pungi runs must be configured to login as ``runroot_ssh_username``
+       using the SSH key.
 
 **runroot_channel**
     (*str*) -- name of koji channel
@@ -885,6 +889,14 @@ Options
      * ``ostree``
      * ``ostree_installer``
 
+**runroot_ssh_username**
+    (*str*) -- For ``openssh`` runroot method, configures the username used to login
+    the remote machine to run the runroot task. Defaults to "root".
+
+**runroot_ssh_hostnames**
+    (*dict*) -- For ``openssh`` runroot method, defines the hostname for each
+    architecture on which the runroot task should be running. Format:
+    ``{"x86_64": "runroot-x86-64.localhost.tld", ...}``
 
 Example
 -------
