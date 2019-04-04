@@ -26,7 +26,9 @@ def get_full_version():
         return re.sub(r'-1.fc\d\d?', '', output.strip().replace('pungi-', ''))
     else:
         import subprocess
-        proc = subprocess.Popen(["rpm", "-q", "pungi"], stdout=subprocess.PIPE)
+        proc = subprocess.Popen(
+            ["rpm", "-q", "pungi"], stdout=subprocess.PIPE, universal_newlines=True
+        )
         (output, err) = proc.communicate()
         if not err:
             return output.rstrip()
