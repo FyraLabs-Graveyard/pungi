@@ -1225,6 +1225,14 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
+            "osbs_registries": {
+                "type": "object",
+                "patternProperties": {
+                    # There are no restrictions on what the value can be.
+                    ".+": {}
+                },
+                "additionalProperties": False,
+            },
 
             "extra_files": _variant_arch_mapping({
                 "type": "array",

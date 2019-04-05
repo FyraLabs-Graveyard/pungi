@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import fnmatch
 import json
 import os
 from kobo.threads import ThreadPool, WorkerThread
@@ -58,6 +59,16 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
             )
 
 
+def get_registry(compose, nvr, fallback=None):
+    """Get a configured registry for the image from config matching given NVR.
+    If not present, return fallback value.
+    """
+    for pattern, registry in compose.conf.get("osbs_registries", {}).items():
+        if fnmatch.fnmatch(nvr, pattern):
+            return registry
+    return fallback
+
+
 class OSBSThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
@@ -79,6 +90,7 @@ class OSBSThread(WorkerThread):
         gpgkey = config.pop('gpgkey', None)
         repos = [self._get_repo(compose, v, gpgkey=gpgkey)
                  for v in [variant.uid] + shortcuts.force_list(config.pop('repo', []))]
+        # Deprecated in 4.1.36
         registry = config.pop("registry", None)
 
         config['yum_repourls'] = repos
@@ -98,8 +110,10 @@ class OSBSThread(WorkerThread):
 
         scratch = config.get('scratch', False)
         nvr = self._add_metadata(variant, task_id, compose, scratch)
-        if nvr and registry:
-            self.pool.registries[nvr] = registry
+        if nvr:
+            registry = get_registry(compose, nvr, registry)
+            if registry:
+                self.pool.registries[nvr] = registry
 
         self.pool.log_info('[DONE ] %s' % msg)
 

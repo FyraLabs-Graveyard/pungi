@@ -360,7 +360,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             self.assertIn("baseurl=http://example.com/repo\n", f)
 
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_registry(self, KojiWrapper):
+    def test_run_with_deprecated_registry(self, KojiWrapper):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -389,6 +389,37 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile(["Server", "Everything"])
         self.assertEqual(self.t.pool.registries, {"my-name-1.0-1": {"foo": "bar"}})
+
+    @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
+    def test_run_with_registry(self, KojiWrapper):
+        cfg = {
+            "url": "git://example.com/repo?#BEEFCAFE",
+            "target": "f24-docker-candidate",
+            "git_branch": "f24-docker",
+            "name": "my-name",
+            "version": "1.0",
+            "repo": ["Everything", "http://pkgs.example.com/my.repo"],
+        }
+        self.compose.conf["osbs_registries"] = {"my-name-1.0-*": [{"foo": "bar"}]}
+        self._setupMock(KojiWrapper)
+        self._assertConfigCorrect(cfg)
+
+        self.t.process((self.compose, self.compose.variants["Server"], cfg), 1)
+
+        options = {
+            "name": "my-name",
+            "version": "1.0",
+            "git_branch": "f24-docker",
+            "yum_repourls": [
+                "http://root/work/global/tmp-Server/compose-rpms-Server-1.repo",
+                "http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo",
+                "http://pkgs.example.com/my.repo",
+            ]
+        }
+        self._assertCorrectCalls(options)
+        self._assertCorrectMetadata()
+        self._assertRepoFile(["Server", "Everything"])
+        self.assertEqual(self.t.pool.registries, {"my-name-1.0-1": [{"foo": "bar"}]})
 
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_run_with_extra_repos_in_list(self, KojiWrapper):

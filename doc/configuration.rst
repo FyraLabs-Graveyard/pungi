@@ -1533,14 +1533,6 @@ they are not scratch builds).
         option will most likely change to list architectures that are allowed
         to fail.
 
-    It is possible to configure extra information about where to push the image
-    (unless it is a scratch build). Pungi will take any value in ``registry``
-    key in the configuration and collect them across all built images. The data
-    will be saved into ``logs/global/osbs-registries.json`` as a mapping from
-    Koji NVR to the registry data. The same data is also sent to the message
-    bus on ``osbs-request-push`` topic once the compose finishes successfully.
-    Handling the message and performing the actual push is outside of scope for
-    Pungi.
 
     The configuration will pass other attributes directly to the Koji task.
     This includes ``name``, ``version``, ``scratch`` and ``priority``.
@@ -1550,6 +1542,17 @@ they are not scratch builds).
     ``repo`` key having a list of urls pointing to ``.repo`` files or just
     variant uid, Pungi will create the .repo file for that variant. ``gpgkey``
     can be specified to enable gpgcheck in repo files for variants.
+
+**osbs_registries**
+   (*dict*) -- It is possible to configure extra information about where to
+   push the image (unless it is a scratch build). For each finished build,
+   Pungi will try to match NVR against a key in this mapping (using shell-style
+   globbing) and take the corresponding value and collect them across all built
+   images. The data will be saved into ``logs/global/osbs-registries.json`` as
+   a mapping from Koji NVR to the registry data. The same data is also sent to
+   the message bus on ``osbs-request-push`` topic once the compose finishes
+   successfully. Handling the message and performing the actual push is outside
+   of scope for Pungi.
 
 
 Example config
