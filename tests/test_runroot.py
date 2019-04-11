@@ -28,17 +28,23 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         method = self.runroot.get_runroot_method()
         self.assertEqual(method, "openssh")
 
+    def _ssh_call(self, cmd):
+        """
+        Helper method returning default SSH mock.call with given command `cmd`.
+        """
+        return mock.call(
+            ['ssh', '-oBatchMode=yes', '-n', '-l', 'root', 'localhost', cmd],
+            logfile='/foo/runroot.log',
+            show_cmd=True,
+        )
+
     @mock.patch("pungi.runroot.run")
     def test_run(self, run):
+        run.return_value = (0, "dummy output\n")
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64")
         run.assert_has_calls([
-            mock.call(
-                ['ssh', '-oBatchMode=yes', '-n', '-l', 'root', 'localhost',
-                 'df -h'], logfile='/foo/runroot.log', show_cmd=True),
-            mock.call(
-                ['ssh', '-oBatchMode=yes', '-n', '-l', 'root', 'localhost',
-                 "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"],
-                show_cmd=True)
+            self._ssh_call('df -h'),
+            self._ssh_call("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -50,3 +56,60 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         rpms = self.runroot.get_buildroot_rpms()
         self.assertEqual(
             set(rpms), set(["foo-1-1.fc29.noarch", "bar-1-1.fc29.noarch"]))
+
+    @mock.patch("pungi.runroot.run")
+    def test_run_templates(self, run):
+        self.compose.conf["runroot_ssh_init_command"] = "/usr/sbin/init_runroot"
+        self.compose.conf["runroot_ssh_install_packages_template"] = \
+            "install {runroot_key} {packages}"
+        self.compose.conf["runroot_ssh_run_template"] = "run {runroot_key} {command}"
+
+        run.return_value = (0, "key\n")
+        self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
+                         packages=["lorax", "automake"])
+        run.assert_has_calls([
+            self._ssh_call('/usr/sbin/init_runroot'),
+            self._ssh_call('install key lorax automake'),
+            self._ssh_call('run key df -h'),
+            self._ssh_call("run key rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+        ])
+
+    @mock.patch("pungi.runroot.run")
+    def test_run_templates_no_init(self, run):
+        self.compose.conf["runroot_ssh_install_packages_template"] = \
+            "install {packages}"
+        self.compose.conf["runroot_ssh_run_template"] = "run {command}"
+
+        run.return_value = (0, "key\n")
+        self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
+                         packages=["lorax", "automake"])
+        run.assert_has_calls([
+            self._ssh_call('install lorax automake'),
+            self._ssh_call('run df -h'),
+            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+        ])
+
+    @mock.patch("pungi.runroot.run")
+    def test_run_templates_no_packages(self, run):
+        self.compose.conf["runroot_ssh_install_packages_template"] = \
+            "install {packages}"
+        self.compose.conf["runroot_ssh_run_template"] = "run {command}"
+
+        run.return_value = (0, "key\n")
+        self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64")
+        run.assert_has_calls([
+            self._ssh_call('run df -h'),
+            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+        ])
+
+    @mock.patch("pungi.runroot.run")
+    def test_run_templates_no_install_packages(self, run):
+        self.compose.conf["runroot_ssh_run_template"] = "run {command}"
+
+        run.return_value = (0, "key\n")
+        self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
+                         packages=["lorax", "automake"])
+        run.assert_has_calls([
+            self._ssh_call('run df -h'),
+            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+        ])

@@ -889,6 +889,22 @@ Options
      * ``ostree``
      * ``ostree_installer``
 
+Example
+-------
+::
+
+    koji_profile = "koji"
+    runroot = True
+    runroot_channel = "runroot"
+    runroot_tag = "f23-build"
+
+Runroot "openssh" method settings
+=================================
+
+
+Options
+-------
+
 **runroot_ssh_username**
     (*str*) -- For ``openssh`` runroot method, configures the username used to login
     the remote machine to run the runroot task. Defaults to "root".
@@ -898,14 +914,56 @@ Options
     architecture on which the runroot task should be running. Format:
     ``{"x86_64": "runroot-x86-64.localhost.tld", ...}``
 
-Example
--------
-::
+**runroot_ssh_init_command**
+    (*str*) [optional] -- For ``openssh`` runroot method, defines the command
+    to initializes the runroot task on the remote machine. This command is
+    executed as first command for each runroot task executed.
 
-    koji_profile = "koji"
-    runroot = True
-    runroot_channel = "runroot"
-    runroot_tag = "f23-build"
+    The command can print a string which is then available as ``{runroot_key}``
+    for other SSH commands. This string might be used to keep the context
+    across different SSH commands executed for single runroot task.
+
+    The goal of this command is setting up the environment for real runroot
+    commands. For example preparing the unique mock environment, mounting the
+    desired file-systems, ...
+
+    When not set, no init command is executed.
+
+**runroot_ssh_install_packages_template**
+    (*str*) [optional] -- For ``openssh`` runroot method, defines the template
+    for command to install the packages requested to run the runroot task.
+
+    The template string can contain following variables which are replaced by
+    the real values before executing the install command:
+
+    * ``{runroot_key}`` - Replaced with the string returned by
+      ``runroot_ssh_init_command`` if used. This can be used to keep the track
+      of context of SSH commands beloging to single runroot task.
+    * ``{packages}`` - White-list separated list of packages to install.
+
+    Example (The ``{runroot_key}`` is expected to be set to mock config file
+    using the ``runroot_ssh_init_command`` command.):
+    ``"mock -r {runroot_key} --install {packages}"``
+
+    When not set, no command to install packages on remote machine is executed.
+
+**runroot_ssh_run_template**
+    (*str*) [optional] -- For ``openssh`` runroot method, defines the template
+    for the main runroot command.
+
+    The template string can contain following variables which are replaced by
+    the real values before executing the install command:
+
+    * ``{runroot_key}`` - Replaced with the string returned by
+      ``runroot_ssh_init_command`` if used. This can be used to keep the track
+      of context of SSH commands beloging to single runroot task.
+    * ``{command}`` - Command to run.
+
+    Example (The ``{runroot_key}`` is expected to be set to mock config file
+    using the ``runroot_ssh_init_command`` command.):
+    ``"mock -r {runroot_key} chroot -- {command}"``
+
+    When not set, the runroot command is run directly.
 
 
 Extra Files Settings

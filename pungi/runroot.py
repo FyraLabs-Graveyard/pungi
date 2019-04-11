@@ -84,7 +84,23 @@ class Runroot(kobo.log.LoggingBase):
             )
         self._result = output
 
-    def _run_openssh(self, command, log_file=None, arch=None, **kwargs):
+    def _ssh_run(self, hostname, user, command, fmt_dict=None, log_file=None):
+        """
+        Helper method to run the command using "ssh".
+
+        :param str hostname: Hostname.
+        :param str user: User for login.
+        :param str command: Command to run.
+        :param str fmt_dict: If set, the `command` is formatted like
+            `command.format(**fmt_dict)`.
+        :param str log_file: Log file.
+        :return str: Output of remote command.
+        """
+        formatted_cmd = command.format(**fmt_dict) if fmt_dict else command
+        ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname, formatted_cmd]
+        return run(ssh_cmd, show_cmd=True, logfile=log_file)[1]
+
+    def _run_openssh(self, command, log_file=None, arch=None, packages=None, **kwargs):
         """
         Runs the runroot command on remote machine using ssh.
         """
@@ -94,16 +110,51 @@ class Runroot(kobo.log.LoggingBase):
 
         hostname = runroot_ssh_hostnames[arch]
         user = self.compose.conf.get("runroot_ssh_username", "root")
+        init_command = self.compose.conf.get("runroot_ssh_init_command")
+        install_packages_template = self.compose.conf.get(
+            "runroot_ssh_install_packages_template"
+        )
+        run_template = self.compose.conf.get("runroot_ssh_run_template")
 
-        ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname, command]
-        run(ssh_cmd, show_cmd=True, logfile=log_file)
+        # Init the runroot on remote machine and get the runroot_key.
+        if init_command:
+            runroot_key = self._ssh_run(hostname, user, init_command, log_file=log_file)
+            runroot_key = runroot_key.rstrip("\n\r")
+        else:
+            runroot_key = None
 
-        # Get the buildroot RPMs.
-        ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname,
-                   "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"]
-        output = run(ssh_cmd, show_cmd=True)[1]
+        # Install the packages needed for runroot task if configured.
+        if install_packages_template and packages:
+            fmt_dict = {"packages": " ".join(packages)}
+            if runroot_key:
+                fmt_dict["runroot_key"] = runroot_key
+            self._ssh_run(
+                hostname, user, install_packages_template, fmt_dict, log_file=log_file
+            )
+
+        # Run the runroot task and get the buildroot RPMs.
+        if run_template:
+            fmt_dict = {"command": command}
+            if runroot_key:
+                fmt_dict["runroot_key"] = runroot_key
+            self._ssh_run(hostname, user, run_template, fmt_dict, log_file=log_file)
+
+            fmt_dict["command"] = "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"
+            buildroot_rpms = self._ssh_run(
+                hostname, user, run_template, fmt_dict, log_file=log_file
+            )
+        else:
+            self._ssh_run(hostname, user, command, log_file=log_file)
+            buildroot_rpms = self._ssh_run(
+                hostname,
+                user,
+                "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                log_file=log_file,
+            )
+
+        # Parse the buildroot_rpms and store it in self._result.
         self._result = []
-        for i in output.splitlines():
+        for i in buildroot_rpms.splitlines():
             if not i:
                 continue
             self._result.append(i)
@@ -158,8 +209,8 @@ class Runroot(kobo.log.LoggingBase):
         """
         if not self._result:
             raise ValueError(
-                "Runroot.get_buildroot_rpms called before runroot task "
-                "finished.")
+                "Runroot.get_buildroot_rpms called before runroot task finished."
+            )
         if self.runroot_method in ["local", "koji"]:
             if self.runroot_method == "local":
                 task_id = None
