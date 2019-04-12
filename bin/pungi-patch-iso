@@ -40,8 +40,8 @@ def main(args=None):
                         help='which file to write the result to')
     parser.add_argument('source', metavar='SOURCE_ISO',
                         help='source ISO to work with')
-    parser.add_argument('dir', metavar='GRAFT_DIR',
-                        help='extra directory to graft on the ISO')
+    parser.add_argument('dirs', nargs="+", metavar='GRAFT_DIR',
+                        help='extra directories to graft on the ISO')
     opts = parser.parse_args(args)
 
     level = logging.DEBUG if opts.verbose else logging.INFO

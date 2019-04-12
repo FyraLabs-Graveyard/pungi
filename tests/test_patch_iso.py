@@ -87,6 +87,7 @@ class TestPatchingIso(unittest.TestCase):
             source='source.iso',
             force_arch=None,
             volume_id='FOOBAR',
+            dirs=[]
         )
         patch_iso.run(log, opts)
 
@@ -124,7 +125,8 @@ class TestPatchingIso(unittest.TestCase):
             target='test.iso',
             source='source.iso',
             force_arch=None,
-            volume_id=None
+            volume_id=None,
+            dirs=[]
         )
         patch_iso.run(log, opts)
 
@@ -164,7 +166,8 @@ class TestPatchingIso(unittest.TestCase):
             target='test.iso',
             source='source.iso',
             force_arch=None,
-            volume_id=None
+            volume_id=None,
+            dirs=[]
         )
         patch_iso.run(log, opts)
 
@@ -206,6 +209,7 @@ class TestPatchingIso(unittest.TestCase):
             source='source.iso',
             force_arch='s390',
             volume_id='foobar',
+            dirs=[],
         )
         patch_iso.run(log, opts)
 
