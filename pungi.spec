@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.35
+Version:        4.1.36
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,20 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Apr 12 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.36-1
+- Extend "openssh" runroot_method to be able to execute "mock" (jkaluza)
+- osbs: Rework configuration for image pushes (lsedlar)
+- Add "openssh" runroot method (jkaluza)
+- Fix printing version on Python 3 (lsedlar)
+- config-dump: Fix crash when used without --define (lsedlar)
+- setup: Fix missing comma in a list (lsedlar)
+- setup: Install some deps on Py2.7 only (lsedlar)
+- config-dump: Allow defining variables on CLI (lsedlar)
+- Update test data (lsedlar)
+- gather: Use wildcard for repo selection (lsedlar)
+- gather: Apply repo path substitutions for DNF backend (lsedlar)
+- tests: Stop overwriting modulesdir for DNF (lsedlar)
+
 * Tue Mar 26 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.35-1
 - orchestrator: Monitor status of parts (lsedlar)
 - tests: Skip tests if libmodulemd is not available (lsedlar)
