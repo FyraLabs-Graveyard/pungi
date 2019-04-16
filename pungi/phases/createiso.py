@@ -451,6 +451,14 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
         break_hardlinks(
             data, compose.paths.work.iso_staging_dir(arch, variant, filename)
         )
+        # Create hardlinks for files with duplicate contents.
+        compose.log_debug(
+            "Creating hardlinks for ISO %s for %s.%s" % (filename, variant, arch)
+        )
+        create_hardlinks(
+            compose.paths.work.iso_staging_dir(arch, variant, filename),
+            log_file=compose.paths.log.log_file(arch, "iso-hardlink-%s.log" % variant.uid),
+        )
 
     # TODO: /content /graft-points
     gp = "%s-graft-points" % iso_dir
@@ -504,3 +512,11 @@ def break_hardlinks(graft_points, staging_dir):
             makedirs(os.path.dirname(dest_path))
             shutil.copy2(graft_points[f], dest_path)
             graft_points[f] = dest_path
+
+
+def create_hardlinks(staging_dir, log_file):
+    """Create hardlinks within the staging directory.
+    Should happen after break_hardlinks()
+    """
+    cmd = ["hardlink", "-c", "-vv", staging_dir]
+    run(cmd, logfile=log_file, show_cmd=True)
