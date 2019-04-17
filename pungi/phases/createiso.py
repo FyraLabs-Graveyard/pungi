@@ -518,5 +518,5 @@ def create_hardlinks(staging_dir, log_file):
     """Create hardlinks within the staging directory.
     Should happen after break_hardlinks()
     """
-    cmd = ["hardlink", "-c", "-vv", staging_dir]
+    cmd = ["/usr/sbin/hardlink", "-c", "-vv", staging_dir]
     run(cmd, logfile=log_file, show_cmd=True)
