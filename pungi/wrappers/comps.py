@@ -301,9 +301,10 @@ class CompsWrapper(object):
 
             for type_name in TYPE_MAPPING.values():
                 for pkg in sorted(packages_by_type[type_name], key=attrgetter('name')):
-                    node = append(doc, packagelist, "packagereq", pkg.name, type=type_name)
+                    kwargs = {"type": type_name}
                     if type_name == "conditional":
-                        node.setAttribute("requires", pkg.requires)
+                        kwargs["requires"] = pkg.requires
+                    append(doc, packagelist, "packagereq", pkg.name, **kwargs)
 
             group_node.appendChild(packagelist)
 
@@ -422,7 +423,7 @@ def append(doc, parent, elem, content=None, lang=None, **kwargs):
         node.appendChild(doc.createTextNode(content))
     if lang:
         node.setAttribute("xml:lang", lang)
-    for attr, value in kwargs.items():
+    for attr, value in sorted(kwargs.items()):
         node.setAttribute(attr, value)
     parent.appendChild(node)
     return node
