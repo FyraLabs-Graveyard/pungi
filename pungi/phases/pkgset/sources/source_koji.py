@@ -396,7 +396,8 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
 
         # Find the latest builds of all modules. This does following:
         # - Sorts the module_builds descending by Koji NVR (which maps to NSV
-        #   for modules).
+        #   for modules). Split release into modular version and context, and
+        #   treat version as numeric.
         # - Groups the sorted module_builds by NV (NS in modular world).
         #   In each resulting `ns_group`, the first item is actually build
         #   with the latest version (because the list is still sorted by NVR).
@@ -406,9 +407,12 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
         # - The `nsv_builds` contains the builds representing all the contexts
         #   of the latest version for give name-stream, so add them to
         #   `latest_builds`.
+        def _key(build):
+            ver, ctx = build["release"].split(".", 1)
+            return build["name"], build["version"], int(ver), ctx
+
         latest_builds = []
-        module_builds = sorted(
-            module_builds, key=lambda build: build['nvr'], reverse=True)
+        module_builds = sorted(module_builds, key=_key, reverse=True)
         for ns, ns_builds in groupby(
                 module_builds, key=lambda x: ":".join([x["name"], x["version"]])):
             for nsv, nsv_builds in groupby(
