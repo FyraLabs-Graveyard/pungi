@@ -303,9 +303,10 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         assert len(result) == 1
         module = result[0]
         assert type(module) is dict
-        assert "modulemd" in module
-        assert "stream" in module
-        assert "context" in module
+        self.assertIn("module_stream", module)
+        self.assertIn("module_version", module)
+        self.assertIn("module_context", module)
+        self.assertIn("tag", module)
 
         expected_query = "testmodule2-master_dash-20180406051653.96c371af"
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
@@ -426,9 +427,9 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         module = result[0]
         for module in result:
             assert type(module) is dict
-            assert "modulemd" in module
-            assert "stream" in module
-            assert "context" in module
+            self.assertIn("module_stream", module)
+            self.assertIn("module_version", module)
+            self.assertIn("module_context", module)
 
         expected_query = "testmodule2-master-*"
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",

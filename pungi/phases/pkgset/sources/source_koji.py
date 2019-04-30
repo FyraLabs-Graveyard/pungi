@@ -143,14 +143,12 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
             continue
 
         try:
-            md["modulemd"] = md["extra"]["typeinfo"]["module"]["modulemd_str"]
             md["tag"] = md["extra"]["typeinfo"]["module"]["content_koji_tag"]
-            # Get the NSVC from module metadata, because the original Koji build
-            # has '-' replaced with "_".
-            md["name"] = md["extra"]["typeinfo"]["module"]["name"]
-            md["stream"] = md["extra"]["typeinfo"]["module"]["stream"]
-            md["version"] = md["extra"]["typeinfo"]["module"]["version"]
-            md["context"] = md["extra"]["typeinfo"]["module"]["context"]
+            # Store module versioning information into the dict, but make sure
+            # not to overwrite any existing keys.
+            md["module_stream"] = md["extra"]["typeinfo"]["module"]["stream"]
+            md["module_version"] = int(md["extra"]["typeinfo"]["module"]["version"])
+            md["module_context"] = md["extra"]["typeinfo"]["module"]["context"]
         except KeyError:
             continue
 
@@ -167,9 +165,13 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
     # include all modules with that version.
     if not module_info.get('version'):
         # select all found modules with latest version
-        sorted_modules = sorted(modules, key=lambda item: int(item['version']), reverse=True)
-        latest_version = int(sorted_modules[0]['version'])
-        modules = [module for module in modules if latest_version == int(module['version'])]
+        sorted_modules = sorted(
+            modules, key=lambda item: item["module_version"], reverse=True
+        )
+        latest_version = sorted_modules[0]["module_version"]
+        modules = [
+            module for module in modules if latest_version == module["module_version"]
+        ]
 
     return modules
 
