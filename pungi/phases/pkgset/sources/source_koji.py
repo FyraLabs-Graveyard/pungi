@@ -21,6 +21,7 @@ import re
 from itertools import groupby
 import threading
 
+from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import force_list, relative_path
 
 import pungi.wrappers.kojiwrapper
@@ -638,10 +639,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                     for arch_modules in variant.arch_mmds.values():
                         arch_mmd = arch_modules[nsvc]
                         if arch_mmd:
-                            modular_packages.update(
-                                nevra.rsplit("-", 2)[0]
-                                for nevra in arch_mmd.get_rpm_artifacts().get()
-                            )
+                            for rpm_nevra in arch_mmd.get_rpm_artifacts().get():
+                                nevra = parse_nvra(rpm_nevra)
+                                modular_packages.add((nevra["name"], nevra["arch"]))
 
             pkgset.populate(
                 compose_tag,
