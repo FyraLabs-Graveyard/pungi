@@ -324,28 +324,41 @@ def filter_by_whitelist(compose, module_builds, input_modules):
     input_modules. Order may not be preserved.
     """
     specs = set()
-    nvr_prefixes = set()
+    nvr_patterns = set()
     for spec in input_modules:
         # Do not do any filtering in case variant wants all the modules.
         if spec["name"] == "*":
             return module_builds
 
         info = variant_dict_from_str(compose, spec["name"])
-        prefix = ("%s-%s-%s.%s" % (
+        pattern = (
             info["name"],
             info["stream"].replace("-", "_"),
-            info.get("version", ""),
-            info.get("context", ""),
-        )).rstrip("-.")
-        nvr_prefixes.add((prefix, spec["name"]))
+            info.get("version"),
+            info.get("context"),
+        )
+        nvr_patterns.add((pattern, spec["name"]))
         specs.add(spec["name"])
 
     modules_to_keep = []
     used = set()
 
     for mb in module_builds:
-        for (prefix, spec) in nvr_prefixes:
-            if mb["nvr"].startswith(prefix):
+        # Split release from the build into version and context
+        ver, ctx = mb["release"].split(".")
+        # Values in `mb` are from Koji build. There's nvr and name, version and
+        # release. The input pattern specifies modular name, stream, version
+        # and context.
+        for (n, s, v, c), spec in nvr_patterns:
+            if (
+                # We always have a name and stream...
+                mb["name"] == n
+                and mb["version"] == s
+                # ...but version and context can be missing, in which case we
+                # don't want to check them.
+                and (not v or ver == v)
+                and (not c or ctx == c)
+            ):
                 modules_to_keep.append(mb)
                 used.add(spec)
                 break

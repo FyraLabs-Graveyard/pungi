@@ -585,6 +585,15 @@ class TestFilterInherited(unittest.TestCase):
 
 
 class TestFilterByWhitelist(unittest.TestCase):
+    def _build(self, n, s, v, c):
+        s = s.replace("-", "_")
+        return {
+            "nvr": "%s-%s-%s.%s" % (n, s, v, c),
+            "name": n,
+            "version": s,
+            "release": "%s.%s" % (v, c),
+        }
+
     def test_no_modules(self):
         compose = mock.Mock()
         module_builds = []
@@ -598,72 +607,55 @@ class TestFilterByWhitelist(unittest.TestCase):
     def test_filter_by_NS(self):
         compose = mock.Mock()
         module_builds = [
-            {"nvr": "foo-1-201809031048.cafebabe"},
-            {"nvr": "foo-1-201809031047.deadbeef"},
-            {"nvr": "foo-2-201809031047.deadbeef"},
+            self._build("foo", "1", "201809031048", "cafebabe"),
+            self._build("foo", "1", "201809031047", "deadbeef"),
+            self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1"}]
 
         result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
 
-        self.assertItemsEqual(
-            result,
-            [
-                {"nvr": "foo-1-201809031048.cafebabe"},
-                {"nvr": "foo-1-201809031047.deadbeef"},
-            ],
-        )
+        self.assertItemsEqual(result, [module_builds[0], module_builds[1]])
 
     def test_filter_by_NSV(self):
         compose = mock.Mock()
         module_builds = [
-            {"nvr": "foo-1-201809031048.cafebabe"},
-            {"nvr": "foo-1-201809031047.deadbeef"},
-            {"nvr": "foo-2-201809031047.deadbeef"},
+            self._build("foo", "1", "201809031048", "cafebabe"),
+            self._build("foo", "1", "201809031047", "deadbeef"),
+            self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1:201809031047"}]
 
         result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
 
-        self.assertItemsEqual(
-            result, [{"nvr": "foo-1-201809031047.deadbeef"}]
-        )
+        self.assertItemsEqual(result, [module_builds[1]])
 
     def test_filter_by_NSVC(self):
         compose = mock.Mock()
         module_builds = [
-            {"nvr": "foo-1-201809031048.cafebabe"},
-            {"nvr": "foo-1-201809031047.deadbeef"},
-            {"nvr": "foo-1-201809031047.cafebabe"},
-            {"nvr": "foo-2-201809031047.deadbeef"},
+            self._build("foo", "1", "201809031048", "cafebabe"),
+            self._build("foo", "1", "201809031047", "deadbeef"),
+            self._build("foo", "1", "201809031047", "cafebabe"),
+            self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1:201809031047:deadbeef"}]
 
         result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
 
-        self.assertItemsEqual(
-            result, [{"nvr": "foo-1-201809031047.deadbeef"}]
-        )
+        self.assertItemsEqual(result, [module_builds[1]])
 
     def test_filter_by_wildcard(self):
         compose = mock.Mock()
         module_builds = [
-            {"nvr": "foo-1-201809031048.cafebabe"},
-            {"nvr": "foo-1-201809031047.deadbeef"},
-            {"nvr": "foo-2-201809031047.deadbeef"},
+            self._build("foo", "1", "201809031048", "cafebabe"),
+            self._build("foo", "1", "201809031047", "deadbeef"),
+            self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "*"}]
 
         result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
 
-        self.assertItemsEqual(
-            result,
-            [
-                {"nvr": "foo-1-201809031048.cafebabe"},
-                {"nvr": "foo-1-201809031047.deadbeef"},
-                {"nvr": "foo-2-201809031047.deadbeef"},
-            ],
-        )
+        self.assertItemsEqual(result, module_builds)
 
 
 class MockModule(object):
