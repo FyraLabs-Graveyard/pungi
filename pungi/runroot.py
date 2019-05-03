@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-
+import os
+from six.moves import shlex_quote
 import kobo.log
 from kobo.shortcuts import run
 
@@ -100,7 +101,8 @@ class Runroot(kobo.log.LoggingBase):
         ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname, formatted_cmd]
         return run(ssh_cmd, show_cmd=True, logfile=log_file)[1]
 
-    def _run_openssh(self, command, log_file=None, arch=None, packages=None, **kwargs):
+    def _run_openssh(self, command, log_file=None, arch=None, packages=None,
+                     output_dir=None, **kwargs):
         """
         Runs the runroot command on remote machine using ssh.
         """
@@ -108,17 +110,28 @@ class Runroot(kobo.log.LoggingBase):
         if arch not in runroot_ssh_hostnames:
             raise ValueError("The arch %r not in runroot_ssh_hostnames." % arch)
 
+        # If the output dir is defined, change the permissions of files generated
+        # by the runroot task, so the Pungi user can access them.
+        if output_dir:
+            # Make the files world readable
+            command += " && chmod -R a+r %s" % shlex_quote(output_dir)
+            # and owned by the same user that is running the process
+            command += " && chown -R %d %s" % (os.getuid(), shlex_quote(output_dir))
+
         hostname = runroot_ssh_hostnames[arch]
         user = self.compose.conf.get("runroot_ssh_username", "root")
-        init_command = self.compose.conf.get("runroot_ssh_init_command")
+        runroot_tag = self.compose.conf["runroot_tag"]
+        init_template = self.compose.conf.get("runroot_ssh_init_template")
         install_packages_template = self.compose.conf.get(
             "runroot_ssh_install_packages_template"
         )
         run_template = self.compose.conf.get("runroot_ssh_run_template")
 
         # Init the runroot on remote machine and get the runroot_key.
-        if init_command:
-            runroot_key = self._ssh_run(hostname, user, init_command, log_file=log_file)
+        if init_template:
+            fmt_dict = {"runroot_tag": runroot_tag}
+            runroot_key = self._ssh_run(
+                hostname, user, init_template, fmt_dict, log_file=log_file)
             runroot_key = runroot_key.rstrip("\n\r")
         else:
             runroot_key = None

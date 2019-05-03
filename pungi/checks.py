@@ -573,6 +573,15 @@ def make_schema():
                 "type": "object",
                 "default": {},
             },
+            "runroot_ssh_init_template": {
+                "type": "string",
+            },
+            "runroot_ssh_install_packages_template": {
+                "type": "string",
+            },
+            "runroot_ssh_run_template": {
+                "type": "string",
+            },
             "create_jigdo": {
                 "type": "boolean",
                 "default": True,

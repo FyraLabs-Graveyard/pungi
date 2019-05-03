@@ -914,7 +914,7 @@ Options
     architecture on which the runroot task should be running. Format:
     ``{"x86_64": "runroot-x86-64.localhost.tld", ...}``
 
-**runroot_ssh_init_command**
+**runroot_ssh_init_template**
     (*str*) [optional] -- For ``openssh`` runroot method, defines the command
     to initializes the runroot task on the remote machine. This command is
     executed as first command for each runroot task executed.
@@ -927,6 +927,11 @@ Options
     commands. For example preparing the unique mock environment, mounting the
     desired file-systems, ...
 
+    The command string can contain following variables which are replaced by
+    the real values before executing the init command:
+
+    * ``{runroot_tag}`` - Tag to initialize the runroot environment from.
+
     When not set, no init command is executed.
 
 **runroot_ssh_install_packages_template**
@@ -937,12 +942,12 @@ Options
     the real values before executing the install command:
 
     * ``{runroot_key}`` - Replaced with the string returned by
-      ``runroot_ssh_init_command`` if used. This can be used to keep the track
+      ``runroot_ssh_init_template`` if used. This can be used to keep the track
       of context of SSH commands beloging to single runroot task.
     * ``{packages}`` - White-list separated list of packages to install.
 
     Example (The ``{runroot_key}`` is expected to be set to mock config file
-    using the ``runroot_ssh_init_command`` command.):
+    using the ``runroot_ssh_init_template`` command.):
     ``"mock -r {runroot_key} --install {packages}"``
 
     When not set, no command to install packages on remote machine is executed.
@@ -955,12 +960,12 @@ Options
     the real values before executing the install command:
 
     * ``{runroot_key}`` - Replaced with the string returned by
-      ``runroot_ssh_init_command`` if used. This can be used to keep the track
+      ``runroot_ssh_init_template`` if used. This can be used to keep the track
       of context of SSH commands beloging to single runroot task.
     * ``{command}`` - Command to run.
 
     Example (The ``{runroot_key}`` is expected to be set to mock config file
-    using the ``runroot_ssh_init_command`` command.):
+    using the ``runroot_ssh_init_template`` command.):
     ``"mock -r {runroot_key} chroot -- {command}"``
 
     When not set, the runroot command is run directly.
