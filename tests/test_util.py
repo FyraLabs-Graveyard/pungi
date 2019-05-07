@@ -48,6 +48,20 @@ class TestGitRefResolver(unittest.TestCase):
         self.assertEqual(ref, "a" * 40)
 
     @mock.patch('pungi.util.run')
+    def test_resolve_ref_multiple_matches(self, run):
+        run.return_value = (
+            0, "CAFEBABE\trefs/heads/master\nBABECAFE\trefs/remotes/origin/master"
+        )
+
+        ref = util.resolve_git_ref("https://git.example.com/repo.git", "master")
+
+        self.assertEqual(ref, "CAFEBABE")
+        run.assert_called_once_with(
+            ["git", "ls-remote", "https://git.example.com/repo.git", "master"],
+            universal_newlines=True,
+        )
+
+    @mock.patch('pungi.util.run')
     def test_resolve_missing_spec(self, run):
         url = util.resolve_git_url('https://git.example.com/repo.git')
 

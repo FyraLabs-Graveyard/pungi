@@ -263,7 +263,10 @@ def resolve_git_ref(repourl, ref):
 
     _, output = git_ls_remote(repourl, ref)
 
-    lines = [line for line in output.split('\n') if line]
+    lines = []
+    for line in output.split("\n"):
+        if line and ("refs/heads/" in line or "refs/tags/" in line or "HEAD" in line):
+            lines.append(line)
     if len(lines) == 0:
         # Branch does not exist in remote repo
         raise GitUrlResolveError(
@@ -272,7 +275,7 @@ def resolve_git_ref(repourl, ref):
     if len(lines) != 1:
         # This should never happen. HEAD can not match multiple commits in a
         # single repo, and there can not be a repo without a HEAD.
-        raise GitUrlResolveError("Failed to resolve %s", repourl)
+        raise GitUrlResolveError("Failed to resolve %r in %s" % (ref, repourl))
 
     return lines[0].split()[0]
 
