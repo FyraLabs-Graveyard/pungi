@@ -305,7 +305,8 @@ def _extend_with_default_and_alias(validator_class, offline=False):
                 and "repo" in instance[property]
             ):
                 instance[property]["branch"] = resolver(
-                    instance[property]["repo"], instance[property].get("branch", "HEAD")
+                    instance[property]["repo"],
+                    instance[property].get("branch") or "HEAD",
                 )
 
         for error in _hook_errors(properties, instance, schema):
