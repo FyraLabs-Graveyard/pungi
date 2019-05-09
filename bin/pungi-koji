@@ -384,9 +384,6 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     essentials_phase.start()
     essentials_phase.stop()
 
-    if not buildinstall_phase.skip():
-        buildinstall_phase.copy_files()
-
     productimg_phase.start()
     productimg_phase.stop()
 

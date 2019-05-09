@@ -143,6 +143,9 @@ class BuildinstallPhase(PhaseBase):
         release = self.compose.conf["release_version"]
         disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
 
+        # Prepare kickstart file for final images.
+        self.pool.kickstart_file = get_kickstart_file(self.compose)
+
         for arch in self.compose.get_arches():
             commands = []
 
@@ -198,40 +201,6 @@ class BuildinstallPhase(PhaseBase):
         # happen.
         return (super(BuildinstallPhase, self).skip()
                 or (variant.uid if self.used_lorax else None, arch) in self.pool.finished_tasks)
-
-    def copy_files(self):
-        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
-
-        # copy buildinstall files to the 'os' dir
-        kickstart_file = get_kickstart_file(self.compose)
-        for arch in self.compose.get_arches():
-            for variant in self.compose.get_variants(arch=arch, types=["self", "variant"]):
-                if variant.is_empty:
-                    continue
-                if not self.succeeded(variant, arch):
-                    self.compose.log_debug(
-                        'Buildinstall: skipping copying files for %s.%s due to failed runroot task'
-                        % (variant.uid, arch))
-                    continue
-
-                buildinstall_dir = self.compose.paths.work.buildinstall_dir(arch)
-
-                # Lorax runs per-variant, so we need to tweak the source path
-                # to include variant.
-                if self.used_lorax:
-                    buildinstall_dir = os.path.join(buildinstall_dir, variant.uid)
-
-                if not os.path.isdir(buildinstall_dir) or not os.listdir(buildinstall_dir):
-                    continue
-
-                os_tree = self.compose.paths.compose.os_tree(arch, variant)
-                # TODO: label is not used
-                label = ""
-                volid = get_volid(self.compose, arch, variant, disc_type=disc_type)
-                can_fail = self.compose.can_fail(variant, arch, 'buildinstall')
-                with failable(self.compose, can_fail, variant, arch, 'buildinstall'):
-                    tweak_buildinstall(self.compose, buildinstall_dir, os_tree, arch, variant.uid, label, volid, kickstart_file)
-                    link_boot_iso(self.compose, arch, variant, can_fail)
 
 
 def get_kickstart_file(compose):
@@ -494,4 +463,37 @@ class BuildinstallThread(WorkerThread):
             f.write("\n".join(rpms))
 
         self.pool.finished_tasks.add((variant.uid if variant else None, arch))
+
+        self.copy_files(compose, variant, arch)
+
         self.pool.log_info("[DONE ] %s" % msg)
+
+    def copy_files(self, compose, variant, arch):
+        disc_type = compose.conf['disc_types'].get('dvd', 'dvd')
+
+        buildinstall_dir = compose.paths.work.buildinstall_dir(arch)
+
+        # Lorax runs per-variant, so we need to tweak the source path
+        # to include variant.
+        if variant:
+            buildinstall_dir = os.path.join(buildinstall_dir, variant.uid)
+
+        # Find all relevant variants if lorax is not used.
+        variants = [variant] if variant else compose.get_variants(arch=arch, types=["self", "variant"])
+        for var in variants:
+            os_tree = compose.paths.compose.os_tree(arch, var)
+            # TODO: label is not used
+            label = ""
+            volid = get_volid(compose, arch, var, disc_type=disc_type)
+            can_fail = compose.can_fail(var, arch, 'buildinstall')
+            tweak_buildinstall(
+                compose,
+                buildinstall_dir,
+                os_tree,
+                arch,
+                var.uid,
+                label,
+                volid,
+                self.pool.kickstart_file,
+            )
+            link_boot_iso(compose, arch, var, can_fail)
