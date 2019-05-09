@@ -27,7 +27,7 @@ from pungi import get_full_version, util
 
 
 # force C locales
-locale.setlocale(locale.LC_ALL, "C")
+locale.setlocale(locale.LC_ALL, "C.UTF-8")
 
 
 COMPOSE = None
