@@ -83,7 +83,7 @@ class MockVariant(mock.Mock):
     def get_modular_koji_tags(self, arch=None, types=None):
         return []
 
-    def add_fake_module(self, nsvc, rpm_nvrs=None, with_artifacts=False):
+    def add_fake_module(self, nsvc, rpm_nvrs=None, with_artifacts=False, mmd_arch=None):
         if not Modulemd:
             # No support for modules
             return
@@ -116,6 +116,8 @@ class MockVariant(mock.Mock):
             self.modules = []
         self.modules.append(":".join([name, stream, version]))
         self.mmds.append(mmd)
+        if mmd_arch:
+            self.arch_mmds.setdefault(mmd_arch, {})[mmd.dup_nsvc()] = mmd
         return mmd
 
 

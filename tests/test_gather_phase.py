@@ -644,10 +644,11 @@ class TestGatherPackages(helpers.PungiTestCase):
             {'rpm': [], 'srpm': [], 'debuginfo': []}
         )
         self.assertEqual(get_gather_method.call_args_list,
-                         [mock.call(compose.conf['gather_method'])] * 2)
+                         [mock.call(compose.conf['gather_method'])] * 3)
         self.assertEqual(
             get_variant_packages.call_args_list,
             [
+                mock.call(compose, 'x86_64', compose.variants['Server'], 'module', pkg_set),
                 mock.call(compose, 'x86_64', compose.variants['Server'], 'comps', pkg_set),
                 mock.call(compose, 'x86_64', compose.variants['Server'], 'json', pkg_set),
             ],
@@ -656,7 +657,7 @@ class TestGatherPackages(helpers.PungiTestCase):
             get_gather_method.return_value.return_value.call_args_list,
             [mock.call('x86_64', compose.variants['Server'], packages, groups,
                        filters, set(), set(), pkg_set, fulltree_excludes=set(),
-                       prepopulate=set())] * 2
+                       prepopulate=set())] * 3
         )
 
     @mock.patch('pungi.phases.gather.get_variant_packages')
@@ -687,10 +688,11 @@ class TestGatherPackages(helpers.PungiTestCase):
             {'rpm': [], 'srpm': [], 'debuginfo': []}
         )
         self.assertEqual(get_gather_method.call_args_list,
-                         [mock.call(compose.conf['gather_method'])] * 2)
+                         [mock.call(compose.conf['gather_method'])] * 3)
         self.assertEqual(
             get_variant_packages.call_args_list,
             [
+                mock.call(compose, 'x86_64', compose.variants['Server'], 'module', pkg_set),
                 mock.call(compose, 'x86_64', compose.variants['Server'], 'comps', pkg_set),
                 mock.call(compose, 'x86_64', compose.variants['Server'], 'json', pkg_set),
             ],
@@ -699,7 +701,7 @@ class TestGatherPackages(helpers.PungiTestCase):
             get_gather_method.return_value.return_value.call_args_list,
             [mock.call('x86_64', compose.variants['Server'], packages, groups,
                        filters, set(['white']), set(['black']), pkg_set,
-                       fulltree_excludes=set(), prepopulate=set())] * 2
+                       fulltree_excludes=set(), prepopulate=set())] * 3
         )
 
     @mock.patch('pungi.phases.gather.get_variant_packages')
@@ -710,12 +712,12 @@ class TestGatherPackages(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'multilib_whitelist': {'*': ['white']},
             'multilib_blacklist': {'*': ['black']},
-            'gather_method': {'^Server$': {'comps': 'deps', 'json': 'deps'}},
+            'gather_method': {'^Server$': {'comps': 'deps', 'module': 'nodeps', 'json': 'deps'}},
         })
         pkg_set = mock.Mock()
         gather.gather_packages(compose, 'x86_64', compose.variants['Server'], pkg_set),
         self.assertEqual(get_gather_method.call_args_list,
-                         [mock.call('deps'), mock.call('deps')])
+                         [mock.call('nodeps'), mock.call('deps'), mock.call('deps')])
 
     @mock.patch("pungi.phases.gather.get_variant_packages")
     @mock.patch("pungi.phases.gather.get_gather_method")

@@ -205,7 +205,7 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
 
     else:
 
-        for source_name in ('comps', 'json'):
+        for source_name in ("module", "comps", "json"):
 
             packages, groups, filter_packages = get_variant_packages(compose, arch, variant,
                                                                      source_name, package_sets)
@@ -727,7 +727,7 @@ def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
     """
     packages = set([])
     groups = set([])
-    for source_name in ('comps', 'json'):
+    for source_name in ("module", "comps", "json"):
         GatherSource = get_gather_source(source_name)
         src = GatherSource(compose)
 
