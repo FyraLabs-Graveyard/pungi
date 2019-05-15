@@ -22,9 +22,11 @@ class ConfigValidateScriptTest(helpers.PungiTestCase):
     def test_validate_dummy_config(self):
         DUMMY_CONFIG = os.path.join(HERE, 'data/dummy-pungi.conf')
         interp = 'python2' if six.PY2 else 'python3'
-        p = subprocess.Popen([interp, PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            [interp, "-W", "ignore", PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         (stdout, stderr) = p.communicate()
         self.assertEqual(b'', stdout)
         self.assertEqual(b'', stderr)
