@@ -465,7 +465,7 @@ class TestCorrectNVR(helpers.PungiTestCase):
         self.compose = helpers.DummyCompose(self.topdir, {})
         self.nv = "base-runtime-f26"
         self.nvr = "base-runtime-f26-20170502134116"
-        self.release_regex = re.compile("^(\d){14}$")
+        self.release_regex = re.compile(r"^(\d){14}$")
         self.new_nv = "base-runtime:f26"
         self.new_nvr = "base-runtime:f26:20170502134116"
         self.new_nvrc = "base-runtime:f26:20170502134116:0123abcd"

@@ -86,7 +86,7 @@ def variant_dict_from_str(compose, module_str):
         module_info = {}
         # The regex is matching a string which should represent the release number
         # of a module. The release number is in format: "%Y%m%d%H%M%S"
-        release_regex = re.compile("^(\d){14}$")
+        release_regex = re.compile(r"^(\d){14}$")
 
         section_start = module_str.rfind('-')
         module_str_first_part = module_str[section_start+1:]
