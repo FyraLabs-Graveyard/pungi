@@ -152,10 +152,10 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'],
                                     task_id=True, use_shell=True, weight=weight,
-                                    destdir=outdir)])
+                                    chown_paths=[outdir])])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,
-                                    log_file='%s/%s/runroot.log' % (self.topdir, LOG_PATH))])
+                                    log_file=os.path.join(self.topdir, LOG_PATH, "runroot.log"))])
 
     def assertIsoLinked(self, link, get_file_size, get_mtime, final_iso_path):
         self.assertEqual(link.call_args_list,

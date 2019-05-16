@@ -604,7 +604,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 'rrt', 'x86_64', self.cmd, channel=None,
                 use_shell=True, task_id=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
-                destdir=destdir,
+                chown_paths=[destdir],
             )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
@@ -673,7 +673,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 "rrt", "amd64", self.cmd, channel=None,
                 use_shell=True, task_id=True,
                 packages=['anaconda'], mounts=[self.topdir], weight=None,
-                destdir=destdir,
+                chown_paths=[destdir],
             )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,
@@ -845,7 +845,9 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 'rrt', 'x86_64', self.cmd, channel=None,
                 use_shell=True, task_id=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
-                destdir="/buildinstall_topdir/buildinstall-%s/x86_64/Server" % os.path.basename(self.topdir),
+                chown_paths=[
+                    "/buildinstall_topdir/buildinstall-%s/x86_64/Server" % os.path.basename(self.topdir),
+                ],
             )])
         self.assertItemsEqual(
             run_runroot_cmd.mock_calls,

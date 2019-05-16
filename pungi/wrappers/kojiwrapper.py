@@ -69,7 +69,7 @@ class KojiWrapper(object):
 
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True,
                         channel=None, packages=None, mounts=None, weight=None,
-                        task_id=True, new_chroot=False, destdir=None):
+                        task_id=True, new_chroot=False, chown_paths=None):
         cmd = self._get_cmd("runroot")
 
         if quiet:
@@ -113,11 +113,12 @@ class KojiWrapper(object):
         # HACK: remove rpmdb and yum cache
         command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
 
-        if destdir:
+        if chown_paths:
+            paths = " ".join(shlex_quote(pth) for pth in chown_paths)
             # Make the files world readable
-            command += " && chmod -R a+r %s" % shlex_quote(destdir)
+            command += " && chmod -R a+r %s" % paths
             # and owned by the same user that is running the process
-            command += " && chown -R %d %s" % (os.getuid(), shlex_quote(destdir))
+            command += " && chown -R %d %s" % (os.getuid(), paths)
         cmd.append(command)
 
         return cmd

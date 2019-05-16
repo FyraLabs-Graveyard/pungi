@@ -68,7 +68,7 @@ class Runroot(kobo.log.LoggingBase):
         runroot_tag = self.compose.conf["runroot_tag"]
 
         if output_dir:
-            kwargs["destdir"] = output_dir
+            kwargs.setdefault("chown_paths", []).append(output_dir)
 
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_runroot_cmd(
