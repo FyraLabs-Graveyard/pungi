@@ -151,6 +151,7 @@ class BuildinstallPhase(PhaseBase):
 
             output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=True)
             final_output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=False)
+            makedirs(final_output_dir)
             repo_baseurl = self.compose.paths.work.arch_repo(arch)
             if final_output_dir != output_dir:
                 repo_baseurl = translate_path(self.compose, repo_baseurl)
