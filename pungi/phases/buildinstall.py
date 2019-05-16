@@ -91,18 +91,13 @@ class BuildinstallPhase(PhaseBase):
 
         # The paths module will modify the filename (by inserting arch). But we
         # only care about the directory anyway.
-        log_filename = 'buildinstall-%s-logs/dummy' % variant.uid
-        log_dir = os.path.dirname(self.compose.paths.log.log_file(arch, log_filename))
-        makedirs(log_dir)
+        log_dir = _get_log_dir(self.compose, variant, arch)
 
         # If the buildinstall_topdir is set, it means Koji is used for
         # buildinstall phase and the filesystem with Koji is read-only.
         # In that case, we have to write logs to buildinstall_topdir and
         # later copy them back to our local log directory.
         if self.compose.conf.get("buildinstall_topdir", None):
-            log_dir = self.compose.paths.work.buildinstall_dir(
-                arch, allow_topdir_override=True, variant=variant)
-            log_dir = os.path.join(log_dir, "logs")
             output_dir = os.path.join(output_dir, "results")
 
         repos = [repo_baseurl] + get_arch_variant_data(self.compose.conf,
@@ -427,8 +422,10 @@ class BuildinstallThread(WorkerThread):
 
         # Get list of packages which are neded in runroot.
         packages = []
+        chown_paths = []
         if buildinstall_method == "lorax":
             packages += ["lorax"]
+            chown_paths.append(_get_log_dir(compose, variant, arch))
         elif buildinstall_method == "buildinstall":
             packages += ["anaconda"]
 
@@ -442,7 +439,9 @@ class BuildinstallThread(WorkerThread):
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
             mounts=[compose.topdir], output_dir=output_dir,
-            weight=compose.conf['runroot_weights'].get('buildinstall'))
+            weight=compose.conf['runroot_weights'].get('buildinstall'),
+            chown_paths=chown_paths,
+        )
 
         if final_output_dir != output_dir:
             if not os.path.exists(final_output_dir):
@@ -498,3 +497,21 @@ class BuildinstallThread(WorkerThread):
                 self.pool.kickstart_file,
             )
             link_boot_iso(compose, arch, var, can_fail)
+
+
+def _get_log_dir(compose, variant, arch):
+    """Find directory where to store lorax logs in. If it's inside the compose,
+    create the directory.
+    """
+    if compose.conf.get("buildinstall_topdir"):
+        log_dir = compose.paths.work.buildinstall_dir(
+            arch, allow_topdir_override=True, variant=variant
+        )
+        return os.path.join(log_dir, "logs")
+
+    # The paths module will modify the filename (by inserting arch). But we
+    # only care about the directory anyway.
+    log_filename = 'buildinstall-%s-logs/dummy' % variant.uid
+    log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_filename))
+    makedirs(log_dir)
+    return log_dir
