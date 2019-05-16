@@ -5,8 +5,6 @@ import os
 import subprocess
 import sys
 
-import six
-
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 BINDIR = os.path.join(HERE, '../bin')
@@ -21,9 +19,8 @@ class ConfigValidateScriptTest(helpers.PungiTestCase):
 
     def test_validate_dummy_config(self):
         DUMMY_CONFIG = os.path.join(HERE, 'data/dummy-pungi.conf')
-        interp = 'python2' if six.PY2 else 'python3'
         p = subprocess.Popen(
-            [interp, "-W", "ignore", PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
+            [sys.executable, "-W", "ignore", PUNGI_CONFIG_VALIDATE, DUMMY_CONFIG],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
