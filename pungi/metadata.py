@@ -178,7 +178,9 @@ def write_compose_info(compose):
             field_paths = getattr(variant.paths, field)
             for arch, dirpath in field_paths.items():
                 dirpath = os.path.join(compose.paths.compose.topdir(), dirpath)
-                if not (os.path.isdir(dirpath) and os.listdir(dirpath)):
+                if not os.path.isdir(dirpath):
+                    # If the directory does not exist, do not include the path
+                    # in metadata.
                     field_paths[arch] = None
     ci_copy.dump(path)
 
