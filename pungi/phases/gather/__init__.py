@@ -79,10 +79,13 @@ class GatherPhase(PhaseBase):
 
         # check whether variants from configuration value 'variant_as_lookaside' are correct
         variant_as_lookaside = self.compose.conf.get("variant_as_lookaside", [])
-        for variant_pair in variant_as_lookaside:
-            for variant_uid in variant_pair:
-                if variant_uid not in self.compose.all_variants:
-                    errors.append("Variant uid '%s' does't exists in 'variant_as_lookaside'" % variant_uid)
+        all_variants = self.compose.all_variants
+        for (requiring, required) in variant_as_lookaside:
+            if requiring in all_variants and required not in all_variants:
+                errors.append(
+                    "variant_as_lookaside: variant %r doesn't exist but is required by %r"
+                    % (required, requiring)
+                )
 
         if errors:
             raise ValueError('\n'.join(errors))

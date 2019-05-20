@@ -879,6 +879,33 @@ class TestGatherPhase(helpers.PungiTestCase):
         with open(rpms_file) as fh:
             self.assertEqual(fh.read(), "hello")
 
+    def test_validates_wrong_requiring_variant(self):
+        pkgset_phase = mock.Mock()
+        compose = helpers.DummyCompose(
+            self.topdir, {"variant_as_lookaside": [("foo", "Server")]}
+        )
+        phase = gather.GatherPhase(compose, pkgset_phase)
+        phase.validate()
+
+    def test_validates_wrong_required_variant(self):
+        pkgset_phase = mock.Mock()
+        compose = helpers.DummyCompose(
+            self.topdir, {"variant_as_lookaside": [("Server", "foo")]}
+        )
+        phase = gather.GatherPhase(compose, pkgset_phase)
+        with self.assertRaises(ValueError) as ctx:
+            phase.validate()
+
+        self.assertIn("'foo' doesn't exist", str(ctx.exception))
+
+    def test_validates_both_requires_missing(self):
+        pkgset_phase = mock.Mock()
+        compose = helpers.DummyCompose(
+            self.topdir, {"variant_as_lookaside": [("foo", "bar")]}
+        )
+        phase = gather.GatherPhase(compose, pkgset_phase)
+        phase.validate()
+
 
 class TestGetPackagesToGather(helpers.PungiTestCase):
     def setUp(self):
