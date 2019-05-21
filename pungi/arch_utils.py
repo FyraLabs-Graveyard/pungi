@@ -193,6 +193,8 @@ def getCanonX86Arch(arch):  # pragma: no cover
     for line in _try_read_cpuinfo():
         if line.startswith("vendor") and line.find("AuthenticAMD") != -1:
             return "athlon"
+        elif line.startswith("vendor") and line.find("HygonGenuine") != -1:
+            return "athlon"
         # i686 doesn't guarantee cmov, but we depend on it
         elif line.startswith("flags"):
             if line.find("cmov") == -1:
@@ -281,6 +283,8 @@ def getCanonX86_64Arch(arch):  # pragma: no cover
         return arch
 
     if vendor.find("Authentic AMD") != -1 or vendor.find("AuthenticAMD") != -1:
+        return "amd64"
+    if vendor.find("HygonGenuine") != -1:
         return "amd64"
     if vendor.find("GenuineIntel") != -1:
         return "ia32e"
