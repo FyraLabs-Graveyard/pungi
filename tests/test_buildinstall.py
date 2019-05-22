@@ -605,8 +605,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 use_shell=True, task_id=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
                 chown_paths=[
-                    os.path.join(self.topdir, "logs/x86_64/buildinstall-Server-logs"),
                     destdir,
+                    os.path.join(self.topdir, "logs/x86_64/buildinstall-Server-logs"),
                 ],
             )])
         self.assertItemsEqual(
@@ -849,8 +849,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 use_shell=True, task_id=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
                 chown_paths=[
-                    "/buildinstall_topdir/buildinstall-%s/x86_64/Server/logs" % os.path.basename(self.topdir),
                     "/buildinstall_topdir/buildinstall-%s/x86_64/Server" % os.path.basename(self.topdir),
+                    "/buildinstall_topdir/buildinstall-%s/x86_64/Server/logs" % os.path.basename(self.topdir),
                 ],
             )])
         self.assertItemsEqual(

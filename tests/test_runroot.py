@@ -121,10 +121,11 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
 
         run.return_value = (0, "key\n")
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
-                         packages=["lorax", "automake"], output_dir="/mnt/foo/compose")
+                         packages=["lorax", "automake"],
+                         chown_paths=["/mnt/foo/compose", "/mnt/foo/x"])
         run.assert_has_calls([
             self._ssh_call(
-                'run df -h && chmod -R a+r /mnt/foo/compose && '
-                'chown -R %d /mnt/foo/compose' % os.getuid()),
+                "run df -h && chmod -R a+r /mnt/foo/compose /mnt/foo/x && "
+                "chown -R %d /mnt/foo/compose /mnt/foo/x" % os.getuid()),
             self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
         ])

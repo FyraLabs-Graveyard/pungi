@@ -422,7 +422,7 @@ class BuildinstallThread(WorkerThread):
 
         # Get list of packages which are neded in runroot.
         packages = []
-        chown_paths = []
+        chown_paths = [output_dir]
         if buildinstall_method == "lorax":
             packages += ["lorax"]
             chown_paths.append(_get_log_dir(compose, variant, arch))
@@ -438,7 +438,7 @@ class BuildinstallThread(WorkerThread):
         runroot = Runroot(compose)
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
-            mounts=[compose.topdir], output_dir=output_dir,
+            mounts=[compose.topdir],
             weight=compose.conf['runroot_weights'].get('buildinstall'),
             chown_paths=chown_paths,
         )

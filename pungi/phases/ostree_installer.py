@@ -187,5 +187,5 @@ class OstreeInstallerThread(WorkerThread):
         runroot = Runroot(compose)
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
-            mounts=[compose.topdir], output_dir=output_dir,
+            mounts=[compose.topdir], chown_paths=[output_dir],
             weight=compose.conf['runroot_weights'].get('ostree_installer'))

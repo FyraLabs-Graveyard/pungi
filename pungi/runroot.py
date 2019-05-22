@@ -59,16 +59,12 @@ class Runroot(kobo.log.LoggingBase):
         run(command, show_cmd=True, logfile=log_file)
         self._result = True
 
-    def _run_koji(self, command, log_file=None, packages=None,
-                  arch=None, output_dir=None, **kwargs):
+    def _run_koji(self, command, log_file=None, packages=None, arch=None, **kwargs):
         """
         Runs the runroot command in Koji.
         """
         runroot_channel = self.compose.conf.get("runroot_channel")
         runroot_tag = self.compose.conf["runroot_tag"]
-
-        if output_dir:
-            kwargs.setdefault("chown_paths", []).append(output_dir)
 
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_runroot_cmd(
@@ -102,7 +98,7 @@ class Runroot(kobo.log.LoggingBase):
         return run(ssh_cmd, show_cmd=True, logfile=log_file)[1]
 
     def _run_openssh(self, command, log_file=None, arch=None, packages=None,
-                     output_dir=None, **kwargs):
+                     chown_paths=None, **kwargs):
         """
         Runs the runroot command on remote machine using ssh.
         """
@@ -112,11 +108,12 @@ class Runroot(kobo.log.LoggingBase):
 
         # If the output dir is defined, change the permissions of files generated
         # by the runroot task, so the Pungi user can access them.
-        if output_dir:
+        if chown_paths:
+            paths = " ".join(shlex_quote(pth) for pth in chown_paths)
             # Make the files world readable
-            command += " && chmod -R a+r %s" % shlex_quote(output_dir)
+            command += " && chmod -R a+r %s" % paths
             # and owned by the same user that is running the process
-            command += " && chown -R %d %s" % (os.getuid(), shlex_quote(output_dir))
+            command += " && chown -R %d %s" % (os.getuid(), paths)
 
         hostname = runroot_ssh_hostnames[arch]
         user = self.compose.conf.get("runroot_ssh_username", "root")
@@ -172,8 +169,7 @@ class Runroot(kobo.log.LoggingBase):
                 continue
             self._result.append(i)
 
-    def run(self, command, log_file=None, packages=None, arch=None,
-            output_dir=None, **kwargs):
+    def run(self, command, log_file=None, packages=None, arch=None, **kwargs):
         """
         Runs the runroot task using the `Runroot.runroot_method`. Blocks until
         the runroot task is successfully finished. Raises an exception on error.
@@ -196,16 +192,16 @@ class Runroot(kobo.log.LoggingBase):
         """
         if self.runroot_method == "local":
             self._run_local(
-                command, log_file=log_file, packages=packages, arch=arch,
-                output_dir=output_dir, **kwargs)
+                command, log_file=log_file, packages=packages, arch=arch, **kwargs
+            )
         elif self.runroot_method == "koji":
             self._run_koji(
-                command, log_file=log_file, packages=packages, arch=arch,
-                output_dir=output_dir, **kwargs)
+                command, log_file=log_file, packages=packages, arch=arch, **kwargs
+            )
         elif self.runroot_method == "openssh":
             self._run_openssh(
-                command, log_file=log_file, packages=packages, arch=arch,
-                output_dir=output_dir, **kwargs)
+                command, log_file=log_file, packages=packages, arch=arch, **kwargs
+            )
         else:
             raise ValueError("Unknown runroot_method %r." % self.runroot_method)
 
