@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.36
+Version:        4.1.37
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,36 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon May 27 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.37-1
+- config-dump: Allow dumping config for multi compose (lsedlar)
+- pkgset: Ignore modules without metadata in Koji (lsedlar)
+- runroot: Remove useless argument output_path (lsedlar)
+- buildinstall: Change owner of lorax logs (lsedlar)
+- kojiwrapper: Allow changing mode of multiple files (lsedlar)
+- buildinstall: Create toplevel directory on compose host (lsedlar)
+- arch_utils: add Hygon Dhyana CPU support (fanjinke)
+- gather: Introduce module source again (lsedlar)
+- metadata: Include empty directories in metadata (lsedlar)
+- gather: Relax validations on variant_as_lookaside (lsedlar)
+- tests: Use correct Python interpreter (lsedlar)
+- tests: Ignore warnings when running validation script (lsedlar)
+- Remove invalid escape sequences (lsedlar)
+- Fix issues in OpenSSH Runroot method found by real tests. (jkaluza)
+- buildinstall: Copy files in thread (lsedlar)
+- Fall back to C locale if UTF8 version does not exist (lsedlar)
+- init: Create comps repos in parallel (lsedlar)
+- Switch locale to C.UTF-8 (lsedlar)
+- util: Resolve ref if duplicate branches are present (lsedlar)
+- config: Fix getting default branch in SCM dict (lsedlar)
+- pkgset: Fix whitelist for modules (lsedlar)
+- pkgset: Fix filtering excluded modular packages (lsedlar)
+- pkgset: Do not overwrite version in module (lsedlar)
+- pkgset: Treat modular version as number for sorting (lsedlar)
+- Use absolute path for hardlink (lsedlar)
+- createiso: Run hardlink on staged content (jdisnard)
+- comps-wrapper: Emit attributes sorted (lsedlar)
+- patch-iso supports multiple graft directories (jkonecny)
+
 * Fri Apr 12 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.36-1
 - Extend "openssh" runroot_method to be able to execute "mock" (jkaluza)
 - osbs: Rework configuration for image pushes (lsedlar)
