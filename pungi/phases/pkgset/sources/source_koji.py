@@ -246,6 +246,9 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
         return
 
     source_mmd = mmds["modulemd.txt"]
+    # Set name from build to modulemd. Generally it will match, but for devel
+    # modules the source mmd contains the original name.
+    source_mmd.set_name(build["extra"]["typeinfo"]["module"]["name"])
     nsvc = source_mmd.dup_nsvc()
 
     variant.mmds.append(source_mmd)

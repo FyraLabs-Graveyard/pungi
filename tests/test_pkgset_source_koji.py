@@ -671,6 +671,9 @@ class MockModule(object):
     def dup_nsvc(self):
         return "module:master:20190318.abcdef"
 
+    def set_name(self, name):
+        pass
+
 
 @mock.patch("pungi.Modulemd.Module.new_from_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
@@ -685,7 +688,7 @@ class TestAddModuleToVariant(unittest.TestCase):
         ] + [{"btype": "foo"}]
 
     def test_adding_module(self):
-        build = {"id": 1234}
+        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
         )
@@ -707,7 +710,7 @@ class TestAddModuleToVariant(unittest.TestCase):
         self.assertEqual(variant.modules, [])
 
     def test_adding_module_to_existing(self):
-        build = {"id": 1234}
+        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             mmds=[MockModule("/koji/m1.txt")],
@@ -737,7 +740,7 @@ class TestAddModuleToVariant(unittest.TestCase):
         self.assertEqual(variant.modules, ["m1:latest-20190101.cafe"])
 
     def test_adding_module_with_add_module(self):
-        build = {"id": 1234}
+        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
         )
@@ -761,7 +764,7 @@ class TestAddModuleToVariant(unittest.TestCase):
         self.assertEqual(variant.modules, ["module:master:20190318.abcdef"])
 
     def test_adding_module_to_existing_with_add_module(self):
-        build = {"id": 1234}
+        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             mmds=[MockModule("/koji/m1.txt")],
