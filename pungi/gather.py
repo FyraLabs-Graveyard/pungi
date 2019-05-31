@@ -834,7 +834,6 @@ class Pungi(PungiBase):
         """Cycle through the list of packages and get package object matches."""
 
         searchlist = [] # The list of package names/globs to search for
-        matchdict = {} # A dict of objects to names
         excludeGroups = [] # A list of groups for removal defined in the ks file
 
         # precompute pkgs and pkg_refs to speed things up
@@ -1775,7 +1774,6 @@ class Pungi(PungiBase):
             self.logger.info("ARCH: arm, not doing doCreateIsos().")
             return
 
-        isolist = []
         ppcbootinfo = '/usr/share/lorax/config_files/ppc'
 
         pungi.util._ensuredir(self.isodir, self.logger,

@@ -435,7 +435,6 @@ class KojiWrapper(object):
 
     def get_wrapped_rpm_path(self, task_id, srpm=False):
         result = []
-        parent_task = self.koji_proxy.getTaskInfo(task_id, request=True)
         task_info_list = []
         task_info_list.extend(self.koji_proxy.getTaskChildren(task_id, request=True))
 
@@ -445,9 +444,6 @@ class KojiWrapper(object):
             if i["method"] in ("wrapperRPM"):
                 task_info = i
                 break
-
-        # Check parent_task if it's scratch build
-        scratch = parent_task["request"][-1].get("scratch", False)
 
         # Get results of wrapperRPM task
         # {'buildroot_id': 2479520,

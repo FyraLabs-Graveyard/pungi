@@ -71,7 +71,6 @@ def read_runtime_patterns_from_file(path):
 
 def expand_runtime_patterns(patterns):
     pm = pungi.pathmatch.PathMatch()
-    result = []
     for path, pattern in patterns:
         for root in ("", "/opt/*/*/root"):
             # include Software Collections: /opt/<vendor>/<scl_name>/root/...
