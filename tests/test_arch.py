@@ -93,5 +93,6 @@ class TestExclusiveExcludeArch(unittest.TestCase):
         self.assertEqual(log.mock_calls,
                          [mock.call.debug("Excluding (EXCLUSIVEARCH: ['aarch64']): pkg.rpm")])
 
+
 if __name__ == "__main__":
     unittest.main()

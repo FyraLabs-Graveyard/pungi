@@ -1435,34 +1435,32 @@ class Pungi(PungiBase):
             # setup the repoview call
             repoview = ['/usr/bin/repoview']
             repoview.append('--quiet')
-            
+
             repoview.append('--state-dir')
             repoview.append(os.path.join(cachedir, 'repoviewcache'))
-            
+
             if repoviewtitle:
                 repoview.append('--title')
                 repoview.append(repoviewtitle)
-    
+
             repoview.append(path)
-    
+
             # run the command
             pungi.util._doRunCommand(repoview, self.logger)
-        
+
     def doCreaterepo(self, comps=True):
         """Run createrepo to generate repodata in the tree."""
-
-
         compsfile = None
         if comps:
             compsfile = os.path.join(self.workdir, '%s-%s-comps.xml' % (self.config.get('pungi', 'family'), self.config.get('pungi', 'version')))
-        
+
         # setup the cache dirs
         for target in ['createrepocache', 'repoviewcache']:
             pungi.util._ensuredir(os.path.join(self.config.get('pungi', 'cachedir'),
                                             target), 
                                self.logger, 
                                force=True)
-            
+
         repoviewtitle = '%s %s - %s' % (self.config.get('pungi', 'family'),
                                         self.config.get('pungi', 'version'),
                                         self.tree_arch)
@@ -1604,6 +1602,7 @@ class Pungi(PungiBase):
         # Create a function to use with os.path.walk to sum the files
         # basepath is used to make the sum output relative
         sums = []
+
         def getsum(basepath, dir, files):
             for file in files:
                 path = os.path.join(dir, file)
@@ -1616,7 +1615,7 @@ class Pungi(PungiBase):
 
         # Walk the os/images path to get sums of all the files
         os.path.walk(os.path.join(self.topdir, 'images'), getsum, self.topdir + '/')
-        
+
         # Capture PPC images
         if self.tree_arch in ['ppc', 'ppc64', 'ppc64le']:
             os.path.walk(os.path.join(self.topdir, 'ppc'), getsum, self.topdir + '/')
@@ -1690,8 +1689,6 @@ class Pungi(PungiBase):
     def doGetRelnotes(self):
         """Get extra files from packages in the tree to put in the topdir of
            the tree."""
-
-
         docsdir = os.path.join(self.workdir, 'docs')
         relnoterpms = self.config.get('pungi', 'relnotepkgs').split()
 
@@ -1748,7 +1745,7 @@ class Pungi(PungiBase):
                     if regex.match(directory) and not os.path.exists(os.path.join(self.topdir, directory)):
                         self.logger.info("Copying release note dir %s" % directory)
                         shutil.copytree(os.path.join(dirpath, directory), os.path.join(self.topdir, directory))
-        
+
     def _doIsoChecksum(self, path, csumfile):
         """Simple function to wrap creating checksums of iso files."""
 

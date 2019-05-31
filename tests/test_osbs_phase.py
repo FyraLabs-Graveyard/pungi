@@ -558,5 +558,6 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata(scratch=True)
         self._assertRepoFile()
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -87,6 +87,7 @@ def is_genisoimage_needed(conf):
 def is_createrepo_c_needed(conf):
     return conf.get('createrepo_c', True)
 
+
 # The first element in the tuple is package name expected to have the
 # executable (2nd element of the tuple). The last element is an optional
 # function that should determine if the tool is required based on
