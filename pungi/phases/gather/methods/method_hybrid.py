@@ -17,7 +17,6 @@ import gzip
 import os
 from collections import defaultdict
 from fnmatch import fnmatch
-from itertools import chain
 
 import createrepo_c as cr
 import kobo.rpmlib
@@ -147,8 +146,6 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
     def prepare_modular_packages(self):
         for var in self.compose.all_variants.values():
             for mmd in var.arch_mmds.get(self.arch, {}).values():
-                self.modular_packages.update(mmd.get_rpm_artifacts().dup())
-            for mmd in var.dev_mmds.get(self.arch, {}).values():
                 self.modular_packages.update(mmd.get_rpm_artifacts().dup())
 
     def prepare_langpacks(self, arch, variant):
@@ -456,9 +453,7 @@ def create_module_repo(compose, variant, arch):
     # We need to include metadata for all variants. The packages are in the
     # set, so we need their metadata.
     for var in compose.all_variants.values():
-        for mmd in chain(
-            var.arch_mmds.get(arch, {}).values(), var.dev_mmds.get(arch, {}).values()
-        ):
+        for mmd in var.arch_mmds.get(arch, {}).values():
             # Set the arch field, but no other changes are needed.
             repo_mmd = mmd.copy()
             repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
