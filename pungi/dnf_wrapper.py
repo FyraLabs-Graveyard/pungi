@@ -17,9 +17,6 @@
 # TODO: remove all DNF hacks, possibly this whole file
 
 
-from distutils.version import LooseVersion
-import os
-
 import dnf
 
 import dnf.conf
