@@ -33,6 +33,7 @@ import multilib_yum as multilib
 import pungi.util
 from pungi.wrappers.createrepo import CreaterepoWrapper
 
+
 class ReentrantYumLock(object):
     """ A lock that can be acquired multiple times by the same process. """
 
@@ -212,6 +213,7 @@ class PungiYum(yum.YumBase):
                     result[0:1] = result[0:1:-1]
         return result
 
+
 class Pungi(PungiBase):
     def __init__(self, config, ksparser):
         PungiBase.__init__(self, config)
@@ -247,7 +249,6 @@ class Pungi(PungiBase):
         self.infofile = os.path.join(self.config.get('pungi', 'destdir'),
                                     self.config.get('pungi', 'version'),
                                     '.composeinfo')
-
 
         self.ksparser = ksparser
 
@@ -1393,8 +1394,6 @@ class Pungi(PungiBase):
 
     def writeinfo(self, line):
         """Append a line to the infofile in self.infofile"""
-
-
         f=open(self.infofile, "a+")
         f.write(line.strip() + "\n")
         f.close()

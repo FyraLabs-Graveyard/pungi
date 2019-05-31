@@ -581,7 +581,6 @@ class KojiWrapper(object):
 
         return results
 
-
     @util.retry(wait_on=(xmlrpclib.ProtocolError, koji.GenericError))
     def retrying_multicall_map(self, *args, **kwargs):
         """
@@ -591,7 +590,6 @@ class KojiWrapper(object):
         Please refer to koji_multicall_map for further specification of arguments.
         """
         return self.multicall_map(*args, **kwargs)
-
 
 
 def get_buildroot_rpms(compose, task_id):

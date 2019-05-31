@@ -21,7 +21,6 @@ import pungi.gather
 import pungi.util
 
 
-
 LINE_PATTERN_RE = re.compile(r"^\s*(?P<line>[^#]+)(:?\s+(?P<comment>#.*))?$")
 RUNTIME_PATTERN_SPLIT_RE = re.compile(r"^\s*(?P<path>[^\s]+)\s+(?P<pattern>[^\s]+)(:?\s+(?P<comment>#.*))?$")
 SONAME_PATTERN_RE = re.compile(r"^(.+\.so\.[a-zA-Z0-9_\.]+).*$")
@@ -247,6 +246,7 @@ class DevelMultilibMethod(MultilibMethodBase):
 
 DEFAULT_METHODS = ["devel", "runtime"]
 METHOD_MAP = {}
+
 
 def init(config_path="/usr/share/pungi/multilib/"):
     global METHOD_MAP

@@ -320,6 +320,7 @@ def getCanonArch(skipRpmPlatform=0):  # pragma: no cover
 
     return arch
 
+
 canonArch = getCanonArch()
 
 
