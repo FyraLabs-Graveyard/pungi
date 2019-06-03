@@ -541,7 +541,9 @@ def make_schema():
                 "enum": RELEASE_TYPES,
                 "default": "ga",
             },
-            "release_is_layered": {"type": "boolean"},
+            "release_is_layered": {
+                "deprecated": "remove it. It's layered if there's configuration for base product"
+            },
             "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
 
@@ -1280,7 +1282,6 @@ def make_schema():
         },
 
         "required": ["release_name", "release_short", "release_version",
-                     "release_is_layered",
                      "variants_file",
                      "runroot", "pkgset_source",
                      "gather_method"],
@@ -1355,14 +1356,28 @@ CONFIG_DEPS = {
             (lambda val: not val, ["lorax_options", "buildinstall_kickstart"]),
         ),
     },
-    "release_is_layered": {
+    "base_product_name": {
         "requires": (
-            (lambda x: x, ["base_product_name", "base_product_short",
-                           "base_product_version", "base_product_type"]),
+            (lambda x: x, ["base_product_short", "base_product_version"]),
         ),
         "conflicts": (
-            (lambda x: not x, ["base_product_name", "base_product_short",
-                               "base_product_version", "base_product_type"]),
+            (lambda x: not x, ["base_product_short", "base_product_version"]),
+        ),
+    },
+    "base_product_short": {
+        "requires": (
+            (lambda x: x, ["base_product_name", "base_product_version"]),
+        ),
+        "conflicts": (
+            (lambda x: not x, ["base_product_name", "base_product_version"]),
+        ),
+    },
+    "base_product_version": {
+        "requires": (
+            (lambda x: x, ["base_product_name", "base_product_short"]),
+        ),
+        "conflicts": (
+            (lambda x: not x, ["base_product_name", "base_product_short"]),
         ),
     },
     "runroot": {

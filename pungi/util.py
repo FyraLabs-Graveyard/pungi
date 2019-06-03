@@ -397,7 +397,7 @@ def get_volid(compose, arch, variant=None, disc_type=False,
     else:
         release_short = compose.conf["release_short"]
         release_version = compose.conf["release_version"]
-        release_is_layered = compose.conf["release_is_layered"]
+        release_is_layered = True if compose.conf.get("base_product_name", "") else False
         base_product_short = compose.conf.get("base_product_short", "")
         base_product_version = compose.conf.get("base_product_version", "")
         variant_uid = variant and variant.uid or None
@@ -941,4 +941,5 @@ def load_config(file_path):
         conf._open_file = file_path
     else:
         conf.load_from_file(file_path)
+
     return conf

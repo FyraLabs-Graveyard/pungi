@@ -67,9 +67,6 @@ Options
     <http://productmd.readthedocs.io/en/latest/common.html#productmd.common.RELEASE_TYPES>`_
     in productmd documentation.
 
-**release_is_layered** = False
-    (*bool*) -- typically False for an operating system, True otherwise
-
 **release_internal** = False
     (*bool*) -- whether the compose is meant for public consumption
 
@@ -115,8 +112,6 @@ Example
     release_name = "RPM Fusion"
     release_short = "rf"
     release_version = "23.0"
-
-    release_is_layered = True
 
     base_product_name = "Fedora"
     base_product_short = "Fedora"

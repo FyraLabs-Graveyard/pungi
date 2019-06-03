@@ -75,7 +75,7 @@ class PkgsetConfigTestCase(ConfigTestCase):
 
 
 class ReleaseConfigTestCase(ConfigTestCase):
-    def test_layered_without_base_product(self):
+    def test_set_release_is_layered(self):
         cfg = load_config(
             PKGSET_REPOS,
             release_is_layered=True
@@ -83,25 +83,47 @@ class ReleaseConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.REQUIRES.format('release_is_layered', 'True', 'base_product_name'),
-             checks.REQUIRES.format('release_is_layered', 'True', 'base_product_short'),
-             checks.REQUIRES.format('release_is_layered', 'True', 'base_product_version')])
+            warnings=[
+                "WARNING: Config option release_is_layered was removed and has no effect; remove it. It's layered if there's configuration for base product."])
 
-    def test_not_layered_with_base_product(self):
+    def test_only_config_base_product_name(self):
         cfg = load_config(
             PKGSET_REPOS,
             base_product_name='Prod',
-            base_product_short='bp',
-            base_product_version='1.0',
-            base_product_type='updates',
         )
 
         self.assertValidation(
             cfg,
-            [checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_name'),
-             checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_short'),
-             checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_type'),
-             checks.CONFLICTS.format('release_is_layered', 'False', 'base_product_version')])
+            [checks.REQUIRES.format('base_product_name', 'Prod', 'base_product_short'),
+             checks.REQUIRES.format('base_product_name', 'Prod', 'base_product_version'),
+             checks.CONFLICTS.format('base_product_short', None, 'base_product_name'),
+             checks.CONFLICTS.format('base_product_version', None, 'base_product_name')])
+
+    def test_only_config_base_product_short(self):
+        cfg = load_config(
+            PKGSET_REPOS,
+            base_product_short='bp',
+        )
+
+        self.assertValidation(
+            cfg,
+            [checks.REQUIRES.format('base_product_short', 'bp', 'base_product_name'),
+             checks.REQUIRES.format('base_product_short', 'bp', 'base_product_version'),
+             checks.CONFLICTS.format('base_product_name', None, 'base_product_short'),
+             checks.CONFLICTS.format('base_product_version', None, 'base_product_short')])
+
+    def test_only_config_base_product_version(self):
+        cfg = load_config(
+            PKGSET_REPOS,
+            base_product_version='1.0',
+        )
+
+        self.assertValidation(
+            cfg,
+            [checks.REQUIRES.format('base_product_version', '1.0', 'base_product_name'),
+             checks.REQUIRES.format('base_product_version', '1.0', 'base_product_short'),
+             checks.CONFLICTS.format('base_product_name', None, 'base_product_version'),
+             checks.CONFLICTS.format('base_product_short', None, 'base_product_version')])
 
 
 class ImageNameConfigTestCase(ConfigTestCase):

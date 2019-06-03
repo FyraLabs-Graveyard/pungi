@@ -245,7 +245,6 @@ class TestVolumeIdGenerator(unittest.TestCase):
             conf = {
                 'release_short': 'rel_short2',
                 'release_version': '6.0',
-                'release_is_layered': False,
                 'image_volid_formats': [format],
                 'image_volid_layered_product_formats': [],
                 'volume_id_substitutions': {},
@@ -281,7 +280,6 @@ class TestVolumeIdGenerator(unittest.TestCase):
             conf = {
                 'release_short': 'rel_short2',
                 'release_version': '6.0',
-                'release_is_layered': False,
                 'image_volid_formats': [format],
                 'image_volid_layered_product_formats': [],
                 'volume_id_substitutions': {},
@@ -310,7 +308,6 @@ class TestVolumeIdGenerator(unittest.TestCase):
         conf = {
             'release_short': 'rel_short2',
             'release_version': '6.0',
-            'release_is_layered': False,
             'image_volid_formats': [
                 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',   # 34 chars
                 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',    # 33 chars

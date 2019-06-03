@@ -258,7 +258,6 @@ BASE_CONFIG = dict(
     release_short='test',
     release_name='Test',
     release_version='1.0',
-    release_is_layered=False,
     variants_file='variants.xml',
     runroot=False,
     createrepo_checksum='sha256',

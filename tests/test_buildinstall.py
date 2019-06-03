@@ -91,7 +91,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'disc_types': {'dvd': 'DVD'},
         })
@@ -164,7 +163,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax'
         })
 
@@ -210,7 +208,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'buildinstall',
             'disc_types': {'dvd': 'DVD'},
         })
@@ -248,7 +245,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'lorax_options': [
                 ('^.*$', {'*': {}}),
@@ -339,7 +335,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'lorax_options': [
                 ('^.*$', {
@@ -417,7 +412,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'buildinstall_topdir': '/buildinstall_topdir',
             'translate_paths': [(self.topdir, "http://localhost/")],
@@ -495,7 +489,6 @@ class TestBuildinstallPhase(PungiTestCase):
             'release_name': 'Test',
             'release_short': 't',
             'release_version': '1',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'lorax_extra_sources': [
                 ('^Server$', {

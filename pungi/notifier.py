@@ -54,9 +54,10 @@ class PungiNotifier(object):
         data.setdefault('release_name', self.compose.conf['release_name'])
         data.setdefault('release_version', self.compose.conf['release_version'])
         data.setdefault('release_type', self.compose.conf['release_type'].lower())
-        data.setdefault('release_is_layered', self.compose.conf["release_is_layered"])
+        data.setdefault('release_is_layered', False)
 
-        if self.compose.conf['release_is_layered']:
+        if self.compose.conf.get('base_product_name', ''):
+            data['release_is_layered'] = True
             data['base_product_name'] = self.compose.conf["base_product_name"]
             data['base_product_version'] = self.compose.conf["base_product_version"]
             data['base_product_short'] = self.compose.conf["base_product_short"]

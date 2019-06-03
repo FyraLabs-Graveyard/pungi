@@ -253,7 +253,6 @@ class ComposeTestCase(unittest.TestCase):
             release_version='1.0',
             release_short='test',
             release_type='ga',
-            release_is_layered=False,
             release_internal=False,
         )
 
@@ -296,7 +295,6 @@ class ComposeTestCase(unittest.TestCase):
             release_version='1.0',
             release_short='test',
             release_type='ga',
-            release_is_layered=False,
             release_internal=False,
             tree_arches=['x86_64'],
         )
@@ -342,7 +340,6 @@ class ComposeTestCase(unittest.TestCase):
             release_version='1.0',
             release_short='test',
             release_type='ga',
-            release_is_layered=False,
             release_internal=False,
             tree_variants=['Server', 'Client', 'Server-Gluster'],
         )
@@ -381,7 +378,6 @@ class ComposeTestCase(unittest.TestCase):
             release_version='1.0',
             release_short='test',
             release_type='ga',
-            release_is_layered=False,
             release_internal=False,
             tree_variants=['Server', 'Client', 'Server-optional'],
             tree_arches=['x86_64'],
@@ -422,7 +418,6 @@ class ComposeTestCase(unittest.TestCase):
             release_version='1.0',
             release_short='test',
             release_type='ga',
-            release_is_layered=False,
             release_internal=False,
             tree_variants=['Server', 'Client', 'Server-optional'],
             tree_arches=['x86_64'],

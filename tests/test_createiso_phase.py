@@ -42,7 +42,6 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'createiso_skip': [
             ]
         })
@@ -75,7 +74,6 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'createiso_skip': [
             ]
         })
@@ -137,7 +135,6 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'bootable': True,
             'createiso_skip': []
@@ -221,7 +218,6 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'bootable': True,
             'createiso_skip': []
@@ -287,7 +283,6 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'buildinstall_method': 'lorax',
             'bootable': True,
             'createiso_skip': [],
@@ -353,7 +348,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
@@ -417,7 +411,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
@@ -482,7 +475,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'bootable': True,
             'buildinstall_method': 'lorax',
@@ -550,7 +542,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
@@ -581,7 +572,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
@@ -620,7 +610,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': True,
             'runroot_tag': 'f25-build',
             'koji_profile': 'koji',
@@ -665,7 +654,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': False,
         })
         cmd = {
@@ -710,7 +698,6 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_short': 'test',
             'release_version': '1.0',
-            'release_is_layered': False,
             'runroot': False,
             'failable_deliverables': [
                 ('^.*$', {'*': 'iso'})

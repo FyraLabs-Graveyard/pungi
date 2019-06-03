@@ -25,7 +25,6 @@ class DiscInfoTestCase(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
             'release_version': '1.0',
-            'release_is_layered': False,
         })
 
         metadata.write_discinfo(compose, 'x86_64', compose.variants['Server'])
@@ -64,7 +63,6 @@ class DiscInfoTestCase(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {
             'release_name': 'Test',
             'release_version': '1.0',
-            'release_is_layered': True,
             'base_product_name': 'Base',
             'base_product_version': 42,
         })

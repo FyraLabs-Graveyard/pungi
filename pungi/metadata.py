@@ -36,7 +36,7 @@ def get_description(compose, variant, arch):
         result = "%s %s for %s %s" % (variant.release_name, variant.release_version, compose.conf["release_name"], get_major_version(compose.conf["release_version"]))
     else:
         result = "%s %s" % (compose.conf["release_name"], compose.conf["release_version"])
-        if compose.conf["release_is_layered"]:
+        if compose.conf.get("base_product_name", ""):
             result += " for %s %s" % (compose.conf["base_product_name"], compose.conf["base_product_version"])
 
     result = result % {"variant_name": variant.name, "arch": arch}
@@ -78,7 +78,7 @@ def compose_to_composeinfo(compose):
     ci.release.name = compose.conf["release_name"]
     ci.release.version = compose.conf["release_version"]
     ci.release.short = compose.conf["release_short"]
-    ci.release.is_layered = compose.conf["release_is_layered"]
+    ci.release.is_layered = True if compose.conf.get("base_product_name", "") else False
     ci.release.type = compose.conf["release_type"].lower()
     ci.release.internal = bool(compose.conf["release_internal"])
 
@@ -225,7 +225,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         ti.release.name = compose.conf["release_name"]
         ti.release.version = compose.conf["release_version"]
         ti.release.short = compose.conf["release_short"]
-        ti.release.is_layered = compose.conf["release_is_layered"]
+        ti.release.is_layered = True if compose.conf.get("base_product_name", "") else False
         ti.release.type = compose.conf["release_type"].lower()
 
         # base product
