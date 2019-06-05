@@ -62,13 +62,9 @@ def write_config(conf_file, modules, packages):
 
 
 def _prep_path(path):
-    """Strip file:// from the path if present or raise exception for other
-    protocols.
-    """
-    if "://" in path:
-        proto, path = path.split("://", 2)
-        if proto != "file":
-            raise ValueError("Only repositories on local filesystem are supported.")
+    """Strip file:// from the path if present."""
+    if path.startswith("file://"):
+        return path[len("file://"):]
     return path
 
 

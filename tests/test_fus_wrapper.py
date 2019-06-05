@@ -63,9 +63,19 @@ class TestGetCmd(unittest.TestCase):
             ],
         )
 
-    def test_fail_on_http_repo(self):
-        with self.assertRaises(ValueError):
-            fus.get_cmd("conf", "x86_64", ["http:///tmp"], [])
+    def test_preserves_http_protocol(self):
+        cmd = fus.get_cmd("conf", "x86_64", [], ["http://r"])
+        self.assertEqual(
+            cmd,
+            [
+                "fus",
+                "--verbose",
+                "--arch",
+                "x86_64",
+                "--repo=lookaside-0,lookaside,http://r",
+                "@conf",
+            ],
+        )
 
     def test_strip_file_protocol_lookaside(self):
         cmd = fus.get_cmd("conf", "x86_64", [], ["file:///r"])
@@ -81,9 +91,18 @@ class TestGetCmd(unittest.TestCase):
             ],
         )
 
-    def test_fail_on_http_repo_lookaside(self):
-        with self.assertRaises(ValueError):
-            fus.get_cmd("conf", "x86_64", [], ["http:///tmp"])
+    def test_preserves_http_protocol_lookaside(self):
+        self.assertEqual(
+            fus.get_cmd("conf", "x86_64", [], ["http:///tmp"]),
+            [
+                "fus",
+                "--verbose",
+                "--arch",
+                "x86_64",
+                "--repo=lookaside-0,lookaside,http:///tmp",
+                "@conf",
+            ]
+        )
 
 
 class TestWriteConfig(PungiTestCase):
