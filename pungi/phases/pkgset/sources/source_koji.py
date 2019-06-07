@@ -23,6 +23,7 @@ import threading
 
 from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import force_list, relative_path
+from kobo.threads import run_in_threads
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
@@ -203,9 +204,7 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
 
     t.join()
 
-    for arch in compose.get_arches():
-        # TODO: threads? runroot?
-        create_arch_repos(compose, arch, path_prefix)
+    create_arch_repos(compose, path_prefix)
 
     return package_sets
 

@@ -258,9 +258,7 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                          [mock.call(self.compose, '/prefix')])
         self.assertEqual(rcgr.call_args_list,
                          [mock.call(self.compose, gcgrc.return_value)])
-        self.assertItemsEqual(car.call_args_list,
-                              [mock.call(self.compose, 'x86_64', '/prefix'),
-                               mock.call(self.compose, 'amd64', '/prefix')])
+        self.assertItemsEqual(car.call_args_list, [mock.call(self.compose, '/prefix')])
 
         self.assertEqual(pkgsets, expected)
 

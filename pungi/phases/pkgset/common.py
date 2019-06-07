@@ -17,6 +17,7 @@
 import os
 
 from kobo.shortcuts import run, relative_path
+from kobo.threads import run_in_threads
 
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import get_valid_arches
@@ -87,7 +88,17 @@ def run_create_global_repo(compose, cmd):
     compose.log_info("[DONE ] %s" % msg)
 
 
-def create_arch_repos(compose, arch, path_prefix):
+def create_arch_repos(compose, path_prefix):
+    run_in_threads(
+        _create_arch_repo,
+        [(compose, arch, path_prefix) for arch in compose.get_arches()],
+        threads=compose.conf['createrepo_num_threads'],
+    )
+
+
+def _create_arch_repo(worker_thread, args, task_num):
+    """Create a single pkgset repo for given arch."""
+    compose, arch, path_prefix = args
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)

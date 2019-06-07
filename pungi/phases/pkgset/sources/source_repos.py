@@ -126,9 +126,7 @@ def get_pkgset_from_repos(compose):
 
     t.join()
 
-    for arch in compose.get_arches():
-        # TODO: threads? runroot?
-        create_arch_repos(compose, arch, path_prefix)
+    create_arch_repos(compose, path_prefix)
 
     package_sets["global"] = pkgset_global
     return package_sets, path_prefix
