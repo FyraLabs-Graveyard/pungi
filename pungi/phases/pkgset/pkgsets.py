@@ -253,7 +253,7 @@ class PackageSetBase(kobo.log.LoggingBase):
         Saves the current FileCache using the pickle module to `file_path`.
         """
         with open(file_path, 'wb') as f:
-            pickle.dump(self.file_cache, f)
+            pickle.dump(self.file_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 class FilelistPackageSet(PackageSetBase):

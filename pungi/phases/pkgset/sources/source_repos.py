@@ -152,7 +152,7 @@ def populate_global_pkgset(compose, file_list, path_prefix):
         pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
         pkgset.populate(file_list)
         with open(global_pkgset_path, "wb") as f:
-            pickle.dump(pkgset, f)
+            pickle.dump(pkgset, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     # write global package list
     pkgset.save_file_list(compose.paths.work.package_list(arch="global"), remove_path_prefix=path_prefix)

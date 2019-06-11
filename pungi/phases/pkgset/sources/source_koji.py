@@ -712,7 +712,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             else:
                 global_pkgset.fast_merge(pkgset)
         with open(global_pkgset_path, 'wb') as f:
-            data = pickle.dumps(global_pkgset)
+            data = pickle.dumps(global_pkgset, protocol=pickle.HIGHEST_PROTOCOL)
             f.write(data)
 
     # write global package list

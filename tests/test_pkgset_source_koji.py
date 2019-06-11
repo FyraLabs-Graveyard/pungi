@@ -10,6 +10,8 @@ try:
 except ImportError:
     import unittest
 
+from six.moves import cPickle as pickle
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.pkgset.sources import source_koji
@@ -127,7 +129,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
             ]
         )
         self.assertItemsEqual(pickle_dumps.call_args_list,
-                              [mock.call(orig_pkgset)])
+                              [mock.call(orig_pkgset, protocol=pickle.HIGHEST_PROTOCOL)])
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
@@ -174,7 +176,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         # for each tag, call pkgset.fast_merge once for each variant and once for global pkgset
         self.assertEqual(pkgset.fast_merge.call_count, 2 * (len(self.compose.all_variants.values()) + 1))
         self.assertItemsEqual(pickle_dumps.call_args_list,
-                              [mock.call(orig_pkgset)])
+                              [mock.call(orig_pkgset, protocol=pickle.HIGHEST_PROTOCOL)])
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
 
