@@ -309,8 +309,9 @@ def resolve_git_url(url):
 
 
 class GitUrlResolver(object):
-    """A wrapper for resolve_git_url that checks each url only once. In offline
-    mode it does not actually do anything, returning original input urls.
+    """A caching resolver for git references. As input it can either take repo
+    URL with fragment describing reference, or url and refname. It will return
+    either url with changed fragment or just resolved ref.
     """
     def __init__(self, offline=False):
         self.offline = offline
@@ -318,7 +319,7 @@ class GitUrlResolver(object):
 
     def __call__(self, url, branch=None):
         if self.offline:
-            return url
+            return branch or url
         key = (url, branch)
         if key not in self.cache:
             try:

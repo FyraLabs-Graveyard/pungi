@@ -130,14 +130,27 @@ class TestGitRefResolver(unittest.TestCase):
                          [mock.call(['git', 'ls-remote', 'https://git.example.com/repo.git', 'HEAD'],
                                     universal_newlines=True)] * 2)
 
+    @mock.patch("pungi.util.resolve_git_ref")
     @mock.patch("pungi.util.resolve_git_url")
-    def test_resolver_offline(self, mock_resolve):
+    def test_resolver_offline(self, mock_resolve_url, mock_resolve_ref):
         resolver = util.GitUrlResolver(offline=True)
         self.assertEqual(
             resolver("http://example.com/repo.git#HEAD"),
             "http://example.com/repo.git#HEAD",
         )
-        self.assertEqual(mock_resolve.call_args_list, [])
+        self.assertEqual(mock_resolve_url.call_args_list, [])
+        self.assertEqual(mock_resolve_ref.call_args_list, [])
+
+    @mock.patch("pungi.util.resolve_git_ref")
+    @mock.patch("pungi.util.resolve_git_url")
+    def test_resolver_offline_branch(self, mock_resolve_url, mock_resolve_ref):
+        resolver = util.GitUrlResolver(offline=True)
+        self.assertEqual(
+            resolver("http://example.com/repo.git", "master"),
+            "master",
+        )
+        self.assertEqual(mock_resolve_url.call_args_list, [])
+        self.assertEqual(mock_resolve_ref.call_args_list, [])
 
     @mock.patch("pungi.util.resolve_git_ref")
     @mock.patch("pungi.util.resolve_git_url")
