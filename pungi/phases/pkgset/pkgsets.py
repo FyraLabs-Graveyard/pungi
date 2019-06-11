@@ -326,7 +326,8 @@ class KojiPackageSet(PackageSetBase):
         result["koji_profile"] = self.koji_wrapper.profile
         del result["koji_wrapper"]
         del result["_logger"]
-        del result["cache_region"]
+        if "cache_region" in result:
+            del result["cache_region"]
         return result
 
     def __setstate__(self, data):
