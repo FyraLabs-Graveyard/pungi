@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+import os
 from pprint import pformat
 from fnmatch import fnmatch
 import six
@@ -128,13 +129,36 @@ def expand_groups(compose, arch, variant, groups, set_pkg_arch=True):
         # No groups, nothing to do (this also covers case when there is no
         # comps file.
         return set()
+    comps = []
     comps_file = compose.paths.work.comps(arch, variant, create_dir=False)
-    comps = CompsWrapper(comps_file)
+    comps.append(CompsWrapper(comps_file))
+
+    if variant and variant.parent:
+        parent_comps_file = compose.paths.work.comps(arch, variant.parent, create_dir=False)
+        comps.append(CompsWrapper(parent_comps_file))
+
+        if variant.type == 'optional':
+            for v in variant.parent.variants.values():
+                if v.id == variant.id:
+                    continue
+                comps_file = compose.paths.work.comps(arch, v, create_dir=False)
+                if os.path.exists(comps_file):
+                    comps.append(CompsWrapper(comps_file))
+
     packages = set()
-
     pkg_arch = arch if set_pkg_arch else None
-
     for group in groups:
-        packages.update([(pkg, pkg_arch) for pkg in comps.get_packages(group)])
+        found = False
+        ex = None
+        for c in comps:
+            try:
+                packages.update([(pkg, pkg_arch) for pkg in c.get_packages(group)])
+                found = True
+                break
+            except KeyError as e:
+                ex = e
+
+        if not found:
+            raise ex
 
     return packages
