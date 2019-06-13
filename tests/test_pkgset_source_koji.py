@@ -598,11 +598,11 @@ class TestFilterByWhitelist(unittest.TestCase):
         compose = mock.Mock()
         module_builds = []
         input_modules = [{"name": "foo:1"}]
+        expected = set(["foo:1"])
 
-        with self.assertRaises(RuntimeError) as ctx:
-            source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+        source_koji.filter_by_whitelist(compose, module_builds, input_modules, expected)
 
-        self.assertIn("patterns (foo:1) that don't match", str(ctx.exception))
+        self.assertEqual(expected, set(["foo:1"]))
 
     def test_filter_by_NS(self):
         compose = mock.Mock()
@@ -612,10 +612,14 @@ class TestFilterByWhitelist(unittest.TestCase):
             self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1"}]
+        expected = set(["foo:1"])
 
-        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+        result = source_koji.filter_by_whitelist(
+            compose, module_builds, input_modules, expected
+        )
 
         self.assertItemsEqual(result, [module_builds[0], module_builds[1]])
+        self.assertEqual(expected, set())
 
     def test_filter_by_NSV(self):
         compose = mock.Mock()
@@ -625,10 +629,14 @@ class TestFilterByWhitelist(unittest.TestCase):
             self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1:201809031047"}]
+        expected = set(["foo:1:201809031047"])
 
-        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+        result = source_koji.filter_by_whitelist(
+            compose, module_builds, input_modules, expected
+        )
 
         self.assertItemsEqual(result, [module_builds[1]])
+        self.assertEqual(expected, set())
 
     def test_filter_by_NSVC(self):
         compose = mock.Mock()
@@ -639,10 +647,14 @@ class TestFilterByWhitelist(unittest.TestCase):
             self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "foo:1:201809031047:deadbeef"}]
+        expected = set()
 
-        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+        result = source_koji.filter_by_whitelist(
+            compose, module_builds, input_modules, expected
+        )
 
         self.assertItemsEqual(result, [module_builds[1]])
+        self.assertEqual(expected, set())
 
     def test_filter_by_wildcard(self):
         compose = mock.Mock()
@@ -652,10 +664,14 @@ class TestFilterByWhitelist(unittest.TestCase):
             self._build("foo", "2", "201809031047", "deadbeef"),
         ]
         input_modules = [{"name": "*"}]
+        expected = set(["*"])
 
-        result = source_koji.filter_by_whitelist(compose, module_builds, input_modules)
+        result = source_koji.filter_by_whitelist(
+            compose, module_builds, input_modules, expected
+        )
 
         self.assertItemsEqual(result, module_builds)
+        self.assertEqual(expected, set())
 
 
 class MockModule(object):

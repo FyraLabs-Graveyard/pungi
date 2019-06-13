@@ -335,16 +335,20 @@ def filter_inherited(koji_proxy, event, module_builds, top_tag):
     return result
 
 
-def filter_by_whitelist(compose, module_builds, input_modules):
+def filter_by_whitelist(compose, module_builds, input_modules, expected_modules):
     """
     Exclude modules from the list that do not match any pattern specified in
-    input_modules. Order may not be preserved.
+    input_modules. Order may not be preserved. The last argument is a set of
+    module patterns that are expected across module tags. When a matching
+    module is found, the corresponding pattern is removed from the set.
     """
-    specs = set()
     nvr_patterns = set()
     for spec in input_modules:
-        # Do not do any filtering in case variant wants all the modules.
+        # Do not do any filtering in case variant wants all the modules. Also
+        # empty the set of remaining expected modules, as the check does not
+        # really make much sense here.
         if spec["name"] == "*":
+            expected_modules.clear()
             return module_builds
 
         info = variant_dict_from_str(compose, spec["name"])
@@ -355,10 +359,8 @@ def filter_by_whitelist(compose, module_builds, input_modules):
             info.get("context"),
         )
         nvr_patterns.add((pattern, spec["name"]))
-        specs.add(spec["name"])
 
     modules_to_keep = []
-    used = set()
 
     for mb in module_builds:
         # Split release from the build into version and context
@@ -377,14 +379,8 @@ def filter_by_whitelist(compose, module_builds, input_modules):
                 and (not c or ctx == c)
             ):
                 modules_to_keep.append(mb)
-                used.add(spec)
+                expected_modules.discard(spec)
                 break
-
-    if used != specs:
-        raise RuntimeError(
-            "Configuration specified patterns (%s) that don't match any modules in the configured tags."
-            % ", ".join(specs - used)
-        )
 
     return modules_to_keep
 
@@ -405,6 +401,9 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
     compose_tags = [
         {"name": tag} for tag in force_list(compose.conf["pkgset_koji_module_tag"])
     ]
+    # Get set of configured module names for this variant. If nothing is
+    # configured, the set is empty.
+    expected_modules = set(spec["name"] for spec in variant.get_modules())
     # Find out all modules in every variant and add their Koji tags
     # to variant and variant_tags list.
     koji_proxy = koji_wrapper.koji_proxy
@@ -425,7 +424,9 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
         # Apply whitelist of modules if specified.
         variant_modules = variant.get_modules()
         if variant_modules:
-            module_builds = filter_by_whitelist(compose, module_builds, variant_modules)
+            module_builds = filter_by_whitelist(
+                compose, module_builds, variant_modules, expected_modules
+            )
 
         # Find the latest builds of all modules. This does following:
         # - Sorts the module_builds descending by Koji NVR (which maps to NSV
@@ -475,6 +476,14 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
                 variant=variant, tag=module_tag, module=build["nvr"])
             compose.log_info("%s" % module_msg)
+
+    if expected_modules:
+        # There are some module names that were listed in configuration and not
+        # found in any tag...
+        raise RuntimeError(
+            "Configuration specified patterns (%s) that don't match any modules in the configured tags."
+            % ", ".join(expected_modules)
+        )
 
 
 def _find_old_file_cache_path(compose):
