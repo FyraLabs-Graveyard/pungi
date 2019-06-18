@@ -18,6 +18,12 @@ from pungi.phases import init
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
 
+def fake_run_in_threads(func, params, threads=None):
+    for num, param in enumerate(params):
+        func(None, param, num)
+
+
+@mock.patch("pungi.phases.init.run_in_threads", new=fake_run_in_threads)
 @mock.patch("pungi.phases.init.validate_comps")
 @mock.patch("pungi.phases.init.validate_module_defaults")
 @mock.patch("pungi.phases.init.write_module_defaults")
