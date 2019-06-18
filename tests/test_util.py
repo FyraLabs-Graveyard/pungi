@@ -62,6 +62,20 @@ class TestGitRefResolver(unittest.TestCase):
         )
 
     @mock.patch('pungi.util.run')
+    def test_resolve_ref_with_remote_head(self, run):
+        run.return_value = (
+            0, "CAFEBABE\tHEAD\nBABECAFE\trefs/remotes/origin/HEAD"
+        )
+
+        ref = util.resolve_git_ref("https://git.example.com/repo.git", "HEAD")
+
+        self.assertEqual(ref, "CAFEBABE")
+        run.assert_called_once_with(
+            ["git", "ls-remote", "https://git.example.com/repo.git", "HEAD"],
+            universal_newlines=True,
+        )
+
+    @mock.patch('pungi.util.run')
     def test_resolve_missing_spec(self, run):
         url = util.resolve_git_url('https://git.example.com/repo.git')
 

@@ -265,7 +265,10 @@ def resolve_git_ref(repourl, ref):
 
     lines = []
     for line in output.split("\n"):
-        if line and ("refs/heads/" in line or "refs/tags/" in line or "HEAD" in line):
+        # Keep only lines that represent branches and tags, and also a line for
+        # currently checked out HEAD. The leading tab is required to
+        # distinguish it from HEADs that could exist in remotes.
+        if line and ("refs/heads/" in line or "refs/tags/" in line or "\tHEAD" in line):
             lines.append(line)
     if len(lines) == 0:
         # Branch does not exist in remote repo
