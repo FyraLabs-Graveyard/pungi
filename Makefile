@@ -9,6 +9,8 @@ PKGRPMFLAGS=--define "_topdir ${PWD}" --define "_specdir ${PWD}" --define "_sour
 RPM="noarch/${PKGNAME}-$(VERSION)-$(RELEASE).noarch.rpm"
 SRPM="${PKGNAME}-$(VERSION)-$(RELEASE).src.rpm"
 
+NOSE=nosetests
+
 
 all: help
 
@@ -93,10 +95,10 @@ clean:
 
 
 test:
-	nosetests --exe $(NOSE_OPTS)
+	$(NOSE) --exe $(NOSE_OPTS)
 
 test-coverage:
-	nosetests --exe --with-cov --cov-report html --cov-config tox.ini $(NOSE_OPTS)
+	$(NOSE) --exe --with-cov --cov-report html --cov-config tox.ini $(NOSE_OPTS)
 
 test-data:
 	./tests/data/specs/build.sh
