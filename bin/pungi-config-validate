@@ -8,7 +8,6 @@ import json
 import os
 import sys
 
-import kobo.conf
 import six
 
 here = sys.path[0]
@@ -35,6 +34,7 @@ class ValidationCompose(pungi.compose.Compose):
         self.has_old_composes = has_old
         self.paths = pungi.paths.Paths(self)
         self.variants = {}
+        self.all_variants = {}
 
     @property
     def old_composes(self):
@@ -70,7 +70,6 @@ def read_variants(compose, config):
             parser = VariantsXmlParser(file_obj, tree_arches, tree_variants)
             compose.variants = parser.parse()
 
-    compose.all_variants = {}
     for variant in compose.variants.values():
         compose.all_variants[variant.uid] = variant
         for child in variant.get_variants():
@@ -92,9 +91,8 @@ def run(config, topdir, has_old, offline):
         read_variants(compose, config)
     except VariantsValidationError as exc:
         errors.extend(str(exc).splitlines())
-    except:
-        # Failed to read variants, no big deal.
-        pass
+    except RuntimeError as exc:
+        print("WARNING: Failed to load variants: %s" % exc)
 
     pkgset_phase = pungi.phases.PkgsetPhase(compose)
     buildinstall_phase = pungi.phases.BuildinstallPhase(compose)
