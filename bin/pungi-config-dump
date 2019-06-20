@@ -29,8 +29,10 @@ def load_file(source, conf):
 def load_source(source, conf):
     if os.path.isfile(source):
         load_file(source, conf)
-    else:
+    elif os.path.isdir(source):
         load_file(os.path.join(source, "logs/global/config-dump.global.log"), conf)
+    else:
+        raise RuntimeError("Source %s is neither file nor directory." % source)
 
 
 def dump_multi_config(conf_file, dest, **kwargs):
@@ -200,5 +202,9 @@ def main():
 
 
 if __name__ == "__main__":
-    if not main():
-        sys.exit(1)
+    try:
+        if not main():
+            sys.exit(1)
+    except RuntimeError as exc:
+        print("Error", str(exc), file=sys.stderr)
+        sys.exit(2)
