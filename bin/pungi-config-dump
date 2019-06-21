@@ -6,7 +6,6 @@ from __future__ import print_function
 import argparse
 import json
 import os
-import re
 import shutil
 import sys
 
@@ -15,6 +14,8 @@ from six.moves import configparser
 import kobo.conf
 import pungi.checks
 import pungi.util
+
+from pungi_utils import config_utils
 
 
 def load_file(source, conf):
@@ -30,17 +31,6 @@ def load_source(source, conf):
         load_file(source, conf)
     else:
         load_file(os.path.join(source, "logs/global/config-dump.global.log"), conf)
-
-
-def validate_definition(value):
-    """Check that the variable name is a valid Python variable name, and that
-    there is an equals sign. The value can by anything non-empty.
-    """
-    if not re.match(r"^[a-z_]\w*=.+$", value):
-        raise argparse.ArgumentTypeError(
-            "definition should be in var=value format: %r" % value
-        )
-    return value
 
 
 def dump_multi_config(conf_file, dest, **kwargs):
@@ -156,7 +146,7 @@ def main():
         action="append",
         default=[],
         metavar="VAR=VALUE",
-        type=validate_definition,
+        type=config_utils.validate_definition,
         help=(
             "Define a variable on command line and inject it into the config file. "
             "Can be used multiple times."
@@ -185,7 +175,7 @@ def main():
 
     args = parser.parse_args()
 
-    defines = dict(var.split("=", 1) for var in args.define)
+    defines = config_utils.extract_defines(args.define)
 
     if args.multi:
         if len(args.sources) > 1:

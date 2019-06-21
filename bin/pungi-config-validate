@@ -22,6 +22,7 @@ import pungi.phases
 import pungi.wrappers.scm
 import pungi.util
 from pungi.wrappers.variants import VariantsXmlParser, VariantsValidationError
+from pungi_utils import config_utils
 
 
 class ValidationCompose(pungi.compose.Compose):
@@ -76,8 +77,23 @@ def read_variants(compose, config):
             compose.all_variants[child.uid] = child
 
 
-def run(config, topdir, has_old, offline):
-    conf = pungi.util.load_config(config)
+def run(config, topdir, has_old, offline, defined_variables):
+    # Load default values for undefined variables. This is useful for
+    # validating templates that are supposed to be filled in later with
+    # pungi-config-dump.
+    try:
+        defaults_file = os.path.join(
+            os.path.dirname(config), ".pungi-config-validate.json"
+        )
+        with open(defaults_file) as f:
+            defined_variables.update(json.load(f))
+    except IOError:
+        pass
+    # Load actual configuration
+    conf = pungi.util.load_config(config, defined_variables)
+    # Remove the dummy variables used for defaults.
+    for key in defined_variables:
+        del conf[key]
 
     errors, warnings = pungi.checks.validate(conf, offline=offline)
     if errors or warnings:
@@ -148,10 +164,23 @@ def main(args=None):
         action="store_true",
         help="Do not validate git references in URLs",
     )
+    parser.add_argument(
+        "-e",
+        "--define",
+        action="append",
+        default=[],
+        metavar="VAR=VALUE",
+        type=config_utils.validate_definition,
+        help=(
+            "Define a variable on command line and inject it into the config file. "
+            "Can be used multiple times."
+        ),
+    )
     opts = parser.parse_args(args)
+    defines = config_utils.extract_defines(opts.define)
 
     with pungi.util.temp_dir() as topdir:
-        errors = run(opts.config, topdir, opts.old_composes, opts.offline)
+        errors = run(opts.config, topdir, opts.old_composes, opts.offline, defines)
 
     for msg in errors:
         print(msg)

@@ -935,9 +935,10 @@ def iter_module_defaults(path):
                 yield mmddef
 
 
-def load_config(file_path):
+def load_config(file_path, defaults={}):
     """Open and load configuration file form .conf or .json file."""
     conf = kobo.conf.PyConfigParser()
+    conf.load_from_dict(defaults)
     if file_path.endswith(".json"):
         with open(file_path) as f:
             conf.load_from_dict(json.load(f))
