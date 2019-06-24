@@ -149,7 +149,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(False, 1, compose, True, 'x86_64',
+            [mock.call(1, compose, True, 'x86_64',
                        ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
                        [self.topdir],
                        log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
@@ -205,7 +205,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(False, 1, compose, True, 'x86_64',
+            [mock.call(1, compose, True, 'x86_64',
                        ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
                        [self.topdir],
                        log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
@@ -261,7 +261,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(False, 1, compose, True, "x86_64",
+            [mock.call(1, compose, True, "x86_64",
                        ["bash", os.path.join(self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh")],
                        [self.topdir],
                        log_file=os.path.join(self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"),
@@ -316,7 +316,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(False, 1, compose, False, 'x86_64',
+            [mock.call(1, compose, False, 'x86_64',
                        ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
                        [self.topdir],
                        log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
@@ -371,7 +371,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(False, 1, compose, False, 'src',
+            [mock.call(1, compose, False, 'src',
                        ['bash', os.path.join(self.topdir, 'work/src/tmp-Server/extraiso-my.iso.sh')],
                        [self.topdir],
                        log_file=os.path.join(self.topdir, 'logs/src/extraiso-my.iso.src.log'),

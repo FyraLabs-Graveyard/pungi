@@ -65,8 +65,8 @@ def is_isohybrid_needed(conf):
     to check for it. Additionally, the syslinux package is only available on
     x86_64 and i386.
     """
-    runroot = conf.get('runroot', False)
-    if runroot and not _will_productimg_run(conf):
+    runroot_tag = conf.get('runroot_tag', '')
+    if runroot_tag and not _will_productimg_run(conf):
         return False
     if platform.machine() not in ('x86_64', 'i686', 'i386'):
         print('Not checking for /usr/bin/isohybrid due to current architecture. '
@@ -78,8 +78,8 @@ def is_isohybrid_needed(conf):
 def is_genisoimage_needed(conf):
     """This is only needed locally for productimg and createiso without runroot.
     """
-    runroot = conf.get('runroot', False)
-    if runroot and not _will_productimg_run(conf):
+    runroot_tag = conf.get('runroot_tag', '')
+    if runroot_tag and not _will_productimg_run(conf):
         return False
     return True
 
@@ -564,8 +564,7 @@ def make_schema():
             },
 
             "runroot": {
-                "type": "boolean",
-                "default": False,
+                "deprecated": "remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally",
             },
             "runroot_method": {
                 "type": "string",
@@ -1286,7 +1285,7 @@ def make_schema():
 
         "required": ["release_name", "release_short", "release_version",
                      "variants_file",
-                     "runroot", "pkgset_source",
+                     "pkgset_source",
                      "gather_method"],
         "additionalProperties": False,
     }
@@ -1381,14 +1380,6 @@ CONFIG_DEPS = {
         ),
         "conflicts": (
             (lambda x: not x, ["base_product_name", "base_product_short"]),
-        ),
-    },
-    "runroot": {
-        "requires": (
-            (lambda x: x, ["koji_profile", "runroot_tag", "runroot_channel"]),
-        ),
-        "conflicts": (
-            (lambda x: not x, ["runroot_tag", "runroot_channel", "runroot_weights"]),
         ),
     },
     "product_id": {

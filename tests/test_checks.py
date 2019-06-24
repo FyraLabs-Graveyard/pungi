@@ -63,7 +63,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         conf = {
             'bootable': True,
             'productimg': False,
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -77,7 +77,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
     def test_isohybrid_not_required_on_not_bootable(self):
         conf = {
             'bootable': False,
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -92,7 +92,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         conf = {
             'bootable': True,
             'productimg': True,
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -107,7 +107,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
     def test_isohybrid_not_needed_in_runroot(self):
         conf = {
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -120,7 +120,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
     def test_genisoimg_not_needed_in_runroot(self):
         conf = {
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -133,7 +133,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
     def test_genisoimg_needed_for_productimg(self):
         conf = {
-            'runroot': True,
+            'runroot_tag': 'dummy_tag',
             'productimg': True,
             'bootable': True,
         }

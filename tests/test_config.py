@@ -145,7 +145,7 @@ class ImageNameConfigTestCase(ConfigTestCase):
 
 
 class RunrootConfigTestCase(ConfigTestCase):
-    def test_runroot_without_deps(self):
+    def test_set_runroot_true(self):
         cfg = load_config(
             PKGSET_REPOS,
             runroot=True,
@@ -153,23 +153,17 @@ class RunrootConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.REQUIRES.format('runroot', 'True', 'koji_profile'),
-             checks.REQUIRES.format('runroot', 'True', 'runroot_tag'),
-             checks.REQUIRES.format('runroot', 'True', 'runroot_channel')])
+            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally."])
 
-    def test_koji_settings_without_runroot(self):
+    def test_set_runroot_false(self):
         cfg = load_config(
             PKGSET_REPOS,
             runroot=False,
-            koji_profile='koji',
-            runroot_tag='f25',
-            runroot_channel='compose',
         )
 
         self.assertValidation(
             cfg,
-            [checks.CONFLICTS.format('runroot', 'False', 'runroot_tag'),
-             checks.CONFLICTS.format('runroot', 'False', 'runroot_channel')])
+            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally."])
 
 
 class BuildinstallConfigTestCase(ConfigTestCase):

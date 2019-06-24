@@ -120,7 +120,7 @@ class ExtraIsosThread(WorkerThread):
         with open(script_file, 'w') as f:
             createiso.write_script(opts, f)
 
-        run_createiso_command(compose.conf["runroot"], self.num, compose, bootable, arch,
+        run_createiso_command(self.num, compose, bootable, arch,
                               ['bash', script_file], [compose.topdir],
                               log_file=compose.paths.log.log_file(
                                   arch, "extraiso-%s" % os.path.basename(iso_path)),

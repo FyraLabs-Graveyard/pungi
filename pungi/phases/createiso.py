@@ -193,7 +193,6 @@ class CreateIsoThread(WorkerThread):
         if "mount" in cmd:
             mounts.append(cmd["mount"])
 
-        runroot = compose.conf["runroot"]
         bootable = cmd['bootable']
         log_file = compose.paths.log.log_file(
             arch, "createiso-%s" % os.path.basename(cmd["iso_path"]))
@@ -203,7 +202,7 @@ class CreateIsoThread(WorkerThread):
         self.pool.log_info("[BEGIN] %s" % msg)
 
         try:
-            run_createiso_command(runroot, num, compose, bootable, arch,
+            run_createiso_command(num, compose, bootable, arch,
                                   cmd['cmd'], mounts, log_file)
         except Exception:
             self.fail(compose, cmd, variant, arch)
@@ -267,7 +266,7 @@ def add_iso_to_metadata(
     return img
 
 
-def run_createiso_command(runroot, num, compose, bootable, arch, cmd, mounts,
+def run_createiso_command(num, compose, bootable, arch, cmd, mounts,
                           log_file, with_jigdo=True):
     packages = ["coreutils", "genisoimage", "isomd5sum"]
     if with_jigdo and compose.conf['create_jigdo']:
