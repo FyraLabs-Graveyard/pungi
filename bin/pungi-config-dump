@@ -112,8 +112,7 @@ def process_file(
 
     # Clean up defines from the final final config. We don't want to keep them
     # as they would cause warnings during validation.
-    for key in defines:
-        del conf[key]
+    config_utils.remove_unknown(conf, defines)
 
     if callback:
         callback(conf)

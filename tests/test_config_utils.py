@@ -35,3 +35,13 @@ class TestDefineHelpers(unittest.TestCase):
     def test_validate_define_incorrect(self, value):
         with self.assertRaises(argparse.ArgumentTypeError):
             config_utils.validate_definition(value)
+
+    def test_remove_unknown(self):
+        conf = {"foo": "bar"}
+        config_utils.remove_unknown(conf, ["foo"])
+        self.assertEqual(conf, {})
+
+    def test_remove_known(self):
+        conf = {"release_name": "bar"}
+        config_utils.remove_unknown(conf, ["release_name"])
+        self.assertEqual(conf, {"release_name": "bar"})

@@ -92,8 +92,7 @@ def run(config, topdir, has_old, offline, defined_variables):
     # Load actual configuration
     conf = pungi.util.load_config(config, defined_variables)
     # Remove the dummy variables used for defaults.
-    for key in defined_variables:
-        del conf[key]
+    config_utils.remove_unknown(conf, defined_variables)
 
     errors, warnings = pungi.checks.validate(conf, offline=offline)
     if errors or warnings:
