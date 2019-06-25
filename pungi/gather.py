@@ -298,6 +298,7 @@ class Pungi(PungiBase):
         self.is_sources = not self.config.getboolean("pungi", "nosource")
         self.is_debuginfo = not self.config.getboolean("pungi", "nodebuginfo")
         self.is_resolve_deps = self.config.getboolean("pungi", "resolve_deps")
+        self.is_nomacboot = self.config.getboolean("pungi", "nomacboot")
 
         self.fulltree_excludes = set(self.ksparser.handler.fulltree_excludes)
 
@@ -1552,7 +1553,7 @@ class Pungi(PungiBase):
             cmd.extend(["--buildarch", "ppc64le"])
 
         # Only supported mac hardware is x86 make sure we only enable mac support on arches that need it
-        if self.tree_arch in ['x86_64'] and not self.config.getboolean('pungi','nomacboot'):
+        if self.tree_arch in ['x86_64'] and not self.is_nomacboot:
             cmd.append("--macboot")
         else:
             cmd.append("--nomacboot")
@@ -1830,7 +1831,7 @@ class Pungi(PungiBase):
             if self.tree_arch == 'x86_64':
                 extraargs.extend(efibootargs)
                 isohybrid.append('-u')
-                if os.path.exists(os.path.join(self.topdir, 'images', 'macboot.img')):
+                if (not self.is_nomacboot) and os.path.exists(os.path.join(self.topdir, 'images', 'macboot.img')):
                     extraargs.extend(macbootargs)
                     isohybrid.append('-m')
         elif self.tree_arch == 'ia64':
