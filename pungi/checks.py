@@ -200,6 +200,9 @@ def validate(config, offline=False):
         else:
             errors.append('Failed validation in %s: %s' % (
                 '.'.join([str(x) for x in error.path]), error.message))
+            if error.validator in ("anyOf", "oneOf"):
+                for suberror in error.context:
+                    errors.append("    Possible reason: %s" % suberror.message)
     return (errors + _validate_requires(schema, config, CONFIG_DEPS),
             warnings)
 

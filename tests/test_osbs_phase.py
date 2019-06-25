@@ -270,9 +270,13 @@ class OSBSThreadTest(helpers.PungiTestCase):
         config['osbs'] = {
             '^Server$': cfg
         }
-        self.assertEqual(
-            (['Failed validation in osbs.^Server$: %r is not valid under any of the given schemas' % cfg], []),
-            checks.validate(config, offline=True))
+        errors, warnings = checks.validate(config, offline=True)
+        self.assertIn(
+            "Failed validation in osbs.^Server$: %r is not valid under any of the given schemas" % cfg,
+            errors,
+        )
+        self.assertIn("    Possible reason: %r is a required property" % key, errors)
+        self.assertEqual([], warnings)
 
     @mock.patch('pungi.phases.osbs.kojiwrapper.KojiWrapper')
     def test_minimal_run(self, KojiWrapper):
