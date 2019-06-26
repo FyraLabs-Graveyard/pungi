@@ -181,14 +181,6 @@ class WorkPaths(object):
         """
         return self._repo("comps", arch, variant, create_dir=create_dir)
 
-    def module_repo(self, arch=None, variant=None, create_dir=True):
-        """
-        Examples:
-            work/x86_64/module_repo_Server
-            work/global/module_repo
-        """
-        return self._repo("module", arch, variant, create_dir=create_dir)
-
     def arch_repo(self, arch=None, create_dir=True):
         """
         Examples:

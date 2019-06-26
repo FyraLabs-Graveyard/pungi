@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
-import gzip
 import os
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -23,18 +22,15 @@ import kobo.rpmlib
 from kobo.shortcuts import run
 
 import pungi.phases.gather.method
-from pungi import Modulemd, multilib_dnf
+from pungi import multilib_dnf
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
-from pungi.phases.createrepo import add_modular_metadata
 from pungi.util import (
     get_arch_variant_data,
-    iter_module_defaults,
     pkg_is_debug,
 )
 from pungi.wrappers import fus
 from pungi.wrappers.comps import CompsWrapper
-from pungi.wrappers.createrepo import CreaterepoWrapper
 
 from .method_nodeps import expand_groups
 
@@ -198,7 +194,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             set(p.name for p in self.expand_list(multilib_whitelist)),
         )
 
-        platform = create_module_repo(self.compose, variant, arch)
+        platform = get_platform(self.compose, variant, arch)
 
         packages.update(
             expand_groups(self.compose, arch, variant, groups, set_pkg_arch=False)
@@ -227,10 +223,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         result_modules = set()
 
         modules = []
-        if variant.arch_mmds.get(arch):
-            repos.append(self.compose.paths.work.module_repo(arch, variant))
-            for mmd in variant.arch_mmds[arch].values():
-                modules.append("%s:%s" % (mmd.peek_name(), mmd.peek_stream()))
+        for mmd in variant.arch_mmds.get(arch, {}).values():
+            modules.append("%s:%s" % (mmd.peek_name(), mmd.peek_stream()))
 
         input_packages = []
         for pkg_name, pkg_arch in packages:
@@ -398,105 +392,22 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         return packages
 
 
-def get_lookaside_modules(lookasides):
-    """Get list of NSVC of all modules in all lookaside repos."""
-    modules = set()
+def get_platform(compose, variant, arch):
+    """Find platform stream for modules. Raises RuntimeError if there are
+    conflicting requests.
+    """
     platforms = set()
-    for repo in lookasides:
-        repo = fus._prep_path(repo)
-        repomd = cr.Repomd(os.path.join(repo, "repodata/repomd.xml"))
-        for rec in repomd.records:
-            if rec.type != "modules":
-                continue
-            # No with statement on Python 2.6 for GzipFile...
-            gzipped_file = gzip.GzipFile(os.path.join(repo, rec.location_href), "r")
-            # This can't use _from_stream, since gobject-introspection
-            # refuses to pass a file object.
-            mmds = Modulemd.objects_from_string(gzipped_file.read())
-            gzipped_file.close()
-            for mmd in mmds:
-                if isinstance(mmd, Modulemd.Module):
-                    modules.add(
-                        "%s:%s:%s:%s"
-                        % (
-                            mmd.peek_name(),
-                            mmd.peek_stream(),
-                            mmd.peek_version(),
-                            mmd.peek_context(),
-                        )
-                    )
-                    for dep in mmd.peek_dependencies():
-                        streams = dep.peek_requires().get("platform")
-                        if streams:
-                            platforms.update(streams.dup())
-    return modules, platforms
 
-
-def create_module_repo(compose, variant, arch):
-    """Create repository with module metadata. There are no packages otherwise."""
-    createrepo_c = compose.conf["createrepo_c"]
-    createrepo_checksum = compose.conf["createrepo_checksum"]
-    msg = "Creating repo with modular metadata for %s.%s" % (variant, arch)
-
-    repo_path = compose.paths.work.module_repo(arch, variant)
-
-    compose.log_debug("[BEGIN] %s" % msg)
-
-    lookaside_modules, platforms = get_lookaside_modules(
-        pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
-    )
-
-    # Add modular metadata to it
-    included = set()
-    modules = []
-
-    # We need to include metadata for all variants. The packages are in the
-    # set, so we need their metadata.
     for var in compose.all_variants.values():
         for mmd in var.arch_mmds.get(arch, {}).values():
-            # Set the arch field, but no other changes are needed.
-            repo_mmd = mmd.copy()
-            repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
-
-            for dep in repo_mmd.peek_dependencies():
+            for dep in mmd.peek_dependencies():
                 streams = dep.peek_requires().get("platform")
                 if streams:
                     platforms.update(streams.dup())
 
-            nsvc = "%s:%s:%s:%s" % (
-                repo_mmd.peek_name(),
-                repo_mmd.peek_stream(),
-                repo_mmd.peek_version(),
-                repo_mmd.peek_context(),
-            )
-            if nsvc not in lookaside_modules and nsvc not in included:
-                modules.append(repo_mmd)
-                included.add(nsvc)
-
     if len(platforms) > 1:
         raise RuntimeError("There are conflicting requests for platform.")
 
-    module_names = set([x.get_name() for x in modules])
-    defaults_dir = compose.paths.work.module_defaults_dir()
-    for mmddef in iter_module_defaults(defaults_dir):
-        if mmddef.peek_module_name() in module_names:
-            modules.append(mmddef)
-
-    if modules:
-        # Initialize empty repo
-        repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-        cmd = repo.get_createrepo_cmd(
-            repo_path, database=False, outputdir=repo_path, checksum=createrepo_checksum
-        )
-        logfile = "module_repo-%s" % variant
-        run(cmd, logfile=compose.paths.log.log_file(arch, logfile), show_cmd=True)
-
-        log_file = compose.paths.log.log_file(
-            arch, "gather-modifyrepo-modules-%s" % variant
-        )
-        add_modular_metadata(repo, repo_path, modules, log_file)
-
-    compose.log_debug("[DONE ] %s" % msg)
     return list(platforms)[0] if platforms else None
 
 

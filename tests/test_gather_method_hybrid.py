@@ -28,8 +28,8 @@ class TestMethodHybrid(helpers.PungiTestCase):
     @mock.patch("pungi.phases.gather.get_lookaside_repos")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_groups")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_packages")
-    @mock.patch("pungi.phases.gather.methods.method_hybrid.create_module_repo")
-    def test_call_method(self, cmr, ep, eg, glr, CW):
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.get_platform")
+    def test_call_method(self, gp, ep, eg, glr, CW):
         compose = helpers.DummyCompose(self.topdir, {})
         m = hybrid.GatherMethodHybrid(compose)
         m.run_solver = mock.Mock(return_value=(mock.Mock(), mock.Mock()))
@@ -58,7 +58,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
         )
 
         self.assertEqual(res, ep.return_value)
-        self.assertEqual(cmr.call_args_list, [mock.call(compose, variant, arch)])
+        self.assertEqual(gp.call_args_list, [mock.call(compose, variant, arch)])
         self.assertEqual(
             m.run_solver.call_args_list,
             [
@@ -66,7 +66,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
                     variant,
                     arch,
                     set(["pkg", "foo", "bar", ("prep", "noarch")]),
-                    cmr.return_value,
+                    gp.return_value,
                     [],
                 )
             ],
@@ -250,62 +250,26 @@ class HelperMixin(object):
         return os.path.join(self.compose.topdir, "work/x86_64/%s" % name)
 
 
-@mock.patch("pungi.phases.gather.methods.method_hybrid.add_modular_metadata")
-@mock.patch("pungi.phases.gather.methods.method_hybrid.run")
-class TestCreateModuleRepo(HelperMixin, helpers.PungiTestCase):
+class TestGetPlatform(HelperMixin, helpers.PungiTestCase):
     def setUp(self):
-        super(TestCreateModuleRepo, self).setUp()
+        super(TestGetPlatform, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
         self.variant = self.compose.variants["Server"]
 
-    def test_no_modules(self, run, Modulemd):
-        plat = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
-
+    def test_no_modules(self):
+        plat = hybrid.get_platform(self.compose, self.variant, "x86_64")
         self.assertIsNone(plat)
-        self.assertEqual(run.call_args_list, [])
-        self.assertEqual(Modulemd.mock_calls, [])
 
-    def test_more_than_one_platform(self, run, add_modular_metadata):
+    def test_more_than_one_platform(self):
         self.variant.arch_mmds["x86_64"] = {
             "mod:1": MockModule("mod", platform="f29"),
             "mod:2": MockModule("mod", platform="f30"),
         }
 
         with self.assertRaises(RuntimeError) as ctx:
-            hybrid.create_module_repo(self.compose, self.variant, "x86_64")
+            hybrid.get_platform(self.compose, self.variant, "x86_64")
 
         self.assertIn("conflicting requests for platform", str(ctx.exception))
-        self.assertEqual(run.call_args_list, [])
-        self.assertEqual(add_modular_metadata.mock_calls, [])
-
-    @mock.patch("pungi.phases.gather.methods.method_hybrid.iter_module_defaults")
-    def test_creating_repo_with_module_and_default(self, imd, run, add_modular_metadata):
-        mod = MockModule("mod", platform="f29")
-        self.variant.arch_mmds["x86_64"] = {"mod:1": mod}
-        default = mock.Mock(peek_module_name=mock.Mock(return_value="mod"))
-        imd.return_value = [default]
-
-        plat = hybrid.create_module_repo(self.compose, self.variant, "x86_64")
-
-        self.assertEqual(plat, "f29")
-
-        self.assertEqual(
-            add_modular_metadata.call_args_list,
-            [
-                mock.call(
-                    mock.ANY,
-                    self._repo("module_repo_Server"),
-                    [mod, default],
-                    mock.ANY,
-                ),
-            ],
-        )
-        self.assertEqual(
-            # Get first positional argument of the first call, and since it's
-            # an array, take first two elements.
-            run.call_args_list[0][0][0][:2],
-            ["createrepo_c", self._repo("module_repo_Server")]
-        )
 
 
 class ModifiedMagicMock(mock.MagicMock):
@@ -389,7 +353,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 mock.call(
                     self.config1,
                     "x86_64",
-                    [self._repo("repo"), self._repo("module_repo_Server")],
+                    [self._repo("repo")],
                     [],
                     platform="pl",
                     filter_packages=[("foo", None)],
@@ -445,7 +409,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 mock.call(
                     self.config1,
                     "x86_64",
-                    [self._repo("repo"), self._repo("module_repo_Server")],
+                    [self._repo("repo")],
                     [],
                     platform="pl",
                     filter_packages=["foo"],
