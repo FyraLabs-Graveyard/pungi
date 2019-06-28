@@ -684,12 +684,6 @@ class MockModule(object):
     def __eq__(self, other):
         return self.path == other.path
 
-    def dup_nsvc(self):
-        return "module:master:20190318.abcdef"
-
-    def set_name(self, name):
-        pass
-
 
 @mock.patch("pungi.Modulemd.Module.new_from_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
@@ -702,104 +696,113 @@ class TestAddModuleToVariant(unittest.TestCase):
         self.koji.koji_proxy.listArchives.return_value = [
             {"btype": "module", "filename": fname} for fname in files
         ] + [{"btype": "foo"}]
+        self.buildinfo = {
+            "id": 1234,
+            "extra": {
+                "typeinfo": {
+                    "module": {
+                        "name": "module",
+                        "stream": "master",
+                        "version": "20190318",
+                        "context": "abcdef",
+                    },
+                },
+            },
+        }
 
     def test_adding_module(self):
-        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
         )
 
-        source_koji._add_module_to_variant(self.koji, variant, build)
+        source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
 
         self.assertEqual(
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
                 },
                 "x86_64": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
                 },
             },
         )
         self.assertEqual(variant.modules, [])
 
     def test_adding_module_to_existing(self):
-        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             arch_mmds={
-                "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
+                "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
             },
-            modules=["m1:latest-20190101.cafe"],
+            modules=["m1:latest-20190101:cafe"],
         )
 
-        source_koji._add_module_to_variant(self.koji, variant, build)
+        source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
 
         self.assertEqual(
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
                 },
                 "x86_64": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
-                    "m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
                 },
             },
         )
-        self.assertEqual(variant.modules, ["m1:latest-20190101.cafe"])
+        self.assertEqual(variant.modules, ["m1:latest-20190101:cafe"])
 
     def test_adding_module_with_add_module(self):
-        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
         )
 
         source_koji._add_module_to_variant(
-            self.koji, variant, build, add_to_variant_modules=True
+            self.koji, variant, self.buildinfo, add_to_variant_modules=True
         )
 
         self.assertEqual(
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
                 },
                 "x86_64": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
                 },
             },
         )
-        self.assertEqual(variant.modules, ["module:master:20190318.abcdef"])
+        self.assertEqual(variant.modules, ["module:master:20190318:abcdef"])
 
     def test_adding_module_to_existing_with_add_module(self):
-        build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             arch_mmds={
-                "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
+                "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
             },
-            modules=["m1:latest-20190101.cafe"],
+            modules=["m1:latest-20190101:cafe"],
         )
 
         source_koji._add_module_to_variant(
-            self.koji, variant, build, add_to_variant_modules=True
+            self.koji, variant, self.buildinfo, add_to_variant_modules=True
         )
 
         self.assertEqual(
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
                 },
                 "x86_64": {
-                    "module:master:20190318.abcdef": MockModule("/koji/modulemd.x86_64.txt"),
-                    "m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
                 },
             },
         )
         self.assertEqual(
             variant.modules,
-            ["m1:latest-20190101.cafe", "module:master:20190318.abcdef"],
+            ["m1:latest-20190101:cafe", "module:master:20190318:abcdef"],
         )

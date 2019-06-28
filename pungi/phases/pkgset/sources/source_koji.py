@@ -235,7 +235,7 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
             filename = "modulemd.%s.txt" % getBaseArch(arch)
         except ValueError:
             pass
-        mmds[filename] = Modulemd.Module.new_from_file(file_path)
+        mmds[filename] = file_path
 
     if len(mmds) <= 1:
         # There was only one modulemd file. This means the build is rather old
@@ -243,15 +243,12 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
         # longer supported and should be rebuilt. Let's skip it.
         return
 
-    source_mmd = mmds["modulemd.txt"]
-    # Set name from build to modulemd. Generally it will match, but for devel
-    # modules the source mmd contains the original name.
-    source_mmd.set_name(build["extra"]["typeinfo"]["module"]["name"])
-    nsvc = source_mmd.dup_nsvc()
+    nsvc = "%(name)s:%(stream)s:%(version)s:%(context)s" % build["extra"]["typeinfo"]["module"]
 
     for arch in variant.arches:
         try:
-            variant.arch_mmds.setdefault(arch, {})[nsvc] = mmds["modulemd.%s.txt" % arch]
+            mmd = Modulemd.Module.new_from_file(mmds["modulemd.%s.txt" % arch])
+            variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
         except KeyError:
             # There is no modulemd for this arch. This could mean an arch was
             # added to the compose after the module was built. We don't want to
@@ -261,7 +258,7 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
     if add_to_variant_modules:
         variant.modules.append(nsvc)
 
-    return source_mmd
+    return nsvc
 
 
 def _get_modules_from_koji(compose, koji_wrapper, event, variant, variant_tags):
@@ -281,12 +278,11 @@ def _get_modules_from_koji(compose, koji_wrapper, event, variant, variant_tags):
     for module in variant.get_modules():
         koji_modules = get_koji_modules(compose, koji_wrapper, event, module["name"])
         for koji_module in koji_modules:
-            mmd = _add_module_to_variant(koji_wrapper, variant, koji_module)
-            if not mmd:
+            nsvc = _add_module_to_variant(koji_wrapper, variant, koji_module)
+            if not nsvc:
                 continue
 
             tag = koji_module["tag"]
-            nsvc = mmd.dup_nsvc()
             variant_tags[variant].append(tag)
 
             # Store mapping NSVC --> koji_tag into variant.
@@ -461,13 +457,12 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
 
             variant_tags[variant].append(module_tag)
 
-            mmd = _add_module_to_variant(koji_wrapper, variant, build, True)
-            if not mmd:
+            nsvc = _add_module_to_variant(koji_wrapper, variant, build, True)
+            if not nsvc:
                 continue
 
             # Store mapping module-uid --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
-            nsvc = mmd.dup_nsvc()
             variant.module_uid_to_koji_tag[nsvc] = module_tag
 
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
