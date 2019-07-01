@@ -247,7 +247,9 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
 
     for arch in variant.arches:
         try:
-            mmd = Modulemd.Module.new_from_file(mmds["modulemd.%s.txt" % arch])
+            mmd = Modulemd.ModuleStream.read_file(
+                mmds["modulemd.%s.txt" % arch], strict=True
+            )
             variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
         except KeyError:
             # There is no modulemd for this arch. This could mean an arch was
@@ -662,11 +664,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                         # Not current tag, skip it
                         continue
                     for arch_modules in variant.arch_mmds.values():
-                        arch_mmd = arch_modules[nsvc]
-                        if arch_mmd:
-                            for rpm_nevra in arch_mmd.get_rpm_artifacts().get():
-                                nevra = parse_nvra(rpm_nevra)
-                                modular_packages.add((nevra["name"], nevra["arch"]))
+                        for rpm_nevra in arch_modules[nsvc].get_rpm_artifacts():
+                            nevra = parse_nvra(rpm_nevra)
+                            modular_packages.add((nevra["name"], nevra["arch"]))
 
             pkgset.populate(
                 compose_tag,

@@ -142,7 +142,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
     def prepare_modular_packages(self):
         for var in self.compose.all_variants.values():
             for mmd in var.arch_mmds.get(self.arch, {}).values():
-                self.modular_packages.update(mmd.get_rpm_artifacts().dup())
+                self.modular_packages.update(mmd.get_rpm_artifacts())
 
     def prepare_langpacks(self, arch, variant):
         if not self.compose.has_comps:
@@ -223,7 +223,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
 
         modules = []
         for mmd in variant.arch_mmds.get(arch, {}).values():
-            modules.append("%s:%s" % (mmd.peek_name(), mmd.peek_stream()))
+            modules.append("%s:%s" % (mmd.get_module_name(), mmd.get_stream_name()))
 
         input_packages = []
         for pkg_name, pkg_arch in packages:
@@ -399,10 +399,10 @@ def get_platform(compose, variant, arch):
 
     for var in compose.all_variants.values():
         for mmd in var.arch_mmds.get(arch, {}).values():
-            for dep in mmd.peek_dependencies():
-                streams = dep.peek_requires().get("platform")
+            for dep in mmd.get_dependencies():
+                streams = dep.get_runtime_streams("platform")
                 if streams:
-                    platforms.update(streams.dup())
+                    platforms.update(streams)
 
     if len(platforms) > 1:
         raise RuntimeError("There are conflicting requests for platform.")

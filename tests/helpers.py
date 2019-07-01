@@ -86,36 +86,30 @@ class MockVariant(mock.Mock):
             # No support for modules
             return
         name, stream, version, context = nsvc.split(":")
-        mmd = Modulemd.Module()
-        mmd.set_mdversion(2)
-        mmd.set_name(name)
-        mmd.set_stream(stream)
-        mmd.set_version(int(version))
-        mmd.set_context(context)
-        mmd.set_summary("foo")
-        mmd.set_description("foo")
-        licenses = Modulemd.SimpleSet()
-        licenses.add("GPL")
-        mmd.set_module_licenses(licenses)
+        module_stream = Modulemd.ModuleStreamV2.new(name, stream)
+        module_stream.set_version(int(version))
+        module_stream.set_context(context)
+        module_stream.set_summary("foo")
+        module_stream.set_description("foo")
+        module_stream.add_module_license("GPL")
 
         if rpm_nvrs:
-            artifacts = Modulemd.SimpleSet()
             for rpm_nvr in rpm_nvrs:
-                artifacts.add(rpm_nvr)
                 rpm_name = parse_nvr(rpm_nvr)["name"]
-                component = Modulemd.ComponentRpm()
+                component = Modulemd.ComponentRpm.new(rpm_nvr)
                 component.set_name(rpm_name)
                 component.set_rationale("Needed for test")
-                mmd.add_rpm_component(component)
-            if with_artifacts:
-                mmd.set_rpm_artifacts(artifacts)
+                module_stream.add_component(component)
+                if with_artifacts:
+                    module_stream.add_rpm_artifact(rpm_nvr)
 
         if self.modules is None:
             self.modules = []
         self.modules.append(":".join([name, stream, version]))
         if mmd_arch:
-            self.arch_mmds.setdefault(mmd_arch, {})[mmd.dup_nsvc()] = mmd
-        return mmd
+            nsvc = module_stream.get_nsvc()
+            self.arch_mmds.setdefault(mmd_arch, {})[nsvc] = module_stream
+        return module_stream
 
 
 class IterableMock(mock.Mock):

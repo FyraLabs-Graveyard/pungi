@@ -36,7 +36,7 @@ from .base import PhaseBase
 from ..util import (
     find_old_compose,
     get_arch_variant_data,
-    iter_module_defaults,
+    collect_module_defaults,
     temp_dir,
 )
 from pungi import Modulemd
@@ -196,22 +196,21 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
 
     # call modifyrepo to inject modulemd if needed
     if pkg_type == "rpm" and arch in variant.arch_mmds and Modulemd is not None:
-        modules = []
+        mod_index = Modulemd.ModuleIndex()
         metadata = []
 
         for module_id, mmd in variant.arch_mmds[arch].items():
             if modules_metadata:
-                module_rpms = mmd.peek_rpm_artifacts().dup()
+                module_rpms = mmd.get_rpm_artifacts()
                 metadata.append((module_id, module_rpms))
-            modules.append(mmd)
+            mod_index.add_module_stream(mmd)
 
-        module_names = set([x.get_name() for x in modules])
-        for mmddef in iter_module_defaults(compose.paths.work.module_defaults_dir()):
-            if mmddef.peek_module_name() in module_names:
-                modules.append(mmddef)
+        module_names = set(mod_index.get_module_names())
+        defaults_dir = compose.paths.work.module_defaults_dir()
+        collect_module_defaults(defaults_dir, module_names, mod_index)
 
         log_file = compose.paths.log.log_file(arch, "modifyrepo-modules-%s" % variant)
-        add_modular_metadata(repo, repo_dir, modules, log_file)
+        add_modular_metadata(repo, repo_dir, mod_index, log_file)
 
         for module_id, module_rpms in metadata:
             modulemd_path = os.path.join(
@@ -230,11 +229,12 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
     compose.log_info("[DONE ] %s" % msg)
 
 
-def add_modular_metadata(repo, repo_path, mmd, log_file):
+def add_modular_metadata(repo, repo_path, mod_index, log_file):
     """Add modular metadata into a repository."""
     with temp_dir() as tmp_dir:
         modules_path = os.path.join(tmp_dir, "modules.yaml")
-        Modulemd.dump(mmd, modules_path)
+        with open(modules_path, "w") as f:
+            f.write(mod_index.dump_to_string())
 
         cmd = repo.get_modifyrepo_cmd(
             os.path.join(repo_path, "repodata"),

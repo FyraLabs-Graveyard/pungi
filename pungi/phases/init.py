@@ -229,8 +229,8 @@ def validate_module_defaults(path):
     """
     seen_defaults = collections.defaultdict(set)
 
-    for mmddef in iter_module_defaults(path):
-        seen_defaults[mmddef.peek_module_name()].add(mmddef.peek_default_stream())
+    for module_name, defaults in iter_module_defaults(path):
+        seen_defaults[module_name].add(defaults.get_default_stream())
 
     errors = []
     for module_name, defaults in seen_defaults.items():

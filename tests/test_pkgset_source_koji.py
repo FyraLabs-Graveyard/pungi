@@ -675,7 +675,7 @@ class TestFilterByWhitelist(unittest.TestCase):
 
 
 class MockModule(object):
-    def __init__(self, path):
+    def __init__(self, path, strict=True):
         self.path = path
 
     def __repr__(self):
@@ -685,7 +685,7 @@ class MockModule(object):
         return self.path == other.path
 
 
-@mock.patch("pungi.Modulemd.Module.new_from_file", new=MockModule)
+@mock.patch("pungi.Modulemd.ModuleStream.read_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
 class TestAddModuleToVariant(unittest.TestCase):
 

@@ -38,7 +38,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 
         compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
 
-        for nsvc, mmd in variant.arch_mmds[arch].items():
+        for nsvc, module_stream in variant.arch_mmds[arch].items():
             available_rpms = sum(
                 (
                     variant.nsvc_to_pkgset[nsvc].rpms_by_arch.get(a, [])
@@ -46,7 +46,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
                 ),
                 [],
             )
-            to_include = set(mmd.get_rpm_artifacts().get())
+            to_include = set(module_stream.get_rpm_artifacts())
             for rpm_obj in available_rpms:
                 if rpm_obj.nevra in to_include:
                     packages.add((rpm_obj, None))

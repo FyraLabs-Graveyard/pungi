@@ -20,9 +20,10 @@ from kobo.shortcuts import run, relative_path
 from kobo.threads import run_in_threads
 
 import pungi.phases.pkgset.pkgsets
+from pungi import Modulemd
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib, find_old_compose, iter_module_defaults
+from pungi.util import is_arch_multilib, find_old_compose, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
 
@@ -118,12 +119,14 @@ def _create_arch_repo(worker_thread, args, task_num):
                                   update_md_path=repo_dir_global, checksum=createrepo_checksum)
     run(cmd, logfile=compose.paths.log.log_file(arch, "arch_repo"), show_cmd=True)
     # Add modulemd to the repo for all modules in all variants on this architecture.
-    mmds = list(iter_module_defaults(compose.paths.work.module_defaults_dir()))
-    for variant in compose.get_variants(arch=arch):
-        mmds.extend(variant.arch_mmds.get(arch, {}).values())
-    if mmds:
+    if Modulemd:
+        mod_index = collect_module_defaults(compose.paths.work.module_defaults_dir())
+
+        for variant in compose.get_variants(arch=arch):
+            for module_stream in variant.arch_mmds.get(arch, {}).values():
+                mod_index.add_module_stream(module_stream)
         add_modular_metadata(
-            repo, repo_dir, mmds, compose.paths.log.log_file(arch, "arch_repo_modulemd")
+            repo, repo_dir, mod_index, compose.paths.log.log_file(arch, "arch_repo_modulemd")
         )
 
     compose.log_info("[DONE ] %s" % msg)

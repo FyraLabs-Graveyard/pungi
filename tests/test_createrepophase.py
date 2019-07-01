@@ -118,6 +118,24 @@ class TestCreaterepoPhase(PungiTestCase):
              mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata))])
 
 
+def make_mocked_modifyrepo_cmd(tc, module_artifacts):
+    def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
+        mod_index = Modulemd.ModuleIndex.new()
+        mod_index.update_from_file(mmd_path, strict=True)
+
+        tc.assertEqual(len(mod_index.get_module_names()), 1)
+
+        module = mod_index.get_module("test")
+        module_streams = module.get_all_streams()
+        tc.assertEqual(len(module_streams), len(module_artifacts))
+        for ms in module_streams:
+            tc.assertIn(ms.get_stream_name(), module_artifacts)
+            tc.assertItemsEqual(
+                ms.get_rpm_artifacts(), module_artifacts[ms.get_stream_name()],
+            )
+    return mocked_modifyrepo_cmd
+
+
 class TestCreateVariantRepo(PungiTestCase):
 
     @mock.patch('pungi.phases.createrepo.run')
@@ -742,17 +760,10 @@ class TestCreateVariantRepo(PungiTestCase):
         variant.arch_mmds["x86_64"]["test:f28:1:2017"] = variant.add_fake_module(
             "test:f28:1:2017", rpm_nvrs=["pkg-0:2.0.0-1.x86_64"])
 
-        def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
-            modules = Modulemd.Module.new_all_from_file(mmd_path)
-            self.assertEqual(len(modules), 2)
-            self.assertItemsEqual([m.get_stream() for m in modules],
-                                  ["f27", "f28"])
-            self.assertItemsEqual(
-                [m.get_rpm_artifacts().get() for m in modules],
-                [[], []])
-
         repo = CreaterepoWrapperCls.return_value
-        repo.get_modifyrepo_cmd.side_effect = mocked_modifyrepo_cmd
+        repo.get_modifyrepo_cmd.side_effect = make_mocked_modifyrepo_cmd(
+            self, {"f27": [], "f28": []}
+        )
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
         repodata_dir = os.path.join(
@@ -796,17 +807,12 @@ class TestCreateVariantRepo(PungiTestCase):
             "test:f27:2018:cafe": "tag-2",
         }
 
-        def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
-            modules = Modulemd.Module.new_all_from_file(mmd_path)
-            self.assertEqual(len(modules), 2)
-            self.assertItemsEqual([m.get_stream() for m in modules],
-                                  ["f27", "f28"])
-            self.assertItemsEqual(
-                [m.get_rpm_artifacts().get() for m in modules],
-                [["bash-0:4.3.30-2.fc21.x86_64"], ["pkg-0:2.0.0-1.x86_64"]])
-
         repo = CreaterepoWrapperCls.return_value
-        repo.get_modifyrepo_cmd.side_effect = mocked_modifyrepo_cmd
+        repo.get_modifyrepo_cmd.side_effect = make_mocked_modifyrepo_cmd(
+            self,
+            {"f27": ["bash-0:4.3.30-2.fc21.x86_64"], "f28": ["pkg-0:2.0.0-1.x86_64"]},
+        )
+
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
         repodata_dir = os.path.join(

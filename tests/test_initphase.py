@@ -542,13 +542,13 @@ class TestValidateModuleDefaults(PungiTestCase):
     def _write_defaults(self, defs):
         for mod_name, streams in defs.items():
             for stream in streams:
-                mmddef = Modulemd.Defaults.new()
-                mmddef.set_version(1)
-                mmddef.set_module_name(mod_name)
+                mod_index = Modulemd.ModuleIndex.new()
+                mmddef = Modulemd.DefaultsV1.new(mod_name)
                 mmddef.set_default_stream(stream)
-                mmddef.dump(
-                    os.path.join(self.topdir, "%s-%s.yaml" % (mod_name, stream))
-                )
+                mod_index.add_defaults(mmddef)
+                filename = "%s-%s.yaml" % (mod_name, stream)
+                with open(os.path.join(self.topdir, filename), "w") as f:
+                    f.write(mod_index.dump_to_string())
 
     def test_valid_files(self):
         self._write_defaults({"httpd": ["1"], "python": ["3.6"]})

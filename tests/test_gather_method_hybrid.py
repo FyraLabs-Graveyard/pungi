@@ -209,39 +209,26 @@ class MockModule(object):
     def get_name(self):
         return self.name
 
-    def peek_name(self):
+    def get_module_name(self):
         return self.name
 
-    def peek_stream(self):
+    def get_stream_name(self):
         return self.stream
 
-    def peek_version(self):
+    def get_version(self):
         return self.version
 
-    def peek_context(self):
+    def get_context(self):
         return self.context
 
-    def peek_dependencies(self):
-        return [
-            mock.Mock(
-                peek_requires=mock.Mock(
-                    return_value={
-                        "platform": mock.Mock(
-                            dup=mock.Mock(return_value=[self.platform])
-                        )
-                    }
-                )
-            )
-        ]
-
-    def copy(self):
-        return self
-
-    def set_arch(self, arch):
-        pass
+    def get_dependencies(self):
+        def get_runtime_streams(platform):
+            assert platform == "platform"
+            return [self.platform]
+        return [mock.Mock(get_runtime_streams=get_runtime_streams)]
 
     def get_rpm_artifacts(self):
-        return mock.Mock(dup=mock.Mock(return_value=self.rpms))
+        return self.rpms
 
 
 class HelperMixin(object):
@@ -308,10 +295,10 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.compose.has_comps = False
         self.compose.variants["Server"].arch_mmds["x86_64"] = {
             "mod:master": mock.Mock(
-                peek_name=mock.Mock(return_value="mod"),
-                peek_stream=mock.Mock(return_value="master"),
-                peek_version=mock.Mock(return_value="ver"),
-                peek_context=mock.Mock(return_value="ctx"),
+                get_module_name=mock.Mock(return_value="mod"),
+                get_stream_name=mock.Mock(return_value="master"),
+                get_version=mock.Mock(return_value="ver"),
+                get_context=mock.Mock(return_value="ctx"),
             )
         }
         po.return_value = ([], ["m1"])
@@ -356,16 +343,16 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.compose.has_comps = False
         self.compose.variants["Server"].arch_mmds["x86_64"] = {
             "mod:master": mock.Mock(
-                peek_name=mock.Mock(return_value="mod"),
-                peek_stream=mock.Mock(return_value="master"),
-                peek_version=mock.Mock(return_value="ver"),
-                peek_context=mock.Mock(return_value="ctx"),
+                get_module_name=mock.Mock(return_value="mod"),
+                get_stream_name=mock.Mock(return_value="master"),
+                get_version=mock.Mock(return_value="ver"),
+                get_context=mock.Mock(return_value="ctx"),
             ),
             "mod-devel:master": mock.Mock(
-                peek_name=mock.Mock(return_value="mod-devel"),
-                peek_stream=mock.Mock(return_value="master"),
-                peek_version=mock.Mock(return_value="ver"),
-                peek_context=mock.Mock(return_value="ctx"),
+                get_module_name=mock.Mock(return_value="mod-devel"),
+                get_stream_name=mock.Mock(return_value="master"),
+                get_version=mock.Mock(return_value="ver"),
+                get_context=mock.Mock(return_value="ctx"),
             ),
         }
         po.return_value = ([("p-1-1", "x86_64", frozenset())], ["m1"])

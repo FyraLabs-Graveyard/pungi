@@ -29,10 +29,10 @@ import pungi.wrappers.kojiwrapper
 
 from pungi import Modulemd
 from pungi.compose import get_ordered_variant_uids
-from pungi.arch import get_compatible_arches, split_name_arch, tree_arch_to_yum_arch
+from pungi.arch import get_compatible_arches, split_name_arch
 from pungi.phases.base import PhaseBase
 from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
-                        makedirs, iter_module_defaults)
+                        makedirs, collect_module_defaults)
 from pungi.phases.createrepo import add_modular_metadata
 
 
@@ -377,23 +377,18 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map):
 
     # Add modular metadata into the repo
     if variant.arch_mmds:
-        mmds = []
+        mod_index = Modulemd.ModuleIndex()
         for mmd in variant.arch_mmds[arch].values():
-            # Set the arch field, but no other changes are needed.
-            repo_mmd = mmd.copy()
-            repo_mmd.set_arch(tree_arch_to_yum_arch(arch))
-            mmds.append(repo_mmd)
+            mod_index.add_module_stream(mmd)
 
-        module_names = set([x.get_name() for x in mmds])
+        module_names = set(mod_index.get_module_names())
         defaults_dir = compose.paths.work.module_defaults_dir()
-        for mmddef in iter_module_defaults(defaults_dir):
-            if mmddef.peek_module_name() in module_names:
-                mmds.append(mmddef)
+        collect_module_defaults(defaults_dir, module_names, mod_index)
 
         log_file = compose.paths.log.log_file(
             arch, "lookaside_repo_modules_%s" % (variant.uid)
         )
-        add_modular_metadata(cr, repo, mmds, log_file)
+        add_modular_metadata(cr, repo, mod_index, log_file)
 
     compose.log_info('[DONE ] %s', msg)
 

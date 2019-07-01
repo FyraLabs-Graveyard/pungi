@@ -6,9 +6,9 @@ import re
 
 try:
     import gi
-    gi.require_version('Modulemd', '1.0') # noqa
+    gi.require_version('Modulemd', '2.0') # noqa
     from gi.repository import Modulemd
-except:
+except (ImportError, ValueError):
     Modulemd = None
 
 
