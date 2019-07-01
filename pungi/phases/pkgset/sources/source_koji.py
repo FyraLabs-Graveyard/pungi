@@ -23,7 +23,6 @@ import threading
 
 from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import force_list, relative_path
-from kobo.threads import run_in_threads
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
