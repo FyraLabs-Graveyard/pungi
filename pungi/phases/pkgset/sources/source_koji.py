@@ -249,7 +249,6 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
     source_mmd.set_name(build["extra"]["typeinfo"]["module"]["name"])
     nsvc = source_mmd.dup_nsvc()
 
-    variant.mmds.append(source_mmd)
     for arch in variant.arches:
         try:
             variant.arch_mmds.setdefault(arch, {})[nsvc] = mmds["modulemd.%s.txt" % arch]
@@ -564,9 +563,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 "modules.")
 
         if modular_koji_tags or (compose.conf["pkgset_koji_module_tag"] and variant.modules):
-            included_modules_file = os.path.join(
-                compose.paths.work.topdir(arch="global"),
-                "koji-tag-module-%s.yaml" % variant.uid)
             _get_modules_from_koji_tags(
                 compose,
                 koji_wrapper,
@@ -575,9 +571,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 variant_tags,
             )
         elif variant.modules:
-            included_modules_file = os.path.join(
-                compose.paths.work.topdir(arch="global"),
-                "koji-module-%s.yaml" % variant.uid)
             _get_modules_from_koji(
                 compose,
                 koji_wrapper,
@@ -592,8 +585,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             if variant_tag not in compose_tags:
                 compose_tags.append(variant_tag)
 
-        if variant.mmds:
-            Modulemd.Module.dump_all(variant.mmds, included_modules_file)
         if not variant_tags[variant] and variant.modules is None:
             variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 

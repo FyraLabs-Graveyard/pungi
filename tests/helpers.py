@@ -60,7 +60,6 @@ class MockVariant(mock.Mock):
     def __init__(self, is_empty=False, name=None, *args, **kwargs):
         super(MockVariant, self).__init__(*args, is_empty=is_empty, **kwargs)
         self.parent = kwargs.get('parent', None)
-        self.mmds = []
         self.arch_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.variants = {}
@@ -114,7 +113,6 @@ class MockVariant(mock.Mock):
         if self.modules is None:
             self.modules = []
         self.modules.append(":".join([name, stream, version]))
-        self.mmds.append(mmd)
         if mmd_arch:
             self.arch_mmds.setdefault(mmd_arch, {})[mmd.dup_nsvc()] = mmd
         return mmd

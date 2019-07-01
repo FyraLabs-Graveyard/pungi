@@ -264,7 +264,6 @@ class Variant(object):
         self.is_empty = is_empty
 
         self.pkgset = None
-        self.mmds = []
         self.arch_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.nsvc_to_pkgset = {}

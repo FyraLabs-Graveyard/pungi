@@ -315,14 +315,6 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 peek_context=mock.Mock(return_value="ctx"),
             )
         }
-        self.compose.variants["Server"].mmds = [
-            mock.Mock(
-                peek_name=mock.Mock(return_value="mod"),
-                peek_stream=mock.Mock(return_value="master"),
-                peek_version=mock.Mock(return_value="ver"),
-                peek_context=mock.Mock(return_value="ctx"),
-            )
-        ]
         po.return_value = ([], ["m1"])
 
         res = self.phase.run_solver(

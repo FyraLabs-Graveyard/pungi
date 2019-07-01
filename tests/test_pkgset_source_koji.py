@@ -706,12 +706,11 @@ class TestAddModuleToVariant(unittest.TestCase):
     def test_adding_module(self):
         build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
-            arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
+            arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
         )
 
         source_koji._add_module_to_variant(self.koji, variant, build)
 
-        self.assertEqual(variant.mmds, [MockModule("/koji/modulemd.txt")])
         self.assertEqual(
             variant.arch_mmds,
             {
@@ -729,7 +728,6 @@ class TestAddModuleToVariant(unittest.TestCase):
         build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
-            mmds=[MockModule("/koji/m1.txt")],
             arch_mmds={
                 "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
             },
@@ -738,9 +736,6 @@ class TestAddModuleToVariant(unittest.TestCase):
 
         source_koji._add_module_to_variant(self.koji, variant, build)
 
-        self.assertEqual(
-            variant.mmds, [MockModule("/koji/m1.txt"), MockModule("/koji/modulemd.txt")]
-        )
         self.assertEqual(
             variant.arch_mmds,
             {
@@ -758,14 +753,13 @@ class TestAddModuleToVariant(unittest.TestCase):
     def test_adding_module_with_add_module(self):
         build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
-            arches=["armhfp", "x86_64"], mmds=[], arch_mmds={}, modules=[]
+            arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
         )
 
         source_koji._add_module_to_variant(
             self.koji, variant, build, add_to_variant_modules=True
         )
 
-        self.assertEqual(variant.mmds, [MockModule("/koji/modulemd.txt")])
         self.assertEqual(
             variant.arch_mmds,
             {
@@ -783,7 +777,6 @@ class TestAddModuleToVariant(unittest.TestCase):
         build = {"id": 1234, "extra": {"typeinfo": {"module": {"name": "module"}}}}
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
-            mmds=[MockModule("/koji/m1.txt")],
             arch_mmds={
                 "x86_64": {"m1:latest:20190101.cafe": MockModule("/koji/m1.x86_64.txt")}
             },
@@ -794,9 +787,6 @@ class TestAddModuleToVariant(unittest.TestCase):
             self.koji, variant, build, add_to_variant_modules=True
         )
 
-        self.assertEqual(
-            variant.mmds, [MockModule("/koji/m1.txt"), MockModule("/koji/modulemd.txt")]
-        )
         self.assertEqual(
             variant.arch_mmds,
             {
