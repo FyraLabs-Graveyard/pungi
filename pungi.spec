@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.37
+Version:        4.1.38
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,35 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Tue Jul 02 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.38-1
+- Remove remaining mentions of runroot option (lsedlar)
+- pkgset: Include module metadata in the repos (lsedlar)
+- config: Deprecate runroot option (hlin)
+- Respect --nomacboot flag when calling isohybrid (dnevil)
+- config: Keep known options defined on CLI (lsedlar)
+- config-dump: Report better error for non-existing sources (lsedlar)
+- config: Improve config validation for anyOf and oneOf (lsedlar)
+- config-validate: Allow defining variables (lsedlar)
+- config: Report validation warning if variants fail to load (lsedlar)
+- Allow customizing nosetests command (lsedlar)
+- scm: Close stdin of processing command (lsedlar)
+- pkgset: Create arch repos in parallel (lsedlar)
+- util: Resolve HEAD in repos that have a remote (lsedlar)
+- tests: Avoid using threads in tests (lsedlar)
+- pkgset: Use highest pickle protocol (lsedlar)
+- gather: fix crash issue when gather_method = "nodeps" (hlin)
+- pkgset: Check for unused module patterns across all tags (lsedlar)
+- util: Fix offline resolving for scm dict (lsedlar)
+- pkgset: Make serialization more resilient (lsedlar)
+- fus: Support HTTP repos (lsedlar)
+- config: Deprecate release_is_layered option (hlin)
+- pkgset: Set correct nsvc for devel modules (lsedlar)
+- Remove unused variable (lsedlar)
+- Whitespace fixes (lsedlar)
+- Whitespace cleanup (lsedlar)
+- Remove unused variables (lsedlar)
+- Remove unused imports (lsedlar)
+
 * Mon May 27 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.37-1
 - config-dump: Allow dumping config for multi compose (lsedlar)
 - pkgset: Ignore modules without metadata in Koji (lsedlar)
