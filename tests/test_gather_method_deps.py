@@ -41,6 +41,27 @@ class TestWritePungiConfig(helpers.PungiTestCase):
                            exclude_packages=['pkg3', 'pkg4.x86_64'],
                            fulltree_excludes=fulltree, package_whitelist=set())
 
+    @mock.patch("pungi.phases.gather.methods.method_deps.PungiWrapper")
+    def test_duplicated_package_name(self, PungiWrapper):
+        pkgs = [("pkg1", None), ("pkg1", "x86_64")]
+        grps = []
+        filter = [("pkg2", None), ("pkg2", "x86_64")]
+        white = mock.Mock()
+        black = mock.Mock()
+        prepopulate = mock.Mock()
+        fulltree = mock.Mock()
+        deps.write_pungi_config(self.compose, "x86_64", self.compose.variants["Server"],
+                                pkgs, grps, filter, white, black,
+                                prepopulate=prepopulate, fulltree_excludes=fulltree)
+        self.assertWritten(PungiWrapper, packages=["pkg1", "pkg1.x86_64"],
+                           ks_path=self.topdir + "/work/x86_64/pungi/Server.x86_64.conf",
+                           lookaside_repos={}, multilib_whitelist=white, multilib_blacklist=black,
+                           groups=[], prepopulate=prepopulate,
+                           repos={"pungi-repo": self.topdir + "/work/x86_64/repo",
+                                  "comps-repo": self.topdir + "/work/x86_64/comps_repo_Server"},
+                           exclude_packages=["pkg2", "pkg2.x86_64"],
+                           fulltree_excludes=fulltree, package_whitelist=set())
+
     @mock.patch('pungi.phases.gather.get_lookaside_repos')
     @mock.patch('pungi.phases.gather.methods.method_deps.PungiWrapper')
     def test_with_lookaside(self, PungiWrapper, glr):

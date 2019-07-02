@@ -68,15 +68,17 @@ def raise_on_invalid_sigkeys(arch, variant, package_sets, result):
 
 def _format_packages(pkgs):
     """Sort packages and merge name with arch."""
-    for pkg, pkg_arch in sorted(pkgs):
+    result = set()
+    for pkg, pkg_arch in pkgs:
         if type(pkg) in [SimpleRpmWrapper, RpmWrapper]:
             pkg_name = pkg.name
         else:
             pkg_name = pkg
         if pkg_arch:
-            yield '%s.%s' % (pkg_name, pkg_arch)
+            result.add("%s.%s" % (pkg_name, pkg_arch))
         else:
-            yield pkg_name
+            result.add(pkg_name)
+    return sorted(result)
 
 
 def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
