@@ -33,10 +33,12 @@ class ChangeLog:
         self.version = version
 
     def _getCommitDetail(self, commit, field):
-        proc = subprocess.Popen(['git', 'log', '-1',
-                                 "--pretty=format:%s" % field, commit],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE).communicate()
+        proc = subprocess.Popen(
+            ["git", "log", "-1", "--pretty=format:%s" % field, commit],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ).communicate()
 
         ret = proc[0].strip('\n').split('\n')
 
@@ -54,10 +56,12 @@ class ChangeLog:
             range = "%s.." % (self.version)
         else:
             range = "%s-%s.." % (self.name, self.version)
-        proc = subprocess.Popen(['git', 'log', '--pretty=oneline',
-                                 '--no-merges', range],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE).communicate()
+        proc = subprocess.Popen(
+            ["git", "log", "--pretty=oneline", "--no-merges", range],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ).communicate()
         lines = filter(lambda x: x.find('l10n: ') != 41,
                        proc[0].strip('\n').split('\n'))
 
