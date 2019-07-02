@@ -102,7 +102,6 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'translate_paths': [
                 (self.topdir + '/work', 'http://example.com/work')
             ],
-            'runroot': True,
         })
 
     def assertImageAdded(self, compose, ImageCls, iso):

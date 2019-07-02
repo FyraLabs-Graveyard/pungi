@@ -568,7 +568,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     ):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
             'runroot_weights': {'buildinstall': 123},
@@ -641,7 +640,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     ):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
         })
@@ -709,7 +707,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     def test_buildinstall_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'buildinstall',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
             'failable_deliverables': [
@@ -744,7 +741,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     def test_lorax_fail_exit_code(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
             'failable_deliverables': [
@@ -778,7 +774,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     def test_skips_on_existing_output_dir(self, run, get_buildroot_rpms, KojiWrapperMock):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
             'failable_deliverables': [
@@ -812,7 +807,6 @@ class BuildinstallThreadTestCase(PungiTestCase):
     ):
         compose = BuildInstallCompose(self.topdir, {
             'buildinstall_method': 'lorax',
-            'runroot': True,
             'runroot_tag': 'rrt',
             'koji_profile': 'koji',
             'runroot_weights': {'buildinstall': 123},

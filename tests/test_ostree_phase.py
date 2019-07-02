@@ -121,7 +121,6 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'translate_paths': [
                 (self.topdir, 'http://example.com')
             ],
-            'runroot': True
         })
         self.pool = mock.Mock()
 

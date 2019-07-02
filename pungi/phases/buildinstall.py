@@ -399,7 +399,6 @@ class BuildinstallThread(WorkerThread):
             self.worker(compose, arch, variant, cmd, num)
 
     def worker(self, compose, arch, variant, cmd, num):
-        runroot = compose.conf["runroot"]
         buildinstall_method = compose.conf["buildinstall_method"]
         log_filename = ('buildinstall-%s' % variant.uid) if variant else 'buildinstall'
         log_file = compose.paths.log.log_file(arch, log_filename)

@@ -564,7 +564,7 @@ def make_schema():
             },
 
             "runroot": {
-                "deprecated": "remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally",
+                "deprecated": "remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally",
             },
             "runroot_method": {
                 "type": "string",

@@ -153,7 +153,7 @@ class RunrootConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally."])
+            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."])
 
     def test_set_runroot_false(self):
         cfg = load_config(
@@ -163,7 +163,7 @@ class RunrootConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_tag' if you want to enable runroot, otherwise run things locally."])
+            warnings=["WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."])
 
 
 class BuildinstallConfigTestCase(ConfigTestCase):

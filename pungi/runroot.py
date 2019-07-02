@@ -37,20 +37,20 @@ class Runroot(kobo.log.LoggingBase):
 
     def get_runroot_method(self):
         """
-        Returns the runroot method by checking the `runroot` and
+        Returns the runroot method by checking the `runroot_tag` and
         `runroot_method` options in configuration.
 
-        :return: The "local" or "koji" string.
+        :return: The configured method
         """
-        runroot = self.compose.conf.get("runroot", None)
-        runroot_method = self.compose.conf.get("runroot_method", None)
-        if runroot is None and runroot_method is None:
-            raise ValueError("No runroot_method set.")
-        if runroot is False:
-            runroot_method = "local"
-        elif runroot and not runroot_method:
-            runroot_method = "koji"
-        return runroot_method
+        runroot_tag = self.compose.conf.get("runroot_tag")
+        runroot_method = self.compose.conf.get("runroot_method")
+        if runroot_tag and not runroot_method:
+            # If we have runroot tag and no method, let's assume koji method
+            # for backwards compatibility.
+            return "koji"
+        # Otherwise use the configured method or default to local if nothing is
+        # given.
+        return runroot_method or "local"
 
     def _run_local(self, command, log_file=None, **kwargs):
         """
