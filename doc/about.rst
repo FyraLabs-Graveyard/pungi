@@ -38,6 +38,14 @@ delegated to separate executables. *Pungi* just makes sure that all the
 commands are invoked in the appropriate order and with correct arguments. It
 also moves the artifacts to correct locations.
 
+The executable name ``pungi-koji`` comes from the fact that most of those
+separate executables submit tasks to Koji that does the actual work in an
+auditable way.
+
+However unlike doing everything manually in Koji, Pungi will make sure you are
+building all images from the same package set, and will produce even
+deliverables that Koji can not create like YUM repos and installer ISOs.
+
 
 Links
 =====
