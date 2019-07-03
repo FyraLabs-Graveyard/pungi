@@ -210,7 +210,6 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         filter_modules(variant, arch, out_modules)
         return expand_packages(
             self._get_pkg_map(arch),
-            variant.arch_mmds.get(arch, {}),
             pungi.phases.gather.get_lookaside_repos(self.compose, arch, variant),
             nvrs,
             filter_packages=filter_packages,
@@ -443,7 +442,7 @@ def _make_result(paths):
     return [{"path": path, "flags": []} for path in sorted(paths)]
 
 
-def expand_packages(nevra_to_pkg, variant_modules, lookasides, nvrs, filter_packages):
+def expand_packages(nevra_to_pkg, lookasides, nvrs, filter_packages):
     """For each package add source RPM."""
     # This will serve as the final result. We collect sets of paths to the
     # packages.

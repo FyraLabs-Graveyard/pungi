@@ -76,7 +76,6 @@ class TestMethodHybrid(helpers.PungiTestCase):
             [
                 mock.call(
                     {"pkg-3:1-2.x86_64": pkg},
-                    {},
                     glr.return_value,
                     m.run_solver.return_value[0],
                     filter_packages=[],
@@ -837,7 +836,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages()
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
+            nevra_to_pkg, [], [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
@@ -853,7 +852,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(src=True)
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", [])], []
+            nevra_to_pkg, [], [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
@@ -870,7 +869,6 @@ class TestExpandPackages(helpers.PungiTestCase):
 
         res = hybrid.expand_packages(
             nevra_to_pkg,
-            {},
             [],
             [("pkg-3:1-2", "x86_64", [])],
             filter_packages=[("pkg", "src")],
@@ -889,7 +887,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(src=True)
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-3:1-2", "x86_64", ["modular"])], []
+            nevra_to_pkg, [], [("pkg-3:1-2", "x86_64", ["modular"])], []
         )
 
         self.assertEqual(
@@ -905,7 +903,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, [], [("pkg-debuginfo-3:1-2", "x86_64", ["modular"])], []
+            nevra_to_pkg, [], [("pkg-debuginfo-3:1-2", "x86_64", ["modular"])], []
         )
 
         self.assertEqual(
@@ -933,7 +931,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])], []
+            nevra_to_pkg, lookasides, [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(
@@ -961,7 +959,7 @@ class TestExpandPackages(helpers.PungiTestCase):
         cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
 
         res = hybrid.expand_packages(
-            nevra_to_pkg, {}, lookasides, [("pkg-3:1-2", "x86_64", [])], []
+            nevra_to_pkg, lookasides, [("pkg-3:1-2", "x86_64", [])], []
         )
 
         self.assertEqual(res, {"rpm": [], "srpm": [], "debuginfo": []})
