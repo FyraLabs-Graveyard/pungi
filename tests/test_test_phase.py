@@ -182,6 +182,27 @@ class TestCheckImageSanity(PungiTestCase):
         )
 
     @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_too_big_iso_strict(self):
+        compose = DummyCompose(
+            self.topdir,
+            {
+                "createiso_max_size": [(".*", {"*": 10})],
+                "createiso_max_size_is_strict": [(".*", {"*": True})],
+            },
+        )
+        compose.image.format = 'iso'
+        compose.image.bootable = False
+        compose.image.size = 20
+
+        with self.assertRaises(RuntimeError) as ctx:
+            test_phase.check_image_sanity(compose)
+
+        self.assertEqual(
+            str(ctx.exception),
+            "ISO Client/i386/iso/image.iso is too big. Expected max 10B, got 20B",
+        )
+
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
     def test_too_big_unified(self):
         compose = DummyCompose(self.topdir, {})
         compose.image.format = 'iso'
@@ -196,6 +217,26 @@ class TestCheckImageSanity(PungiTestCase):
         self.assertIn(
             "ISO Client/i386/iso/image.iso is too big. Expected max 10B, got 20B",
             warnings,
+        )
+
+    @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
+    def test_too_big_unified_strict(self):
+        compose = DummyCompose(
+            self.topdir,
+            {"createiso_max_size_is_strict": [(".*", {"*": True})]},
+        )
+        compose.image.format = 'iso'
+        compose.image.bootable = False
+        compose.image.size = 20
+        compose.image.unified = True
+        setattr(compose.image, "_max_size", 10)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            test_phase.check_image_sanity(compose)
+
+        self.assertEqual(
+            str(ctx.exception),
+            "ISO Client/i386/iso/image.iso is too big. Expected max 10B, got 20B",
         )
 
     @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
