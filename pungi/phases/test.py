@@ -182,7 +182,7 @@ def check_size_limit(compose, variant, arch, img):
         msg = "ISO %s is too big. Expected max %dB, got %dB" % (
             img.path, limit, img.size
         )
-        if is_strict:
+        if any(is_strict):
             raise RuntimeError(msg)
         else:
             compose.log_warning(msg)

@@ -1092,6 +1092,8 @@ Options
 **createiso_max_size_is_strict**
     (*list*) -- Set the value to ``True`` to turn the warning from
     ``createiso_max_size`` into a hard error that will abort the compose.
+    If there are multiple matches in the mapping, the check will be strict if
+    at least one match says so.
 
     Format: ``[(variant_uid_regex, {arch|*: bool})]``
 
