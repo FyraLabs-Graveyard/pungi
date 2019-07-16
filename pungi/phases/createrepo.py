@@ -233,8 +233,12 @@ def add_modular_metadata(repo, repo_path, mod_index, log_file):
     """Add modular metadata into a repository."""
     with temp_dir() as tmp_dir:
         modules_path = os.path.join(tmp_dir, "modules.yaml")
+        data = mod_index.dump_to_string()
+        if not data:
+            # No data to include...
+            return
         with open(modules_path, "w") as f:
-            f.write(mod_index.dump_to_string())
+            f.write(data)
 
         cmd = repo.get_modifyrepo_cmd(
             os.path.join(repo_path, "repodata"),
