@@ -259,8 +259,9 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     ti.variants.add(var)
 
     repomd_path = os.path.join(var.paths.repository, "repodata", "repomd.xml")
+    createrepo_checksum = compose.conf["createrepo_checksum"]
     if os.path.isfile(repomd_path):
-        ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
+        ti.checksums.add(repomd_path, createrepo_checksum, root_dir=os_tree)
 
     for i in variant.get_variants(types=["addon"], arch=arch):
         addon = productmd.treeinfo.Variant(ti)
@@ -276,7 +277,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
 
         repomd_path = os.path.join(addon.paths.repository, "repodata", "repomd.xml")
         if os.path.isfile(repomd_path):
-            ti.checksums.add(repomd_path, "sha256", root_dir=os_tree)
+            ti.checksums.add(repomd_path, createrepo_checksum, root_dir=os_tree)
 
     class LoraxProduct(productmd.treeinfo.Release):
         def _validate_short(self):
@@ -310,12 +311,12 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
             # stage2 - mainimage
             if bi_ti.stage2.mainimage:
                 ti.stage2.mainimage = bi_ti.stage2.mainimage
-                ti.checksums.add(ti.stage2.mainimage, "sha256", root_dir=os_tree)
+                ti.checksums.add(ti.stage2.mainimage, createrepo_checksum, root_dir=os_tree)
 
             # stage2 - instimage
             if bi_ti.stage2.instimage:
                 ti.stage2.instimage = bi_ti.stage2.instimage
-                ti.checksums.add(ti.stage2.instimage, "sha256", root_dir=os_tree)
+                ti.checksums.add(ti.stage2.instimage, createrepo_checksum, root_dir=os_tree)
 
             # images
             for platform in bi_ti.images.images:
@@ -327,7 +328,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
                         # We can't add that.
                         continue
                     ti.images.images[platform][image] = path
-                    ti.checksums.add(path, "sha256", root_dir=os_tree)
+                    ti.checksums.add(path, createrepo_checksum, root_dir=os_tree)
 
         # add product.img to images-$arch
         product_img = os.path.join(os_tree, "images", "product.img")
@@ -335,7 +336,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         if os.path.isfile(product_img):
             for platform in ti.images.images:
                 ti.images.images[platform]["product.img"] = product_img_relpath
-                ti.checksums.add(product_img_relpath, "sha256", root_dir=os_tree)
+                ti.checksums.add(product_img_relpath, createrepo_checksum, root_dir=os_tree)
 
     path = os.path.join(compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo")
     compose.log_info("Writing treeinfo: %s" % path)
