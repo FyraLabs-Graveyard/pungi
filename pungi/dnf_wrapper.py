@@ -59,6 +59,7 @@ class DnfWrapper(dnf.Base):
             baseurl=[baseurl],
             enabledgroups=enablegroups,
             priority=10 if lookaside else 20,
+            module_hotfixes=True,
         )
 
 
