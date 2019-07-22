@@ -167,7 +167,7 @@ class RunrootConfigTestCase(ConfigTestCase):
 
 
 class BuildinstallConfigTestCase(ConfigTestCase):
-    def test_bootable_without_method(self):
+    def test_bootable_deprecated(self):
         cfg = load_config(
             PKGSET_REPOS,
             bootable=True,
@@ -175,18 +175,7 @@ class BuildinstallConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.REQUIRES.format('bootable', 'True', 'buildinstall_method')])
-
-    def test_non_bootable_with_method(self):
-        cfg = load_config(
-            PKGSET_REPOS,
-            bootable=False,
-            buildinstall_method='lorax',
-        )
-
-        self.assertValidation(
-            cfg,
-            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')])
+            warnings=['WARNING: Config option bootable was removed and has no effect; remove it. Setting buildinstall_method option if you want a bootable installer.'])
 
     def test_buildinstall_method_without_bootable(self):
         cfg = load_config(
@@ -196,12 +185,11 @@ class BuildinstallConfigTestCase(ConfigTestCase):
 
         self.assertValidation(
             cfg,
-            [checks.CONFLICTS.format('bootable', 'False', 'buildinstall_method')])
+            [])
 
     def test_buildinstall_with_lorax_options(self):
         cfg = load_config(
             PKGSET_REPOS,
-            bootable=True,
             buildinstall_method='buildinstall',
             lorax_options=[('^Server$', {})]
         )
@@ -213,7 +201,6 @@ class BuildinstallConfigTestCase(ConfigTestCase):
     def test_lorax_with_lorax_options(self):
         cfg = load_config(
             PKGSET_REPOS,
-            bootable=True,
             buildinstall_method='lorax',
             lorax_options=[]
         )

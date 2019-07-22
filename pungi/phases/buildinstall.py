@@ -53,7 +53,7 @@ class BuildinstallPhase(PhaseBase):
     def skip(self):
         if PhaseBase.skip(self):
             return True
-        if not self.compose.conf.get("bootable"):
+        if not self.compose.conf.get("buildinstall_method"):
             if not self.warned_skipped:
                 msg = "Not a bootable product. Skipping buildinstall."
                 self.compose.log_debug(msg)

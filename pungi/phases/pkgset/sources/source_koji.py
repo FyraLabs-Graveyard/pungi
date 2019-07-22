@@ -529,7 +529,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
         comps = CompsWrapper(compose.paths.work.comps())
         for group in groups:
             packages_to_gather += comps.get_packages(group)
-    if compose.conf["gather_method"] == "nodeps" and not compose.conf.get('bootable'):
+    if compose.conf["gather_method"] == "nodeps" and not compose.conf.get('buildinstall_method'):
         populate_only_packages_to_gather = True
     else:
         populate_only_packages_to_gather = False

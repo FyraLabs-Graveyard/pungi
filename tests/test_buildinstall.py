@@ -74,7 +74,7 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertEqual(1, len(pool.queue_put.mock_calls))
 
     def test_does_not_skip_on_bootable(self):
-        compose = BuildInstallCompose(self.topdir, {'bootable': True})
+        compose = BuildInstallCompose(self.topdir, {'buildinstall_method': 'lorax'})
         compose.just_phases = None
         compose.skip_phases = []
 

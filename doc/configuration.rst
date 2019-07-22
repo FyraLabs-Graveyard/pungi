@@ -41,7 +41,6 @@ Minimal Config Example
     check_deps = False
 
     # BUILDINSTALL
-    bootable = True
     buildinstall_method = "lorax"
 
 
@@ -521,8 +520,6 @@ Anaconda installer is historically called
 Options
 -------
 
-**bootable**
-    (*bool*) -- whether to run the buildinstall phase
 **buildinstall_method**
     (*str*) -- "lorax" (f16+, rhel7+) or "buildinstall" (older releases)
 **lorax_options**
@@ -565,7 +562,6 @@ Example
 -------
 ::
 
-    bootable = True
     buildinstall_method = "lorax"
 
     # Enables macboot on x86_64 for all variants and builds upgrade images
@@ -1045,7 +1041,7 @@ Options
 -------
 
 **productimg** = False
-    (*bool*) -- create product images; requires bootable=True
+    (*bool*) -- create product images; requires buildinstall_method option
 
 **productimg_install_class**
     (:ref:`scm_dict <scm_support>`, *str*) -- reference to install class **file**

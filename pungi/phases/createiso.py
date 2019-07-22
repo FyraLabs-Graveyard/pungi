@@ -63,7 +63,7 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
         if skip == [True]:
             # Buildinstall is skipped for this tree. Can't create a bootable ISO.
             return False
-        return self.compose.conf["bootable"]
+        return bool(self.compose.conf.get('buildinstall_method', ''))
 
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to")

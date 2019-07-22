@@ -86,7 +86,7 @@ class ExtraIsosThread(WorkerThread):
 
         get_extra_files(compose, variant, arch, config.get('extra_files', []))
 
-        bootable = arch != "src" and compose.conf['bootable']
+        bootable = arch != "src" and bool(compose.conf.get('buildinstall_method'))
 
         graft_points = get_iso_contents(
             compose,

@@ -52,7 +52,7 @@ from . import util
 
 
 def _will_productimg_run(conf):
-    return conf.get('productimg', False) and conf.get('bootable', False)
+    return conf.get('productimg', False) and conf.get('buildinstall_method', '')
 
 
 def is_jigdo_needed(conf):
@@ -600,8 +600,7 @@ def make_schema():
                 "default": False,
             },
             "bootable": {
-                "type": "boolean",
-                "default": False
+                "deprecated": "remove it. Setting buildinstall_method option if you want a bootable installer"
             },
 
             "gather_method": {
@@ -1347,14 +1346,6 @@ CONFIG_DEPS = {
         ),
     },
 
-    "bootable": {
-        "requires": (
-            (lambda x: x, ["buildinstall_method"]),
-        ),
-        "conflicts": (
-            (lambda x: not x, ["buildinstall_method"]),
-        ),
-    },
     "buildinstall_method": {
         "conflicts": (
             (lambda val: val == "buildinstall", ["lorax_options"]),

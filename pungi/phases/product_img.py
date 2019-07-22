@@ -66,7 +66,7 @@ class ProductimgPhase(PhaseBase):
             msg = "Config option 'productimg' not set. Skipping creating product images."
             self.compose.log_debug(msg)
             return True
-        if not self.compose.conf["bootable"]:
+        if not self.compose.conf["buildinstall_method"]:
             msg = "Not a bootable product. Skipping creating product images."
             self.compose.log_debug(msg)
             return True

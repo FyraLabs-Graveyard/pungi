@@ -90,7 +90,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
     def test_isohybrid_not_required_on_arm(self):
         conf = {
-            'bootable': True,
+            'buildinstall_method': 'lorax',
             'productimg': True,
             'runroot_tag': 'dummy_tag',
         }
@@ -135,7 +135,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         conf = {
             'runroot_tag': 'dummy_tag',
             'productimg': True,
-            'bootable': True,
+            'buildinstall_method': 'lorax',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
