@@ -231,14 +231,14 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
 
 def add_modular_metadata(repo, repo_path, mod_index, log_file):
     """Add modular metadata into a repository."""
+    # Dumping empty index fails, we need to check for that.
+    if not mod_index.get_module_names():
+        return
+
     with temp_dir() as tmp_dir:
         modules_path = os.path.join(tmp_dir, "modules.yaml")
-        data = mod_index.dump_to_string()
-        if not data:
-            # No data to include...
-            return
         with open(modules_path, "w") as f:
-            f.write(data)
+            f.write(mod_index.dump_to_string())
 
         cmd = repo.get_modifyrepo_cmd(
             os.path.join(repo_path, "repodata"),
