@@ -88,7 +88,6 @@ def _variant_worker(_, args, num):
 
 def write_global_comps(compose):
     comps_file_global = compose.paths.work.comps(arch="global")
-    msg = "Writing global comps file: %s" % comps_file_global
 
     scm_dict = compose.conf["comps_file"]
     if isinstance(scm_dict, dict):
@@ -99,7 +98,7 @@ def write_global_comps(compose):
         comps_name = os.path.basename(scm_dict)
         scm_dict = os.path.join(compose.config_dir, scm_dict)
 
-    compose.log_debug(msg)
+    compose.log_debug("Writing global comps file: %s", comps_file_global)
     tmp_dir = compose.mkdtemp(prefix="comps_")
     get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
     shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
@@ -110,9 +109,8 @@ def write_global_comps(compose):
 
 def write_arch_comps(compose, arch):
     comps_file_arch = compose.paths.work.comps(arch=arch)
-    msg = "Writing comps file for arch '%s': %s" % (arch, comps_file_arch)
 
-    compose.log_debug(msg)
+    compose.log_debug("Writing comps file for arch '%s': %s", arch, comps_file_arch)
     run(["comps_filter", "--arch=%s" % arch, "--no-cleanup",
          "--output=%s" % comps_file_arch,
          compose.paths.work.comps(arch="global")])
@@ -136,9 +134,10 @@ def get_lookaside_groups(compose, variant):
 
 def write_variant_comps(compose, arch, variant):
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
-    msg = "Writing comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
 
-    compose.log_debug(msg)
+    compose.log_debug(
+        "Writing comps file (arch: %s, variant: %s): %s", arch, variant, comps_file
+    )
     cmd = [
         "comps_filter",
         "--arch=%s" % arch,

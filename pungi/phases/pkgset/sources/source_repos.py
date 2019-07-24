@@ -138,10 +138,9 @@ def populate_global_pkgset(compose, file_list, path_prefix):
         arches = get_valid_arches(arch, is_multilib)
         ALL_ARCHES.update(arches)
 
-    msg = "Populating the global package set from a file list"
     global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "packages.pickle")
 
-    compose.log_info(msg)
+    compose.log_info("Populating the global package set from a file list")
     pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(
         compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES
     )
@@ -158,9 +157,10 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
-    msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
-    compose.log_info(msg)
+    compose.log_info(
+        "Writing pungi config (arch: %s, variant: %s): %s", arch, variant, pungi_cfg
+    )
     packages, grps = get_packages_to_gather(compose, arch, variant)
 
     # include *all* packages providing system-release

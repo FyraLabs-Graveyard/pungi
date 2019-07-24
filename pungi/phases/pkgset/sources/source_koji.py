@@ -709,12 +709,11 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 def get_koji_event_info(compose, koji_wrapper):
     event_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-event")
 
-    msg = "Getting koji event"
+    compose.log_info("Getting koji event")
     result = get_koji_event_raw(koji_wrapper, compose.koji_event, event_file)
     if compose.koji_event:
         compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
     else:
-        compose.log_info(msg)
         compose.log_info("Koji event: %s" % result["id"])
 
     return result

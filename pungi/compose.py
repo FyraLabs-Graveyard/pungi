@@ -219,7 +219,6 @@ class Compose(kobo.log.LoggingBase):
     def read_variants(self):
         # TODO: move to phases/init ?
         variants_file = self.paths.work.variants_file(arch="global")
-        msg = "Writing variants file: %s" % variants_file
 
         scm_dict = self.conf["variants_file"]
         if isinstance(scm_dict, dict):
@@ -232,7 +231,7 @@ class Compose(kobo.log.LoggingBase):
             file_name = os.path.basename(scm_dict)
             scm_dict = os.path.join(self.config_dir, os.path.basename(scm_dict))
 
-        self.log_debug(msg)
+        self.log_debug("Writing variants file: %s", variants_file)
         tmp_dir = self.mkdtemp(prefix="variants_file_")
         get_file_from_scm(scm_dict, tmp_dir, logger=self._logger)
         shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)

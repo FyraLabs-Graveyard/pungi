@@ -87,9 +87,10 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch, source_name=source_name)
-    msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
-    compose.log_info(msg)
+    compose.log_info(
+        "Writing pungi config (arch: %s, variant: %s): %s", arch, variant, pungi_cfg
+    )
 
     repos = {
         "pungi-repo": compose.paths.work.arch_repo(arch=arch),
