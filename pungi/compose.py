@@ -106,7 +106,7 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
 
 
 class Compose(kobo.log.LoggingBase):
-    def __init__(self, conf, topdir, debug=False, skip_phases=None, just_phases=None, old_composes=None, koji_event=None, supported=False, logger=None, notifier=None):
+    def __init__(self, conf, topdir, skip_phases=None, just_phases=None, old_composes=None, koji_event=None, supported=False, logger=None, notifier=None):
         kobo.log.LoggingBase.__init__(self, logger)
         # TODO: check if minimal conf values are set
         self.conf = conf
@@ -121,9 +121,6 @@ class Compose(kobo.log.LoggingBase):
         self.old_composes = old_composes or []
         self.koji_event = koji_event or conf.get("koji_event")
         self.notifier = notifier
-
-        # intentionally upper-case (visible in the code)
-        self.DEBUG = debug
 
         # path definitions
         self.paths = Paths(self)
@@ -142,17 +139,6 @@ class Compose(kobo.log.LoggingBase):
             self.supported = True
 
         self.im = Images()
-        if self.DEBUG:
-            try:
-                self.im.load(self.paths.compose.metadata("images.json"))
-            except RuntimeError:
-                pass
-            # images.json doesn't exists
-            except IOError:
-                pass
-            # images.json is not a valid json file, for example, it's an empty file
-            except ValueError:
-                pass
         self.im.compose.id = self.compose_id
         self.im.compose.type = self.compose_type
         self.im.compose.date = self.compose_date
@@ -235,23 +221,22 @@ class Compose(kobo.log.LoggingBase):
         variants_file = self.paths.work.variants_file(arch="global")
         msg = "Writing variants file: %s" % variants_file
 
-        if self.DEBUG and os.path.isfile(variants_file):
-            self.log_warning("[SKIP ] %s" % msg)
+        scm_dict = self.conf["variants_file"]
+        if isinstance(scm_dict, dict):
+            file_name = os.path.basename(scm_dict["file"])
+            if scm_dict["scm"] == "file":
+                scm_dict["file"] = os.path.join(
+                    self.config_dir, os.path.basename(scm_dict["file"])
+                )
         else:
-            scm_dict = self.conf["variants_file"]
-            if isinstance(scm_dict, dict):
-                file_name = os.path.basename(scm_dict["file"])
-                if scm_dict["scm"] == "file":
-                    scm_dict["file"] = os.path.join(self.config_dir, os.path.basename(scm_dict["file"]))
-            else:
-                file_name = os.path.basename(scm_dict)
-                scm_dict = os.path.join(self.config_dir, os.path.basename(scm_dict))
+            file_name = os.path.basename(scm_dict)
+            scm_dict = os.path.join(self.config_dir, os.path.basename(scm_dict))
 
-            self.log_debug(msg)
-            tmp_dir = self.mkdtemp(prefix="variants_file_")
-            get_file_from_scm(scm_dict, tmp_dir, logger=self._logger)
-            shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)
-            shutil.rmtree(tmp_dir)
+        self.log_debug(msg)
+        tmp_dir = self.mkdtemp(prefix="variants_file_")
+        get_file_from_scm(scm_dict, tmp_dir, logger=self._logger)
+        shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)
+        shutil.rmtree(tmp_dir)
 
         tree_arches = self.conf.get("tree_arches", None)
         tree_variants = self.conf.get("tree_variants", None)

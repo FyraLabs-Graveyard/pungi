@@ -91,13 +91,8 @@ class GatherPhase(PhaseBase):
             raise ValueError('\n'.join(errors))
 
     def _write_manifest(self):
-        if self.compose.DEBUG and os.path.isfile(self.manifest_file):
-            self.compose.log_info(
-                "Skipping writing RPM manifest, already exists: %s" % self.manifest_file
-            )
-        else:
-            self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
-            self.manifest.dump(self.manifest_file)
+        self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
+        self.manifest.dump(self.manifest_file)
 
     def run(self):
         pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets,
@@ -517,23 +512,20 @@ def write_prepopulate_file(compose):
     prepopulate_file = os.path.join(compose.paths.work.topdir(arch="global"), "prepopulate.json")
     msg = "Writing prepopulate file: %s" % prepopulate_file
 
-    if compose.DEBUG and os.path.isfile(prepopulate_file):
-        compose.log_warning("[SKIP ] %s" % msg)
+    scm_dict = compose.conf["gather_prepopulate"]
+    if isinstance(scm_dict, dict):
+        file_name = os.path.basename(scm_dict["file"])
+        if scm_dict["scm"] == "file":
+            scm_dict["file"] = os.path.join(compose.config_dir, os.path.basename(scm_dict["file"]))
     else:
-        scm_dict = compose.conf["gather_prepopulate"]
-        if isinstance(scm_dict, dict):
-            file_name = os.path.basename(scm_dict["file"])
-            if scm_dict["scm"] == "file":
-                scm_dict["file"] = os.path.join(compose.config_dir, os.path.basename(scm_dict["file"]))
-        else:
-            file_name = os.path.basename(scm_dict)
-            scm_dict = os.path.join(compose.config_dir, os.path.basename(scm_dict))
+        file_name = os.path.basename(scm_dict)
+        scm_dict = os.path.join(compose.config_dir, os.path.basename(scm_dict))
 
-        compose.log_debug(msg)
-        tmp_dir = compose.mkdtemp(prefix="prepopulate_file_")
-        get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
-        shutil.copy2(os.path.join(tmp_dir, file_name), prepopulate_file)
-        shutil.rmtree(tmp_dir)
+    compose.log_debug(msg)
+    tmp_dir = compose.mkdtemp(prefix="prepopulate_file_")
+    get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+    shutil.copy2(os.path.join(tmp_dir, file_name), prepopulate_file)
+    shutil.rmtree(tmp_dir)
 
 
 def get_prepopulate_packages(compose, arch, variant, include_arch=True):

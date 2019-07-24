@@ -185,16 +185,6 @@ class TestWriteArchComps(PungiTestCase):
                                      '--output=%s/work/x86_64/comps/comps-x86_64.xml' % self.topdir,
                                      self.topdir + '/work/global/comps/comps-global.xml'])])
 
-    @mock.patch('pungi.phases.init.run')
-    def test_run_in_debug(self, run):
-        compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = True
-        touch(self.topdir + '/work/x86_64/comps/comps-x86_64.xml')
-
-        init.write_arch_comps(compose, 'x86_64')
-
-        self.assertEqual(run.mock_calls, [])
-
 
 class TestCreateCompsRepo(PungiTestCase):
 
@@ -232,32 +222,8 @@ class TestCreateCompsRepo(PungiTestCase):
                                     logfile=self.topdir + '/logs/x86_64/comps_repo-Server.x86_64.log',
                                     show_cmd=True)])
 
-    @mock.patch('pungi.phases.init.run')
-    def test_run_in_debug(self, run):
-        compose = DummyCompose(self.topdir, {
-            'createrepo_checksum': 'sha256',
-        })
-        compose.DEBUG = True
-        os.makedirs(self.topdir + '/work/x86_64/comps_repo/repodata')
-
-        init.create_comps_repo(compose, 'x86_64', None)
-
-        self.assertEqual(run.mock_calls, [])
-
 
 class TestWriteGlobalComps(PungiTestCase):
-
-    @mock.patch('shutil.copy2')
-    @mock.patch('pungi.phases.init.get_file_from_scm')
-    def test_run_in_debug(self, get_file, copy2):
-        compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
-        compose.DEBUG = True
-        touch(self.topdir + '/work/global/comps/comps-global.xml')
-
-        init.write_global_comps(compose)
-
-        self.assertEqual(get_file.mock_calls, [])
-        self.assertEqual(copy2.mock_calls, [])
 
     @mock.patch('pungi.phases.init.get_file_from_scm')
     def test_run_local_file(self, get_file):
@@ -416,25 +382,6 @@ class TestWriteVariantComps(PungiTestCase):
             compose.log_warning.call_args_list,
             [mock.call(init.UNMATCHED_GROUP_MSG % ('Server', 'x86_64', 'foo')),
              mock.call(init.UNMATCHED_GROUP_MSG % ('Server', 'x86_64', 'bar'))])
-
-    @mock.patch('pungi.phases.init.run')
-    @mock.patch('pungi.phases.init.CompsWrapper')
-    def test_run_in_debug(self, CompsWrapper, run):
-        compose = DummyCompose(self.topdir, {})
-        compose.DEBUG = True
-        variant = compose.variants['Server']
-        touch(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')
-
-        init.write_variant_comps(compose, 'x86_64', variant)
-
-        self.assertEqual(run.mock_calls, [])
-        self.assertEqual(CompsWrapper.call_args_list,
-                         [mock.call(self.topdir + '/work/x86_64/comps/comps-Server.x86_64.xml')])
-        comps = CompsWrapper.return_value
-        self.assertEqual(comps.filter_groups.mock_calls, [mock.call(variant.groups)])
-        self.assertEqual(comps.filter_environments.mock_calls,
-                         [mock.call(variant.environments)])
-        self.assertEqual(comps.write_comps.mock_calls, [])
 
 
 class TestGetLookasideGroups(PungiTestCase):

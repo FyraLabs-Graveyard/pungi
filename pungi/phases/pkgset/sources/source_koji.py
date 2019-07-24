@@ -600,104 +600,103 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 
     inherit = compose.conf["pkgset_koji_inherit"]
     inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
-    global_pkgset_path = os.path.join(
-        compose.paths.work.topdir(arch="global"), "pkgset_global.pickle")
-    if compose.DEBUG and os.path.isfile(global_pkgset_path):
-        msg = "Populating the global package set from tag '%s'" % compose_tags
-        compose.log_warning("[SKIP ] %s" % msg)
-        with open(global_pkgset_path, "rb") as f:
-            global_pkgset = pickle.load(f)
-    else:
-        global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+
+    global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+        koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
+        arches=all_arches)
+
+    old_file_cache_path = _find_old_file_cache_path(compose)
+    old_file_cache = None
+    if old_file_cache_path:
+        compose.log_info("Reusing old PKGSET file cache from %s" % old_file_cache_path)
+        old_file_cache = pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(
+            old_file_cache_path
+        )
+        global_pkgset.set_old_file_cache(old_file_cache)
+
+    # Get package set for each compose tag and merge it to global package
+    # list. Also prepare per-variant pkgset, because we do not have list
+    # of binary RPMs in module definition - there is just list of SRPMs.
+    for compose_tag in compose_tags:
+        compose.log_info(
+            "Populating the global package set from tag '%s'" % compose_tag
+        )
+        if compose_tag in pkgset_koji_tags:
+            extra_builds = force_list(compose.conf.get("pkgset_koji_builds", []))
+        else:
+            extra_builds = []
+        pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches)
+            arches=all_arches, packages=packages_to_gather,
+            allow_invalid_sigkeys=allow_invalid_sigkeys,
+            populate_only_packages=populate_only_packages_to_gather,
+            cache_region=compose.cache_region,
+            extra_builds=extra_builds)
+        if old_file_cache:
+            pkgset.set_old_file_cache(old_file_cache)
+        # Create a filename for log with package-to-tag mapping. The tag
+        # name is included in filename, so any slashes in it are replaced
+        # with underscores just to be safe.
+        logfile = compose.paths.log.log_file(
+            None, "packages_from_%s" % compose_tag.replace("/", "_")
+        )
+        is_traditional = compose_tag in compose.conf.get("pkgset_koji_tag", [])
+        should_inherit = inherit if is_traditional else inherit_modules
 
-        old_file_cache_path = _find_old_file_cache_path(compose)
-        old_file_cache = None
-        if old_file_cache_path:
-            compose.log_info("Reusing old PKGSET file cache from %s" % old_file_cache_path)
-            old_file_cache = pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(
-                old_file_cache_path
-            )
-            global_pkgset.set_old_file_cache(old_file_cache)
+        # If we're processing a modular tag, we have an exact list of
+        # packages that will be used. This is basically a workaround for
+        # tagging working on build level, not rpm level. A module tag may
+        # build a package but not want it included. This should include
+        # only packages that are actually in modules. It's possible two
+        # module builds will use the same tag, particularly a -devel module
+        # is sharing a tag with its regular version.
+        # The ultimate goal of the mapping is to avoid a package built in modular
+        # tag to be used as a dependency of some non-modular package.
+        modular_packages = set()
+        for variant in compose.all_variants.values():
+            for nsvc, modular_tag in variant.module_uid_to_koji_tag.items():
+                if modular_tag != compose_tag:
+                    # Not current tag, skip it
+                    continue
+                for arch_modules in variant.arch_mmds.values():
+                    for rpm_nevra in arch_modules[nsvc].get_rpm_artifacts():
+                        nevra = parse_nvra(rpm_nevra)
+                        modular_packages.add((nevra["name"], nevra["arch"]))
 
-        # Get package set for each compose tag and merge it to global package
-        # list. Also prepare per-variant pkgset, because we do not have list
-        # of binary RPMs in module definition - there is just list of SRPMs.
-        for compose_tag in compose_tags:
-            compose.log_info("Populating the global package set from tag "
-                             "'%s'" % compose_tag)
-            if compose_tag in pkgset_koji_tags:
-                extra_builds = force_list(compose.conf.get("pkgset_koji_builds", []))
-            else:
-                extra_builds = []
-            pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-                koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-                arches=all_arches, packages=packages_to_gather,
-                allow_invalid_sigkeys=allow_invalid_sigkeys,
-                populate_only_packages=populate_only_packages_to_gather,
-                cache_region=compose.cache_region,
-                extra_builds=extra_builds)
-            if old_file_cache:
-                pkgset.set_old_file_cache(old_file_cache)
-            # Create a filename for log with package-to-tag mapping. The tag
-            # name is included in filename, so any slashes in it are replaced
-            # with underscores just to be safe.
-            logfile = compose.paths.log.log_file(
-                None, 'packages_from_%s' % compose_tag.replace('/', '_'))
-            is_traditional = compose_tag in compose.conf.get('pkgset_koji_tag', [])
-            should_inherit = inherit if is_traditional else inherit_modules
+        pkgset.populate(
+            compose_tag,
+            event,
+            inherit=should_inherit,
+            logfile=logfile,
+            include_packages=modular_packages,
+        )
+        for variant in compose.all_variants.values():
+            if compose_tag in variant_tags[variant]:
 
-            # If we're processing a modular tag, we have an exact list of
-            # packages that will be used. This is basically a workaround for
-            # tagging working on build level, not rpm level. A module tag may
-            # build a package but not want it included. This should include
-            # only packages that are actually in modules. It's possible two
-            # module builds will use the same tag, particularly a -devel module
-            # is sharing a tag with its regular version.
-            # The ultimate goal of the mapping is to avoid a package built in modular
-            # tag to be used as a dependency of some non-modular package.
-            modular_packages = set()
-            for variant in compose.all_variants.values():
-                for nsvc, modular_tag in variant.module_uid_to_koji_tag.items():
-                    if modular_tag != compose_tag:
-                        # Not current tag, skip it
-                        continue
-                    for arch_modules in variant.arch_mmds.values():
-                        for rpm_nevra in arch_modules[nsvc].get_rpm_artifacts():
-                            nevra = parse_nvra(rpm_nevra)
-                            modular_packages.add((nevra["name"], nevra["arch"]))
+                # If it's a modular tag, store the package set for the module.
+                for nsvc, koji_tag in variant.module_uid_to_koji_tag.items():
+                    if compose_tag == koji_tag:
+                        variant.nsvc_to_pkgset[nsvc] = pkgset
 
-            pkgset.populate(
-                compose_tag,
-                event,
-                inherit=should_inherit,
-                logfile=logfile,
-                include_packages=modular_packages,
-            )
-            for variant in compose.all_variants.values():
-                if compose_tag in variant_tags[variant]:
+                # Optimization for case where we have just single compose
+                # tag - we do not have to merge in this case...
+                if len(variant_tags[variant]) == 1:
+                    variant.pkgset = pkgset
+                else:
+                    variant.pkgset.fast_merge(pkgset)
+        # Optimization for case where we have just single compose
+        # tag - we do not have to merge in this case...
+        if len(compose_tags) == 1:
+            global_pkgset = pkgset
+        else:
+            global_pkgset.fast_merge(pkgset)
 
-                    # If it's a modular tag, store the package set for the module.
-                    for nsvc, koji_tag in variant.module_uid_to_koji_tag.items():
-                        if compose_tag == koji_tag:
-                            variant.nsvc_to_pkgset[nsvc] = pkgset
-
-                    # Optimization for case where we have just single compose
-                    # tag - we do not have to merge in this case...
-                    if len(variant_tags[variant]) == 1:
-                        variant.pkgset = pkgset
-                    else:
-                        variant.pkgset.fast_merge(pkgset)
-            # Optimization for case where we have just single compose
-            # tag - we do not have to merge in this case...
-            if len(compose_tags) == 1:
-                global_pkgset = pkgset
-            else:
-                global_pkgset.fast_merge(pkgset)
-        with open(global_pkgset_path, 'wb') as f:
-            data = pickle.dumps(global_pkgset, protocol=pickle.HIGHEST_PROTOCOL)
-            f.write(data)
+    global_pkgset_path = os.path.join(
+        compose.paths.work.topdir(arch="global"), "pkgset_global.pickle"
+    )
+    with open(global_pkgset_path, "wb") as f:
+        data = pickle.dumps(global_pkgset, protocol=pickle.HIGHEST_PROTOCOL)
+        f.write(data)
 
     # write global package list
     global_pkgset.save_file_list(
@@ -711,16 +710,12 @@ def get_koji_event_info(compose, koji_wrapper):
     event_file = os.path.join(compose.paths.work.topdir(arch="global"), "koji-event")
 
     msg = "Getting koji event"
-    if compose.DEBUG and os.path.exists(event_file):
-        compose.log_warning("[SKIP ] %s" % msg)
-        result = json.load(open(event_file, "r"))
+    result = get_koji_event_raw(koji_wrapper, compose.koji_event, event_file)
+    if compose.koji_event:
+        compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
     else:
-        result = get_koji_event_raw(koji_wrapper, compose.koji_event, event_file)
-        if compose.koji_event:
-            compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
-        else:
-            compose.log_info(msg)
-            compose.log_info("Koji event: %s" % result["id"])
+        compose.log_info(msg)
+        compose.log_info("Koji event: %s" % result["id"])
 
     return result
 

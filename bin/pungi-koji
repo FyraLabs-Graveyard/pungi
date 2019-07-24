@@ -77,12 +77,6 @@ def main():
         help="Path to directory with old composes. Reuse an existing repodata from the most recent compose.",
     )
     parser.add_argument(
-        "--debug-mode",
-        action="store_true",
-        default=False,
-        help="run pungi in DEBUG mode (DANGEROUS!)",
-    )
-    parser.add_argument(
         "--config",
         help="Config file",
         required=True
@@ -252,7 +246,6 @@ def main():
 
     compose = Compose(conf,
                       topdir=compose_dir,
-                      debug=opts.debug_mode,
                       skip_phases=opts.skip_phase,
                       just_phases=opts.just_phase,
                       old_composes=opts.old_composes,

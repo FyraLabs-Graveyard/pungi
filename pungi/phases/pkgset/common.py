@@ -48,10 +48,6 @@ def get_create_global_repo_cmd(compose, path_prefix):
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
 
-    if compose.DEBUG and os.path.isdir(os.path.join(repo_dir_global, "repodata")):
-        compose.log_warning("[SKIP ] Running createrepo for the global package set")
-        return
-
     # find an old compose suitable for repodata reuse
     old_compose_path = None
     update_md_path = None
@@ -107,10 +103,6 @@ def _create_arch_repo(worker_thread, args, task_num):
     repo_dir_global = compose.paths.work.arch_repo(arch="global")
     repo_dir = compose.paths.work.arch_repo(arch=arch)
     msg = "Running createrepo for arch '%s'" % arch
-
-    if compose.DEBUG and os.path.isdir(os.path.join(repo_dir, "repodata")):
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
 
     compose.log_info("[BEGIN] %s" % msg)
     cmd = repo.get_createrepo_cmd(path_prefix, update=True, database=False, skip_stat=True,

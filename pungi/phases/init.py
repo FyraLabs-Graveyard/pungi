@@ -90,23 +90,20 @@ def write_global_comps(compose):
     comps_file_global = compose.paths.work.comps(arch="global")
     msg = "Writing global comps file: %s" % comps_file_global
 
-    if compose.DEBUG and os.path.isfile(comps_file_global):
-        compose.log_warning("[SKIP ] %s" % msg)
+    scm_dict = compose.conf["comps_file"]
+    if isinstance(scm_dict, dict):
+        comps_name = os.path.basename(scm_dict["file"])
+        if scm_dict["scm"] == "file":
+            scm_dict["file"] = os.path.join(compose.config_dir, scm_dict["file"])
     else:
-        scm_dict = compose.conf["comps_file"]
-        if isinstance(scm_dict, dict):
-            comps_name = os.path.basename(scm_dict["file"])
-            if scm_dict["scm"] == "file":
-                scm_dict["file"] = os.path.join(compose.config_dir, scm_dict["file"])
-        else:
-            comps_name = os.path.basename(scm_dict)
-            scm_dict = os.path.join(compose.config_dir, scm_dict)
+        comps_name = os.path.basename(scm_dict)
+        scm_dict = os.path.join(compose.config_dir, scm_dict)
 
-        compose.log_debug(msg)
-        tmp_dir = compose.mkdtemp(prefix="comps_")
-        get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
-        shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
-        shutil.rmtree(tmp_dir)
+    compose.log_debug(msg)
+    tmp_dir = compose.mkdtemp(prefix="comps_")
+    get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+    shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
+    shutil.rmtree(tmp_dir)
 
     return comps_file_global
 
@@ -114,10 +111,6 @@ def write_global_comps(compose):
 def write_arch_comps(compose, arch):
     comps_file_arch = compose.paths.work.comps(arch=arch)
     msg = "Writing comps file for arch '%s': %s" % (arch, comps_file_arch)
-
-    if compose.DEBUG and os.path.isfile(comps_file_arch):
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
 
     compose.log_debug(msg)
     run(["comps_filter", "--arch=%s" % arch, "--no-cleanup",
@@ -144,17 +137,6 @@ def get_lookaside_groups(compose, variant):
 def write_variant_comps(compose, arch, variant):
     comps_file = compose.paths.work.comps(arch=arch, variant=variant)
     msg = "Writing comps file (arch: %s, variant: %s): %s" % (arch, variant, comps_file)
-
-    if compose.DEBUG and os.path.isfile(comps_file):
-        # read display_order and groups for environments (needed for live images)
-        comps = CompsWrapper(comps_file)
-        # groups = variant.groups
-        comps.filter_groups(variant.groups)
-        if compose.conf["comps_filter_environments"]:
-            comps.filter_environments(variant.environments)
-
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
 
     compose.log_debug(msg)
     cmd = [
@@ -194,17 +176,17 @@ def create_comps_repo(compose, arch, variant):
     comps_repo = compose.paths.work.comps_repo(arch=arch, variant=variant)
     comps_path = compose.paths.work.comps(arch=arch, variant=variant)
     msg = "Creating comps repo for arch '%s' variant '%s'" % (arch, variant.uid if variant else None)
-    if compose.DEBUG and os.path.isdir(os.path.join(comps_repo, "repodata")):
-        compose.log_warning("[SKIP ] %s" % msg)
-    else:
-        compose.log_info("[BEGIN] %s" % msg)
-        cmd = repo.get_createrepo_cmd(comps_repo, database=False,
-                                      outputdir=comps_repo, groupfile=comps_path,
-                                      checksum=createrepo_checksum)
-        logfile = 'comps_repo-%s' % variant if variant else 'comps_repo'
-        run(cmd, logfile=compose.paths.log.log_file(arch, logfile),
-            show_cmd=True)
-        compose.log_info("[DONE ] %s" % msg)
+
+    compose.log_info("[BEGIN] %s" % msg)
+    cmd = repo.get_createrepo_cmd(
+        comps_repo, database=False,
+        outputdir=comps_repo,
+        groupfile=comps_path,
+        checksum=createrepo_checksum,
+    )
+    logfile = "comps_repo-%s" % variant if variant else "comps_repo"
+    run(cmd, logfile=compose.paths.log.log_file(arch, logfile), show_cmd=True)
+    compose.log_info("[DONE ] %s" % msg)
 
 
 def write_module_defaults(compose):

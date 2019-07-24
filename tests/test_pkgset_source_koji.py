@@ -72,19 +72,6 @@ class TestGetKojiEvent(helpers.PungiTestCase):
         with open(self.event_file) as f:
             self.assertEqual(json.load(f), EVENT_INFO)
 
-    def test_gets_last_event_in_debug_mode(self):
-        self.compose.DEBUG = True
-        self.compose.koji_event = None
-        koji_wrapper = mock.Mock()
-        helpers.touch(self.event_file, json.dumps(EVENT_INFO))
-
-        event = source_koji.get_koji_event_info(self.compose, koji_wrapper)
-
-        self.assertEqual(event, EVENT_INFO)
-        self.assertItemsEqual(koji_wrapper.mock_calls, [])
-        with open(self.event_file) as f:
-            self.assertEqual(json.load(f), EVENT_INFO)
-
 
 class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     def setUp(self):
@@ -179,27 +166,6 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                               [mock.call(orig_pkgset, protocol=pickle.HIGHEST_PROTOCOL)])
         with open(self.pkgset_path) as f:
             self.assertEqual(f.read(), 'DATA')
-
-    @mock.patch('six.moves.cPickle.load')
-    def test_populate_in_debug_mode(self, pickle_load):
-        helpers.touch(self.pkgset_path, 'DATA')
-        self.compose.DEBUG = True
-
-        pickle_load.return_value
-
-        with mock.patch('pungi.phases.pkgset.sources.source_koji.open',
-                        mock.mock_open(), create=True) as m:
-            pkgset = source_koji.populate_global_pkgset(
-                self.compose, self.koji_wrapper, '/prefix', 123456)
-
-        self.assertEqual(pickle_load.call_args_list,
-                         [mock.call(m.return_value)])
-        self.assertIs(pkgset, pickle_load.return_value)
-        self.assertEqual(
-            pkgset.mock_calls,
-            [mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
-                                      remove_path_prefix='/prefix'),
-             mock.call.save_file_cache(self.topdir + '/work/global/pkgset_file_cache.pickle')])
 
     @mock.patch('six.moves.cPickle.dumps')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.populate')

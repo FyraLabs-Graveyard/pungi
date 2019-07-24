@@ -140,16 +140,14 @@ def populate_global_pkgset(compose, file_list, path_prefix):
 
     msg = "Populating the global package set from a file list"
     global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "packages.pickle")
-    if compose.DEBUG and os.path.isfile(global_pkgset_path):
-        compose.log_warning("[SKIP ] %s" % msg)
-        with open(global_pkgset_path, "rb") as f:
-            pkgset = pickle.load(f)
-    else:
-        compose.log_info(msg)
-        pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES)
-        pkgset.populate(file_list)
-        with open(global_pkgset_path, "wb") as f:
-            pickle.dump(pkgset, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    compose.log_info(msg)
+    pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(
+        compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES
+    )
+    pkgset.populate(file_list)
+    with open(global_pkgset_path, "wb") as f:
+        pickle.dump(pkgset, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     # write global package list
     pkgset.save_file_list(compose.paths.work.package_list(arch="global"), remove_path_prefix=path_prefix)
@@ -161,10 +159,6 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
     msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
-
-    if compose.DEBUG and os.path.isfile(pungi_cfg):
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
 
     compose.log_info(msg)
     packages, grps = get_packages_to_gather(compose, arch, variant)

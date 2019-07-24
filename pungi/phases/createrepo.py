@@ -122,10 +122,6 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
             return
         createrepo_dirs.add(repo_dir)
 
-    if compose.DEBUG and os.path.isdir(os.path.join(repo_dir, "repodata")):
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
-
     compose.log_info("[BEGIN] %s" % msg)
 
     # We only want delta RPMs for binary repos.

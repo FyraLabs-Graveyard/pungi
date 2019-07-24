@@ -175,8 +175,6 @@ class DummyCompose(object):
         self.should_create_yum_database = True
         self.cache_region = None
 
-        self.DEBUG = False
-
     def setup_optional(self):
         self.all_variants['Server-optional'] = MockVariant(
             uid='Server-optional', arches=['x86_64'], type='optional')

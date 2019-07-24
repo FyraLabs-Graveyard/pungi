@@ -89,10 +89,6 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch, source_name=source_name)
     msg = "Writing pungi config (arch: %s, variant: %s): %s" % (arch, variant, pungi_cfg)
 
-    if compose.DEBUG and os.path.isfile(pungi_cfg):
-        compose.log_warning("[SKIP ] %s" % msg)
-        return
-
     compose.log_info(msg)
 
     repos = {
@@ -160,11 +156,6 @@ def resolve_deps(compose, arch, variant, source_name=None):
     pungi_log = compose.paths.work.pungi_log(arch, variant, source_name=source_name)
 
     msg = "Running pungi (arch: %s, variant: %s)" % (arch, variant)
-    if compose.DEBUG and os.path.exists(pungi_log):
-        compose.log_warning("[SKIP ] %s" % msg)
-        with open(pungi_log, "r") as f:
-            res, broken_deps, _ = pungi_wrapper.parse_log(f)
-            return res, broken_deps
 
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant, source_name=source_name)
