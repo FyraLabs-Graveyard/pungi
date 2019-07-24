@@ -121,7 +121,6 @@ def get_pkgset_from_repos(compose):
     t = threading.Thread(target=run_create_global_repo, args=(compose, cmd))
     t.start()
 
-#    get_extra_packages(compose, pkgset_global)
     package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
 
     t.join()
