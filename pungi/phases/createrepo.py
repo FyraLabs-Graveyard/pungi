@@ -289,13 +289,15 @@ def get_productids_from_scm(compose):
             # use for development:
             # pem_files = glob.glob("%s/*.pem" % tmp_dir)[-1:]
             if not pem_files:
-                msg = "No product certificate found (arch: %s, variant: %s)" % (arch, variant.uid)
+                warning = "No product certificate found (arch: %s, variant: %s)" % (
+                    arch, variant.uid
+                )
                 if product_id_allow_missing:
-                    compose.log_warning(msg)
+                    compose.log_warning(warning)
                     continue
                 else:
                     shutil.rmtree(tmp_dir)
-                    raise RuntimeError(msg)
+                    raise RuntimeError(warning)
             if len(pem_files) > 1:
                 shutil.rmtree(tmp_dir)
                 raise RuntimeError("Multiple product certificates found (arch: %s, variant: %s): %s" % (arch, variant.uid, ", ".join(sorted([os.path.basename(i) for i in pem_files]))))
