@@ -198,10 +198,10 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.getLastEvent.return_value = EVENT_INFO
         self.koji_wrapper.koji_proxy.getTag.return_value = TAG_INFO
 
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.create_arch_repos')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.run_create_global_repo')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_create_global_repo_cmd')
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_arch_pkgsets')
+    @mock.patch('pungi.phases.pkgset.common.create_arch_repos')
+    @mock.patch('pungi.phases.pkgset.common.run_create_global_repo')
+    @mock.patch('pungi.phases.pkgset.common.get_create_global_repo_cmd')
+    @mock.patch('pungi.phases.pkgset.common.populate_arch_pkgsets')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_global_pkgset')
     def test_get_package_sets(self, pgp, pap, gcgrc, rcgr, car):
         expected = {'x86_64': mock.Mock()}

@@ -15,6 +15,7 @@
 
 
 import os
+import threading
 
 from kobo.shortcuts import run, relative_path
 from kobo.threads import run_in_threads
@@ -27,7 +28,6 @@ from pungi.util import is_arch_multilib, find_old_compose, collect_module_defaul
 from pungi.phases.createrepo import add_modular_metadata
 
 
-# TODO: per arch?
 def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
     result = {}
     exclusive_noarch = compose.conf['pkgset_exclusive_arch_considers_noarch']
@@ -122,3 +122,19 @@ def _create_arch_repo(worker_thread, args, task_num):
         )
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def materialize_pkgset(compose, pkgset_global, path_prefix):
+    """Create per-arch pkgsets and create repodata for each arch."""
+    cmd = get_create_global_repo_cmd(compose, path_prefix)
+    t = threading.Thread(target=run_create_global_repo, args=(compose, cmd))
+    t.start()
+
+    package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
+    package_sets["global"] = pkgset_global
+
+    t.join()
+
+    create_arch_repos(compose, path_prefix)
+
+    return package_sets
