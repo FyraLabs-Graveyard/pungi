@@ -193,6 +193,20 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
+    def pkgset_repo(self, pkgset_name, arch=None, create_dir=True):
+        """
+        Examples:
+            work/x86_64/repo/f30-compose
+            work/global/repo/f30-compose
+        """
+        arch = arch or "global"
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir), "repo", pkgset_name
+        )
+        if create_dir:
+            makedirs(path)
+        return path
+
     def lookaside_repo(self, arch, variant, create_dir=True):
         """
         Examples:
