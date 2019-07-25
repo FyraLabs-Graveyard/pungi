@@ -80,9 +80,10 @@ class ReaderThread(WorkerThread):
 
 class PackageSetBase(kobo.log.LoggingBase):
 
-    def __init__(self, sigkey_ordering, arches=None, logger=None,
+    def __init__(self, name, sigkey_ordering, arches=None, logger=None,
                  allow_invalid_sigkeys=False):
         super(PackageSetBase, self).__init__(logger=logger)
+        self.name = name
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
         self.old_file_cache = None
         self.sigkey_ordering = tuple(sigkey_ordering or [None])
@@ -284,7 +285,7 @@ class FilelistPackageSet(PackageSetBase):
 
 
 class KojiPackageSet(PackageSetBase):
-    def __init__(self, koji_wrapper, sigkey_ordering, arches=None, logger=None,
+    def __init__(self, name, koji_wrapper, sigkey_ordering, arches=None, logger=None,
                  packages=None, allow_invalid_sigkeys=False,
                  populate_only_packages=False, cache_region=None,
                  extra_builds=None):
@@ -317,9 +318,13 @@ class KojiPackageSet(PackageSetBase):
         :param list extra_builds: Extra builds NVRs to get from Koji and include
             in the package set.
         """
-        super(KojiPackageSet, self).__init__(sigkey_ordering=sigkey_ordering,
-                                             arches=arches, logger=logger,
-                                             allow_invalid_sigkeys=allow_invalid_sigkeys)
+        super(KojiPackageSet, self).__init__(
+            name,
+            sigkey_ordering=sigkey_ordering,
+            arches=arches,
+            logger=logger,
+            allow_invalid_sigkeys=allow_invalid_sigkeys
+        )
         self.koji_wrapper = koji_wrapper
         # Names of packages to look for in the Koji tag.
         self.packages = set(packages or [])

@@ -124,7 +124,7 @@ def populate_global_pkgset(compose, file_list, path_prefix):
 
     compose.log_info("Populating the global package set from a file list")
     pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(
-        compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES
+        "repos", compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES
     )
     pkgset.populate(file_list)
     with open(global_pkgset_path, "wb") as f:

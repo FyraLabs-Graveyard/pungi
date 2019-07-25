@@ -167,7 +167,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
         ])
 
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None])
+        pkgset = pkgsets.KojiPackageSet("pkgset", self.koji_wrapper, [None])
 
         result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
 
@@ -202,7 +202,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
         ])
 
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None], arches=['x86_64'])
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset", self.koji_wrapper, [None], arches=['x86_64']
+        )
 
         result = pkgset.populate('f25')
 
@@ -221,7 +223,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             'signed/deadbeef/bash-debuginfo@4.3.42@4.fc24@x86_64',
         ])
 
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', 'deadbeef'], arches=['x86_64'])
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset", self.koji_wrapper, ['cafebabe', 'deadbeef'], arches=['x86_64']
+        )
 
         result = pkgset.populate('f25')
 
@@ -239,7 +243,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
         ])
 
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset", self.koji_wrapper, ['cafebabe', None], arches=['x86_64']
+        )
 
         result = pkgset.populate('f25')
 
@@ -252,7 +258,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                                            'signed/cafebabe/bash@4.3.42@4.fc24@x86_64']})
 
     def test_can_not_find_signed_package(self):
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe'], arches=['x86_64'])
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset", self.koji_wrapper, ['cafebabe'], arches=['x86_64']
+        )
 
         with self.assertRaises(RuntimeError) as ctx:
             pkgset.populate('f25')
@@ -267,8 +275,13 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         self.assertRegexpMatches(str(ctx.exception), figure)
 
     def test_can_not_find_signed_package_allow_invalid_sigkeys(self):
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe'], arches=['x86_64'],
-                                        allow_invalid_sigkeys=True)
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            ['cafebabe'],
+            arches=['x86_64'],
+            allow_invalid_sigkeys=True,
+        )
 
         pkgset.populate('f25')
 
@@ -285,7 +298,9 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         self.assertRegexpMatches(str(ctx.exception), figure)
 
     def test_can_not_find_any_package(self):
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, ['cafebabe', None], arches=['x86_64'])
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset", self.koji_wrapper, ['cafebabe', None], arches=['x86_64']
+        )
 
         with self.assertRaises(RuntimeError) as ctx:
             pkgset.populate('f25')
@@ -309,8 +324,13 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             'rpms/bash-debuginfo@4.3.42@4.fc24@x86_64',
         ])
 
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None],
-                                        packages=["bash"], populate_only_packages=True)
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            [None],
+            packages=["bash"],
+            populate_only_packages=True,
+        )
 
         result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
 
@@ -330,8 +350,13 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         ])
 
         cache_region = make_region().configure("dogpile.cache.memory")
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None], arches=['x86_64'],
-                                        cache_region=cache_region)
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            [None],
+            arches=['x86_64'],
+            cache_region=cache_region,
+        )
 
         # Try calling the populate twice, but expect just single listTaggedRPMs
         # call - that means the caching worked.
@@ -352,8 +377,13 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         ])
 
         cache_region = make_region().configure("dogpile.cache.memory")
-        pkgset = pkgsets.KojiPackageSet(self.koji_wrapper, [None], arches=['x86_64'],
-                                        cache_region=cache_region)
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            [None],
+            arches=['x86_64'],
+            cache_region=cache_region,
+        )
 
         # Try calling the populate twice with different event id. It must not
         # cache anything.
@@ -397,8 +427,8 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             [b for b in self.tagged_rpms[1] if b["package_name"] != "pungi"]]
 
         pkgset = pkgsets.KojiPackageSet(
-            self.koji_wrapper, [None],
-            extra_builds=["pungi-4.1.3-3.fc25"])
+            "pkgset", self.koji_wrapper, [None], extra_builds=["pungi-4.1.3-3.fc25"]
+        )
 
         result = pkgset.populate('f25', logfile=self.topdir + '/pkgset.log')
 
@@ -419,8 +449,8 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
 @mock.patch('kobo.pkgset.FileCache', new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
     def test_merge_in_another_arch(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         for name in ['rpms/pungi@4.1.3@3.fc25@noarch', 'rpms/pungi@4.1.3@3.fc25@src']:
             pkg = first.file_cache.add(name)
@@ -438,8 +468,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                 'i686': ['rpms/bash@4.3.42@4.fc24@i686']})
 
     def test_merge_includes_noarch_with_different_exclude_arch(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -455,8 +485,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                 'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch']})
 
     def test_merge_excludes_noarch_exclude_arch(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -472,8 +502,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                 'noarch': []})
 
     def test_merge_excludes_noarch_exclusive_arch(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -489,8 +519,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                 'noarch': []})
 
     def test_merge_includes_noarch_with_same_exclusive_arch(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -506,8 +536,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                 'noarch': ['rpms/pungi@4.1.3@3.fc25@noarch']})
 
     def test_merge_skips_package_in_cache(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -521,8 +551,8 @@ class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
                                {'i686': ['rpms/bash@4.3.42@4.fc24@i686']})
 
     def test_merge_skips_src_without_binary(self):
-        first = pkgsets.PackageSetBase([None])
-        second = pkgsets.PackageSetBase([None])
+        first = pkgsets.PackageSetBase("first", [None])
+        second = pkgsets.PackageSetBase("second", [None])
 
         pkg = first.file_cache.add('rpms/bash@4.3.42@4.fc24@i686')
         first.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)
@@ -548,7 +578,7 @@ class TestSaveFileList(unittest.TestCase):
         os.unlink(self.tmpfile)
 
     def test_save_arches_alphabetically(self):
-        pkgset = pkgsets.PackageSetBase([None])
+        pkgset = pkgsets.PackageSetBase("pkgset", [None])
         for name in ['rpms/pungi@4.1.3@3.fc25@x86_64',
                      'rpms/pungi@4.1.3@3.fc25@src',
                      'rpms/pungi@4.1.3@3.fc25@ppc64']:
@@ -564,7 +594,7 @@ class TestSaveFileList(unittest.TestCase):
                                     'rpms/pungi@4.1.3@3.fc25@x86_64'])
 
     def test_save_strip_prefix(self):
-        pkgset = pkgsets.PackageSetBase([None])
+        pkgset = pkgsets.PackageSetBase("pkgset", [None])
         for name in ['rpms/pungi@4.1.3@3.fc25@noarch', 'rpms/pungi@4.1.3@3.fc25@src']:
             pkg = pkgset.file_cache.add(name)
             pkgset.rpms_by_arch.setdefault(pkg.arch, []).append(pkg)

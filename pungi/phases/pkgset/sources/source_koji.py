@@ -529,8 +529,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     for variant in compose.all_variants.values():
         # pkgset storing the packages belonging to this particular variant.
         variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-            koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches)
+            "TODO",
+            koji_wrapper,
+            compose.conf["sigkeys"],
+            logger=compose._logger,
+            arches=all_arches,
+        )
         variant_tags[variant] = []
 
         # Get the modules from Koji tag or from PDC, depending on
@@ -578,8 +582,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
 
     global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-        koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-        arches=all_arches)
+        "TODO",
+        koji_wrapper,
+        compose.conf["sigkeys"],
+        logger=compose._logger,
+        arches=all_arches,
+    )
 
     old_file_cache_path = _find_old_file_cache_path(compose)
     old_file_cache = None
@@ -602,6 +610,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
         else:
             extra_builds = []
         pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
+            "TODO",
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
             arches=all_arches, packages=packages_to_gather,
             allow_invalid_sigkeys=allow_invalid_sigkeys,
