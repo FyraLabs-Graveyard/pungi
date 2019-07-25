@@ -653,17 +653,13 @@ def get_system_release_packages(compose, arch, variant, package_sets):
     packages = set()
     filter_packages = set()
 
-    if not package_sets or not package_sets.get(arch, None):
-        return packages, filter_packages
-
-    package_set = package_sets[arch]
-
     system_release_packages = set()
-    for i in package_set:
-        pkg = package_set[i]
 
-        if pkg.is_system_release:
-            system_release_packages.add(pkg)
+    for pkgset in package_sets or []:
+        for i in pkgset.get(arch, []):
+            pkg = pkgset[arch][i]
+            if pkg.is_system_release:
+                system_release_packages.add(pkg)
 
     if not system_release_packages:
         return packages, filter_packages

@@ -44,7 +44,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
         )
         CW.return_value.get_langpacks.return_value = {"glibc": "glibc-langpack-%s"}
         eg.return_value = ["foo", "bar"]
-        package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": [pkg]})}
+        package_sets = [{"x86_64": mock.Mock(rpms_by_arch={"x86_64": [pkg]})}]
         arch = "x86_64"
         variant = compose.variants["Server"]
 
@@ -103,50 +103,52 @@ class TestMethodHybrid(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
         CW.return_value.get_langpacks.return_value = {"foo": "foo-%s"}
         m = hybrid.GatherMethodHybrid(compose)
-        m.package_sets = {
-            "x86_64": mock.Mock(
-                rpms_by_arch={
-                    "x86_64": [
-                        MockPkg(
-                            name="foo",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                        MockPkg(
-                            name="foo-en",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                        MockPkg(
-                            name="foo-devel",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                        MockPkg(
-                            name="foo-debuginfo",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                    ]
-                }
-            )
-        }
+        m.package_sets = [
+            {
+                "x86_64": mock.Mock(
+                    rpms_by_arch={
+                        "x86_64": [
+                            MockPkg(
+                                name="foo",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                            MockPkg(
+                                name="foo-en",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                            MockPkg(
+                                name="foo-devel",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                            MockPkg(
+                                name="foo-debuginfo",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                        ]
+                    }
+                )
+            }
+        ]
         m.prepare_langpacks("x86_64", compose.variants["Server"])
 
         self.assertEqual(m.langpacks, {"foo": set(["foo-en"])})
@@ -155,41 +157,43 @@ class TestMethodHybrid(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
         m = hybrid.GatherMethodHybrid(compose)
         m.arch = "x86_64"
-        m.package_sets = {
-            "x86_64": mock.Mock(
-                rpms_by_arch={
-                    "x86_64": [
-                        MockPkg(
-                            name="foo",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                        MockPkg(
-                            name="foo-en",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                        MockPkg(
-                            name="bar",
-                            version="1",
-                            release="2",
-                            arch="x86_64",
-                            epoch=0,
-                            sourcerpm=None,
-                            file_path=None,
-                        ),
-                    ]
-                }
-            )
-        }
+        m.package_sets = [
+            {
+                "x86_64": mock.Mock(
+                    rpms_by_arch={
+                        "x86_64": [
+                            MockPkg(
+                                name="foo",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                            MockPkg(
+                                name="foo-en",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                            MockPkg(
+                                name="bar",
+                                version="1",
+                                release="2",
+                                arch="x86_64",
+                                epoch=0,
+                                sourcerpm=None,
+                                file_path=None,
+                            ),
+                        ]
+                    }
+                )
+            }
+        ]
         expanded = m.expand_list(["foo*"])
 
         self.assertItemsEqual([p.name for p in expanded], ["foo", "foo-en"])
@@ -357,7 +361,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         }
         po.return_value = ([("p-1-1", "x86_64", frozenset())], ["m1"])
         self.phase.packages = {"p-1-1.x86_64": mock.Mock()}
-        self.phase.package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}
+        self.phase.package_sets = [{"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}]
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],
@@ -524,7 +528,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "pkg-1.0-1.x86_64": mock.Mock(),
             "pkg-en-1.0-1.noarch": mock.Mock(),
         }
-        self.phase.package_sets = {"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}
+        self.phase.package_sets = [{"x86_64": mock.Mock(rpms_by_arch={"x86_64": []})}]
 
         res = self.phase.run_solver(
             self.compose.variants["Server"],

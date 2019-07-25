@@ -85,7 +85,7 @@ class PackageSetBase(kobo.log.LoggingBase):
         super(PackageSetBase, self).__init__(logger=logger)
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
         self.old_file_cache = None
-        self.sigkey_ordering = sigkey_ordering or [None]
+        self.sigkey_ordering = tuple(sigkey_ordering or [None])
         self.arches = arches
         self.rpms_by_arch = {}
         self.srpms_by_name = {}
@@ -124,10 +124,16 @@ class PackageSetBase(kobo.log.LoggingBase):
         def nvr_formatter(package_info):
             # joins NVR parts of the package with '-' character.
             return '-'.join((package_info['name'], package_info['version'], package_info['release']))
-        raise RuntimeError(
-            "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
-                self.sigkey_ordering,
-                '\n'.join(sorted(set([nvr_formatter(rpminfo) for rpminfo in rpminfos])))))
+
+        def get_error(sigkeys, infos):
+            return "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
+                sigkeys,
+                '\n'.join(sorted(set(nvr_formatter(rpminfo) for rpminfo in infos))),
+            )
+
+        if not isinstance(rpminfos, dict):
+            rpminfos = {self.sigkey_ordering: rpminfos}
+        raise RuntimeError("\n".join(get_error(k, v) for k, v in rpminfos.items()))
 
     def read_packages(self, rpms, srpms):
         srpm_pool = ReaderPool(self, self._logger)

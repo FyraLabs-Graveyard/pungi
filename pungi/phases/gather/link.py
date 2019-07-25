@@ -53,9 +53,16 @@ def get_package_path(filename, hashed_directory=False):
     return filename
 
 
+def _find_by_path(pkg_sets, arch, path):
+    """Find object in an list of package sets by path."""
+    for pkg_set in pkg_sets:
+        if path in pkg_set[arch]:
+            return pkg_set[arch][path]
+    raise RuntimeError("Path %r not found in any package set." % path)
+
+
 def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={}):
     # srpm_map instance is shared between link_files() runs
-    pkg_set = pkg_sets[arch]
 
     msg = "Linking packages (arch: %s, variant: %s)" % (arch, variant)
     compose.log_info("[BEGIN] %s" % msg)
@@ -77,7 +84,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = pkg_set[pkg["path"]]
+        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
         manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="source")
 
@@ -96,7 +103,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = pkg_set[pkg["path"]]
+        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
         manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="binary", srpm_nevra=src_nevra)
@@ -113,7 +120,7 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = pkg_set[pkg["path"]]
+        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
         manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="debug", srpm_nevra=src_nevra)

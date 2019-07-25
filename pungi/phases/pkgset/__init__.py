@@ -28,4 +28,5 @@ class PkgsetPhase(PhaseBase):
         PkgsetSourceContainer.register_module(sources)
         container = PkgsetSourceContainer()
         SourceClass = container[pkgset_source]
-        self.package_sets, self.path_prefix = SourceClass(self.compose)()
+        package_sets, self.path_prefix = SourceClass(self.compose)()
+        self.package_sets = [package_sets]

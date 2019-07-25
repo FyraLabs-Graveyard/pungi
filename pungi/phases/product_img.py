@@ -259,14 +259,15 @@ def explode_anaconda(compose, arch, variant, package_sets):
     # if scm is "rpm" and repo contains a package name, find the package(s) in package set
     if scm_dict["scm"] == "rpm" and not (scm_dict["repo"].startswith("/") or "://" in scm_dict["repo"]):
         rpms = []
-        for pkgset_file in package_sets[arch]:
-            pkg_obj = package_sets[arch][pkgset_file]
-            if not pkg_is_rpm(pkg_obj):
-                continue
-            pkg_name, pkg_arch = split_name_arch(scm_dict["repo"])
-            if fnmatch.fnmatch(pkg_obj.name, pkg_name) and (pkg_arch is None or pkg_arch == pkg_obj.arch):
-                compose.log_critical("%s %s %s" % (pkg_obj.name, pkg_name, pkg_arch))
-                rpms.append(pkg_obj.file_path)
+        for pkgset in package_sets:
+            for pkgset_file in pkgset[arch]:
+                pkg_obj = pkgset[arch][pkgset_file]
+                if not pkg_is_rpm(pkg_obj):
+                    continue
+                pkg_name, pkg_arch = split_name_arch(scm_dict["repo"])
+                if fnmatch.fnmatch(pkg_obj.name, pkg_name) and (pkg_arch is None or pkg_arch == pkg_obj.arch):
+                    compose.log_critical("%s %s %s" % (pkg_obj.name, pkg_name, pkg_arch))
+                    rpms.append(pkg_obj.file_path)
         scm_dict["repo"] = rpms
 
         if not rpms:

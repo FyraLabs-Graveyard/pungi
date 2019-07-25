@@ -297,7 +297,8 @@ class TestGetSystemRelease(unittest.TestCase):
     def test_no_system_release_package(self):
         pkgset = MockPackageSet(MockPkg('/build/bash-1.0.0-1.x86_64.rpm'))
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, 'x86_64', self.variant, {'x86_64': pkgset})
+            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+        )
 
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(filter_packages, [])
@@ -307,7 +308,8 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/dummy-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, 'x86_64', self.variant, {'x86_64': pkgset})
+            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+        )
 
         self.assertItemsEqual(packages, [('dummy', None)])
         self.assertItemsEqual(filter_packages, [])
@@ -318,7 +320,8 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-server-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, 'x86_64', self.variant, {'x86_64': pkgset})
+            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+        )
 
         self.assertItemsEqual(packages, [('system-release-server', None)])
         self.assertItemsEqual(filter_packages, [('system-release', None)])
@@ -329,7 +332,8 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-bar-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, 'x86_64', self.variant, {'x86_64': pkgset})
+            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+        )
 
         # In this case a random package is picked, so let's check that both
         # list contain one package and that they are different.
@@ -344,7 +348,8 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-client-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, 'x86_64', self.addon, {'x86_64': pkgset})
+            self.compose, "x86_64", self.addon, [{"x86_64": pkgset}]
+        )
 
         self.assertItemsEqual(packages, [('system-release-server', None)])
         self.assertItemsEqual(filter_packages,
@@ -490,7 +495,11 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.variants['Server'], 'comps', package_sets={'x86_64': pkgset})
+            compose,
+            "x86_64",
+            compose.variants["Server"], "comps",
+            package_sets=[{"x86_64": pkgset}],
+        )
         self.assertItemsEqual(packages, [('system-release-server', None)])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [('system-release', None)])
@@ -509,7 +518,12 @@ class TestGetVariantPackages(helpers.PungiTestCase):
         )
 
         packages, groups, filter_packages = gather.get_variant_packages(
-            compose, 'x86_64', compose.variants['Server'], 'comps', package_sets={'x86_64': pkgset})
+            compose,
+            "x86_64",
+            compose.variants["Server"],
+            "comps",
+            package_sets=[{"x86_64": pkgset}],
+        )
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(groups, [])
         self.assertItemsEqual(filter_packages, [])

@@ -91,9 +91,10 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         """
         if arch not in self.package_maps:
             pkg_map = {}
-            for pkg_arch in self.package_sets[arch].rpms_by_arch:
-                for pkg in self.package_sets[arch].rpms_by_arch[pkg_arch]:
-                    pkg_map[_fmt_nevra(pkg, pkg_arch)] = pkg
+            for pkgset in self.package_sets:
+                for pkg_arch in pkgset[arch].rpms_by_arch:
+                    for pkg in pkgset[arch].rpms_by_arch[pkg_arch]:
+                        pkg_map[_fmt_nevra(pkg, pkg_arch)] = pkg
             self.package_maps[arch] = pkg_map
 
         return self.package_maps[arch]
@@ -117,9 +118,10 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         indexed by package architecture and then by package name. There can be
         more than one debuginfo package with the same name.
         """
-        for pkg_arch in self.package_sets[self.arch].rpms_by_arch:
-            for pkg in self.package_sets[self.arch].rpms_by_arch[pkg_arch]:
-                self.debuginfo[pkg.arch][pkg.name].add(pkg)
+        for pkgset in self.package_sets:
+            for pkg_arch in pkgset[self.arch].rpms_by_arch:
+                for pkg in pkgset[self.arch].rpms_by_arch[pkg_arch]:
+                    self.debuginfo[pkg.arch][pkg.name].add(pkg)
 
     def _get_debuginfo(self, name, arch):
         if not self.debuginfo:
@@ -131,12 +133,13 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         of the pattern.
         """
         expanded = set()
-        for pkg_arch in self.package_sets[self.arch].rpms_by_arch:
-            for pkg in self.package_sets[self.arch].rpms_by_arch[pkg_arch]:
-                for pattern in patterns:
-                    if fnmatch(pkg.name, pattern):
-                        expanded.add(pkg)
-                        break
+        for pkgset in self.package_sets:
+            for pkg_arch in pkgset[self.arch].rpms_by_arch:
+                for pkg in pkgset[self.arch].rpms_by_arch[pkg_arch]:
+                    for pattern in patterns:
+                        if fnmatch(pkg.name, pattern):
+                            expanded.add(pkg)
+                            break
         return expanded
 
     def prepare_modular_packages(self):
@@ -154,16 +157,17 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             # Replace %s with * for fnmatch.
             install_match = install % "*"
             self.langpacks[name] = set()
-            for pkg_arch in self.package_sets[arch].rpms_by_arch:
-                for pkg in self.package_sets[arch].rpms_by_arch[pkg_arch]:
-                    if not fnmatch(pkg.name, install_match):
-                        # Does not match the pattern, ignore...
-                        continue
-                    if pkg.name.endswith("-devel") or pkg.name.endswith("-static"):
-                        continue
-                    if pkg_is_debug(pkg):
-                        continue
-                    self.langpacks[name].add(pkg.name)
+            for pkgset in self.package_sets:
+                for pkg_arch in pkgset[arch].rpms_by_arch:
+                    for pkg in pkgset[arch].rpms_by_arch[pkg_arch]:
+                        if not fnmatch(pkg.name, install_match):
+                            # Does not match the pattern, ignore...
+                            continue
+                        if pkg.name.endswith("-devel") or pkg.name.endswith("-static"):
+                            continue
+                        if pkg_is_debug(pkg):
+                            continue
+                        self.langpacks[name].add(pkg.name)
 
     def __call__(
         self,

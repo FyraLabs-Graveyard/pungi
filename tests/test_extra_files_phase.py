@@ -123,11 +123,15 @@ class TestCopyFiles(helpers.PungiTestCase):
         src_po.configure_mock(name='extra-data-1.1-1.fc24.src.rpm',
                               file_path='/src/location',
                               arch='src')
-        package_sets = {
-            'x86_64': {server_po.name: server_po,
-                       client_po.name: client_po,
-                       src_po.name: src_po}
-        }
+        package_sets = [
+            {
+                "x86_64": {
+                    server_po.name: server_po,
+                    client_po.name: client_po,
+                    src_po.name: src_po,
+                },
+            },
+        ]
 
         get_file_from_scm.side_effect = self.fake_get_file
 
@@ -153,7 +157,7 @@ class TestCopyFiles(helpers.PungiTestCase):
     def test_copy_from_non_existing_rpm_in_compose(self, get_dir_from_scm, get_file_from_scm):
         compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'rpm', 'file': 'file.txt', 'repo': 'bad-%(variant_uid_lower)s*'}
-        package_sets = {'x86_64': {}}
+        package_sets = [{"x86_64": {}}]
 
         with self.assertRaises(RuntimeError) as ctx:
             extra_files.copy_extra_files(

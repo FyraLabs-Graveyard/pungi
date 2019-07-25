@@ -71,10 +71,11 @@ def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type=No
             rpms = []
             pattern = scm_dict["repo"] % var_dict
             pkg_name, pkg_arch = split_name_arch(pattern)
-            for pkgset_file in package_sets[arch]:
-                pkg_obj = package_sets[arch][pkgset_file]
-                if pkg_is_rpm(pkg_obj) and _pkg_matches(pkg_obj, pkg_name, pkg_arch):
-                    rpms.append(pkg_obj.file_path)
+            for package_set in package_sets:
+                for pkgset_file in package_set[arch]:
+                    pkg_obj = package_set[arch][pkgset_file]
+                    if pkg_is_rpm(pkg_obj) and _pkg_matches(pkg_obj, pkg_name, pkg_arch):
+                        rpms.append(pkg_obj.file_path)
             if not rpms:
                 raise RuntimeError('No package matching %s in the package set.' % pattern)
             scm_dict["repo"] = rpms

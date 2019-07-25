@@ -78,7 +78,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         super(TestPopulateGlobalPkgset, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {
             'pkgset_koji_tag': 'f25',
-            'sigkeys': mock.Mock(),
+            'sigkeys': ["foo", "bar"],
         })
         self.koji_wrapper = mock.Mock()
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
@@ -125,7 +125,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     def test_populate_with_multiple_koji_tags(self, KojiPackageSet, pickle_dumps):
         self.compose = helpers.DummyCompose(self.topdir, {
             'pkgset_koji_tag': ['f25', 'f25-extra'],
-            'sigkeys': mock.Mock(),
+            'sigkeys': ["foo", "bar"],
         })
 
         pickle_dumps.return_value = b'DATA'
@@ -175,7 +175,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.compose = helpers.DummyCompose(self.topdir, {
             'gather_method': 'nodeps',
             'pkgset_koji_tag': 'f25',
-            'sigkeys': mock.Mock(),
+            'sigkeys': ["foo", "bar"],
             'additional_packages': [
                 ('.*', {'*': ['pkg', 'foo.x86_64']}),
             ]

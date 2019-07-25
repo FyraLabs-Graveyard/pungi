@@ -54,16 +54,18 @@ def raise_on_invalid_sigkeys(arch, variant, package_sets, result):
     Raises RuntimeError if some package in compose is signed with an invalid
     sigkey.
     """
-    invalid_sigkey_rpms = []
+    invalid_sigkey_rpms = {}
     for package in result["rpm"]:
         name = parse_nvra(package["path"])["name"]
-        for forbidden_package in package_sets["global"].invalid_sigkey_rpms:
-            if name == forbidden_package["name"]:
-                invalid_sigkey_rpms.append(forbidden_package)
+        for pkgset in package_sets:
+            for forbidden_package in pkgset["global"].invalid_sigkey_rpms:
+                if name == forbidden_package["name"]:
+                    invalid_sigkey_rpms.setdefault(
+                        pkgset["global"].sigkey_ordering, []
+                    ).append(forbidden_package)
 
     if invalid_sigkey_rpms:
-        package_sets["global"].raise_invalid_sigkeys_exception(
-            invalid_sigkey_rpms)
+        package_sets["global"].raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
 
 
 def _format_packages(pkgs):
@@ -137,12 +139,13 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
             # already on the whitelist.
             package_names = set(p.rsplit('-', 2)[0] for p in package_whitelist)
             for i in get_valid_arches(arch, multilib=multilib, add_noarch=True, add_src=True):
-                for rpm_obj in package_sets[arch].rpms_by_arch.get(i, []):
-                    if rpm_obj.name in package_names:
-                        # We already have a package with this name in the whitelist, skip it.
-                        continue
-                    package_whitelist.add(
-                        '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
+                for pkgset in package_sets:
+                    for rpm_obj in pkgset[arch].rpms_by_arch.get(i, []):
+                        if rpm_obj.name in package_names:
+                            # We already have a package with this name in the whitelist, skip it.
+                            continue
+                        package_whitelist.add(
+                            '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
 
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
