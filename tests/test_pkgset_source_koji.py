@@ -208,6 +208,12 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         pap.return_value = expected
         expected['global'] = pgp.return_value
 
+        def mock_create_arch_repos(compose, path_prefix, paths):
+            for arch in compose.get_arches():
+                paths[arch] = "/repo/for/" + arch
+
+        car.side_effect = mock_create_arch_repos
+
         pkgsets = source_koji.get_pkgset_from_koji(self.compose, self.koji_wrapper, '/prefix')
 
         self.assertItemsEqual(
@@ -220,13 +226,26 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
                                     EVENT_INFO)])
         self.assertEqual(pap.call_args_list,
                          [mock.call(self.compose, '/prefix', pgp.return_value)])
-        self.assertEqual(gcgrc.call_args_list,
-                         [mock.call(self.compose, '/prefix')])
+        global_repo = os.path.join(self.topdir, "work/global/repo")
+        self.assertEqual(
+            gcgrc.call_args_list, [mock.call(self.compose, '/prefix', global_repo)]
+        )
         self.assertEqual(rcgr.call_args_list,
                          [mock.call(self.compose, gcgrc.return_value)])
-        self.assertItemsEqual(car.call_args_list, [mock.call(self.compose, '/prefix')])
+        self.assertItemsEqual(
+            car.call_args_list,
+            [mock.call(self.compose, '/prefix', pkgsets.paths)],
+        )
 
-        self.assertEqual(pkgsets, expected)
+        self.assertEqual(pkgsets.package_sets, expected)
+        self.assertEqual(
+            pkgsets.paths,
+            {
+                "amd64": "/repo/for/amd64",
+                "global": global_repo,
+                "x86_64": "/repo/for/x86_64",
+            }
+        )
 
     def test_get_koji_modules(self):
         mock_build_ids = [{'id': 1065873, 'name': 'testmodule2-master_dash-20180406051653.96c371af'}]

@@ -218,7 +218,7 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def package_list(self, arch=None, variant=None, pkg_type=None, create_dir=True):
+    def package_list(self, arch=None, variant=None, pkgset=None, pkg_type=None, create_dir=True):
         """
         Examples:
             work/x86_64/package_list/x86_64.conf
@@ -230,6 +230,8 @@ class WorkPaths(object):
             file_name = "%s.%s" % (variant, arch)
         else:
             file_name = "%s" % arch
+        if pkgset:
+            file_name += "." + pkgset.name
         if pkg_type is not None:
             file_name += ".%s" % pkg_type
         file_name += ".conf"

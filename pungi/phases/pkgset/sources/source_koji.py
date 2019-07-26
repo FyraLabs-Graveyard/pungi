@@ -30,7 +30,7 @@ from pungi.arch import getBaseArch
 from pungi.util import retry, find_old_compose
 from pungi import Modulemd
 
-from pungi.phases.pkgset.common import materialize_pkgset, get_all_arches
+from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
 from pungi.phases.gather import get_packages_to_gather
 
 import pungi.phases.pkgset.source
@@ -190,9 +190,7 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     event_info = get_koji_event_info(compose, koji_wrapper)
     pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
 
-    package_sets = materialize_pkgset(compose, pkgset_global, path_prefix)
-
-    return package_sets
+    return MaterializedPackageSet.create(compose, pkgset_global, path_prefix)
 
 
 def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=False):

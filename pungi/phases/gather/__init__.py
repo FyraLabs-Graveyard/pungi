@@ -656,8 +656,7 @@ def get_system_release_packages(compose, arch, variant, package_sets):
     system_release_packages = set()
 
     for pkgset in package_sets or []:
-        for i in pkgset.get(arch, []):
-            pkg = pkgset[arch][i]
+        for pkg in pkgset.iter_packages(arch):
             if pkg.is_system_release:
                 system_release_packages.add(pkg)
 

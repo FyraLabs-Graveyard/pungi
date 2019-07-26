@@ -94,9 +94,9 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         "Writing pungi config (arch: %s, variant: %s): %s", arch, variant, pungi_cfg
     )
 
-    repos = {
-        "pungi-repo": compose.paths.work.arch_repo(arch=arch),
-    }
+    repos = {}
+    for i, pkgset in enumerate(package_sets or []):
+        repos["pungi-repo-%d" % i] = pkgset.paths[arch]
     if compose.has_comps:
         repos["comps-repo"] = compose.paths.work.comps_repo(arch=arch, variant=variant)
     if variant.type == "optional":

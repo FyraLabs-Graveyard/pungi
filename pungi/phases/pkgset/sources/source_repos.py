@@ -23,7 +23,7 @@ import pungi.phases.pkgset.pkgsets
 from pungi.util import makedirs
 from pungi.wrappers.pungi import PungiWrapper
 
-from pungi.phases.pkgset.common import materialize_pkgset, get_all_arches
+from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
 from pungi.phases.gather import get_prepopulate_packages, get_packages_to_gather
 from pungi.linker import LinkerPool
 
@@ -112,7 +112,7 @@ def get_pkgset_from_repos(compose):
     flist = sorted(set(flist))
     pkgset_global = populate_global_pkgset(compose, flist, path_prefix)
 
-    package_sets = materialize_pkgset(compose, pkgset_global, path_prefix)
+    package_sets = MaterializedPackageSet.create(compose, pkgset_global, path_prefix)
 
     return package_sets, path_prefix
 

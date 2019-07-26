@@ -13,6 +13,7 @@ except ImportError:
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases import gather
+from pungi.phases.pkgset.common import MaterializedPackageSet
 from pungi.phases.gather import _mk_pkg_map
 from tests import helpers
 
@@ -272,6 +273,10 @@ class TestGatherWrapper(helpers.PungiTestCase):
                        expected_lp_packages, path_prefix='/build')])
 
 
+def _make_materialized_pkgsets(pkgsets):
+    return [MaterializedPackageSet(pkgsets, {})]
+
+
 class TestGetSystemRelease(unittest.TestCase):
     def setUp(self):
         self.compose = mock.Mock()
@@ -289,15 +294,19 @@ class TestGetSystemRelease(unittest.TestCase):
 
     def test_no_arch_in_package_set(self):
         self.assertEqual(
-            gather.get_system_release_packages(self.compose, 'x86_64',
-                                               self.variant, {}),
+            gather.get_system_release_packages(
+                self.compose, 'x86_64', self.variant, _make_materialized_pkgsets({})
+            ),
             (set(), set())
         )
 
     def test_no_system_release_package(self):
         pkgset = MockPackageSet(MockPkg('/build/bash-1.0.0-1.x86_64.rpm'))
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+            self.compose,
+            "x86_64",
+            self.variant,
+            _make_materialized_pkgsets({"x86_64": pkgset}),
         )
 
         self.assertItemsEqual(packages, [])
@@ -308,7 +317,10 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/dummy-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+            self.compose,
+            "x86_64",
+            self.variant,
+            _make_materialized_pkgsets({"x86_64": pkgset}),
         )
 
         self.assertItemsEqual(packages, [('dummy', None)])
@@ -320,7 +332,10 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-server-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+            self.compose,
+            "x86_64",
+            self.variant,
+            [MaterializedPackageSet({"x86_64": pkgset}, {})],
         )
 
         self.assertItemsEqual(packages, [('system-release-server', None)])
@@ -332,7 +347,10 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-bar-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, "x86_64", self.variant, [{"x86_64": pkgset}]
+            self.compose,
+            "x86_64",
+            self.variant,
+            [MaterializedPackageSet({"x86_64": pkgset}, {})],
         )
 
         # In this case a random package is picked, so let's check that both
@@ -348,7 +366,10 @@ class TestGetSystemRelease(unittest.TestCase):
             MockPkg('/build/system-release-client-1.0.0-1.x86_64.rpm', is_system_release=True),
         )
         packages, filter_packages = gather.get_system_release_packages(
-            self.compose, "x86_64", self.addon, [{"x86_64": pkgset}]
+            self.compose,
+            "x86_64",
+            self.addon,
+            [MaterializedPackageSet({"x86_64": pkgset}, {})],
         )
 
         self.assertItemsEqual(packages, [('system-release-server', None)])
@@ -498,7 +519,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
             compose,
             "x86_64",
             compose.variants["Server"], "comps",
-            package_sets=[{"x86_64": pkgset}],
+            package_sets=[MaterializedPackageSet({"x86_64": pkgset}, {})],
         )
         self.assertItemsEqual(packages, [('system-release-server', None)])
         self.assertItemsEqual(groups, [])
@@ -522,7 +543,7 @@ class TestGetVariantPackages(helpers.PungiTestCase):
             "x86_64",
             compose.variants["Server"],
             "comps",
-            package_sets=[{"x86_64": pkgset}],
+            package_sets=[MaterializedPackageSet({"x86_64": pkgset}, {})],
         )
         self.assertItemsEqual(packages, [])
         self.assertItemsEqual(groups, [])
