@@ -26,11 +26,11 @@ from kobo.shortcuts import force_list, relative_path
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
-from pungi.arch import get_valid_arches, getBaseArch
-from pungi.util import is_arch_multilib, retry, find_old_compose
+from pungi.arch import getBaseArch
+from pungi.util import retry, find_old_compose
 from pungi import Modulemd
 
-from pungi.phases.pkgset.common import materialize_pkgset
+from pungi.phases.pkgset.common import materialize_pkgset, get_all_arches
 from pungi.phases.gather import get_packages_to_gather
 
 import pungi.phases.pkgset.source
@@ -492,11 +492,7 @@ def _find_old_file_cache_path(compose):
 
 
 def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
-    all_arches = set(["src"])
-    for arch in compose.get_arches():
-        is_multilib = is_arch_multilib(compose.conf, arch)
-        arches = get_valid_arches(arch, is_multilib)
-        all_arches.update(arches)
+    all_arches = get_all_arches(compose)
 
     # List of compose tags from which we create this compose
     compose_tags = []

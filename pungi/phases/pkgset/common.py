@@ -138,3 +138,12 @@ def materialize_pkgset(compose, pkgset_global, path_prefix):
     create_arch_repos(compose, path_prefix)
 
     return package_sets
+
+
+def get_all_arches(compose):
+    all_arches = set(["src"])
+    for arch in compose.get_arches():
+        is_multilib = is_arch_multilib(compose.conf, arch)
+        arches = get_valid_arches(arch, is_multilib)
+        all_arches.update(arches)
+    return all_arches

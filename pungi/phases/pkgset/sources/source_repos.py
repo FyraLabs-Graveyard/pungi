@@ -20,11 +20,10 @@ from six.moves import cPickle as pickle
 from kobo.shortcuts import run
 
 import pungi.phases.pkgset.pkgsets
-from pungi.arch import get_valid_arches
-from pungi.util import makedirs, is_arch_multilib
+from pungi.util import makedirs
 from pungi.wrappers.pungi import PungiWrapper
 
-from pungi.phases.pkgset.common import materialize_pkgset
+from pungi.phases.pkgset.common import materialize_pkgset, get_all_arches
 from pungi.phases.gather import get_prepopulate_packages, get_packages_to_gather
 from pungi.linker import LinkerPool
 
@@ -119,11 +118,7 @@ def get_pkgset_from_repos(compose):
 
 
 def populate_global_pkgset(compose, file_list, path_prefix):
-    ALL_ARCHES = set(["src"])
-    for arch in compose.get_arches():
-        is_multilib = is_arch_multilib(compose.conf, arch)
-        arches = get_valid_arches(arch, is_multilib)
-        ALL_ARCHES.update(arches)
+    ALL_ARCHES = get_all_arches(compose)
 
     global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "packages.pickle")
 
