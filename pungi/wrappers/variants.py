@@ -263,7 +263,7 @@ class Variant(object):
         self.parent = parent
         self.is_empty = is_empty
 
-        self.pkgset = None
+        self.pkgsets = set()
         self.arch_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.nsvc_to_pkgset = {}

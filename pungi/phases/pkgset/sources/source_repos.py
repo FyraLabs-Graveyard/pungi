@@ -112,9 +112,9 @@ def get_pkgset_from_repos(compose):
     flist = sorted(set(flist))
     pkgset_global = populate_global_pkgset(compose, flist, path_prefix)
 
-    package_sets = MaterializedPackageSet.create(compose, pkgset_global, path_prefix)
+    package_set = MaterializedPackageSet.create(compose, pkgset_global, path_prefix)
 
-    return package_sets, path_prefix
+    return [package_set], path_prefix
 
 
 def populate_global_pkgset(compose, file_list, path_prefix):

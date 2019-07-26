@@ -421,14 +421,11 @@ class KojiPackageSet(PackageSetBase):
                        % (rpm_info, self.sigkey_ordering, paths))
         return None
 
-    def populate(
-        self, tag, event=None, inherit=True, logfile=None, include_packages=None,
-    ):
+    def populate(self, tag, event=None, inherit=True, include_packages=None):
         """Populate the package set with packages from given tag.
 
         :param event: the Koji event to query at (or latest if not given)
         :param inherit: whether to enable tag inheritance
-        :param logfile: path to file where package source tags should be logged
         :param include_packages: an iterable of tuples (package name, arch) that should
                                  be included, all others are skipped.
         """
@@ -503,18 +500,6 @@ class KojiPackageSet(PackageSetBase):
                                    if rpm["name"] in self.packages]
             if invalid_sigkey_rpms:
                 self.raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
-
-        # Create a log with package NEVRAs and the tag they are coming from
-        if logfile:
-            with open(logfile, 'w') as f:
-                for rpm in rpms:
-                    build = builds_by_id[rpm['build_id']]
-                    if 'tag_name' in build and 'tag_id' in build:
-                        f.write('{name}-{ep}:{version}-{release}.{arch}: {tag} [{tag_id}]\n'.format(
-                            tag=build['tag_name'], tag_id=build['tag_id'], ep=rpm['epoch'] or 0, **rpm))
-                    else:
-                        f.write('{name}-{ep}:{version}-{release}.{arch}: [pkgset_koji_builds]\n'.format(
-                            ep=rpm['epoch'] or 0, **rpm))
 
         self.log_info("[DONE ] %s" % msg)
         return result

@@ -111,17 +111,27 @@ def run_create_global_repo(compose, cmd, logfile):
     compose.log_info("[DONE ] %s", msg)
 
 
-def create_arch_repos(compose, path_prefix, paths, pkgset):
+def create_arch_repos(compose, path_prefix, paths, pkgset, mmds):
     run_in_threads(
         _create_arch_repo,
-        [(compose, arch, path_prefix, paths, pkgset) for arch in compose.get_arches()],
+        [
+            (
+                compose,
+                arch,
+                path_prefix,
+                paths,
+                pkgset,
+                mmds.get(arch) if mmds else None,
+            )
+            for arch in compose.get_arches()
+        ],
         threads=compose.conf["createrepo_num_threads"],
     )
 
 
 def _create_arch_repo(worker_thread, args, task_num):
     """Create a single pkgset repo for given arch."""
-    compose, arch, path_prefix, paths, pkgset = args
+    compose, arch, path_prefix, paths, pkgset, mmd = args
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
@@ -149,12 +159,13 @@ def _create_arch_repo(worker_thread, args, task_num):
         show_cmd=True,
     )
     # Add modulemd to the repo for all modules in all variants on this architecture.
-    if Modulemd:
-        mod_index = collect_module_defaults(compose.paths.work.module_defaults_dir())
-
-        for variant in compose.get_variants(arch=arch):
-            for module_stream in variant.arch_mmds.get(arch, {}).values():
-                mod_index.add_module_stream(module_stream)
+    if Modulemd and mmd:
+        names = set(x.get_module_name() for x in mmd)
+        mod_index = collect_module_defaults(
+            compose.paths.work.module_defaults_dir(), names
+        )
+        for x in mmd:
+            mod_index.add_module_stream(x)
         add_modular_metadata(
             repo,
             repo_dir,
@@ -199,7 +210,7 @@ class MaterializedPackageSet(object):
                 yield self.package_sets[arch][file_path]
 
     @classmethod
-    def create(klass, compose, pkgset_global, path_prefix):
+    def create(klass, compose, pkgset_global, path_prefix, mmd=None):
         """Create per-arch pkgsets and create repodata for each arch."""
         repo_dir_global = compose.paths.work.pkgset_repo(
             pkgset_global.name, arch="global"
@@ -221,7 +232,7 @@ class MaterializedPackageSet(object):
 
         t.join()
 
-        create_arch_repos(compose, path_prefix, paths, pkgset_global)
+        create_arch_repos(compose, path_prefix, paths, pkgset_global, mmd)
 
         return klass(package_sets, paths)
 

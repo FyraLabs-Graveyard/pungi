@@ -15,7 +15,6 @@
 
 
 import os
-from six.moves import cPickle as pickle
 import json
 import re
 from itertools import groupby
@@ -188,9 +187,9 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
 
 def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     event_info = get_koji_event_info(compose, koji_wrapper)
-    pkgset_global = populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
+    pkgsets = populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
 
-    return MaterializedPackageSet.create(compose, pkgset_global, path_prefix)
+    return pkgsets
 
 
 def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=False):
@@ -248,7 +247,9 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
     return nsvc
 
 
-def _get_modules_from_koji(compose, koji_wrapper, event, variant, variant_tags):
+def _get_modules_from_koji(
+    compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+):
     """
     Loads modules for given `variant` from koji `session`, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -275,6 +276,10 @@ def _get_modules_from_koji(compose, koji_wrapper, event, variant, variant_tags):
             # Store mapping NSVC --> koji_tag into variant.
             # This is needed in createrepo phase where metadata is exposed by producmd
             variant.module_uid_to_koji_tag[nsvc] = tag
+
+            tag_to_mmd.setdefault(tag, {})
+            for arch in variant.arch_mmds:
+                tag_to_mmd[tag].setdefault(arch, set()).add(variant.arch_mmds[arch][nsvc])
 
             module_msg = (
                 "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' "
@@ -365,7 +370,9 @@ def filter_by_whitelist(compose, module_builds, input_modules, expected_modules)
     return modules_to_keep
 
 
-def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, variant_tags):
+def _get_modules_from_koji_tags(
+    compose, koji_wrapper, event_id, variant, variant_tags, tag_to_mmd
+):
     """
     Loads modules for given `variant` from Koji, adds them to
     the `variant` and also to `variant_tags` dict.
@@ -452,6 +459,10 @@ def _get_modules_from_koji_tags(compose, koji_wrapper, event_id, variant, varian
             # This is needed in createrepo phase where metadata is exposed by producmd
             variant.module_uid_to_koji_tag[nsvc] = module_tag
 
+            tag_to_mmd.setdefault(module_tag, {})
+            for arch in variant.arch_mmds:
+                tag_to_mmd[module_tag].setdefault(arch, set()).add(variant.arch_mmds[arch][nsvc])
+
             module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
                 variant=variant, tag=module_tag, module=build["nvr"])
             compose.log_info("%s" % module_msg)
@@ -524,19 +535,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # there are some packages with invalid sigkeys, it raises an exception.
     allow_invalid_sigkeys = compose.conf["gather_method"] == "deps"
 
+    tag_to_mmd = {}
+
     for variant in compose.all_variants.values():
-        # pkgset storing the packages belonging to this particular variant.
-        variant.pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-            "TODO",
-            koji_wrapper,
-            compose.conf["sigkeys"],
-            logger=compose._logger,
-            arches=all_arches,
-        )
         variant_tags[variant] = []
 
-        # Get the modules from Koji tag or from PDC, depending on
-        # configuration.
+        # Get the modules from Koji tag
         modular_koji_tags = variant.get_modular_koji_tags()
         if (variant.modules or modular_koji_tags) and not Modulemd:
             raise ValueError(
@@ -545,20 +549,15 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 "modules.")
 
         if modular_koji_tags or (compose.conf["pkgset_koji_module_tag"] and variant.modules):
+            # List modules tagged in particular tags.
             _get_modules_from_koji_tags(
-                compose,
-                koji_wrapper,
-                event,
-                variant,
-                variant_tags,
+                compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
             )
         elif variant.modules:
+            # Search each module in Koji separately. Tagging does not come into
+            # play here.
             _get_modules_from_koji(
-                compose,
-                koji_wrapper,
-                event,
-                variant,
-                variant_tags,
+                compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
             )
 
         # Ensure that every tag added to `variant_tags` is added also to
@@ -567,62 +566,38 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             if variant_tag not in compose_tags:
                 compose_tags.append(variant_tag)
 
-        if not variant_tags[variant] and variant.modules is None:
-            variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
+        # TODO check if this works for Fedora Modular variant
+        variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
 
     # Add global tag(s) if supplied.
-    pkgset_koji_tags = []
-    if 'pkgset_koji_tag' in compose.conf:
-        pkgset_koji_tags = force_list(compose.conf["pkgset_koji_tag"])
-        compose_tags.extend(pkgset_koji_tags)
+    pkgset_koji_tags = force_list(compose.conf.get("pkgset_koji_tag", []))
+    compose_tags.extend(pkgset_koji_tags)
 
     inherit = compose.conf["pkgset_koji_inherit"]
     inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
 
-    global_pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-        "TODO",
-        koji_wrapper,
-        compose.conf["sigkeys"],
-        logger=compose._logger,
-        arches=all_arches,
-    )
-
-    old_file_cache_path = _find_old_file_cache_path(compose)
-    old_file_cache = None
-    if old_file_cache_path:
-        compose.log_info("Reusing old PKGSET file cache from %s" % old_file_cache_path)
-        old_file_cache = pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(
-            old_file_cache_path
-        )
-        global_pkgset.set_old_file_cache(old_file_cache)
+    pkgsets = []
 
     # Get package set for each compose tag and merge it to global package
     # list. Also prepare per-variant pkgset, because we do not have list
     # of binary RPMs in module definition - there is just list of SRPMs.
     for compose_tag in compose_tags:
-        compose.log_info(
-            "Populating the global package set from tag '%s'" % compose_tag
-        )
+        compose.log_info("Loading package set for tag %s", compose_tag)
         if compose_tag in pkgset_koji_tags:
             extra_builds = force_list(compose.conf.get("pkgset_koji_builds", []))
         else:
             extra_builds = []
+
         pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
-            "TODO",
+            compose_tag,
             koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
             arches=all_arches, packages=packages_to_gather,
             allow_invalid_sigkeys=allow_invalid_sigkeys,
             populate_only_packages=populate_only_packages_to_gather,
             cache_region=compose.cache_region,
             extra_builds=extra_builds)
-        if old_file_cache:
-            pkgset.set_old_file_cache(old_file_cache)
-        # Create a filename for log with package-to-tag mapping. The tag
-        # name is included in filename, so any slashes in it are replaced
-        # with underscores just to be safe.
-        logfile = compose.paths.log.log_file(
-            None, "packages_from_%s" % compose_tag.replace("/", "_")
-        )
+        # TODO find cache for this tag
+
         is_traditional = compose_tag in compose.conf.get("pkgset_koji_tag", [])
         should_inherit = inherit if is_traditional else inherit_modules
 
@@ -650,7 +625,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             compose_tag,
             event,
             inherit=should_inherit,
-            logfile=logfile,
             include_packages=modular_packages,
         )
         for variant in compose.all_variants.values():
@@ -659,34 +633,23 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 # If it's a modular tag, store the package set for the module.
                 for nsvc, koji_tag in variant.module_uid_to_koji_tag.items():
                     if compose_tag == koji_tag:
+                        # TODO check if this is still needed
+                        # It should not be needed, we can get package sets by name.
                         variant.nsvc_to_pkgset[nsvc] = pkgset
 
                 # Optimization for case where we have just single compose
                 # tag - we do not have to merge in this case...
-                if len(variant_tags[variant]) == 1:
-                    variant.pkgset = pkgset
-                else:
-                    variant.pkgset.fast_merge(pkgset)
-        # Optimization for case where we have just single compose
-        # tag - we do not have to merge in this case...
-        if len(compose_tags) == 1:
-            global_pkgset = pkgset
-        else:
-            global_pkgset.fast_merge(pkgset)
+                variant.pkgsets.add(compose_tag)
+        # TODO pickle pkgset to disk
+        # TODO save pkgset file list
+        # TODO save pkgset file cache
+        pkgsets.append(
+            MaterializedPackageSet.create(
+                compose, pkgset, path_prefix, mmd=tag_to_mmd.get(pkgset.name)
+            ),
+        )
 
-    global_pkgset_path = os.path.join(
-        compose.paths.work.topdir(arch="global"), "pkgset_global.pickle"
-    )
-    with open(global_pkgset_path, "wb") as f:
-        data = pickle.dumps(global_pkgset, protocol=pickle.HIGHEST_PROTOCOL)
-        f.write(data)
-
-    # write global package list
-    global_pkgset.save_file_list(
-        compose.paths.work.package_list(arch="global"),
-        remove_path_prefix=path_prefix)
-    global_pkgset.save_file_cache(compose.paths.work.pkgset_file_cache())
-    return global_pkgset
+    return pkgsets
 
 
 def get_koji_event_info(compose, koji_wrapper):

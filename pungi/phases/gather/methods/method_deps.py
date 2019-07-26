@@ -96,7 +96,8 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     repos = {}
     for i, pkgset in enumerate(package_sets or []):
-        repos["pungi-repo-%d" % i] = pkgset.paths[arch]
+        if not variant.pkgsets or pkgset.name in variant.pkgsets:
+            repos["pungi-repo-%d" % i] = pkgset.paths[arch]
     if compose.has_comps:
         repos["comps-repo"] = compose.paths.work.comps_repo(arch=arch, variant=variant)
     if variant.type == "optional":
@@ -118,41 +119,12 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
             'No packages included in %s.%s (no comps groups, no input packages, no prepopulate)'
             % (variant.uid, arch))
 
-    package_whitelist = set()
-    if variant.pkgset:
-        multilib = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
-        for i in get_valid_arches(arch, multilib=multilib, add_noarch=True, add_src=True):
-            for rpm_obj in variant.pkgset.rpms_by_arch.get(i, []):
-                package_whitelist.add(
-                    '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
-
-        # If the variant contains just modules or just comps groups, the pkgset
-        # is sufficient and contains all necessary packages.
-
-        has_additional_pkgs = get_arch_variant_data(
-            compose.conf, "additional_packages", arch, variant
-        )
-        has_traditional_content = variant.groups or has_additional_pkgs
-        if has_traditional_content and variant.modules is not None and package_sets:
-            # The variant is hybrid. The modular builds are already available.
-            # We need to add packages from base tag, but only if they are not
-            # already on the whitelist.
-            package_names = set(p.rsplit('-', 2)[0] for p in package_whitelist)
-            for i in get_valid_arches(arch, multilib=multilib, add_noarch=True, add_src=True):
-                for pkgset in package_sets:
-                    for rpm_obj in pkgset[arch].rpms_by_arch.get(i, []):
-                        if rpm_obj.name in package_names:
-                            # We already have a package with this name in the whitelist, skip it.
-                            continue
-                        package_whitelist.add(
-                            '{0.name}-{1}:{0.version}-{0.release}'.format(rpm_obj, rpm_obj.epoch or 0))
-
     pungi_wrapper.write_kickstart(
         ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
         exclude_packages=filter_packages_str,
         lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes,
         multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist,
-        prepopulate=prepopulate, package_whitelist=package_whitelist)
+        prepopulate=prepopulate)
 
 
 def resolve_deps(compose, arch, variant, source_name=None):
