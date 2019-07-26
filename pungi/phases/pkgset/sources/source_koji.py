@@ -575,15 +575,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # Add global tag(s) if supplied.
     pkgset_koji_tags = []
     if 'pkgset_koji_tag' in compose.conf:
-        if compose.conf["pkgset_koji_tag"] == "not-used":
-            # The magic value is used for modular composes to avoid errors
-            # about missing option. It should be removed in next version.
-            compose.log_warning('pkgset_koji_tag is set to "not-used", but the '
-                                'option is no longer required. Remove it from '
-                                'the configuration.')
-        else:
-            pkgset_koji_tags = force_list(compose.conf["pkgset_koji_tag"])
-            compose_tags.extend(pkgset_koji_tags)
+        pkgset_koji_tags = force_list(compose.conf["pkgset_koji_tag"])
+        compose_tags.extend(pkgset_koji_tags)
 
     inherit = compose.conf["pkgset_koji_inherit"]
     inherit_modules = compose.conf["pkgset_koji_inherit_modules"]
