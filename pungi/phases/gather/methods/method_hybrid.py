@@ -100,13 +100,13 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         return self.package_maps[arch]
 
     def _prepare_packages(self):
-        repo_path = self.compose.paths.work.arch_repo(arch=self.arch)
-        md = cr.Metadata()
-        md.locate_and_load_xml(repo_path)
-        for key in md.keys():
-            pkg = md.get(key)
-            if pkg.arch in self.valid_arches:
-                self.packages[_fmt_nevra(pkg, arch=pkg.arch)] = FakePackage(pkg)
+        for repo_path in self.get_repos():
+            md = cr.Metadata()
+            md.locate_and_load_xml(repo_path)
+            for key in md.keys():
+                pkg = md.get(key)
+                if pkg.arch in self.valid_arches:
+                    self.packages[_fmt_nevra(pkg, arch=pkg.arch)] = FakePackage(pkg)
 
     def _get_package(self, nevra):
         if not self.packages:
@@ -183,6 +183,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         **kwargs
     ):
         self.arch = arch
+        self.variant = variant
         self.valid_arches = get_valid_arches(arch, multilib=True)
         self.package_sets = package_sets
 
@@ -220,8 +221,16 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         )
         # maybe check invalid sigkeys
 
+    def get_repos(self):
+        repos = []
+        for pkgset in self.package_sets:
+            if self.variant.pkgsets and pkgset.name not in self.variant.pkgsets:
+                continue
+            repos.append(pkgset.paths[self.arch])
+        return repos
+
     def run_solver(self, variant, arch, packages, platform, filter_packages):
-        repos = [self.compose.paths.work.arch_repo(arch=arch)]
+        repos = self.get_repos()
         results = set()
         result_modules = set()
 
