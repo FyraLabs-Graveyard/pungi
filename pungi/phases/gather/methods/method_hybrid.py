@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
+import gzip
 import os
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -22,7 +23,7 @@ import kobo.rpmlib
 from kobo.shortcuts import run
 
 import pungi.phases.gather.method
-from pungi import multilib_dnf
+from pungi import Modulemd, multilib_dnf
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
 from pungi.util import (
@@ -404,11 +405,40 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         return packages
 
 
+def iter_platforms_in_repo(url):
+    """Find all platform streams that any module in give repo requires at runtime.
+    Yields lists of stream names (possible empty).
+    """
+    repomd = cr.Repomd(os.path.join(url, "repodata/repomd.xml"))
+    for rec in repomd.records:
+        if rec.type != "modules":
+            continue
+        # No with statement on Python 2.6 for GzipFile...
+        gzipped_file = gzip.GzipFile(os.path.join(url, rec.location_href), "r")
+        mod_index = Modulemd.ModuleIndex.new()
+        mod_index.update_from_string(gzipped_file.read(), False)
+        gzipped_file.close()
+        for module_name in mod_index.get_module_names():
+            module = mod_index.get_module(module_name)
+            for module_stream in module.get_all_streams():
+                module_stream = module_stream.upgrade(2)
+                for dep in module_stream.get_dependencies():
+                    yield dep.get_runtime_streams("platform")
+
+
+def get_platform_from_lookasides(compose, variant, arch):
+    """Find a set of all platform dependencies in all lookaside repos."""
+    platforms = set()
+    for repo in pungi.phases.gather.get_lookaside_repos(compose, arch, variant):
+        platforms.update(iter_platforms_in_repo(fus._prep_path(repo)))
+    return platforms
+
+
 def get_platform(compose, variant, arch):
     """Find platform stream for modules. Raises RuntimeError if there are
     conflicting requests.
     """
-    platforms = set()
+    platforms = get_platform_from_lookasides(compose, variant, arch)
 
     for var in compose.all_variants.values():
         for mmd in var.arch_mmds.get(arch, {}).values():
