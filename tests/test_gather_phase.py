@@ -1063,7 +1063,7 @@ class TestUpdateLookasideConfig(helpers.PungiTestCase):
                          [mock.call(self.compose,
                                     self.compose.variants['Everything'],
                                     'x86_64',
-                                    self.pkg_map)])
+                                    self.pkg_map, None)])
         self.assertEqual(mock_update_config.call_args_list,
                          [mock.call(self.compose, 'Server', 'x86_64',
                                     mock_make_repo.return_value)])
@@ -1078,6 +1078,7 @@ class TestMakeLookasideRepo(helpers.PungiTestCase):
         self.arch = 'x86_64'
         self.repodir = self.compose.paths.work.lookaside_repo(self.arch, self.variant, create_dir=False)
         self.pkglist = self.compose.paths.work.lookaside_package_list(self.arch, self.variant)
+        self.package_sets = self._make_pkgset_phase(["p1", "p2"]).package_sets
 
     @mock.patch('pungi.phases.gather.run')
     def test_existing_repo(self, mock_run):
@@ -1096,16 +1097,11 @@ class TestMakeLookasideRepo(helpers.PungiTestCase):
                                'pkg/pkg-1.0-1.src.rpm'])
 
         self.assertEqual(self.repodir, repopath)
-        print(MockCR.return_value.get_createrepo_cmd.call_args_list)
-        print([mock.call(path_prefix, update=True, database=True, skip_stat=True,
-                         pkglist=self.pkglist, outputdir=repopath,
-                         baseurl="file://%s" % path_prefix, workers=3,
-                         update_md_path=self.compose.paths.work.arch_repo(self.arch))])
         self.assertEqual(MockCR.return_value.get_createrepo_cmd.call_args_list,
                          [mock.call(path_prefix, update=True, database=True, skip_stat=True,
                                     pkglist=self.pkglist, outputdir=repopath,
                                     baseurl="file://%s" % path_prefix, workers=3,
-                                    update_md_path=self.compose.paths.work.arch_repo(self.arch))])
+                                    update_md_path=self.compose.paths.work.pkgset_repo("p2", self.arch))])
         self.assertEqual(mock_run.call_args_list,
                          [mock.call(MockCR.return_value.get_createrepo_cmd.return_value,
                                     logfile=os.path.join(
@@ -1134,7 +1130,9 @@ class TestMakeLookasideRepo(helpers.PungiTestCase):
 
         MockKW.return_value.koji_module.config.topdir = '/tmp/packages'
 
-        repopath = gather._make_lookaside_repo(self.compose, self.variant, self.arch, pkg_map)
+        repopath = gather._make_lookaside_repo(
+            self.compose, self.variant, self.arch, pkg_map, self.package_sets
+        )
 
         self.assertCorrect(repopath, '/tmp/packages/', MockCR, mock_run)
 
@@ -1163,6 +1161,8 @@ class TestMakeLookasideRepo(helpers.PungiTestCase):
             }
         }
 
-        repopath = gather._make_lookaside_repo(self.compose, self.variant, self.arch, pkg_map)
+        repopath = gather._make_lookaside_repo(
+            self.compose, self.variant, self.arch, pkg_map, self.package_sets
+        )
 
         self.assertCorrect(repopath, dl_dir + '/download/', MockCR, mock_run)

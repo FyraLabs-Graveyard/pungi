@@ -328,7 +328,7 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
     return addon_pkgs, move_to_parent_pkgs, removed_pkgs
 
 
-def _make_lookaside_repo(compose, variant, arch, pkg_map):
+def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
     """
     Create variant lookaside repo for given variant and architecture with
     packages from the map. If the repo repo already exists, then nothing will
@@ -360,12 +360,16 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map):
                 f.write('%s\n' % pkg)
 
     cr = CreaterepoWrapper(compose.conf['createrepo_c'])
+    update_metadata = None
+    if package_sets:
+        pkgset = package_sets[-1]
+        update_metadata = compose.paths.work.pkgset_repo(pkgset.name, arch)
     cmd = cr.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True,
                                 pkglist=pkglist,
                                 outputdir=repo,
                                 baseurl="file://%s" % path_prefix,
                                 workers=compose.conf["createrepo_num_workers"],
-                                update_md_path=compose.paths.work.arch_repo(arch))
+                                update_md_path=update_metadata)
     run(cmd,
         logfile=compose.paths.log.log_file(arch, "lookaside_repo_%s" % (variant.uid)),
         show_cmd=True)
@@ -398,7 +402,7 @@ def _update_config(compose, variant_uid, arch, repo):
     lookasides.append(('^%s$' % variant_uid, {arch: repo}))
 
 
-def _update_lookaside_config(compose, variant, arch, pkg_map):
+def _update_lookaside_config(compose, variant, arch, pkg_map, package_sets=None):
     """
     Make sure lookaside repo for all variants that the given one depends on
     exist, and that configuration is updated to use those repos.
@@ -411,7 +415,9 @@ def _update_lookaside_config(compose, variant, arch, pkg_map):
             compose.log_warning('[SKIP] Skipping lookaside from %s for %s.%s due to arch mismatch',
                                 lookaside_variant.uid, variant.uid, arch)
             continue
-        repo = _make_lookaside_repo(compose, lookaside_variant, arch, pkg_map)
+        repo = _make_lookaside_repo(
+            compose, lookaside_variant, arch, pkg_map, package_sets
+        )
         _update_config(compose, variant.uid, arch, repo)
 
 
@@ -435,7 +441,7 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             # Get lookaside repos for this variant from other variants. Based
             # on the ordering we already know that we have the packages from
             # there.
-            _update_lookaside_config(compose, variant, arch, result)
+            _update_lookaside_config(compose, variant, arch, result, package_sets)
 
             pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
             result.setdefault(arch, {})[variant.uid] = pkg_map
