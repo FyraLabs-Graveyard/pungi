@@ -66,7 +66,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -98,7 +98,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1", "p2"]))
 
         phase.run()
 
@@ -116,7 +116,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo',
+                       [self.topdir + "/work/x86_64/repo/p1",
+                        self.topdir + "/work/x86_64/repo/p2",
                         self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
@@ -127,7 +128,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
+                        self.topdir + "/work/amd64/repo/p2",
                         self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -138,7 +140,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
+                        self.topdir + "/work/amd64/repo/p2",
                         self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -170,7 +173,7 @@ class TestBuildinstallPhase(PungiTestCase):
         compose.variants['Server'].is_empty = True
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -184,7 +187,7 @@ class TestBuildinstallPhase(PungiTestCase):
         lorax = loraxCls.return_value
         lorax.get_lorax_cmd.assert_has_calls(
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -214,7 +217,7 @@ class TestBuildinstallPhase(PungiTestCase):
 
         get_volid.return_value = 'vol_id'
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -225,10 +228,10 @@ class TestBuildinstallPhase(PungiTestCase):
         # Obtained correct lorax commands.
         self.assertItemsEqual(
             loraxCls.return_value.get_buildinstall_cmd.mock_calls,
-            [mock.call('Test', '1', '1', self.topdir + '/work/x86_64/repo',
+            [mock.call('Test', '1', '1', [self.topdir + "/work/x86_64/repo/p1"],
                        self.topdir + '/work/x86_64/buildinstall',
                        buildarch='x86_64', is_final=True, volid='vol_id'),
-             mock.call('Test', '1', '1', self.topdir + '/work/amd64/repo',
+             mock.call('Test', '1', '1', [self.topdir + "/work/amd64/repo/p1"],
                        self.topdir + '/work/amd64/buildinstall',
                        buildarch='amd64', is_final=True, volid='vol_id')])
         self.assertItemsEqual(
@@ -270,7 +273,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -288,7 +291,7 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1.2.3', '1.2.3',
-                       [self.topdir + '/work/x86_64/repo',
+                       [self.topdir + "/work/x86_64/repo/p1",
                         self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
@@ -299,7 +302,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=3,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
@@ -310,7 +313,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=False, noupgrade=True,
@@ -347,7 +350,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -365,7 +368,7 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo',
+                       [self.topdir + "/work/x86_64/repo/p1",
                         self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
                        buildarch='x86_64', is_final=True, nomacboot=False, noupgrade=False,
@@ -376,7 +379,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
@@ -387,7 +390,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Client'],
                        self.topdir + '/work/amd64/buildinstall/Client',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=False,
@@ -402,6 +405,17 @@ class TestBuildinstallPhase(PungiTestCase):
             [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
+
+    def _make_pkgset_phase(self, names):
+        pkgsets = []
+        for name in names:
+            pkgset = mock.Mock(paths={})
+            for arch in ("x86_64", "amd64"):
+                pkgset.paths[arch] = os.path.join(
+                    self.topdir, "work", arch, "repo", name
+                )
+            pkgsets.append(pkgset)
+        return mock.Mock(package_sets=pkgsets)
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
@@ -424,7 +438,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -442,7 +456,7 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       ['http://localhost/work/x86_64/repo',
+                       ["http://localhost/work/x86_64/repo/p1",
                         'http://localhost/work/x86_64/comps_repo_Server'],
                        buildinstall_topdir + '/x86_64/Server/results',
                        buildarch='x86_64', is_final=True, nomacboot=True, noupgrade=True,
@@ -453,7 +467,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=buildinstall_topdir + '/x86_64/Server/logs'),
              mock.call('Test', '1', '1',
-                       ['http://localhost/work/amd64/repo',
+                       ["http://localhost/work/amd64/repo/p1",
                         'http://localhost/work/amd64/comps_repo_Server'],
                        buildinstall_topdir + '/amd64/Server/results',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -464,7 +478,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=buildinstall_topdir + '/amd64/Server/logs'),
              mock.call('Test', '1', '1',
-                       ['http://localhost/work/amd64/repo',
+                       ["http://localhost/work/amd64/repo/p1",
                         'http://localhost/work/amd64/comps_repo_Client'],
                        buildinstall_topdir + '/amd64/Client/results',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -503,7 +517,7 @@ class TestBuildinstallPhase(PungiTestCase):
         get_volid.return_value = 'vol_id'
         loraxCls.return_value.get_lorax_cmd.return_value = ['lorax', '...']
 
-        phase = BuildinstallPhase(compose)
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1"]))
 
         phase.run()
 
@@ -511,7 +525,7 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertItemsEqual(
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
-                       [self.topdir + '/work/x86_64/repo',
+                       [self.topdir + "/work/x86_64/repo/p1",
                         "http://example.com/repo1",
                         self.topdir + '/work/x86_64/comps_repo_Server'],
                        self.topdir + '/work/x86_64/buildinstall/Server',
@@ -523,7 +537,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/x86_64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         self.topdir + '/work/amd64/comps_repo_Server'],
                        self.topdir + '/work/amd64/buildinstall/Server',
                        buildarch='amd64', is_final=True, nomacboot=True, noupgrade=True,
@@ -534,7 +548,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Server-logs'),
              mock.call('Test', '1', '1',
-                       [self.topdir + '/work/amd64/repo',
+                       [self.topdir + "/work/amd64/repo/p1",
                         "http://example.com/repo2",
                         "http://example.com/repo3",
                         self.topdir + '/work/amd64/comps_repo_Client'],

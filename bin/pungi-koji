@@ -288,7 +288,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     # initialize all phases
     init_phase = pungi.phases.InitPhase(compose)
     pkgset_phase = pungi.phases.PkgsetPhase(compose)
-    buildinstall_phase = pungi.phases.BuildinstallPhase(compose)
+    buildinstall_phase = pungi.phases.BuildinstallPhase(compose, pkgset_phase)
     gather_phase = pungi.phases.GatherPhase(compose, pkgset_phase)
     extrafiles_phase = pungi.phases.ExtraFilesPhase(compose, pkgset_phase)
     createrepo_phase = pungi.phases.CreaterepoPhase(compose, pkgset_phase)

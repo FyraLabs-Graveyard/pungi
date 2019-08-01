@@ -39,7 +39,7 @@ from pungi.runroot import Runroot
 class BuildinstallPhase(PhaseBase):
     name = "buildinstall"
 
-    def __init__(self, compose):
+    def __init__(self, compose, pkgset_phase=None):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
         # A set of (variant_uid, arch) pairs that completed successfully. This
@@ -47,6 +47,7 @@ class BuildinstallPhase(PhaseBase):
         self.pool.finished_tasks = set()
         self.buildinstall_method = self.compose.conf.get("buildinstall_method")
         self.used_lorax = self.buildinstall_method == 'lorax'
+        self.pkgset_phase = pkgset_phase
 
         self.warned_skipped = False
 
@@ -100,8 +101,10 @@ class BuildinstallPhase(PhaseBase):
         if self.compose.conf.get("buildinstall_topdir", None):
             output_dir = os.path.join(output_dir, "results")
 
-        repos = [repo_baseurl] + get_arch_variant_data(self.compose.conf,
-                                                       'lorax_extra_sources', arch, variant)
+        repos = repo_baseurl[:]
+        repos.extend(
+            get_arch_variant_data(self.compose.conf, "lorax_extra_sources", arch, variant)
+        )
         if self.compose.has_comps:
             comps_repo = self.compose.paths.work.comps_repo(arch, variant)
             if final_output_dir != output_dir:
@@ -131,6 +134,12 @@ class BuildinstallPhase(PhaseBase):
         return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
                                     ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
+    def get_repos(self, arch):
+        repos = []
+        for pkgset in self.pkgset_phase.package_sets:
+            repos.append(pkgset.paths[arch])
+        return repos
+
     def run(self):
         lorax = LoraxWrapper()
         product = self.compose.conf["release_name"]
@@ -147,9 +156,9 @@ class BuildinstallPhase(PhaseBase):
             output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=True)
             final_output_dir = self.compose.paths.work.buildinstall_dir(arch, allow_topdir_override=False)
             makedirs(final_output_dir)
-            repo_baseurl = self.compose.paths.work.arch_repo(arch)
+            repo_baseurls = self.get_repos(arch)
             if final_output_dir != output_dir:
-                repo_baseurl = translate_path(self.compose, repo_baseurl)
+                repo_baseurls = [translate_path(self.compose, r) for r in repo_baseurls]
 
             if self.buildinstall_method == "lorax":
 
@@ -166,8 +175,12 @@ class BuildinstallPhase(PhaseBase):
 
                     volid = get_volid(self.compose, arch, variant=variant, disc_type=disc_type)
                     commands.append(
-                        (variant,
-                         self._get_lorax_cmd(repo_baseurl, output_dir, variant, arch, buildarch, volid, final_output_dir))
+                        (
+                            variant,
+                            self._get_lorax_cmd(
+                                repo_baseurls, output_dir, variant, arch, buildarch, volid, final_output_dir
+                            ),
+                        )
                     )
             elif self.buildinstall_method == "buildinstall":
                 volid = get_volid(self.compose, arch, disc_type=disc_type)
@@ -176,7 +189,7 @@ class BuildinstallPhase(PhaseBase):
                      lorax.get_buildinstall_cmd(product,
                                                 version,
                                                 release,
-                                                repo_baseurl,
+                                                repo_baseurls,
                                                 output_dir,
                                                 is_final=self.compose.supported,
                                                 buildarch=arch,
