@@ -71,24 +71,29 @@ class TestCreaterepoPhase(PungiTestCase):
 
         phase = CreaterepoPhase(compose)
         phase.run()
-        self.maxDiff = None
 
+        server = compose.variants["Server"]
+        everything = compose.variants["Everything"]
+        client = compose.variants["Client"]
         self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
-            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, None, compose.variants['Server'], 'srpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Client'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Client'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, None, compose.variants['Client'], 'srpm', phase.modules_metadata))])
+            [
+                mock.call((compose, "x86_64", server, "rpm")),
+                mock.call((compose, "x86_64", server, "debuginfo")),
+                mock.call((compose, "amd64", server, "rpm")),
+                mock.call((compose, "amd64", server, "debuginfo")),
+                mock.call((compose, None, server, "srpm")),
+                mock.call((compose, "x86_64", everything, "rpm")),
+                mock.call((compose, "x86_64", everything, "debuginfo")),
+                mock.call((compose, "amd64", everything, "rpm")),
+                mock.call((compose, "amd64", everything, "debuginfo")),
+                mock.call((compose, None, everything, "srpm")),
+                mock.call((compose, "amd64", client, "rpm")),
+                mock.call((compose, "amd64", client, "debuginfo")),
+                mock.call((compose, None, client, "srpm")),
+            ],
+        )
 
     @mock.patch('pungi.checks.get_num_cpus')
     @mock.patch('pungi.phases.createrepo.ThreadPool')
@@ -103,19 +108,24 @@ class TestCreaterepoPhase(PungiTestCase):
         phase.run()
         self.maxDiff = None
 
+        server = compose.variants["Server"]
+        everything = compose.variants["Everything"]
         self.assertEqual(len(pool.add.mock_calls), 5)
         self.assertItemsEqual(
             pool.queue_put.mock_calls,
-            [mock.call((compose, 'x86_64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Server'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, None, compose.variants['Server'], 'srpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'x86_64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'rpm', phase.modules_metadata)),
-             mock.call((compose, 'amd64', compose.variants['Everything'], 'debuginfo', phase.modules_metadata)),
-             mock.call((compose, None, compose.variants['Everything'], 'srpm', phase.modules_metadata))])
+            [
+                mock.call((compose, "x86_64", server, "rpm")),
+                mock.call((compose, "x86_64", server, "debuginfo")),
+                mock.call((compose, "amd64", server, "rpm")),
+                mock.call((compose, "amd64", server, "debuginfo")),
+                mock.call((compose, None, server, "srpm")),
+                mock.call((compose, "x86_64", everything, "rpm")),
+                mock.call((compose, "x86_64", everything, "debuginfo")),
+                mock.call((compose, "amd64", everything, "rpm")),
+                mock.call((compose, "amd64", everything, "debuginfo")),
+                mock.call((compose, None, everything, "srpm")),
+            ],
+        )
 
 
 def make_mocked_modifyrepo_cmd(tc, module_artifacts):
@@ -138,6 +148,12 @@ def make_mocked_modifyrepo_cmd(tc, module_artifacts):
 
 class TestCreateVariantRepo(PungiTestCase):
 
+    def setUp(self):
+        super(TestCreateVariantRepo, self).setUp()
+        self.pkgset = mock.Mock(
+            paths={"x86_64": "/repo/x86_64", "global": "/repo/global"}
+        )
+
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
     def test_variant_repo_rpms(self, CreaterepoWrapperCls, run):
@@ -149,7 +165,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -160,7 +178,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -180,7 +198,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -191,7 +211,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=False, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -210,7 +230,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, None, compose.variants['Server'], 'srpm')
+        create_variant_repo(
+            compose, None, compose.variants["Server"], "srpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/global/repo_package_list/Server.None.srpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -221,7 +243,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/global/repo',
+                       update_md_path="/repo/global",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -242,7 +264,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'debuginfo')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "debuginfo", self.pkgset
+        )
         self.maxDiff = None
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.debuginfo.conf'
@@ -254,7 +278,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -274,7 +298,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -285,7 +311,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -306,8 +332,12 @@ class TestCreateVariantRepo(PungiTestCase):
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
         # Running the same thing twice only creates repo once.
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -318,7 +348,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=10,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -338,7 +368,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -349,7 +381,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
+                       update_md_path="/repo/x86_64", deltas=False,
                        oldpackagedirs=None, use_xz=True, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -371,7 +403,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -405,7 +439,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -439,7 +475,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -450,7 +488,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -473,7 +511,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -484,7 +524,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -511,7 +551,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -550,7 +592,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -561,7 +605,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=True,
+                       update_md_path="/repo/x86_64", deltas=True,
                        oldpackagedirs=[],
                        use_xz=False, extra_args=[])])
         self.assertItemsEqual(
@@ -585,7 +629,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, None, compose.variants['Server'], 'srpm')
+        create_variant_repo(
+            compose, None, compose.variants["Server"], "srpm", self.pkgset
+        )
 
         list_file = self.topdir + '/work/global/repo_package_list/Server.None.srpm.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -596,7 +642,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/global/repo',
+                       update_md_path="/repo/global",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -621,7 +667,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'debuginfo')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "debuginfo", self.pkgset
+        )
 
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.debuginfo.conf'
         self.assertEqual(CreaterepoWrapperCls.mock_calls[0],
@@ -632,7 +680,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo',
+                       update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -658,7 +706,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+        )
 
         self.maxDiff = None
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.rpm.conf'
@@ -670,7 +720,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/os',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
+                       update_md_path="/repo/x86_64", deltas=False,
                        oldpackagedirs=None,
                        use_xz=False, extra_args=[])])
         self.assertItemsEqual(
@@ -691,7 +741,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'debuginfo')
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "debuginfo", self.pkgset
+        )
 
         self.maxDiff = None
         list_file = self.topdir + '/work/x86_64/repo_package_list/Server.x86_64.debuginfo.conf'
@@ -703,7 +755,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/x86_64/debug/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/x86_64/repo', deltas=False,
+                       update_md_path="/repo/x86_64", deltas=False,
                        oldpackagedirs=None,
                        use_xz=False, extra_args=[])])
         self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
@@ -722,7 +774,9 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture('server-rpms.json', compose.paths.compose.metadata('rpms.json'))
 
-        create_variant_repo(compose, None, compose.variants['Server'], 'srpm')
+        create_variant_repo(
+            compose, None, compose.variants["Server"], "srpm", self.pkgset
+        )
 
         self.maxDiff = None
         list_file = self.topdir + '/work/global/repo_package_list/Server.None.srpm.conf'
@@ -734,7 +788,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        database=True, groupfile=None, workers=3,
                        outputdir=self.topdir + '/compose/Server/source/tree',
                        pkglist=list_file, skip_stat=True, update=True,
-                       update_md_path=self.topdir + '/work/global/repo', deltas=False,
+                       update_md_path="/repo/global", deltas=False,
                        oldpackagedirs=None,
                        use_xz=False, extra_args=[])])
         self.assertItemsEqual(repo.get_modifyrepo_cmd.mock_calls, [])
@@ -772,7 +826,9 @@ class TestCreateVariantRepo(PungiTestCase):
         modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a7-modules.yaml.gz"
         modules_metadata = mock.Mock()
 
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm', modules_metadata)
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset, modules_metadata
+        )
 
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,
@@ -822,7 +878,9 @@ class TestCreateVariantRepo(PungiTestCase):
         modules_metadata = ModulesMetadata(compose)
 
         modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a723e1bd69826e591508f07e377d2212769b59178a9-modules.yaml.gz"
-        create_variant_repo(compose, 'x86_64', compose.variants['Server'], 'rpm', modules_metadata)
+        create_variant_repo(
+            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset, modules_metadata
+        )
 
         self.assertItemsEqual(
             repo.get_modifyrepo_cmd.mock_calls,

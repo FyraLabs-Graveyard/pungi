@@ -52,10 +52,11 @@ createrepo_dirs = set()
 class CreaterepoPhase(PhaseBase):
     name = "createrepo"
 
-    def __init__(self, compose):
+    def __init__(self, compose, pkgset_phase=None):
         PhaseBase.__init__(self, compose)
         self.pool = ThreadPool(logger=self.compose._logger)
         self.modules_metadata = ModulesMetadata(compose)
+        self.pkgset_phase = pkgset_phase
 
     def validate(self):
         errors = []
@@ -68,16 +69,21 @@ class CreaterepoPhase(PhaseBase):
 
     def run(self):
         get_productids_from_scm(self.compose)
+        reference_pkgset = None
+        if self.pkgset_phase:
+            reference_pkgset = self.pkgset_phase.package_sets[-1]
         for i in range(self.compose.conf['createrepo_num_threads']):
-            self.pool.add(CreaterepoThread(self.pool))
+            self.pool.add(
+                CreaterepoThread(self.pool, reference_pkgset, self.modules_metadata)
+            )
 
         for variant in self.compose.get_variants():
             if variant.is_empty:
                 continue
-            self.pool.queue_put((self.compose, None, variant, "srpm", self.modules_metadata))
+            self.pool.queue_put((self.compose, None, variant, "srpm"))
             for arch in variant.arches:
-                self.pool.queue_put((self.compose, arch, variant, "rpm", self.modules_metadata))
-                self.pool.queue_put((self.compose, arch, variant, "debuginfo", self.modules_metadata))
+                self.pool.queue_put((self.compose, arch, variant, "rpm"))
+                self.pool.queue_put((self.compose, arch, variant, "debuginfo"))
 
         self.pool.start()
 
@@ -86,7 +92,7 @@ class CreaterepoPhase(PhaseBase):
         self.modules_metadata.write_modules_metadata()
 
 
-def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None):
+def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metadata=None):
     types = {
         'rpm': ('binary',
                 lambda **kwargs: compose.paths.compose.repository(arch=arch, variant=variant, **kwargs)),
@@ -103,7 +109,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, modules_metadata=None)
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-    repo_dir_arch = compose.paths.work.arch_repo(arch='global' if pkg_type == 'srpm' else arch)
+    repo_dir_arch = pkgset.paths["global" if pkg_type == "srpm" else arch]
 
     try:
         repo_dir = types[pkg_type][1]()
@@ -255,9 +261,21 @@ def find_file_in_repodata(repo_path, type_):
 
 
 class CreaterepoThread(WorkerThread):
+    def __init__(self, pool, reference_pkgset, modules_metadata):
+        super(CreaterepoThread, self).__init__(pool)
+        self.reference_pkgset = reference_pkgset
+        self.modules_metadata = modules_metadata
+
     def process(self, item, num):
-        compose, arch, variant, pkg_type, modules_metadata = item
-        create_variant_repo(compose, arch, variant, pkg_type=pkg_type, modules_metadata=modules_metadata)
+        compose, arch, variant, pkg_type = item
+        create_variant_repo(
+            compose,
+            arch,
+            variant,
+            pkg_type=pkg_type,
+            pkgset=self.reference_pkgset,
+            modules_metadata=self.modules_metadata
+        )
 
 
 def get_productids_from_scm(compose):
