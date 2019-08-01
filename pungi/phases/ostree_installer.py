@@ -18,10 +18,11 @@ from ..runroot import Runroot
 class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     name = 'ostree_installer'
 
-    def __init__(self, compose, buildinstall_phase):
+    def __init__(self, compose, buildinstall_phase, pkgset_phase=None):
         super(OstreeInstallerPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
         self.bi = buildinstall_phase
+        self.pkgset_phase = pkgset_phase
 
     def validate(self):
         errors = []
@@ -39,17 +40,30 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         if errors:
             raise ValueError('\n'.join(errors))
 
+    def get_repos(self):
+        return [
+            translate_path(
+                self.compose,
+                self.compose.paths.work.pkgset_repo(pkgset.name, "$basearch"),
+            )
+            for pkgset in self.pkgset_phase.package_sets
+        ]
+
     def run(self):
         for variant in self.compose.get_variants():
             for arch in variant.arches:
                 for conf in self.get_config_block(variant, arch):
-                    self.pool.add(OstreeInstallerThread(self.pool))
+                    self.pool.add(OstreeInstallerThread(self.pool, self.get_repos()))
                     self.pool.queue_put((self.compose, variant, arch, conf))
 
         self.pool.start()
 
 
 class OstreeInstallerThread(WorkerThread):
+    def __init__(self, pool, baseurls):
+        super(OstreeInstallerThread, self).__init__(pool)
+        self.baseurls = baseurls
+
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
@@ -64,10 +78,9 @@ class OstreeInstallerThread(WorkerThread):
         self.pool.log_info('[BEGIN] %s' % msg)
         self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
 
-        repo_baseurl = compose.paths.work.arch_repo('$basearch', create_dir=False)
         repos = get_repo_urls(None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
                               shortcuts.force_list(config['repo'])
-                              + shortcuts.force_list(translate_path(compose, repo_baseurl)),
+                              + self.baseurls,
                               arch=arch,
                               logger=self.pool)
         if compose.has_comps:

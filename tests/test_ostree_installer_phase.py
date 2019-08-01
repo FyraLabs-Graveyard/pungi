@@ -30,14 +30,24 @@ class OstreeInstallerPhaseTest(helpers.PungiTestCase):
                 ('^Everything$', {'x86_64': cfg})
             ],
             'runroot': True,
+            "translate_paths": [(self.topdir + "/work", "http://example.com/work")],
         })
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OstreeInstallerPhase(compose, mock.Mock())
+        phase = ostree.OstreeInstallerPhase(
+            compose, mock.Mock(), self._make_pkgset_phase(["p1", "p2"])
+        )
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
+        self.assertEqual(
+            pool.add.call_args_list[0][0][0].baseurls,
+            [
+                "http://example.com/work/$basearch/repo/p1",
+                "http://example.com/work/$basearch/repo/p2",
+            ],
+        )
         self.assertEqual(pool.queue_put.call_args_list,
                          [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg))])
 
@@ -197,12 +207,12 @@ class OstreeThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(koji,
-                               ['http://example.com/work/$basearch/repo',
+                               ["http://example.com/repo/1",
                                 'http://example.com/work/$basearch/comps_repo_Everything'],
                                cfg['release'],
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
@@ -234,13 +244,13 @@ class OstreeThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(koji,
                                ('http://example.com/repo/x86_64/',
-                                'http://example.com/work/$basearch/repo',
+                                "http://example.com/repo/1",
                                 'http://example.com/work/$basearch/comps_repo_Everything'),
                                cfg['release'],
                                isfinal=True,
@@ -274,14 +284,14 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'output': 'Foo bar\n',
         }
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         sources = [
             'https://example.com/extra-repo1.repo',
             'https://example.com/extra-repo2.repo',
-            'http://example.com/work/$basearch/repo',
+            "http://example.com/repo/1",
             'http://example.com/work/$basearch/comps_repo_Everything',
         ]
 
@@ -314,14 +324,14 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'output': 'Foo bar\n',
         }
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         sources = [
             'https://example.com/extra-repo1.repo',
             'https://example.com/extra-repo2.repo',
-            'http://example.com/work/$basearch/repo',
+            "http://example.com/repo/1",
             'http://example.com/work/$basearch/comps_repo_Everything',
         ]
 
@@ -351,13 +361,11 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'output': 'Foo bar\n',
         }
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
-        sources = [
-            'http://example.com/work/$basearch/repo',
-        ]
+        sources = ["http://example.com/repo/1"]
 
         self.assertRunrootCall(koji, sources, cfg['release'], isfinal=True,
                                extra=['--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
@@ -387,7 +395,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         get_file_size.return_value = 1024
         get_mtime.return_value = 13579
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         with self.assertRaises(RuntimeError) as ctx:
             t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
@@ -425,7 +433,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
         templ_dir = self.topdir + '/work/x86_64/Everything/lorax_templates'
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
@@ -434,7 +442,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                      'branch': 'f24', 'dir': '.'},
                                     templ_dir, logger=pool._logger)])
         self.assertRunrootCall(koji,
-                               ['http://example.com/work/$basearch/repo',
+                               ["http://example.com/repo/1",
                                 'http://example.com/work/$basearch/comps_repo_Everything'],
                                cfg['release'],
                                isfinal=True,
@@ -482,13 +490,13 @@ class OstreeThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(
             koji,
-            ['http://example.com/work/$basearch/repo',
+            ["http://example.com/repo/1",
              'http://example.com/work/$basearch/comps_repo_Everything'],
             '20151203.t.0',
             isfinal=True,
@@ -544,13 +552,13 @@ class OstreeThreadTest(helpers.PungiTestCase):
         get_mtime.return_value = 13579
         final_iso_path = self.topdir + '/compose/Everything/x86_64/iso/image-name'
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
         self.assertRunrootCall(
             koji,
-            ['http://example.com/work/$basearch/repo',
+            ["http://example.com/repo/1",
              'http://example.com/work/$basearch/comps_repo_Everything'],
             '20151203.t.0',
             isfinal=True,
@@ -587,7 +595,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
         pool._logger.error.assert_has_calls([
@@ -617,7 +625,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'retcode': 1,
         }
 
-        t = ostree.OstreeInstallerThread(pool)
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
         pool._logger.error.assert_has_calls([
