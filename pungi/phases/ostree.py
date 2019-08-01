@@ -18,12 +18,22 @@ from ..wrappers import scm
 class OSTreePhase(ConfigGuardedPhase):
     name = 'ostree'
 
-    def __init__(self, compose):
+    def __init__(self, compose, pkgset_phase=None):
         super(OSTreePhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.compose._logger)
+        self.pkgset_phase = pkgset_phase
+
+    def get_repos(self):
+        return [
+            translate_path(
+                self.compose,
+                self.compose.paths.work.pkgset_repo(pkgset.name, "$basearch"),
+            )
+            for pkgset in self.pkgset_phase.package_sets
+        ]
 
     def _enqueue(self, variant, arch, conf):
-        self.pool.add(OSTreeThread(self.pool))
+        self.pool.add(OSTreeThread(self.pool, self.get_repos()))
         self.pool.queue_put((self.compose, variant, arch, conf))
 
     def run(self):
@@ -43,6 +53,10 @@ class OSTreePhase(ConfigGuardedPhase):
 
 
 class OSTreeThread(WorkerThread):
+    def __init__(self, pool, repos):
+        super(OSTreeThread, self).__init__(pool)
+        self.repos = repos
+
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
@@ -60,9 +74,8 @@ class OSTreeThread(WorkerThread):
         repodir = os.path.join(workdir, 'config_repo')
         self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
 
-        repo_baseurl = compose.paths.work.arch_repo('$basearch', create_dir=False)
         comps_repo = compose.paths.work.comps_repo('$basearch', variant=variant, create_dir=False)
-        repos = shortcuts.force_list(config['repo']) + [translate_path(compose, repo_baseurl)]
+        repos = shortcuts.force_list(config['repo']) + self.repos
         if compose.has_comps:
             repos.append(translate_path(compose, comps_repo))
         repos = get_repo_dicts(repos, logger=self.pool)

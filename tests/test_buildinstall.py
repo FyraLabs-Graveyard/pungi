@@ -406,17 +406,6 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='dvd')])
 
-    def _make_pkgset_phase(self, names):
-        pkgsets = []
-        for name in names:
-            pkgset = mock.Mock(paths={})
-            for arch in ("x86_64", "amd64"):
-                pkgset.paths[arch] = os.path.join(
-                    self.topdir, "work", arch, "repo", name
-                )
-            pkgsets.append(pkgset)
-        return mock.Mock(package_sets=pkgsets)
-
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')

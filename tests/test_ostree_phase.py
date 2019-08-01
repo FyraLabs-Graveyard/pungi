@@ -25,14 +25,24 @@ class OSTreePhaseTest(helpers.PungiTestCase):
                 ('^Everything$', {'x86_64': cfg})
             ],
             'runroot': True,
+            "translate_paths": [
+                (self.topdir, "http://example.com")
+            ],
         })
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OSTreePhase(compose)
+        phase = ostree.OSTreePhase(compose, self._make_pkgset_phase(["p1", "p2"]))
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
+        self.assertEqual(
+            pool.add.call_args_list[0][0][0].repos,
+            [
+                "http://example.com/work/$basearch/repo/p1",
+                "http://example.com/work/$basearch/repo/p2",
+            ],
+        )
         self.assertEqual(pool.queue_put.call_args_list,
                          [mock.call((compose, compose.variants['Everything'], 'x86_64', cfg))])
 
@@ -55,7 +65,7 @@ class OSTreePhaseTest(helpers.PungiTestCase):
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OSTreePhase(compose)
+        phase = ostree.OSTreePhase(compose, self._make_pkgset_phase(["p1"]))
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 2)
@@ -74,7 +84,7 @@ class OSTreePhaseTest(helpers.PungiTestCase):
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OSTreePhase(compose)
+        phase = ostree.OSTreePhase(compose, self._make_pkgset_phase(["p1"]))
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
@@ -93,7 +103,7 @@ class OSTreePhaseTest(helpers.PungiTestCase):
 
         pool = ThreadPool.return_value
 
-        phase = ostree.OSTreePhase(compose)
+        phase = ostree.OSTreePhase(compose, self._make_pkgset_phase(["p1"]))
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 2)
@@ -159,7 +169,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         extra_config_file = os.path.join(self.topdir, 'work/ostree-1/extra_config.json')
         self.assertFalse(os.path.isfile(extra_config_file))
@@ -172,8 +182,8 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         proper_extraconf_content = {
             "repo": [
-                {"name": "http:__example.com_work__basearch_repo",
-                 "baseurl": "http://example.com/work/$basearch/repo"},
+                {"name": "http:__example.com_repo_1",
+                 "baseurl": "http://example.com/repo/1"},
                 {"name": "http:__example.com_work__basearch_comps_repo_Everything",
                  "baseurl": "http://example.com/work/$basearch/comps_repo_Everything"}
             ]
@@ -189,7 +199,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -225,7 +235,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(1)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -244,7 +254,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = helpers.boom
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -267,7 +277,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             {'commitid.log': 'fca3465861a',
              'create-ostree-repo.log':
                 ['Doing work', 'fedora-atomic/25/x86_64 -> fca3465861a']})
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -295,7 +305,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             {'commitid.log': 'fca3465861a',
              'create-ostree-repo.log':
                 ['Doing work', 'fedora-atomic/25/x86_64 -> fca3465861a']})
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -319,7 +329,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji.run_runroot_cmd.side_effect = self._mock_runroot(
             0,
             {'create-ostree-repo.log': ['Doing work', 'Weird output']})
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -341,7 +351,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
 
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(1)
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         self.assertRaises(RuntimeError, t.process,
                           (self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg),
@@ -358,7 +368,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -393,7 +403,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -428,7 +438,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', self.cfg), 1)
 
@@ -482,7 +492,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
             'ostree_repo': self.repo
         }
 
-        t = ostree.OSTreeThread(self.pool)
+        t = ostree.OSTreeThread(self.pool, ["http://example.com/repo/1"])
 
         t.process((self.compose, self.compose.variants['Everything'], 'x86_64', cfg), 1)
 
@@ -495,7 +505,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(len(extra_config.get('repo', [])), 3)
         self.assertEqual(extra_config.get('repo').pop()['baseurl'],
                          'http://example.com/work/$basearch/comps_repo_Everything')
-        self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://example.com/work/$basearch/repo')
+        self.assertEqual(extra_config.get("repo").pop()["baseurl"], "http://example.com/repo/1")
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://url/to/repo/a')
 
 

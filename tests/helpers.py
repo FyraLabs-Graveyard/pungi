@@ -55,6 +55,18 @@ class PungiTestCase(BaseTestCase):
     def assertValidConfig(self, conf):
         self.assertEqual(checks.validate(conf, offline=True), ([], []))
 
+    def _make_pkgset_phase(self, names):
+        pkgsets = []
+        for name in names:
+            pkgset = mock.Mock(paths={})
+            pkgset.name = name
+            for arch in ("x86_64", "amd64"):
+                pkgset.paths[arch] = os.path.join(
+                    self.topdir, "work", arch, "repo", name
+                )
+            pkgsets.append(pkgset)
+        return mock.Mock(package_sets=pkgsets)
+
 
 class MockVariant(mock.Mock):
     def __init__(self, is_empty=False, name=None, *args, **kwargs):

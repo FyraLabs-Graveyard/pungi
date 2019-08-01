@@ -293,7 +293,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     extrafiles_phase = pungi.phases.ExtraFilesPhase(compose, pkgset_phase)
     createrepo_phase = pungi.phases.CreaterepoPhase(compose, pkgset_phase)
     ostree_installer_phase = pungi.phases.OstreeInstallerPhase(compose, buildinstall_phase)
-    ostree_phase = pungi.phases.OSTreePhase(compose)
+    ostree_phase = pungi.phases.OSTreePhase(compose, pkgset_phase)
     productimg_phase = pungi.phases.ProductimgPhase(compose, pkgset_phase)
     createiso_phase = pungi.phases.CreateisoPhase(compose, buildinstall_phase)
     extra_isos_phase = pungi.phases.ExtraIsosPhase(compose)
