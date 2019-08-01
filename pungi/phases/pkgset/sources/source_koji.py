@@ -187,9 +187,7 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
 
 def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     event_info = get_koji_event_info(compose, koji_wrapper)
-    pkgsets = populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
-
-    return pkgsets
+    return populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
 
 
 def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=False):

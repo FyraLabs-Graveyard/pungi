@@ -10,8 +10,6 @@ try:
 except ImportError:
     import unittest
 
-from six.moves import cPickle as pickle
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.pkgset.sources import source_koji
@@ -84,96 +82,69 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
         self.koji_module_path = os.path.join(self.topdir, 'work', 'global', 'koji-module-Server.yaml')
 
-    @unittest.skip("TODO not working now")
-    @mock.patch('six.moves.cPickle.dumps')
+    @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    def test_populate(self, KojiPackageSet, pickle_dumps):
-
-        pickle_dumps.return_value = b'DATA'
+    def test_populate(self, KojiPackageSet, materialize):
+        materialize.side_effect = self.mock_materialize
 
         orig_pkgset = KojiPackageSet.return_value
 
-        pkgset = source_koji.populate_global_pkgset(
-            self.compose, self.koji_wrapper, '/prefix', 123456)
-
-        self.assertIs(pkgset, orig_pkgset)
-        self.assertEqual(
-            pkgset.mock_calls,
-            [
-                mock.call.populate(
-                    'f25',
-                    123456,
-                    inherit=True,
-                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
-                    include_packages=set(),
-                ),
-                mock.call.save_file_list(
-                    self.topdir + '/work/global/package_list/global.conf',
-                    remove_path_prefix='/prefix',
-                ),
-                mock.call.save_file_cache(
-                    self.topdir + '/work/global/pkgset_file_cache.pickle'
-                ),
-            ]
+        pkgsets = source_koji.populate_global_pkgset(
+            self.compose, self.koji_wrapper, "/prefix", 123456
         )
-        self.assertItemsEqual(pickle_dumps.call_args_list,
-                              [mock.call(orig_pkgset, protocol=pickle.HIGHEST_PROTOCOL)])
-        with open(self.pkgset_path) as f:
-            self.assertEqual(f.read(), 'DATA')
 
-    @unittest.skip("TODO not working now")
-    @mock.patch('six.moves.cPickle.dumps')
+        self.assertEqual(len(pkgsets), 1)
+        self.assertIs(pkgsets[0], orig_pkgset)
+        pkgsets[0].assert_has_calls(
+            [mock.call.populate("f25", 123456, inherit=True, include_packages=set())],
+        )
+
+    def mock_materialize(self, compose, pkgset, prefix, mmd):
+        self.assertEqual(prefix, "/prefix")
+        self.assertEqual(compose, self.compose)
+        return pkgset
+
+    @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    def test_populate_with_multiple_koji_tags(self, KojiPackageSet, pickle_dumps):
+    def test_populate_with_multiple_koji_tags(
+        self, KojiPackageSet, materialize
+    ):
         self.compose = helpers.DummyCompose(self.topdir, {
             'pkgset_koji_tag': ['f25', 'f25-extra'],
             'sigkeys': ["foo", "bar"],
         })
 
-        pickle_dumps.return_value = b'DATA'
+        materialize.side_effect = self.mock_materialize
 
-        orig_pkgset = KojiPackageSet.return_value
+        pkgsets = source_koji.populate_global_pkgset(
+            self.compose, self.koji_wrapper, "/prefix", 123456
+        )
 
-        pkgset = source_koji.populate_global_pkgset(
-            self.compose, self.koji_wrapper, '/prefix', 123456)
+        self.assertEqual(len(pkgsets), 2)
+        init_calls = KojiPackageSet.call_args_list
+        self.assertItemsEqual([call[0][0] for call in init_calls], ["f25", "f25-extra"])
+        self.assertItemsEqual(
+            [call[0][1] for call in init_calls], [self.koji_wrapper] * 2
+        )
+        self.assertItemsEqual(
+            [call[0][2] for call in init_calls], [["foo", "bar"]] * 2
+        )
 
-        self.assertIs(pkgset, orig_pkgset)
-        pkgset.assert_has_calls(
+        pkgsets[0].assert_has_calls(
+            [mock.call.populate("f25", 123456, inherit=True, include_packages=set())]
+        )
+        pkgsets[1].assert_has_calls(
             [
                 mock.call.populate(
-                    'f25',
-                    123456,
-                    inherit=True,
-                    logfile=self.topdir + '/logs/global/packages_from_f25.global.log',
-                    include_packages=set(),
+                    "f25-extra", 123456, inherit=True, include_packages=set()
                 ),
             ]
         )
-        pkgset.assert_has_calls(
-            [
-                mock.call.populate(
-                    'f25-extra',
-                    123456,
-                    inherit=True,
-                    logfile=self.topdir + '/logs/global/packages_from_f25-extra.global.log',
-                    include_packages=set(),
-                ),
-            ]
-        )
-        pkgset.assert_has_calls([mock.call.save_file_list(self.topdir + '/work/global/package_list/global.conf',
-                                                          remove_path_prefix='/prefix')])
-        # for each tag, call pkgset.fast_merge once for each variant and once for global pkgset
-        self.assertEqual(pkgset.fast_merge.call_count, 2 * (len(self.compose.all_variants.values()) + 1))
-        self.assertItemsEqual(pickle_dumps.call_args_list,
-                              [mock.call(orig_pkgset, protocol=pickle.HIGHEST_PROTOCOL)])
-        with open(self.pkgset_path) as f:
-            self.assertEqual(f.read(), 'DATA')
 
-    @mock.patch('six.moves.cPickle.dumps')
+    @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.populate')
     @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.save_file_list')
-    def test_populate_packages_to_gather(self, save_file_list, popuplate,
-                                         pickle_dumps):
+    def test_populate_packages_to_gather(self, save_file_list, popuplate, materialize):
         self.compose = helpers.DummyCompose(self.topdir, {
             'gather_method': 'nodeps',
             'pkgset_koji_tag': 'f25',
@@ -182,7 +153,8 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
                 ('.*', {'*': ['pkg', 'foo.x86_64']}),
             ]
         })
-        pickle_dumps.return_value = b'DATA'
+
+        materialize.side_effect = self.mock_materialize
 
         pkgsets = source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, '/prefix', 123456)
@@ -201,43 +173,21 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.getLastEvent.return_value = EVENT_INFO
         self.koji_wrapper.koji_proxy.getTag.return_value = TAG_INFO
 
-    @unittest.skip("TODO not working now")
-    @mock.patch('pungi.phases.pkgset.common.create_arch_repos')
     @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_global_pkgset')
-    def test_get_package_sets(self, pgp, car):
-        expected = {"x86_64": mock.Mock(), "global": pgp.return_value}
-
-        def mock_create_arch_repos(compose, path_prefix, paths):
-            for arch in compose.get_arches():
-                paths[arch] = "/repo/for/" + arch
-
-        car.side_effect = mock_create_arch_repos
-
-        pkgsets = source_koji.get_pkgset_from_koji(self.compose, self.koji_wrapper, '/prefix')
+    def test_get_package_sets(self, pgp):
+        pkgsets = source_koji.get_pkgset_from_koji(
+            self.compose, self.koji_wrapper, "/prefix"
+        )
 
         self.assertItemsEqual(
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.getLastEvent()]
         )
+        self.assertEqual(pkgsets, pgp.return_value)
 
-        self.assertEqual(len(pkgsets), 1)
-        self.assertEqual(pgp.call_args_list,
-                         [mock.call(self.compose, self.koji_wrapper, '/prefix',
-                                    EVENT_INFO)])
-        global_repo = os.path.join(self.topdir, "work/global/repo")
-        self.assertItemsEqual(
-            car.call_args_list,
-            [mock.call(self.compose, "/prefix", pkgsets[0].paths)],
-        )
-
-        self.assertEqual(pkgsets[0].package_sets, expected)
         self.assertEqual(
-            pkgsets[0].paths,
-            {
-                "amd64": "/repo/for/amd64",
-                "global": global_repo,
-                "x86_64": "/repo/for/x86_64",
-            }
+            pgp.call_args_list,
+            [mock.call(self.compose, self.koji_wrapper, '/prefix', EVENT_INFO)],
         )
 
     def test_get_koji_modules(self):

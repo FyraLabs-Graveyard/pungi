@@ -92,8 +92,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         if arch not in self.package_maps:
             pkg_map = {}
             for pkgset in self.package_sets:
-                for pkg_arch in pkgset[arch].rpms_by_arch:
-                    for pkg in pkgset[arch].rpms_by_arch[pkg_arch]:
+                for pkg_arch in pkgset.package_sets[arch].rpms_by_arch:
+                    for pkg in pkgset.package_sets[arch].rpms_by_arch[pkg_arch]:
                         pkg_map[_fmt_nevra(pkg, pkg_arch)] = pkg
             self.package_maps[arch] = pkg_map
 
@@ -119,8 +119,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         more than one debuginfo package with the same name.
         """
         for pkgset in self.package_sets:
-            for pkg_arch in pkgset[self.arch].rpms_by_arch:
-                for pkg in pkgset[self.arch].rpms_by_arch[pkg_arch]:
+            for pkg_arch in pkgset.package_sets[self.arch].rpms_by_arch:
+                for pkg in pkgset.package_sets[self.arch].rpms_by_arch[pkg_arch]:
                     self.debuginfo[pkg.arch][pkg.name].add(pkg)
 
     def _get_debuginfo(self, name, arch):
@@ -134,8 +134,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         """
         expanded = set()
         for pkgset in self.package_sets:
-            for pkg_arch in pkgset[self.arch].rpms_by_arch:
-                for pkg in pkgset[self.arch].rpms_by_arch[pkg_arch]:
+            for pkg_arch in pkgset.package_sets[self.arch].rpms_by_arch:
+                for pkg in pkgset.package_sets[self.arch].rpms_by_arch[pkg_arch]:
                     for pattern in patterns:
                         if fnmatch(pkg.name, pattern):
                             expanded.add(pkg)
@@ -158,8 +158,8 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             install_match = install % "*"
             self.langpacks[name] = set()
             for pkgset in self.package_sets:
-                for pkg_arch in pkgset[arch].rpms_by_arch:
-                    for pkg in pkgset[arch].rpms_by_arch[pkg_arch]:
+                for pkg_arch in pkgset.package_sets[arch].rpms_by_arch:
+                    for pkg in pkgset.package_sets[arch].rpms_by_arch[pkg_arch]:
                         if not fnmatch(pkg.name, install_match):
                             # Does not match the pattern, ignore...
                             continue
