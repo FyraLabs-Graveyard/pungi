@@ -181,18 +181,6 @@ class WorkPaths(object):
         """
         return self._repo("comps", arch, variant, create_dir=create_dir)
 
-    def arch_repo(self, arch=None, create_dir=True):
-        """
-        Examples:
-            work/x86_64/repo
-            work/global/repo
-        """
-        arch = arch or "global"
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), "repo")
-        if create_dir:
-            makedirs(path)
-        return path
-
     def pkgset_repo(self, pkgset_name, arch=None, create_dir=True):
         """
         Examples:
