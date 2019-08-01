@@ -59,6 +59,7 @@ def get_create_global_repo_cmd(compose, path_prefix, repo_dir_global, pkgset):
         compose.paths.work.package_list(arch="global", pkgset=pkgset),
         remove_path_prefix=path_prefix,
     )
+    pkgset.save_file_cache(compose.paths.work.pkgset_file_cache(pkgset.name))
 
     # find an old compose suitable for repodata reuse
     old_compose_path = None

@@ -425,13 +425,13 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def pkgset_file_cache(self):
+    def pkgset_file_cache(self, pkgset_name):
         """
         Returns the path to file in which the cached version of
         PackageSetBase.file_cache should be stored.
         """
-        return os.path.join(
-            self.topdir(arch="global"), "pkgset_file_cache.pickle")
+        filename = "pkgset_%s_file_cache.pickle" % pkgset_name
+        return os.path.join(self.topdir(arch="global"), filename)
 
 
 class ComposePaths(object):

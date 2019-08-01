@@ -476,7 +476,7 @@ def _get_modules_from_koji_tags(
         )
 
 
-def _find_old_file_cache_path(compose):
+def _find_old_file_cache_path(compose, tag_name):
     """
     Finds the old compose with "pkgset_file_cache.pickled" and returns
     the path to it. If no compose is found, returns None.
@@ -492,7 +492,7 @@ def _find_old_file_cache_path(compose):
     if not old_compose_path:
         return None
 
-    old_file_cache_dir = compose.paths.work.pkgset_file_cache()
+    old_file_cache_dir = compose.paths.work.pkgset_file_cache(tag_name)
     rel_dir = relative_path(old_file_cache_dir, compose.topdir.rstrip('/') + '/')
     old_file_cache_path = os.path.join(old_compose_path, rel_dir)
     if not os.path.exists(old_file_cache_path):
@@ -596,7 +596,16 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             populate_only_packages=populate_only_packages_to_gather,
             cache_region=compose.cache_region,
             extra_builds=extra_builds)
-        # TODO find cache for this tag
+
+        # Check if we have cache for this tag from previous compose. If so, use
+        # it.
+        old_cache_path = _find_old_file_cache_path(compose, compose_tag)
+        if old_cache_path:
+            pkgset.set_old_file_cache(
+                pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(
+                    old_cache_path
+                )
+            )
 
         is_traditional = compose_tag in compose.conf.get("pkgset_koji_tag", [])
         should_inherit = inherit if is_traditional else inherit_modules
@@ -640,8 +649,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 # Optimization for case where we have just single compose
                 # tag - we do not have to merge in this case...
                 variant.pkgsets.add(compose_tag)
-        # TODO pickle pkgset to disk
-        # TODO save pkgset file cache
         pkgsets.append(
             MaterializedPackageSet.create(
                 compose, pkgset, path_prefix, mmd=tag_to_mmd.get(pkgset.name)
