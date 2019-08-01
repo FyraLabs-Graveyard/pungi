@@ -15,7 +15,6 @@
 
 
 import os
-from six.moves import cPickle as pickle
 
 from kobo.shortcuts import run
 
@@ -120,18 +119,12 @@ def get_pkgset_from_repos(compose):
 def populate_global_pkgset(compose, file_list, path_prefix):
     ALL_ARCHES = get_all_arches(compose)
 
-    global_pkgset_path = os.path.join(compose.paths.work.topdir(arch="global"), "packages.pickle")
-
     compose.log_info("Populating the global package set from a file list")
     pkgset = pungi.phases.pkgset.pkgsets.FilelistPackageSet(
         "repos", compose.conf["sigkeys"], logger=compose._logger, arches=ALL_ARCHES
     )
     pkgset.populate(file_list)
-    with open(global_pkgset_path, "wb") as f:
-        pickle.dump(pkgset, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    # write global package list
-    pkgset.save_file_list(compose.paths.work.package_list(arch="global"), remove_path_prefix=path_prefix)
     return pkgset
 
 

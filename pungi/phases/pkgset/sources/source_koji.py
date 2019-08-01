@@ -641,7 +641,6 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 # tag - we do not have to merge in this case...
                 variant.pkgsets.add(compose_tag)
         # TODO pickle pkgset to disk
-        # TODO save pkgset file list
         # TODO save pkgset file cache
         pkgsets.append(
             MaterializedPackageSet.create(
