@@ -127,19 +127,6 @@ class PrepopulateSection(pykickstart.sections.Section):
         self.handler.prepopulate.add(line)
 
 
-class PackageWhitelistSection(pykickstart.sections.Section):
-    sectionOpen = "%package-whitelist"
-
-    def handleLine(self, line):
-        if not self.handler:
-            return
-
-        (h, s, t) = line.partition('#')
-        line = h.rstrip()
-
-        self.handler.package_whitelist.add(line)
-
-
 class KickstartParser(pykickstart.parser.KickstartParser):
     def setupSections(self):
         pykickstart.parser.KickstartParser.setupSections(self)
@@ -147,7 +134,6 @@ class KickstartParser(pykickstart.parser.KickstartParser):
         self.registerSection(MultilibBlacklistSection(self.handler))
         self.registerSection(MultilibWhitelistSection(self.handler))
         self.registerSection(PrepopulateSection(self.handler))
-        self.registerSection(PackageWhitelistSection(self.handler))
 
     def get_packages(self, dnf_obj):
         packages = set()
@@ -208,7 +194,6 @@ class PungiHandler(HandlerClass):
         self.multilib_blacklist = set()
         self.multilib_whitelist = set()
         self.prepopulate = set()
-        self.package_whitelist = set()
 
 
 def get_ksparser(ks_path=None):

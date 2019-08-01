@@ -129,7 +129,6 @@ def main(persistdir, cachedir):
     gather_opts.multilib_whitelist = ksparser.handler.multilib_whitelist
     gather_opts.prepopulate = ksparser.handler.prepopulate
     gather_opts.fulltree_excludes = ksparser.handler.fulltree_excludes
-    gather_opts.package_whitelist = ksparser.handler.package_whitelist
 
     g = Gather(dnf_obj, gather_opts)
 

@@ -23,7 +23,7 @@ from kobo.rpmlib import parse_nvra
 from pungi.util import get_arch_variant_data, temp_dir
 from pungi.wrappers.pungi import PungiWrapper
 
-from pungi.arch import tree_arch_to_yum_arch, get_valid_arches
+from pungi.arch import tree_arch_to_yum_arch
 import pungi.phases.gather
 
 import pungi.phases.gather.method

@@ -47,7 +47,7 @@ class PungiWrapper(object):
                         exclude_packages=None, comps_repo=None,
                         lookaside_repos=None, fulltree_excludes=None,
                         multilib_blacklist=None, multilib_whitelist=None,
-                        prepopulate=None, package_whitelist=None):
+                        prepopulate=None):
         groups = groups or []
         exclude_packages = exclude_packages or {}
         lookaside_repos = lookaside_repos or {}
@@ -92,7 +92,6 @@ class PungiWrapper(object):
         _write_ks_section(kickstart, "multilib-blacklist", multilib_blacklist)
         _write_ks_section(kickstart, "multilib-whitelist", multilib_whitelist)
         _write_ks_section(kickstart, "prepopulate", prepopulate)
-        _write_ks_section(kickstart, "package-whitelist", package_whitelist)
 
         kickstart.close()
 

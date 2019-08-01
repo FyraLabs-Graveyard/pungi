@@ -1854,66 +1854,8 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def test_bash_older(self):
         pass
 
-    def test_whitelist_old_version(self):
-        # There are two version of dummy-bash in the package set; let's
-        # whitelist only the older one and its dependencies.
-        packages = [
-            "dummy-bash",
-        ]
-        package_whitelist = [
-            "dummy-basesystem-10.0-6",
-            "dummy-bash-debuginfo-4.2.37-5",
-            "dummy-bash-4.2.37-5",
-            "dummy-filesystem-4.2.37-6",
-            "dummy-glibc-common-2.14-5",
-            "dummy-glibc-debuginfo-common-2.14-5",
-            "dummy-glibc-debuginfo-2.14-5",
-            "dummy-glibc-2.14-5",
-        ]
-        pkg_map = self.go(packages, None, greedy="none", package_whitelist=package_whitelist)
-
-        self.assertNotIn("dummy-bash-4.2.37-5.i686.rpm", pkg_map["rpm"])
-        self.assertNotIn("dummy-bash-4.2.37-6.i686.rpm", pkg_map["rpm"])
-        self.assertNotIn("dummy-bash-4.2.37-6.x86_64.rpm", pkg_map["rpm"])
-
-        self.assertItemsEqual(pkg_map["rpm"], [
-            "dummy-basesystem-10.0-6.noarch.rpm",
-            "dummy-bash-4.2.37-5.x86_64.rpm",
-            "dummy-filesystem-4.2.37-6.x86_64.rpm",
-            "dummy-glibc-2.14-5.x86_64.rpm",
-            "dummy-glibc-common-2.14-5.x86_64.rpm",
-        ])
-        self.assertItemsEqual(pkg_map["srpm"], [
-            "dummy-basesystem-10.0-6.src.rpm",
-            "dummy-bash-4.2.37-5.src.rpm",
-            "dummy-filesystem-4.2.37-6.src.rpm",
-            "dummy-glibc-2.14-5.src.rpm",
-        ])
-        self.assertItemsEqual(pkg_map["debuginfo"], [
-            "dummy-bash-debuginfo-4.2.37-5.x86_64.rpm",
-            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
-            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
-        ])
-
     def test_firefox_selfhosting_with_krb5_lookaside(self):
         super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
         self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-debuginfo-1.10-5.x86_64", [PkgFlag.lookaside])
-
-    def test_package_whitelist(self):
-        packages = ['*']
-        whitelist = [
-            'dummy-bash-4.2.37-6',
-        ]
-
-        pkg_map = self.go(packages, None, package_whitelist=whitelist)
-
-        self.assertItemsEqual(pkg_map["rpm"], [
-            'dummy-bash-4.2.37-6.x86_64.rpm',
-        ])
-        self.assertItemsEqual(pkg_map["srpm"], [
-            'dummy-bash-4.2.37-6.src.rpm',
-        ])
-        self.assertItemsEqual(pkg_map["debuginfo"], [
-        ])

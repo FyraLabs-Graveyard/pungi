@@ -69,8 +69,6 @@ class GatherOptions(pungi.common.OptionsBase):
         # lookaside repos; packages will be flagged accordingly
         self.lookaside_repos = []
 
-        self.package_whitelist = set()
-
         self.merge_options(**kwargs)
 
     def __str__(self):
@@ -85,7 +83,6 @@ class GatherOptions(pungi.common.OptionsBase):
             'multilib_blacklist=%d items' % len(self.multilib_blacklist),
             'multilib_whitelist=%d items' % len(self.multilib_whitelist),
             'lookaside_repos=%s' % self.lookaside_repos,
-            'package_whitelist=%d items' % len(self.package_whitelist),
             'prepopulate=%d items' % len(self.prepopulate)
         ]
         return '[\n%s\n]' % '\n'.join('    ' + l for l in lines)
@@ -403,20 +400,6 @@ class Gather(GatherBase):
                       'q_multilib_binary_packages', 'q_noarch_binary_packages',
                       'q_source_packages', 'q_native_debug_packages',
                       'q_multilib_debug_packages']
-
-        if self.opts.package_whitelist:
-            with Profiler("Gather._apply_excludes():apply-package-whitelist'"):
-                to_keep = []
-                for pattern in self.opts.package_whitelist:
-                    nvr = parse_nvr(pattern)
-                    try:
-                        nvr['epoch'] = int(nvr.pop('epoch'))
-                    except ValueError:
-                        pass
-                    to_keep.extend(self._query.filter(**nvr).run())
-
-                for queue in all_queues:
-                    setattr(self, queue, getattr(self, queue).filter(pkg=to_keep).latest().apply())
 
         with Profiler("Gather._apply_excludes():exclude-queries"):
             for queue in all_queues:
