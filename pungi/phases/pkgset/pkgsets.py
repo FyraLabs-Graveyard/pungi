@@ -231,17 +231,6 @@ class PackageSetBase(kobo.log.LoggingBase):
 
         self.log_debug("[DONE ] %s" % msg)
 
-    def fast_merge(self, other):
-        """
-        Merge two package sets together without any filtering of packages. All
-        packages from `other` package set are taken.
-        """
-        for arch in other.rpms_by_arch.keys():
-            self.rpms_by_arch.setdefault(arch, [])
-            for i in other.rpms_by_arch.get(arch, []):
-                self.file_cache.file_cache[i.file_path] = i
-                self.rpms_by_arch[arch].append(i)
-
     def save_file_list(self, file_path, remove_path_prefix=None):
         with open(file_path, "w") as f:
             for arch in sorted(self.rpms_by_arch):
