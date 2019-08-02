@@ -276,3 +276,9 @@ def load_config(data={}, **kwargs):
 
 def load_bin(name):
     return imp.load_source('pungi_cli_fake_' + name, os.path.dirname(__file__) + "/../bin/" + name)
+
+
+def fake_run_in_threads(func, params, threads=None):
+    """Like run_in_threads from Kobo, but actually runs tasks serially."""
+    for num, param in enumerate(params):
+        func(None, param, num)

@@ -15,12 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi import Modulemd
 from pungi.phases import init
-from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
-
-
-def fake_run_in_threads(func, params, threads=None):
-    for num, param in enumerate(params):
-        func(None, param, num)
+from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom, fake_run_in_threads
 
 
 @mock.patch("pungi.phases.init.run_in_threads", new=fake_run_in_threads)

@@ -20,7 +20,6 @@ import threading
 from kobo.shortcuts import run, relative_path
 from kobo.threads import run_in_threads
 
-import pungi.phases.pkgset.pkgsets
 from pungi import Modulemd
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
@@ -35,13 +34,7 @@ def populate_arch_pkgsets(compose, path_prefix, global_pkgset):
         compose.log_info("Populating package set for arch: %s", arch)
         is_multilib = is_arch_multilib(compose.conf, arch)
         arches = get_valid_arches(arch, is_multilib, add_src=True)
-        pkgset = pungi.phases.pkgset.pkgsets.PackageSetBase(
-            global_pkgset.name,
-            compose.conf["sigkeys"],
-            logger=compose._logger,
-            arches=arches,
-        )
-        pkgset.merge(global_pkgset, arch, arches, exclusive_noarch=exclusive_noarch)
+        pkgset = global_pkgset.subset(arch, arches, exclusive_noarch=exclusive_noarch)
         pkgset.save_file_list(
             compose.paths.work.package_list(arch=arch, pkgset=global_pkgset),
             remove_path_prefix=path_prefix,
@@ -156,7 +149,7 @@ def _create_arch_repo(worker_thread, args, task_num):
     )
     run(
         cmd,
-        logfile=compose.paths.log.log_file(arch, "arch_repo_%s" % pkgset.name),
+        logfile=compose.paths.log.log_file(arch, "arch_repo.%s" % pkgset.name),
         show_cmd=True,
     )
     # Add modulemd to the repo for all modules in all variants on this architecture.
@@ -171,7 +164,7 @@ def _create_arch_repo(worker_thread, args, task_num):
             repo,
             repo_dir,
             mod_index,
-            compose.paths.log.log_file(arch, "arch_repo_modulemd"),
+            compose.paths.log.log_file(arch, "arch_repo_modulemd.%s" % pkgset.name),
         )
 
     compose.log_info("[DONE ] %s", msg)
