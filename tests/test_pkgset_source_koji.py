@@ -702,7 +702,7 @@ class TestAddModuleToVariant(unittest.TestCase):
             arch_mmds={
                 "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
             },
-            modules=["m1:latest-20190101:cafe"],
+            modules=[{"name": "m1:latest-20190101:cafe", "glob": False}],
         )
 
         source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
@@ -719,7 +719,9 @@ class TestAddModuleToVariant(unittest.TestCase):
                 },
             },
         )
-        self.assertEqual(variant.modules, ["m1:latest-20190101:cafe"])
+        self.assertEqual(
+            variant.modules, [{"name": "m1:latest-20190101:cafe", "glob": False}]
+        )
 
     def test_adding_module_with_add_module(self):
         variant = mock.Mock(
@@ -741,7 +743,9 @@ class TestAddModuleToVariant(unittest.TestCase):
                 },
             },
         )
-        self.assertEqual(variant.modules, ["module:master:20190318:abcdef"])
+        self.assertEqual(
+            variant.modules, [{"name": "module:master:20190318:abcdef", "glob": False}]
+        )
 
     def test_adding_module_to_existing_with_add_module(self):
         variant = mock.Mock(
@@ -749,7 +753,7 @@ class TestAddModuleToVariant(unittest.TestCase):
             arch_mmds={
                 "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
             },
-            modules=["m1:latest-20190101:cafe"],
+            modules=[{"name": "m1:latest-20190101:cafe", "glob": False}],
         )
 
         source_koji._add_module_to_variant(
@@ -770,5 +774,8 @@ class TestAddModuleToVariant(unittest.TestCase):
         )
         self.assertEqual(
             variant.modules,
-            ["m1:latest-20190101:cafe", "module:master:20190318:abcdef"],
+            [
+                {"name": "m1:latest-20190101:cafe", "glob": False},
+                {"name": "module:master:20190318:abcdef", "glob": False},
+            ],
         )

@@ -258,7 +258,7 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
             pass
 
     if add_to_variant_modules:
-        variant.modules.append(nsvc)
+        variant.modules.append({"name": nsvc, "glob": False})
 
     return nsvc
 
