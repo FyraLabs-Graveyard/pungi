@@ -289,10 +289,10 @@ class TestRepoclosure(PungiTestCase):
         super(TestRepoclosure, self).setUp()
         self.maxDiff = None
 
-    def _get_repo(self, variant, arch, path=None):
+    def _get_repo(self, compose_id, variant, arch, path=None):
         path = path or arch + '/os'
         return {
-            'repoclosure-%s.%s' % (variant, arch): self.topdir + '/compose/%s/%s' % (variant, path)
+            'repoclosure-%s-%s.%s' % (compose_id, variant, arch): self.topdir + '/compose/%s/%s' % (variant, path)
         }
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
@@ -316,15 +316,15 @@ class TestRepoclosure(PungiTestCase):
         self.assertItemsEqual(
             mock_grc.call_args_list,
             [mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Everything', 'amd64')),
              mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Client', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Client', 'amd64')),
              mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'amd64')),
              mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'x86_64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'x86_64')),
              mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'x86_64'))])
+                       repos=self._get_repo(compose.compose_id, 'Everything', 'x86_64'))])
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
@@ -335,15 +335,15 @@ class TestRepoclosure(PungiTestCase):
         self.assertItemsEqual(
             mock_grc.call_args_list,
             [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Everything', 'amd64')),
              mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Client', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Client', 'amd64')),
              mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'amd64')),
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'x86_64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'x86_64')),
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Everything', 'x86_64'))])
+                       repos=self._get_repo(compose.compose_id, 'Everything', 'x86_64'))])
 
     @mock.patch("glob.glob")
     @mock.patch("pungi.wrappers.repoclosure.extract_from_fus_log")
@@ -399,9 +399,9 @@ class TestRepoclosure(PungiTestCase):
         self.assertItemsEqual(
             mock_grc.call_args_list,
             [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'amd64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'amd64')),
              mock.call(backend='dnf', arch=['x86_64', 'noarch'], lookaside={},
-                       repos=self._get_repo('Server', 'x86_64')),
+                       repos=self._get_repo(compose.compose_id, 'Server', 'x86_64')),
              ])
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')

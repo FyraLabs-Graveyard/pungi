@@ -52,12 +52,12 @@ def run_repoclosure(compose):
 
             lookaside = {}
             if variant.parent:
-                repo_id = "repoclosure-%s.%s" % (variant.parent.uid, arch)
+                repo_id = "repoclosure-%s-%s.%s" % (compose.compose_id, variant.parent.uid, arch)
                 repo_dir = compose.paths.compose.repository(arch=arch, variant=variant.parent)
                 lookaside[repo_id] = repo_dir
 
             repos = {}
-            repo_id = "repoclosure-%s.%s" % (variant.uid, arch)
+            repo_id = "repoclosure-%s-%s.%s" % (compose.compose_id, variant.uid, arch)
             repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
             repos[repo_id] = repo_dir
 
