@@ -16,6 +16,7 @@
 
 import glob
 import os
+import shutil
 
 from kobo.shortcuts import run
 
@@ -98,6 +99,17 @@ def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
         # cause any error to be printed directly to stderr.
         #  https://github.com/release-engineering/kobo/pull/26
         run(cmd, logfile=logfile, workdir=tmp_dir, show_cmd=True)
+
+        # Delete cache dir
+        if 'dnf' == compose.conf["repoclosure_backend"]:
+            from dnf.yum.misc import getCacheDir
+        else:
+            from yum.misc import getCacheDir
+        top_cache_dir = getCacheDir()
+        for repo_id in repos.keys():
+            cache_dir = os.path.join(top_cache_dir, repo_id)
+            if os.path.isdir(cache_dir):
+                shutil.rmtree(cache_dir)
 
 
 def check_image_sanity(compose):

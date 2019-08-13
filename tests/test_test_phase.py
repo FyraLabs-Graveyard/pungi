@@ -16,6 +16,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pungi.phases.test as test_phase
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
+try:
+    import dnf
+    HAS_DNF = True
+except ImportError:
+    HAS_DNF = False
+
+try:
+    import yum
+    HAS_YUM = True
+except ImportError:
+    HAS_YUM = False
+
 
 PAD = b'\0' * 100
 UNBOOTABLE_ISO = (b'\0' * 0x8001) + b'CD001' + PAD
@@ -305,6 +317,7 @@ class TestRepoclosure(PungiTestCase):
 
         self.assertEqual(mock_grc.call_args_list, [])
 
+    @unittest.skipUnless(HAS_YUM, 'YUM is not available')
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
     def test_repoclosure_default_backend(self, mock_run, mock_grc):
@@ -326,6 +339,7 @@ class TestRepoclosure(PungiTestCase):
              mock.call(backend='yum', arch=['x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo(compose.compose_id, 'Everything', 'x86_64'))])
 
+    @unittest.skipUnless(HAS_DNF, 'DNF is not available')
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
     def test_repoclosure_dnf_backend(self, mock_run, mock_grc):
@@ -384,6 +398,7 @@ class TestRepoclosure(PungiTestCase):
         with self.assertRaises(RuntimeError):
             test_phase.run_repoclosure(compose)
 
+    @unittest.skipUnless(HAS_DNF, 'DNF is not available')
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
     def test_repoclosure_overwrite_options_creates_correct_commands(self, mock_run, mock_grc):
