@@ -191,6 +191,8 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     if variant.type in ("addon", ) or variant.is_empty:
         return
 
+    compose.log_debug("on arch '%s' looking at variant '%s' of type '%s'" % (arch, variant, variant.type))
+
     if not timestamp:
         timestamp = int(time.time())
     else:
@@ -269,6 +271,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         addon.uid = i.uid
         addon.name = i.name
         addon.type = i.type
+        compose.log_debug("variant '%s' inserting addon uid '%s' type '%s'" % (variant, addon.uid, addon.type))
 
         os_tree = compose.paths.compose.os_tree(arch=arch, variant=i).rstrip("/") + "/"
         addon.paths.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
