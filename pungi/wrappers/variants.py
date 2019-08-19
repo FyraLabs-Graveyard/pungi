@@ -60,6 +60,7 @@ class VariantsXmlParser(object):
         with open(get_variants_dtd(logger), 'r') as f:
             self.dtd = lxml.etree.DTD(f)
         self.addons = {}
+        self.variants = {}
         self.layered_products = {}
         self.tree_arches = tree_arches
         self.tree_variants = tree_variants
@@ -228,14 +229,13 @@ class VariantsXmlParser(object):
             variant_id = str(variant_node.attrib["id"])
             self.addons[variant_id] = variant_node
 
-        result = {}
         for variant_node in self.tree.xpath("/variants/variant[@type='variant']"):
             variant = self.parse_variant_node(variant_node)
             if not variant or self._is_excluded(variant):
                 continue
-            result[variant.id] = variant
+            self.variants[variant.id] = variant
 
-        return result
+        return self.variants
 
 
 class Variant(object):
