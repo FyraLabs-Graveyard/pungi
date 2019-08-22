@@ -84,8 +84,29 @@ def run_repoclosure(compose):
                 else:
                     compose.log_warning('Repoclosure failed for %s.%s\n%s'
                                         % (variant.uid, arch, exc))
+            finally:
+                if methods != "hybrid":
+                    _delete_repoclosure_cache_dirs(compose, repos, lookaside)
 
     compose.log_info("[DONE ] %s" % msg)
+
+
+def _delete_repoclosure_cache_dirs(compose, repos, lookaside):
+    if 'dnf' == compose.conf["repoclosure_backend"]:
+        from dnf.yum.misc import getCacheDir
+    else:
+        from yum.misc import getCacheDir
+
+    top_cache_dir = getCacheDir()
+    for repo_id in repos.keys():
+        cache_dir = os.path.join(top_cache_dir, repo_id)
+        if os.path.isdir(cache_dir):
+            shutil.rmtree(cache_dir)
+
+    for repo_id in lookaside.keys():
+        cache_dir = os.path.join(top_cache_dir, repo_id)
+        if os.path.isdir(cache_dir):
+            shutil.rmtree(cache_dir)
 
 
 def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
@@ -99,22 +120,6 @@ def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
         # cause any error to be printed directly to stderr.
         #  https://github.com/release-engineering/kobo/pull/26
         run(cmd, logfile=logfile, workdir=tmp_dir, show_cmd=True)
-
-        # Delete cache dir
-        if 'dnf' == compose.conf["repoclosure_backend"]:
-            from dnf.yum.misc import getCacheDir
-        else:
-            from yum.misc import getCacheDir
-        top_cache_dir = getCacheDir()
-        for repo_id in repos.keys():
-            cache_dir = os.path.join(top_cache_dir, repo_id)
-            if os.path.isdir(cache_dir):
-                shutil.rmtree(cache_dir)
-
-        for repo_id in lookaside.keys():
-            cache_dir = os.path.join(top_cache_dir, repo_id)
-            if os.path.isdir(cache_dir):
-                shutil.rmtree(cache_dir)
 
 
 def check_image_sanity(compose):
