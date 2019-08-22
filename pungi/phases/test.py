@@ -111,6 +111,11 @@ def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
             if os.path.isdir(cache_dir):
                 shutil.rmtree(cache_dir)
 
+        for repo_id in lookaside.keys():
+            cache_dir = os.path.join(top_cache_dir, repo_id)
+            if os.path.isdir(cache_dir):
+                shutil.rmtree(cache_dir)
+
 
 def check_image_sanity(compose):
     """
