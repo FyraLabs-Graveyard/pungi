@@ -419,9 +419,10 @@ class TestRepoclosure(PungiTestCase):
                        repos=self._get_repo(compose.compose_id, 'Server', 'x86_64')),
              ])
 
+    @mock.patch('pungi.phases.test._delete_repoclosure_cache_dirs')
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')
     @mock.patch('pungi.phases.test.run')
-    def test_repoclosure_uses_correct_behaviour(self, mock_run, mock_grc):
+    def test_repoclosure_uses_correct_behaviour(self, mock_run, mock_grc, mock_del):
         compose = DummyCompose(self.topdir, {
             'repoclosure_backend': 'dnf',
             'repoclosure_strictness': [

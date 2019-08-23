@@ -51,14 +51,15 @@ def run_repoclosure(compose):
             if conf and conf[-1] == 'off':
                 continue
 
+            prefix = "repoclosure-%s" % compose.compose_id
             lookaside = {}
             if variant.parent:
-                repo_id = "repoclosure-%s-%s.%s" % (compose.compose_id, variant.parent.uid, arch)
+                repo_id = "%s-%s.%s" % (prefix, variant.parent.uid, arch)
                 repo_dir = compose.paths.compose.repository(arch=arch, variant=variant.parent)
                 lookaside[repo_id] = repo_dir
 
             repos = {}
-            repo_id = "repoclosure-%s-%s.%s" % (compose.compose_id, variant.uid, arch)
+            repo_id = "%s-%s.%s" % (prefix, variant.uid, arch)
             repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
             repos[repo_id] = repo_dir
 
@@ -86,27 +87,25 @@ def run_repoclosure(compose):
                                         % (variant.uid, arch, exc))
             finally:
                 if methods != "hybrid":
-                    _delete_repoclosure_cache_dirs(compose, repos, lookaside)
+                    _delete_repoclosure_cache_dirs(compose, prefix)
 
     compose.log_info("[DONE ] %s" % msg)
 
 
-def _delete_repoclosure_cache_dirs(compose, repos, lookaside):
+def _delete_repoclosure_cache_dirs(compose, prefix):
     if 'dnf' == compose.conf["repoclosure_backend"]:
         from dnf.yum.misc import getCacheDir
     else:
         from yum.misc import getCacheDir
 
     top_cache_dir = getCacheDir()
-    for repo_id in repos.keys():
-        cache_dir = os.path.join(top_cache_dir, repo_id)
-        if os.path.isdir(cache_dir):
-            shutil.rmtree(cache_dir)
-
-    for repo_id in lookaside.keys():
-        cache_dir = os.path.join(top_cache_dir, repo_id)
-        if os.path.isdir(cache_dir):
-            shutil.rmtree(cache_dir)
+    for name in os.listdir(top_cache_dir):
+        if name.startswith(prefix):
+            cache_path = os.path.join(top_cache_dir, name)
+            if os.path.isdir(cache_path):
+                shutil.rmtree(cache_path)
+            else:
+                os.remove(cache_path)
 
 
 def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
