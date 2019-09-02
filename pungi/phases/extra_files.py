@@ -35,10 +35,10 @@ class ExtraFilesPhase(ConfigGuardedPhase):
         self.pkgset_phase = pkgset_phase
 
     def run(self):
-        for arch in self.compose.get_arches() + ["src"]:
-            for variant in self.compose.get_variants(arch=arch):
-                if variant.is_empty:
-                    continue
+        for variant in self.compose.get_variants():
+            if variant.is_empty:
+                continue
+            for arch in variant.arches + ["src"]:
                 cfg = get_arch_variant_data(self.compose.conf, self.name, arch, variant)
                 if cfg:
                     copy_extra_files(self.compose, cfg, arch, variant, self.pkgset_phase.package_sets)
