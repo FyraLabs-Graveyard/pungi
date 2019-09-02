@@ -326,7 +326,7 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     extra_files_dir = compose.paths.work.extra_files_dir(arch, variant)
 
     # scan extra files to mark them "sticky" -> they'll be on all media after split
-    extra_files = set()
+    extra_files = set(["media.repo"])
     for root, dirs, files in os.walk(extra_files_dir):
         for fn in files:
             path = os.path.join(root, fn)
