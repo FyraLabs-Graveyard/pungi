@@ -430,7 +430,8 @@ def get_platform_from_lookasides(compose, variant, arch):
     """Find a set of all platform dependencies in all lookaside repos."""
     platforms = set()
     for repo in pungi.phases.gather.get_lookaside_repos(compose, arch, variant):
-        platforms.update(iter_platforms_in_repo(fus._prep_path(repo)))
+        for ps in iter_platforms_in_repo(fus._prep_path(repo)):
+            platforms.update(ps)
     return platforms
 
 
