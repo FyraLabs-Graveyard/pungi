@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.38
+Version:        4.1.39
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,60 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Sep 09 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.39-1
+- Fix getting platforms from lookaside (lsedlar)
+- extra-files: Simplify iterating over variants (lsedlar)
+- createiso: Make media.repo sticky (lsedlar)
+- hybrid: Re-add getting platform from lookaside repos (lsedlar)
+- pkgset: Remove fast_merge method (lsedlar)
+- Add test for materialized pkgset (lsedlar)
+- Remove package whitelist (lsedlar)
+- paths: Remove arch_repo path (lsedlar)
+- gather: Remove use of arch_repo (lsedlar)
+- ostree-installer: Remove usage of arch_repo (lsedlar)
+- ostree: Remove arch_repo path usage (lsedlar)
+- buildinstall: Remove arch_repo usage (lsedlar)
+- createrepo: Remove arch_repo usage (lsedlar)
+- Fix tests (lsedlar)
+- pkgset: Update processing file cache (lsedlar)
+- Remove pickling from source repos (lsedlar)
+- gather: Port hybrid method (lsedlar)
+- pkgset: Update Koji source to create multiple pkgsets (lsedlar)
+- pkgset: Add object representing a package set on disk (lsedlar)
+- pkgset: Add name to package set (lsedlar)
+- paths: Add function to generate path to pkgset repo (lsedlar)
+- Update code to pass around a list of pkgsets (lsedlar)
+- Store the parsed variants for possible later re-use (riehecky)
+- compose: additional logging on variants being processed (riehecky)
+- Refactor code for removing repoclosure cache (hlin)
+- Delete cache dirs even though repoclosure command failed (hlin)
+- Delete lookaside cache dir (hlin)
+- Delete repoclosure cache (hlin)
+- Add function to get all arches in a compose (lsedlar)
+- Remove not-used hack to workaround required option (lsedlar)
+- pkgset: Create repos in a single place (lsedlar)
+- pkgset: Added modules to variant in correct format (lsedlar)
+- Add compose_id to repoclosure/lookaside directory names (hlin)
+- Fix shadowed variable (lsedlar)
+- Remove now unused msg variables (lsedlar)
+- Remove debug mode (lsedlar)
+- Remove dead code (lsedlar)
+- pkgset: Check for empty module index (lsedlar)
+- gather: Mark repos as containing module hotfixes (lsedlar)
+- config: Deprecate bootable option (hlin)
+- Use createrepo_checksum option instead of hardcoded sha256 (hlin)
+- pkgset: Skip adding modulemd if there is none (lsedlar)
+- test: Allow turning strictness off as well (lsedlar)
+- Port to libmodulemd v2 (lsedlar)
+- test: Option to make size check strict (lsedlar)
+- gather: Remove unused argument (lsedlar)
+- pkgset: Load modulemd only when needed (lsedlar)
+- Stop storing modulemd without arch (lsedlar)
+- Remove unused import (lsedlar)
+- doc: Clarify relationship to Koji (lsedlar)
+- gather: Correctly sort list with multiple data types (lsedlar)
+- git-changelog: Fix running on Python 3 (lsedlar)
+
 * Tue Jul 02 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.38-1
 - Remove remaining mentions of runroot option (lsedlar)
 - pkgset: Include module metadata in the repos (lsedlar)
