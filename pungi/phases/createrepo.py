@@ -70,7 +70,7 @@ class CreaterepoPhase(PhaseBase):
     def run(self):
         get_productids_from_scm(self.compose)
         reference_pkgset = None
-        if self.pkgset_phase:
+        if self.pkgset_phase and self.pkgset_phase.package_sets:
             reference_pkgset = self.pkgset_phase.package_sets[-1]
         for i in range(self.compose.conf['createrepo_num_threads']):
             self.pool.add(
@@ -109,7 +109,9 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
-    repo_dir_arch = pkgset.paths["global" if pkg_type == "srpm" else arch]
+    repo_dir_arch = None
+    if pkgset:
+        repo_dir_arch = pkgset.paths["global" if pkg_type == "srpm" else arch]
 
     try:
         repo_dir = types[pkg_type][1]()
