@@ -382,7 +382,10 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
 
         module_names = set(mod_index.get_module_names())
         defaults_dir = compose.paths.work.module_defaults_dir()
-        collect_module_defaults(defaults_dir, module_names, mod_index)
+        overrides_dir = compose.conf.get("module_defaults_override_dir")
+        collect_module_defaults(
+            defaults_dir, module_names, mod_index, overrides_dir=overrides_dir
+        )
 
         log_file = compose.paths.log.log_file(
             arch, "lookaside_repo_modules_%s" % (variant.uid)

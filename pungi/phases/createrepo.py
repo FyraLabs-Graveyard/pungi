@@ -211,7 +211,10 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
 
         module_names = set(mod_index.get_module_names())
         defaults_dir = compose.paths.work.module_defaults_dir()
-        collect_module_defaults(defaults_dir, module_names, mod_index)
+        overrides_dir = compose.conf.get("module_defaults_override_dir")
+        collect_module_defaults(
+            defaults_dir, module_names, mod_index, overrides_dir=overrides_dir
+        )
 
         log_file = compose.paths.log.log_file(arch, "modifyrepo-modules-%s" % variant)
         add_modular_metadata(repo, repo_dir, mod_index, log_file)

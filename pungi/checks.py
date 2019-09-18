@@ -746,6 +746,7 @@ def make_schema():
                 "default": True
             },
             "module_defaults_dir": {"$ref": "#/definitions/str_or_scm_dict"},
+            "module_defaults_override_dir": {"type": "string"},
 
             "pkgset_repos": {
                 "type": "object",

@@ -155,8 +155,9 @@ def _create_arch_repo(worker_thread, args, task_num):
     # Add modulemd to the repo for all modules in all variants on this architecture.
     if Modulemd and mmd:
         names = set(x.get_module_name() for x in mmd)
+        overrides_dir = compose.conf.get("module_defaults_override_dir")
         mod_index = collect_module_defaults(
-            compose.paths.work.module_defaults_dir(), names
+            compose.paths.work.module_defaults_dir(), names, overrides_dir=overrides_dir
         )
         for x in mmd:
             mod_index.add_module_stream(x)

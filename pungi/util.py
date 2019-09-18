@@ -934,9 +934,10 @@ def iter_module_defaults(path):
     # and work with it. However that does not allow for detecting conflicting
     # defaults. That should not happen in practice, but better safe than sorry.
     # Once libmodulemd can report the error, this code can be simplifed by a
-    # lot. It's implemented in
+    # lot. It was implemented in
     # https://github.com/fedora-modularity/libmodulemd/commit/3087e4a5c38a331041fec9b6b8f1a372f9ffe64d
-    # and released in 2.6.0
+    # and released in 2.6.0, but 2.8.0 added the need to merge overrides and
+    # that breaks this use case again.
     for file in glob.glob(os.path.join(path, "*.yaml")):
         index = Modulemd.ModuleIndex()
         index.update_from_file(file, strict=False)
@@ -944,7 +945,9 @@ def iter_module_defaults(path):
             yield module_name, index.get_module(module_name).get_defaults()
 
 
-def collect_module_defaults(defaults_dir, modules_to_load=None, mod_index=None):
+def collect_module_defaults(
+    defaults_dir, modules_to_load=None, mod_index=None, overrides_dir=None
+):
     """Load module defaults into index.
 
     If `modules_to_load` is passed in, it should be a set of module names. Only
@@ -954,7 +957,15 @@ def collect_module_defaults(defaults_dir, modules_to_load=None, mod_index=None):
     not, a new ModuleIndex will be created and returned
     """
     mod_index = mod_index or Modulemd.ModuleIndex()
-    for module_name, defaults in iter_module_defaults(defaults_dir):
+
+    temp_index = Modulemd.ModuleIndex.new()
+    temp_index.update_from_defaults_directory(
+        defaults_dir, overrides_path=overrides_dir, strict=False
+    )
+
+    for module_name in temp_index.get_module_names():
+        defaults = temp_index.get_module(module_name).get_defaults()
+
         if not modules_to_load or module_name in modules_to_load:
             mod_index.add_defaults(defaults)
 

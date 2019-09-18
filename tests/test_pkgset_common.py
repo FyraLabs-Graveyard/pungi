@@ -105,6 +105,7 @@ class TestMaterializedPkgsetCreate(helpers.PungiTestCase):
         cmd.assert_called_once_with(
             os.path.join(self.topdir, "work/global/module_defaults"),
             set(x.get_module_name.return_value for x in mmd["x86_64"]),
+            overrides_dir=None,
         )
         amm.assert_called_once_with(
             mock.ANY,
