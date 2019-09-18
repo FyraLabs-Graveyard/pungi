@@ -369,6 +369,7 @@ class ComposeTestCase(unittest.TestCase):
         ci.return_value.compose.type_suffix = '.n'
 
         logger = mock.Mock()
+        logger.handlers = []
 
         conf = ConfigWrapper(
             variants_file={'scm': 'file',
@@ -433,6 +434,7 @@ class StatusTest(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
         self.logger = mock.Mock()
+        self.logger.handlers = []
         with mock.patch('pungi.compose.ComposeInfo'):
             self.compose = Compose({}, self.tmp_dir, logger=self.logger)
 

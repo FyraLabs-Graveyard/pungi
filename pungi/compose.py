@@ -20,6 +20,7 @@ __all__ = (
 
 
 import errno
+import logging
 import os
 import time
 import tempfile
@@ -128,6 +129,27 @@ class Compose(kobo.log.LoggingBase):
         # Set up logging to file
         if logger:
             kobo.log.add_file_logger(logger, self.paths.log.log_file("global", "pungi.log"))
+            kobo.log.add_file_logger(logger, self.paths.log.log_file("global", "excluding-arch.log"))
+
+            class PungiLogFilter(logging.Filter):
+                def filter(self, record):
+                    return False if record.funcName and record.funcName == 'is_excluded' else True
+
+            class ExcludingArchLogFilter(logging.Filter):
+                def filter(self, record):
+                    if 'Populating package set for arch:' in record.message or \
+                            (record.funcName and record.funcName == 'is_excluded'):
+                        return True
+                    else:
+                        return False
+
+            for handler in logger.handlers:
+                if isinstance(handler, logging.FileHandler):
+                    log_file_name = os.path.basename(handler.stream.name)
+                    if log_file_name == 'pungi.global.log':
+                        handler.addFilter(PungiLogFilter())
+                    elif log_file_name == 'excluding-arch.global.log':
+                        handler.addFilter(ExcludingArchLogFilter())
 
         # to provide compose_id, compose_date and compose_respin
         self.ci_base = ComposeInfo()
