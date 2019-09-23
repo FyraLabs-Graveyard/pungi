@@ -733,6 +733,10 @@ def make_schema():
                 "$ref": "#/definitions/package_mapping",
                 "default": [],
             },
+            "filter_modules": {
+                "$ref": "#/definitions/package_mapping",
+                "default": [],
+            },
             "sigkeys": {
                 "type": "array",
                 "items": {"$ref": "#/definitions/optional_string"},

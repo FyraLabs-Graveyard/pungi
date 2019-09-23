@@ -700,6 +700,16 @@ Options
     See :ref:`additional_packages <additional_packages>` for details about
     package specification.
 
+**filter_modules**
+    (*list*) -- modules to be excluded from a variant and architecture;
+    format: ``[(variant_uid_regex, {arch|*: [name:stream]})]``
+
+    Both name and stream can use shell-style globs. If stream is omitted, all
+    streams are removed.
+
+    This option only applies to modules taken from Koji tags, not modules
+    explicitly listed in variants XML without any tags.
+
 **filter_system_release_packages**
     (*bool*) -- for each variant, figure out the best system release package
     and filter out all others. This will not work if a variant needs more than

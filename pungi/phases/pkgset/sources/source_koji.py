@@ -17,6 +17,7 @@
 import os
 import json
 import re
+from fnmatch import fnmatch
 from itertools import groupby
 
 from kobo.rpmlib import parse_nvra
@@ -26,7 +27,7 @@ import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import getBaseArch
-from pungi.util import retry, find_old_compose
+from pungi.util import retry, find_old_compose, get_arch_variant_data
 from pungi import Modulemd
 
 from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
@@ -190,7 +191,9 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
     return populate_global_pkgset(compose, koji_wrapper, path_prefix, event_info)
 
 
-def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=False):
+def _add_module_to_variant(
+    koji_wrapper, variant, build, add_to_variant_modules=False, compose=None
+):
     """
     Adds module defined by Koji build info to variant.
 
@@ -198,6 +201,7 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
     :param int: build id
     :param bool add_to_variant_modules: Adds the modules also to
         variant.modules.
+    :param compose: Compose object to get filters from
     """
     mmds = {}
     archives = koji_wrapper.koji_proxy.listArchives(build["id"])
@@ -225,24 +229,55 @@ def _add_module_to_variant(koji_wrapper, variant, build, add_to_variant_modules=
         # longer supported and should be rebuilt. Let's skip it.
         return
 
-    nsvc = "%(name)s:%(stream)s:%(version)s:%(context)s" % build["extra"]["typeinfo"]["module"]
+    info = build["extra"]["typeinfo"]["module"]
+    nsvc = "%(name)s:%(stream)s:%(version)s:%(context)s" % info
+
+    added = False
 
     for arch in variant.arches:
+        if _is_filtered_out(compose, variant, arch, info["name"], info["stream"]):
+            compose.log_debug("Module %s is filtered from %s.%s", nsvc, variant, arch)
+            continue
+
         try:
             mmd = Modulemd.ModuleStream.read_file(
                 mmds["modulemd.%s.txt" % arch], strict=True
             )
             variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
+            added = True
         except KeyError:
             # There is no modulemd for this arch. This could mean an arch was
             # added to the compose after the module was built. We don't want to
             # process this, let's skip this module.
             pass
 
+    if not added:
+        # The module is filtered on all arches of this variant.
+        return None
+
     if add_to_variant_modules:
         variant.modules.append({"name": nsvc, "glob": False})
 
     return nsvc
+
+
+def _is_filtered_out(compose, variant, arch, module_name, module_stream):
+    """Check if module with given name and stream is filter out from this stream.
+    """
+    if not compose:
+        return False
+
+    for filter in get_arch_variant_data(compose.conf, "filter_modules", arch, variant):
+        if ":" not in filter:
+            name_filter = filter
+            stream_filter = "*"
+        else:
+            name_filter, stream_filter = filter.split(":", 1)
+
+        if fnmatch(module_name, name_filter) and fnmatch(module_stream, stream_filter):
+            return True
+
+    return False
 
 
 def _get_modules_from_koji(
@@ -264,26 +299,34 @@ def _get_modules_from_koji(
     for module in variant.get_modules():
         koji_modules = get_koji_modules(compose, koji_wrapper, event, module["name"])
         for koji_module in koji_modules:
-            nsvc = _add_module_to_variant(koji_wrapper, variant, koji_module)
+            nsvc = _add_module_to_variant(
+                koji_wrapper, variant, koji_module, compose=compose
+            )
             if not nsvc:
                 continue
 
             tag = koji_module["tag"]
             variant_tags[variant].append(tag)
 
-            # Store mapping NSVC --> koji_tag into variant.
-            # This is needed in createrepo phase where metadata is exposed by producmd
-            variant.module_uid_to_koji_tag[nsvc] = tag
-
             tag_to_mmd.setdefault(tag, {})
             for arch in variant.arch_mmds:
-                tag_to_mmd[tag].setdefault(arch, set()).add(variant.arch_mmds[arch][nsvc])
+                try:
+                    mmd = variant.arch_mmds[arch][nsvc]
+                except KeyError:
+                    # Module was filtered from here
+                    continue
+                tag_to_mmd[tag].setdefault(arch, set()).add(mmd)
 
-            module_msg = (
-                "Module '{uid}' in variant '{variant}' will use Koji tag '{tag}' "
-                "(as a result of querying module '{module}')"
-            ).format(uid=nsvc, variant=variant, tag=tag, module=module["name"])
-            compose.log_info("%s" % module_msg)
+            if tag_to_mmd[tag]:
+                compose.log_info(
+                    "Module '%s' in variant '%s' will use Koji tag '%s' "
+                    "(as a result of querying module '%s')",
+                    nsvc, variant, tag, module["name"]
+                )
+
+                # Store mapping NSVC --> koji_tag into variant. This is needed
+                # in createrepo phase where metadata is exposed by producmd
+                variant.module_uid_to_koji_tag[nsvc] = tag
 
 
 def filter_inherited(koji_proxy, event, module_builds, top_tag):
@@ -449,21 +492,31 @@ def _get_modules_from_koji_tags(
 
             variant_tags[variant].append(module_tag)
 
-            nsvc = _add_module_to_variant(koji_wrapper, variant, build, True)
+            nsvc = _add_module_to_variant(
+                koji_wrapper, variant, build, True, compose=compose
+            )
             if not nsvc:
                 continue
 
-            # Store mapping module-uid --> koji_tag into variant.
-            # This is needed in createrepo phase where metadata is exposed by producmd
-            variant.module_uid_to_koji_tag[nsvc] = module_tag
-
             tag_to_mmd.setdefault(module_tag, {})
             for arch in variant.arch_mmds:
-                tag_to_mmd[module_tag].setdefault(arch, set()).add(variant.arch_mmds[arch][nsvc])
+                try:
+                    mmd = variant.arch_mmds[arch][nsvc]
+                except KeyError:
+                    # Module was filtered from here
+                    continue
+                tag_to_mmd[module_tag].setdefault(arch, set()).add(mmd)
 
-            module_msg = "Module {module} in variant {variant} will use Koji tag {tag}.".format(
-                variant=variant, tag=module_tag, module=build["nvr"])
-            compose.log_info("%s" % module_msg)
+            if tag_to_mmd[module_tag]:
+                compose.log_info(
+                    "Module %s in variant %s will use Koji tag %s.",
+                    nsvc, variant, module_tag
+                )
+
+                # Store mapping module-uid --> koji_tag into variant. This is
+                # needed in createrepo phase where metadata is exposed by
+                # productmd
+                variant.module_uid_to_koji_tag[nsvc] = module_tag
 
     if expected_modules:
         # There are some module names that were listed in configuration and not
@@ -624,7 +677,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                     # Not current tag, skip it
                     continue
                 for arch_modules in variant.arch_mmds.values():
-                    for rpm_nevra in arch_modules[nsvc].get_rpm_artifacts():
+                    try:
+                        module = arch_modules[nsvc]
+                    except KeyError:
+                        # The module was filtered out
+                        continue
+                    for rpm_nevra in module.get_rpm_artifacts():
                         nevra = parse_nvra(rpm_nevra)
                         modular_packages.add((nevra["name"], nevra["arch"]))
 

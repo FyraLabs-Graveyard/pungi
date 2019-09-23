@@ -615,9 +615,10 @@ class MockModule(object):
 
 @mock.patch("pungi.Modulemd.ModuleStream.read_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
-class TestAddModuleToVariant(unittest.TestCase):
+class TestAddModuleToVariant(helpers.PungiTestCase):
 
     def setUp(self):
+        super(TestAddModuleToVariant, self).setUp()
         self.koji = mock.Mock()
         self.koji.koji_module.pathinfo.typedir.return_value = "/koji"
         files = ["modulemd.x86_64.txt", "modulemd.armv7hl.txt", "modulemd.txt"]
@@ -741,3 +742,61 @@ class TestAddModuleToVariant(unittest.TestCase):
                 {"name": "module:master:20190318:abcdef", "glob": False},
             ],
         )
+
+    def test_adding_module_but_filtered(self):
+        compose = helpers.DummyCompose(
+            self.topdir, {"filter_modules": [(".*", {"*": ["module:*"]})]}
+        )
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"], arch_mmds={}, modules=[], uid="Variant"
+        )
+
+        nsvc = source_koji._add_module_to_variant(
+            self.koji,
+            variant,
+            self.buildinfo,
+            add_to_variant_modules=True,
+            compose=compose,
+        )
+
+        self.assertIsNone(nsvc)
+        self.assertEqual(variant.arch_mmds, {})
+        self.assertEqual(variant.modules, [])
+
+
+class TestIsModuleFiltered(helpers.PungiTestCase):
+    def assertIsFiltered(self, name, stream):
+        self.assertTrue(
+            source_koji._is_filtered_out(
+                self.compose, self.compose.variants["Server"], "x86_64", name, stream
+            )
+        )
+
+    def assertIsNotFiltered(self, name, stream):
+        self.assertFalse(
+            source_koji._is_filtered_out(
+                self.compose, self.compose.variants["Server"], "x86_64", name, stream
+            )
+        )
+
+    def test_no_filters(self):
+        self.compose = helpers.DummyCompose(self.topdir, {})
+
+        self.assertIsNotFiltered("foo", "master")
+
+    def test_filter_by_name(self):
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"filter_modules": [(".*", {"*": ["foo"]})]}
+        )
+
+        self.assertIsFiltered("foo", "master")
+        self.assertIsNotFiltered("bar", "master")
+
+    def test_filter_by_stream(self):
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"filter_modules": [(".*", {"*": ["foo:master"]})]}
+        )
+
+        self.assertIsFiltered("foo", "master")
+        self.assertIsNotFiltered("bar", "master")
+        self.assertIsNotFiltered("foo", "stable")
