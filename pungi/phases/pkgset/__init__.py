@@ -24,6 +24,7 @@ class PkgsetPhase(PhaseBase):
     def __init__(self, *args, **kwargs):
         super(PkgsetPhase, self).__init__(*args, **kwargs)
         self.package_sets = []
+        self.path_prefix = None
 
     def run(self):
         pkgset_source = "PkgsetSource%s" % self.compose.conf["pkgset_source"]
