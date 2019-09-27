@@ -287,12 +287,11 @@ class Gather(GatherBase):
                 return [i for i in multilib_pkgs if i.sourcerpm == match.sourcerpm]
         return [match]
 
-    def _add_packages(self, packages, pulled_by=None, req=None, reason=None):
-        added = set()
+    def _add_packages(self, packages, pulled_by=None, req=None, reason=None, dest=None):
+        dest = dest or self.result_binary_packages
         for i in packages:
             assert i is not None
-            if i not in self.result_binary_packages:
-                added.add(i)
+            if i not in dest:
                 pb = ""
                 if pulled_by:
                     pb = " (pulled by %s, repo: %s)" % (pulled_by, pulled_by.repo.id)
@@ -301,14 +300,12 @@ class Gather(GatherBase):
                 if reason:
                     pb += " (%s)" % reason
                 self.logger.debug("Added package %s%s" % (i, pb))
-                self.result_binary_packages.add(i)
+                dest.add(i)
                 # lookaside
                 if i.repoid in self.opts.lookaside_repos:
                     self._set_flag(i, PkgFlag.lookaside)
                 if i.sourcerpm.rsplit('-', 2)[0] in self.opts.fulltree_excludes:
                     self._set_flag(i, PkgFlag.fulltree_exclude)
-
-        self.result_binary_packages.update(added)
 
     def _get_package_deps(self, pkg):
         """Return all direct (1st level) deps for a package.
