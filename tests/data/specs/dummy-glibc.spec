@@ -31,6 +31,7 @@ A dummy nscd package
 %package debuginfo
 Summary:        A dummy glibc-debuginfo package
 Group:          Development/Debug
+Requires:	%{name}-debuginfo-common%{?_isa} = %{version}-%{release}
 
 %description debuginfo
 A dummy glibc-debuginfo package

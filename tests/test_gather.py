@@ -213,7 +213,6 @@ class DepsolvingBase(object):
             "dummy-bash-4.2.37-6.i686.rpm",
             "dummy-filesystem-4.2.37-6.x86_64.rpm",
             "dummy-glibc-2.14-5.i686.rpm",
-            "dummy-glibc-2.14-5.x86_64.rpm",
             "dummy-glibc-common-2.14-5.x86_64.rpm",
         ])
         self.assertItemsEqual(pkg_map["srpm"], [
@@ -970,7 +969,6 @@ class DepsolvingBase(object):
             "dummy-bash-4.2.37-6.i686.rpm",
             "dummy-filesystem-4.2.37-6.x86_64.rpm",
             "dummy-glibc-2.14-5.i686.rpm",
-            "dummy-glibc-2.14-5.x86_64.rpm",
             "dummy-glibc-common-2.14-5.x86_64.rpm",
         ])
         self.assertItemsEqual(pkg_map["srpm"], [

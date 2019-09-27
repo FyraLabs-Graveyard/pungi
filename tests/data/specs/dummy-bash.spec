@@ -3,7 +3,7 @@ Version:        4.2.37
 Release:        6
 License:        LGPLv2
 Summary:        A dummy bash package
-Requires:       dummy-glibc
+Requires:       dummy-glibc%{?_isa}
 %if %__isa_bits == 32
 Requires:       libpthread.so.0(GLIBC_2.0)
 %else

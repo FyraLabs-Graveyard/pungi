@@ -58,7 +58,7 @@ rpmbuild --quiet --target=$target -bb --nodeps --define "_srcrpmdir $DIR/../repo
 
 # create main repo
 echo "Creating main repository"
-createrepo_c --quiet --update --groupfile $DIR/../dummy-comps.xml $DIR/../repo
+createrepo_c --quiet --update --groupfile $DIR/../dummy-comps.xml $DIR/../repo --no-database --simple-md-filenames
 
 
 # create lookaside repo for krb5
