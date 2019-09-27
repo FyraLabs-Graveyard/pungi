@@ -19,7 +19,7 @@ from itertools import count
 import logging
 import os
 
-from kobo.rpmlib import parse_nvra, parse_nvr
+from kobo.rpmlib import parse_nvra
 
 import pungi.common
 import pungi.dnf_wrapper
