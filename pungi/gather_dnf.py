@@ -220,7 +220,7 @@ class Gather(GatherBase):
     def _set_flag(self, pkg, *flags):
         self.result_package_flags.setdefault(pkg, set()).update(flags)
 
-    def _get_best_package(self, package_list, pkg=None, req=None):
+    def _get_best_package(self, package_list, pkg=None, req=None, debuginfo=False):
         if not package_list:
             return []
 
@@ -245,27 +245,31 @@ class Gather(GatherBase):
             ):
                 all_pkgs.append(pkg)
 
-        native_pkgs = self.q_native_binary_packages.filter(pkg=all_pkgs).apply()
-        multilib_pkgs = self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply()
+        if not debuginfo:
+            native_pkgs = set(self.q_native_binary_packages.filter(pkg=all_pkgs).apply())
+            multilib_pkgs = set(self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply())
+        else:
+            native_pkgs = set(self.q_native_debug_packages.filter(pkg=all_pkgs).apply())
+            multilib_pkgs = set(self.q_multilib_debug_packages.filter(pkg=all_pkgs).apply())
 
         result = set()
 
         # try seen native packages first
-        seen_pkgs = set(native_pkgs) & self.result_binary_packages
+        seen_pkgs = native_pkgs & self.result_binary_packages
         if seen_pkgs:
             result = seen_pkgs
 
         # then try seen multilib packages
         if not result:
-            seen_pkgs = set(multilib_pkgs) & self.result_binary_packages
+            seen_pkgs = multilib_pkgs & self.result_binary_packages
             if seen_pkgs:
                 result = seen_pkgs
 
         if not result:
-            result = set(native_pkgs)
+            result = native_pkgs
 
         if not result:
-            result = set(multilib_pkgs)
+            result = multilib_pkgs
 
         if not result:
             return []
@@ -307,13 +311,14 @@ class Gather(GatherBase):
                 if i.sourcerpm.rsplit('-', 2)[0] in self.opts.fulltree_excludes:
                     self._set_flag(i, PkgFlag.fulltree_exclude)
 
-    def _get_package_deps(self, pkg):
+    def _get_package_deps(self, pkg, debuginfo=False):
         """Return all direct (1st level) deps for a package.
 
         The return value is a set of tuples (pkg, reldep). Each package is
         tagged with the particular reldep that pulled it in. Requires_pre and
         _post are not distinguished.
         """
+        queue = self.q_debug_packages if debuginfo else self.q_binary_packages
         assert pkg is not None
         result = set()
 
@@ -329,7 +334,7 @@ class Gather(GatherBase):
             + getattr(pkg, 'requires_post', [])
         )
 
-        q = self.q_binary_packages.filter(provides=requires).apply()
+        q = queue.filter(provides=requires).apply()
         for req in requires:
             deps = self.finished_get_package_deps_reqs.setdefault(str(req), set())
             if deps:
@@ -339,7 +344,7 @@ class Gather(GatherBase):
             # TODO: need query also debuginfo
             deps = q.filter(provides=req)
             if deps:
-                deps = self._get_best_package(deps, req=req)
+                deps = self._get_best_package(deps, req=req, debuginfo=debuginfo)
                 self.finished_get_package_deps_reqs[str(req)].update(deps)
                 result.update((dep, req) for dep in deps)
             else:
@@ -510,6 +515,34 @@ class Gather(GatherBase):
 
         return added
 
+    @Profiler("Gather.add_debug_package_deps()")
+    def add_debug_package_deps(self):
+        added = set()
+
+        if not self.opts.resolve_deps:
+            return added
+
+        for pkg in self.result_debug_packages.copy():
+
+            if pkg not in self.finished_add_debug_package_deps:
+                deps = self._get_package_deps(pkg, debuginfo=True)
+                for i, req in deps:
+                    if i in self.result_binary_packages:
+                        # The dependency is already satisfied by binary package
+                        continue
+                    if i not in self.result_debug_packages:
+                        self._add_packages(
+                            [i],
+                            pulled_by=pkg,
+                            req=req,
+                            reason="debug-dep",
+                            dest=self.result_debug_packages,
+                        )
+                        added.add(i)
+                self.finished_add_debug_package_deps[pkg] = deps
+
+        return added
+
     @Profiler("Gather.add_conditional_packages()")
     def add_conditional_packages(self):
         """
@@ -643,17 +676,20 @@ class Gather(GatherBase):
             debug_pkgs = []
             pkg_in_lookaside = pkg.repoid in self.opts.lookaside_repos
             for i in candidates:
-                if pkg.arch == 'noarch' and i.arch != 'noarch':
-                    # If the package is noarch, we will only pull debuginfo if
-                    # it's noarch as well. This covers mingw use case, but
-                    # means we don't for example pull debuginfo just because of
-                    # -doc subpackage.
+                if pkg.arch != i.arch:
+                    continue
+                if "-debugsource" not in i.name and i.name != "%s-debuginfo" % pkg.name:
+                    # If it's not debugsource package or does not match name of
+                    # the package, we don't want it in.
                     continue
                 if i.repoid in self.opts.lookaside_repos or pkg_in_lookaside:
                     self._set_flag(i, PkgFlag.lookaside)
                 if i not in self.result_debug_packages:
                     added.add(i)
                     debug_pkgs.append(i)
+                    self.logger.debug(
+                        "Added debuginfo %s (for %s, repo: %s)" % (i, pkg, i.repo.id)
+                    )
 
             self.finished_add_debug_packages[pkg] = debug_pkgs
             self.result_debug_packages.update(debug_pkgs)
@@ -834,7 +870,9 @@ class Gather(GatherBase):
 
             if self.log_count('DEBUG PACKAGES', self.add_debug_packages):
                 continue
-            # TODO: debug deps
+
+            if self.log_count("DEBUG DEPS", self.add_debug_package_deps):
+                continue
 
             if self.log_count('FULLTREE', self.add_fulltree_packages):
                 continue

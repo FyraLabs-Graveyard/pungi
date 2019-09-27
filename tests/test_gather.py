@@ -1856,4 +1856,169 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
         self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside])
-        self.assertFlags("dummy-krb5-debuginfo-1.10-5.x86_64", [PkgFlag.lookaside])
+
+    def test_only_required_debuginfo_pulled_in(self):
+        self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/debuginfo")
+        packages = ["libuser.+", "python-libuser"]
+
+        pkg_map = self.go(packages, None)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "libuser-1-1.i686.rpm",
+            "python-libuser-1-1.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "libuser-1-1.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "libuser-debuginfo-1-1.i686.rpm",
+            "python-libuser-debuginfo-1-1.x86_64.rpm",
+        ])
+
+    def test_skype(self):
+        packages = [
+            "dummy-skype",
+        ]
+        pkg_map = self.go(packages, None, greedy="build", fulltree=False, arch="x86_64")
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-skype-4.2.0.13-1.i586.rpm",
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+        ])
+        # no SRPM for skype
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+        ])
+
+    def test_bash_multilib_exclude_debuginfo(self):
+        packages = [
+            'dummy-bash.+',
+            '-dummy-bash-debuginfo',
+            '-dummy-bash-debugsource',
+        ]
+        pkg_map = self.go(packages, None, greedy="none")
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-bash-4.2.37-6.i686.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-bash-4.2.37-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+        ])
+
+    def test_exclude_wildcards(self):
+        packages = [
+            "dummy-bash",
+            "-dummy-bas*",
+            "dummy-glibc",
+        ]
+        pkg_map = self.go(packages, None,
+                          greedy="none", nodeps=True, fulltree=True)
+
+        # neither dummy-bash or dummy-basesystem is pulled in
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+            "dummy-nscd-2.14-5.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-glibc-2.14-5.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+        ])
+
+    def test_bash_multilib_exclude_source(self):
+        packages = [
+            "dummy-bash.+",
+            "-dummy-bash.src",
+        ]
+        pkg_map = self.go(packages, None, greedy="none")
+
+        self.assertNotIn("dummy-bash-4.2.37-6.src.rpm", pkg_map["srpm"])
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-bash-4.2.37-6.i686.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-bash-debuginfo-4.2.37-6.i686.rpm",
+            "dummy-bash-debugsource-4.2.37-6.i686.rpm",
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+        ])
+
+    def test_ipw3945_kmod(self):
+        # every package name is different
+        packages = [
+            "dummy-kmod-ipw3945",
+        ]
+        pkg_map = self.go(packages, None, greedy="none", fulltree=True)
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-kmod-ipw3945-1.2.0-4.20.x86_64.rpm",         # Important
+            "dummy-kmod-ipw3945-xen-1.2.0-4.20.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-ipw3945-kmod-1.2.0-4.20.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [])
+
+    def test_multilib_method_devel_runtime(self):
+        packages = [
+            "dummy-lvm2-devel",
+        ]
+        pkg_map = self.go(packages, None, greedy="none", fulltree=False,
+                          multilib_methods=["devel", "runtime"])
+
+        self.assertItemsEqual(pkg_map["rpm"], [
+            "dummy-basesystem-10.0-6.noarch.rpm",
+            "dummy-filesystem-4.2.37-6.x86_64.rpm",
+            "dummy-glibc-2.14-5.x86_64.rpm",
+            "dummy-glibc-2.14-5.i686.rpm",
+            "dummy-glibc-common-2.14-5.x86_64.rpm",
+            "dummy-lvm2-2.02.84-4.x86_64.rpm",
+            "dummy-lvm2-devel-2.02.84-4.i686.rpm",          # Important
+            "dummy-lvm2-devel-2.02.84-4.x86_64.rpm",        # Important
+            "dummy-lvm2-libs-2.02.84-4.x86_64.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["srpm"], [
+            "dummy-basesystem-10.0-6.src.rpm",
+            "dummy-filesystem-4.2.37-6.src.rpm",
+            "dummy-glibc-2.14-5.src.rpm",
+            "dummy-lvm2-2.02.84-4.src.rpm",
+        ])
+        self.assertItemsEqual(pkg_map["debuginfo"], [
+            "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+            "dummy-glibc-debuginfo-2.14-5.i686.rpm",
+            "dummy-glibc-debuginfo-common-2.14-5.i686.rpm",
+            "dummy-lvm2-debuginfo-2.02.84-4.x86_64.rpm",
+        ])
