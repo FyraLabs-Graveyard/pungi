@@ -323,9 +323,11 @@ class Gather(GatherBase):
 
         # DNF package has the _pre and _post attributes only if they are not
         # empty.
-        requires = (pkg.requires +
-                    getattr(pkg, 'requires_pre', []) +
-                    getattr(pkg, 'requires_post', []))
+        requires = (
+            pkg.requires
+            + getattr(pkg, 'requires_pre', [])
+            + getattr(pkg, 'requires_post', [])
+        )
 
         q = self.q_binary_packages.filter(provides=requires).apply()
         for req in requires:
