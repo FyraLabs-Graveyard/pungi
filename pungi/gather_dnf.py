@@ -860,7 +860,7 @@ class Gather(GatherBase):
             # Link downloaded package in (or link package from file repo)
             try:
                 linker.hardlink(pkg.localPkg(), target)
-            except:
+            except Exception:
                 self.logger.error("Unable to link %s from the yum cache." % pkg.name)
                 raise
 
