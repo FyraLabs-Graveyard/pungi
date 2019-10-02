@@ -19,7 +19,7 @@ from pungi.phases.createrepo import (CreaterepoPhase,
                                      get_productids_from_scm,
                                      ModulesMetadata)
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
-from pungi import Modulemd
+from pungi.module_util import Modulemd
 
 
 class TestCreaterepoPhase(PungiTestCase):

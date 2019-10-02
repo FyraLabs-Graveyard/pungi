@@ -4,14 +4,6 @@ import os
 import re
 
 
-try:
-    import gi
-    gi.require_version('Modulemd', '2.0') # noqa
-    from gi.repository import Modulemd
-except (ImportError, ValueError):
-    Modulemd = None
-
-
 def get_full_version():
     """
     Find full version of Pungi: if running from git, this will return cleaned

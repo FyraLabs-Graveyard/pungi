@@ -20,10 +20,10 @@ import threading
 from kobo.shortcuts import run, relative_path
 from kobo.threads import run_in_threads
 
-from pungi import Modulemd
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib, find_old_compose, collect_module_defaults
+from pungi.util import is_arch_multilib, find_old_compose
+from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
 

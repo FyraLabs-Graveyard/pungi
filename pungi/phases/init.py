@@ -23,7 +23,8 @@ from kobo.threads import run_in_threads
 
 from pungi.phases.base import PhaseBase
 from pungi.phases.gather import write_prepopulate_file
-from pungi.util import temp_dir, iter_module_defaults
+from pungi.util import temp_dir
+from pungi.module_util import iter_module_defaults
 from pungi.wrappers.comps import CompsWrapper
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm

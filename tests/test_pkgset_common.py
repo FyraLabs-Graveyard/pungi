@@ -8,7 +8,7 @@ import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi import Modulemd
+from pungi.module_util import Modulemd
 from pungi.phases.pkgset import common
 from tests import helpers
 

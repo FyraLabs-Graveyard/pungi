@@ -28,7 +28,7 @@ from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import getBaseArch
 from pungi.util import retry, find_old_compose, get_arch_variant_data
-from pungi import Modulemd
+from pungi.module_util import Modulemd
 
 from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
 from pungi.phases.gather import get_packages_to_gather

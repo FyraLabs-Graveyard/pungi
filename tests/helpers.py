@@ -18,7 +18,8 @@ except ImportError:
     import unittest
 
 from pungi.util import get_arch_variant_data
-from pungi import paths, checks, Modulemd
+from pungi import paths, checks
+from pungi.module_util import Modulemd
 
 
 class BaseTestCase(unittest.TestCase):

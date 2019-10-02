@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
-from pungi import Modulemd
+from pungi.module_util import Modulemd
 
 EVENT_INFO = {'id': 15681980, 'ts': 1460956382.81936}
 TAG_INFO = {
@@ -613,7 +613,7 @@ class MockModule(object):
         return self.path == other.path
 
 
-@mock.patch("pungi.Modulemd.ModuleStream.read_file", new=MockModule)
+@mock.patch("pungi.module_util.Modulemd.ModuleStream.read_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
 class TestAddModuleToVariant(helpers.PungiTestCase):
 

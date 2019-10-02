@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pungi import Modulemd
+from pungi.module_util import Modulemd
 from pungi.phases import init
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom, fake_run_in_threads
 

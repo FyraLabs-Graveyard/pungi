@@ -27,12 +27,12 @@ from .link import link_files
 from ...wrappers.createrepo import CreaterepoWrapper
 import pungi.wrappers.kojiwrapper
 
-from pungi import Modulemd
 from pungi.compose import get_ordered_variant_uids
 from pungi.arch import get_compatible_arches, split_name_arch
 from pungi.phases.base import PhaseBase
 from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
-                        makedirs, collect_module_defaults)
+                        makedirs)
+from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
 

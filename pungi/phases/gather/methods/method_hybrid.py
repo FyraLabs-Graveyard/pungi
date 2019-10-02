@@ -23,13 +23,11 @@ import kobo.rpmlib
 from kobo.shortcuts import run
 
 import pungi.phases.gather.method
-from pungi import Modulemd, multilib_dnf
+from pungi import multilib_dnf
+from pungi.module_util import Modulemd
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
-from pungi.util import (
-    get_arch_variant_data,
-    pkg_is_debug,
-)
+from pungi.util import get_arch_variant_data, pkg_is_debug
 from pungi.wrappers import fus
 from pungi.wrappers.comps import CompsWrapper
 

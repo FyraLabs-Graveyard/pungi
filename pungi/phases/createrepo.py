@@ -33,13 +33,8 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import (
-    find_old_compose,
-    get_arch_variant_data,
-    collect_module_defaults,
-    temp_dir,
-)
-from pungi import Modulemd
+from ..util import find_old_compose, get_arch_variant_data, temp_dir
+from ..module_util import Modulemd, collect_module_defaults
 
 import productmd.rpms
 import productmd.modules
