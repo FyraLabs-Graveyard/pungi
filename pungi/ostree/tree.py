@@ -48,13 +48,20 @@ class Tree(OSTree):
             cmd.append('--force-nocache')
         cmd.append(self.treefile)
 
-        shortcuts.run(cmd, show_cmd=True, stdout=True, logfile=log_file)
+        shortcuts.run(
+            cmd, show_cmd=True, stdout=True, logfile=log_file, universal_newlines=True
+        )
 
     def _update_summary(self):
         """Update summary metadata"""
         log_file = make_log_file(self.logdir, 'ostree-summary')
-        shortcuts.run(['ostree', 'summary', '-u', '--repo=%s' % self.repo],
-                      show_cmd=True, stdout=True, logfile=log_file)
+        shortcuts.run(
+            ['ostree', 'summary', '-u', '--repo=%s' % self.repo],
+            show_cmd=True,
+            stdout=True,
+            logfile=log_file,
+            universal_newlines=True,
+        )
 
     def _update_ref(self):
         """
