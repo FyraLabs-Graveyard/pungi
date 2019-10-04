@@ -803,7 +803,7 @@ class TestCreateVariantRepo(PungiTestCase):
 
         self.assertEqual(
             repo.get_modifyrepo_cmd.mock_calls,
-            [mock.call(repodata_dir, ANY, compress_type="gz", mdtype="modules")],
+            [mock.call(repodata_dir, mock.ANY, compress_type="gz", mdtype="modules")],
         )
 
     @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
@@ -856,20 +856,8 @@ class TestCreateVariantRepo(PungiTestCase):
 
         self.assertEqual(
             repo.get_modifyrepo_cmd.mock_calls,
-            [mock.call(repodata_dir, ANY, compress_type="gz", mdtype="modules")],
+            [mock.call(repodata_dir, mock.ANY, compress_type="gz", mdtype="modules")],
         )
-
-
-class ANYSingleton(object):
-    """An object that is equal to anything."""
-    def __eq__(self, another):
-        return True
-
-    def __repr__(self):
-        return u'ANY'
-
-
-ANY = ANYSingleton()
 
 
 class TestGetProductIds(PungiTestCase):
@@ -913,7 +901,7 @@ class TestGetProductIds(PungiTestCase):
 
         get_productids_from_scm(self.compose)
 
-        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
         self.assertProductIds({
             'Client': ['amd64'],
             'Everything': ['amd64', 'x86_64'],
@@ -934,7 +922,7 @@ class TestGetProductIds(PungiTestCase):
 
         get_productids_from_scm(self.compose)
 
-        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
         self.assertProductIds({
             'Server': ['amd64', 'x86_64'],
         })
@@ -953,7 +941,7 @@ class TestGetProductIds(PungiTestCase):
         with self.assertRaises(RuntimeError) as ctx:
             get_productids_from_scm(self.compose)
 
-        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
         self.assertRegexpMatches(
             str(ctx.exception),
             r'No product certificate found \(arch: amd64, variant: (Everything|Client)\)')
@@ -976,7 +964,7 @@ class TestGetProductIds(PungiTestCase):
         with self.assertRaises(RuntimeError) as ctx:
             get_productids_from_scm(self.compose)
 
-        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, ANY)])
+        self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
         self.assertRegexpMatches(
             str(ctx.exception),
             'Multiple product certificates found.+')
