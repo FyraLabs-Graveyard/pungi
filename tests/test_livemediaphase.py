@@ -5,6 +5,8 @@ import mock
 import sys
 import os
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
@@ -480,13 +482,22 @@ class TestLiveMediaThread(PungiTestCase):
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/x86_64/iso'))
         self.assertTrue(os.path.isdir(self.topdir + '/compose/Server/amd64/iso'))
         link = Linker.return_value.link
-        self.assertItemsEqual(link.mock_calls,
-                              [mock.call('/koji/task/1235/Live-20160103.amd64.iso',
-                                         self.topdir + '/compose/Server/amd64/iso/Live-20160103.amd64.iso',
-                                         link_type='hardlink-or-copy'),
-                               mock.call('/koji/task/1235/Live-20160103.x86_64.iso',
-                                         self.topdir + '/compose/Server/x86_64/iso/Live-20160103.x86_64.iso',
-                                         link_type='hardlink-or-copy')])
+        six.assertCountEqual(
+            self,
+            link.mock_calls,
+            [
+                mock.call(
+                    "/koji/task/1235/Live-20160103.amd64.iso",
+                    self.topdir + "/compose/Server/amd64/iso/Live-20160103.amd64.iso",
+                    link_type="hardlink-or-copy",
+                ),
+                mock.call(
+                    "/koji/task/1235/Live-20160103.x86_64.iso",
+                    self.topdir + "/compose/Server/x86_64/iso/Live-20160103.x86_64.iso",
+                    link_type="hardlink-or-copy",
+                ),
+            ],
+        )
 
         image_relative_paths = [
             'Server/amd64/iso/Live-20160103.amd64.iso',

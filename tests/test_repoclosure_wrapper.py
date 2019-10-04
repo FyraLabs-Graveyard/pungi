@@ -2,6 +2,7 @@
 
 import os
 import sys
+import six
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -35,7 +36,8 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
 
         cmd = rc.get_repoclosure_cmd(arch='x86_64', repos=repos, lookaside=lookaside)
         self.assertEqual(cmd[0], '/usr/bin/repoclosure')
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             cmd[1:],
             ['--arch=x86_64',
              '--repofrompath=my-repo,file:///mnt/koji/repo',
@@ -50,7 +52,8 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
         cmd = rc.get_repoclosure_cmd(backend='dnf', arch='x86_64',
                                      repos=repos, lookaside=lookaside)
         self.assertEqual(cmd[:2], ['dnf', 'repoclosure'])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             cmd[2:],
             ['--arch=x86_64',
              '--repofrompath=my-repo,file:///mnt/koji/repo',
@@ -66,7 +69,8 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
         }
         cmd = rc.get_repoclosure_cmd(repos=repos)
         self.assertEqual(cmd[0], '/usr/bin/repoclosure')
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             cmd[1:],
             ['--repofrompath=local,file:///mnt/koji/repo',
              '--repofrompath=remote,http://kojipkgs.fp.o/repo',
@@ -80,7 +84,8 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
         }
         cmd = rc.get_repoclosure_cmd(lookaside=repos)
         self.assertEqual(cmd[0], '/usr/bin/repoclosure')
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             cmd[1:],
             ['--repofrompath=local,file:///mnt/koji/repo',
              '--repofrompath=remote,http://kojipkgs.fp.o/repo',

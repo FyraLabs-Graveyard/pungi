@@ -6,6 +6,7 @@ except ImportError:
     import unittest
 
 import mock
+import six
 import os
 import sys
 
@@ -41,8 +42,8 @@ class TestGatherSourceModule(helpers.PungiTestCase):
     def test_without_modules(self):
         source = GatherSourceModule(self.compose)
         packages, groups = source("x86_64", self.compose.variants["Server"])
-        self.assertItemsEqual(packages, [])
-        self.assertItemsEqual(groups, [])
+        self.assertEqual(packages, set())
+        self.assertEqual(groups, set())
 
     def test_include_two_packages(self):
         self.compose.variants["Server"].add_fake_module(
@@ -57,11 +58,12 @@ class TestGatherSourceModule(helpers.PungiTestCase):
 
         source = GatherSourceModule(self.compose)
         packages, groups = source("x86_64", self.compose.variants["Server"])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [(rpm[0].nevra, rpm[1]) for rpm in packages],
             [("pkg-0:1.0.0-1.x86_64", None), ("pkg-0:1.0.0-1.i686", None)],
         )
-        self.assertItemsEqual(groups, [])
+        self.assertEqual(groups, set())
 
     def test_does_not_include_unlisted(self):
         self.compose.variants["Server"].add_fake_module(
@@ -75,5 +77,5 @@ class TestGatherSourceModule(helpers.PungiTestCase):
 
         source = GatherSourceModule(self.compose)
         packages, groups = source("x86_64", self.compose.variants["Server"])
-        self.assertItemsEqual(packages, [])
-        self.assertItemsEqual(groups, [])
+        self.assertEqual(packages, set())
+        self.assertEqual(groups, set())

@@ -20,7 +20,7 @@ from tests.helpers import load_config, PKGSET_REPOS
 class ConfigTestCase(unittest.TestCase):
     def assertValidation(self, cfg, errors=[], warnings=[]):
         actual_errors, actual_warnings = checks.validate(cfg)
-        self.assertItemsEqual(errors, actual_errors)
+        six.assertCountEqual(self, errors, actual_errors)
         self.assertEqual(warnings, actual_warnings)
 
 

@@ -6,6 +6,8 @@ import mock
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.gather.methods import method_hybrid as hybrid
@@ -205,7 +207,7 @@ class TestMethodHybrid(helpers.PungiTestCase):
         ]
         expanded = m.expand_list(["foo*"])
 
-        self.assertItemsEqual([p.name for p in expanded], ["foo", "foo-en"])
+        six.assertCountEqual(self, [p.name for p in expanded], ["foo", "foo-en"])
 
 
 class MockModule(object):
@@ -331,8 +333,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[("foo", None)],
         )
 
-        self.assertItemsEqual(res[0], [])
-        self.assertItemsEqual(res[1], ["m1"])
+        self.assertEqual(res[0], set())
+        self.assertEqual(res[1], set(["m1"]))
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
@@ -426,8 +428,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertItemsEqual(res[0], po.return_value[0])
-        self.assertItemsEqual(res[1], [])
+        six.assertCountEqual(self, res[0], po.return_value[0])
+        self.assertEqual(res[1], set())
         self.assertEqual(po.call_args_list, [mock.call(self.logfile1)])
         self.assertEqual(
             run.call_args_list,
@@ -481,14 +483,15 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             res[0],
             [
                 ("pkg-1.0-1", "x86_64", frozenset()),
                 ("pkg-debuginfo-1.0-1", "x86_64", frozenset()),
             ],
         )
-        self.assertItemsEqual(res[1], [])
+        self.assertEqual(res[1], set())
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -552,8 +555,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=["foo"],
         )
 
-        self.assertItemsEqual(res[0], final)
-        self.assertItemsEqual(res[1], [])
+        six.assertCountEqual(self, res[0], final)
+        self.assertEqual(res[1], set())
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -639,7 +642,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             res[0],
             [
                 ("pkg-devel-1.0-1", "x86_64", frozenset()),
@@ -647,7 +651,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 ("pkg-devel-1.0-1", "i686", frozenset()),
             ]
         )
-        self.assertItemsEqual(res[1], [])
+        self.assertEqual(res[1], set())
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -760,7 +764,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             filter_packages=[],
         )
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             res[0],
             [
                 ("pkg-devel-1.0-1", "x86_64", frozenset()),
@@ -768,7 +773,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 ("foo-1.0-1", "i686", frozenset()),
             ],
         )
-        self.assertItemsEqual(res[1], [])
+        self.assertEqual(res[1], set())
         self.assertEqual(
             po.call_args_list, [mock.call(self.logfile1), mock.call(self.logfile2)]
         )
@@ -981,4 +986,4 @@ class TestFilterModules(helpers.PungiTestCase):
 
         hybrid.filter_modules(self.variant, "x86_64", ["mod:1"])
 
-        self.assertItemsEqual(self.variant.arch_mmds["x86_64"].keys(), ["mod:1"])
+        self.assertEqual(list(self.variant.arch_mmds["x86_64"].keys()), ["mod:1"])

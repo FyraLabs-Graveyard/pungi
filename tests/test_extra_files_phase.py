@@ -4,6 +4,8 @@ import mock
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases import extra_files
@@ -33,7 +35,8 @@ class TestExtraFilePhase(helpers.PungiTestCase):
         phase = extra_files.ExtraFilesPhase(compose, pkgset_phase)
         phase.run()
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             copy_extra_files.call_args_list,
             [mock.call(compose, [cfg], 'x86_64', compose.variants['Server'],
                        pkgset_phase.package_sets),

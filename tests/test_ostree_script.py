@@ -6,6 +6,7 @@ import os
 import sys
 
 import mock
+import six
 import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -36,7 +37,8 @@ class OstreeTreeScriptTest(helpers.PungiTestCase):
                       '[fedora-23]\nbaseurl=why-not-zoidberg?')
 
     def assertCorrectCall(self, mock_run, extra_calls=[], extra_args=[]):
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mock_run.call_args_list,
             [
                 mock.call(
@@ -344,23 +346,32 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
         args.append('--add-arch-template-var=ostree_repo=http://www.example.com/ostree')
         ostree.main(args)
         self.maxDiff = None
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call(['lorax',
-                                          '--product=dummyproduct',
-                                          '--version=1.0',
-                                          '--release=20160101.t.0',
-                                          '--source=http://www.example.com/dummy/repo',
-                                          '--variant=dummy',
-                                          '--nomacboot',
-                                          '--isfinal',
-                                          '--installpkgs=dummy-foo',
-                                          '--installpkgs=dummy-bar',
-                                          '--add-template=/path/to/lorax.tmpl',
-                                          '--add-arch-template=/path/to/lorax-embed.tmpl',
-                                          '--add-template-var=ostree_osname=dummy',
-                                          '--add-arch-template-var=ostree_repo=http://www.example.com/ostree',
-                                          '--rootfs-size=None',
-                                          self.output])])
+        six.assertCountEqual(
+            self,
+            run.mock_calls,
+            [
+                mock.call(
+                    [
+                        "lorax",
+                        "--product=dummyproduct",
+                        "--version=1.0",
+                        "--release=20160101.t.0",
+                        "--source=http://www.example.com/dummy/repo",
+                        "--variant=dummy",
+                        "--nomacboot",
+                        "--isfinal",
+                        "--installpkgs=dummy-foo",
+                        "--installpkgs=dummy-bar",
+                        "--add-template=/path/to/lorax.tmpl",
+                        "--add-arch-template=/path/to/lorax-embed.tmpl",
+                        "--add-template-var=ostree_osname=dummy",
+                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",
+                        "--rootfs-size=None",
+                        self.output,
+                    ],
+                ),
+            ],
+        )
 
     @mock.patch('kobo.shortcuts.run')
     def test_run_with_extra_config_file(self, run):
@@ -387,22 +398,31 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
         args.append('--extra-config=%s' % extra_config_file)
         ostree.main(args)
         self.maxDiff = None
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call(['lorax',
-                                          '--product=dummyproduct',
-                                          '--version=1.0',
-                                          '--release=20160101.t.0',
-                                          '--source=http://www.example.com/dummy/repo',
-                                          '--variant=dummy',
-                                          '--nomacboot',
-                                          '--isfinal',
-                                          '--installpkgs=dummy-foo',
-                                          '--installpkgs=dummy-bar',
-                                          '--add-template=/path/to/lorax.tmpl',
-                                          '--add-arch-template=/path/to/lorax-embed.tmpl',
-                                          '--add-template-var=ostree_osname=dummy-atomic',
-                                          '--add-template-var=ostree_ref=dummy/x86_64/docker',
-                                          '--add-arch-template-var=ostree_osname=dummy-atomic',
-                                          '--add-arch-template-var=ostree_repo=http://www.example.com/ostree',
-                                          '--rootfs-size=None',
-                                          self.output])])
+        six.assertCountEqual(
+            self,
+            run.mock_calls,
+            [
+                mock.call(
+                    [
+                        "lorax",
+                        "--product=dummyproduct",
+                        "--version=1.0",
+                        "--release=20160101.t.0",
+                        "--source=http://www.example.com/dummy/repo",
+                        "--variant=dummy",
+                        "--nomacboot",
+                        "--isfinal",
+                        "--installpkgs=dummy-foo",
+                        "--installpkgs=dummy-bar",
+                        "--add-template=/path/to/lorax.tmpl",
+                        "--add-arch-template=/path/to/lorax-embed.tmpl",
+                        "--add-template-var=ostree_osname=dummy-atomic",
+                        "--add-template-var=ostree_ref=dummy/x86_64/docker",
+                        "--add-arch-template-var=ostree_osname=dummy-atomic",
+                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",
+                        "--rootfs-size=None",
+                        self.output,
+                    ],
+                ),
+            ],
+        )

@@ -8,6 +8,7 @@ except ImportError:
 
 import mock
 import os
+import six
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -325,7 +326,8 @@ class TestRepoclosure(PungiTestCase):
 
         test_phase.run_repoclosure(compose)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mock_grc.call_args_list,
             [mock.call(backend='yum', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo(compose.compose_id, 'Everything', 'amd64')),
@@ -345,7 +347,8 @@ class TestRepoclosure(PungiTestCase):
         compose = DummyCompose(self.topdir, {'repoclosure_backend': 'dnf'})
         test_phase.run_repoclosure(compose)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mock_grc.call_args_list,
             [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo(compose.compose_id, 'Everything', 'amd64')),
@@ -375,7 +378,8 @@ class TestRepoclosure(PungiTestCase):
         test_phase.run_repoclosure(compose)
 
         self.assertEqual(mock_grc.call_args_list, [])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             effl.call_args_list,
             [
                 mock.call(f, _log("amd64", "Everything")),
@@ -410,7 +414,8 @@ class TestRepoclosure(PungiTestCase):
         })
         test_phase.run_repoclosure(compose)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mock_grc.call_args_list,
             [mock.call(backend='dnf', arch=['amd64', 'x86_64', 'noarch'], lookaside={},
                        repos=self._get_repo(compose.compose_id, 'Server', 'amd64')),

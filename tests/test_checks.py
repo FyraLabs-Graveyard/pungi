@@ -573,19 +573,19 @@ class TestUmask(unittest.TestCase):
         os.umask(0o022)
         logger = mock.Mock()
         checks.check_umask(logger)
-        self.assertItemsEqual(logger.mock_calls, [])
+        self.assertEqual(logger.mock_calls, [])
 
     def test_no_warning_with_0000(self):
         os.umask(0o000)
         logger = mock.Mock()
         checks.check_umask(logger)
-        self.assertItemsEqual(logger.mock_calls, [])
+        self.assertEqual(logger.mock_calls, [])
 
     def test_warning_with_0044(self):
         os.umask(0o044)
         logger = mock.Mock()
         checks.check_umask(logger)
-        self.assertItemsEqual(
+        self.assertEqual(
             logger.mock_calls,
             [mock.call.warning('Unusually strict umask detected (0%03o), '
                                'expect files with broken permissions.', 0o044)]

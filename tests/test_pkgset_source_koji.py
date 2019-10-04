@@ -4,6 +4,7 @@ import json
 import mock
 import os
 import re
+import six
 import sys
 try:
     import unittest2 as unittest
@@ -49,7 +50,8 @@ class TestGetKojiEvent(helpers.PungiTestCase):
         event = source_koji.get_koji_event_info(self.compose, koji_wrapper)
 
         self.assertEqual(event, EVENT_INFO)
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             koji_wrapper.mock_calls,
             [mock.call.koji_proxy.getEvent(123456)])
         with open(self.event_file) as f:
@@ -64,7 +66,8 @@ class TestGetKojiEvent(helpers.PungiTestCase):
         event = source_koji.get_koji_event_info(self.compose, koji_wrapper)
 
         self.assertEqual(event, EVENT_INFO)
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             koji_wrapper.mock_calls,
             [mock.call.koji_proxy.getLastEvent()])
         with open(self.event_file) as f:
@@ -122,12 +125,12 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
 
         self.assertEqual(len(pkgsets), 2)
         init_calls = KojiPackageSet.call_args_list
-        self.assertItemsEqual([call[0][0] for call in init_calls], ["f25", "f25-extra"])
-        self.assertItemsEqual(
-            [call[0][1] for call in init_calls], [self.koji_wrapper] * 2
+        six.assertCountEqual(self, [call[0][0] for call in init_calls], ["f25", "f25-extra"])
+        six.assertCountEqual(
+            self, [call[0][1] for call in init_calls], [self.koji_wrapper] * 2
         )
-        self.assertItemsEqual(
-            [call[0][2] for call in init_calls], [["foo", "bar"]] * 2
+        six.assertCountEqual(
+            self, [call[0][2] for call in init_calls], [["foo", "bar"]] * 2
         )
 
         pkgsets[0].assert_has_calls(
@@ -159,7 +162,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         pkgsets = source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, '/prefix', 123456)
         self.assertEqual(len(pkgsets), 1)
-        self.assertItemsEqual(pkgsets[0].packages, ["pkg", "foo"])
+        six.assertCountEqual(self, pkgsets[0].packages, ["pkg", "foo"])
 
 
 class TestGetPackageSetFromKoji(helpers.PungiTestCase):
@@ -179,7 +182,8 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
             self.compose, self.koji_wrapper, "/prefix"
         )
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             self.koji_wrapper.koji_proxy.mock_calls,
             [mock.call.getLastEvent()]
         )
@@ -382,8 +386,7 @@ class TestSourceKoji(helpers.PungiTestCase):
 
         self.assertEqual(pkgsets, gpfk.return_value)
         self.assertEqual(path_prefix, '/prefix/')
-        self.assertItemsEqual(KojiWrapper.mock_calls,
-                              [mock.call('koji')])
+        self.assertEqual(KojiWrapper.mock_calls, [mock.call('koji')])
 
 
 class TestCorrectNVR(helpers.PungiTestCase):
@@ -401,12 +404,12 @@ class TestCorrectNVR(helpers.PungiTestCase):
     def test_nv(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nv)
         expectedKeys = ["stream", "name"]
-        self.assertItemsEqual(module_info.keys(), expectedKeys)
+        six.assertCountEqual(self, module_info.keys(), expectedKeys)
 
     def test_nvr(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
         expectedKeys = ["stream", "name", "version"]
-        self.assertItemsEqual(module_info.keys(), expectedKeys)
+        six.assertCountEqual(self, module_info.keys(), expectedKeys)
 
     def test_correct_release(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.nvr)
@@ -456,7 +459,7 @@ class TestFilterInherited(unittest.TestCase):
 
         result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
 
-        self.assertItemsEqual(result, [])
+        self.assertEqual(result, [])
         self.assertEqual(
             koji_proxy.mock_calls,
             [mock.call.getFullInheritance("top-tag", event=123456)],
@@ -478,7 +481,8 @@ class TestFilterInherited(unittest.TestCase):
 
         result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             result,
             [{"name": "foo", "version": "1", "release": "1", "tag_name": "top-tag"}],
         )
@@ -502,7 +506,8 @@ class TestFilterInherited(unittest.TestCase):
 
         result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             result,
             [{"name": "foo", "version": "1", "release": "3", "tag_name": "middle-tag"}],
         )
@@ -546,7 +551,7 @@ class TestFilterByWhitelist(unittest.TestCase):
             compose, module_builds, input_modules, expected
         )
 
-        self.assertItemsEqual(result, [module_builds[0], module_builds[1]])
+        six.assertCountEqual(self, result, [module_builds[0], module_builds[1]])
         self.assertEqual(expected, set())
 
     def test_filter_by_NSV(self):
@@ -563,7 +568,7 @@ class TestFilterByWhitelist(unittest.TestCase):
             compose, module_builds, input_modules, expected
         )
 
-        self.assertItemsEqual(result, [module_builds[1]])
+        self.assertEqual(result, [module_builds[1]])
         self.assertEqual(expected, set())
 
     def test_filter_by_NSVC(self):
@@ -581,7 +586,7 @@ class TestFilterByWhitelist(unittest.TestCase):
             compose, module_builds, input_modules, expected
         )
 
-        self.assertItemsEqual(result, [module_builds[1]])
+        self.assertEqual(result, [module_builds[1]])
         self.assertEqual(expected, set())
 
     def test_filter_by_wildcard(self):
@@ -598,7 +603,7 @@ class TestFilterByWhitelist(unittest.TestCase):
             compose, module_builds, input_modules, expected
         )
 
-        self.assertItemsEqual(result, module_builds)
+        six.assertCountEqual(self, result, module_builds)
         self.assertEqual(expected, set())
 
 

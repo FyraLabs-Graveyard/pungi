@@ -2,6 +2,7 @@
 
 
 import mock
+import six
 
 import os
 import sys
@@ -49,7 +50,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
 
         self.assertEqual(len(pool.add.call_args_list), 0)
         self.assertEqual(pool.queue_put.call_args_list, [])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             phase.logger.warn.call_args_list,
             [mock.call('No RPMs found for Everything.x86_64, skipping ISO'),
              mock.call('No RPMs found for Everything.amd64, skipping ISO'),
@@ -92,7 +94,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                          [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 1)
         self.maxDiff = None
-        self.assertItemsEqual(
+        self.assertEqual(
             [x[0][0] for x in write_script.call_args_list],
             [CreateIsoOpts(
                 output_dir='%s/compose/Server/x86_64/iso' % self.topdir,
@@ -105,7 +107,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                 os_tree='%s/compose/Server/x86_64/os' % self.topdir,
                 hfs_compat=True,
             )])
-        self.assertItemsEqual(
+        self.assertEqual(
             pool.queue_put.call_args_list,
             [mock.call((
                 compose,
@@ -150,19 +152,22 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         phase.logger = mock.Mock()
         phase.run()
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             prepare_iso.call_args_list,
             [mock.call(compose, 'x86_64', compose.variants['Server'],
                        disc_count=1, disc_num=1, split_iso_data=disc_data),
              mock.call(compose, 'src', compose.variants['Server'],
                        disc_count=1, disc_num=1, split_iso_data=disc_data)])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             split_iso.call_args_list,
             [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=True, logger=phase.logger),
              mock.call(compose, 'src', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 2)
         self.maxDiff = None
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [x[0][0] for x in write_script.call_args_list],
             [CreateIsoOpts(output_dir='%s/compose/Server/x86_64/iso' % self.topdir,
                            iso_name='image-name',
@@ -183,7 +188,8 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            jigdo_dir='%s/compose/Server/source/jigdo' % self.topdir,
                            os_tree='%s/compose/Server/source/tree' % self.topdir,
                            hfs_compat=True)])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             pool.queue_put.call_args_list,
             [mock.call((compose,
                         {'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,
@@ -235,16 +241,16 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         phase.logger = mock.Mock()
         phase.run()
 
-        self.assertItemsEqual(
+        self.assertEqual(
             prepare_iso.call_args_list,
             [mock.call(compose, 'src', compose.variants['Server'],
                        disc_count=1, disc_num=1, split_iso_data=disc_data)])
-        self.assertItemsEqual(
+        self.assertEqual(
             split_iso.call_args_list,
             [mock.call(compose, 'src', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 1)
         self.maxDiff = None
-        self.assertItemsEqual(
+        self.assertEqual(
             [x[0][0] for x in write_script.call_args_list],
             [CreateIsoOpts(output_dir='%s/compose/Server/source/iso' % self.topdir,
                            iso_name='image-name',
@@ -255,7 +261,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            jigdo_dir='%s/compose/Server/source/jigdo' % self.topdir,
                            os_tree='%s/compose/Server/source/tree' % self.topdir,
                            hfs_compat=True)])
-        self.assertItemsEqual(
+        self.assertEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,
                         {'iso_path': '%s/compose/Server/source/iso/image-name' % self.topdir,
@@ -300,15 +306,15 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         phase.run()
 
         self.maxDiff = None
-        self.assertItemsEqual(
+        self.assertEqual(
             prepare_iso.call_args_list,
             [mock.call(compose, 'x86_64', compose.variants['Server'],
                        disc_count=1, disc_num=1, split_iso_data=disc_data)])
-        self.assertItemsEqual(
+        self.assertEqual(
             split_iso.call_args_list,
             [mock.call(compose, 'x86_64', compose.variants['Server'], no_split=False, logger=phase.logger)])
         self.assertEqual(len(pool.add.call_args_list), 1)
-        self.assertItemsEqual(
+        self.assertEqual(
             [x[0][0] for x in write_script.call_args_list],
             [CreateIsoOpts(output_dir='%s/compose/Server/x86_64/iso' % self.topdir,
                            iso_name='image-name',
@@ -319,7 +325,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                            jigdo_dir='%s/compose/Server/x86_64/jigdo' % self.topdir,
                            os_tree='%s/compose/Server/x86_64/os' % self.topdir,
                            hfs_compat=False)])
-        self.assertItemsEqual(
+        self.assertEqual(
             pool.queue_put.call_args_list,
             [mock.call((compose,
                         {'iso_path': '%s/compose/Server/x86_64/iso/image-name' % self.topdir,

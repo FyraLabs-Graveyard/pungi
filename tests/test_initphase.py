@@ -7,6 +7,8 @@ except ImportError:
     import unittest
 import mock
 
+import six
+
 import os
 import sys
 
@@ -48,25 +50,34 @@ class TestInitPhase(PungiTestCase):
 
         self.assertEqual(write_global.mock_calls, [mock.call(compose)])
         self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
-        self.assertItemsEqual(write_arch.mock_calls,
-                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
-        self.assertItemsEqual(create_comps.mock_calls,
-                              [mock.call(compose, 'x86_64', None), mock.call(compose, 'amd64', None),
-                               mock.call(compose, 'x86_64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Client']),
-                               mock.call(compose, 'x86_64', compose.variants['Everything']),
-                               mock.call(compose, 'amd64', compose.variants['Everything']),
-                               mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
-        self.assertItemsEqual(write_variant.mock_calls,
-                              [mock.call(compose, 'x86_64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Client']),
-                               mock.call(compose, 'x86_64', compose.variants['Everything']),
-                               mock.call(compose, 'amd64', compose.variants['Everything']),
-                               mock.call(compose, 'x86_64', compose.all_variants['Server-optional'])])
-        self.assertItemsEqual(write_defaults, [])
-        self.assertItemsEqual(validate_defaults, [])
+        six.assertCountEqual(
+            self,
+            write_arch.mock_calls,
+            [mock.call(compose, "x86_64"), mock.call(compose, "amd64")],
+        )
+        six.assertCountEqual(
+            self,
+            create_comps.mock_calls,
+            [mock.call(compose, "x86_64", None), mock.call(compose, "amd64", None),
+             mock.call(compose, "x86_64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Client"]),
+             mock.call(compose, "x86_64", compose.variants["Everything"]),
+             mock.call(compose, "amd64", compose.variants["Everything"]),
+             mock.call(compose, "x86_64", compose.all_variants["Server-optional"])],
+        )
+        six.assertCountEqual(
+            self,
+            write_variant.mock_calls,
+            [mock.call(compose, "x86_64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Client"]),
+             mock.call(compose, "x86_64", compose.variants["Everything"]),
+             mock.call(compose, "amd64", compose.variants["Everything"]),
+             mock.call(compose, "x86_64", compose.all_variants["Server-optional"])],
+        )
+        self.assertEqual(write_defaults.call_args_list, [])
+        self.assertEqual(validate_defaults.call_args_list, [])
 
     def test_run_with_preserve(
         self,
@@ -92,23 +103,32 @@ class TestInitPhase(PungiTestCase):
             validate_comps.call_args_list, [mock.call(write_global.return_value)]
         )
         self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
-        self.assertItemsEqual(write_arch.mock_calls,
-                              [mock.call(compose, 'x86_64'), mock.call(compose, 'amd64')])
-        self.assertItemsEqual(create_comps.mock_calls,
-                              [mock.call(compose, 'x86_64', None), mock.call(compose, 'amd64', None),
-                               mock.call(compose, 'x86_64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Client']),
-                               mock.call(compose, 'x86_64', compose.variants['Everything']),
-                               mock.call(compose, 'amd64', compose.variants['Everything'])])
-        self.assertItemsEqual(write_variant.mock_calls,
-                              [mock.call(compose, 'x86_64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Server']),
-                               mock.call(compose, 'amd64', compose.variants['Client']),
-                               mock.call(compose, 'x86_64', compose.variants['Everything']),
-                               mock.call(compose, 'amd64', compose.variants['Everything'])])
-        self.assertItemsEqual(write_defaults, [])
-        self.assertItemsEqual(validate_defaults, [])
+        six.assertCountEqual(
+            self,
+            write_arch.mock_calls,
+            [mock.call(compose, "x86_64"), mock.call(compose, "amd64")],
+        )
+        six.assertCountEqual(
+            self,
+            create_comps.mock_calls,
+            [mock.call(compose, "x86_64", None), mock.call(compose, "amd64", None),
+             mock.call(compose, "x86_64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Client"]),
+             mock.call(compose, "x86_64", compose.variants["Everything"]),
+             mock.call(compose, "amd64", compose.variants["Everything"])],
+        )
+        six.assertCountEqual(
+            self,
+            write_variant.mock_calls,
+            [mock.call(compose, "x86_64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Server"]),
+             mock.call(compose, "amd64", compose.variants["Client"]),
+             mock.call(compose, "x86_64", compose.variants["Everything"]),
+             mock.call(compose, "amd64", compose.variants["Everything"])],
+        )
+        self.assertEqual(write_defaults.call_args_list, [])
+        self.assertEqual(validate_defaults.call_args_list, [])
 
     def test_run_without_comps(
         self,
@@ -127,14 +147,14 @@ class TestInitPhase(PungiTestCase):
         phase = init.InitPhase(compose)
         phase.run()
 
-        self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertEqual(write_global.mock_calls, [])
         self.assertEqual(validate_comps.call_args_list, [])
-        self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
-        self.assertItemsEqual(write_arch.mock_calls, [])
-        self.assertItemsEqual(create_comps.mock_calls, [])
-        self.assertItemsEqual(write_variant.mock_calls, [])
-        self.assertItemsEqual(write_defaults, [])
-        self.assertItemsEqual(validate_defaults, [])
+        self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertEqual(write_arch.mock_calls, [])
+        self.assertEqual(create_comps.mock_calls, [])
+        self.assertEqual(write_variant.mock_calls, [])
+        self.assertEqual(write_defaults.call_args_list, [])
+        self.assertEqual(validate_defaults.call_args_list, [])
 
     def test_with_module_defaults(
         self,
@@ -153,14 +173,14 @@ class TestInitPhase(PungiTestCase):
         phase = init.InitPhase(compose)
         phase.run()
 
-        self.assertItemsEqual(write_global.mock_calls, [])
+        self.assertEqual(write_global.mock_calls, [])
         self.assertEqual(validate_comps.call_args_list, [])
-        self.assertItemsEqual(write_prepopulate.mock_calls, [mock.call(compose)])
-        self.assertItemsEqual(write_arch.mock_calls, [])
-        self.assertItemsEqual(create_comps.mock_calls, [])
-        self.assertItemsEqual(write_variant.mock_calls, [])
-        self.assertItemsEqual(write_defaults.call_args_list, [mock.call(compose)])
-        self.assertItemsEqual(
+        self.assertEqual(write_prepopulate.mock_calls, [mock.call(compose)])
+        self.assertEqual(write_arch.mock_calls, [])
+        self.assertEqual(create_comps.mock_calls, [])
+        self.assertEqual(write_variant.mock_calls, [])
+        self.assertEqual(write_defaults.call_args_list, [mock.call(compose)])
+        self.assertEqual(
             validate_defaults.call_args_list,
             [mock.call(compose.paths.work.module_defaults_dir())],
         )
@@ -381,17 +401,17 @@ class TestWriteVariantComps(PungiTestCase):
 class TestGetLookasideGroups(PungiTestCase):
     def test_toplevel_variant(self):
         compose = DummyCompose(self.topdir, {})
-        self.assertItemsEqual(
-            init.get_lookaside_groups(compose, compose.variants["Server"]), []
+        self.assertEqual(
+            init.get_lookaside_groups(compose, compose.variants["Server"]), set()
         )
 
     def test_classic_addon(self):
         compose = DummyCompose(self.topdir, {})
         compose.setup_addon()
         compose.variants["Server"].groups = [{"name": "foo"}]
-        self.assertItemsEqual(
+        self.assertEqual(
             init.get_lookaside_groups(compose, compose.all_variants["Server-HA"]),
-            ["foo"],
+            set(["foo"]),
         )
 
     def test_variant_as_lookaside(self):
@@ -399,9 +419,9 @@ class TestGetLookasideGroups(PungiTestCase):
             self.topdir, {"variant_as_lookaside": [("Server", "Client")]}
         )
         compose.variants["Client"].groups = [{"name": "foo"}]
-        self.assertItemsEqual(
+        self.assertEqual(
             init.get_lookaside_groups(compose, compose.variants["Server"]),
-            ["foo"],
+            set(["foo"]),
         )
 
 

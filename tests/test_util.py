@@ -11,6 +11,7 @@ except ImportError:
 import tempfile
 import shutil
 import subprocess
+import six
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -224,7 +225,7 @@ class TestGetVariantData(unittest.TestCase):
             }
         }
         result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Client'))
-        self.assertItemsEqual(result, [1, 2, 3])
+        six.assertCountEqual(self, result, [1, 2, 3])
 
     def test_not_matching_arch(self):
         conf = {
@@ -233,11 +234,11 @@ class TestGetVariantData(unittest.TestCase):
             }
         }
         result = util.get_variant_data(conf, 'foo', mock.Mock(uid='Server'))
-        self.assertItemsEqual(result, [])
+        self.assertEqual(result, [])
 
     def test_handle_missing_config(self):
         result = util.get_variant_data({}, 'foo', mock.Mock(uid='Client'))
-        self.assertItemsEqual(result, [])
+        self.assertEqual(result, [])
 
     def test_get_save_pattern(self):
         conf = {

@@ -2,6 +2,7 @@
 
 
 import mock
+import six
 
 import os
 import sys
@@ -45,7 +46,8 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 3)
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ThreadPool.return_value.queue_put.call_args_list,
             [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
              mock.call((compose, cfg, compose.variants['Server'], 'amd64')),
@@ -67,7 +69,8 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 2)
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ThreadPool.return_value.queue_put.call_args_list,
             [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
              mock.call((compose, cfg, compose.variants['Server'], 'src'))]
@@ -88,7 +91,8 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 2)
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ThreadPool.return_value.queue_put.call_args_list,
             [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
              mock.call((compose, cfg, compose.variants['Server'], 'amd64'))]
@@ -582,7 +586,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
         }
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ggp.call_args_list,
             [mock.call([os.path.join(self.topdir, x)]) for x in gp]
         )
@@ -644,7 +649,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             "Server/repodata/repomd.xml": "/mnt/repodata/repomd.xml",
         }
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ggp.call_args_list,
             [mock.call([os.path.join(self.topdir, x)]) for x in gp]
         )
@@ -702,7 +708,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
         }
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ggp.call_args_list,
             [mock.call([os.path.join(self.topdir, x)]) for x in gp]
         )
@@ -780,7 +787,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             ),
         }
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             ggp.call_args_list,
             [mock.call([os.path.join(self.topdir, x)]) for x in gp] + [mock.call([bi_dir, iso_dir])]
         )

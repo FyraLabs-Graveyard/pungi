@@ -211,7 +211,7 @@ class TestComposePart(PungiTestCase):
     def test_unblock_on(self, deps, blockers, status):
         part = o.ComposePart("test", "/tmp/my.conf", dependencies=deps)
         part.unblock_on("finished")
-        self.assertItemsEqual(part.blocked_on, blockers)
+        six.assertCountEqual(self, part.blocked_on, blockers)
         self.assertEqual(part.status, status)
 
 
@@ -338,7 +338,8 @@ class TestCopyPart(PungiTestCase):
 
         o.copy_part(conf, linker, part)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             hd.call_args_list,
             [
                 mock.call(
@@ -363,7 +364,8 @@ class TestHardlinkDir(PungiTestCase):
 
         o.hardlink_dir(linker, src, dst)
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             linker.queue_put.call_args_list,
             [mock.call((os.path.join(src, f), os.path.join(dst, f))) for f in files],
         )
@@ -375,7 +377,7 @@ class TestCheckFinishedProcesses(BaseTestCase):
         v1 = mock.Mock()
         processes = {k1: v1}
 
-        self.assertItemsEqual(o.check_finished_processes(processes), [])
+        six.assertCountEqual(self, o.check_finished_processes(processes), [])
 
     def test_yields_finished(self):
         k1 = mock.Mock(returncode=None)
@@ -384,14 +386,14 @@ class TestCheckFinishedProcesses(BaseTestCase):
         v2 = mock.Mock()
         processes = {k1: v1, k2: v2}
 
-        self.assertItemsEqual(o.check_finished_processes(processes), [(k2, v2)])
+        six.assertCountEqual(self, o.check_finished_processes(processes), [(k2, v2)])
 
     def test_yields_failed(self):
         k1 = mock.Mock(returncode=1)
         v1 = mock.Mock()
         processes = {k1: v1}
 
-        self.assertItemsEqual(o.check_finished_processes(processes), [(k1, v1)])
+        six.assertCountEqual(self, o.check_finished_processes(processes), [(k1, v1)])
 
 
 class _Part(object):

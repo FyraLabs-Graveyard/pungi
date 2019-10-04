@@ -4,6 +4,7 @@ import mock
 import os
 import shutil
 import sys
+import six
 from six.moves.configparser import SafeConfigParser
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -147,9 +148,11 @@ class TestLinkToTemp(PungiTestCase):
     def test_link_to_temp(self):
         self.isos.link_to_temp()
 
-        self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['i386', 's390x', 'src', 'x86_64',
-                               'debug-i386', 'debug-s390x', 'debug-x86_64'])
+        six.assertCountEqual(
+            self,
+            self.isos.treeinfo.keys(),
+            ["i386", "s390x", "src", "x86_64", "debug-i386", "debug-s390x", "debug-x86_64"],
+        )
         self.assertEqual(self.isos.comps,
                          get_comps_mapping(self.compose_path))
         self.assertEqual(self.isos.productid,
@@ -157,7 +160,8 @@ class TestLinkToTemp(PungiTestCase):
         self.assertEqual(self.isos.repos,
                          get_repos_mapping(self.isos.temp_dir))
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             self.isos.linker.link.call_args_list,
             [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
              self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
@@ -178,9 +182,11 @@ class TestLinkToTemp(PungiTestCase):
         with mock.patch('sys.stderr'):
             self.isos.link_to_temp()
 
-        self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['s390x', 'src', 'x86_64',
-                               'debug-s390x', 'debug-x86_64'])
+        six.assertCountEqual(
+            self,
+            self.isos.treeinfo.keys(),
+            ["s390x", "src", "x86_64", "debug-s390x", "debug-x86_64"],
+        )
         comps = get_comps_mapping(self.compose_path)
         comps.pop('i386')
         self.assertEqual(self.isos.comps, comps)
@@ -194,7 +200,8 @@ class TestLinkToTemp(PungiTestCase):
 
         self.maxDiff = None
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             self.isos.linker.link.call_args_list,
             [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
              self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
@@ -211,9 +218,11 @@ class TestLinkToTemp(PungiTestCase):
 
         self.isos.link_to_temp()
 
-        self.assertItemsEqual(self.isos.treeinfo.keys(),
-                              ['i386', 's390x', 'src', 'x86_64',
-                               'debug-i386', 'debug-s390x', 'debug-x86_64'])
+        six.assertCountEqual(
+            self,
+            self.isos.treeinfo.keys(),
+            ["i386", "s390x", "src", "x86_64", "debug-i386", "debug-s390x", "debug-x86_64"],
+        )
         self.assertEqual(self.isos.comps,
                          get_comps_mapping(self.compose_path))
         self.assertEqual(self.isos.productid,
@@ -221,7 +230,8 @@ class TestLinkToTemp(PungiTestCase):
         self.assertEqual(self.isos.repos,
                          get_repos_mapping(self.isos.temp_dir))
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             self.isos.linker.link.call_args_list,
             [self._linkCall('Server', 's390x', 'dummy-filesystem-4.2.37-6.s390x.rpm'),
              self._linkCall('Server', 's390x', 'dummy-elinks-debuginfo-2.6-2.s390x.rpm'),
@@ -267,7 +277,8 @@ class TestCreaterepo(PungiTestCase):
         cr.return_value.get_createrepo_cmd.side_effect = self.mock_cr
         self.isos.createrepo()
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             run.call_args_list,
             [mock.call(('src/Client', None), show_cmd=True),
              mock.call(('src/Server', None), show_cmd=True),
@@ -311,7 +322,8 @@ class TestCreaterepo(PungiTestCase):
         cr.return_value.get_modifyrepo_cmd.side_effect = self.mock_mr
         self.isos.createrepo()
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             run.call_args_list,
             [mock.call(('src/Client', None), show_cmd=True),
              mock.call(('src/Server', None), show_cmd=True),
@@ -369,7 +381,8 @@ class TestDiscinfo(PungiTestCase):
     @mock.patch('pungi_utils.unified_isos.create_discinfo')
     def test_discinfo(self, create_discinfo):
         self.isos.discinfo()
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             create_discinfo.call_args_list,
             [mock.call(os.path.join(self.isos.temp_dir, 'trees', 'i386', '.discinfo'),
                        'Dummy Product 1.0', 'i386'),
@@ -465,7 +478,7 @@ class TestCreateiso(PungiTestCase):
                 mock.call(self.debug, self._iso('Server', 'x86_64/debug', self.debug_fn)),
                 mock.call(self.debug + '.manifest', self._iso('Server', 'x86_64/debug', self.debug_fn + '.manifest')),
             ])
-        self.assertItemsEqual(self.isos.linker.link.call_args_list, expected)
+        six.assertCountEqual(self, self.isos.linker.link.call_args_list, expected)
 
     @mock.patch('pungi_utils.unified_isos.iso')
     @mock.patch('pungi_utils.unified_isos.run')
@@ -525,7 +538,8 @@ class TestUpdateChecksums(PungiTestCase):
     @mock.patch('pungi_utils.unified_isos.make_checksums')
     def test_update_checksums(self, mmc):
         self.isos.update_checksums()
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mmc.call_args_list,
             [mock.call(self.compose_path, self.isos.compose.images,
                        unified_isos.DEFAULT_CHECKSUMS, False,
@@ -535,7 +549,8 @@ class TestUpdateChecksums(PungiTestCase):
     def test_update_checksums_one_file(self, mmc):
         self.isos.conf['media_checksum_one_file'] = True
         self.isos.update_checksums()
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mmc.call_args_list,
             [mock.call(self.compose_path, self.isos.compose.images,
                        unified_isos.DEFAULT_CHECKSUMS, True,

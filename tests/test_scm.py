@@ -10,6 +10,7 @@ import tempfile
 
 import os
 import sys
+import six
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -26,7 +27,7 @@ class SCMBaseTest(unittest.TestCase):
 
     def assertStructure(self, returned, expected):
         # Check we returned the correct files
-        self.assertItemsEqual(returned, expected)
+        six.assertCountEqual(self, returned, expected)
 
         # Each file must exist
         for f in expected:
@@ -38,7 +39,7 @@ class SCMBaseTest(unittest.TestCase):
             for f in files:
                 p = os.path.relpath(os.path.join(root, f), self.destdir)
                 found.append(p)
-        self.assertItemsEqual(expected, found)
+        six.assertCountEqual(self, expected, found)
 
 
 class FileSCMTestCase(SCMBaseTest):
@@ -269,7 +270,7 @@ class RpmSCMTestCase(SCMBaseTest):
             self.destdir)
 
         self.assertStructure(retval, ['some-file.txt'])
-        self.assertItemsEqual(self.exploded, [self.rpms[0]])
+        self.assertEqual(self.exploded, set([self.rpms[0]]))
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_more_files(self, explode):
@@ -281,7 +282,7 @@ class RpmSCMTestCase(SCMBaseTest):
             self.destdir)
 
         self.assertStructure(retval, ['some-file.txt', 'foo.txt'])
-        self.assertItemsEqual(self.exploded, [self.rpms[0]])
+        self.assertEqual(self.exploded, set([self.rpms[0]]))
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_whole_dir(self, explode):
@@ -292,7 +293,7 @@ class RpmSCMTestCase(SCMBaseTest):
             self.destdir)
 
         self.assertStructure(retval, ['subdir/foo.txt', 'subdir/bar.txt'])
-        self.assertItemsEqual(self.exploded, [self.rpms[0]])
+        self.assertEqual(self.exploded, set([self.rpms[0]]))
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_contents(self, explode):
@@ -303,7 +304,7 @@ class RpmSCMTestCase(SCMBaseTest):
             self.destdir)
 
         self.assertStructure(retval, ['foo.txt', 'bar.txt'])
-        self.assertItemsEqual(self.exploded, [self.rpms[0]])
+        self.assertEqual(self.exploded, set([self.rpms[0]]))
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_files_from_two_rpms(self, explode):
@@ -315,7 +316,7 @@ class RpmSCMTestCase(SCMBaseTest):
             self.destdir)
 
         self.assertStructure(retval, ['some-file-1.txt', 'some-file-2.txt'])
-        self.assertItemsEqual(self.exploded, self.rpms)
+        six.assertCountEqual(self, self.exploded, self.rpms)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_files_from_glob_rpms(self, explode):
@@ -328,7 +329,7 @@ class RpmSCMTestCase(SCMBaseTest):
 
         self.assertStructure(retval,
                              ['some-file-1.txt', 'some-file-2.txt', 'some-file-3.txt', 'some-file-4.txt'])
-        self.assertItemsEqual(self.exploded, self.numbered)
+        six.assertCountEqual(self, self.exploded, self.numbered)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_from_two_rpms(self, explode):
@@ -340,7 +341,7 @@ class RpmSCMTestCase(SCMBaseTest):
                                       self.destdir)
 
         self.assertStructure(retval, ['common/foo-1.txt', 'common/foo-2.txt'])
-        self.assertItemsEqual(self.exploded, self.rpms)
+        six.assertCountEqual(self, self.exploded, self.rpms)
 
     @mock.patch('pungi.wrappers.scm.explode_rpm_package')
     def test_get_dir_from_glob_rpms(self, explode):
@@ -353,7 +354,7 @@ class RpmSCMTestCase(SCMBaseTest):
 
         self.assertStructure(retval,
                              ['foo-1.txt', 'foo-2.txt', 'foo-3.txt', 'foo-4.txt'])
-        self.assertItemsEqual(self.exploded, self.numbered)
+        six.assertCountEqual(self, self.exploded, self.numbered)
 
 
 class CvsSCMTestCase(SCMBaseTest):

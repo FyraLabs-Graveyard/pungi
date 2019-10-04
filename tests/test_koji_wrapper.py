@@ -11,6 +11,8 @@ import tempfile
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
@@ -98,24 +100,26 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
         )
 
         self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'image-build'])
-        self.assertItemsEqual(cmd[3:],
-                              ['--config=' + self.tmpfile, '--wait'])
+        six.assertCountEqual(self, cmd[3:], ["--config=" + self.tmpfile, "--wait"])
 
         with open(self.tmpfile, 'r') as f:
             lines = f.read().strip().split('\n')
         self.assertEqual(lines[0], '[image-build]')
-        self.assertItemsEqual(lines[1:],
-                              ['name = test-name',
-                               'version = 1',
-                               'target = test-target',
-                               'install_tree = /tmp/test/install_tree',
-                               'arches = x86_64',
-                               'format = docker,qcow2',
-                               'kickstart = test-kickstart',
-                               'ksurl = git://example.com/ks.git',
-                               'distro = test-distro',
-                               'release = 20160222.0',
-                               'disk_size = 4'])
+        six.assertCountEqual(
+            self,
+            lines[1:],
+            ["name = test-name",
+             "version = 1",
+             "target = test-target",
+             "install_tree = /tmp/test/install_tree",
+             "arches = x86_64",
+             "format = docker,qcow2",
+             "kickstart = test-kickstart",
+             "ksurl = git://example.com/ks.git",
+             "distro = test-distro",
+             "release = 20160222.0",
+             "disk_size = 4"],
+        )
 
     def test_get_image_paths(self):
 
@@ -276,24 +280,30 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
             getTaskResult=mock.Mock(side_effect=lambda task_id: getTaskResult_data.get(task_id))
         )
         result = self.koji.get_image_paths(12387273)
-        self.assertItemsEqual(result.keys(), ['i386', 'x86_64'])
+        six.assertCountEqual(self, result.keys(), ["i386", "x86_64"])
         self.maxDiff = None
-        self.assertItemsEqual(result['i386'],
-                              ['/koji/task/12387276/tdl-i386.xml',
-                               '/koji/task/12387276/fedora-cloud-base-2878aa0.ks',
-                               '/koji/task/12387276/koji-f23-build-12387276-base.ks',
-                               '/koji/task/12387276/libvirt-qcow2-i386.xml',
-                               '/koji/task/12387276/Fedora-Cloud-Base-23-20160103.i386.qcow2',
-                               '/koji/task/12387276/libvirt-raw-xz-i386.xml',
-                               '/koji/task/12387276/Fedora-Cloud-Base-23-20160103.i386.raw.xz'])
-        self.assertItemsEqual(result['x86_64'],
-                              ['/koji/task/12387277/tdl-x86_64.xml',
-                               '/koji/task/12387277/fedora-cloud-base-2878aa0.ks',
-                               '/koji/task/12387277/koji-f23-build-12387277-base.ks',
-                               '/koji/task/12387277/libvirt-qcow2-x86_64.xml',
-                               '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.qcow2',
-                               '/koji/task/12387277/libvirt-raw-xz-x86_64.xml',
-                               '/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.raw.xz'])
+        six.assertCountEqual(
+            self,
+            result["i386"],
+            ["/koji/task/12387276/tdl-i386.xml",
+             "/koji/task/12387276/fedora-cloud-base-2878aa0.ks",
+             "/koji/task/12387276/koji-f23-build-12387276-base.ks",
+             "/koji/task/12387276/libvirt-qcow2-i386.xml",
+             "/koji/task/12387276/Fedora-Cloud-Base-23-20160103.i386.qcow2",
+             "/koji/task/12387276/libvirt-raw-xz-i386.xml",
+             "/koji/task/12387276/Fedora-Cloud-Base-23-20160103.i386.raw.xz"],
+        )
+        six.assertCountEqual(
+            self,
+            result["x86_64"],
+            ["/koji/task/12387277/tdl-x86_64.xml",
+             "/koji/task/12387277/fedora-cloud-base-2878aa0.ks",
+             "/koji/task/12387277/koji-f23-build-12387277-base.ks",
+             "/koji/task/12387277/libvirt-qcow2-x86_64.xml",
+             "/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.qcow2",
+             "/koji/task/12387277/libvirt-raw-xz-x86_64.xml",
+             "/koji/task/12387277/Fedora-Cloud-Base-23-20160103.x86_64.raw.xz"],
+        )
 
     def test_get_image_paths_failed_subtask(self):
 
@@ -316,8 +326,8 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
 
         result = self.koji.get_image_paths(25643870, callback=failed_callback)
 
-        self.assertItemsEqual(result.keys(), ['aarch64', 'armhfp', 'x86_64'])
-        self.assertItemsEqual(failed, ['ppc64le', 's390x'])
+        six.assertCountEqual(self, result.keys(), ["aarch64", "armhfp", "x86_64"])
+        six.assertCountEqual(self, failed, ["ppc64le", "s390x"])
 
     def test_multicall_map(self):
         self.koji.koji_proxy = mock.Mock()
@@ -327,7 +337,8 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
             self.koji.koji_proxy, self.koji.koji_proxy.getBuild, ["foo", "bar"],
             [{"x":1}, {"x":2}])
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             self.koji.koji_proxy.getBuild.mock_calls,
             [mock.call("foo", x=1), mock.call("bar", x=2)])
         self.koji.koji_proxy.multiCall.assert_called_with(strict=True)
@@ -356,9 +367,12 @@ class LiveMediaTestCase(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[:9],
                          ['koji', '--profile=custom-koji', 'spin-livemedia', 'name', '1', 'tgt', 'x,y,z', 'kickstart',
                           '--install-tree=/mnt/os'])
-        self.assertItemsEqual(cmd[9:],
-                              ['--repo=repo-1', '--repo=repo-2', '--skip-tag', '--scratch', '--wait',
-                               '--ksurl=git://example.com/ksurl.git', '--release=20160222.1'])
+        six.assertCountEqual(
+            self,
+            cmd[9:],
+            ["--repo=repo-1", "--repo=repo-2", "--skip-tag", "--scratch", "--wait",
+             "--ksurl=git://example.com/ksurl.git", "--release=20160222.1"],
+        )
 
 
 class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
@@ -366,7 +380,9 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
         cmd = self.koji.get_create_image_cmd('my_name', '1.0', 'f24-candidate',
                                              'x86_64', '/path/to/ks', ['/repo/1'])
         self.assertEqual(cmd[0:3], ['koji', '--profile=custom-koji', 'spin-livecd'])
-        self.assertItemsEqual(cmd[3:7], ['--noprogress', '--scratch', '--wait', '--repo=/repo/1'])
+        six.assertCountEqual(
+            self, cmd[3:7], ["--noprogress", "--scratch", "--wait", "--repo=/repo/1"]
+        )
         self.assertEqual(cmd[7:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
     def test_get_create_image_cmd_full(self):
@@ -376,9 +392,12 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
                                              ksurl='https://git.example.com/')
         self.assertEqual(cmd[0:3], ['koji', '--profile=custom-koji', 'spin-livecd'])
         self.assertEqual(cmd[-5:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
-        self.assertItemsEqual(cmd[3:-5],
-                              ['--noprogress', '--nowait', '--repo=/repo/1', '--repo=/repo/2',
-                               '--release=1', '--specfile=foo.spec', '--ksurl=https://git.example.com/'])
+        six.assertCountEqual(
+            self,
+            cmd[3:-5],
+            ["--noprogress", "--nowait", "--repo=/repo/1", "--repo=/repo/2",
+             "--release=1", "--specfile=foo.spec", "--ksurl=https://git.example.com/"],
+        )
 
     def test_spin_livecd_with_format(self):
         with self.assertRaises(ValueError):
@@ -392,7 +411,9 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
                                              image_type='appliance',
                                              image_format='qcow')
         self.assertEqual(cmd[0:3], ['koji', '--profile=custom-koji', 'spin-appliance'])
-        self.assertItemsEqual(cmd[3:7], ['--noprogress', '--scratch', '--wait', '--format=qcow'])
+        six.assertCountEqual(
+            self, cmd[3:7], ["--noprogress", "--scratch", "--wait", "--format=qcow"]
+        )
         self.assertEqual(cmd[7:], ['my_name', '1.0', 'f24-candidate', 'x86_64', '/path/to/ks'])
 
     def test_spin_appliance_with_wrong_format(self):
@@ -411,8 +432,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; date')
-        self.assertItemsEqual(cmd[3:-3],
-                              ['--channel-override=runroot-local'])
+        six.assertCountEqual(self, cmd[3:-3], ["--channel-override=runroot-local"])
 
     def test_get_cmd_full(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
@@ -424,10 +444,13 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo \'&\'')
-        self.assertItemsEqual(cmd[3:-3],
-                              ['--channel-override=chan', '--quiet', '--use-shell',
-                               '--task-id', '--weight=1000', '--package=some_other_package',
-                               '--package=lorax', '--mount=/tmp'])
+        six.assertCountEqual(
+            self,
+            cmd[3:-3],
+            ["--channel-override=chan", "--quiet", "--use-shell",
+             "--task-id", "--weight=1000", "--package=some_other_package",
+             "--package=lorax", "--mount=/tmp"],
+        )
 
     @mock.patch("os.getuid", new=lambda: 1010)
     def test_with_chown_paths(self):
@@ -443,10 +466,13 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
             cmd[-1],
             "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir' /foo && chown -R 1010 '/output dir' /foo"
         )
-        self.assertItemsEqual(cmd[3:-3],
-                              ['--channel-override=chan', '--quiet', '--use-shell',
-                               '--task-id', '--weight=1000', '--package=some_other_package',
-                               '--package=lorax', '--mount=/tmp'])
+        six.assertCountEqual(
+            self,
+            cmd[3:-3],
+            ["--channel-override=chan", "--quiet", "--use-shell",
+             "--task-id", "--weight=1000", "--package=some_other_package",
+             "--package=lorax", "--mount=/tmp"],
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_no_task_id(self, run):
@@ -534,9 +560,11 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         result = self.koji.run_blocking_cmd('cmd')
 
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None, env=None,
-                                         universal_newlines=True)])
+        six.assertCountEqual(
+            self,
+            run.mock_calls,
+            [mock.call('cmd', can_fail=True, logfile=None, env=None, universal_newlines=True)],
+        )
 
     @mock.patch.dict('os.environ', {'FOO': 'BAR'}, clear=True)
     @mock.patch('pungi.util.temp_dir')
@@ -550,10 +578,13 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         result = self.koji.run_blocking_cmd('cmd')
 
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None,
-                                         env={'KRB5CCNAME': 'DIR:/tmp/foo', 'FOO': 'BAR'},
-                                         universal_newlines=True)])
+        six.assertCountEqual(
+            self,
+            run.mock_calls,
+            [mock.call("cmd", can_fail=True, logfile=None,
+                       env={"KRB5CCNAME": "DIR:/tmp/foo", "FOO": "BAR"},
+                       universal_newlines=True)],
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_with_log(self, run):
@@ -563,9 +594,12 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         result = self.koji.run_blocking_cmd('cmd', log_file='logfile')
 
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile='logfile', env=None,
-                                         universal_newlines=True)])
+        six.assertCountEqual(
+            self,
+            run.mock_calls,
+            [mock.call("cmd", can_fail=True, logfile="logfile", env=None,
+                       universal_newlines=True)]
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_fail_with_task_id(self, run):
@@ -575,9 +609,11 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         result = self.koji.run_blocking_cmd('cmd')
 
         self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 1234})
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None, env=None,
-                                         universal_newlines=True)])
+        six.assertCountEqual(
+            self, run.mock_calls,
+            [mock.call("cmd", can_fail=True, logfile=None, env=None,
+                       universal_newlines=True)],
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_fail_without_task_id(self, run):
@@ -587,9 +623,11 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
         with self.assertRaises(RuntimeError) as ctx:
             self.koji.run_blocking_cmd('cmd')
 
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call('cmd', can_fail=True, logfile=None, env=None,
-                                         universal_newlines=True)])
+        six.assertCountEqual(
+            self, run.mock_calls,
+            [mock.call("cmd", can_fail=True, logfile=None, env=None,
+                       universal_newlines=True)],
+        )
         self.assertIn('Could not find task ID', str(ctx.exception))
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
@@ -779,11 +817,15 @@ class TestGetBuildrootRPMs(unittest.TestCase):
                          [mock.call.koji_proxy.listBuildroots(taskID=1234),
                           mock.call.koji_proxy.listRPMs(componentBuildrootID=5458481)])
 
-        self.assertItemsEqual(rpms, [
-            'python3-kickstart-2.25-2.fc24.noarch',
-            'binutils-2.26-18.fc24.x86_64',
-            'kernel-headers-4.5.2-301.fc24.x86_64'
-        ])
+        six.assertCountEqual(
+            self,
+            rpms,
+            [
+                "python3-kickstart-2.25-2.fc24.noarch",
+                "binutils-2.26-18.fc24.x86_64",
+                "kernel-headers-4.5.2-301.fc24.x86_64",
+            ],
+        )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_get_local(self, mock_run):
@@ -793,10 +835,14 @@ class TestGetBuildrootRPMs(unittest.TestCase):
 
         rpms = get_buildroot_rpms(compose, None)
 
-        self.assertItemsEqual(rpms, [
-            'cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch',
-            'libmount-2.28-1.fc23.x86_64',
-            'ed-1.10-5.fc23.x86_64',
-            'kbd-2.0.2-8.fc23.x86_64',
-            'coreutils-8.24-6.fc23.x86_64',
-        ])
+        six.assertCountEqual(
+            self,
+            rpms,
+            [
+                "cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch",
+                "libmount-2.28-1.fc23.x86_64",
+                "ed-1.10-5.fc23.x86_64",
+                "kbd-2.0.2-8.fc23.x86_64",
+                "coreutils-8.24-6.fc23.x86_64",
+            ],
+        )

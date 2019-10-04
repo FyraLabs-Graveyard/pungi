@@ -8,6 +8,8 @@ except ImportError:
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.wrappers.lorax import LoraxWrapper
@@ -23,12 +25,15 @@ class LoraxWrapperTest(unittest.TestCase):
                                        "/mnt/repo_baseurl", "/mnt/output_dir")
 
         self.assertEqual(cmd[0], 'lorax')
-        self.assertItemsEqual(cmd[1:],
-                              ['--product=product',
-                               '--version=version',
-                               '--release=release',
-                               '--source=file:///mnt/repo_baseurl',
-                               '/mnt/output_dir'])
+        six.assertCountEqual(
+            self,
+            cmd[1:],
+            ["--product=product",
+             "--version=version",
+             "--release=release",
+             "--source=file:///mnt/repo_baseurl",
+             "/mnt/output_dir"],
+        )
 
     def test_get_command_with_all_arguments(self):
         cmd = self.lorax.get_lorax_cmd("product", "version", "release",
@@ -44,17 +49,20 @@ class LoraxWrapperTest(unittest.TestCase):
                                        log_dir='/tmp')
 
         self.assertEqual(cmd[0], 'lorax')
-        self.assertItemsEqual(cmd[1:],
-                              ['--product=product', '--version=version',
-                               '--release=release', '--variant=Server',
-                               '--source=file:///mnt/repo_baseurl',
-                               '--bugurl=http://example.com/',
-                               '--buildarch=x86_64', '--volid=VOLUME_ID',
-                               '--nomacboot', '--noupgrade', '--isfinal',
-                               '--installpkgs=bash', '--installpkgs=vim',
-                               '--add-template=t1', '--add-template=t2',
-                               '--add-arch-template=ta1', '--add-arch-template=ta2',
-                               '--add-template-var=v1', '--add-template-var=v2',
-                               '--add-arch-template-var=va1', '--add-arch-template-var=va2',
-                               '--logfile=/tmp/lorax.log',
-                               '/mnt/output_dir'])
+        six.assertCountEqual(
+            self,
+            cmd[1:],
+            ["--product=product", "--version=version",
+             "--release=release", "--variant=Server",
+             "--source=file:///mnt/repo_baseurl",
+             "--bugurl=http://example.com/",
+             "--buildarch=x86_64", "--volid=VOLUME_ID",
+             "--nomacboot", "--noupgrade", "--isfinal",
+             "--installpkgs=bash", "--installpkgs=vim",
+             "--add-template=t1", "--add-template=t2",
+             "--add-arch-template=ta1", "--add-arch-template=ta2",
+             "--add-template-var=v1", "--add-template-var=v2",
+             "--add-arch-template-var=va1", "--add-arch-template-var=va2",
+             "--logfile=/tmp/lorax.log",
+             "/mnt/output_dir"],
+        )

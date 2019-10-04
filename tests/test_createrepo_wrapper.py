@@ -5,6 +5,8 @@ try:
 except ImportError:
     import unittest
 
+import six
+
 import os
 import sys
 
@@ -20,7 +22,9 @@ class CreateRepoWrapperTest(unittest.TestCase):
         cmd = repo.get_createrepo_cmd('/test/dir')
 
         self.assertEqual(cmd[:2], ['createrepo_c', '/test/dir'])
-        self.assertItemsEqual(cmd[2:], ['--update', '--database', '--unique-md-filenames'])
+        six.assertCountEqual(
+            self, cmd[2:], ["--update", "--database", "--unique-md-filenames"]
+        )
 
     def test_get_createrepo_c_cmd_full(self):
         repo = CreaterepoWrapper()
@@ -37,22 +41,28 @@ class CreateRepoWrapperTest(unittest.TestCase):
         self.maxDiff = None
 
         self.assertEqual(cmd[:2], ['createrepo_c', '/test/dir'])
-        self.assertItemsEqual(cmd[2:],
-                              ['--baseurl=http://base.example.com', '--excludes=abc', '--excludes=xyz',
-                               '--pkglist=/test/pkglist', '--groupfile=/test/comps', '--cachedir=/test/cache',
-                               '--skip-stat', '--update-md-path=/test/md_path', '--split', '--checkts',
-                               '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
-                               '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
-                               '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
-                               '--outputdir=/test/output', '--xz', "--zck", "--zck-primary-dict=/foo/bar"])
+        six.assertCountEqual(
+            self,
+            cmd[2:],
+            ["--baseurl=http://base.example.com", "--excludes=abc", "--excludes=xyz",
+             "--pkglist=/test/pkglist", "--groupfile=/test/comps", "--cachedir=/test/cache",
+             "--skip-stat", "--update-md-path=/test/md_path", "--split", "--checkts",
+             "--checksum=sha256", "--distro=Fedora", "--simple-md-filenames", "--no-database",
+             "--content=c1", "--content=c2", "--repo=r1", "--repo=r2", "--revision=rev",
+             "--deltas", "--oldpackagedirs=/test/old", "--num-deltas=2", "--workers=3",
+             "--outputdir=/test/output", "--xz", "--zck", "--zck-primary-dict=/foo/bar"],
+        )
 
     def test_get_createrepo_cmd_minimal(self):
         repo = CreaterepoWrapper(False)
         cmd = repo.get_createrepo_cmd('/test/dir')
 
         self.assertEqual(cmd[:2], ['createrepo', '/test/dir'])
-        self.assertItemsEqual(cmd[2:], ['--update', '--database', '--unique-md-filenames',
-                                        '--pretty'])
+        six.assertCountEqual(
+            self,
+            cmd[2:],
+            ["--update", "--database", "--unique-md-filenames", "--pretty"],
+        )
 
     def test_get_createrepo_cmd_full(self):
         repo = CreaterepoWrapper(False)
@@ -67,11 +77,14 @@ class CreateRepoWrapperTest(unittest.TestCase):
         self.maxDiff = None
 
         self.assertEqual(cmd[:2], ['createrepo', '/test/dir'])
-        self.assertItemsEqual(cmd[2:],
-                              ['--baseurl=http://base.example.com', '--excludes=abc', '--excludes=xyz',
-                               '--pkglist=/test/pkglist', '--groupfile=/test/comps', '--cachedir=/test/cache',
-                               '--skip-stat', '--update-md-path=/test/md_path', '--split', '--checkts',
-                               '--checksum=sha256', '--distro=Fedora', '--simple-md-filenames', '--no-database',
-                               '--content=c1', '--content=c2', '--repo=r1', '--repo=r2', '--revision=rev',
-                               '--deltas', '--oldpackagedirs=/test/old', '--num-deltas=2', '--workers=3',
-                               '--outputdir=/test/output'])
+        six.assertCountEqual(
+            self,
+            cmd[2:],
+            ["--baseurl=http://base.example.com", "--excludes=abc", "--excludes=xyz",
+             "--pkglist=/test/pkglist", "--groupfile=/test/comps", "--cachedir=/test/cache",
+             "--skip-stat", "--update-md-path=/test/md_path", "--split", "--checkts",
+             "--checksum=sha256", "--distro=Fedora", "--simple-md-filenames", "--no-database",
+             "--content=c1", "--content=c2", "--repo=r1", "--repo=r2", "--revision=rev",
+             "--deltas", "--oldpackagedirs=/test/old", "--num-deltas=2", "--workers=3",
+             "--outputdir=/test/output"],
+        )

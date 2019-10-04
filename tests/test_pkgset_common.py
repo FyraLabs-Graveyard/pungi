@@ -4,6 +4,7 @@ import os
 import sys
 
 import mock
+import six
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -66,7 +67,9 @@ class TestMaterializedPkgsetCreate(helpers.PungiTestCase):
             self.compose, self.pkgset, self.prefix
         )
 
-        self.assertItemsEqual(result.package_sets.keys(), ["global", "amd64", "x86_64"])
+        six.assertCountEqual(
+            self, result.package_sets.keys(), ["global", "amd64", "x86_64"]
+        )
         self.assertEqual(result["global"], self.pkgset)
         self.assertEqual(result["x86_64"], self.subsets["x86_64"])
         self.assertEqual(result["amd64"], self.subsets["amd64"])

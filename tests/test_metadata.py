@@ -3,6 +3,8 @@ import mock
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from tests import helpers
@@ -125,12 +127,17 @@ class MediaRepoTestCase(helpers.PungiTestCase):
         with open(self.path) as f:
             lines = f.read().strip().split('\n')
             self.assertEqual(lines[0], '[InstallMedia]')
-            self.assertItemsEqual(lines[1:],
-                                  ['name=Test 1.0',
-                                   'mediaid=123456',
-                                   'metadata_expire=-1',
-                                   'gpgcheck=0',
-                                   'cost=500'])
+            six.assertCountEqual(
+                self,
+                lines[1:],
+                [
+                    "name=Test 1.0",
+                    "mediaid=123456",
+                    "metadata_expire=-1",
+                    "gpgcheck=0",
+                    "cost=500",
+                ],
+            )
 
     def test_addons_dont_have_media_repo(self):
         compose = helpers.DummyCompose(self.topdir, {

@@ -2,6 +2,8 @@
 
 import mock
 
+import six
+
 import os
 import sys
 
@@ -96,9 +98,11 @@ class TestImageBuildPhase(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
-        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
-                              [mock.call((compose, client_args)),
-                               mock.call((compose, server_args))])
+        six.assertCountEqual(
+            self,
+            phase.pool.queue_put.mock_calls,
+            [mock.call((compose, client_args)), mock.call((compose, server_args))],
+        )
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_phase_global_options(self, ThreadPool):
@@ -155,8 +159,9 @@ class TestImageBuildPhase(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
-        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
-                              [mock.call((compose, server_args))])
+        self.assertEqual(
+            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+        )
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_phase_missing_version(self, ThreadPool):
@@ -210,8 +215,9 @@ class TestImageBuildPhase(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
-        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
-                              [mock.call((compose, server_args))])
+        self.assertEqual(
+            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+        )
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_image_build_filter_all_variants(self, ThreadPool):
@@ -660,8 +666,9 @@ class TestImageBuildPhase(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
-        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
-                              [mock.call((compose, server_args))])
+        self.assertEqual(
+            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+        )
 
     @mock.patch('pungi.phases.image_build.ThreadPool')
     def test_failable_star(self, ThreadPool):
@@ -719,8 +726,9 @@ class TestImageBuildPhase(PungiTestCase):
             "link_type": 'hardlink-or-copy',
             "scratch": False,
         }
-        self.assertItemsEqual(phase.pool.queue_put.mock_calls,
-                              [mock.call((compose, server_args))])
+        self.assertEqual(
+            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+        )
 
 
 class TestCreateImageBuildThread(PungiTestCase):
@@ -785,20 +793,21 @@ class TestCreateImageBuildThread(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, cmd), 1)
 
-        self.assertItemsEqual(
+        self.assertEqual(
             koji_wrapper.get_image_build_cmd.call_args_list,
             [mock.call(cmd['image_conf'],
                        conf_file_dest='amd64,x86_64-Client-Fedora-Docker-Base-docker',
                        scratch=False)]
         )
 
-        self.assertItemsEqual(
+        self.assertEqual(
             koji_wrapper.run_blocking_cmd.call_args_list,
             [mock.call(koji_wrapper.get_image_build_cmd.return_value,
                        log_file=self.topdir + '/logs/amd64-x86_64/imagebuild-Client-KDE-docker-qcow2.amd64-x86_64.log')]
         )
 
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             linker.mock_calls,
             [mock.call.link(
                 '/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2',

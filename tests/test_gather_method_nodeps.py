@@ -4,6 +4,8 @@ import mock
 import os
 import sys
 
+import six
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pungi.phases.gather.methods import method_nodeps as nodeps
@@ -20,6 +22,12 @@ class TestWritePungiConfig(helpers.PungiTestCase):
 
     def test_expand_group(self):
         packages = nodeps.expand_groups(self.compose, 'x86_64', None, ['core', 'text-internet'])
-        self.assertItemsEqual(packages, [('dummy-bash', 'x86_64'),
-                                         ('dummy-elinks', 'x86_64'),
-                                         ('dummy-tftp', 'x86_64')])
+        six.assertCountEqual(
+            self,
+            packages,
+            [
+                ("dummy-bash", "x86_64"),
+                ("dummy-elinks", "x86_64"),
+                ("dummy-tftp", "x86_64"),
+            ],
+        )

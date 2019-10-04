@@ -2,6 +2,7 @@
 
 
 import mock
+import six
 
 import os
 import sys
@@ -101,14 +102,16 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [call[0][0][3] for call in pool.queue_put.call_args_list],
             ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
              'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
              'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
                        [self.topdir + "/work/x86_64/repo/p1",
@@ -146,7 +149,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             get_volid.mock_calls,
             [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='DVD'),
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='DVD'),
@@ -174,7 +178,7 @@ class TestBuildinstallPhase(PungiTestCase):
 
         pool = poolCls.return_value
         self.assertEqual(1, len(pool.queue_put.mock_calls))
-        self.assertItemsEqual(
+        self.assertEqual(
             [call[0][0][3] for call in pool.queue_put.call_args_list],
             ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir])
 
@@ -193,7 +197,7 @@ class TestBuildinstallPhase(PungiTestCase):
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')],
             any_order=True)
-        self.assertItemsEqual(
+        self.assertEqual(
             get_volid.mock_calls,
             [mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd')])
 
@@ -221,7 +225,8 @@ class TestBuildinstallPhase(PungiTestCase):
         self.assertEqual(2, len(pool.queue_put.mock_calls))
 
         # Obtained correct lorax commands.
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_buildinstall_cmd.mock_calls,
             [mock.call('Test', '1', '1', [self.topdir + "/work/x86_64/repo/p1"],
                        self.topdir + '/work/x86_64/buildinstall',
@@ -229,7 +234,8 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call('Test', '1', '1', [self.topdir + "/work/amd64/repo/p1"],
                        self.topdir + '/work/amd64/buildinstall',
                        buildarch='amd64', is_final=True, volid='vol_id')])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             get_volid.mock_calls,
             [mock.call(compose, 'x86_64', disc_type='DVD'),
              mock.call(compose, 'amd64', disc_type='DVD')])
@@ -276,14 +282,16 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [call[0][0][3] for call in pool.queue_put.call_args_list],
             ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
              'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
              'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1.2.3', '1.2.3',
                        [self.topdir + "/work/x86_64/repo/p1",
@@ -318,7 +326,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             get_volid.mock_calls,
             [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
@@ -353,14 +362,16 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [call[0][0][3] for call in pool.queue_put.call_args_list],
             ['rm -rf %s/work/amd64/buildinstall/Client && lorax ...' % self.topdir,
              'rm -rf %s/work/amd64/buildinstall/Server && lorax ...' % self.topdir,
              'rm -rf %s/work/x86_64/buildinstall/Server && lorax ...' % self.topdir])
 
         # Obtained correct lorax commands.
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
                        [self.topdir + "/work/x86_64/repo/p1",
@@ -395,7 +406,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        rootfs_size=None,
                        log_dir=self.topdir + '/logs/amd64/buildinstall-Client-logs')])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             get_volid.mock_calls,
             [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
@@ -430,14 +442,16 @@ class TestBuildinstallPhase(PungiTestCase):
         # Server.x86_64, Client.amd64, Server.x86_64
         pool = poolCls.return_value
         self.assertEqual(3, len(pool.queue_put.mock_calls))
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             [call[0][0][3] for call in pool.queue_put.call_args_list],
             ['rm -rf %s/amd64/Client && lorax ...' % buildinstall_topdir,
              'rm -rf %s/amd64/Server && lorax ...' % buildinstall_topdir,
              'rm -rf %s/x86_64/Server && lorax ...' % buildinstall_topdir])
 
         # Obtained correct lorax commands.
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
                        ["http://localhost/work/x86_64/repo/p1",
@@ -472,7 +486,8 @@ class TestBuildinstallPhase(PungiTestCase):
                        add_template_var=[], add_arch_template_var=[],
                        rootfs_size=None,
                        log_dir=buildinstall_topdir + '/amd64/Client/logs')])
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             get_volid.mock_calls,
             [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='dvd'),
              mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='dvd'),
@@ -506,7 +521,8 @@ class TestBuildinstallPhase(PungiTestCase):
         phase.run()
 
         self.maxDiff = None
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             loraxCls.return_value.get_lorax_cmd.mock_calls,
             [mock.call('Test', '1', '1',
                        [self.topdir + "/work/x86_64/repo/p1",
@@ -588,7 +604,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
         destdir = os.path.join(self.topdir, "work/x86_64/buildinstall/Server")
-        self.assertItemsEqual(
+        self.assertEqual(
             get_runroot_cmd.mock_calls,
             [mock.call(
                 'rrt', 'x86_64', self.cmd, channel=None,
@@ -599,14 +615,14 @@ class BuildinstallThreadTestCase(PungiTestCase):
                     os.path.join(self.topdir, "logs/x86_64/buildinstall-Server-logs"),
                 ],
             )])
-        self.assertItemsEqual(
+        self.assertEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
                        log_file=self.topdir + '/logs/x86_64/buildinstall-Server.x86_64.log')])
         with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
-        self.assertItemsEqual(rpms, ['bash', 'zsh'])
-        self.assertItemsEqual(self.pool.finished_tasks, [('Server', 'x86_64')])
+        six.assertCountEqual(self, rpms, ["bash", "zsh"])
+        six.assertCountEqual(self, self.pool.finished_tasks, [("Server", "x86_64")])
 
         self.assertEqual(
             mock_tweak.call_args_list,
@@ -659,7 +675,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             t.process((compose, "amd64", None, self.cmd), 0)
 
         destdir = os.path.join(self.topdir, "work/amd64/buildinstall")
-        self.assertItemsEqual(
+        self.assertEqual(
             get_runroot_cmd.mock_calls,
             [mock.call(
                 "rrt", "amd64", self.cmd, channel=None,
@@ -667,15 +683,16 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 packages=['anaconda'], mounts=[self.topdir], weight=None,
                 chown_paths=[destdir],
             )])
-        self.assertItemsEqual(
+        self.assertEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
                        log_file=self.topdir + "/logs/amd64/buildinstall.amd64.log")])
         with open(self.topdir + "/logs/amd64/buildinstall-RPMs.amd64.log") as f:
             rpms = f.read().strip().split('\n')
-        self.assertItemsEqual(rpms, ['bash', 'zsh'])
-        self.assertItemsEqual(self.pool.finished_tasks, [(None, 'amd64')])
-        self.assertItemsEqual(
+        six.assertCountEqual(self, rpms, ["bash", "zsh"])
+        six.assertCountEqual(self, self.pool.finished_tasks, [(None, "amd64")])
+        six.assertCountEqual(
+            self,
             mock_tweak.call_args_list,
             [
                 mock.call(
@@ -691,7 +708,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 for var in ["Client", "Server"]
             ],
         )
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             mock_link.call_args_list,
             [
                 mock.call(compose, "amd64", compose.variants["Client"], False),
@@ -731,7 +749,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details.'
                       % self.topdir)
         ])
-        self.assertItemsEqual(self.pool.finished_tasks, [])
+        self.assertEqual(self.pool.finished_tasks, set())
 
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
@@ -764,7 +782,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             mock.call('[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway.'),
             mock.call('Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details.' % self.topdir)
         ])
-        self.assertItemsEqual(self.pool.finished_tasks, [])
+        self.assertEqual(self.pool.finished_tasks, set())
 
     @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
     @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
@@ -792,7 +810,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertEqual(0, len(run.mock_calls))
 
         self.assertTrue(os.path.exists(dummy_file))
-        self.assertItemsEqual(self.pool.finished_tasks, [])
+        self.assertEqual(self.pool.finished_tasks, set())
 
     @mock.patch('pungi.phases.buildinstall.link_boot_iso')
     @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
@@ -827,7 +845,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
         with mock.patch('time.sleep'):
             t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
 
-        self.assertItemsEqual(
+        self.assertEqual(
             get_runroot_cmd.mock_calls,
             [mock.call(
                 'rrt', 'x86_64', self.cmd, channel=None,
@@ -838,18 +856,19 @@ class BuildinstallThreadTestCase(PungiTestCase):
                     "/buildinstall_topdir/buildinstall-%s/x86_64/Server/logs" % os.path.basename(self.topdir),
                 ],
             )])
-        self.assertItemsEqual(
+        self.assertEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
                        log_file=self.topdir + '/logs/x86_64/buildinstall-Server.x86_64.log')])
         with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
-        self.assertItemsEqual(rpms, ['bash', 'zsh'])
-        self.assertItemsEqual(self.pool.finished_tasks, [('Server', 'x86_64')])
+        six.assertCountEqual(self, rpms, ["bash", "zsh"])
+        six.assertCountEqual(self, self.pool.finished_tasks, [("Server", "x86_64")])
 
         buildinstall_topdir = os.path.join(
             "/buildinstall_topdir", "buildinstall-" + os.path.basename(self.topdir))
-        self.assertItemsEqual(
+        six.assertCountEqual(
+            self,
             copy_all.mock_calls,
             [mock.call(os.path.join(buildinstall_topdir, 'x86_64/Server/results'),
                        os.path.join(self.topdir, 'work/x86_64/buildinstall/Server')),
@@ -904,19 +923,22 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(os.stat(tgt).st_ino,
                          os.stat(self.topdir + '/compose/Server/x86_64/os/images/boot.iso').st_ino)
 
-        self.assertItemsEqual(
+        self.assertEqual(
             self.compose.get_image_name.mock_calls,
             [mock.call('x86_64', self.compose.variants['Server'],
                        disc_type='boot', disc_num=None, suffix='.iso')])
-        self.assertItemsEqual(iso.get_implanted_md5.mock_calls,
-                              [mock.call(tgt)])
-        self.assertItemsEqual(iso.get_manifest_cmd.mock_calls,
-                              [mock.call('image-name')])
-        self.assertItemsEqual(iso.get_volume_id.mock_calls,
-                              [mock.call(tgt)])
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call(iso.get_manifest_cmd.return_value,
-                                         workdir=self.topdir + '/compose/Server/x86_64/iso')])
+        self.assertEqual(iso.get_implanted_md5.mock_calls, [mock.call(tgt)])
+        self.assertEqual(iso.get_manifest_cmd.mock_calls, [mock.call("image-name")])
+        self.assertEqual(iso.get_volume_id.mock_calls, [mock.call(tgt)])
+        self.assertEqual(
+            run.mock_calls,
+            [
+                mock.call(
+                    iso.get_manifest_cmd.return_value,
+                    workdir=self.topdir + "/compose/Server/x86_64/iso",
+                ),
+            ],
+        )
 
         image = ImageCls.return_value
         self.assertEqual(image.path, 'Server/x86_64/iso/image-name')
@@ -953,19 +975,22 @@ class TestSymlinkIso(PungiTestCase):
         self.assertEqual(os.stat(tgt).st_ino,
                          os.stat(self.topdir + '/compose/Server/x86_64/os/images/boot.iso').st_ino)
 
-        self.assertItemsEqual(
+        self.assertEqual(
             self.compose.get_image_name.mock_calls,
             [mock.call('x86_64', self.compose.variants['Server'],
                        disc_type='netinst', disc_num=None, suffix='.iso')])
-        self.assertItemsEqual(iso.get_implanted_md5.mock_calls,
-                              [mock.call(tgt)])
-        self.assertItemsEqual(iso.get_manifest_cmd.mock_calls,
-                              [mock.call('image-name')])
-        self.assertItemsEqual(iso.get_volume_id.mock_calls,
-                              [mock.call(tgt)])
-        self.assertItemsEqual(run.mock_calls,
-                              [mock.call(iso.get_manifest_cmd.return_value,
-                                         workdir=self.topdir + '/compose/Server/x86_64/iso')])
+        self.assertEqual(iso.get_implanted_md5.mock_calls, [mock.call(tgt)])
+        self.assertEqual(iso.get_manifest_cmd.mock_calls, [mock.call("image-name")])
+        self.assertEqual(iso.get_volume_id.mock_calls, [mock.call(tgt)])
+        self.assertEqual(
+            run.mock_calls,
+            [
+                mock.call(
+                    iso.get_manifest_cmd.return_value,
+                    workdir=self.topdir + "/compose/Server/x86_64/iso",
+                )
+            ],
+        )
 
         image = ImageCls.return_value
         self.assertEqual(image.path, 'Server/x86_64/iso/image-name')
