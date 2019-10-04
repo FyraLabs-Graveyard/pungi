@@ -1018,10 +1018,9 @@ class TestTweakConfigs(PungiTestCase):
                 touch(configs[-1], ':LABEL=baz')
         tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'))
         for cfg in configs:
-            with open(cfg) as f:
-                self.assertEqual(
-                    f.read().strip(),
-                    ':LABEL=new\\x20volid ks=hd:LABEL=new\\x20volid:/ks.cfg')
+            self.assertFileContent(
+                cfg, ":LABEL=new\\x20volid ks=hd:LABEL=new\\x20volid:/ks.cfg\n"
+            )
 
     def test_tweak_configs_yaboot(self):
         configs = []
@@ -1031,7 +1030,6 @@ class TestTweakConfigs(PungiTestCase):
                 touch(configs[-1], ':LABEL=baz')
         tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'))
         for cfg in configs:
-            with open(os.path.join(self.topdir, cfg)) as f:
-                self.assertEqual(
-                    f.read().strip(),
-                    ':LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg')
+            self.assertFileContent(
+                cfg, ":LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg\n"
+            )

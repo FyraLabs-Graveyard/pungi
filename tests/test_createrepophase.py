@@ -185,8 +185,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -216,8 +215,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -246,8 +244,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/global",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), "Packages/b/bash-4.3.30-2.fc21.src.rpm\n")
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.src.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -277,8 +274,9 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(
+            list_file, 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n'
+        )
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -308,8 +306,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -343,8 +340,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -374,8 +370,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64", deltas=False,
                        oldpackagedirs=None, use_xz=True, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -408,8 +403,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages',
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -442,8 +436,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        oldpackagedirs=self.topdir + '/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages',
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -475,8 +468,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -509,8 +501,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -551,8 +542,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        ],
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -587,8 +577,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        oldpackagedirs=[],
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -621,8 +610,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/global",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), "Packages/b/bash-4.3.30-2.fc21.src.rpm\n")
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.src.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -655,8 +643,9 @@ class TestCreateVariantRepo(PungiTestCase):
                        update_md_path="/repo/x86_64",
                        deltas=False, oldpackagedirs=None, use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(
+            list_file, "Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n"
+        )
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -697,8 +686,7 @@ class TestCreateVariantRepo(PungiTestCase):
             repo.get_modifyrepo_cmd.mock_calls,
             [mock.call(repodata_dir, product_id, compress_type="gz")]
         )
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.x86_64.rpm\n")
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -730,8 +718,9 @@ class TestCreateVariantRepo(PungiTestCase):
                        oldpackagedirs=None,
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n')
+        self.assertFileContent(
+            list_file, "Packages/b/bash-debuginfo-4.3.30-2.fc21.x86_64.rpm\n"
+        )
 
     @mock.patch('pungi.phases.createrepo.run')
     @mock.patch('pungi.phases.createrepo.CreaterepoWrapper')
@@ -763,8 +752,7 @@ class TestCreateVariantRepo(PungiTestCase):
                        oldpackagedirs=None,
                        use_xz=False, extra_args=[])])
         self.assertEqual(repo.get_modifyrepo_cmd.mock_calls, [])
-        with open(list_file) as f:
-            self.assertEqual(f.read(), 'Packages/b/bash-4.3.30-2.fc21.src.rpm\n')
+        self.assertFileContent(list_file, "Packages/b/bash-4.3.30-2.fc21.src.rpm\n")
 
     @unittest.skipUnless(Modulemd is not None, 'Skipped test, no module support.')
     @mock.patch('pungi.phases.createrepo.find_file_in_repodata')
