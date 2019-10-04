@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
@@ -593,7 +592,3 @@ class TestSaveFileList(unittest.TestCase):
             rpms = f.read().strip().split('\n')
             self.assertItemsEqual(rpms, ['pungi@4.1.3@3.fc25@noarch',
                                          'pungi@4.1.3@3.fc25@src'])
-
-
-if __name__ == "__main__":
-    unittest.main()

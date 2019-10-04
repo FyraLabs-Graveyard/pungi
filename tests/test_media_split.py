@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 try:
@@ -141,7 +140,3 @@ class MediaSplitterTestCase(unittest.TestCase):
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second', 'third'], 'size': bl(145)}])
         self.assertUnlimited(bl(25 + 40 + 80))
-
-
-if __name__ == "__main__":
-    unittest.main()

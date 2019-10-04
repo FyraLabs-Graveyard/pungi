@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -434,7 +433,3 @@ class TestRepoclosure(PungiTestCase):
 
         with self.assertRaises(RuntimeError):
             test_phase.run_repoclosure(compose)
-
-
-if __name__ == "__main__":
-    unittest.main()

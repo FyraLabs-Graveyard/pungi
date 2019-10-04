@@ -1,8 +1,6 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 
-import unittest
 import mock
 
 import os
@@ -768,7 +766,3 @@ class TestCreateLiveImageThread(PungiTestCase):
             mock.call('[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway.'),
             mock.call('BOOM')
         ])
-
-
-if __name__ == "__main__":
-    unittest.main()

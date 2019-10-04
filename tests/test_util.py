@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -873,7 +872,3 @@ class TestCopyAll(PungiTestCase):
 
         self.assertTrue(os.path.islink(os.path.join(self.dst, "symlink")))
         self.assertEqual(os.readlink(os.path.join(self.dst, "symlink")), "broken")
-
-
-if __name__ == "__main__":
-    unittest.main()

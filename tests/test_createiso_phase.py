@@ -1,11 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 
 import os
@@ -942,7 +937,3 @@ class TweakTreeinfo(helpers.PungiTestCase):
         ti.dump(output)
 
         self.assertFilesEqual(output, expected)
-
-
-if __name__ == '__main__':
-    unittest.main()

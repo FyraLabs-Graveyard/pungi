@@ -1,10 +1,8 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
 import os
 import sys
-import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -169,7 +167,3 @@ class TestCopyFiles(helpers.PungiTestCase):
 
         self.assertEqual(len(get_file_from_scm.call_args_list), 0)
         self.assertEqual(get_dir_from_scm.call_args_list, [])
-
-
-if __name__ == "__main__":
-    unittest.main()

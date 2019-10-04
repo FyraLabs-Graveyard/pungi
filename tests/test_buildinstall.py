@@ -1,11 +1,6 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 
 import os
@@ -1015,7 +1010,3 @@ class TestTweakConfigs(PungiTestCase):
                 self.assertEqual(
                     f.read().strip(),
                     ':LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg')
-
-
-if __name__ == "__main__":
-    unittest.main()

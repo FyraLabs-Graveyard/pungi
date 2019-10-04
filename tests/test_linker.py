@@ -1,13 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
 import mock
 import errno
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import os
 import stat
 import sys
@@ -342,7 +337,3 @@ class TestLinkerLink(TestLinkerBase):
         self.assertTrue(self.same_inode(self.file1, self.hardlink1))
         self.linker.link(self.src_dir, self.dst_dir, link_type="copy")
         self.assertTrue(self.same_inode(self.dst_file1, self.dst_hardlink1))
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import mock
@@ -92,7 +91,3 @@ class TestExclusiveExcludeArch(unittest.TestCase):
         self.assertTrue(is_excluded(pkg, ['x86_64'], logger=log))
         self.assertEqual(log.mock_calls,
                          [mock.call.debug("Excluding (EXCLUSIVEARCH: ['aarch64']): pkg.rpm")])
-
-
-if __name__ == "__main__":
-    unittest.main()

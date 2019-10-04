@@ -1,7 +1,5 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import unittest
 import mock
 
 import sys
@@ -679,7 +677,3 @@ class TestLiveMediaThread(PungiTestCase):
                              'name': 'Fedora Server Live',
                              'repo': ['/repo/$basearch/Server'],
                          })])
-
-
-if __name__ == "__main__":
-    unittest.main()

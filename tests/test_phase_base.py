@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
@@ -135,7 +134,3 @@ class TestWeaver(unittest.TestCase):
         self.assertMissed(self.p4)
         self.assertFinalized(self.p5)
         self.assertFinalized(self.p6)
-
-
-if __name__ == "__main__":
-    unittest.main()

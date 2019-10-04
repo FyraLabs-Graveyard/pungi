@@ -1,8 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-import unittest
 import mock
 
 import os
@@ -633,7 +630,3 @@ class OstreeThreadTest(helpers.PungiTestCase):
             mock.call('Runroot task failed: 1234. See %s/%s/runroot.log for more details.'
                       % (self.topdir, LOG_PATH))
         ])
-
-
-if __name__ == '__main__':
-    unittest.main()

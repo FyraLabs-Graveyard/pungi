@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 try:
@@ -198,7 +197,3 @@ class TestDumpChecksums(unittest.TestCase):
                 'MD5 (file2.iso) = cafebabe',
             ]
             self.assertEqual(expected, data)
-
-
-if __name__ == "__main__":
-    unittest.main()

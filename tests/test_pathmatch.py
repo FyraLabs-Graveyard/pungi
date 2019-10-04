@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -66,7 +65,3 @@ class TestPathMatch(unittest.TestCase):
         self.assertEqual(sorted(self.pm["/lib"]), ["/star2"])
 
         self.assertEqual(sorted(self.pm["/lib/foo"]), ["/star/star1", "/star2"])
-
-
-if __name__ == "__main__":
-    unittest.main()

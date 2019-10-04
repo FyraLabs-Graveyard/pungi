@@ -1,7 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
 import mock
 
 import os
@@ -218,7 +216,3 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                        '--template=%s/jigdo/DP-1.0-20160405.t.3-x86_64.iso.template' % self.topdir,
                        '--no-servers-section', '--report=noprogress', self.topdir + '/os//'])]
         )
-
-
-if __name__ == '__main__':
-    unittest.main()

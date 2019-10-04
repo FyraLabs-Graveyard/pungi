@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -557,7 +556,3 @@ class TestValidateComps(unittest.TestCase):
         self.assertEqual(
             CompsWrapper.mock_calls, [mock.call("/path"), mock.call().validate()]
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

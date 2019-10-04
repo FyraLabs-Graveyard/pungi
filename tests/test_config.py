@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -483,7 +482,3 @@ class SkipPhasesTestCase(ConfigTestCase):
             skip_phases=skip_phases,
         )
         self.assertNotEqual(checks.validate(cfg), ([], []))
-
-
-if __name__ == '__main__':
-    unittest.main()

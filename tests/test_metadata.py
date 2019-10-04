@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 import json
 import mock
-import unittest
 import os
 import sys
 
@@ -247,7 +244,3 @@ class TestWriteExtraFiles(helpers.PungiTestCase):
         files.append('missing_file')
 
         self.assertRaises(RuntimeError, metadata.write_extra_files, tree_dir, files, 'sha256', mock_logger)
-
-
-if __name__ == "__main__":
-    unittest.main()

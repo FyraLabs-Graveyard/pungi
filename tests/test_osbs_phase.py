@@ -1,10 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 import json
 
@@ -561,7 +556,3 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectCalls({'git_branch': 'f24-docker'}, scratch=True)
         self._assertCorrectMetadata(scratch=True)
         self._assertRepoFile()
-
-
-if __name__ == '__main__':
-    unittest.main()

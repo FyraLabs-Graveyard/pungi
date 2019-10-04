@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import json
@@ -801,7 +800,3 @@ class TestGetBuildrootRPMs(unittest.TestCase):
             'kbd-2.0.2-8.fc23.x86_64',
             'coreutils-8.24-6.fc23.x86_64',
         ])
-
-
-if __name__ == "__main__":
-    unittest.main()

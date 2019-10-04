@@ -1,11 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 
 import os
@@ -922,7 +917,3 @@ class PrepareMetadataTest(helpers.PungiTestCase):
                 ),
             ],
         )
-
-
-if __name__ == '__main__':
-    unittest.main()

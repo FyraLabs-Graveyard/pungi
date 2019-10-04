@@ -1,9 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
 import json
-import unittest
 import mock
 
 import os
@@ -507,7 +505,3 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                          'http://example.com/work/$basearch/comps_repo_Everything')
         self.assertEqual(extra_config.get("repo").pop()["baseurl"], "http://example.com/repo/1")
         self.assertEqual(extra_config.get('repo').pop()['baseurl'], 'http://url/to/repo/a')
-
-
-if __name__ == '__main__':
-    unittest.main()

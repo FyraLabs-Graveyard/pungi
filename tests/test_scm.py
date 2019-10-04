@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
@@ -399,7 +398,3 @@ class CvsSCMTestCase(SCMBaseTest):
         self.assertEqual(
             commands,
             ['/usr/bin/cvs -q -d http://example.com/cvs export -r HEAD subdir'])
-
-
-if __name__ == "__main__":
-    unittest.main()

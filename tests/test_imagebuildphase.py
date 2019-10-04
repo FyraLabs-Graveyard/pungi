@@ -1,11 +1,5 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 
 import os
@@ -993,7 +987,3 @@ class TestCreateImageBuildThread(PungiTestCase):
         with self.assertRaises(RuntimeError):
             with mock.patch('time.sleep'):
                 t.process((compose, cmd), 1)
-
-
-if __name__ == "__main__":
-    unittest.main()

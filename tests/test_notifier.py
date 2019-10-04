@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
@@ -142,7 +141,3 @@ class TestNotifier(unittest.TestCase):
 
         self.assertEqual(run.call_args_list, [self._call('run-notify', 'cmd')])
         self.assertTrue(self.compose.log_warning.called)
-
-
-if __name__ == "__main__":
-    unittest.main()

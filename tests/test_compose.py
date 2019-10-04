@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import mock
@@ -521,7 +520,3 @@ class StatusTest(unittest.TestCase):
         self.compose.conf['gather_backend'] = 'yum'
         self.compose.conf['createrepo_database'] = False
         self.assertFalse(self.compose.should_create_yum_database)
-
-
-if __name__ == "__main__":
-    unittest.main()
