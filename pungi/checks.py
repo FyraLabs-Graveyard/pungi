@@ -446,7 +446,7 @@ def make_schema():
                 "properties": {
                     "scm": {
                         "type": "string",
-                        "enum": ["file", "cvs", "git", "rpm"],
+                        "enum": ["file", "cvs", "git", "rpm", "koji"],
                     },
                     "repo": {"type": "string"},
                     "branch": {"$ref": "#/definitions/optional_string"},

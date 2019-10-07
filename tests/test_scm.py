@@ -399,3 +399,106 @@ class CvsSCMTestCase(SCMBaseTest):
         self.assertEqual(
             commands,
             ['/usr/bin/cvs -q -d http://example.com/cvs export -r HEAD subdir'])
+
+
+@mock.patch("pungi.wrappers.scm.urlretrieve")
+@mock.patch("pungi.wrappers.scm.KojiWrapper")
+class KojiSCMTestCase(SCMBaseTest):
+    def test_without_koji_profile(self, KW, dl):
+        compose = mock.Mock(conf={})
+
+        with self.assertRaises(RuntimeError) as ctx:
+            scm.get_file_from_scm(
+                {"scm": "koji", "repo": "my-build-1.0-2", "file": "*"},
+                self.destdir,
+                compose=compose,
+            )
+        self.assertIn("Koji profile must be configured", str(ctx.exception))
+        self.assertEqual(KW.mock_calls, [])
+        self.assertEqual(dl.mock_calls, [])
+
+    def test_doesnt_get_dirs(self, KW, dl):
+        compose = mock.Mock(conf={"koji_profile": "koji"})
+
+        with self.assertRaises(RuntimeError) as ctx:
+            scm.get_dir_from_scm(
+                {"scm": "koji", "repo": "my-build-1.0-2", "dir": "*"},
+                self.destdir,
+                compose=compose,
+            )
+        self.assertIn("Only files can be exported", str(ctx.exception))
+        self.assertEqual(KW.mock_calls, [mock.call("koji")])
+        self.assertEqual(dl.mock_calls, [])
+
+    def _setup_koji_wrapper(self, KW, build_id, files):
+        KW.return_value.koji_module.config.topdir = "/mnt/koji"
+        KW.return_value.koji_module.config.topurl = "http://koji.local/koji"
+        KW.return_value.koji_module.pathinfo.typedir.return_value = "/mnt/koji/images"
+        buildinfo = {"build_id": build_id}
+        KW.return_value.koji_proxy.getBuild.return_value = buildinfo
+        KW.return_value.koji_proxy.listArchives.return_value = [
+            {"filename": f, "btype": "image"} for f in files
+        ]
+        KW.return_value.koji_proxy.listTagged.return_value = [buildinfo]
+
+    def test_get_from_build(self, KW, dl):
+        compose = mock.Mock(conf={"koji_profile": "koji"})
+
+        def download(src, dst):
+            touch(dst)
+
+        dl.side_effect = download
+
+        self._setup_koji_wrapper(KW, 123, ["abc.out", "abc.tar"])
+
+        retval = scm.get_file_from_scm(
+            {"scm": "koji", "repo": "my-build-1.0-2", "file": "*.tar"},
+            self.destdir,
+            compose=compose,
+        )
+        self.assertStructure(retval, ["abc.tar"])
+        self.assertEqual(
+            KW.mock_calls,
+            [
+                mock.call("koji"),
+                mock.call().koji_proxy.getBuild("my-build-1.0-2"),
+                mock.call().koji_proxy.listArchives(123),
+                mock.call().koji_module.pathinfo.typedir({"build_id": 123}, "image"),
+            ],
+        )
+        self.assertEqual(
+            dl.call_args_list,
+            [mock.call("http://koji.local/koji/images/abc.tar", mock.ANY)],
+        )
+
+    def test_get_from_latest_build(self, KW, dl):
+        compose = mock.Mock(conf={"koji_profile": "koji"})
+
+        def download(src, dst):
+            touch(dst)
+
+        dl.side_effect = download
+
+        self._setup_koji_wrapper(KW, 123, ["abc.out", "abc.tar"])
+
+        retval = scm.get_file_from_scm(
+            {"scm": "koji", "repo": "my-build", "file": "*.tar", "branch": "images"},
+            self.destdir,
+            compose=compose,
+        )
+        self.assertStructure(retval, ["abc.tar"])
+        self.assertEqual(
+            KW.mock_calls,
+            [
+                mock.call("koji"),
+                mock.call().koji_proxy.listTagged(
+                    "images", package="my-build", latest=True
+                ),
+                mock.call().koji_proxy.listArchives(123),
+                mock.call().koji_module.pathinfo.typedir({"build_id": 123}, "image"),
+            ],
+        )
+        self.assertEqual(
+            dl.call_args_list,
+            [mock.call("http://koji.local/koji/images/abc.tar", mock.ANY)],
+        )

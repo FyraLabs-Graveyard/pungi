@@ -20,15 +20,18 @@ import shutil
 import glob
 import six
 from six.moves import shlex_quote
+from six.moves.urllib.request import urlretrieve
+from fnmatch import fnmatch
 
 import kobo.log
 from kobo.shortcuts import run, force_list
 from pungi.util import (explode_rpm_package, makedirs, copy_all, temp_dir,
                         retry)
+from .kojiwrapper import KojiWrapper
 
 
 class ScmBase(kobo.log.LoggingBase):
-    def __init__(self, logger=None, command=None):
+    def __init__(self, logger=None, command=None, compose=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
         self.command = command
 
@@ -196,17 +199,70 @@ class RpmScmWrapper(ScmBase):
                     shutil.copy2(src, dst)
 
 
+class KojiScmWrapper(ScmBase):
+    def __init__(self, *args, **kwargs):
+        super(KojiScmWrapper, self).__init__(*args, **kwargs)
+        try:
+            profile = kwargs["compose"].conf["koji_profile"]
+        except KeyError:
+            raise RuntimeError("Koji profile must be configured")
+        wrapper = KojiWrapper(profile)
+        self.koji = wrapper.koji_module
+        self.proxy = wrapper.koji_proxy
+
+    def export_dir(self, *args, **kwargs):
+        raise RuntimeError("Only files can be exported from Koji")
+
+    def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
+        if scm_branch:
+            self._get_latest_from_tag(scm_branch, scm_root, scm_file, target_dir)
+        else:
+            self._get_from_build(scm_root, scm_file, target_dir)
+
+    def _get_latest_from_tag(self, koji_tag, package, file_pattern, target_dir):
+        self.log_debug(
+            "Exporting file %s from latest Koji package %s in tag %s",
+            file_pattern,
+            package,
+            koji_tag,
+        )
+        builds = self.proxy.listTagged(koji_tag, package=package, latest=True)
+        if len(builds) != 1:
+            raise RuntimeError("No package %s in tag %s", package, koji_tag)
+        self._download_build(builds[0], file_pattern, target_dir)
+
+    def _get_from_build(self, build_id, file_pattern, target_dir):
+        self.log_debug(
+            "Exporting file %s from Koji build %s", file_pattern, build_id
+        )
+        build = self.proxy.getBuild(build_id)
+        self._download_build(build, file_pattern, target_dir)
+
+    def _download_build(self, build, file_pattern, target_dir):
+        for archive in self.proxy.listArchives(build["build_id"]):
+            filename = archive["filename"]
+            if not fnmatch(filename, file_pattern):
+                continue
+            typedir = self.koji.pathinfo.typedir(build, archive["btype"])
+            file_path = os.path.join(typedir, filename)
+            url = file_path.replace(self.koji.config.topdir, self.koji.config.topurl)
+            target_file = os.path.join(target_dir, filename)
+            urlretrieve(url, target_file)
+
+
 def _get_wrapper(scm_type, *args, **kwargs):
     SCM_WRAPPERS = {
         "file": FileWrapper,
         "cvs": CvsWrapper,
         "git": GitWrapper,
         "rpm": RpmScmWrapper,
+        "koji": KojiScmWrapper,
     }
     try:
-        return SCM_WRAPPERS[scm_type](*args, **kwargs)
+        cls = SCM_WRAPPERS[scm_type]
     except KeyError:
         raise ValueError("Unknown SCM type: %s" % scm_type)
+    return cls(*args, **kwargs)
 
 
 def get_file_from_scm(scm_dict, target_path, compose=None):
@@ -254,7 +310,7 @@ def get_file_from_scm(scm_dict, target_path, compose=None):
         command = scm_dict.get('command')
 
     logger = compose._logger if compose else None
-    scm = _get_wrapper(scm_type, logger=logger, command=command)
+    scm = _get_wrapper(scm_type, logger=logger, command=command, compose=compose)
 
     files_copied = []
     for i in force_list(scm_file):
@@ -308,7 +364,7 @@ def get_dir_from_scm(scm_dict, target_path, compose=None):
         command = scm_dict.get("command")
 
     logger = compose._logger if compose else None
-    scm = _get_wrapper(scm_type, logger=logger, command=command)
+    scm = _get_wrapper(scm_type, logger=logger, command=command, compose=compose)
 
     with temp_dir(prefix="scm_checkout_") as tmp_dir:
         scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
