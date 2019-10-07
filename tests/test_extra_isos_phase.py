@@ -460,8 +460,8 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             get_file.call_args_list,
             [
                 mock.call(
-                    cfg, os.path.join(self.dir, "legalese"), logger=self.compose._logger
-                )
+                    cfg, os.path.join(self.dir, "legalese"), compose=self.compose
+                ),
             ],
         )
         self.assertEqual(
@@ -491,7 +491,7 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             get_dir.call_args_list,
             [
                 mock.call(
-                    cfg, os.path.join(self.dir, "foo"), logger=self.compose._logger
+                    cfg, os.path.join(self.dir, "foo"), compose=self.compose
                 )
             ],
         )
@@ -525,9 +525,9 @@ class GetExtraFilesTest(helpers.PungiTestCase):
                 mock.call(
                     cfg1,
                     os.path.join(self.dir, "legalese"),
-                    logger=self.compose._logger,
+                    compose=self.compose,
                 ),
-                mock.call(cfg2, self.dir, logger=self.compose._logger),
+                mock.call(cfg2, self.dir, compose=self.compose),
             ],
         )
         self.assertEqual(

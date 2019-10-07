@@ -101,7 +101,7 @@ def write_global_comps(compose):
 
     compose.log_debug("Writing global comps file: %s", comps_file_global)
     tmp_dir = compose.mkdtemp(prefix="comps_")
-    get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+    get_file_from_scm(scm_dict, tmp_dir, compose=compose)
     shutil.copy2(os.path.join(tmp_dir, comps_name), comps_file_global)
     shutil.rmtree(tmp_dir)
 
@@ -198,7 +198,7 @@ def write_module_defaults(compose):
         scm_dict = os.path.join(compose.config_dir, scm_dict)
 
     with temp_dir(prefix="moduledefaults_") as tmp_dir:
-        get_dir_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+        get_dir_from_scm(scm_dict, tmp_dir, compose=compose)
         compose.log_debug("Writing module defaults")
         shutil.copytree(tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False))
 

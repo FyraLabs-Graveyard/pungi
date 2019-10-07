@@ -209,7 +209,7 @@ def _get_wrapper(scm_type, *args, **kwargs):
         raise ValueError("Unknown SCM type: %s" % scm_type)
 
 
-def get_file_from_scm(scm_dict, target_path, logger=None):
+def get_file_from_scm(scm_dict, target_path, compose=None):
     """
     Copy one or more files from source control to a target path. A list of files
     created in ``target_path`` is returned.
@@ -253,6 +253,7 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
         scm_branch = scm_dict.get("branch", None)
         command = scm_dict.get('command')
 
+    logger = compose._logger if compose else None
     scm = _get_wrapper(scm_type, logger=logger, command=command)
 
     files_copied = []
@@ -263,7 +264,7 @@ def get_file_from_scm(scm_dict, target_path, logger=None):
     return files_copied
 
 
-def get_dir_from_scm(scm_dict, target_path, logger=None):
+def get_dir_from_scm(scm_dict, target_path, compose=None):
     """
     Copy a directory from source control to a target path. A list of files
     created in ``target_path`` is returned.
@@ -306,6 +307,7 @@ def get_dir_from_scm(scm_dict, target_path, logger=None):
         scm_branch = scm_dict.get("branch", None)
         command = scm_dict.get("command")
 
+    logger = compose._logger if compose else None
     scm = _get_wrapper(scm_type, logger=logger, command=command)
 
     with temp_dir(prefix="scm_checkout_") as tmp_dir:

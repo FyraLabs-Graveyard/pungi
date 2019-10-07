@@ -116,11 +116,11 @@ def create_product_img(compose, arch, variant):
     install_class["file"] = install_class["file"] % {"variant_id": variant.id.lower()}
     install_dir = os.path.join(product_tmp, "installclasses")
     makedirs(install_dir)
-    get_file_from_scm(install_class, target_path=install_dir, logger=None)
+    get_file_from_scm(install_class, target_path=install_dir)
 
     po_files = compose.conf["productimg_po_files"]
     po_tmp = compose.mkdtemp(prefix="pofiles_")
-    get_dir_from_scm(po_files, po_tmp, logger=compose._logger)
+    get_dir_from_scm(po_files, po_tmp, compose=compose)
     for po_file in os.listdir(po_tmp):
         if not po_file.endswith(".po"):
             continue

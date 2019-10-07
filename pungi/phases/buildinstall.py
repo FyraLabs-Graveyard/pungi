@@ -239,7 +239,7 @@ def get_kickstart_file(compose):
         scm_dict = os.path.join(compose.config_dir, scm_dict)
 
     tmp_dir = compose.mkdtemp(prefix="buildinstall_kickstart_")
-    get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+    get_file_from_scm(scm_dict, tmp_dir, compose=compose)
     src = os.path.join(tmp_dir, kickstart_name)
     shutil.copy2(src, kickstart_path)
     compose.log_info("[DONE ] %s" % msg)

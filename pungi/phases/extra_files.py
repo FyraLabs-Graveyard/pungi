@@ -82,7 +82,7 @@ def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type=No
 
         getter = get_file_from_scm if 'file' in scm_dict else get_dir_from_scm
         target_path = os.path.join(extra_files_dir, scm_dict.get('target', '').lstrip('/'))
-        getter(scm_dict, target_path, logger=compose._logger)
+        getter(scm_dict, target_path, compose=compose)
 
     if os.listdir(extra_files_dir):
         files_copied = copy_all(extra_files_dir, os_tree)

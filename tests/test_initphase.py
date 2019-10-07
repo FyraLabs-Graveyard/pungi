@@ -243,7 +243,7 @@ class TestWriteGlobalComps(PungiTestCase):
     def test_run_local_file(self, get_file):
         compose = DummyCompose(self.topdir, {'comps_file': 'some-file.xml'})
 
-        def gen_file(src, dest, logger=None):
+        def gen_file(src, dest, compose=None):
             self.assertEqual(src, '/home/releng/config/some-file.xml')
             touch(os.path.join(dest, 'some-file.xml'))
 
@@ -436,7 +436,7 @@ class TestWriteModuleDefaults(PungiTestCase):
         init.write_module_defaults(compose)
 
         self.assertEqual(
-            gdfs.call_args_list, [mock.call(conf, mock.ANY, logger=mock.ANY)]
+            gdfs.call_args_list, [mock.call(conf, mock.ANY, compose=compose)]
         )
         self.assertEqual(
             ct.call_args_list,
@@ -461,7 +461,7 @@ class TestWriteModuleDefaults(PungiTestCase):
                 mock.call(
                     {"scm": "file", "dir": "/home/releng/configs/defaults"},
                     mock.ANY,
-                    logger=mock.ANY,
+                    compose=compose,
                 )
             ],
         )
@@ -484,7 +484,7 @@ class TestWriteModuleDefaults(PungiTestCase):
 
         self.assertEqual(
             gdfs.call_args_list,
-            [mock.call("/home/releng/configs/defaults", mock.ANY, logger=mock.ANY)],
+            [mock.call("/home/releng/configs/defaults", mock.ANY, compose=compose)],
         )
         self.assertEqual(
             ct.call_args_list,

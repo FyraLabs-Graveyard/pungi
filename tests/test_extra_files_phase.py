@@ -148,7 +148,7 @@ class TestCopyFiles(helpers.PungiTestCase):
         self.assertTrue(os.path.isfile(os.path.join(
             self.topdir, 'compose', 'Server', 'x86_64', 'os', 'file.txt')))
 
-    def fake_get_file(self, scm_dict, dest, logger):
+    def fake_get_file(self, scm_dict, dest, compose):
         self.scm_dict = scm_dict
         helpers.touch(os.path.join(dest, scm_dict['file']))
         return [scm_dict['file']]

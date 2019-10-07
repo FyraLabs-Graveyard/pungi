@@ -255,7 +255,7 @@ class Compose(kobo.log.LoggingBase):
 
         self.log_debug("Writing variants file: %s", variants_file)
         tmp_dir = self.mkdtemp(prefix="variants_file_")
-        get_file_from_scm(scm_dict, tmp_dir, logger=self._logger)
+        get_file_from_scm(scm_dict, tmp_dir, compose=self)
         shutil.copy2(os.path.join(tmp_dir, file_name), variants_file)
         shutil.rmtree(tmp_dir)
 

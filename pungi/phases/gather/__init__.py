@@ -553,7 +553,7 @@ def write_prepopulate_file(compose):
 
     compose.log_debug(msg)
     tmp_dir = compose.mkdtemp(prefix="prepopulate_file_")
-    get_file_from_scm(scm_dict, tmp_dir, logger=compose._logger)
+    get_file_from_scm(scm_dict, tmp_dir, compose=compose)
     shutil.copy2(os.path.join(tmp_dir, file_name), prepopulate_file)
     shutil.rmtree(tmp_dir)
 
