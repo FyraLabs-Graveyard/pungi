@@ -70,6 +70,7 @@ class BuildinstallPhase(PhaseBase):
         add_arch_template = []
         add_template_var = []
         add_arch_template_var = []
+        dracut_args = []
         rootfs_size = None
         version = self.compose.conf["release_version"]
         for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
@@ -85,6 +86,7 @@ class BuildinstallPhase(PhaseBase):
             add_arch_template.extend(data.get('add_arch_template', []))
             add_template_var.extend(data.get('add_template_var', []))
             add_arch_template_var.extend(data.get('add_arch_template_var', []))
+            dracut_args.extend(data.get("dracut_args", []))
             if "version" in data:
                 version = data["version"]
         output_dir = os.path.join(output_dir, variant.uid)
@@ -112,25 +114,28 @@ class BuildinstallPhase(PhaseBase):
             repos.append(comps_repo)
 
         lorax = LoraxWrapper()
-        lorax_cmd = lorax.get_lorax_cmd(self.compose.conf["release_name"],
-                                        version,
-                                        version,
-                                        repos,
-                                        output_dir,
-                                        variant=variant.uid,
-                                        buildinstallpackages=variant.buildinstallpackages,
-                                        is_final=self.compose.supported,
-                                        buildarch=buildarch,
-                                        volid=volid,
-                                        nomacboot=nomacboot,
-                                        bugurl=bugurl,
-                                        add_template=add_template,
-                                        add_arch_template=add_arch_template,
-                                        add_template_var=add_template_var,
-                                        add_arch_template_var=add_arch_template_var,
-                                        noupgrade=noupgrade,
-                                        rootfs_size=rootfs_size,
-                                        log_dir=log_dir)
+        lorax_cmd = lorax.get_lorax_cmd(
+            self.compose.conf["release_name"],
+            version,
+            version,
+            repos,
+            output_dir,
+            variant=variant.uid,
+            buildinstallpackages=variant.buildinstallpackages,
+            is_final=self.compose.supported,
+            buildarch=buildarch,
+            volid=volid,
+            nomacboot=nomacboot,
+            bugurl=bugurl,
+            add_template=add_template,
+            add_arch_template=add_arch_template,
+            add_template_var=add_template_var,
+            add_arch_template_var=add_arch_template_var,
+            noupgrade=noupgrade,
+            rootfs_size=rootfs_size,
+            log_dir=log_dir,
+            dracut_args=dracut_args,
+        )
         return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
                                     ' '.join([shlex_quote(x) for x in lorax_cmd]))
 

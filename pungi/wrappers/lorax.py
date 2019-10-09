@@ -27,7 +27,8 @@ class LoraxWrapper(object):
                       add_template=None, add_arch_template=None,
                       add_template_var=None, add_arch_template_var=None,
                       rootfs_size=None,
-                      log_dir=None):
+                      log_dir=None,
+                      dracut_args=None):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -70,6 +71,9 @@ class LoraxWrapper(object):
 
         if rootfs_size is not None:
             cmd.append('--rootfs-size=%s' % (rootfs_size))
+
+        for i in force_list(dracut_args or []):
+            cmd.append("--dracut-arg=%s" % i)
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)

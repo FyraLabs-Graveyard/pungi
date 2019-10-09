@@ -538,6 +538,10 @@ Options
       * ``rootfs_size`` -- [*int*] (default empty)
       * ``version`` -- [*str*] (default from ``release_version``) -- used as
         ``--version`` and ``--release`` argument on the lorax command line
+      * ``dracut_args`` -- [*[str]*] (default empty) override arguments for
+        dracut. Please note that if this option is used, lorax will not use any
+        other arguments, so you have to provide a full list and can not just
+        add something.
 **lorax_extra_sources**
     (*list*) -- a variant/arch mapping with urls for extra source repositories
     added to Lorax command line. Either one repo or a list can be specified.

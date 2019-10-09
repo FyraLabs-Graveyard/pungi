@@ -46,7 +46,8 @@ class LoraxWrapperTest(unittest.TestCase):
                                        add_arch_template=['ta1', 'ta2'],
                                        add_template_var=['v1', 'v2'],
                                        add_arch_template_var=['va1', 'va2'],
-                                       log_dir='/tmp')
+                                       log_dir="/tmp",
+                                       dracut_args=["--foo", "bar"])
 
         self.assertEqual(cmd[0], 'lorax')
         six.assertCountEqual(
@@ -64,5 +65,7 @@ class LoraxWrapperTest(unittest.TestCase):
              "--add-template-var=v1", "--add-template-var=v2",
              "--add-arch-template-var=va1", "--add-arch-template-var=va2",
              "--logfile=/tmp/lorax.log",
+             "--dracut-arg=--foo",
+             "--dracut-arg=bar",
              "/mnt/output_dir"],
         )
