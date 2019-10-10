@@ -1132,6 +1132,7 @@ def make_schema():
                     "rootfs_size": {"type": "string"},
                     "template_repo": {"type": "string"},
                     "template_branch": {"type": "string"},
+                    "extra_runroot_pkgs": {"$ref": "#/definitions/list_of_strings"},
                 },
                 "additionalProperties": False,
             }),

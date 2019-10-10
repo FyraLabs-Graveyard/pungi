@@ -1527,6 +1527,11 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
     ``template_repo`` needs to point to a Git repository from which to take the
     templates.
 
+    If the templates need to run with additional dependencies, that can be configured
+    with the optional key:
+
+    * ``extra_runroot_pkgs`` -- (*[str]*)
+
 **ostree_installer_overwrite** = False
     (*bool*) -- by default if a variant including OSTree installer also creates
     regular installer images in buildinstall phase, there will be conflicts (as

@@ -195,6 +195,8 @@ class OstreeInstallerThread(WorkerThread):
                                    ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
         packages = ['pungi', 'lorax', 'ostree']
+        packages += config.get('extra_runroot_pkgs', [])
+
         log_file = os.path.join(self.logdir, 'runroot.log')
 
         runroot = Runroot(compose)

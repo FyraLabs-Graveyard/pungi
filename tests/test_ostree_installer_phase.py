@@ -126,7 +126,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(compose.im.add.mock_calls,
                          [mock.call('Everything', 'x86_64', image)])
 
-    def assertRunrootCall(self, koji, sources, release, isfinal=False, extra=[], weight=None):
+    def assertRunrootCall(self, koji, sources, release, isfinal=False, extra=[],
+                          extra_pkgs=[], weight=None):
         lorax_cmd = [
             'lorax',
             '--product=Fedora',
@@ -156,7 +157,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                          [mock.call('rrt', 'x86_64',
                                     'rm -rf %s && %s' % (outdir, ' '.join(lorax_cmd)),
                                     channel=None, mounts=[self.topdir],
-                                    packages=['pungi', 'lorax', 'ostree'],
+                                    packages=['pungi', 'lorax', 'ostree'] + extra_pkgs,
                                     task_id=True, use_shell=True, weight=weight,
                                     chown_paths=[outdir])])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
@@ -418,6 +419,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
             'add_arch_template': ['other_file.txt'],
             'template_repo': 'git://example.com/templates.git',
             'template_branch': 'f24',
+            'extra_runroot_pkgs': ['templatedep'],
         }
         koji = KojiWrapper.return_value
         koji.run_runroot_cmd.return_value = {
@@ -445,7 +447,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                isfinal=True,
                                extra=['--add-template=%s/some_file.txt' % templ_dir,
                                       '--add-arch-template=%s/other_file.txt' % templ_dir,
-                                      '--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)])
+                                      '--logfile=%s/%s/lorax.log' % (self.topdir, LOG_PATH)],
+                               extra_pkgs=['templatedep'])
         self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
         self.assertImageAdded(self.compose, ImageCls, iso)
         self.assertAllCopied(copy_all)
