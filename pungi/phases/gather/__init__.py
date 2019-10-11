@@ -17,10 +17,15 @@
 import json
 import os
 import shutil
+import threading
 
 from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import run
 from productmd.rpms import Rpms
+try:
+    from queue import Queue
+except ImportError:
+    from Queue import Queue
 
 from pungi.wrappers.scm import get_file_from_scm
 from .link import link_files
@@ -435,6 +440,8 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
         variant = compose.all_variants[variant_uid]
         if variant.type != variant_type:
             continue
+        threads_list = []
+        que = Queue()
         for arch in variant.arches:
             fulltree_excludes = set()
             if exclude_fulltree:
@@ -446,7 +453,21 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             # there.
             _update_lookaside_config(compose, variant, arch, result, package_sets)
 
-            pkg_map = gather_packages(compose, arch, variant, package_sets, fulltree_excludes=fulltree_excludes)
+            # Run gather_packages() in parallel with multi threads and store
+            # its return value in a Queue() for later use.
+            t = threading.Thread(
+                target=lambda q, arch, *args, **kwargs: q.put((arch, gather_packages(*args, **kwargs))),
+                args=(que, arch, compose, arch, variant, package_sets),
+                kwargs={'fulltree_excludes': fulltree_excludes},
+            )
+            threads_list.append(t)
+            t.start()
+
+        for t in threads_list:
+            t.join()
+
+        while not que.empty():
+            arch, pkg_map = que.get()
             result.setdefault(arch, {})[variant.uid] = pkg_map
 
         # Remove the module -> pkgset mapping to save memory
