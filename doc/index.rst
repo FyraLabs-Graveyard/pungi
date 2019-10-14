@@ -15,6 +15,7 @@ Contents:
     phases
     format
     configuration
+    examples
     scm_support
     messaging
     gathering
