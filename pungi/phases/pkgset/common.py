@@ -77,7 +77,7 @@ def get_create_global_repo_cmd(compose, path_prefix, repo_dir_global, pkgset):
                 repo_dir, os.path.abspath(compose.topdir).rstrip("/") + "/"
             )
             old_repo_dir = os.path.join(old_compose_path, rel_path)
-            if os.path.isdir(old_repo_dir):
+            if os.path.isdir(os.path.join(old_repo_dir, "repodata")):
                 compose.log_info("Using old repodata from: %s", old_repo_dir)
                 update_md_path = old_repo_dir
 
