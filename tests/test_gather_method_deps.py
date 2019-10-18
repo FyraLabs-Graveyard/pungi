@@ -99,3 +99,18 @@ class TestWritePungiConfig(helpers.PungiTestCase):
             str(ctx.exception),
             'No packages included in Server.x86_64 (no comps groups, no input packages, no prepopulate)')
         self.assertEqual(PungiWrapper.return_value.mock_calls, [])
+
+
+class TestRaiseOnInvalidSigkeys(helpers.PungiTestCase):
+
+    def test_raise_on_invalid_sigkeys(self):
+        pkgset = {
+            "global": mock.Mock(),
+        }
+        pkgset["global"].invalid_sigkey_rpms = [{'name': 'pkg1'}]
+        pkgset["global"].raise_invalid_sigkeys_exception = mock.Mock(side_effect=RuntimeError())
+        result = {
+            'rpm': [{'path': 'pkg1-1-1.el7'}],
+        }
+        with self.assertRaises(RuntimeError):
+            deps.raise_on_invalid_sigkeys('', '', [pkgset], result)

@@ -65,7 +65,7 @@ def raise_on_invalid_sigkeys(arch, variant, package_sets, result):
                     ).append(forbidden_package)
 
     if invalid_sigkey_rpms:
-        package_sets["global"].raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
+        package_sets[0]["global"].raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
 
 
 def _format_packages(pkgs):
