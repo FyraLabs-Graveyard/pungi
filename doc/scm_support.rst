@@ -20,7 +20,7 @@ which can contain following keys.
 
 * ``repo`` -- for Git and CVS backends URL to the repository, for RPM a shell
   glob for matching package names (or a list of such globs); for ``file``
-  backend this option should be empty (or left out)
+  backend this option should be empty
 
 * ``branch`` -- branch name for Git and CVS backends, with ``master`` and
   ``HEAD`` as defaults. Ignored for other backends.
