@@ -135,6 +135,26 @@ def check_umask(logger):
                        'expect files with broken permissions.', mask)
 
 
+def check_skip_phases(logger, skip_phases):
+    """Check if skipped phases are needed by other phase.
+
+    :param logger: logger instance for reporting error
+    :param skip_phases: list of skipped phases
+    :returns: True if checking passed else False
+    """
+    needed_by = {
+        'pkgset': 'gather',
+        'gather': 'createrepo',
+    }
+    fail = False
+    for k, v in needed_by.items():
+        if k in skip_phases and needed_by[k] not in skip_phases:
+            fail = True
+            logger.error("%s phase is skipped but it's needed by %s phase" % (k, v))
+
+    return not fail
+
+
 def _validate_requires(schema, conf, valid_options):
     """
     Check if all requires and conflicts are ok in configuration.
