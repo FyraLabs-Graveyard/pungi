@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.39
+Version:        4.1.40
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,36 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Oct 23 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.40-1
+- pkgset: Only reuse valid old repo (lsedlar)
+- Clean up skipping phases (hlin)
+- Fix crash on unsigned packages (hlin)
+- doc: Make it clear that the field 'repo' has to be empty for 'file' backend
+  (juliana.rodrigueiro)
+- gather: Make depsolving parallel (hlin)
+- doc: Add full examples of compose configuration (lsedlar)
+- ostree-install: allow configuring additional depenencies for runroot
+  (otaylor)
+- buildinstall: Allow customizing dracut arguments (lsedlar)
+- Use custom assertion for checking content of files (lsedlar)
+- Drop custom ANY object (lsedlar)
+- Remove usage of unittest2 on Python 3 (lsedlar)
+- Remove shebangs from test files (lsedlar)
+- gather: Resolve dependencies of debug packages (lsedlar)
+- gather: Fix bare except block (lsedlar)
+- gather: Fix formatting (lsedlar)
+- gather: Simplify adding packages to result (lsedlar)
+- gather: Remove unused import (lsedlar)
+- Regenerate test fixture repo (lsedlar)
+- Move import of modulemd to a separate module (lsedlar)
+- ostree: Run commands in universal_newlines mode (lsedlar)
+- pkgset: Allow filtering modules from Koji tags (lsedlar)
+- pkgset: Initialize path_prefix to empty value (lsedlar)
+- Allow loading overrides for module defaults (lsedlar)
+- Move pkgset skipping logs to separate file (hlin)
+- Fix crash when pkgset phase is skipped (lsedlar)
+- Resolve symlinks to images (lsedlar)
+
 * Mon Sep 09 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.39-1
 - Fix getting platforms from lookaside (lsedlar)
 - extra-files: Simplify iterating over variants (lsedlar)
