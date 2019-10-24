@@ -95,10 +95,15 @@ def process_file(
     :returns: False if validation failed, True otherwise
     """
     conf = kobo.conf.PyConfigParser()
+
+    # Make sure variables are ready before processing config template
     conf.load_from_dict(defines or {})
 
     for source in sources:
         load_source(source, conf)
+
+    # Load again to overwrite exsting config with the value provided in command line
+    conf.load_from_dict(defines or {})
 
     if not just_dump:
         errors, _ = pungi.checks.validate(conf, offline=offline)
@@ -149,7 +154,8 @@ def main():
         metavar="VAR=VALUE",
         type=config_utils.validate_definition,
         help=(
-            "Define a variable on command line and inject it into the config file. "
+            "Define missing or overwrite existing config item in the config file, "
+            "or assign value to template variable. "
             "Can be used multiple times."
         ),
     )
