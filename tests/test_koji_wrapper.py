@@ -701,6 +701,22 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                                     can_fail=True, logfile=None, universal_newlines=True)])
         self.assertEqual(sleep.mock_calls, [mock.call(i * 10) for i in range(1, 2)])
 
+    @mock.patch('pungi.wrappers.kojiwrapper.run')
+    def test_server_offline_and_retry(self, run):
+        output = 'Created task: 1234\nkoji: ServerOffline:'
+        retry = 'Created task: 1234\nOook\n'
+        run.side_effect = [(1, output), (0, retry)]
+
+        result = self.koji.run_blocking_cmd('cmd')
+
+        self.assertDictEqual(result, {'retcode': 0, 'output': retry, 'task_id': 1234})
+        self.assertEqual(run.mock_calls,
+                         [mock.call('cmd', can_fail=True, logfile=None, env=None,
+                                    universal_newlines=True),
+                          mock.call(['koji', '--profile=custom-koji', 'watch-task', '1234'],
+                                    can_fail=True, logfile=None, universal_newlines=True)])
+
+
 
 RPM_QA_QF_OUTPUT = """
 cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch

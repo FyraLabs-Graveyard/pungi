@@ -308,6 +308,10 @@ class KojiWrapper(object):
         """Checks if output indicates connection error."""
         return re.search('error: failed to connect\n$', output)
 
+    def _has_offline_error(self, output):
+        """Check if output indicates server offline."""
+        return re.search('koji: ServerOffline:', output)
+
     def _wait_for_task(self, task_id, logfile=None, max_retries=None):
         """Tries to wait for a task to finish. On connection error it will
         retry with `watch-task` command.
@@ -318,8 +322,8 @@ class KojiWrapper(object):
         while True:
             retcode, output = run(cmd, can_fail=True, logfile=logfile, universal_newlines=True)
 
-            if retcode == 0 or not self._has_connection_error(output):
-                # Task finished for reason other than connection error.
+            if retcode == 0 or not (self._has_connection_error(output) or self._has_offline_error(output)):
+                # Task finished for reason other than connection error or server offline error.
                 return retcode, output
 
             attempt += 1
@@ -345,7 +349,7 @@ class KojiWrapper(object):
                                % (" ".join(command), output))
         task_id = int(match.groups()[0])
 
-        if retcode != 0 and self._has_connection_error(output):
+        if retcode != 0 and (self._has_connection_error(output) or self._has_offline_error(output)):
             retcode, output = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
 
         return {
