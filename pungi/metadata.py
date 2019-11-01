@@ -17,7 +17,6 @@
 import copy
 import os
 import time
-import json
 
 import productmd.composeinfo
 import productmd.treeinfo
@@ -346,43 +345,34 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     ti.dump(path)
 
 
-def write_extra_files(tree_path, files, checksum_type='sha256', logger=None):
+def populate_extra_files_metadata(
+    metadata, variant, arch, topdir, files, checksum_types, relative_root=None
+):
     """
-    Write the metadata for all extra files added to the compose.
-
-    :param tree_path:
-        Root of the tree to write the ``extra_files.json`` metadata file for.
-
-    :param files:
-        A list of files that should be included in the metadata file. These
-        should be paths that are relative to ``tree_path``.
-
-    :return:
-        Path to the metadata file written.
+    :param metadata: an instance of productmd.extra_files.ExtraFiles to
+                     populate with the current files
+    :param Variant variant: under which variant should the files be listed
+    :param str arch: under which arch should the files be listed
+    :param topdir: directory where files are located
+    :param files: list of file paths relative to topdir
+    :param checksum_types: list of checksums to compute
+    :param relative_root: ancestor directory of topdir, this will be removed
+                          from paths written to local metadata file
     """
-    metadata_path = os.path.join(tree_path, 'extra_files.json')
-    if logger:
-        logger.info('Calculating content of {metadata}'.format(metadata=metadata_path))
-    metadata = {'header': {'version': '1.0'}, 'data': []}
-    for f in files:
-        if logger:
-            logger.debug('Processing {file}'.format(file=f))
-        path = os.path.join(tree_path, f)
+    for copied_file in files:
+        full_path = os.path.join(topdir, copied_file)
+        size = os.path.getsize(full_path)
         try:
-            checksum = compute_file_checksums(path, checksum_type)
+            checksums = compute_file_checksums(full_path, checksum_types)
         except IOError as exc:
-            file = os.path.relpath(exc.filename, '/'.join(tree_path.split('/')[:-3]))
-            raise RuntimeError('Failed to calculate checksum for %s: %s' % (file, exc.strerror))
-        entry = {
-            'file': f,
-            'checksums': checksum,
-            'size': os.path.getsize(path),
-        }
-        metadata['data'].append(entry)
+            raise RuntimeError(
+                "Failed to calculate checksum for %s: %s" % (full_path, exc)
+            )
 
-    if logger:
-        logger.info('Writing {metadata}'.format(metadata=metadata_path))
+        if relative_root:
+            copied_file = os.path.relpath(full_path, relative_root)
+        metadata.add(variant.uid, arch, copied_file, size, checksums)
 
-    with open(metadata_path, 'w') as fd:
-        json.dump(metadata, fd, sort_keys=True, indent=4, separators=(',', ': '))
-    return metadata_path
+    strip_prefix = (os.path.relpath(topdir, relative_root) + "/") if relative_root else ""
+    with open(os.path.join(topdir, "extra_files.json"), "w") as f:
+        metadata.dump_for_tree(f, variant.uid, arch, strip_prefix)

@@ -424,7 +424,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         self.assertEqual(aitm.call_args_list, [])
 
 
-@mock.patch("pungi.metadata.write_extra_files")
+@mock.patch("pungi.metadata.populate_extra_files_metadata")
 @mock.patch('pungi.phases.extra_isos.get_file_from_scm')
 @mock.patch('pungi.phases.extra_isos.get_dir_from_scm')
 class GetExtraFilesTest(helpers.PungiTestCase):
@@ -438,14 +438,14 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             self.topdir, "work", self.arch, self.variant.uid, "extra-iso-extra-files"
         )
 
-    def test_no_config(self, get_dir, get_file, write_extra):
+    def test_no_config(self, get_dir, get_file, populate_md):
         extra_isos.get_extra_files(self.compose, self.variant, self.arch, [])
 
         self.assertEqual(get_dir.call_args_list, [])
         self.assertEqual(get_file.call_args_list, [])
-        self.assertEqual(write_extra.call_args_list, [])
+        self.assertEqual(populate_md.call_args_list, [])
 
-    def test_get_file(self, get_dir, get_file, write_extra):
+    def test_get_file(self, get_dir, get_file, populate_md):
         get_file.return_value = ["GPL"]
         cfg = {
             'scm': 'git',
@@ -465,18 +465,20 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
-            write_extra.call_args_list,
+            populate_md.call_args_list,
             [
                 mock.call(
+                    mock.ANY,
+                    self.variant,
+                    self.arch,
                     self.dir,
                     ["legalese/GPL"],
                     self.compose.conf["media_checksums"],
-                    logger=self.compose._logger,
                 )
             ],
         )
 
-    def test_get_dir(self, get_dir, get_file, write_extra):
+    def test_get_dir(self, get_dir, get_file, populate_md):
         get_dir.return_value = ["a", "b"]
         cfg = {
             'scm': 'git',
@@ -489,25 +491,23 @@ class GetExtraFilesTest(helpers.PungiTestCase):
         self.assertEqual(get_file.call_args_list, [])
         self.assertEqual(
             get_dir.call_args_list,
-            [
-                mock.call(
-                    cfg, os.path.join(self.dir, "foo"), compose=self.compose
-                )
-            ],
+            [mock.call(cfg, os.path.join(self.dir, "foo"), compose=self.compose)],
         )
         self.assertEqual(
-            write_extra.call_args_list,
+            populate_md.call_args_list,
             [
                 mock.call(
+                    mock.ANY,
+                    self.variant,
+                    self.arch,
                     self.dir,
                     ["foo/a", "foo/b"],
                     self.compose.conf["media_checksums"],
-                    logger=self.compose._logger,
-                )
+                ),
             ],
         )
 
-    def test_get_multiple_files(self, get_dir, get_file, write_extra):
+    def test_get_multiple_files(self, get_dir, get_file, populate_md):
         get_file.side_effect = [["GPL"], ["setup.py"]]
         cfg1 = {
             'scm': 'git',
@@ -531,14 +531,16 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
-            write_extra.call_args_list,
+            populate_md.call_args_list,
             [
                 mock.call(
+                    mock.ANY,
+                    self.variant,
+                    self.arch,
                     self.dir,
                     ["legalese/GPL", "setup.py"],
                     self.compose.conf["media_checksums"],
-                    logger=self.compose._logger,
-                )
+                ),
             ],
         )
 

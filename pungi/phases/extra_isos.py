@@ -18,6 +18,7 @@ import os
 from kobo.shortcuts import force_list
 from kobo.threads import ThreadPool, WorkerThread
 import productmd.treeinfo
+from productmd.extra_files import ExtraFiles
 
 from pungi import createiso
 from pungi import metadata
@@ -155,11 +156,13 @@ def get_extra_files(compose, variant, arch, extra_files):
         )
 
     if filelist:
-        metadata.write_extra_files(
+        metadata.populate_extra_files_metadata(
+            ExtraFiles(),
+            variant,
+            arch,
             extra_files_dir,
             filelist,
             compose.conf["media_checksums"],
-            logger=compose._logger,
         )
 
 

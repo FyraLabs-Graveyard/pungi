@@ -18,11 +18,13 @@ import os
 import copy
 import fnmatch
 
+from productmd.extra_files import ExtraFiles
+
 from pungi.util import get_arch_variant_data, pkg_is_rpm, copy_all
 from pungi.arch import split_name_arch
-from pungi import metadata
 from pungi.wrappers.scm import get_file_from_scm, get_dir_from_scm
 from pungi.phases.base import ConfigGuardedPhase
+from pungi import metadata
 
 
 class ExtraFilesPhase(ConfigGuardedPhase):
@@ -33,6 +35,12 @@ class ExtraFilesPhase(ConfigGuardedPhase):
         super(ExtraFilesPhase, self).__init__(compose)
         # pkgset_phase provides package_sets
         self.pkgset_phase = pkgset_phase
+        # Prepare metadata
+        self.metadata = ExtraFiles()
+        self.metadata.compose.id = self.compose.compose_id
+        self.metadata.compose.type = self.compose.compose_type
+        self.metadata.compose.date = self.compose.compose_date
+        self.metadata.compose.respin = self.compose.compose_respin
 
     def run(self):
         for variant in self.compose.get_variants():
@@ -41,13 +49,26 @@ class ExtraFilesPhase(ConfigGuardedPhase):
             for arch in variant.arches + ["src"]:
                 cfg = get_arch_variant_data(self.compose.conf, self.name, arch, variant)
                 if cfg:
-                    copy_extra_files(self.compose, cfg, arch, variant, self.pkgset_phase.package_sets)
+                    copy_extra_files(
+                        self.compose,
+                        cfg,
+                        arch,
+                        variant,
+                        self.pkgset_phase.package_sets,
+                        self.metadata,
+                    )
                 else:
                     self.compose.log_info('[SKIP ] No extra files (arch: %s, variant: %s)'
                                           % (arch, variant.uid))
 
+        metadata_path = self.compose.paths.compose.metadata("extra_files.json")
+        self.compose.log_info("Writing global extra files metadata: %s" % metadata_path)
+        self.metadata.dump(metadata_path)
 
-def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type=None):
+
+def copy_extra_files(
+    compose, cfg, arch, variant, package_sets, extra_metadata, checksum_type=None
+):
     checksum_type = checksum_type or compose.conf['media_checksums']
     var_dict = {
         "arch": arch,
@@ -85,8 +106,15 @@ def copy_extra_files(compose, cfg, arch, variant, package_sets, checksum_type=No
         getter(scm_dict, target_path, compose=compose)
 
     if os.listdir(extra_files_dir):
-        files_copied = copy_all(extra_files_dir, os_tree)
-        metadata.write_extra_files(os_tree, files_copied, checksum_type, compose._logger)
+        metadata.populate_extra_files_metadata(
+            extra_metadata,
+            variant,
+            arch,
+            os_tree,
+            copy_all(extra_files_dir, os_tree),
+            compose.conf["media_checksums"],
+            relative_root=compose.paths.compose.topdir(),
+        )
 
     compose.log_info("[DONE ] %s" % msg)
 

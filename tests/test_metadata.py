@@ -1,4 +1,3 @@
-import json
 import mock
 import os
 import sys
@@ -153,101 +152,67 @@ class MediaRepoTestCase(helpers.PungiTestCase):
         self.assertFalse(os.path.isfile(self.path))
 
 
-class TestWriteExtraFiles(helpers.PungiTestCase):
+FOO_MD5 = {"md5": "acbd18db4cc2f85cedef654fccc4a4d8"}
+BAR_MD5 = {"md5": "37b51d194a7513e45b56f6524f2d51f2"}
+
+
+class TestPopulateExtraFiles(helpers.PungiTestCase):
 
     def setUp(self):
-        super(TestWriteExtraFiles, self).setUp()
-        self.compose = helpers.DummyCompose(self.topdir, {})
+        super(TestPopulateExtraFiles, self).setUp()
+        self.variant = mock.Mock(uid="Server")
+        self.metadata = mock.Mock()
 
-    def test_write_extra_files(self):
-        """Assert metadata is written to the proper location with valid data"""
-        mock_logger = mock.Mock()
-        files = ['file1', 'file2', 'subdir/file3']
-        expected_metadata = {
-            u'header': {u'version': u'1.0'},
-            u'data': [
-                {
-                    u'file': u'file1',
-                    u'checksums': {u'sha256': u'ecdc5536f73bdae8816f0ea40726ef5e9b810d914493075903bb90623d97b1d8'},
-                    u'size': 6,
-                },
-                {
-                    u'file': u'file2',
-                    u'checksums': {u'sha256': u'67ee5478eaadb034ba59944eb977797b49ca6aa8d3574587f36ebcbeeb65f70e'},
-                    u'size': 6,
-                },
-                {
-                    u'file': u'subdir/file3',
-                    u'checksums': {u'sha256': u'52f9f0e467e33da811330cad085fdb4eaa7abcb9ebfe6001e0f5910da678be51'},
-                    u'size': 13,
-                },
-            ]
-        }
-        tree_dir = os.path.join(self.topdir, 'compose', 'Server', 'x86_64', 'os')
-        for f in files:
-            helpers.touch(os.path.join(tree_dir, f), f + '\n')
+    def test_with_relative_root(self):
+        helpers.touch(
+            os.path.join(self.topdir, "compose/Server/x86_64/os/foo"), content="foo"
+        )
+        helpers.touch(
+            os.path.join(self.topdir, "compose/Server/x86_64/os/bar"), content="bar"
+        )
 
-        metadata_file = metadata.write_extra_files(tree_dir, files, logger=mock_logger)
-        with open(metadata_file) as metadata_fd:
-            actual_metadata = json.load(metadata_fd)
+        metadata.populate_extra_files_metadata(
+            self.metadata,
+            self.variant,
+            "x86_64",
+            os.path.join(self.topdir, "compose/Server/x86_64/os"),
+            ["foo", "bar"],
+            ["md5"],
+            relative_root=os.path.join(self.topdir, "compose"),
+        )
 
-        self.assertEqual(expected_metadata['header'], actual_metadata['header'])
-        self.assertEqual(expected_metadata['data'], actual_metadata['data'])
-
-    def test_write_extra_files_multiple_checksums(self):
-        """Assert metadata is written to the proper location with valid data"""
         self.maxDiff = None
-        mock_logger = mock.Mock()
-        files = ['file1', 'file2', 'subdir/file3']
-        expected_metadata = {
-            u'header': {u'version': u'1.0'},
-            u'data': [
-                {
-                    u'file': u'file1',
-                    u'checksums': {
-                        u'md5': u'5149d403009a139c7e085405ef762e1a',
-                        u'sha256': u'ecdc5536f73bdae8816f0ea40726ef5e9b810d914493075903bb90623d97b1d8'
-                    },
-                    u'size': 6,
-                },
-                {
-                    u'file': u'file2',
-                    u'checksums': {
-                        u'md5': u'3d709e89c8ce201e3c928eb917989aef',
-                        u'sha256': u'67ee5478eaadb034ba59944eb977797b49ca6aa8d3574587f36ebcbeeb65f70e'
-                    },
-                    u'size': 6,
-                },
-                {
-                    u'file': u'subdir/file3',
-                    u'checksums': {
-                        u'md5': u'1ed02b5cf7fd8626f854e9ef3fee8694',
-                        u'sha256': u'52f9f0e467e33da811330cad085fdb4eaa7abcb9ebfe6001e0f5910da678be51'
-                    },
-                    u'size': 13,
-                },
-            ]
-        }
-        tree_dir = os.path.join(self.topdir, 'compose', 'Server', 'x86_64', 'os')
-        for f in files:
-            helpers.touch(os.path.join(tree_dir, f), f + '\n')
 
-        metadata_file = metadata.write_extra_files(tree_dir, files,
-                                                   checksum_type=['md5', 'sha256'],
-                                                   logger=mock_logger)
-        with open(metadata_file) as metadata_fd:
-            actual_metadata = json.load(metadata_fd)
+        six.assertCountEqual(
+            self,
+            self.metadata.mock_calls,
+            [
+                mock.call.add(
+                    "Server", "x86_64", "Server/x86_64/os/foo", 3, FOO_MD5
+                ),
+                mock.call.add(
+                    "Server", "x86_64", "Server/x86_64/os/bar", 3, BAR_MD5
+                ),
+                mock.call.dump_for_tree(
+                    mock.ANY, "Server", "x86_64", "Server/x86_64/os/"
+                ),
+            ],
+        )
 
-        self.assertEqual(expected_metadata['header'], actual_metadata['header'])
-        self.assertEqual(expected_metadata['data'], actual_metadata['data'])
+    def test_without_relative_root(self):
+        helpers.touch(os.path.join(self.topdir, "foo"), content="foo")
+        helpers.touch(os.path.join(self.topdir, "bar"), content="bar")
 
-    def test_write_extra_files_missing_file(self):
-        """Assert metadata is written to the proper location with valid data"""
-        mock_logger = mock.Mock()
-        files = ['file1', 'file2', 'subdir/file3']
-        tree_dir = os.path.join(self.topdir, 'compose', 'Server', 'x86_64', 'os')
-        for f in files:
-            helpers.touch(os.path.join(tree_dir, f), f + '\n')
-        files.append('missing_file')
+        metadata.populate_extra_files_metadata(
+            self.metadata, self.variant, "x86_64", self.topdir, ["foo", "bar"], ["md5"]
+        )
 
-        self.assertRaises(RuntimeError, metadata.write_extra_files, tree_dir, files, 'sha256', mock_logger)
+        six.assertCountEqual(
+            self,
+            self.metadata.mock_calls,
+            [
+                mock.call.add("Server", "x86_64", "foo", 3, FOO_MD5),
+                mock.call.add("Server", "x86_64", "bar", 3, BAR_MD5),
+                mock.call.dump_for_tree(mock.ANY, "Server", "x86_64", ""),
+            ],
+        )

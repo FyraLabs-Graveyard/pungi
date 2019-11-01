@@ -4,6 +4,8 @@ import mock
 import os
 import sys
 
+from productmd.extra_files import ExtraFiles
+
 import six
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -38,23 +40,44 @@ class TestExtraFilePhase(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             copy_extra_files.call_args_list,
-            [mock.call(compose, [cfg], 'x86_64', compose.variants['Server'],
-                       pkgset_phase.package_sets),
-             mock.call(compose, [cfg], 'x86_64', compose.variants['Everything'],
-                       pkgset_phase.package_sets)]
+            [
+                mock.call(
+                    compose,
+                    [cfg],
+                    "x86_64",
+                    compose.variants["Server"],
+                    pkgset_phase.package_sets,
+                    phase.metadata,
+                ),
+                mock.call(
+                    compose,
+                    [cfg],
+                    "x86_64",
+                    compose.variants["Everything"],
+                    pkgset_phase.package_sets,
+                    phase.metadata,
+                ),
+            ],
         )
+        self.assertTrue(isinstance(phase.metadata, ExtraFiles))
 
 
 class TestCopyFiles(helpers.PungiTestCase):
 
+    def setUp(self):
+        super(TestCopyFiles, self).setUp()
+        self.metadata = ExtraFiles()
+        self.compose = helpers.DummyCompose(self.topdir, {})
+        self.variant = self.compose.variants["Server"]
+
     def test_copy_local_file(self):
         tgt = os.path.join(self.topdir, 'file')
         helpers.touch(tgt)
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'file', 'file': tgt, 'repo': None}
 
-        extra_files.copy_extra_files(compose, [cfg], 'x86_64',
-                                     compose.variants['Server'], mock.Mock())
+        extra_files.copy_extra_files(
+            self.compose, [cfg], "x86_64", self.variant, mock.Mock(), self.metadata
+        )
 
         self.assertTrue(os.path.isfile(os.path.join(
             self.topdir, 'compose', 'Server', 'x86_64', 'os', 'file')))
@@ -64,12 +87,17 @@ class TestCopyFiles(helpers.PungiTestCase):
         tgt2 = os.path.join(self.topdir, 'gpl')
         helpers.touch(tgt1)
         helpers.touch(tgt2)
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg1 = {'scm': 'file', 'file': tgt1, 'repo': None}
         cfg2 = {'scm': 'file', 'file': tgt2, 'repo': None, 'target': 'license'}
 
-        extra_files.copy_extra_files(compose, [cfg1, cfg2], 'x86_64',
-                                     compose.variants['Server'], mock.Mock())
+        extra_files.copy_extra_files(
+            self.compose,
+            [cfg1, cfg2],
+            "x86_64",
+            self.variant,
+            mock.Mock(),
+            self.metadata
+        )
 
         self.assertTrue(os.path.isfile(os.path.join(
             self.topdir, 'compose', 'Server', 'x86_64', 'os', 'file')))
@@ -79,11 +107,11 @@ class TestCopyFiles(helpers.PungiTestCase):
     def test_copy_local_dir(self):
         helpers.touch(os.path.join(self.topdir, 'src', 'file'))
         helpers.touch(os.path.join(self.topdir, 'src', 'another'))
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'file', 'dir': os.path.join(self.topdir, 'src'),
                'repo': None, 'target': 'subdir'}
-        extra_files.copy_extra_files(compose, [cfg], 'x86_64',
-                                     compose.variants['Server'], mock.Mock())
+        extra_files.copy_extra_files(
+            self.compose, [cfg], "x86_64", self.variant, mock.Mock(), self.metadata
+        )
 
         self.assertTrue(os.path.isfile(os.path.join(
             self.topdir, 'compose', 'Server', 'x86_64', 'os', 'subdir', 'file')))
@@ -93,13 +121,13 @@ class TestCopyFiles(helpers.PungiTestCase):
     @mock.patch('pungi.phases.extra_files.get_file_from_scm')
     @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
     def test_copy_from_external_rpm(self, get_dir_from_scm, get_file_from_scm):
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'rpm', 'file': 'file.txt', 'repo': 'http://example.com/package.rpm'}
 
         get_file_from_scm.side_effect = self.fake_get_file
 
-        extra_files.copy_extra_files(compose, [cfg], 'x86_64',
-                                     compose.variants['Server'], mock.Mock())
+        extra_files.copy_extra_files(
+            self.compose, [cfg], "x86_64", self.variant, mock.Mock(), self.metadata
+        )
 
         self.assertEqual(len(get_file_from_scm.call_args_list), 1)
         self.assertEqual(get_dir_from_scm.call_args_list, [])
@@ -112,7 +140,6 @@ class TestCopyFiles(helpers.PungiTestCase):
     @mock.patch('pungi.phases.extra_files.get_file_from_scm')
     @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
     def test_copy_from_rpm_in_compose(self, get_dir_from_scm, get_file_from_scm):
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'rpm', 'file': 'file.txt', 'repo': '%(variant_uid)s-data*'}
         server_po, client_po, src_po = mock.Mock(), mock.Mock(), mock.Mock()
         server_po.configure_mock(name='Server-data-1.1-1.fc24.x86_64.rpm',
@@ -136,8 +163,9 @@ class TestCopyFiles(helpers.PungiTestCase):
 
         get_file_from_scm.side_effect = self.fake_get_file
 
-        extra_files.copy_extra_files(compose, [cfg], 'x86_64',
-                                     compose.variants['Server'], package_sets)
+        extra_files.copy_extra_files(
+            self.compose, [cfg], "x86_64", self.variant, package_sets, self.metadata
+        )
 
         self.assertEqual(len(get_file_from_scm.call_args_list), 1)
         self.assertEqual(get_dir_from_scm.call_args_list, [])
@@ -156,13 +184,13 @@ class TestCopyFiles(helpers.PungiTestCase):
     @mock.patch('pungi.phases.extra_files.get_file_from_scm')
     @mock.patch('pungi.phases.extra_files.get_dir_from_scm')
     def test_copy_from_non_existing_rpm_in_compose(self, get_dir_from_scm, get_file_from_scm):
-        compose = helpers.DummyCompose(self.topdir, {})
         cfg = {'scm': 'rpm', 'file': 'file.txt', 'repo': 'bad-%(variant_uid_lower)s*'}
         package_sets = [{"x86_64": {}}]
 
         with self.assertRaises(RuntimeError) as ctx:
             extra_files.copy_extra_files(
-                compose, [cfg], 'x86_64', compose.variants['Server'], package_sets)
+                self.compose, [cfg], "x86_64", self.variant, package_sets, self.metadata
+            )
 
         self.assertRegexpMatches(
             str(ctx.exception), r'No.*package.*matching bad-server\*.*'
