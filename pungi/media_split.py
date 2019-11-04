@@ -121,11 +121,4 @@ class MediaSplitter(object):
             disk["files"].append(name)
             disk["size"] += size
             total_size_single += size
-        if self.compose:
-            if self.media_size:
-                self.logger.debug("MediaSplitter: free space on single media would be %s. "
-                                  "Total size of single medium: %s."
-                                  % (self.media_size - total_size_single, total_size_single))
-            else:
-                self.logger.debug("MediaSplitter: Total size of single medium: %s." % total_size_single)
         return disks

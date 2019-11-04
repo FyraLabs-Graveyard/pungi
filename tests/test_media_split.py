@@ -62,17 +62,6 @@ class MediaSplitterTestCase(unittest.TestCase):
     def setUp(self):
         self.compose = mock.Mock()
 
-    def assertFreeSpace(self, free, total):
-        self.assertEqual(
-            self.compose._logger.debug.mock_calls,
-            [mock.call('MediaSplitter: free space on single media would be %s. '
-                       'Total size of single medium: %s.' % (free, total))])
-
-    def assertUnlimited(self, total):
-        self.assertEqual(
-            self.compose._logger.debug.mock_calls,
-            [mock.call('MediaSplitter: Total size of single medium: %s.' % total)])
-
     def test_sum_size(self):
         ms = media_split.MediaSplitter(bl(100))
         ms.add_file('first', bl(20))
@@ -107,7 +96,6 @@ class MediaSplitterTestCase(unittest.TestCase):
 
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second'], 'size': bl(50)}])
-        self.assertFreeSpace(bl(50), bl(50))
 
     def test_split_on_two_discs(self):
         ms = media_split.MediaSplitter(bl(100), compose=self.compose)
@@ -118,7 +106,6 @@ class MediaSplitterTestCase(unittest.TestCase):
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second'], 'size': bl(65)},
                           {'files': ['third'], 'size': bl(80)}])
-        self.assertFreeSpace(bl(100 - 25 - 40 - 80), bl(25 + 40 + 80))
 
     def test_split_with_sticky_file(self):
         ms = media_split.MediaSplitter(bl(100))
@@ -139,4 +126,3 @@ class MediaSplitterTestCase(unittest.TestCase):
 
         self.assertEqual(ms.split(),
                          [{'files': ['first', 'second', 'third'], 'size': bl(145)}])
-        self.assertUnlimited(bl(25 + 40 + 80))
