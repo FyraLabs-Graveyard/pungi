@@ -911,7 +911,7 @@ class TestGatherPhase(helpers.PungiTestCase):
         phase.stop()
 
         self.assertEqual(gather_wrapper.call_args_list, [])
-        self.assertTrue(os.path.isfile(os.path.join(self.topdir, 'compose', 'metadata', 'rpms.json')))
+        self.assertFalse(os.path.isfile(os.path.join(self.topdir, 'compose', 'metadata', 'rpms.json')))
 
     def test_validates_wrong_requiring_variant(self):
         pkgset_phase = mock.Mock()

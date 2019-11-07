@@ -113,8 +113,9 @@ class GatherPhase(PhaseBase):
                            self.pkgset_phase.package_sets,
                            manifest=self.manifest)
 
-    def stop(self):
         self._write_manifest()
+
+    def stop(self):
         super(GatherPhase, self).stop()
 
 
