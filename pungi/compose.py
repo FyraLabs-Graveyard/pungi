@@ -137,7 +137,8 @@ class Compose(kobo.log.LoggingBase):
 
             class ExcludingArchLogFilter(logging.Filter):
                 def filter(self, record):
-                    if 'Populating package set for arch:' in record.message or \
+                    message = record.getMessage()
+                    if 'Populating package set for arch:' in message or \
                             (record.funcName and record.funcName == 'is_excluded'):
                         return True
                     else:
