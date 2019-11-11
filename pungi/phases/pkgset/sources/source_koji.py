@@ -588,6 +588,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 
     tag_to_mmd = {}
 
+    pkgset_koji_tags = force_list(compose.conf.get("pkgset_koji_tag", []))
+
     for variant in compose.all_variants.values():
         variant_tags[variant] = []
 
@@ -617,11 +619,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             if variant_tag not in compose_tags:
                 compose_tags.append(variant_tag)
 
-        # TODO check if this works for Fedora Modular variant
-        variant_tags[variant].extend(force_list(compose.conf["pkgset_koji_tag"]))
+        variant_tags[variant].extend(pkgset_koji_tags)
 
     # Add global tag(s) if supplied.
-    pkgset_koji_tags = force_list(compose.conf.get("pkgset_koji_tag", []))
     compose_tags.extend(pkgset_koji_tags)
 
     inherit = compose.conf["pkgset_koji_inherit"]
