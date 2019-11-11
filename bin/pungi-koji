@@ -412,7 +412,15 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     image_checksum_phase.stop()
 
     pungi.metadata.write_compose_info(compose)
-    compose.im.dump(compose.paths.compose.metadata("images.json"))
+    if not (
+        buildinstall_phase.skip()
+        and ostree_installer_phase.skip()
+        and createiso_phase.skip()
+        and liveimages_phase.skip()
+        and livemedia_phase.skip()
+        and image_build_phase.skip()
+    ):
+        compose.im.dump(compose.paths.compose.metadata("images.json"))
     osbs_phase.dump_metadata()
 
     test_phase.start()
