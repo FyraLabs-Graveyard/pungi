@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import mock
 try:
     import unittest2 as unittest
@@ -28,6 +29,30 @@ class ComposeTestCase(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
+
+    @mock.patch('pungi.compose.ComposeInfo')
+    def test_setup_logger(self, ci):
+        conf = {}
+        logger = logging.getLogger('test_setup_logger')
+        compose = Compose(conf, self.tmp_dir, logger=logger)
+        self.assertEqual(len(logger.handlers), 2)
+
+        pungi_log = logger.handlers[0].stream.name
+        exclude_arch_log = logger.handlers[1].stream.name
+        self.assertEqual(os.path.basename(pungi_log), 'pungi.global.log')
+        self.assertEqual(os.path.basename(exclude_arch_log), 'excluding-arch.global.log')
+
+        msg = "test log"
+        compose.log_info(msg)
+        with open(pungi_log) as f:
+            self.assertTrue(msg in f.read())
+        with open(exclude_arch_log) as f:
+            self.assertTrue(msg not in f.read())
+
+        msg = "Populating package set for arch: x86_64"
+        compose.log_info(msg)
+        with open(exclude_arch_log) as f:
+            self.assertTrue(msg in f.read())
 
     @mock.patch('pungi.compose.ComposeInfo')
     def test_can_fail(self, ci):
