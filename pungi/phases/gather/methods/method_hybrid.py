@@ -27,7 +27,7 @@ from pungi import multilib_dnf
 from pungi.module_util import Modulemd
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
-from pungi.util import get_arch_variant_data, pkg_is_debug
+from pungi.util import get_arch_variant_data, pkg_is_debug, temp_dir
 from pungi.wrappers import fus
 from pungi.wrappers.comps import CompsWrapper
 
@@ -210,7 +210,11 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
         # strings.
         filters = [_fmt_pkg(*p) for p in filter_packages]
 
-        nvrs, out_modules = self.run_solver(variant, arch, packages, platform, filters)
+        cache_prefix = "fus-cache-%s-%s-%s-" % (self.compose.compose_id, variant, arch)
+        with temp_dir(prefix=cache_prefix) as cache_dir:
+            nvrs, out_modules = self.run_solver(
+                variant, arch, packages, platform, filters, cache_dir=cache_dir
+            )
         filter_modules(variant, arch, out_modules)
         return expand_packages(
             self._get_pkg_map(arch),
@@ -228,7 +232,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             repos.append(pkgset.paths[self.arch])
         return repos
 
-    def run_solver(self, variant, arch, packages, platform, filter_packages):
+    def run_solver(self, variant, arch, packages, platform, filter_packages, cache_dir):
         repos = self.get_repos()
         results = set()
         result_modules = set()
@@ -263,6 +267,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             # useless for us anyway).
             env = os.environ.copy()
             env["G_MESSAGES_PREFIXED"] = ""
+            env["XDG_CACHE_HOME"] = cache_dir
             self.compose.log_debug("[BEGIN] Running fus")
             run(cmd, logfile=logfile, show_cmd=True, env=env)
             output, out_modules = fus.parse_output(logfile)

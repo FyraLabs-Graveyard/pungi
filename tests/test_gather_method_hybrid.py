@@ -27,12 +27,13 @@ class NamedMock(mock.Mock):
 
 
 class TestMethodHybrid(helpers.PungiTestCase):
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.temp_dir")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.CompsWrapper")
     @mock.patch("pungi.phases.gather.get_lookaside_repos")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_groups")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.expand_packages")
     @mock.patch("pungi.phases.gather.methods.method_hybrid.get_platform")
-    def test_call_method(self, gp, ep, eg, glr, CW):
+    def test_call_method(self, gp, ep, eg, glr, CW, td):
         compose = helpers.DummyCompose(self.topdir, {})
         m = hybrid.GatherMethodHybrid(compose)
         m.run_solver = mock.Mock(return_value=(mock.Mock(), mock.Mock()))
@@ -73,8 +74,13 @@ class TestMethodHybrid(helpers.PungiTestCase):
                     set(["pkg", "foo", "bar", ("prep", "noarch")]),
                     gp.return_value,
                     [],
+                    cache_dir=td.return_value.__enter__.return_value,
                 )
             ],
+        )
+        self.assertIn(
+            [mock.call(prefix="fus-cache-Test-20151203.0.t-Server-x86_64-")],
+            td.mock_calls,
         )
         self.assertEqual(
             ep.call_args_list,
@@ -331,6 +337,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [],
             platform="pl",
             filter_packages=[("foo", None)],
+            cache_dir="/cache",
         )
 
         self.assertEqual(res[0], set())
@@ -386,6 +393,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [],
             platform="pl",
             filter_packages=["foo"],
+            cache_dir="/cache",
         )
 
         self.assertEqual(res, (set([("p-1-1", "x86_64", frozenset())]), set(["m1"])))
@@ -426,6 +434,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [("pkg", None)],
             platform=None,
             filter_packages=[],
+            cache_dir="/cache",
         )
 
         six.assertCountEqual(self, res[0], po.return_value[0])
@@ -481,6 +490,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [("pkg", None)],
             platform=None,
             filter_packages=[],
+            cache_dir="/cache",
         )
 
         six.assertCountEqual(
@@ -553,6 +563,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [("pkg", None)],
             platform=None,
             filter_packages=["foo"],
+            cache_dir="/cache",
         )
 
         six.assertCountEqual(self, res[0], final)
@@ -640,6 +651,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [("pkg-devel", None), ("foo", None)],
             platform=None,
             filter_packages=[],
+            cache_dir="/cache",
         )
 
         six.assertCountEqual(
@@ -762,6 +774,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             [("pkg-devel", None), ("foo", None)],
             platform=None,
             filter_packages=[],
+            cache_dir="/cache",
         )
 
         six.assertCountEqual(
