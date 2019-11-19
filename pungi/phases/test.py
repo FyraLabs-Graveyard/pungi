@@ -64,7 +64,7 @@ def run_repoclosure(compose):
             repos[repo_id] = repo_dir
 
             for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
-                lookaside["lookaside-%s.%s-%s" % (variant.uid, arch, i)] = lookaside_url
+                lookaside["%s-lookaside-%s.%s-%s" % (compose.compose_id, variant.uid, arch, i)] = lookaside_url
 
             logfile = compose.paths.log.log_file(arch, "repoclosure-%s" % variant)
 
