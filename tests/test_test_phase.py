@@ -304,7 +304,7 @@ class TestRepoclosure(PungiTestCase):
     def _get_repo(self, compose_id, variant, arch, path=None):
         path = path or arch + '/os'
         return {
-            'repoclosure-%s-%s.%s' % (compose_id, variant, arch): self.topdir + '/compose/%s/%s' % (variant, path)
+            '%s-repoclosure-%s.%s' % (compose_id, variant, arch): self.topdir + '/compose/%s/%s' % (variant, path)
         }
 
     @mock.patch('pungi.wrappers.repoclosure.get_repoclosure_cmd')

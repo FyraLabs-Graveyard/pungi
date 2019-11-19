@@ -51,7 +51,7 @@ def run_repoclosure(compose):
             if conf and conf[-1] == 'off':
                 continue
 
-            prefix = "repoclosure-%s" % compose.compose_id
+            prefix = "%s-repoclosure" % compose.compose_id
             lookaside = {}
             if variant.parent:
                 repo_id = "%s-%s.%s" % (prefix, variant.parent.uid, arch)
@@ -87,12 +87,12 @@ def run_repoclosure(compose):
                                         % (variant.uid, arch, exc))
             finally:
                 if methods != "hybrid":
-                    _delete_repoclosure_cache_dirs(compose, prefix)
+                    _delete_repoclosure_cache_dirs(compose)
 
     compose.log_info("[DONE ] %s" % msg)
 
 
-def _delete_repoclosure_cache_dirs(compose, prefix):
+def _delete_repoclosure_cache_dirs(compose):
     if 'dnf' == compose.conf["repoclosure_backend"]:
         from dnf.yum.misc import getCacheDir
     else:
@@ -100,7 +100,7 @@ def _delete_repoclosure_cache_dirs(compose, prefix):
 
     top_cache_dir = getCacheDir()
     for name in os.listdir(top_cache_dir):
-        if name.startswith(prefix):
+        if name.startswith(compose.compose_id):
             cache_path = os.path.join(top_cache_dir, name)
             if os.path.isdir(cache_path):
                 shutil.rmtree(cache_path)
