@@ -27,7 +27,7 @@ from pungi import multilib_dnf
 from pungi.module_util import Modulemd
 from pungi.arch import get_valid_arches, tree_arch_to_yum_arch
 from pungi.phases.gather import _mk_pkg_map
-from pungi.util import get_arch_variant_data, pkg_is_debug, temp_dir
+from pungi.util import get_arch_variant_data, pkg_is_debug, temp_dir, as_local_file
 from pungi.wrappers import fus
 from pungi.wrappers.comps import CompsWrapper
 
@@ -412,14 +412,18 @@ def iter_platforms_in_repo(url):
     """Find all platform streams that any module in give repo requires at runtime.
     Yields lists of stream names (possible empty).
     """
-    repomd = cr.Repomd(os.path.join(url, "repodata/repomd.xml"))
+    repomd = os.path.join(url, "repodata/repomd.xml")
+    with as_local_file(repomd) as url_:
+        repomd = cr.Repomd(url_)
     for rec in repomd.records:
         if rec.type != "modules":
             continue
         # No with statement on Python 2.6 for GzipFile...
-        gzipped_file = gzip.GzipFile(os.path.join(url, rec.location_href), "r")
+        record_url = os.path.join(url, rec.location_href)
+        with as_local_file(record_url) as url_:
+            gzipped_file = gzip.GzipFile(url_, "rb")
         mod_index = Modulemd.ModuleIndex.new()
-        mod_index.update_from_string(gzipped_file.read(), False)
+        mod_index.update_from_string(gzipped_file.read().decode("utf-8"), False)
         gzipped_file.close()
         for module_name in mod_index.get_module_names():
             module = mod_index.get_module(module_name)

@@ -936,3 +936,20 @@ def load_config(file_path, defaults={}):
         conf.load_from_file(file_path)
 
     return conf
+
+
+@contextlib.contextmanager
+def as_local_file(url):
+    """If URL points to a file over HTTP, the file will be downloaded locally
+    and a path to the local copy is yielded. For local files the original path
+    is returned.
+    """
+    if url.startswith("http://") or url.startswith("https://"):
+        local_filename, _ = urllib.request.urlretrieve(url)
+        try:
+            yield local_filename
+        finally:
+            os.remove(local_filename)
+    else:
+        # Not a remote url, return unchanged.
+        yield url

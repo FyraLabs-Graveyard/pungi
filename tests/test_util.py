@@ -873,3 +873,27 @@ class TestCopyAll(PungiTestCase):
 
         self.assertTrue(os.path.islink(os.path.join(self.dst, "symlink")))
         self.assertEqual(os.readlink(os.path.join(self.dst, "symlink")), "broken")
+
+
+@mock.patch("six.moves.urllib.request.urlretrieve")
+class TestAsLocalFile(PungiTestCase):
+    def test_local_file(self, urlretrieve):
+        with util.as_local_file("/tmp/foo") as fn:
+            self.assertEqual(fn, "/tmp/foo")
+        self.assertEqual(urlretrieve.call_args_list, [])
+
+    def test_http(self, urlretrieve):
+        url = "http://example.com/repodata/repomd.xml"
+
+        def my_mock(url_):
+            self.assertEqual(url, url_)
+            self.filename = os.path.join(self.topdir, "my-file")
+            touch(self.filename)
+            return self.filename, {}
+
+        urlretrieve.side_effect = my_mock
+
+        with util.as_local_file(url) as fn:
+            self.assertEqual(fn, self.filename)
+            self.assertTrue(os.path.exists(self.filename))
+        self.assertFalse(os.path.exists(self.filename))
