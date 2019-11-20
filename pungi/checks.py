@@ -1065,7 +1065,6 @@ def make_schema():
                                 "skip_tag": {"type": "boolean"},
                                 "name": {"type": "string"},
                                 "subvariant": {"type": "string"},
-                                "title": {"type": "string"},
                                 "repo": {"$ref": "#/definitions/repos"},
                                 "target": {"type": "string"},
                                 "arches": {"$ref": "#/definitions/list_of_strings"},

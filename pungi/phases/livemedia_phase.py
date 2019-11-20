@@ -71,7 +71,6 @@ class LiveMediaPhase(PhaseLoggerMixin, ImageConfigMixin, ConfigGuardedPhase):
                     'skip_tag': image_conf.get('skip_tag'),
                     'name': name,
                     'subvariant': subvariant,
-                    'title': image_conf.get('title'),
                     'repo': self._get_repos(image_conf, variant),
                     'install_tree': self._get_install_tree(image_conf, variant),
                     'version': self.get_version(image_conf),
