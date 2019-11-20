@@ -21,7 +21,7 @@ from kobo.shortcuts import force_list
 
 def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
     cmds = {
-        'yum': {'cmd': ['/usr/bin/repoclosure'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
+        'yum': {'cmd': ['/usr/bin/repoclosure', '--tempcache'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
         'dnf': {'cmd': ['dnf', 'repoclosure'], 'repoarg': '--repo=%s', 'lookaside': '--repo=%s'},
     }
     try:
