@@ -1028,12 +1028,17 @@ class TestSymlinkIso(PungiTestCase):
 class TestTweakConfigs(PungiTestCase):
 
     def test_tweak_configs(self):
+        logger = mock.Mock()
         configs = []
         for cfg in BOOT_CONFIGS:
             if 'yaboot' not in cfg:
                 configs.append(os.path.join(self.topdir, cfg))
                 touch(configs[-1], ':LABEL=baz')
-        tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'))
+        found_configs = tweak_configs(self.topdir, 'new volid', os.path.join(self.topdir, 'ks.cfg'), logger=logger)
+        self.assertEqual(
+            logger.info.call_args_list,
+            [mock.call('Boot config %s changed' % os.path.join(self.topdir, cfg)) for cfg in found_configs]
+        )
         for cfg in configs:
             self.assertFileContent(
                 cfg, ":LABEL=new\\x20volid ks=hd:LABEL=new\\x20volid:/ks.cfg\n"

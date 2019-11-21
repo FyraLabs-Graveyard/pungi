@@ -224,7 +224,7 @@ class TestPatchingIso(unittest.TestCase):
                                     input_charset='utf-8',
                                     volid='foobar')])
         self.assertEqual(tweak_configs.call_args_list,
-                         [mock.call(ANYTHING, 'foobar', 'path/to/ks.cfg')])
+                         [mock.call(ANYTHING, 'foobar', 'path/to/ks.cfg', logger=log)])
         self.assertEqual(copy_all.mock_calls,
                          [mock.call('mounted-iso-dir', ANYTHING)])
         self.assertEqual(

@@ -255,7 +255,7 @@ BOOT_CONFIGS = [
 ]
 
 
-def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS):
+def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS, logger=None):
     volid_escaped = volid.replace(" ", r"\x20").replace("\\", "\\\\")
     volid_escaped_2 = volid_escaped.replace("\\", "\\\\")
     found_configs = []
@@ -266,7 +266,7 @@ def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS):
         found_configs.append(config)
 
         with open(config_path, "r") as f:
-            data = f.read()
+            data = original_data = f.read()
         os.unlink(config_path)  # break hadlink by removing file writing a new one
 
         # double-escape volid in yaboot.conf
@@ -282,6 +282,9 @@ def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS):
 
         with open(config_path, "w") as f:
             f.write(data)
+
+        if logger and data != original_data:
+            logger.info('Boot config %s changed' % config_path)
 
     return found_configs
 
@@ -311,7 +314,7 @@ def tweak_buildinstall(compose, src, dst, arch, variant, label, volid, kickstart
     )
     run(cmd)
 
-    found_configs = tweak_configs(tmp_dir, volid, kickstart_file)
+    found_configs = tweak_configs(tmp_dir, volid, kickstart_file, logger=compose._logger)
     if kickstart_file and found_configs:
         shutil.copy2(kickstart_file, os.path.join(dst, "ks.cfg"))
 

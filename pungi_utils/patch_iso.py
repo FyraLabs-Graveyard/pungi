@@ -96,7 +96,7 @@ def run(log, opts):
         # if ks.cfg is detected, patch syslinux + grub to use it
         if 'ks.cfg' in graft_points:
             log.info('Adding ks.cfg to boot configs')
-            tweak_configs(work_dir, volume_id, graft_points['ks.cfg'])
+            tweak_configs(work_dir, volume_id, graft_points['ks.cfg'], logger=log)
 
         arch = opts.force_arch or get_arch(log, work_dir)
 
