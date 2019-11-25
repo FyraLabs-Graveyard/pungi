@@ -443,6 +443,7 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             continue
         threads_list = []
         que = Queue()
+        errors = Queue()
         for arch in variant.arches:
             fulltree_excludes = set()
             if exclude_fulltree:
@@ -454,11 +455,17 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             # there.
             _update_lookaside_config(compose, variant, arch, result, package_sets)
 
+            def worker(que, errors, arch, *args, **kwargs):
+                try:
+                    que.put((arch, gather_packages(*args, **kwargs)))
+                except Exception as exc:
+                    errors.put(exc)
+
             # Run gather_packages() in parallel with multi threads and store
             # its return value in a Queue() for later use.
             t = threading.Thread(
-                target=lambda q, arch, *args, **kwargs: q.put((arch, gather_packages(*args, **kwargs))),
-                args=(que, arch, compose, arch, variant, package_sets),
+                target=worker,
+                args=(que, errors, arch, compose, arch, variant, package_sets),
                 kwargs={'fulltree_excludes': fulltree_excludes},
             )
             threads_list.append(t)
@@ -466,6 +473,10 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
 
         for t in threads_list:
             t.join()
+
+        while not errors.empty():
+            exc = errors.get()
+            raise exc
 
         while not que.empty():
             arch, pkg_map = que.get()
