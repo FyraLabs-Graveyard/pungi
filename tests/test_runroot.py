@@ -29,13 +29,14 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         method = self.runroot.get_runroot_method()
         self.assertEqual(method, "openssh")
 
-    def _ssh_call(self, cmd):
+    def _ssh_call(self, cmd, suffix=None):
         """
         Helper method returning default SSH mock.call with given command `cmd`.
         """
+        logfile = ("/foo/runroot." + suffix + ".log") if suffix else "/foo/runroot.log"
         return mock.call(
             ['ssh', '-oBatchMode=yes', '-n', '-l', 'root', 'localhost', cmd],
-            logfile='/foo/runroot.log',
+            logfile=logfile,
             show_cmd=True,
         )
 
@@ -45,7 +46,9 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64")
         run.assert_has_calls([
             self._ssh_call('df -h'),
-            self._ssh_call("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'", suffix="rpms"
+            ),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -69,10 +72,13 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
                          packages=["lorax", "automake"])
         run.assert_has_calls([
-            self._ssh_call('/usr/sbin/init_runroot f28-build'),
-            self._ssh_call('install key lorax automake'),
+            self._ssh_call('/usr/sbin/init_runroot f28-build', suffix="init"),
+            self._ssh_call('install key lorax automake', suffix="install_packages"),
             self._ssh_call('run key df -h'),
-            self._ssh_call("run key rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "run key rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                suffix="rpms",
+            ),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -85,9 +91,12 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64",
                          packages=["lorax", "automake"])
         run.assert_has_calls([
-            self._ssh_call('install lorax automake'),
+            self._ssh_call('install lorax automake', suffix="install_packages"),
             self._ssh_call('run df -h'),
-            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                suffix="rpms",
+            ),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -100,7 +109,10 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         self.runroot.run("df -h", log_file="/foo/runroot.log", arch="x86_64")
         run.assert_has_calls([
             self._ssh_call('run df -h'),
-            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                suffix="rpms",
+            ),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -112,7 +124,10 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
                          packages=["lorax", "automake"])
         run.assert_has_calls([
             self._ssh_call('run df -h'),
-            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                suffix="rpms",
+            ),
         ])
 
     @mock.patch("pungi.runroot.run")
@@ -127,5 +142,8 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
             self._ssh_call(
                 "run df -h && chmod -R a+r /mnt/foo/compose /mnt/foo/x && "
                 "chown -R %d /mnt/foo/compose /mnt/foo/x" % os.getuid()),
-            self._ssh_call("run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"),
+            self._ssh_call(
+                "run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+                suffix="rpms",
+            ),
         ])

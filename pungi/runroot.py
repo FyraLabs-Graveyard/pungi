@@ -97,6 +97,9 @@ class Runroot(kobo.log.LoggingBase):
         ssh_cmd = ["ssh", "-oBatchMode=yes", "-n", "-l", user, hostname, formatted_cmd]
         return run(ssh_cmd, show_cmd=True, logfile=log_file)[1]
 
+    def _log_file(self, base, suffix):
+        return base.replace(".log", "." + suffix + ".log")
+
     def _run_openssh(self, command, log_file=None, arch=None, packages=None,
                      chown_paths=None, **kwargs):
         """
@@ -128,7 +131,12 @@ class Runroot(kobo.log.LoggingBase):
         if init_template:
             fmt_dict = {"runroot_tag": runroot_tag}
             runroot_key = self._ssh_run(
-                hostname, user, init_template, fmt_dict, log_file=log_file)
+                hostname,
+                user,
+                init_template,
+                fmt_dict,
+                log_file=self._log_file(log_file, "init"),
+            )
             runroot_key = runroot_key.rstrip("\n\r")
         else:
             runroot_key = None
@@ -139,7 +147,11 @@ class Runroot(kobo.log.LoggingBase):
             if runroot_key:
                 fmt_dict["runroot_key"] = runroot_key
             self._ssh_run(
-                hostname, user, install_packages_template, fmt_dict, log_file=log_file
+                hostname,
+                user,
+                install_packages_template,
+                fmt_dict,
+                log_file=self._log_file(log_file, "install_packages"),
             )
 
         # Run the runroot task and get the buildroot RPMs.
@@ -151,7 +163,11 @@ class Runroot(kobo.log.LoggingBase):
 
             fmt_dict["command"] = "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"
             buildroot_rpms = self._ssh_run(
-                hostname, user, run_template, fmt_dict, log_file=log_file
+                hostname,
+                user,
+                run_template,
+                fmt_dict,
+                log_file=self._log_file(log_file, "rpms"),
             )
         else:
             self._ssh_run(hostname, user, command, log_file=log_file)
@@ -159,7 +175,7 @@ class Runroot(kobo.log.LoggingBase):
                 hostname,
                 user,
                 "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
-                log_file=log_file,
+                log_file=self._log_file(log_file, "rpms"),
             )
 
         # Parse the buildroot_rpms and store it in self._result.
