@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.40
+Version:        4.1.41
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,29 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Dec 02 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.41-1
+- repoclosure: Parse all fus logs (lsedlar)
+- runroot: Log different commands to different files (lsedlar)
+- gather: Collect and re-raise errors from gather method (lsedlar)
+- buildinstall: Log message for boot config change (hlin)
+- livemedia: Remove title option (hlin)
+- Make sure repoclosure cache cleaned when running as root (hlin)
+- Prefix lookaside cache dir with compose id (hlin)
+- Prefix repoclosure cache dir with compose id (hlin)
+- hybrid: Download remote files when getting platform (lsedlar)
+- gather: Use fresh cache for each sequence of fus runs (lsedlar)
+- tests: Add test for compose logger setup (hlin)
+- pkgset: Fix running without any koji tags (lsedlar)
+- Get message from LogRecord with a method (lsedlar)
+- Do not write images.json if all related phases skipped (hlin)
+- gather: Do not write metadata if gather phase skipped (hlin)
+- Write global metadata about extra files (lsedlar)
+- scm: Add backend for downloading archives from Koji (lsedlar)
+- Pass compose to SCM wrappers (lsedlar)
+- Remove misleading warning about size of the ISO (hlin)
+- Retry watching koji tasks on server outage (hlin)
+- config-dump: Allow overwritting config via -e option (hlin)
+
 * Wed Oct 23 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.40-1
 - pkgset: Only reuse valid old repo (lsedlar)
 - Clean up skipping phases (hlin)
