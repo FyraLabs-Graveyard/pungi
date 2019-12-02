@@ -75,8 +75,8 @@ def run_repoclosure(compose):
                     pattern = compose.paths.log.log_file(
                         arch, "hybrid-depsolver-%s-iter-*" % variant
                     )
-                    fus_log = sorted(glob.glob(pattern))[-1]
-                    repoclosure.extract_from_fus_log(fus_log, logfile)
+                    fus_logs = sorted(glob.glob(pattern))
+                    repoclosure.extract_from_fus_logs(fus_logs, logfile)
                 else:
                     _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile)
             except RuntimeError as exc:

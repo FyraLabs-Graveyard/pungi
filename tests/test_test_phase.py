@@ -362,7 +362,7 @@ class TestRepoclosure(PungiTestCase):
                        repos=self._get_repo(compose.compose_id, 'Everything', 'x86_64'))])
 
     @mock.patch("glob.glob")
-    @mock.patch("pungi.wrappers.repoclosure.extract_from_fus_log")
+    @mock.patch("pungi.wrappers.repoclosure.extract_from_fus_logs")
     @mock.patch("pungi.wrappers.repoclosure.get_repoclosure_cmd")
     @mock.patch("pungi.phases.test.run")
     def test_repoclosure_hybrid_variant(self, mock_run, mock_grc, effl, glob):
@@ -382,11 +382,11 @@ class TestRepoclosure(PungiTestCase):
             self,
             effl.call_args_list,
             [
-                mock.call(f, _log("amd64", "Everything")),
-                mock.call(f, _log("amd64", "Client")),
-                mock.call(f, _log("amd64", "Server")),
-                mock.call(f, _log("x86_64", "Server")),
-                mock.call(f, _log("x86_64", "Everything")),
+                mock.call([f], _log("amd64", "Everything")),
+                mock.call([f], _log("amd64", "Client")),
+                mock.call([f], _log("amd64", "Server")),
+                mock.call([f], _log("x86_64", "Server")),
+                mock.call([f], _log("x86_64", "Everything")),
             ]
         )
 

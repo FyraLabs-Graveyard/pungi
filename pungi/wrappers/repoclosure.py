@@ -59,16 +59,17 @@ def _to_url(path):
     return path
 
 
-def extract_from_fus_log(input, output):
+def extract_from_fus_logs(inputs, output):
     """Extract depsolver error messages from fus log and write them to output
     file.
     """
     has_error = False
-    with open(input) as fin:
-        with open(output, "w") as fout:
-            for line in fin:
-                if line.startswith("Problem ") or line.startswith(" "):
-                    fout.write(line)
-                    has_error = True
+    with open(output, "w") as fout:
+        for input in inputs:
+            with open(input) as fin:
+                for line in fin:
+                    if line.startswith("Problem ") or line.startswith(" "):
+                        fout.write(line)
+                        has_error = True
     if has_error:
         raise RuntimeError("Broken dependencies! See %s for details" % output)

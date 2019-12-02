@@ -108,22 +108,42 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
 class FusExtractorTestCase(helpers.PungiTestCase):
     def setUp(self):
         super(FusExtractorTestCase, self).setUp()
-        self.input = os.path.join(self.topdir, "in")
+        self.input1 = os.path.join(self.topdir, "in1")
+        self.input2 = os.path.join(self.topdir, "in2")
         self.output = os.path.join(self.topdir, "out")
 
     def test_no_match(self):
-        helpers.touch(self.input, "fus-DEBUG: Installing foo\n")
-        rc.extract_from_fus_log(self.input, self.output)
+        helpers.touch(self.input1, "fus-DEBUG: Installing foo\n")
+        rc.extract_from_fus_logs([self.input1], self.output)
         self.assertFileContent(self.output, "")
 
     def test_error(self):
         helpers.touch(
-            self.input,
+            self.input1,
             "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n"
         )
         with self.assertRaises(RuntimeError) as ctx:
-            rc.extract_from_fus_log(self.input, self.output)
+            rc.extract_from_fus_logs([self.input1], self.output)
 
         self.assertIn(self.output, str(ctx.exception))
 
         self.assertFileContent(self.output, "Problem 1/1\n - nothing provides foo\n")
+
+    def test_errors_in_multiple_files(self):
+        helpers.touch(
+            self.input1,
+            "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n"
+        )
+        helpers.touch(
+            self.input2,
+            "fus-DEBUG: Installing baz\nProblem 1/1\n - nothing provides quux\n"
+        )
+        with self.assertRaises(RuntimeError) as ctx:
+            rc.extract_from_fus_logs([self.input1, self.input2], self.output)
+
+        self.assertIn(self.output, str(ctx.exception))
+
+        self.assertFileContent(
+            self.output,
+            "Problem 1/1\n - nothing provides foo\nProblem 1/1\n - nothing provides quux\n",
+        )
