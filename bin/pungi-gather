@@ -71,13 +71,16 @@ def get_parser():
         metavar="[METHOD]",
         action="append",
     )
+    group.add_argument(
+        "--tempdir",
+        metavar="PATH",
+        help="path to temp dir (default: /tmp)",
+        default="/tmp",
+    )
     return parser
 
 
-def main(persistdir, cachedir):
-    parser = get_parser()
-    ns = parser.parse_args()
-
+def main(ns, persistdir, cachedir):
     dnf_conf = Conf(ns.arch)
     dnf_conf.persistdir = persistdir
     dnf_conf.cachedir = cachedir
@@ -174,6 +177,9 @@ def print_rpms(gather_obj):
 
 
 if __name__ == "__main__":
-    with temp_dir(prefix='pungi_dnf_') as persistdir:
-        with temp_dir(prefix='pungi_dnf_cache_') as cachedir:
-            main(persistdir, cachedir)
+    parser = get_parser()
+    ns = parser.parse_args()
+
+    with temp_dir(dir=ns.tempdir, prefix="pungi_dnf_") as persistdir:
+        with temp_dir(dir=ns.tempdir, prefix="pungi_dnf_cache_") as cachedir:
+            main(ns, persistdir, cachedir)
