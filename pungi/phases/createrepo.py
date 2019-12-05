@@ -198,7 +198,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
         mod_index = Modulemd.ModuleIndex()
         metadata = []
 
-        for module_id, mmd in variant.arch_mmds[arch].items():
+        for module_id, mmd in variant.arch_mmds.get(arch, {}).items():
             if modules_metadata:
                 module_rpms = mmd.get_rpm_artifacts()
                 metadata.append((module_id, module_rpms))

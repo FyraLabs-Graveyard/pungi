@@ -38,7 +38,7 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
 
         compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
 
-        for nsvc, module_stream in variant.arch_mmds[arch].items():
+        for nsvc, module_stream in variant.arch_mmds.get(arch, {}).items():
             available_rpms = sum(
                 (
                     variant.nsvc_to_pkgset[nsvc].rpms_by_arch.get(a, [])
