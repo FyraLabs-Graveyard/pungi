@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
@@ -9,11 +9,6 @@ import os
 import sys
 
 import six
-
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
 
 import pungi.checks
 import pungi.compose
@@ -187,6 +182,6 @@ def main(args=None):
     return bool(errors)
 
 
-if __name__ == '__main__':
+def cli_main():
     if main():
         sys.exit(1)

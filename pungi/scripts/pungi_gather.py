@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
@@ -176,7 +176,7 @@ def print_rpms(gather_obj):
         print("SRPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
 
 
-if __name__ == "__main__":
+def cli_main():
     parser = get_parser()
     ns = parser.parse_args()
 

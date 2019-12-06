@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 
 import sys
 import argparse
@@ -68,7 +68,3 @@ def main():
         f.remove_environments()
 
     f.write(open(opts.output, 'wb') if opts.output else sys.stdout)
-
-
-if __name__ == "__main__":
-    main()

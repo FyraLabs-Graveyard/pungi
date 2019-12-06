@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -11,10 +10,6 @@ import argparse
 import os
 import sys
 
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
 
 from pungi_utils.unified_isos import UnifiedISO
 
@@ -36,7 +31,3 @@ def main():
     args = parse_args()
     iso = UnifiedISO(args.compose[0])
     iso.create(delete_temp=True)
-
-
-if __name__ == '__main__':
-    main()

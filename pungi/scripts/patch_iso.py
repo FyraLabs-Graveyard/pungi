@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # This program is free software; you can redistribute it and/or modify
@@ -17,11 +16,6 @@ import argparse
 import logging
 import os
 import sys
-
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
 
 from pungi_utils import patch_iso
 
@@ -52,6 +46,6 @@ def main(args=None):
     patch_iso.run(log, opts)
 
 
-if __name__ == '__main__':
+def cli_main():
     if main():
         sys.exit(1)

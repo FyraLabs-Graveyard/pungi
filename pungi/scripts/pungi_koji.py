@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
@@ -16,11 +16,6 @@ import traceback
 import shutil
 
 from six.moves import shlex_quote
-
-here = sys.path[0]
-if here != '/usr/bin':
-    # Git checkout
-    sys.path[0] = os.path.dirname(here)
 
 from pungi.phases import PHASES_NAMES
 from pungi import get_full_version, util
@@ -479,7 +474,7 @@ def sigterm_handler(signum, frame):
     sys.exit(1)
 
 
-if __name__ == "__main__":
+def cli_main():
     signal.signal(signal.SIGTERM, sigterm_handler)
 
     try:

@@ -33,21 +33,24 @@ setup(
     license         = "GPLv2",
 
     packages        = packages,
+    entry_points    = {
+        'console_scripts': [
+            'comps_filter = pungi.scripts.comps_filter:main',
+            'pungi = pungi.scripts.pungi:main',
+            'pungi-create-unified-isos = pungi.scripts.create_unified_isos:main',
+            'pungi-fedmsg-notification = pungi.scripts.fedmsg_notification:main',
+            'pungi-patch-iso = pungi.scripts.patch_iso:cli_main',
+            'pungi-make-ostree = pungi.ostree:main',
+            'pungi-notification-report-progress = pungi.scripts.report_progress:main',
+            'pungi-orchestrate = pungi_utils.orchestrator:main',
+            'pungi-wait-for-signed-ostree-handler = pungi.scripts.wait_for_signed_ostree_handler:main',
+            'pungi-koji = pungi.scripts.pungi_koji:cli_main',
+            'pungi-gather = pungi.scripts.pungi_gather:cli_main',
+            'pungi-config-dump = pungi.scripts.config_dump:cli_main',
+            'pungi-config-validate = pungi.scripts.config_validate:cli_main',
+        ]
+    },
     scripts         = [
-        'bin/comps_filter',
-        'bin/pungi',
-        'bin/pungi-config-dump',
-        'bin/pungi-config-validate',
-        'bin/pungi-create-unified-isos',
-        'bin/pungi-fedmsg-notification',
-        'bin/pungi-gather',
-        'bin/pungi-koji',
-        'bin/pungi-make-ostree',
-        'bin/pungi-notification-report-progress',
-        'bin/pungi-orchestrate',
-        'bin/pungi-patch-iso',
-        'bin/pungi-wait-for-signed-ostree-handler',
-
         'contrib/yum-dnf-compare/pungi-compare-depsolving',
     ],
     data_files      = [

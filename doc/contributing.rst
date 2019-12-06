@@ -158,6 +158,7 @@ In the ``tests/`` directory there is a shell script ``test_compose.sh`` that
 you can use to try and create a miniature compose on dummy data. The actual
 data will be created by running ``make test-data`` in project root. ::
 
+    $ python setup.py develop
     $ make test-data
     $ make test-compose
 

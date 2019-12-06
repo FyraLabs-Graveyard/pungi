@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
@@ -206,7 +206,7 @@ def main():
     )
 
 
-if __name__ == "__main__":
+def cli_main():
     try:
         if not main():
             sys.exit(1)

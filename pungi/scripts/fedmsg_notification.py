@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -12,7 +11,8 @@ def send(cmd, data):
     topic = 'compose.%s' % cmd.replace('-', '.').lower()
     fedmsg.publish(topic=topic, modname='pungi', msg=data)
 
-if __name__ == '__main__':
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd')
     opts = parser.parse_args()

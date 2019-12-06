@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -38,7 +37,7 @@ def ts_log(msg):
     print("%s: %s" % (datetime.datetime.utcnow(), msg))
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd')
     opts = parser.parse_args()
