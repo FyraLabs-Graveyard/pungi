@@ -8,8 +8,6 @@ import sys
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.gather.methods import method_hybrid as hybrid
 from pungi.phases.pkgset.common import MaterializedPackageSet as PkgSet
 from tests import helpers

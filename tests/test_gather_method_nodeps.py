@@ -6,8 +6,6 @@ import sys
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.gather.methods import method_nodeps as nodeps
 from tests import helpers
 

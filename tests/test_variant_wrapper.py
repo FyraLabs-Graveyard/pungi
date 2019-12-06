@@ -8,8 +8,6 @@ import os
 import sys
 from six.moves import cStringIO
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.wrappers.variants import VariantsXmlParser
 
 VARIANTS_WITH_WHITESPACE = """

@@ -11,8 +11,6 @@ import os
 import six
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 import pungi.phases.test as test_phase
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 

@@ -9,8 +9,6 @@ try:
 except ImportError:
     import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.wrappers import iso
 
 CORRECT_OUTPUT = '''dummy.iso:   31ff3e405e26ad01c63b62f6b11d30f6

@@ -10,8 +10,6 @@ import sys
 
 from pungi.graph import SimpleAcyclicOrientedGraph
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 
 class SimpleAcyclicOrientedGraphTestCase(unittest.TestCase):
 

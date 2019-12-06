@@ -12,8 +12,6 @@ except ImportError:
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases import gather
 from pungi.phases.pkgset.common import MaterializedPackageSet
 from pungi.phases.gather import _mk_pkg_map

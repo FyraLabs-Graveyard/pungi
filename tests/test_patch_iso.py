@@ -8,8 +8,6 @@ try:
 except ImportError:
     import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from tests.helpers import boom, touch, copy_fixture
 from pungi_utils import patch_iso
 

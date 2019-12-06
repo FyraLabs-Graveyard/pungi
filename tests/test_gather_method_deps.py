@@ -4,8 +4,6 @@ import mock
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.gather.methods import method_deps as deps
 from tests import helpers
 

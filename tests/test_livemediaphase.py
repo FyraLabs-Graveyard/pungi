@@ -7,8 +7,6 @@ import os
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.livemedia_phase import LiveMediaPhase, LiveMediaThread
 from tests.helpers import DummyCompose, PungiTestCase, boom
 

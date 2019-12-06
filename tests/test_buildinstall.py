@@ -7,8 +7,6 @@ import six
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.buildinstall import (BuildinstallPhase, BuildinstallThread, link_boot_iso,
                                        BOOT_CONFIGS, tweak_configs)
 from tests.helpers import DummyCompose, PungiTestCase, touch

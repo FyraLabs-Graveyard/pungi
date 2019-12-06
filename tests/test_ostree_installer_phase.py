@@ -7,8 +7,6 @@ import sys
 
 from kobo.shortcuts import force_list
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from tests import helpers
 from pungi.phases import ostree_installer as ostree
 from six.moves import shlex_quote

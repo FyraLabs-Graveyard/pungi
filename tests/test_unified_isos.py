@@ -7,8 +7,6 @@ import sys
 import six
 from six.moves.configparser import SafeConfigParser
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from tests.helpers import PungiTestCase, FIXTURE_DIR, touch, mk_boom
 from pungi_utils import unified_isos
 

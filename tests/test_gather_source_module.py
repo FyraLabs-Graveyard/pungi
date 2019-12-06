@@ -10,8 +10,6 @@ import six
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.gather.sources.source_module import GatherSourceModule
 from tests import helpers
 from pungi.module_util import Modulemd

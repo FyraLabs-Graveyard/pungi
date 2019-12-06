@@ -8,8 +8,6 @@ import sys
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread
 from tests.helpers import DummyCompose, PungiTestCase, boom
 

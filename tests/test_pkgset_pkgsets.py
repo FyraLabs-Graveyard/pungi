@@ -13,8 +13,6 @@ import tempfile
 import re
 from dogpile.cache import make_region
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.pkgset import pkgsets
 from tests import helpers
 

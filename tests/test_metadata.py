@@ -4,8 +4,6 @@ import sys
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from tests import helpers
 
 from pungi import metadata

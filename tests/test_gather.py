@@ -15,11 +15,6 @@ import logging
 
 from six.moves import cStringIO
 
-HERE = os.path.dirname(__file__)
-BINDIR = (os.path.join(HERE, '..', 'bin'))
-sys.path.insert(0, os.path.join(HERE, '..'))
-os.environ['PATH'] = '%s:%s' % (BINDIR, os.environ['PATH'])
-
 from pungi.wrappers.pungi import PungiWrapper
 try:
     from pungi.dnf_wrapper import DnfWrapper, Conf

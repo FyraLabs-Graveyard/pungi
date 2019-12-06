@@ -10,8 +10,6 @@ try:
 except ImportError:
     import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.notifier import PungiNotifier
 
 

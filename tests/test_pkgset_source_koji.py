@@ -11,8 +11,6 @@ try:
 except ImportError:
     import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
 from pungi.module_util import Modulemd

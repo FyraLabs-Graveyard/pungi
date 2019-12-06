@@ -5,8 +5,6 @@ import unittest
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.pathmatch import PathMatch, head_tail_split
 
 

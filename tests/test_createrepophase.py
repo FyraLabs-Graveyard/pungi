@@ -12,8 +12,6 @@ import os
 import six
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases.createrepo import (CreaterepoPhase,
                                      create_variant_repo,
                                      get_productids_from_scm,

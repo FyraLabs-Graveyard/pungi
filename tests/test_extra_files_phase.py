@@ -8,8 +8,6 @@ from productmd.extra_files import ExtraFiles
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.phases import extra_files
 from tests import helpers
 

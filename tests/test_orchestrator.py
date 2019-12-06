@@ -16,8 +16,6 @@ from six.moves import configparser
 
 from parameterized import parameterized
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from tests.helpers import BaseTestCase, PungiTestCase, touch, FIXTURE_DIR
 from pungi_utils import orchestrator as o
 

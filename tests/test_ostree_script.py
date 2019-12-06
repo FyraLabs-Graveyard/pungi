@@ -9,9 +9,6 @@ import mock
 import six
 import yaml
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'bin'))
-
 from tests import helpers
 from pungi import ostree
 

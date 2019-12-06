@@ -6,8 +6,6 @@ import unittest
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.arch import (get_compatible_arches, get_valid_arches, get_valid_multilib_arches,
                         is_excluded, is_valid_arch, split_name_arch)
 

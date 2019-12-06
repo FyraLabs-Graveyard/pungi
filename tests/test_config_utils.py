@@ -10,8 +10,6 @@ import sys
 
 from parameterized import parameterized
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi_utils import config_utils
 
 

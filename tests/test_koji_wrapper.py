@@ -13,8 +13,6 @@ import sys
 
 import six
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from pungi.wrappers.kojiwrapper import KojiWrapper, get_buildroot_rpms
 
 from .helpers import FIXTURE_DIR
