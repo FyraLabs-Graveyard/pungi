@@ -61,7 +61,7 @@ setup(
         "jsonschema",
         "kobo",
         "lxml",
-        "productmd",
+        "productmd>=1.23",
         "six",
         'dogpile.cache',
         ],
