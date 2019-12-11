@@ -332,14 +332,6 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
                     ti.images.images[platform][image] = path
                     ti.checksums.add(path, createrepo_checksum, root_dir=os_tree)
 
-        # add product.img to images-$arch
-        product_img = os.path.join(os_tree, "images", "product.img")
-        product_img_relpath = relative_path(product_img, os_tree.rstrip("/") + "/")
-        if os.path.isfile(product_img):
-            for platform in ti.images.images:
-                ti.images.images[platform]["product.img"] = product_img_relpath
-                ti.checksums.add(product_img_relpath, createrepo_checksum, root_dir=os_tree)
-
     path = os.path.join(compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo")
     compose.log_info("Writing treeinfo: %s" % path)
     ti.dump(path)

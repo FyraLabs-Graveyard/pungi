@@ -1046,44 +1046,6 @@ in the ``os/`` directory and media. The checksums generated are determined by
     }
 
 
-Productimg Settings
-===================
-Product images are placed on installation media and provide additional branding
-and Anaconda changes specific to product variants.
-
-Options
--------
-
-**productimg** = False
-    (*bool*) -- create product images; requires buildinstall_method option
-
-**productimg_install_class**
-    (:ref:`scm_dict <scm_support>`, *str*) -- reference to install class **file**
-
-**productimg_po_files**
-    (:ref:`scm_dict <scm_support>`, *str*) -- reference to a **directory** with
-    po files for install class translations
-
-
-Example
--------
-::
-
-    productimg = True
-    productimg_install_class = {
-        "scm": "git",
-        "repo": "http://git.example.com/productimg.git",
-        "branch": None,
-        "file": "fedora23/%(variant_id)s.py",
-    }
-    productimg_po_files = {
-        "scm": "git",
-        "repo": "http://git.example.com/productimg.git",
-        "branch": None,
-        "dir": "po",
-    }
-
-
 CreateISO Settings
 ==================
 

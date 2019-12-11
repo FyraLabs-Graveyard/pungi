@@ -78,12 +78,6 @@ compose fails in a later stage, the commit will not be reverted.
 Implementation wise, this phase runs ``rpm-ostree`` command in Koji runroot (to
 allow running on different arches).
 
-Productimg
-----------
-
-Creates ``product.img`` files for customizing the bootable media created in
-``buildinstall`` phase.
-
 Createiso
 ---------
 

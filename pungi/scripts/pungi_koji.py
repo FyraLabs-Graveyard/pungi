@@ -35,6 +35,8 @@ COMPOSE = None
 def main():
     global COMPOSE
 
+    PHASES_NAMES_MODIFIED = PHASES_NAMES + ['productimg']
+
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -79,7 +81,7 @@ def main():
     parser.add_argument(
         "--skip-phase",
         metavar="PHASE",
-        choices=PHASES_NAMES,
+        choices=PHASES_NAMES_MODIFIED,
         action="append",
         default=[],
         help="skip a compose phase",
@@ -87,7 +89,7 @@ def main():
     parser.add_argument(
         "--just-phase",
         metavar="PHASE",
-        choices=PHASES_NAMES,
+        choices=PHASES_NAMES_MODIFIED,
         action="append",
         default=[],
         help="run only a specified compose phase",
@@ -224,6 +226,16 @@ def main():
     if not pungi.checks.check_skip_phases(logger, opts.skip_phase):
         sys.exit(1)
     errors, warnings = pungi.checks.validate(conf)
+
+    # TODO: workaround for config files containing skip_phase = productimg
+    # Remove when all config files are up to date
+    if 'productimg' in opts.skip_phase or 'productimg' in opts.just_phase:
+        print('WARNING: productimg phase has been removed, please remove it from --skip-phase or --just-phase option', file=sys.stderr)
+    for err in errors[:]:
+        if "'productimg' is not one of" in err:
+            errors.remove(err)
+            print("WARNING: %s" % err, file=sys.stderr)
+
     if not opts.quiet:
         for warning in warnings:
             print(warning, file=sys.stderr)
@@ -291,7 +303,6 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     createrepo_phase = pungi.phases.CreaterepoPhase(compose, pkgset_phase)
     ostree_installer_phase = pungi.phases.OstreeInstallerPhase(compose, buildinstall_phase, pkgset_phase)
     ostree_phase = pungi.phases.OSTreePhase(compose, pkgset_phase)
-    productimg_phase = pungi.phases.ProductimgPhase(compose, pkgset_phase)
     createiso_phase = pungi.phases.CreateisoPhase(compose, buildinstall_phase)
     extra_isos_phase = pungi.phases.ExtraIsosPhase(compose)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
@@ -303,7 +314,7 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
 
     # check if all config options are set
     for phase in (init_phase, pkgset_phase, createrepo_phase,
-                  buildinstall_phase, productimg_phase, gather_phase,
+                  buildinstall_phase, gather_phase,
                   extrafiles_phase, createiso_phase, liveimages_phase,
                   livemedia_phase, image_build_phase, image_checksum_phase,
                   test_phase, ostree_phase, ostree_installer_phase,
@@ -373,9 +384,6 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     essentials_phase = pungi.phases.WeaverPhase(compose, essentials_schema)
     essentials_phase.start()
     essentials_phase.stop()
-
-    productimg_phase.start()
-    productimg_phase.stop()
 
     # write treeinfo before ISOs are created
     for variant in compose.get_variants():

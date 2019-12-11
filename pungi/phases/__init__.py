@@ -21,7 +21,6 @@ from .weaver import WeaverPhase  # noqa
 from .pkgset import PkgsetPhase  # noqa
 from .gather import GatherPhase  # noqa
 from .createrepo import CreaterepoPhase  # noqa
-from .product_img import ProductimgPhase  # noqa
 from .buildinstall import BuildinstallPhase  # noqa
 from .extra_files import ExtraFilesPhase  # noqa
 from .createiso import CreateisoPhase  # noqa

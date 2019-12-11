@@ -52,22 +52,18 @@ from productmd.composeinfo import COMPOSE_TYPES
 from . import util
 
 
-def _will_productimg_run(conf):
-    return conf.get('productimg', False) and conf.get('buildinstall_method', '')
-
-
 def is_jigdo_needed(conf):
     return conf.get('create_jigdo', True)
 
 
 def is_isohybrid_needed(conf):
-    """The isohybrid command is needed locally only for productimg phase and
+    """The isohybrid command is needed locally only for
     createiso phase without runroot. If that is not going to run, we don't need
     to check for it. Additionally, the syslinux package is only available on
     x86_64 and i386.
     """
     runroot_tag = conf.get('runroot_tag', '')
-    if runroot_tag and not _will_productimg_run(conf):
+    if runroot_tag:
         return False
     if platform.machine() not in ('x86_64', 'i686', 'i386'):
         print('Not checking for /usr/bin/isohybrid due to current architecture. '
@@ -77,10 +73,10 @@ def is_isohybrid_needed(conf):
 
 
 def is_genisoimage_needed(conf):
-    """This is only needed locally for productimg and createiso without runroot.
+    """This is only needed locally for createiso without runroot.
     """
     runroot_tag = conf.get('runroot_tag', '')
-    if runroot_tag and not _will_productimg_run(conf):
+    if runroot_tag:
         return False
     return True
 
@@ -98,7 +94,6 @@ tools = [
     ("isomd5sum", "/usr/bin/checkisomd5", None),
     ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
     ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
-    ("gettext", "/usr/bin/msgfmt", _will_productimg_run),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     # createrepo, modifyrepo and mergerepo are not needed by default, only when
     # createrepo_c is not configured
@@ -1269,11 +1264,8 @@ def make_schema():
             "signing_key_password_file": {"type": "string"},
             "signing_command": {"type": "string"},
             "productimg": {
-                "type": "boolean",
-                "default": False
+                "deprecated": "remove it. Productimg phase has been removed"
             },
-            "productimg_install_class": {"$ref": "#/definitions/str_or_scm_dict"},
-            "productimg_po_files": {"$ref": "#/definitions/str_or_scm_dict"},
             "iso_size": {
                 "anyOf": [
                     {"type": "string"},
@@ -1396,13 +1388,6 @@ def get_num_cpus():
 # encountered and its value satisfies the lambda, an error is reported for each
 # missing (for requires) option in the list.
 CONFIG_DEPS = {
-    "productimg": {
-        "requires": (
-            (lambda x: bool(x), ["productimg_install_class"]),
-            (lambda x: bool(x), ["productimg_po_files"]),
-        ),
-    },
-
     "buildinstall_method": {
         "conflicts": (
             (lambda val: val == "buildinstall", ["lorax_options"]),

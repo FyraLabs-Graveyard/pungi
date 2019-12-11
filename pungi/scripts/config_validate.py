@@ -115,7 +115,6 @@ def run(config, topdir, has_old, offline, defined_variables):
         pungi.phases.CreaterepoPhase(compose),
         pungi.phases.OstreeInstallerPhase(compose, buildinstall_phase),
         pungi.phases.OSTreePhase(compose),
-        pungi.phases.ProductimgPhase(compose, pkgset_phase),
         pungi.phases.CreateisoPhase(compose, buildinstall_phase),
         pungi.phases.ExtraIsosPhase(compose),
         pungi.phases.LiveImagesPhase(compose),

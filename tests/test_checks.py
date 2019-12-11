@@ -89,8 +89,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
     def test_isohybrid_not_required_on_arm(self):
         conf = {
             'buildinstall_method': 'lorax',
-            'productimg': True,
-            'runroot_tag': 'dummy_tag',
+            'runroot_tag': '',
         }
 
         with mock.patch('sys.stdout', new_callable=StringIO) as out:
@@ -128,21 +127,6 @@ class CheckDependenciesTestCase(unittest.TestCase):
 
         self.assertEqual('', out.getvalue())
         self.assertTrue(result)
-
-    def test_genisoimg_needed_for_productimg(self):
-        conf = {
-            'runroot_tag': 'dummy_tag',
-            'productimg': True,
-            'buildinstall_method': 'lorax',
-        }
-
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
-                result = checks.check(conf)
-
-        self.assertIn('genisoimage', out.getvalue())
-        self.assertFalse(result)
 
     def test_requires_modifyrepo(self):
         with mock.patch('sys.stdout', new_callable=StringIO) as out:

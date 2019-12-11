@@ -324,16 +324,6 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
-    def product_img(self, variant, create_dir=True):
-        """
-        Examples:
-            work/global/product-Server.img
-        """
-        file_name = "product-%s.img" % variant
-        path = self.topdir(arch="global", create_dir=create_dir)
-        path = os.path.join(path, file_name)
-        return path
-
     def iso_dir(self, arch, filename, create_dir=True):
         """
         Examples:
