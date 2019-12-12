@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import argparse
+from collections import defaultdict
 import os
 import sys
 
@@ -162,12 +163,6 @@ def main(ns, persistdir, cachedir):
         Profiler.print_results(stream=sys.stderr)
 
 
-def _get_flags(gather_obj, pkg):
-    flags = gather_obj.result_package_flags.get(pkg, [])
-    flags = "(%s)" % ",".join(sorted(f.name.replace('_', '-') for f in flags))
-    return flags
-
-
 def _get_url(pkg):
     if pkg.baseurl:
         result = os.path.join(pkg.baseurl, pkg.location)
@@ -176,15 +171,31 @@ def _get_url(pkg):
     return result
 
 
+def _fmt_flags(flags):
+    return "(%s)" % ",".join(sorted(f.name.replace('_', '-') for f in flags))
+
+
+def deduplicate(gather_obj, items):
+    """The set of packages in ``items`` may contain the same package multiple
+    times, with different source repos. Since they have the same NVRA, we can
+    assume they are identical and should merge their flags.
+    """
+    result = defaultdict(set)
+    for pkg in items:
+        flags = gather_obj.result_package_flags.get(pkg, [])
+        result[_get_url(pkg)].update(flags)
+    return result.items()
+
+
 def print_rpms(gather_obj):
-    for pkg in sorted(gather_obj.result_binary_packages):
-        print("RPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
+    for url, flags in deduplicate(gather_obj, gather_obj.result_binary_packages):
+        print("RPM%s: %s" % (_fmt_flags(flags), url))
 
-    for pkg in sorted(gather_obj.result_debug_packages):
-        print("DEBUGINFO%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
+    for url, flags in deduplicate(gather_obj, gather_obj.result_debug_packages):
+        print("DEBUGINFO%s: %s" % (_fmt_flags(flags), url))
 
-    for pkg in sorted(gather_obj.result_source_packages):
-        print("SRPM%s: %s" % (_get_flags(gather_obj, pkg), _get_url(pkg)))
+    for url, flags in deduplicate(gather_obj, gather_obj.result_source_packages):
+        print("SRPM%s: %s" % (_fmt_flags(flags), url))
 
 
 def cli_main():
