@@ -52,7 +52,8 @@ class DnfWrapper(dnf.Base):
         self.arch_wrapper = ArchWrapper(self.conf.substitutions["arch"])
         self.comps_wrapper = CompsWrapper(self)
 
-    def add_repo(self, repoid, baseurl=None, enablegroups=True, lookaside=False):
+    def add_repo(self, repoid, baseurl=None, enablegroups=True, lookaside=False,
+                 **kwargs):
         self.repos.add_new_repo(
             repoid,
             self.conf,
@@ -60,6 +61,7 @@ class DnfWrapper(dnf.Base):
             enabledgroups=enablegroups,
             priority=10 if lookaside else 20,
             module_hotfixes=True,
+            **kwargs
         )
 
 

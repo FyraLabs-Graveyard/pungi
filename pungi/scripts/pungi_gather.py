@@ -114,14 +114,25 @@ def main(ns, persistdir, cachedir):
         # handling in hawkey
         if ks_repo.name not in gather_opts.lookaside_repos:
             continue
-        dnf_obj.add_repo(
-            ks_repo.name, ks_repo.baseurl, enablegroups=False
-        )
+
+        if not ks_repo.metalink:
+            dnf_obj.add_repo(
+                ks_repo.name, ks_repo.baseurl, enablegroups=False
+            )
+        else:
+            dnf_obj.add_repo(
+                ks_repo.name, ks_repo.baseurl, enablegroups=False,
+                metalink=ks_repo.metalink
+            )
 
     for ks_repo in ksparser.handler.repo.repoList:
         if ks_repo.name in gather_opts.lookaside_repos:
             continue
-        dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
+        if not ks_repo.metalink:
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
+        else:
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl,
+                             metalink=ks_repo.metalink)
 
     with Profiler("DnfWrapper.fill_sack()"):
         dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
