@@ -268,10 +268,10 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             env = os.environ.copy()
             env["G_MESSAGES_PREFIXED"] = ""
             env["XDG_CACHE_HOME"] = cache_dir
-            self.compose.log_debug("[BEGIN] Running fus")
+            self.compose.log_debug("[BEGIN] Running fus (arch: %s, variant: %s)" % (arch, variant))
             run(cmd, logfile=logfile, show_cmd=True, env=env)
             output, out_modules = fus.parse_output(logfile)
-            self.compose.log_debug("[DONE ] Running fus")
+            self.compose.log_debug("[DONE ] Running fus (arch: %s, variant: %s)" % (arch, variant))
             # No need to resolve modules again. They are not going to change.
             modules = []
             # Reset input packages as well to only solve newly added things.

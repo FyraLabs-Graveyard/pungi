@@ -365,6 +365,13 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 )
             ],
         )
+        self.assertEqual(
+            self.compose.log_debug.call_args_list,
+            [
+                mock.call('[BEGIN] Running fus (arch: x86_64, variant: Server)'),
+                mock.call('[DONE ] Running fus (arch: x86_64, variant: Server)')
+            ]
+        )
 
     def test_with_modules_with_devel(self, run, gc, po, wc):
         self.compose.has_comps = False

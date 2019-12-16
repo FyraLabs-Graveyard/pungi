@@ -223,7 +223,8 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
             GatherMethod = get_gather_method(method_name)
             method = GatherMethod(compose)
             method.source_name = source_name
-            compose.log_debug("Gathering source %s, method %s" % (source_name, method_name))
+            compose.log_debug(
+                "Gathering source %s, method %s (arch: %s, variant: %s)" % (source_name, method_name, arch, variant))
             pkg_map = method(arch, variant, packages, groups, filter_packages,
                              multilib_whitelist, multilib_blacklist, package_sets,
                              fulltree_excludes=fulltree_excludes,

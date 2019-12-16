@@ -112,3 +112,30 @@ class TestRaiseOnInvalidSigkeys(helpers.PungiTestCase):
         }
         with self.assertRaises(RuntimeError):
             deps.raise_on_invalid_sigkeys('', '', [pkgset], result)
+
+class TestCheckDeps(helpers.PungiTestCase):
+
+    def setUp(self):
+        super(TestCheckDeps, self).setUp()
+        self.compose = helpers.DummyCompose(self.topdir, {})
+        self.arch = 'x86_64'
+        self.variant = self.compose.variants['Server']
+
+    def test_not_check_deps(self):
+        self.compose.conf["check_deps"] = False
+        self.assertIsNone(deps.check_deps(self.compose, self.arch, self.variant, {}))
+
+    def test_missing_deps(self):
+        self.compose.conf["check_deps"] = True
+        missing_deps = {'foo.noarch': set(['bar = 1.1'])}
+        with self.assertRaises(RuntimeError) as ctx:
+            deps.check_deps(self.compose, self.arch, self.variant, missing_deps)
+        self.assertEqual(str(ctx.exception), 'Unresolved dependencies detected')
+        self.assertEqual(
+            self.compose.log_error.call_args_list,
+            [
+                mock.call(
+                    "Unresolved dependencies for %s.%s in package foo.noarch: ['bar = 1.1']" % (self.variant, self.arch)
+                )
+            ]
+        )

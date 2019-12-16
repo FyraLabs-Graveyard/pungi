@@ -201,5 +201,6 @@ def check_deps(compose, arch, variant, missing_deps):
 
     if missing_deps:
         for pkg in sorted(missing_deps):
-            compose.log_error("Unresolved dependencies in package %s: %s" % (pkg, sorted(missing_deps[pkg])))
+            compose.log_error(
+                "Unresolved dependencies for %s.%s in package %s: %s" % (variant, arch, pkg, sorted(missing_deps[pkg])))
         raise RuntimeError("Unresolved dependencies detected")
