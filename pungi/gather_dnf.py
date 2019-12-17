@@ -291,6 +291,18 @@ class Gather(GatherBase):
                 return [i for i in multilib_pkgs if i.sourcerpm == match.sourcerpm]
         return [match]
 
+    def is_from_lookaside(self, pkg):
+        if not self.opts.lookaside_repos:
+            return False
+        pkgs = self.dnf.sack.query().filter(
+            name=pkg.name,
+            version=pkg.version,
+            release=pkg.release,
+            arch=pkg.arch,
+            reponame=self.opts.lookaside_repos
+        )
+        return pkg in pkgs
+
     def _add_packages(self, packages, pulled_by=None, req=None, reason=None, dest=None):
         dest = dest or self.result_binary_packages
         for i in packages:
@@ -306,7 +318,7 @@ class Gather(GatherBase):
                 self.logger.debug("Added package %s%s" % (i, pb))
                 dest.add(i)
                 # lookaside
-                if i.repoid in self.opts.lookaside_repos:
+                if self.is_from_lookaside(i):
                     self._set_flag(i, PkgFlag.lookaside)
                 if i.sourcerpm.rsplit('-', 2)[0] in self.opts.fulltree_excludes:
                     self._set_flag(i, PkgFlag.fulltree_exclude)
