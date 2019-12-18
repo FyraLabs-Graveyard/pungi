@@ -80,7 +80,7 @@ class GatherPhase(PhaseBase):
             # Modules are not supported, check if we need them
             for variant in self.compose.variants.values():
                 if variant.modules:
-                    errors.append('Modular compose requires pdc_client and libmodulemd packages.')
+                    errors.append('Modular compose requires libmodulemd package.')
 
         # check whether variants from configuration value 'variant_as_lookaside' are correct
         variant_as_lookaside = self.compose.conf.get("variant_as_lookaside", [])
