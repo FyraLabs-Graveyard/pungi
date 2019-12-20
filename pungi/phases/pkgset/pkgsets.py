@@ -440,9 +440,18 @@ class KojiPackageSet(PackageSetBase):
         rpms += extra_rpms
         builds += extra_builds
 
+        extra_builds_by_name = {}
+        for build_info in extra_builds:
+            extra_builds_by_name[build_info['name']] = build_info['build_id']
+
         builds_by_id = {}
+        exclude_build_id = []
         for build_info in builds:
-            builds_by_id.setdefault(build_info["build_id"], build_info)
+            build_id, build_name = build_info['build_id'], build_info['name']
+            if build_name in extra_builds_by_name and build_id != extra_builds_by_name[build_name]:
+                exclude_build_id.append(build_id)
+            else:
+                builds_by_id.setdefault(build_id, build_info)
 
         skipped_arches = []
         skipped_packages_count = 0
@@ -454,6 +463,9 @@ class KojiPackageSet(PackageSetBase):
         # ExclusiveArch for noarch packages.
         for rpm_info in itertools.chain((rpm for rpm in rpms if not _is_src(rpm)),
                                         (rpm for rpm in rpms if _is_src(rpm))):
+            if rpm_info['build_id'] in exclude_build_id:
+                continue
+
             if self.arches and rpm_info["arch"] not in self.arches:
                 if rpm_info["arch"] not in skipped_arches:
                     self.log_debug("Skipping packages for arch: %s" % rpm_info["arch"])
