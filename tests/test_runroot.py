@@ -27,6 +27,25 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         method = self.runroot.get_runroot_method()
         self.assertEqual(method, "openssh")
 
+    def test_get_runroot_method_phase(self):
+        self.compose.conf["runroot_method"] = {"ostree": "openssh"}
+        method = self.runroot.get_runroot_method(phase="ostree")
+        self.assertEqual(method, "openssh")
+
+        # Test fallback to local
+        method = self.runroot.get_runroot_method(phase="createiso")
+        self.assertEqual(method, "local")
+
+    def test_get_runroot_method_global_runroot_method(self):
+        self.compose.conf["runroot_method"] = {"ostree": "openssh"}
+        self.compose.conf["global_runroot_method"] = "koji"
+        method = self.runroot.get_runroot_method(phase="ostree")
+        self.assertEqual(method, "openssh")
+
+        # Test global_runroot_method
+        method = self.runroot.get_runroot_method(phase="createiso")
+        self.assertEqual(method, "koji")
+
     def _ssh_call(self, cmd, suffix=None):
         """
         Helper method returning default SSH mock.call with given command `cmd`.

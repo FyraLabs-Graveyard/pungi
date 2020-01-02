@@ -21,24 +21,30 @@ from kobo.shortcuts import run
 from pungi.wrappers import kojiwrapper
 
 
+RUNROOT_TYPES = ["local", "koji", "openssh"]
+
+
 class Runroot(kobo.log.LoggingBase):
-    def __init__(self, compose, logger=None):
+    def __init__(self, compose, logger=None, phase=None):
         """
         Creates new Runroot instance.
 
         :param Compose compose: Compose instance.
         :param Logger logger: Logger instance to log message to.
+        :param str phase: Pungi phase the runroot task is run as part of.
         """
         kobo.log.LoggingBase.__init__(self, logger=logger)
         self.compose = compose
-        self.runroot_method = self.get_runroot_method()
+        self.runroot_method = self.get_runroot_method(phase)
         # Holds the result of last `run()` call.
         self._result = None
 
-    def get_runroot_method(self):
+    def get_runroot_method(self, phase=None):
         """
         Returns the runroot method by checking the `runroot_tag` and
         `runroot_method` options in configuration.
+
+        :param str phase: Pungi phase to get the runroot method for.
 
         :return: The configured method
         """
@@ -48,6 +54,15 @@ class Runroot(kobo.log.LoggingBase):
             # If we have runroot tag and no method, let's assume koji method
             # for backwards compatibility.
             return "koji"
+
+        if isinstance(runroot_method, dict):
+            # If runroot_method is set to dict, check if there is runroot_method
+            # override for the current phase.
+            if phase in runroot_method:
+                return runroot_method[phase]
+            global_runroot_method = self.compose.conf.get("global_runroot_method")
+            return global_runroot_method or "local"
+
         # Otherwise use the configured method or default to local if nothing is
         # given.
         return runroot_method or "local"

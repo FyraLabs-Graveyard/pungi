@@ -278,7 +278,7 @@ def run_createiso_command(num, compose, bootable, arch, cmd, mounts,
         }
         packages.extend(extra_packages[compose.conf["buildinstall_method"]])
 
-    runroot = Runroot(compose)
+    runroot = Runroot(compose, phase="createiso")
 
     build_arch = arch
     if runroot.runroot_method == "koji" and not bootable:

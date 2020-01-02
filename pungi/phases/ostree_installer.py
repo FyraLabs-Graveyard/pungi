@@ -199,7 +199,7 @@ class OstreeInstallerThread(WorkerThread):
 
         log_file = os.path.join(self.logdir, 'runroot.log')
 
-        runroot = Runroot(compose)
+        runroot = Runroot(compose, phase="ostree_installer")
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
             mounts=[compose.topdir], chown_paths=[output_dir],

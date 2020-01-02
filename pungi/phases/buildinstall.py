@@ -455,7 +455,7 @@ class BuildinstallThread(WorkerThread):
         time.sleep(num * 3)
 
         # Start the runroot task.
-        runroot = Runroot(compose)
+        runroot = Runroot(compose, phase="buildinstall")
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
             mounts=[compose.topdir],

@@ -162,7 +162,7 @@ class OSTreeThread(WorkerThread):
         log_file = os.path.join(self.logdir, 'runroot.log')
         mounts = [compose.topdir, config['ostree_repo']]
 
-        runroot = Runroot(compose)
+        runroot = Runroot(compose, phase="ostree")
         runroot.run(
             cmd, log_file=log_file, arch=arch, packages=packages,
             mounts=mounts, new_chroot=True,

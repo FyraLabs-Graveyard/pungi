@@ -45,6 +45,7 @@ import jsonschema
 import six
 from kobo.shortcuts import force_list
 from pungi.phases import PHASES_NAMES
+from pungi.runroot import RUNROOT_TYPES
 from productmd.common import RELEASE_TYPES
 from productmd.composeinfo import COMPOSE_TYPES
 
@@ -586,9 +587,39 @@ def make_schema():
             "runroot": {
                 "deprecated": "remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally",
             },
-            "runroot_method": {
+            "global_runroot_method": {
                 "type": "string",
-                "enum": ["local", "koji", "openssh"],
+                "enum": RUNROOT_TYPES,
+            },
+            "runroot_method": {
+                "oneOf": [
+                    {
+                        "type": "string",
+                        "enum": RUNROOT_TYPES,
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "buildinstall": {
+                                "type": "string",
+                                "enum": RUNROOT_TYPES,
+                            },
+                            "ostree_installer": {
+                                "type": "string",
+                                "enum": RUNROOT_TYPES,
+                            },
+                            "ostree": {
+                                "type": "string",
+                                "enum": RUNROOT_TYPES,
+                            },
+                            "createiso": {
+                                "type": "string",
+                                "enum": RUNROOT_TYPES,
+                            },
+                        },
+                        "additionalProperties": False,
+                    }
+                ]
             },
             "runroot_ssh_username": {
                 "type": "string",
