@@ -97,7 +97,7 @@ class OstreeInstallerThread(WorkerThread):
         util.makedirs(os.path.dirname(output_dir))
 
         self.template_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'lorax_templates')
-        self._clone_templates(config.get('template_repo'), config.get('template_branch'))
+        self._clone_templates(compose, config.get('template_repo'), config.get('template_branch'))
         disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
@@ -108,12 +108,12 @@ class OstreeInstallerThread(WorkerThread):
         self._add_to_manifest(compose, variant, arch, filename)
         self.pool.log_info('[DONE ] %s' % (msg))
 
-    def _clone_templates(self, url, branch='master'):
+    def _clone_templates(self, compose, url, branch='master'):
         if not url:
             self.template_dir = None
             return
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
-                             self.template_dir, logger=self.pool._logger)
+                             self.template_dir, compose=compose)
 
     def _get_release(self, compose, config):
         if 'release' in config:

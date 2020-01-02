@@ -437,7 +437,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'git://example.com/templates.git',
                                      'branch': 'f24', 'dir': '.'},
-                                    templ_dir, logger=pool._logger)])
+                                    templ_dir, compose=self.compose)])
         self.assertRunrootCall(koji,
                                ["http://example.com/repo/1",
                                 'http://example.com/work/$basearch/comps_repo_Everything'],

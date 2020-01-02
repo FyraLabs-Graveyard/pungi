@@ -130,7 +130,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         })
         self.pool = mock.Mock()
 
-    def _dummy_config_repo(self, scm_dict, target, logger=None):
+    def _dummy_config_repo(self, scm_dict, target, compose=None):
         os.makedirs(target)
         helpers.touch(os.path.join(target, 'fedora-atomic-docker-host.json'),
                       json.dumps({'ref': 'fedora-atomic/25/x86_64',
@@ -202,7 +202,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
                                      'branch': 'f24', 'dir': '.'},
-                                    self.topdir + '/work/ostree-1/config_repo', logger=self.pool._logger)])
+                                    self.topdir + '/work/ostree-1/config_repo', compose=self.compose)])
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
@@ -371,7 +371,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
                                      'branch': 'f24', 'dir': '.'},
-                                    self.topdir + '/work/ostree-1/config_repo', logger=self.pool._logger)])
+                                    self.topdir + '/work/ostree-1/config_repo', compose=self.compose)])
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
@@ -406,7 +406,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
                                      'branch': 'f24', 'dir': '.'},
-                                    self.topdir + '/work/ostree-1/config_repo', logger=self.pool._logger)])
+                                    self.topdir + '/work/ostree-1/config_repo', compose=self.compose)])
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',
@@ -441,7 +441,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list,
                          [mock.call({'scm': 'git', 'repo': 'https://git.fedorahosted.org/git/fedora-atomic.git',
                                      'branch': 'f24', 'dir': '.'},
-                                    self.topdir + '/work/ostree-1/config_repo', logger=self.pool._logger)])
+                                    self.topdir + '/work/ostree-1/config_repo', compose=self.compose)])
         self.assertEqual(koji.get_runroot_cmd.call_args_list,
                          [mock.call('rrt', 'x86_64',
                                     ['pungi-make-ostree',

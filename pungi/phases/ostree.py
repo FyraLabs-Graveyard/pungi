@@ -72,7 +72,7 @@ class OSTreeThread(WorkerThread):
         self.logdir = compose.paths.log.topdir('%s/%s/ostree-%d' %
                                                (arch, variant.uid, self.num))
         repodir = os.path.join(workdir, 'config_repo')
-        self._clone_repo(repodir, config['config_url'], config.get('config_branch', 'master'))
+        self._clone_repo(compose, repodir, config['config_url'], config.get('config_branch', 'master'))
 
         comps_repo = compose.paths.work.comps_repo('$basearch', variant=variant, create_dir=False)
         repos = shortcuts.force_list(config['repo']) + self.repos
@@ -168,6 +168,6 @@ class OSTreeThread(WorkerThread):
             mounts=mounts, new_chroot=True,
             weight=compose.conf['runroot_weights'].get('ostree'))
 
-    def _clone_repo(self, repodir, url, branch):
+    def _clone_repo(self, compose, repodir, url, branch):
         scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
-                             repodir, logger=self.pool._logger)
+                             repodir, compose=compose)
