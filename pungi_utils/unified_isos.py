@@ -77,6 +77,7 @@ class UnifiedISO(object):
         self.comps = {}         # {arch/src: {variant: old_path}
         self.productid = {}     # {arch/stc: {variant: old_path}
         self.conf = self.read_config()
+        self.images = None      # productmd.images.Images instance
 
     def create(self, delete_temp=True):
         print("Creating unified ISOs for: {0}".format(self.compose_path))
@@ -95,8 +96,8 @@ class UnifiedISO(object):
         dest = os.path.join(self.compose_path, 'metadata', 'images.json')
         tmp_file = dest + '.tmp'
         try:
-            self.compose.images.dump(tmp_file)
-        except:
+            self.get_image_manifest().dump(tmp_file)
+        except Exception:
             # We failed, clean up the temporary file.
             if os.path.exists(tmp_file):
                 os.remove(tmp_file)
@@ -286,7 +287,7 @@ class UnifiedISO(object):
 
     def createiso(self):
         # create ISOs
-        im = self.compose.images
+        im = self.get_image_manifest()
 
         for typed_arch, ti in self.treeinfo.items():
             source_dir = os.path.join(self.temp_dir, "trees", typed_arch)
@@ -404,7 +405,19 @@ class UnifiedISO(object):
         return base_name
 
     def update_checksums(self):
-        make_checksums(self.compose_path, self.compose.images,
+        make_checksums(self.compose_path, self.get_image_manifest(),
                        self.conf.get('media_checksums', DEFAULT_CHECKSUMS),
                        self.conf.get('media_checksum_one_file', False),
                        self._get_base_filename)
+
+    def get_image_manifest(self):
+        if not self.images:
+            try:
+                self.images = self.compose.images
+            except RuntimeError:
+                self.images = productmd.images.Images()
+                self.images.compose.id = self.compose.info.compose.id
+                self.images.compose.type = self.compose.info.compose.type
+                self.images.compose.date = self.compose.info.compose.date
+                self.images.compose.respin = self.compose.info.compose.respin
+        return self.images
