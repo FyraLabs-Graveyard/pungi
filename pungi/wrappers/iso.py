@@ -246,7 +246,7 @@ def get_volume_id(path):
     raise RuntimeError("Could not read Volume ID")
 
 
-def get_graft_points(paths, exclusive_paths=None, exclude=None):
+def get_graft_points(compose, paths, exclusive_paths=None, exclude=None):
     # path priority in ascending order (1st = lowest prio)
     # paths merge according to priority
     # exclusive paths override whole dirs
@@ -265,6 +265,20 @@ def get_graft_points(paths, exclusive_paths=None, exclude=None):
     for i in exclusive_paths:
         tree = _scan_tree(i)
         result = _merge_trees(result, tree, exclusive=True)
+
+    # Resolve possible symlinks pointing outside of the compose.topdir.
+    # This fixes an issue if link_type is set to "symlink" and therefore
+    # the RPM packages are symbolic links to /mnt/koji filesystem.
+    # Without this, the symbolic links would be simply copied into the ISO
+    # without the real RPMs.
+    topdir = compose.paths.compose.topdir()
+    for key in result.keys():
+        path = result[key]
+        if os.path.islink(path):
+            real_path = os.readlink(path)
+            abspath = os.path.normpath(os.path.join(os.path.dirname(path), real_path))
+            if not abspath.startswith(topdir):
+                result[key] = abspath
 
     # TODO: exclude
     return result

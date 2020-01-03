@@ -562,7 +562,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'work/x86_64/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
         }
 
-        ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]]
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
         gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
 
         self.assertEqual(
@@ -589,7 +589,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call([os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -623,7 +623,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             "work/x86_64/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
         }
 
-        ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]]
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
         gp_file = os.path.join(self.topdir, "work/x86_64/iso/my.iso-graft-points")
 
         self.assertEqual(
@@ -652,7 +652,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call([os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -684,7 +684,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'work/src/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
         }
 
-        ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]]
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
         gp_file = os.path.join(self.topdir, 'work/src/iso/my.iso-graft-points')
 
         self.assertEqual(
@@ -711,7 +711,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call([os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -756,7 +756,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
             'images/efiboot.img': os.path.join(iso_dir, 'images/efiboot.img'),
         }
 
-        ggp.side_effect = lambda x: gp[x[0][len(self.topdir) + 1:]] if len(x) == 1 else bi_gp
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]] if len(x) == 1 else bi_gp
         gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
 
         self.assertEqual(
@@ -790,7 +790,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call([os.path.join(self.topdir, x)]) for x in gp] + [mock.call([bi_dir, iso_dir])]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp] + [
+                mock.call(self.compose, [bi_dir, iso_dir])]
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)

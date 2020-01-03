@@ -439,9 +439,9 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     write_discinfo(new_di_path, **data)
 
     if not disc_count or disc_count == 1:
-        data = iso.get_graft_points([tree_dir, iso_dir])
+        data = iso.get_graft_points(compose, [tree_dir, iso_dir])
     else:
-        data = iso.get_graft_points([iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
+        data = iso.get_graft_points(compose, [iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
 
     if compose.conf["createiso_break_hardlinks"]:
         compose.log_debug(
