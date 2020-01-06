@@ -861,9 +861,15 @@ Options
     to set up your Koji client profile. In the examples, the profile name is
     "koji", which points to Fedora's koji.fedoraproject.org.
 
+**global_runroot_method**
+    (*str*) -- global runroot method to use. If ``runroot_method`` is set
+    per Pungi phase using a dictionary, this option defines the default
+    runroot method for phases not mentioned in the ``runroot_method``
+    dictionary.
+
 **runroot_method**
-    (*str*) -- Runroot method to use. It can further specify the runroot method
-    in case the ``runroot`` is set to True.
+    (*str*|*dict*) -- Runroot method to use. It can further specify
+    the runroot method in case the ``runroot`` is set to True.
 
     Available methods are:
      * ``local`` -- runroot tasks are run locally
@@ -872,6 +878,19 @@ Options
        The ``runroot_ssh_hostnames`` for each architecture must be set and the
        user under which Pungi runs must be configured to login as ``runroot_ssh_username``
        using the SSH key.
+
+    The runroot method can also be set per Pungi phase using the dictionary
+    with phase name as key and runroot method as value. The default runroot
+    method is in this case defined by the ``global_runroot_method`` option.
+
+Example
+-------
+::
+
+    global_runroot_method = "koji"
+    runroot_method = {
+        "createiso": "local"
+    }
 
 **runroot_channel**
     (*str*) -- name of koji channel
