@@ -569,6 +569,8 @@ def make_schema():
             "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
 
+            "treeinfo_version": {"type": "string"},
+
             "compose_type": {
                 "type": "string",
                 "enum": COMPOSE_TYPES,

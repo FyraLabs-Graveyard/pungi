@@ -72,7 +72,9 @@ class BuildinstallPhase(PhaseBase):
         add_arch_template_var = []
         dracut_args = []
         rootfs_size = None
-        version = self.compose.conf["release_version"]
+        version = self.compose.conf.get(
+            "treeinfo_version", self.compose.conf["release_version"]
+        )
         for data in get_arch_variant_data(self.compose.conf, 'lorax_options', arch, variant):
             if not data.get('noupgrade', True):
                 noupgrade = False

@@ -224,7 +224,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     else:
         # release
         ti.release.name = compose.conf["release_name"]
-        ti.release.version = compose.conf["release_version"]
+        ti.release.version = compose.conf.get("treeinfo_version", compose.conf["release_version"])
         ti.release.short = compose.conf["release_short"]
         ti.release.is_layered = True if compose.conf.get("base_product_name", "") else False
         ti.release.type = compose.conf["release_type"].lower()

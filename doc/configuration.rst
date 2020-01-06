@@ -69,6 +69,10 @@ Options
 **release_internal** = False
     (*bool*) -- whether the compose is meant for public consumption
 
+**treeinfo_version**
+    (*str*) Version to display in ``.treeinfo`` files. If not configured, the
+    value from ``release_version`` will be used.
+
 
 Example
 -------
@@ -536,8 +540,9 @@ Options
       * ``add_template_var`` -- *[str]* (default empty)
       * ``add_arch_template_var`` -- *[str]* (default empty)
       * ``rootfs_size`` -- [*int*] (default empty)
-      * ``version`` -- [*str*] (default from ``release_version``) -- used as
-        ``--version`` and ``--release`` argument on the lorax command line
+      * ``version`` -- [*str*] (default from ``treeinfo_version`` or
+        ``release_version``) -- used as ``--version`` and ``--release``
+        argument on the lorax command line
       * ``dracut_args`` -- [*[str]*] (default empty) override arguments for
         dracut. Please note that if this option is used, lorax will not use any
         other arguments, so you have to provide a full list and can not just
