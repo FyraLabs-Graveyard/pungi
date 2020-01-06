@@ -223,7 +223,7 @@ def main():
     if not pungi.checks.check(conf):
         sys.exit(1)
     pungi.checks.check_umask(logger)
-    if not pungi.checks.check_skip_phases(logger, opts.skip_phase):
+    if not pungi.checks.check_skip_phases(logger, opts.skip_phase, opts.just_phase):
         sys.exit(1)
     errors, warnings = pungi.checks.validate(conf)
 

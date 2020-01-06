@@ -572,3 +572,31 @@ class TestUmask(unittest.TestCase):
             [mock.call.warning('Unusually strict umask detected (0%03o), '
                                'expect files with broken permissions.', 0o044)]
         )
+
+
+class TestCheckSkipPhases(unittest.TestCase):
+    def test_skip_phase(self):
+        logger = mock.Mock()
+        passed = checks.check_skip_phases(logger, ["gather"], [])
+        self.assertFalse(passed)
+        self.assertEqual(
+            logger.mock_calls,
+            [
+                mock.call.error(
+                    "gather phase is skipped but it's needed by createrepo phase"
+                )
+            ],
+        )
+
+    def test_just_phase(self):
+        logger = mock.Mock()
+        passed = checks.check_skip_phases(logger, [], ["gather"])
+        self.assertFalse(passed)
+        self.assertEqual(
+            logger.mock_calls,
+            [
+                mock.call.error(
+                    "pkgset phase is skipped but it's needed by gather phase"
+                )
+            ],
+        )

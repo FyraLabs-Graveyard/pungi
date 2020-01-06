@@ -131,11 +131,12 @@ def check_umask(logger):
                        'expect files with broken permissions.', mask)
 
 
-def check_skip_phases(logger, skip_phases):
+def check_skip_phases(logger, skip_phases, just_phases):
     """Check if skipped phases are needed by other phase.
 
     :param logger: logger instance for reporting error
     :param skip_phases: list of skipped phases
+    :param just_phases: list of phases just run
     :returns: True if checking passed else False
     """
     needed_by = {
@@ -144,7 +145,9 @@ def check_skip_phases(logger, skip_phases):
     }
     fail = False
     for k, v in needed_by.items():
-        if k in skip_phases and needed_by[k] not in skip_phases:
+        if (k in skip_phases and needed_by[k] not in skip_phases) or (
+            needed_by[k] in just_phases and k not in just_phases
+        ):
             fail = True
             logger.error("%s phase is skipped but it's needed by %s phase" % (k, v))
 
