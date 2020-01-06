@@ -45,8 +45,7 @@ def get_pkgset_from_repos(compose):
 
     profiler = compose.conf["gather_profiler"]
 
-    link_type = compose.conf["link_type"]
-    pool = LinkerPool.with_workers(10, link_type, logger=compose._logger)
+    pool = LinkerPool.with_workers(10, "hardlink-or-copy", logger=compose._logger)
 
     path_prefix = os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
     makedirs(path_prefix)
