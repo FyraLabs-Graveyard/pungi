@@ -116,7 +116,7 @@ def main(ns, persistdir, cachedir):
         if ks_repo.name not in gather_opts.lookaside_repos:
             continue
 
-        if not ks_repo.metalink:
+        if not getattr(ks_repo, "metalink", False):
             dnf_obj.add_repo(
                 ks_repo.name, ks_repo.baseurl, enablegroups=False
             )
@@ -129,7 +129,7 @@ def main(ns, persistdir, cachedir):
     for ks_repo in ksparser.handler.repo.repoList:
         if ks_repo.name in gather_opts.lookaside_repos:
             continue
-        if not ks_repo.metalink:
+        if not getattr(ks_repo, "metalink", False):
             dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
         else:
             dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl,
