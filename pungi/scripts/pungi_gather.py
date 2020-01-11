@@ -78,6 +78,18 @@ def get_parser():
         help="path to temp dir (default: /tmp)",
         default="/tmp",
     )
+    group.add_argument(
+        "--exclude-source",
+        action="store_true",
+        default=False,
+        help="exclude source packages from gathering",
+    )
+    group.add_argument(
+        "--exclude-debug",
+        action="store_true",
+        default=False,
+        help="exclude debug packages from gathering",
+    )
     return parser
 
 
@@ -106,6 +118,12 @@ def main(ns, persistdir, cachedir):
 
     if ns.nodeps:
         gather_opts.resolve_deps = False
+
+    if ns.exclude_source:
+        gather_opts.exclude_source = True
+
+    if ns.exclude_debug:
+        gather_opts.exclude_debug = True
 
     ksparser = pungi.ks.get_ksparser(ns.config)
 

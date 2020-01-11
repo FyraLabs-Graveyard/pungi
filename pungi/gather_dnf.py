@@ -69,6 +69,12 @@ class GatherOptions(pungi.common.OptionsBase):
         # lookaside repos; packages will be flagged accordingly
         self.lookaside_repos = []
 
+        # exclude source packages
+        self.exclude_source = False
+
+        # exclude debug packages
+        self.exclude_debug = False
+
         self.merge_options(**kwargs)
 
     def __str__(self):
@@ -83,7 +89,9 @@ class GatherOptions(pungi.common.OptionsBase):
             'multilib_blacklist=%d items' % len(self.multilib_blacklist),
             'multilib_whitelist=%d items' % len(self.multilib_whitelist),
             'lookaside_repos=%s' % self.lookaside_repos,
-            'prepopulate=%d items' % len(self.prepopulate)
+            'prepopulate=%d items' % len(self.prepopulate),
+            'exclude_source=%s' % self.exclude_source,
+            'exclude_debug=%s' % self.exclude_debug
         ]
         return '[\n%s\n]' % '\n'.join('    ' + l for l in lines)
 
@@ -531,7 +539,7 @@ class Gather(GatherBase):
     def add_debug_package_deps(self):
         added = set()
 
-        if not self.opts.resolve_deps:
+        if not self.opts.resolve_deps or self.opts.exclude_debug:
             return added
 
         for pkg in self.result_debug_packages.copy():
@@ -597,6 +605,8 @@ class Gather(GatherBase):
             return added
         if not self.opts.selfhosting:
             return added
+        if self.opts.exclude_source:
+            return added
 
         for pkg in self.result_source_packages:
             assert pkg is not None
@@ -631,6 +641,9 @@ class Gather(GatherBase):
         Return newly added source packages.
         """
         added = set()
+
+        if self.opts.exclude_source:
+            return added
 
         for pkg in self.result_binary_packages:
             assert pkg is not None
@@ -668,6 +681,9 @@ class Gather(GatherBase):
         Return newly added debug packages.
         """
         added = set()
+
+        if self.opts.exclude_debug:
+            return added
 
         for pkg in self.result_binary_packages:
             assert pkg is not None
