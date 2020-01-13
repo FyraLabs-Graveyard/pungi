@@ -2504,3 +2504,57 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
                 "dummy-lvm2-debuginfo-2.02.84-4.x86_64.rpm",
             ],
         )
+
+    def test_exclude_source(self):
+        packages = ["dummy-bash"]
+        pkg_map = self.go(packages, None, exclude_source=True)
+
+        six.assertCountEqual(
+            self,
+            pkg_map["rpm"],
+            [
+                "dummy-basesystem-10.0-6.noarch.rpm",
+                "dummy-bash-4.2.37-6.x86_64.rpm",
+                "dummy-filesystem-4.2.37-6.x86_64.rpm",
+                "dummy-glibc-2.14-5.x86_64.rpm",
+                "dummy-glibc-common-2.14-5.x86_64.rpm",
+            ],
+        )
+        six.assertCountEqual(self, pkg_map["srpm"], [])
+        six.assertCountEqual(
+            self,
+            pkg_map["debuginfo"],
+            [
+                "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
+                "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
+                "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",
+                "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",
+            ],
+        )
+
+    def test_exclude_debug(self):
+        packages = ["dummy-bash"]
+        pkg_map = self.go(packages, None, exclude_debug=True)
+
+        six.assertCountEqual(
+            self,
+            pkg_map["rpm"],
+            [
+                "dummy-basesystem-10.0-6.noarch.rpm",
+                "dummy-bash-4.2.37-6.x86_64.rpm",
+                "dummy-filesystem-4.2.37-6.x86_64.rpm",
+                "dummy-glibc-2.14-5.x86_64.rpm",
+                "dummy-glibc-common-2.14-5.x86_64.rpm",
+            ],
+        )
+        six.assertCountEqual(
+            self,
+            pkg_map["srpm"],
+            [
+                "dummy-basesystem-10.0-6.src.rpm",
+                "dummy-bash-4.2.37-6.src.rpm",
+                "dummy-filesystem-4.2.37-6.src.rpm",
+                "dummy-glibc-2.14-5.src.rpm",
+            ],
+        )
+        six.assertCountEqual(self, pkg_map["debuginfo"], [])
