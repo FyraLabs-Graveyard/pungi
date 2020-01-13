@@ -1597,7 +1597,7 @@ they are not scratch builds).
 
 
     The configuration will pass other attributes directly to the Koji task.
-    This includes ``name``, ``version``, ``scratch`` and ``priority``.
+    This includes ``scratch`` and ``priority``.
 
     A value for ``yum_repourls`` will be created automatically and point at a
     repository in the current compose. You can add extra repositories with
@@ -1629,8 +1629,6 @@ Example config
             "git_branch": "f24-docker",
 
             # optional
-            "name": "fedora-docker-base",
-            "version": "24",
             "repo": ["Everything", "https://example.com/extra-repo.repo"],
             # This will result in three repo urls being passed to the task.
             # They will be in this order: Server, Everything, example.com/

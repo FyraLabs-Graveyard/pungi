@@ -526,8 +526,6 @@ def make_schema():
                 "properties": {
                     "url": {"type": "url"},
                     "target": {"type": "string"},
-                    "name": {"type": "string"},
-                    "version": {"type": "string"},
                     "scratch": {"type": "boolean"},
                     "priority": {"type": "number"},
                     "repo": {
