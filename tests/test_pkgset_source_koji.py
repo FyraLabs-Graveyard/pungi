@@ -368,6 +368,58 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         expected_calls = [mock.call(mock_build_ids[0]["id"]), mock.call(mock_build_ids[1]["id"])]
         self.koji_wrapper.koji_proxy.getBuild.mock_calls == expected_calls
 
+    def test_get_koji_modules_ignore_deleted(self):
+        mock_build_ids = [
+            {"id": 1065873, "name": "testmodule2-master_dash-20180406051653.96c371af"}
+        ]
+        mock_extra = {
+            "typeinfo": {
+                "module": {
+                    "content_koji_tag": "module-b62270b82443edde",
+                    "modulemd_str": mock.Mock(),
+                    "name": "testmodule2",
+                    "stream": "master",
+                    "version": "20180406051653",
+                    "context": "96c371af",
+                }
+            }
+        }
+        mock_build_md = [
+            {
+                "id": 1065873,
+                "epoch": None,
+                "extra": mock_extra,
+                "name": "testmodule2",
+                "nvr": "testmodule2-master_dash-20180406051653.96c371af",
+                "release": "20180406051653.96c371af",
+                "state": 2,
+                "version": "master_dash",
+                "completion_ts": 1433473124.0,
+            }
+        ]
+
+        self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
+        self.koji_wrapper.koji_proxy.getBuild.return_value = mock_build_md[0]
+        event = {"id": 12345, "ts": 1533473124.0}
+
+        with self.assertRaises(ValueError) as ctx:
+            source_koji.get_koji_modules(
+                self.compose, self.koji_wrapper, event, "testmodule2:master-dash"
+            )
+
+        self.compose.log_debug.assert_called_once_with(
+            "Module build %s has been deleted, ignoring it." % mock_build_ids[0]["name"]
+        )
+
+        self.assertIn("No module build found", str(ctx.exception))
+
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(
+            "testmodule2-master_dash-*", "build", "glob"
+        )
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.listArchives.assert_not_called()
+        self.koji_wrapper.koji_proxy.listRPMs.assert_not_called()
+
 
 class TestSourceKoji(helpers.PungiTestCase):
 

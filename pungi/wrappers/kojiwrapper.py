@@ -30,6 +30,9 @@ from .. import util
 from ..arch_utils import getBaseArch
 
 
+KOJI_BUILD_DELETED = koji.BUILD_STATES['DELETED']
+
+
 class KojiWrapper(object):
     lock = threading.Lock()
 

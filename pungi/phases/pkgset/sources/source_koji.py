@@ -149,6 +149,12 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
         except KeyError:
             continue
 
+        if md['state'] == pungi.wrappers.kojiwrapper.KOJI_BUILD_DELETED:
+            compose.log_debug(
+                "Module build %s has been deleted, ignoring it." % build["name"]
+            )
+            continue
+
         modules.append(md)
 
     if not modules:
