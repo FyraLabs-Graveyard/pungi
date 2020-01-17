@@ -425,26 +425,26 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
 class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False, task_id=False)
-        self.assertEqual(len(cmd), 7)
+        self.assertEqual(len(cmd), 8)
         self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; date')
-        six.assertCountEqual(self, cmd[3:-3], ["--channel-override=runroot-local"])
+        six.assertCountEqual(self, cmd[4:-3], ["--channel-override=runroot-local"])
 
     def test_get_cmd_full(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],
                                         quiet=True, channel='chan',
                                         packages=['lorax', 'some_other_package'],
                                         mounts=['/tmp'], weight=1000)
-        self.assertEqual(len(cmd), 14)
+        self.assertEqual(len(cmd), 15)
         self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo \'&\'')
         six.assertCountEqual(
             self,
-            cmd[3:-3],
+            cmd[4:-3],
             ["--channel-override=chan", "--quiet", "--use-shell",
              "--task-id", "--weight=1000", "--package=some_other_package",
              "--package=lorax", "--mount=/tmp"],
@@ -456,7 +456,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                                         quiet=True, channel='chan',
                                         packages=['lorax', 'some_other_package'],
                                         mounts=['/tmp'], weight=1000, chown_paths=["/output dir", "/foo"])
-        self.assertEqual(len(cmd), 14)
+        self.assertEqual(len(cmd), 15)
         self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
@@ -466,7 +466,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         )
         six.assertCountEqual(
             self,
-            cmd[3:-3],
+            cmd[4:-3],
             ["--channel-override=chan", "--quiet", "--use-shell",
              "--task-id", "--weight=1000", "--package=some_other_package",
              "--package=lorax", "--mount=/tmp"],
@@ -476,52 +476,30 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_run_runroot_cmd_no_task_id(self, run):
         cmd = ['koji', 'runroot']
         output = 'Output ...'
-        run.return_value = (0, output)
+        run.return_value = (1, output)
 
-        result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
+        with self.assertRaises(RuntimeError) as ctx:
+            self.koji.run_runroot_cmd(cmd)
+
         self.assertEqual(
             run.call_args_list,
             [mock.call(cmd, can_fail=True, env=None, logfile=None, show_cmd=True,
                        universal_newlines=True)]
+        )
+        self.assertEqual(
+            "Could not find task ID in output. Command '%s' returned '%s'." % (" ".join(cmd), output),
+            str(ctx.exception)
         )
 
     @mock.patch('pungi.wrappers.kojiwrapper.run')
     def test_run_runroot_cmd_with_task_id(self, run):
         cmd = ['koji', 'runroot', '--task-id']
-        output = 'Output ...\n'
-        run.return_value = (0, '1234\n' + output)
+        run.return_value = (0, '1234\n')
+        output = "Output ..."
+        self.koji._wait_for_task = mock.Mock(return_value=(0, output))
 
         result = self.koji.run_runroot_cmd(cmd)
         self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
-        self.assertEqual(
-            run.call_args_list,
-            [mock.call(cmd, can_fail=True, env=None, logfile=None, show_cmd=True,
-                       universal_newlines=True)]
-        )
-
-    @mock.patch('pungi.wrappers.kojiwrapper.run')
-    def test_run_runroot_cmd_with_task_id_and_fail(self, run):
-        cmd = ['koji', 'runroot', '--task-id']
-        output = 'You are not authorized to run this\n'
-        run.return_value = (1, output)
-
-        result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': None})
-        self.assertEqual(
-            run.call_args_list,
-            [mock.call(cmd, can_fail=True, env=None, logfile=None, show_cmd=True,
-                       universal_newlines=True)]
-        )
-
-    @mock.patch('pungi.wrappers.kojiwrapper.run')
-    def test_run_runroot_cmd_with_task_id_and_fail_but_emit_id(self, run):
-        cmd = ['koji', 'runroot', '--task-id']
-        output = 'Nope, does not work.\n'
-        run.return_value = (1, '12345\n' + output)
-
-        result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result, {'retcode': 1, 'output': output, 'task_id': 12345})
         self.assertEqual(
             run.call_args_list,
             [mock.call(cmd, can_fail=True, env=None, logfile=None, show_cmd=True,
@@ -538,10 +516,11 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.koji.koji_module.config.keytab = 'foo'
         cmd = ['koji', 'runroot']
         output = 'Output ...'
-        run.return_value = (0, output)
+        run.return_value = (0, '1234\n')
+        self.koji._wait_for_task = mock.Mock(return_value=(0, output))
 
         result = self.koji.run_runroot_cmd(cmd)
-        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': None})
+        self.assertDictEqual(result, {'retcode': 0, 'output': output, 'task_id': 1234})
         self.assertEqual(
             run.call_args_list,
             [mock.call(cmd, can_fail=True, env={'KRB5CCNAME': 'DIR:/tmp/foo', 'FOO': 'BAR'},

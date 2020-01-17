@@ -73,7 +73,7 @@ class KojiWrapper(object):
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True,
                         channel=None, packages=None, mounts=None, weight=None,
                         task_id=True, new_chroot=False, chown_paths=None):
-        cmd = self._get_cmd("runroot")
+        cmd = self._get_cmd("runroot", "--nowait")
 
         if quiet:
             cmd.append("--quiet")
@@ -152,15 +152,18 @@ class KojiWrapper(object):
         with self.get_koji_cmd_env() as env:
             retcode, output = run(command, can_fail=True, logfile=log_file,
                                   show_cmd=True, env=env, universal_newlines=True)
-        if "--task-id" in command:
-            first_line = output.splitlines()[0]
-            if re.match(r'^\d+$', first_line):
-                task_id = int(first_line)
-                # Remove first line from the output, preserving any trailing newlines.
-                output_ends_with_eol = output.endswith("\n")
-                output = "\n".join(output.splitlines()[1:])
-                if output_ends_with_eol:
-                    output += "\n"
+
+        first_line = output.splitlines()[0]
+        match = re.search(r'^(\d+)$', first_line)
+        if not match:
+            raise RuntimeError(
+                "Could not find task ID in output. Command '%s' returned '%s'."
+                % (" ".join(command), output)
+            )
+
+        task_id = int(match.groups()[0])
+
+        retcode, output = self._wait_for_task(task_id, logfile=log_file)
 
         return {
             "retcode": retcode,
