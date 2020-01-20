@@ -623,7 +623,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call(
                 'rrt', 'x86_64', self.cmd, channel=None,
-                use_shell=True, task_id=True,
+                use_shell=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
                 chown_paths=[
                     destdir,
@@ -694,7 +694,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call(
                 "rrt", "amd64", self.cmd, channel=None,
-                use_shell=True, task_id=True,
+                use_shell=True,
                 packages=['anaconda'], mounts=[self.topdir], weight=None,
                 chown_paths=[destdir],
             )])
@@ -864,7 +864,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
             get_runroot_cmd.mock_calls,
             [mock.call(
                 'rrt', 'x86_64', self.cmd, channel=None,
-                use_shell=True, task_id=True,
+                use_shell=True,
                 packages=['lorax'], mounts=[self.topdir], weight=123,
                 chown_paths=[
                     "/buildinstall_topdir/buildinstall-%s/x86_64/Server" % os.path.basename(self.topdir),

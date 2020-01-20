@@ -84,7 +84,7 @@ class Runroot(kobo.log.LoggingBase):
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_runroot_cmd(
             runroot_tag, arch, command,
-            channel=runroot_channel, use_shell=True, task_id=True,
+            channel=runroot_channel, use_shell=True,
             packages=packages, **kwargs
         )
 

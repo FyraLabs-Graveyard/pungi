@@ -424,13 +424,13 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
 
 class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
-        cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False, task_id=False)
-        self.assertEqual(len(cmd), 8)
-        self.assertEqual(cmd[:3], ['koji', '--profile=custom-koji', 'runroot'])
+        cmd = self.koji.get_runroot_cmd('tgt', 's390x', 'date', use_shell=False)
+        self.assertEqual(len(cmd), 9)
+        self.assertEqual(cmd[:5], ['koji', '--profile=custom-koji', 'runroot', '--nowait', '--task-id'])
         self.assertEqual(cmd[-3], 'tgt')
         self.assertEqual(cmd[-2], 's390x')
         self.assertEqual(cmd[-1], 'rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; date')
-        six.assertCountEqual(self, cmd[4:-3], ["--channel-override=runroot-local"])
+        six.assertCountEqual(self, cmd[5:-3], ["--channel-override=runroot-local"])
 
     def test_get_cmd_full(self):
         cmd = self.koji.get_runroot_cmd('tgt', 's390x', ['/bin/echo', '&'],

@@ -156,7 +156,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                                     'rm -rf %s && %s' % (outdir, ' '.join(lorax_cmd)),
                                     channel=None, mounts=[self.topdir],
                                     packages=['pungi', 'lorax', 'ostree'] + extra_pkgs,
-                                    task_id=True, use_shell=True, weight=weight,
+                                    use_shell=True, weight=weight,
                                     chown_paths=[outdir])])
         self.assertEqual(koji.run_runroot_cmd.call_args_list,
                          [mock.call(koji.get_runroot_cmd.return_value,

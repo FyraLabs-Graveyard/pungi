@@ -72,8 +72,8 @@ class KojiWrapper(object):
 
     def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True,
                         channel=None, packages=None, mounts=None, weight=None,
-                        task_id=True, new_chroot=False, chown_paths=None):
-        cmd = self._get_cmd("runroot", "--nowait")
+                        new_chroot=False, chown_paths=None):
+        cmd = self._get_cmd("runroot", "--nowait", "--task-id")
 
         if quiet:
             cmd.append("--quiet")
@@ -83,9 +83,6 @@ class KojiWrapper(object):
 
         if use_shell:
             cmd.append("--use-shell")
-
-        if task_id:
-            cmd.append("--task-id")
 
         if channel:
             cmd.append("--channel-override=%s" % channel)
@@ -142,11 +139,11 @@ class KojiWrapper(object):
             yield None
 
     def run_runroot_cmd(self, command, log_file=None):
-        """
-        Run koji runroot command and wait for results.
+        """Run koji runroot command and wait for results.
 
-        If the command specified --task-id, and the first line of output
-        contains the id, it will be captured and returned.
+        :param list command: runroot command returned by self.get_runroot_cmd()
+        :param str log_file: save logs to log_file
+        :return dict: {"retcode": 0, "output": "", "task_id": 1}
         """
         task_id = None
         with self.get_koji_cmd_env() as env:
