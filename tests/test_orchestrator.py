@@ -730,9 +730,7 @@ class TestPrepareComposeDir(PungiTestCase):
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "logs")))
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "parts")))
         self.assertTrue(os.path.isdir(os.path.join(self.topdir, "work/global")))
-        self.assertFileContent(
-            os.path.join(self.topdir, "STATUS"), "STARTED"
-        )
+        self.assertFileContent(os.path.join(self.topdir, "STATUS"), "STARTED")
 
     def test_restarting_compose(self, gtd):
         args = mock.Mock(name="args", spec=["label", "compose_path"])
@@ -914,7 +912,7 @@ class TestSendNotification(BaseTestCase):
         self.assertEqual(len(notif.mock_calls), 2)
         self.assertEqual(notif.mock_calls[0], mock.call(["handler"]))
         _, args, kwargs = notif.mock_calls[1]
-        self.assertEqual(args, ("status-change", ))
+        self.assertEqual(args, ("status-change",))
         self.assertEqual(
             kwargs,
             {

@@ -23,23 +23,25 @@ from pungi.module_util import Modulemd
 
 
 class BaseTestCase(unittest.TestCase):
-
     def assertFilesEqual(self, fn1, fn2):
-        with open(fn1, 'rb') as f1:
-            lines1 = f1.read().decode('utf-8').splitlines()
-        with open(fn2, 'rb') as f2:
-            lines2 = f2.read().decode('utf-8').splitlines()
-        diff = '\n'.join(difflib.unified_diff(lines1, lines2,
-                                              fromfile='EXPECTED', tofile='ACTUAL'))
-        self.assertEqual(diff, '', 'Files differ:\n' + diff)
+        with open(fn1, "rb") as f1:
+            lines1 = f1.read().decode("utf-8").splitlines()
+        with open(fn2, "rb") as f2:
+            lines2 = f2.read().decode("utf-8").splitlines()
+        diff = "\n".join(
+            difflib.unified_diff(lines1, lines2, fromfile="EXPECTED", tofile="ACTUAL")
+        )
+        self.assertEqual(diff, "", "Files differ:\n" + diff)
 
     def assertFileContent(self, fn, expected):
-        with open(fn, 'rb') as f:
-            lines = f.read().decode('utf-8').splitlines()
-        diff = '\n'.join(difflib.unified_diff(
-            lines, expected.splitlines(), fromfile='EXPECTED', tofile='ACTUAL')
+        with open(fn, "rb") as f:
+            lines = f.read().decode("utf-8").splitlines()
+        diff = "\n".join(
+            difflib.unified_diff(
+                lines, expected.splitlines(), fromfile="EXPECTED", tofile="ACTUAL"
+            )
         )
-        self.assertEqual(diff, '', 'Files differ:\n' + diff)
+        self.assertEqual(diff, "", "Files differ:\n" + diff)
 
 
 class PungiTestCase(BaseTestCase):
@@ -72,7 +74,7 @@ class PungiTestCase(BaseTestCase):
 class MockVariant(mock.Mock):
     def __init__(self, is_empty=False, name=None, *args, **kwargs):
         super(MockVariant, self).__init__(*args, is_empty=is_empty, **kwargs)
-        self.parent = kwargs.get('parent', None)
+        self.parent = kwargs.get("parent", None)
         self.arch_mmds = {}
         self.module_uid_to_koji_tag = {}
         self.variants = {}
@@ -85,8 +87,11 @@ class MockVariant(mock.Mock):
         return self.uid
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in list(self.variants.values())
-                if (not arch or arch in v.arches) and (not types or v.type in types)]
+        return [
+            v
+            for v in list(self.variants.values())
+            if (not arch or arch in v.arches) and (not types or v.type in types)
+        ]
 
     def get_modules(self, arch=None, types=None):
         return []
@@ -133,22 +138,19 @@ class IterableMock(mock.Mock):
 class DummyCompose(object):
     def __init__(self, topdir, config):
         self.supported = True
-        self.compose_date = '20151203'
-        self.compose_type_suffix = '.t'
-        self.compose_type = 'test'
+        self.compose_date = "20151203"
+        self.compose_type_suffix = ".t"
+        self.compose_type = "test"
         self.compose_respin = 0
-        self.compose_id = 'Test-20151203.0.t'
+        self.compose_id = "Test-20151203.0.t"
         self.compose_label = None
         self.compose_label_major_version = None
-        self.image_release = '20151203.t.0'
-        self.image_version = '25'
+        self.image_release = "20151203.t.0"
+        self.image_version = "25"
         self.ci_base = mock.Mock(
-            release_id='Test-1.0',
+            release_id="Test-1.0",
             release=mock.Mock(
-                short='test',
-                version='1.0',
-                is_layered=False,
-                type_suffix=''
+                short="test", version="1.0", is_layered=False, type_suffix=""
             ),
         )
         self.topdir = topdir
@@ -157,12 +159,27 @@ class DummyCompose(object):
         self.paths = paths.Paths(self)
         self.has_comps = True
         self.variants = {
-            'Server': MockVariant(uid='Server', arches=['x86_64', 'amd64'],
-                                  type='variant', id='Server', name='Server'),
-            'Client': MockVariant(uid='Client', arches=['amd64'],
-                                  type='variant', id='Client', name='Client'),
-            'Everything': MockVariant(uid='Everything', arches=['x86_64', 'amd64'],
-                                      type='variant', id='Everything', name='Everything'),
+            "Server": MockVariant(
+                uid="Server",
+                arches=["x86_64", "amd64"],
+                type="variant",
+                id="Server",
+                name="Server",
+            ),
+            "Client": MockVariant(
+                uid="Client",
+                arches=["amd64"],
+                type="variant",
+                id="Client",
+                name="Client",
+            ),
+            "Everything": MockVariant(
+                uid="Everything",
+                arches=["x86_64", "amd64"],
+                type="variant",
+                id="Everything",
+                name="Everything",
+            ),
         }
         self.all_variants = self.variants.copy()
 
@@ -174,13 +191,13 @@ class DummyCompose(object):
         self.log_error = mock.Mock()
         self.log_debug = mock.Mock()
         self.log_warning = mock.Mock()
-        self.get_image_name = mock.Mock(return_value='image-name')
+        self.get_image_name = mock.Mock(return_value="image-name")
         self.image = mock.Mock(
-            path='Client/i386/iso/image.iso', can_fail=False, size=123, _max_size=None,
+            path="Client/i386/iso/image.iso", can_fail=False, size=123, _max_size=None,
         )
-        self.im = mock.Mock(images={'Client': {'amd64': [self.image]}})
+        self.im = mock.Mock(images={"Client": {"amd64": [self.image]}})
         self.old_composes = []
-        self.config_dir = '/home/releng/config'
+        self.config_dir = "/home/releng/config"
         self.notifier = None
         self.attempt_deliverable = mock.Mock()
         self.fail_deliverable = mock.Mock()
@@ -189,23 +206,32 @@ class DummyCompose(object):
         self.cache_region = None
 
     def setup_optional(self):
-        self.all_variants['Server-optional'] = MockVariant(
-            uid='Server-optional', arches=['x86_64'], type='optional')
-        self.all_variants['Server-optional'].parent = self.variants['Server']
-        self.variants['Server'].variants['optional'] = self.all_variants['Server-optional']
+        self.all_variants["Server-optional"] = MockVariant(
+            uid="Server-optional", arches=["x86_64"], type="optional"
+        )
+        self.all_variants["Server-optional"].parent = self.variants["Server"]
+        self.variants["Server"].variants["optional"] = self.all_variants[
+            "Server-optional"
+        ]
 
     def setup_addon(self):
-        self.all_variants['Server-HA'] = MockVariant(
-            uid='Server-HA', arches=['x86_64'], type='addon', is_empty=False)
-        self.all_variants['Server-HA'].parent = self.variants['Server']
-        self.variants['Server'].variants['HA'] = self.all_variants['Server-HA']
+        self.all_variants["Server-HA"] = MockVariant(
+            uid="Server-HA", arches=["x86_64"], type="addon", is_empty=False
+        )
+        self.all_variants["Server-HA"].parent = self.variants["Server"]
+        self.variants["Server"].variants["HA"] = self.all_variants["Server-HA"]
 
     def get_variants(self, arch=None, types=None):
-        return [v for v in list(self.all_variants.values())
-                if (not arch or arch in v.arches) and (not types or v.type in types)]
+        return [
+            v
+            for v in list(self.all_variants.values())
+            if (not arch or arch in v.arches) and (not types or v.type in types)
+        ]
 
     def can_fail(self, variant, arch, deliverable):
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
+        failable = get_arch_variant_data(
+            self.conf, "failable_deliverables", arch, variant
+        )
         return deliverable in failable
 
     def get_arches(self):
@@ -221,19 +247,19 @@ class DummyCompose(object):
 def touch(path, content=None):
     """Helper utility that creates an dummy file in given location. Directories
     will be created."""
-    content = content or (path + '\n')
+    content = content or (path + "\n")
     try:
         os.makedirs(os.path.dirname(path))
     except OSError:
         pass
     if not isinstance(content, six.binary_type):
         content = content.encode()
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(content)
     return path
 
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
+FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 
 def copy_fixture(fixture_name, dest):
@@ -243,27 +269,25 @@ def copy_fixture(fixture_name, dest):
 
 
 def boom(*args, **kwargs):
-    raise Exception('BOOM')
+    raise Exception("BOOM")
 
 
-def mk_boom(cls=Exception, msg='BOOM'):
+def mk_boom(cls=Exception, msg="BOOM"):
     def b(*args, **kwargs):
         raise cls(msg)
+
     return b
 
 
-PKGSET_REPOS = dict(
-    pkgset_source='repos',
-    pkgset_repos={},
-)
+PKGSET_REPOS = dict(pkgset_source="repos", pkgset_repos={},)
 
 BASE_CONFIG = dict(
-    release_short='test',
-    release_name='Test',
-    release_version='1.0',
-    variants_file='variants.xml',
-    createrepo_checksum='sha256',
-    gather_method='deps',
+    release_short="test",
+    release_name="Test",
+    release_version="1.0",
+    variants_file="variants.xml",
+    createrepo_checksum="sha256",
+    gather_method="deps",
 )
 
 

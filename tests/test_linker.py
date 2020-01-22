@@ -67,7 +67,6 @@ class TestLinkerBase(helpers.PungiTestCase):
 
 
 class TestLinkerSymlink(TestLinkerBase):
-
     def test_symlink(self):
         path_dst = os.path.join(self.topdir, "symlink")
 
@@ -81,7 +80,9 @@ class TestLinkerSymlink(TestLinkerBase):
         self.linker.symlink(self.path_src, path_dst)
 
         # linking existing file with different target must fail
-        self.assertRaises(OSError, self.linker.symlink, self.path_src, path_dst, relative=False)
+        self.assertRaises(
+            OSError, self.linker.symlink, self.path_src, path_dst, relative=False
+        )
 
     def test_symlink_different_type(self):
         # try to symlink 'symlink' -> 'another-file' ('symlink' already exists
@@ -111,7 +112,6 @@ class TestLinkerSymlink(TestLinkerBase):
 
 
 class TestLinkerHardlink(TestLinkerBase):
-
     def test_hardlink(self):
         path_dst = os.path.join(self.topdir, "hardlink")
 
@@ -146,7 +146,7 @@ class TestLinkerCopy(TestLinkerBase):
 
     def test_copy_to_existing_file_with_different_content(self):
         path_dst = os.path.join(self.topdir, "b")
-        helpers.touch(path_dst, 'xxx')
+        helpers.touch(path_dst, "xxx")
         self.assertRaises(Exception, self.linker.copy, self.path_src, path_dst)
 
     def test_copy_to_directory(self):
@@ -260,27 +260,37 @@ class TestLinkerLink(TestLinkerBase):
         self.assertEqual(len(self.logger.mock_calls), 1)
 
     def test_link_file_to_existing_destination(self):
-        self.assertRaises(OSError, self.linker.link,
-                          self.file1, self.file2, link_type="hardlink")
+        self.assertRaises(
+            OSError, self.linker.link, self.file1, self.file2, link_type="hardlink"
+        )
 
     def test_symlink_file_to_existing_destination(self):
-        self.assertRaises(OSError, self.linker.link,
-                          self.file1, self.file2, link_type="symlink")
+        self.assertRaises(
+            OSError, self.linker.link, self.file1, self.file2, link_type="symlink"
+        )
 
     def test_copy_file_to_existing_destination(self):
-        self.assertRaises(OSError, self.linker.link,
-                          self.file1, self.file2, link_type="copy")
+        self.assertRaises(
+            OSError, self.linker.link, self.file1, self.file2, link_type="copy"
+        )
 
     def test_hardlink_or_copy_file_to_existing_destination(self):
-        self.assertRaises(OSError, self.linker.link,
-                          self.file1, self.file2, link_type="hardlink-or-copy")
+        self.assertRaises(
+            OSError,
+            self.linker.link,
+            self.file1,
+            self.file2,
+            link_type="hardlink-or-copy",
+        )
 
     def test_link_dir_hardlink(self):
         self.linker.link(self.src_dir, self.dst_dir, link_type="hardlink")
         self.assertTrue(os.path.isfile(self.dst_file1))
         self.assertTrue(self.same_inode(self.file1, self.dst_file1))
         self.assertTrue(self.same_inode(self.file3, self.dst_file3))
-        self.assertSameStat(os.path.dirname(self.file3), os.path.dirname(self.dst_file3))
+        self.assertSameStat(
+            os.path.dirname(self.file3), os.path.dirname(self.dst_file3)
+        )
 
         # always preserve symlinks
         self.assertEqual(os.readlink(self.dst_symlink1), "../file1")
@@ -292,7 +302,9 @@ class TestLinkerLink(TestLinkerBase):
         self.assertTrue(os.path.isfile(self.dst_file1))
         self.assertFalse(self.same_inode(self.file1, self.dst_file1))
         self.assertFalse(self.same_inode(self.file3, self.dst_file3))
-        self.assertSameStat(os.path.dirname(self.file3), os.path.dirname(self.dst_file3))
+        self.assertSameStat(
+            os.path.dirname(self.file3), os.path.dirname(self.dst_file3)
+        )
 
         # always preserve symlinks
         self.assertEqual(os.readlink(self.dst_symlink1), "../file1")
@@ -323,7 +335,9 @@ class TestLinkerLink(TestLinkerBase):
         self.assertTrue(os.path.isfile(self.dst_file1))
         self.assertTrue(os.path.islink(self.dst_file1))
         self.assertEqual(os.readlink(self.dst_file1), self.file1)
-        self.assertSameStat(os.path.dirname(self.file3), os.path.dirname(self.dst_file3))
+        self.assertSameStat(
+            os.path.dirname(self.file3), os.path.dirname(self.dst_file3)
+        )
         self.assertTrue(os.path.isdir(os.path.dirname(self.file3)))
 
         # always preserve symlinks

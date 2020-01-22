@@ -32,7 +32,6 @@ class TestHeadTailSplit(unittest.TestCase):
 
 
 class TestPathMatch(unittest.TestCase):
-
     def setUp(self):
         self.pm = PathMatch()
 
@@ -56,7 +55,9 @@ class TestPathMatch(unittest.TestCase):
         self.pm["/*/*"] = "/star/star1"
         self.assertEqual(list(self.pm._patterns.keys()), ["*"])
         self.assertEqual(list(self.pm._patterns["*"]._final_patterns.keys()), ["*"])
-        self.assertEqual(self.pm._patterns["*"]._final_patterns["*"]._values, ["/star/star1"])
+        self.assertEqual(
+            self.pm._patterns["*"]._final_patterns["*"]._values, ["/star/star1"]
+        )
         self.assertEqual(sorted(self.pm["/lib/asd"]), ["/star/star1"])
 
         self.pm["/*"] = "/star2"

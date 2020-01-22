@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import mock
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -15,7 +16,6 @@ from pungi import checks
 
 
 class CheckDependenciesTestCase(unittest.TestCase):
-
     def dont_find(self, paths):
         return lambda path: path not in paths
 
@@ -23,149 +23,147 @@ class CheckDependenciesTestCase(unittest.TestCase):
         def custom_exists(path):
             return False
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
                 exists.side_effect = custom_exists
                 result = checks.check({})
 
-        self.assertGreater(len(out.getvalue().strip().split('\n')), 1)
+        self.assertGreater(len(out.getvalue().strip().split("\n")), 1)
         self.assertFalse(result)
 
     def test_all_deps_ok(self):
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('platform.machine') as machine:
-                machine.return_value = 'x86_64'
-                with mock.patch('os.path.exists') as exists:
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("platform.machine") as machine:
+                machine.return_value = "x86_64"
+                with mock.patch("os.path.exists") as exists:
                     exists.side_effect = self.dont_find([])
                     result = checks.check({})
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_does_not_require_jigdo_if_not_configured(self):
-        conf = {
-            'create_jigdo': False
-        }
+        conf = {"create_jigdo": False}
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('platform.machine') as machine:
-                machine.return_value = 'x86_64'
-                with mock.patch('os.path.exists') as exists:
-                    exists.side_effect = self.dont_find(['/usr/bin/jigdo-lite'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("platform.machine") as machine:
+                machine.return_value = "x86_64"
+                with mock.patch("os.path.exists") as exists:
+                    exists.side_effect = self.dont_find(["/usr/bin/jigdo-lite"])
                     result = checks.check(conf)
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_without_productimg_phase(self):
         conf = {
-            'bootable': True,
-            'productimg': False,
-            'runroot_tag': 'dummy_tag',
+            "bootable": True,
+            "productimg": False,
+            "runroot_tag": "dummy_tag",
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/isohybrid"])
                 result = checks.check(conf)
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_on_not_bootable(self):
         conf = {
-            'bootable': False,
-            'runroot_tag': 'dummy_tag',
+            "bootable": False,
+            "runroot_tag": "dummy_tag",
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/isohybrid"])
                 result = checks.check(conf)
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_isohybrid_not_required_on_arm(self):
         conf = {
-            'buildinstall_method': 'lorax',
-            'runroot_tag': '',
+            "buildinstall_method": "lorax",
+            "runroot_tag": "",
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('platform.machine') as machine:
-                machine.return_value = 'armhfp'
-                with mock.patch('os.path.exists') as exists:
-                    exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("platform.machine") as machine:
+                machine.return_value = "armhfp"
+                with mock.patch("os.path.exists") as exists:
+                    exists.side_effect = self.dont_find(["/usr/bin/isohybrid"])
                     result = checks.check(conf)
 
-        self.assertRegexpMatches(out.getvalue(), r'^Not checking.*Expect failures.*$')
+        self.assertRegexpMatches(out.getvalue(), r"^Not checking.*Expect failures.*$")
         self.assertTrue(result)
 
     def test_isohybrid_not_needed_in_runroot(self):
         conf = {
-            'runroot_tag': 'dummy_tag',
+            "runroot_tag": "dummy_tag",
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/isohybrid'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/isohybrid"])
                 result = checks.check(conf)
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_genisoimg_not_needed_in_runroot(self):
         conf = {
-            'runroot_tag': 'dummy_tag',
+            "runroot_tag": "dummy_tag",
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/genisoimage'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/genisoimage"])
                 result = checks.check(conf)
 
-        self.assertEqual('', out.getvalue())
+        self.assertEqual("", out.getvalue())
         self.assertTrue(result)
 
     def test_requires_modifyrepo(self):
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/modifyrepo'])
-                result = checks.check({'createrepo_c': False})
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/modifyrepo"])
+                result = checks.check({"createrepo_c": False})
 
-        self.assertIn('createrepo', out.getvalue())
+        self.assertIn("createrepo", out.getvalue())
         self.assertFalse(result)
 
     def test_requires_modifyrepo_c(self):
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/modifyrepo_c'])
-                result = checks.check({'createrepo_c': True})
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/modifyrepo_c"])
+                result = checks.check({"createrepo_c": True})
 
-        self.assertIn('createrepo_c', out.getvalue())
+        self.assertIn("createrepo_c", out.getvalue())
         self.assertFalse(result)
 
     def test_requires_createrepo_c(self):
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/createrepo_c"])
                 result = checks.check({})
 
-        self.assertIn('createrepo_c', out.getvalue())
+        self.assertIn("createrepo_c", out.getvalue())
         self.assertFalse(result)
 
     def test_doesnt_require_createrepo_c_if_configured(self):
         conf = {
-            'createrepo_c': False,
+            "createrepo_c": False,
         }
 
-        with mock.patch('sys.stdout', new_callable=StringIO) as out:
-            with mock.patch('os.path.exists') as exists:
-                exists.side_effect = self.dont_find(['/usr/bin/createrepo_c'])
+        with mock.patch("sys.stdout", new_callable=StringIO) as out:
+            with mock.patch("os.path.exists") as exists:
+                exists.side_effect = self.dont_find(["/usr/bin/createrepo_c"])
                 result = checks.check(conf)
 
-        self.assertNotIn('createrepo_c', out.getvalue())
+        self.assertNotIn("createrepo_c", out.getvalue())
         self.assertTrue(result)
 
 
@@ -175,7 +173,7 @@ class TestSchemaValidator(unittest.TestCase):
         conf.load_from_string(string)
         return conf
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_property(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -198,7 +196,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 0)
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_alias_property(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -218,10 +216,13 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_required_is_missing(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -241,11 +242,13 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 1)
-        self.assertIn("Failed validation in : 'release_name' is a required property", errors)
+        self.assertIn(
+            "Failed validation in : 'release_name' is a required property", errors
+        )
         self.assertEqual(len(warnings), 1)
         self.assertIn("WARNING: Unrecognized config option: name.", warnings)
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_required_is_in_alias(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -266,10 +269,13 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_redundant_alias(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -290,12 +296,18 @@ class TestSchemaValidator(unittest.TestCase):
         config = self._load_conf_from_string(string)
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 1)
-        self.assertRegexpMatches(errors[0], r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*")
+        self.assertRegexpMatches(
+            errors[0],
+            r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*",
+        )
         self.assertEqual(len(warnings), 1)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_properties_in_deep(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -303,15 +315,10 @@ class TestSchemaValidator(unittest.TestCase):
             "type": "object",
             "properties": {
                 "release_name": {"type": "string", "alias": "product_name"},
-                "keys": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
+                "keys": {"type": "array", "items": {"type": "string"}},
                 "foophase": {
                     "type": "object",
-                    "properties": {
-                        "repo": {"type": "string", "alias": "tree"},
-                    },
+                    "properties": {"repo": {"type": "string", "alias": "tree"}},
                     "additionalProperties": False,
                     "required": ["repo"],
                 },
@@ -331,22 +338,27 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*",
+        )
+        self.assertRegexpMatches(
+            warnings[1],
+            r"^WARNING: Config option '.+' is deprecated and now an alias to '.+'.*",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
-        self.assertEqual(config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os")
+        self.assertEqual(
+            config.get("foophase", {}).get("repo", None), "http://www.exampe.com/os"
+        )
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_append_option(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "title": "Pungi Configuration",
             "type": "object",
             "definitions": {
-                "list_of_strings": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
+                "list_of_strings": {"type": "array", "items": {"type": "string"}},
                 "strings": {
                     "anyOf": [
                         {"type": "string"},
@@ -356,7 +368,7 @@ class TestSchemaValidator(unittest.TestCase):
             },
             "properties": {
                 "release_name": {"type": "string"},
-                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"}
+                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"},
             },
             "additionalProperties": False,
         }
@@ -371,22 +383,25 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+        )
+        self.assertRegexpMatches(
+            warnings[1],
+            r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_append_to_nonexist_option(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "title": "Pungi Configuration",
             "type": "object",
             "definitions": {
-                "list_of_strings": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
+                "list_of_strings": {"type": "array", "items": {"type": "string"}},
                 "strings": {
                     "anyOf": [
                         {"type": "string"},
@@ -396,7 +411,7 @@ class TestSchemaValidator(unittest.TestCase):
             },
             "properties": {
                 "release_name": {"type": "string"},
-                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"}
+                "repo": {"$ref": "#/definitions/strings", "append": "repo_from"},
             },
             "additionalProperties": False,
         }
@@ -410,22 +425,25 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+        )
+        self.assertRegexpMatches(
+            warnings[1],
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_multiple_appends(self, make_schema):
         schema = {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "title": "Pungi Configuration",
             "type": "object",
             "definitions": {
-                "list_of_strings": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
+                "list_of_strings": {"type": "array", "items": {"type": "string"}},
                 "strings": {
                     "anyOf": [
                         {"type": "string"},
@@ -437,8 +455,8 @@ class TestSchemaValidator(unittest.TestCase):
                 "release_name": {"type": "string"},
                 "repo": {
                     "$ref": "#/definitions/strings",
-                    "append": ["repo_from", "source_repo_from"]
-                }
+                    "append": ["repo_from", "source_repo_from"],
+                },
             },
             "additionalProperties": False,
         }
@@ -453,14 +471,28 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 4)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,")
-        self.assertRegexpMatches(warnings[2], r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'")
-        self.assertRegexpMatches(warnings[3], r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.")
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+        )
+        self.assertRegexpMatches(
+            warnings[1],
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",
+        )
+        self.assertRegexpMatches(
+            warnings[2],
+            r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'",
+        )
+        self.assertRegexpMatches(
+            warnings[3],
+            r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.",
+        )
         self.assertEqual(config.get("release_name", None), "dummy product")
-        self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server", "Client"])
+        self.assertEqual(
+            config.get("repo", None), ["http://url/to/repo", "Server", "Client"]
+        )
 
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_anyof_validator_not_raise_our_warnings_as_error(self, make_schema):
         # https://pagure.io/pungi/issue/598
         schema = {
@@ -470,26 +502,21 @@ class TestSchemaValidator(unittest.TestCase):
             "definitions": {
                 "live_image_config": {
                     "type": "object",
-                    "properties": {
-                        "repo": {
-                            "type": "string",
-                            "append": "repo_from",
-                        },
-                    },
+                    "properties": {"repo": {"type": "string", "append": "repo_from"}},
                 },
             },
             "properties": {
-                "live_images": checks._variant_arch_mapping({
-                    "anyOf": [
-                        {"$ref": "#/definitions/live_image_config"},
-                        {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/live_image_config"
-                            }
-                        }
-                    ]
-                }),
+                "live_images": checks._variant_arch_mapping(
+                    {
+                        "anyOf": [
+                            {"$ref": "#/definitions/live_image_config"},
+                            {
+                                "type": "array",
+                                "items": {"$ref": "#/definitions/live_image_config"},
+                            },
+                        ]
+                    }
+                ),
             },
         }
         make_schema.return_value = schema
@@ -506,12 +533,20 @@ class TestSchemaValidator(unittest.TestCase):
         errors, warnings = checks.validate(config)
         self.assertEqual(len(errors), 0)
         self.assertEqual(len(warnings), 2)
-        self.assertRegexpMatches(warnings[0], r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*")
-        self.assertRegexpMatches(warnings[1], r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*")
-        self.assertEqual(config.get("live_images")[0][1]['armhfp']['repo'], 'Everything')
+        self.assertRegexpMatches(
+            warnings[0],
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+        )
+        self.assertRegexpMatches(
+            warnings[1],
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*",
+        )
+        self.assertEqual(
+            config.get("live_images")[0][1]["armhfp"]["repo"], "Everything"
+        )
 
     @mock.patch("pungi.util.resolve_git_url")
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_resolve_url(self, make_schema, resolve_git_url):
         resolve_git_url.return_value = "git://example.com/repo.git#CAFE"
         make_schema.return_value = {
@@ -527,7 +562,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config["foo"], resolve_git_url.return_value)
 
     @mock.patch("pungi.util.resolve_git_url")
-    @mock.patch('pungi.checks.make_schema')
+    @mock.patch("pungi.checks.make_schema")
     def test_resolve_url_when_offline(self, make_schema, resolve_git_url):
         make_schema.return_value = {
             "$schema": "http://json-schema.org/draft-04/schema#",
@@ -594,8 +629,13 @@ class TestUmask(unittest.TestCase):
         checks.check_umask(logger)
         self.assertEqual(
             logger.mock_calls,
-            [mock.call.warning('Unusually strict umask detected (0%03o), '
-                               'expect files with broken permissions.', 0o044)]
+            [
+                mock.call.warning(
+                    "Unusually strict umask detected (0%03o), "
+                    "expect files with broken permissions.",
+                    0o044,
+                )
+            ],
         )
 
 

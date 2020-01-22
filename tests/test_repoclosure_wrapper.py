@@ -11,95 +11,101 @@ from . import helpers
 
 class RepoclosureWrapperTestCase(helpers.BaseTestCase):
     def test_minimal_command(self):
-        self.assertEqual(rc.get_repoclosure_cmd(),
-                         ['/usr/bin/repoclosure', '--tempcache'])
+        self.assertEqual(
+            rc.get_repoclosure_cmd(), ["/usr/bin/repoclosure", "--tempcache"]
+        )
 
     def test_minimal_dnf_command(self):
-        self.assertEqual(rc.get_repoclosure_cmd(backend='dnf'),
-                         ['dnf', 'repoclosure'])
+        self.assertEqual(rc.get_repoclosure_cmd(backend="dnf"), ["dnf", "repoclosure"])
 
     def test_unknown_backend(self):
         with self.assertRaises(RuntimeError) as ctx:
-            rc.get_repoclosure_cmd(backend='rpm')
+            rc.get_repoclosure_cmd(backend="rpm")
 
-        self.assertEqual(str(ctx.exception), 'Unknown repoclosure backend: rpm')
+        self.assertEqual(str(ctx.exception), "Unknown repoclosure backend: rpm")
 
     def test_multiple_arches(self):
-        self.assertEqual(rc.get_repoclosure_cmd(arch=['x86_64', 'ppc64']),
-                         ['/usr/bin/repoclosure', '--tempcache', '--arch=x86_64', '--arch=ppc64'])
+        self.assertEqual(
+            rc.get_repoclosure_cmd(arch=["x86_64", "ppc64"]),
+            ["/usr/bin/repoclosure", "--tempcache", "--arch=x86_64", "--arch=ppc64"],
+        )
 
     def test_full_command(self):
-        repos = {'my-repo': '/mnt/koji/repo'}
-        lookaside = {'fedora': 'http://kojipkgs.fp.o/repo'}
+        repos = {"my-repo": "/mnt/koji/repo"}
+        lookaside = {"fedora": "http://kojipkgs.fp.o/repo"}
 
-        cmd = rc.get_repoclosure_cmd(arch='x86_64', repos=repos, lookaside=lookaside)
-        self.assertEqual(cmd[0], '/usr/bin/repoclosure')
+        cmd = rc.get_repoclosure_cmd(arch="x86_64", repos=repos, lookaside=lookaside)
+        self.assertEqual(cmd[0], "/usr/bin/repoclosure")
         six.assertCountEqual(
             self,
             cmd[1:],
             [
-                '--tempcache',
-                '--arch=x86_64',
-                '--repofrompath=my-repo,file:///mnt/koji/repo',
-                '--repofrompath=fedora,http://kojipkgs.fp.o/repo',
-                '--repoid=my-repo',
-                '--lookaside=fedora',
-            ]
+                "--tempcache",
+                "--arch=x86_64",
+                "--repofrompath=my-repo,file:///mnt/koji/repo",
+                "--repofrompath=fedora,http://kojipkgs.fp.o/repo",
+                "--repoid=my-repo",
+                "--lookaside=fedora",
+            ],
         )
 
     def test_full_dnf_command(self):
-        repos = {'my-repo': '/mnt/koji/repo'}
-        lookaside = {'fedora': 'http://kojipkgs.fp.o/repo'}
+        repos = {"my-repo": "/mnt/koji/repo"}
+        lookaside = {"fedora": "http://kojipkgs.fp.o/repo"}
 
-        cmd = rc.get_repoclosure_cmd(backend='dnf', arch='x86_64',
-                                     repos=repos, lookaside=lookaside)
-        self.assertEqual(cmd[:2], ['dnf', 'repoclosure'])
+        cmd = rc.get_repoclosure_cmd(
+            backend="dnf", arch="x86_64", repos=repos, lookaside=lookaside
+        )
+        self.assertEqual(cmd[:2], ["dnf", "repoclosure"])
         six.assertCountEqual(
             self,
             cmd[2:],
-            ['--arch=x86_64',
-             '--repofrompath=my-repo,file:///mnt/koji/repo',
-             '--repofrompath=fedora,http://kojipkgs.fp.o/repo',
-             '--repo=my-repo',
-             '--check=my-repo',
-             '--repo=fedora'])
+            [
+                "--arch=x86_64",
+                "--repofrompath=my-repo,file:///mnt/koji/repo",
+                "--repofrompath=fedora,http://kojipkgs.fp.o/repo",
+                "--repo=my-repo",
+                "--check=my-repo",
+                "--repo=fedora",
+            ],
+        )
 
     def test_expand_repo(self):
         repos = {
-            'local': '/mnt/koji/repo',
-            'remote': 'http://kojipkgs.fp.o/repo',
+            "local": "/mnt/koji/repo",
+            "remote": "http://kojipkgs.fp.o/repo",
         }
         cmd = rc.get_repoclosure_cmd(repos=repos)
-        self.assertEqual(cmd[0], '/usr/bin/repoclosure')
+        self.assertEqual(cmd[0], "/usr/bin/repoclosure")
         six.assertCountEqual(
             self,
             cmd[1:],
             [
-                '--tempcache',
-                '--repofrompath=local,file:///mnt/koji/repo',
-                '--repofrompath=remote,http://kojipkgs.fp.o/repo',
-                '--repoid=local',
-                '--repoid=remote',
-            ]
+                "--tempcache",
+                "--repofrompath=local,file:///mnt/koji/repo",
+                "--repofrompath=remote,http://kojipkgs.fp.o/repo",
+                "--repoid=local",
+                "--repoid=remote",
+            ],
         )
 
     def test_expand_lookaside(self):
         repos = {
-            'local': '/mnt/koji/repo',
-            'remote': 'http://kojipkgs.fp.o/repo',
+            "local": "/mnt/koji/repo",
+            "remote": "http://kojipkgs.fp.o/repo",
         }
         cmd = rc.get_repoclosure_cmd(lookaside=repos)
-        self.assertEqual(cmd[0], '/usr/bin/repoclosure')
+        self.assertEqual(cmd[0], "/usr/bin/repoclosure")
         six.assertCountEqual(
             self,
             cmd[1:],
             [
-                '--tempcache',
-                '--repofrompath=local,file:///mnt/koji/repo',
-                '--repofrompath=remote,http://kojipkgs.fp.o/repo',
-                '--lookaside=local',
-                '--lookaside=remote',
-            ]
+                "--tempcache",
+                "--repofrompath=local,file:///mnt/koji/repo",
+                "--repofrompath=remote,http://kojipkgs.fp.o/repo",
+                "--lookaside=local",
+                "--lookaside=remote",
+            ],
         )
 
 
@@ -118,7 +124,7 @@ class FusExtractorTestCase(helpers.PungiTestCase):
     def test_error(self):
         helpers.touch(
             self.input1,
-            "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n"
+            "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n",
         )
         with self.assertRaises(RuntimeError) as ctx:
             rc.extract_from_fus_logs([self.input1], self.output)
@@ -130,11 +136,11 @@ class FusExtractorTestCase(helpers.PungiTestCase):
     def test_errors_in_multiple_files(self):
         helpers.touch(
             self.input1,
-            "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n"
+            "fus-DEBUG: Installing bar\nProblem 1/1\n - nothing provides foo\n",
         )
         helpers.touch(
             self.input2,
-            "fus-DEBUG: Installing baz\nProblem 1/1\n - nothing provides quux\n"
+            "fus-DEBUG: Installing baz\nProblem 1/1\n - nothing provides quux\n",
         )
         with self.assertRaises(RuntimeError) as ctx:
             rc.extract_from_fus_logs([self.input1, self.input2], self.output)

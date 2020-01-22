@@ -16,9 +16,11 @@ import logging
 from six.moves import cStringIO
 
 from pungi.wrappers.pungi import PungiWrapper
+
 try:
     from pungi.dnf_wrapper import DnfWrapper, Conf
     from pungi.gather_dnf import Gather, GatherOptions, PkgFlag
+
     HAS_DNF = True
 except ImportError:
     HAS_DNF = False
@@ -36,18 +38,19 @@ def convert_pkg_map(data):
     """
     result = {}
     for pkg_type in data:
-        result[pkg_type] = sorted(set([os.path.basename(pkg['path'])
-                                       for pkg in data[pkg_type]]))
+        result[pkg_type] = sorted(
+            set([os.path.basename(pkg["path"]) for pkg in data[pkg_type]])
+        )
     return result
 
 
 class DepsolvingBase(object):
-
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp(prefix="test_compose_")
         self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/repo")
-        self.lookaside = os.path.join(os.path.dirname(__file__),
-                                      "fixtures/repos/repo-krb5-lookaside")
+        self.lookaside = os.path.join(
+            os.path.dirname(__file__), "fixtures/repos/repo-krb5-lookaside"
+        )
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -76,7 +79,7 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-kernel-3.1.0-1.x86_64.rpm",          # Important
+                "dummy-kernel-3.1.0-1.x86_64.rpm",  # Important
                 "dummy-kernel-headers-3.1.0-1.x86_64.rpm",
                 "dummy-kernel-doc-3.1.0-1.noarch.rpm",
             ],
@@ -88,8 +91,13 @@ class DepsolvingBase(object):
         packages = [
             "dummy-kernel",
         ]
-        pkg_map = self.go(packages, None, greedy="none", fulltree=True,
-                          fulltree_excludes=['dummy-kernel'])
+        pkg_map = self.go(
+            packages,
+            None,
+            greedy="none",
+            fulltree=True,
+            fulltree_excludes=["dummy-kernel"],
+        )
 
         self.assertNotIn("dummy-kernel-3.1.0-1.i686.rpm", pkg_map["rpm"])
 
@@ -109,9 +117,9 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-kernel-3.1.0-1.x86_64.rpm",          # Important
+                "dummy-kernel-3.1.0-1.x86_64.rpm",  # Important
                 "dummy-kernel-headers-3.1.0-1.x86_64.rpm",
-                "dummy-kernel-doc-3.1.0-1.noarch.rpm",      # Important
+                "dummy-kernel-doc-3.1.0-1.noarch.rpm",  # Important
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-kernel-3.1.0-1.src.rpm"])
@@ -131,8 +139,8 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.ppc64.rpm",            # Important
-                "dummy-bash-doc-4.2.37-6.noarch.rpm",       # Important
+                "dummy-bash-4.2.37-6.ppc64.rpm",  # Important
+                "dummy-bash-doc-4.2.37-6.noarch.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.ppc64.rpm",
                 "dummy-glibc-2.14-5.ppc.rpm",
                 "dummy-glibc-2.14-5.ppc64.rpm",
@@ -172,8 +180,8 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-foo32-1-1.i686.rpm",                 # Important
-                "dummy-foo32-doc-1-1.noarch.rpm",           # Important
+                "dummy-foo32-1-1.i686.rpm",  # Important
+                "dummy-foo32-doc-1-1.noarch.rpm",  # Important
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-foo32-1-1.src.rpm"])
@@ -181,9 +189,9 @@ class DepsolvingBase(object):
 
     def test_bash_exclude_debuginfo(self):
         packages = [
-            'dummy-bash',
-            '-dummy-bash-debuginfo',
-            '-dummy-bash-debugsource',
+            "dummy-bash",
+            "-dummy-bash-debuginfo",
+            "-dummy-bash-debugsource",
         ]
         pkg_map = self.go(packages, None, greedy="none")
 
@@ -219,9 +227,9 @@ class DepsolvingBase(object):
 
     def test_bash_multilib_exclude_debuginfo(self):
         packages = [
-            'dummy-bash.+',
-            '-dummy-bash-debuginfo',
-            '-dummy-bash-debugsource',
+            "dummy-bash.+",
+            "-dummy-bash-debuginfo",
+            "-dummy-bash-debugsource",
         ]
         pkg_map = self.go(packages, None, greedy="none")
 
@@ -272,7 +280,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-6.x86_64.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
@@ -314,7 +322,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.s390x.rpm",            # Important
+                "dummy-bash-4.2.37-6.s390x.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.s390x.rpm",
                 "dummy-glibc-2.14-5.s390x.rpm",
                 "dummy-glibc-common-2.14-5.s390x.rpm",
@@ -356,8 +364,8 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.i686.rpm",             # Important
-                "dummy-bash-4.2.37-6.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-6.i686.rpm",  # Important
+                "dummy-bash-4.2.37-6.x86_64.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.i686.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.i686.rpm",
@@ -406,7 +414,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-5.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-5.x86_64.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
@@ -439,8 +447,12 @@ class DepsolvingBase(object):
         ]
         pkg_map = self.go(packages, None, greedy="none")
 
-        self.assertNotIn("dummy-release-client-workstation-1.0.0-1.i686.rpm", pkg_map["rpm"])
-        self.assertNotIn("dummy-release-client-workstation-1.0.0-1.x86_64.rpm", pkg_map["rpm"])
+        self.assertNotIn(
+            "dummy-release-client-workstation-1.0.0-1.i686.rpm", pkg_map["rpm"]
+        )
+        self.assertNotIn(
+            "dummy-release-client-workstation-1.0.0-1.x86_64.rpm", pkg_map["rpm"]
+        )
         self.assertNotIn("dummy-release-client-1.0.0-1.i686.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-release-client-1.0.0-1.x86_64.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-release-server-1.0.0-1.i686.rpm", pkg_map["rpm"])
@@ -463,12 +475,12 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-release-client-1.0.0-1.i686.rpm",                # Important
-                "dummy-release-client-1.0.0-1.x86_64.rpm",              # Important
-                "dummy-release-client-workstation-1.0.0-1.i686.rpm",    # Important
+                "dummy-release-client-1.0.0-1.i686.rpm",  # Important
+                "dummy-release-client-1.0.0-1.x86_64.rpm",  # Important
+                "dummy-release-client-workstation-1.0.0-1.i686.rpm",  # Important
                 "dummy-release-client-workstation-1.0.0-1.x86_64.rpm",  # Important
-                "dummy-release-server-1.0.0-1.i686.rpm",                # Important
-                "dummy-release-server-1.0.0-1.x86_64.rpm",              # Important
+                "dummy-release-server-1.0.0-1.i686.rpm",  # Important
+                "dummy-release-server-1.0.0-1.x86_64.rpm",  # Important
             ],
         )
         six.assertCountEqual(
@@ -500,7 +512,7 @@ class DepsolvingBase(object):
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
-                "dummy-postfix-2.9.2-2.x86_64.rpm",             # Important
+                "dummy-postfix-2.9.2-2.x86_64.rpm",  # Important
                 "dummy-vacation-1.2.7.1-1.x86_64.rpm",
             ],
         )
@@ -545,7 +557,7 @@ class DepsolvingBase(object):
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
-                "dummy-sendmail-8.14.5-12.x86_64.rpm",          # Important
+                "dummy-sendmail-8.14.5-12.x86_64.rpm",  # Important
                 "dummy-vacation-1.2.7.1-1.x86_64.rpm",
             ],
         )
@@ -588,10 +600,10 @@ class DepsolvingBase(object):
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.i686.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
-                "dummy-postfix-2.9.2-2.i686.rpm",               # Important
-                "dummy-postfix-2.9.2-2.x86_64.rpm",             # Important
-                "dummy-sendmail-8.14.5-12.i686.rpm",            # Important
-                "dummy-sendmail-8.14.5-12.x86_64.rpm",          # Important
+                "dummy-postfix-2.9.2-2.i686.rpm",  # Important
+                "dummy-postfix-2.9.2-2.x86_64.rpm",  # Important
+                "dummy-sendmail-8.14.5-12.i686.rpm",  # Important
+                "dummy-sendmail-8.14.5-12.x86_64.rpm",  # Important
                 "dummy-vacation-1.2.7.1-1.i686.rpm",
                 "dummy-vacation-1.2.7.1-1.x86_64.rpm",
             ],
@@ -756,7 +768,7 @@ class DepsolvingBase(object):
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
-                "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
+                "Dummy-firefox-16.0.1-1.x86_64.rpm",  # Important
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "Dummy-xulrunner-16.0.1-1.x86_64.rpm",
@@ -802,11 +814,11 @@ class DepsolvingBase(object):
                 "dummy-bash-4.2.37-6.x86_64.rpm",
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
-                "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
+                "Dummy-firefox-16.0.1-1.x86_64.rpm",  # Important
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-krb5-1.10-5.x86_64.rpm",
-                "dummy-krb5-devel-1.10-5.x86_64.rpm",           # Important
+                "dummy-krb5-devel-1.10-5.x86_64.rpm",  # Important
                 "dummy-krb5-libs-1.10-5.x86_64.rpm",
                 "Dummy-xulrunner-16.0.1-1.x86_64.rpm",
             ],
@@ -831,8 +843,8 @@ class DepsolvingBase(object):
                 "dummy-bash-debuginfo-4.2.37-6.x86_64.rpm",
                 "dummy-bash-debugsource-4.2.37-6.x86_64.rpm",
                 "Dummy-firefox-debuginfo-16.0.1-1.x86_64.rpm",
-                "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",          # Important
-                "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",   # Important
+                "dummy-glibc-debuginfo-2.14-5.x86_64.rpm",  # Important
+                "dummy-glibc-debuginfo-common-2.14-5.x86_64.rpm",  # Important
                 "dummy-krb5-debuginfo-1.10-5.x86_64.rpm",
                 "Dummy-xulrunner-debuginfo-16.0.1-1.x86_64.rpm",
             ],
@@ -855,7 +867,7 @@ class DepsolvingBase(object):
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
-                "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
+                "Dummy-firefox-16.0.1-1.x86_64.rpm",  # Important
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "Dummy-xulrunner-16.0.1-1.x86_64.rpm",
@@ -892,10 +904,11 @@ class DepsolvingBase(object):
         #
         # By default newer version should be pulled in.
         self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/cockpit")
-        self.lookaside = os.path.join(os.path.dirname(__file__),
-                                      "fixtures/repos/cockpit-lookaside")
+        self.lookaside = os.path.join(
+            os.path.dirname(__file__), "fixtures/repos/cockpit-lookaside"
+        )
         packages = [
-            'dummy-cockpit-docker',
+            "dummy-cockpit-docker",
         ]
         pkg_map = self.go(packages, None, lookaside=self.lookaside)
 
@@ -920,11 +933,12 @@ class DepsolvingBase(object):
         # satisfied by the older version in lookaside. No broken dependencies
         # should be reported.
         self.repo = os.path.join(os.path.dirname(__file__), "fixtures/repos/cockpit")
-        self.lookaside = os.path.join(os.path.dirname(__file__),
-                                      "fixtures/repos/cockpit-lookaside")
+        self.lookaside = os.path.join(
+            os.path.dirname(__file__), "fixtures/repos/cockpit-lookaside"
+        )
         packages = [
-            'dummy-cockpit-docker',
-            '-dummy-cockpit-system',
+            "dummy-cockpit-docker",
+            "-dummy-cockpit-system",
         ]
         pkg_map = self.go(packages, None, lookaside=self.lookaside)
 
@@ -949,7 +963,7 @@ class DepsolvingBase(object):
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
-                "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
+                "Dummy-firefox-16.0.1-1.x86_64.rpm",  # Important
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-nscd-2.14-5.x86_64.rpm",
@@ -982,7 +996,9 @@ class DepsolvingBase(object):
         packages = [
             "Dummy-firefox",
         ]
-        pkg_map = self.go(packages, None, greedy="none", selfhosting=True, fulltree=True)
+        pkg_map = self.go(
+            packages, None, greedy="none", selfhosting=True, fulltree=True
+        )
 
         self.assertNotIn("Dummy-firefox-16.0.1-2.i686.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-krb5-devel-1.10-5.i686.rpm", pkg_map["rpm"])
@@ -996,13 +1012,13 @@ class DepsolvingBase(object):
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
-                "Dummy-firefox-16.0.1-1.x86_64.rpm",            # Important
+                "Dummy-firefox-16.0.1-1.x86_64.rpm",  # Important
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-krb5-1.10-5.x86_64.rpm",
-                "dummy-krb5-devel-1.10-5.x86_64.rpm",           # Important
+                "dummy-krb5-devel-1.10-5.x86_64.rpm",  # Important
                 "dummy-krb5-libs-1.10-5.x86_64.rpm",
-                "dummy-krb5-workstation-1.10-5.x86_64.rpm",     # Important
+                "dummy-krb5-workstation-1.10-5.x86_64.rpm",  # Important
                 "dummy-nscd-2.14-5.x86_64.rpm",
                 "Dummy-xulrunner-16.0.1-1.x86_64.rpm",
             ],
@@ -1052,9 +1068,9 @@ class DepsolvingBase(object):
                 "dummy-glibc-2.14-5.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-krb5-1.10-5.x86_64.rpm",
-                "dummy-krb5-devel-1.10-5.x86_64.rpm",           # Important
+                "dummy-krb5-devel-1.10-5.x86_64.rpm",  # Important
                 "dummy-krb5-libs-1.10-5.x86_64.rpm",
-                "dummy-krb5-workstation-1.10-5.x86_64.rpm",     # Important
+                "dummy-krb5-workstation-1.10-5.x86_64.rpm",  # Important
                 "dummy-nscd-2.14-5.x86_64.rpm",
             ],
         )
@@ -1092,7 +1108,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.i686.rpm",             # Important
+                "dummy-bash-4.2.37-6.i686.rpm",  # Important
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.i686.rpm",
@@ -1128,7 +1144,7 @@ class DepsolvingBase(object):
         packages = [
             "dummy-glibc*",
         ]
-        pkg_map = self.go(packages, None, multilib_blacklist=['dummy-glibc*'])
+        pkg_map = self.go(packages, None, multilib_blacklist=["dummy-glibc*"])
 
         six.assertCountEqual(
             self,
@@ -1175,7 +1191,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.i686.rpm",             # Important
+                "dummy-bash-4.2.37-6.i686.rpm",  # Important
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-2.14-5.i686.rpm",
                 "dummy-glibc-2.14-5.x86_64.rpm",
@@ -1259,8 +1275,8 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.i686.rpm",             # Important
-                "dummy-bash-4.2.37-6.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-6.i686.rpm",  # Important
+                "dummy-bash-4.2.37-6.x86_64.rpm",  # Important
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.i686.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
@@ -1297,7 +1313,7 @@ class DepsolvingBase(object):
             ],
         )
 
-    @unittest.skip('This test is broken')
+    @unittest.skip("This test is broken")
     def test_bash_multilib_nogreedy(self):
         packages = [
             "dummy-bash.+",
@@ -1311,7 +1327,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.i686.rpm",             # Important
+                "dummy-bash-4.2.37-6.i686.rpm",  # Important
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 # "dummy-glibc-2.14-5.i686.rpm",
@@ -1357,7 +1373,7 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-basesystem-10.0-6.noarch.rpm",
-                "dummy-bash-4.2.37-6.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-6.x86_64.rpm",  # Important
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.i686.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
@@ -1425,13 +1441,11 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-kmod-ipw3945-1.2.0-4.20.x86_64.rpm",         # Important
+                "dummy-kmod-ipw3945-1.2.0-4.20.x86_64.rpm",  # Important
                 "dummy-kmod-ipw3945-xen-1.2.0-4.20.x86_64.rpm",
             ],
         )
-        self.assertEqual(
-            pkg_map["srpm"], ["dummy-ipw3945-kmod-1.2.0-4.20.src.rpm"]
-        )
+        self.assertEqual(pkg_map["srpm"], ["dummy-ipw3945-kmod-1.2.0-4.20.src.rpm"])
         self.assertEqual(
             pkg_map["debuginfo"], ["dummy-ipw3945-kmod-debuginfo-1.2.0-4.20.x86_64.rpm"]
         )
@@ -1440,8 +1454,13 @@ class DepsolvingBase(object):
         packages = [
             "dummy-lvm2-devel",
         ]
-        pkg_map = self.go(packages, None, greedy="none", fulltree=False,
-                          multilib_methods=["devel", "runtime"])
+        pkg_map = self.go(
+            packages,
+            None,
+            greedy="none",
+            fulltree=False,
+            multilib_methods=["devel", "runtime"],
+        )
 
         six.assertCountEqual(
             self,
@@ -1453,8 +1472,8 @@ class DepsolvingBase(object):
                 "dummy-glibc-2.14-5.i686.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-lvm2-2.02.84-4.x86_64.rpm",
-                "dummy-lvm2-devel-2.02.84-4.i686.rpm",          # Important
-                "dummy-lvm2-devel-2.02.84-4.x86_64.rpm",        # Important
+                "dummy-lvm2-devel-2.02.84-4.i686.rpm",  # Important
+                "dummy-lvm2-devel-2.02.84-4.x86_64.rpm",  # Important
                 "dummy-lvm2-libs-2.02.84-4.x86_64.rpm",
             ],
         )
@@ -1491,8 +1510,8 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",           # Important
-                "dummy-selinux-policy-mls-3.10.0-121.noarch.rpm",   # Important
+                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",  # Important
+                "dummy-selinux-policy-mls-3.10.0-121.noarch.rpm",  # Important
             ],
         )
         six.assertCountEqual(
@@ -1515,10 +1534,10 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",               # Important
+                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",  # Important
                 "dummy-selinux-policy-minimal-3.10.0-121.noarch.rpm",
-                "dummy-selinux-policy-mls-3.10.0-121.noarch.rpm",       # Important
-                "dummy-selinux-policy-targeted-3.10.0-121.noarch.rpm"
+                "dummy-selinux-policy-mls-3.10.0-121.noarch.rpm",  # Important
+                "dummy-selinux-policy-targeted-3.10.0-121.noarch.rpm",
             ],
         )
         six.assertCountEqual(
@@ -1538,13 +1557,15 @@ class DepsolvingBase(object):
         ]
         pkg_map = self.go(packages, None, greedy="none", fulltree=False, arch="ppc64")
 
-        self.assertNotIn("dummy-selinux-policy-mls-3.10.0-121.noarch.rpm", pkg_map["rpm"])
+        self.assertNotIn(
+            "dummy-selinux-policy-mls-3.10.0-121.noarch.rpm", pkg_map["rpm"]
+        )
 
         six.assertCountEqual(
             self,
             pkg_map["rpm"],
             [
-                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",               # Important
+                "dummy-freeipa-server-2.2.0-1.ppc64.rpm",  # Important
                 "dummy-selinux-policy-targeted-3.10.0-121.noarch.rpm",  # Important
             ],
         )
@@ -1559,9 +1580,7 @@ class DepsolvingBase(object):
         self.assertEqual(pkg_map["debuginfo"], [])
 
     def test_selinux_policy_doc_fulltree(self):
-        packages = [
-            "dummy-selinux-policy-doc"
-        ]
+        packages = ["dummy-selinux-policy-doc"]
         pkg_map = self.go(packages, None, fulltree=True)
 
         six.assertCountEqual(
@@ -1587,7 +1606,7 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-AdobeReader_enu-9.5.1-1.i486.rpm",       # Important
+                "dummy-AdobeReader_enu-9.5.1-1.i486.rpm",  # Important
                 "dummy-basesystem-10.0-6.noarch.rpm",
                 "dummy-filesystem-4.2.37-6.x86_64.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
@@ -1626,8 +1645,8 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-imsettings-1.2.9-1.x86_64.rpm",          # Important
-                "dummy-imsettings-qt-1.2.9-1.x86_64.rpm",       # Important
+                "dummy-imsettings-1.2.9-1.x86_64.rpm",  # Important
+                "dummy-imsettings-qt-1.2.9-1.x86_64.rpm",  # Important
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-imsettings-1.2.9-1.src.rpm"])
@@ -1637,10 +1656,10 @@ class DepsolvingBase(object):
         packages = [
             "dummy-imsettings",
         ]
-        groups = [
-            "basic-desktop"
-        ]
-        pkg_map = self.go(packages, groups, greedy="none", fulltree=False, arch="x86_64")
+        groups = ["basic-desktop"]
+        pkg_map = self.go(
+            packages, groups, greedy="none", fulltree=False, arch="x86_64"
+        )
 
         self.assertNotIn("dummy-imsettings-qt-1.2.9-1.x86_64.rpm", pkg_map["rpm"])
         # prefers gnome over qt (condrequires in @basic-desktop)
@@ -1649,8 +1668,8 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-imsettings-1.2.9-1.x86_64.rpm",          # Important
-                "dummy-imsettings-gnome-1.2.9-1.x86_64.rpm",    # Important
+                "dummy-imsettings-1.2.9-1.x86_64.rpm",  # Important
+                "dummy-imsettings-gnome-1.2.9-1.x86_64.rpm",  # Important
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-imsettings-1.2.9-1.src.rpm"])
@@ -1660,11 +1679,10 @@ class DepsolvingBase(object):
         packages = [
             "dummy-imsettings",
         ]
-        groups = [
-            "basic-desktop"
-        ]
-        pkg_map = self.go(packages, groups, greedy="none", fulltree=False, nodeps=True,
-                          arch="x86_64")
+        groups = ["basic-desktop"]
+        pkg_map = self.go(
+            packages, groups, greedy="none", fulltree=False, nodeps=True, arch="x86_64"
+        )
 
         self.assertNotIn("dummy-imsettings-gnome-1.2.9-1.x86_64.rpm", pkg_map["rpm"])
         self.assertNotIn("dummy-imsettings-qt-1.2.9-1.x86_64.rpm", pkg_map["rpm"])
@@ -1679,19 +1697,19 @@ class DepsolvingBase(object):
             "dummy-imsettings",
             "dummy-imsettings-qt",
         ]
-        groups = [
-            "basic-desktop"
-        ]
-        pkg_map = self.go(packages, groups, greedy="none", fulltree=False, arch="x86_64")
+        groups = ["basic-desktop"]
+        pkg_map = self.go(
+            packages, groups, greedy="none", fulltree=False, arch="x86_64"
+        )
 
         # prefers gnome over qt (condrequires in @basic-desktop)
         six.assertCountEqual(
             self,
             pkg_map["rpm"],
             [
-                "dummy-imsettings-1.2.9-1.x86_64.rpm",          # Important
-                "dummy-imsettings-gnome-1.2.9-1.x86_64.rpm",    # Important
-                "dummy-imsettings-qt-1.2.9-1.x86_64.rpm",       # Important
+                "dummy-imsettings-1.2.9-1.x86_64.rpm",  # Important
+                "dummy-imsettings-gnome-1.2.9-1.x86_64.rpm",  # Important
+                "dummy-imsettings-qt-1.2.9-1.x86_64.rpm",  # Important
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-imsettings-1.2.9-1.src.rpm"])
@@ -1732,7 +1750,7 @@ class DepsolvingBase(object):
             self,
             pkg_map["rpm"],
             [
-                "dummy-bash-4.2.37-6.x86_64.rpm",           # Important
+                "dummy-bash-4.2.37-6.x86_64.rpm",  # Important
                 "dummy-bash-doc-4.2.37-6.noarch.rpm",
             ],
         )
@@ -1751,8 +1769,9 @@ class DepsolvingBase(object):
         packages = [
             "*",
         ]
-        pkg_map = self.go(packages, None, lookaside=self.repo,
-                          nodeps=True, fulltree=True)
+        pkg_map = self.go(
+            packages, None, lookaside=self.repo, nodeps=True, fulltree=True
+        )
 
         self.assertEqual(pkg_map["rpm"], [])
         self.assertEqual(pkg_map["srpm"], [])
@@ -1764,8 +1783,7 @@ class DepsolvingBase(object):
             "-dummy-bas*",
             "dummy-glibc",
         ]
-        pkg_map = self.go(packages, None,
-                          greedy="none", nodeps=True, fulltree=True)
+        pkg_map = self.go(packages, None, greedy="none", nodeps=True, fulltree=True)
 
         # neither dummy-bash or dummy-basesystem is pulled in
         six.assertCountEqual(
@@ -1796,10 +1814,7 @@ class DepsolvingBase(object):
         six.assertCountEqual(
             self,
             pkg_map["rpm"],
-            [
-                "dummy-atlas-3.8.4-7.x86_64.rpm",
-                "dummy-atlas-devel-3.8.4-7.x86_64.rpm",
-            ],
+            ["dummy-atlas-3.8.4-7.x86_64.rpm", "dummy-atlas-devel-3.8.4-7.x86_64.rpm"],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-atlas-3.8.4-7.src.rpm"])
         self.assertEqual(pkg_map["debuginfo"], [])
@@ -1827,8 +1842,14 @@ class DepsolvingBase(object):
         packages = [
             "dummy-atlas-devel",
         ]
-        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel", "runtime"],
-                          fulltree=False, arch="x86_64")
+        pkg_map = self.go(
+            packages,
+            None,
+            greedy="build",
+            multilib_methods=["devel", "runtime"],
+            fulltree=False,
+            arch="x86_64",
+        )
 
         six.assertCountEqual(
             self,
@@ -1847,8 +1868,14 @@ class DepsolvingBase(object):
         packages = [
             "dummy-atlas-devel.+",
         ]
-        pkg_map = self.go(packages, None, greedy="build", multilib_methods=["devel", "runtime"],
-                          fulltree=False, arch="x86_64")
+        pkg_map = self.go(
+            packages,
+            None,
+            greedy="build",
+            multilib_methods=["devel", "runtime"],
+            fulltree=False,
+            arch="x86_64",
+        )
 
         six.assertCountEqual(
             self,
@@ -1878,7 +1905,6 @@ class DepsolvingBase(object):
                 "dummy-atlas-sse-3.8.4-7.i686.rpm",
                 "dummy-atlas-sse2-3.8.4-7.i686.rpm",
                 "dummy-atlas-sse3-3.8.4-7.i686.rpm",
-
                 "dummy-atlas-3.8.4-7.x86_64.rpm",
                 "dummy-atlas-devel-3.8.4-7.x86_64.rpm",
                 "dummy-atlas-sse3-3.8.4-7.x86_64.rpm",
@@ -2052,7 +2078,7 @@ class DepsolvingBase(object):
         self.assertEqual(pkg_map["srpm"], ["dummy-mingw-qt5-qtbase-5.6.0-1.src.rpm"])
         self.assertEqual(
             pkg_map["debuginfo"],
-            ["dummy-mingw32-qt5-qtbase-debuginfo-5.6.0-1.noarch.rpm"]
+            ["dummy-mingw32-qt5-qtbase-debuginfo-5.6.0-1.noarch.rpm"],
         )
 
     def test_input_by_wildcard(self):
@@ -2083,9 +2109,7 @@ class DepsolvingBase(object):
         self.assertEqual(pkg_map["debuginfo"], [])
 
     def test_requires_pre_post(self):
-        packages = [
-            "dummy-perl"
-        ]
+        packages = ["dummy-perl"]
         pkg_map = self.go(packages, None)
 
         six.assertCountEqual(
@@ -2093,8 +2117,8 @@ class DepsolvingBase(object):
             pkg_map["rpm"],
             [
                 "dummy-perl-1.0.0-1.x86_64.rpm",
-                "dummy-perl-macros-1.0.0-1.x86_64.rpm",     # Requires(pre)
-                "dummy-perl-utils-1.0.0-1.x86_64.rpm",      # Requires(post)
+                "dummy-perl-macros-1.0.0-1.x86_64.rpm",  # Requires(pre)
+                "dummy-perl-utils-1.0.0-1.x86_64.rpm",  # Requires(post)
             ],
         )
         self.assertEqual(pkg_map["srpm"], ["dummy-perl-1.0.0-1.src.rpm"])
@@ -2102,8 +2126,8 @@ class DepsolvingBase(object):
 
     def test_multilib_exclude_pattern_does_not_match_noarch(self):
         packages = [
-            'dummy-release-notes-en-US',
-            '-dummy-release-notes-en*.+',
+            "dummy-release-notes-en-US",
+            "-dummy-release-notes-en*.+",
         ]
 
         pkg_map = self.go(packages, None)
@@ -2113,9 +2137,8 @@ class DepsolvingBase(object):
         self.assertEqual(pkg_map["debuginfo"], [])
 
 
-@unittest.skipUnless(HAS_YUM, 'YUM only available on Python 2')
+@unittest.skipUnless(HAS_YUM, "YUM only available on Python 2")
 class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
-
     def setUp(self):
         super(PungiYumDepsolvingTestCase, self).setUp()
         self.ks = os.path.join(self.tmp_dir, "ks")
@@ -2125,9 +2148,9 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         self.old_cwd = os.getcwd()
         os.chdir(self.cwd)
 
-        logger = logging.getLogger('Pungi')
+        logger = logging.getLogger("Pungi")
         if not logger.handlers:
-            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            formatter = logging.Formatter("%(name)s:%(levelname)s: %(message)s")
             console = logging.StreamHandler(sys.stdout)
             console.setFormatter(formatter)
             console.setLevel(logging.INFO)
@@ -2137,9 +2160,17 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         os.chdir(self.old_cwd)
         super(PungiYumDepsolvingTestCase, self).tearDown()
 
-    def go(self, packages, groups, lookaside=None, prepopulate=None,
-           fulltree_excludes=None, multilib_blacklist=None,
-           multilib_whitelist=None, **kwargs):
+    def go(
+        self,
+        packages,
+        groups,
+        lookaside=None,
+        prepopulate=None,
+        fulltree_excludes=None,
+        multilib_blacklist=None,
+        multilib_whitelist=None,
+        **kwargs
+    ):
         """
         Write a kickstart with given packages and groups, then run the
         depsolving and parse the output.
@@ -2147,19 +2178,25 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         p = PungiWrapper()
         repos = {"repo": self.repo}
         if lookaside:
-            repos['lookaside'] = lookaside
-            kwargs['lookaside_repos'] = ['lookaside']
-        p.write_kickstart(self.ks, repos, groups, packages, prepopulate=prepopulate,
-                          multilib_whitelist=multilib_whitelist,
-                          multilib_blacklist=multilib_blacklist,
-                          fulltree_excludes=fulltree_excludes)
-        kwargs.setdefault('cache_dir', self.tmp_dir)
+            repos["lookaside"] = lookaside
+            kwargs["lookaside_repos"] = ["lookaside"]
+        p.write_kickstart(
+            self.ks,
+            repos,
+            groups,
+            packages,
+            prepopulate=prepopulate,
+            multilib_whitelist=multilib_whitelist,
+            multilib_blacklist=multilib_blacklist,
+            fulltree_excludes=fulltree_excludes,
+        )
+        kwargs.setdefault("cache_dir", self.tmp_dir)
         # Unless the test specifies an arch, we need to default to x86_64.
         # Otherwise the arch of current machine will be used, which will cause
         # failure most of the time.
-        kwargs.setdefault('arch', 'x86_64')
+        kwargs.setdefault("arch", "x86_64")
 
-        p.run_pungi(self.ks, self.tmp_dir, 'DP', **kwargs)
+        p.run_pungi(self.ks, self.tmp_dir, "DP", **kwargs)
         with open(self.out, "r") as f:
             pkg_map, self.broken_deps, _ = p.parse_log(f)
         return convert_pkg_map(pkg_map)
@@ -2168,7 +2205,7 @@ class PungiYumDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 def convert_dnf_packages(pkgs, flags):
     convert_table = {
         # Hawkey returns nosrc package as src
-        'dummy-AdobeReader_enu-9.5.1-1.src': 'dummy-AdobeReader_enu-9.5.1-1.nosrc',
+        "dummy-AdobeReader_enu-9.5.1-1.src": "dummy-AdobeReader_enu-9.5.1-1.nosrc",
     }
     result = set()
     for p in pkgs:
@@ -2178,20 +2215,20 @@ def convert_dnf_packages(pkgs, flags):
             # Package is coming from lookaside repo, we don't want those in
             # output.
             continue
-        result.add(name + '.rpm')
+        result.add(name + ".rpm")
     return sorted(result)
 
 
-@unittest.skipUnless(HAS_DNF, 'Dependencies are not available')
+@unittest.skipUnless(HAS_DNF, "Dependencies are not available")
 class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
     def setUp(self):
         super(DNFDepsolvingTestCase, self).setUp()
-        self.cachedir = os.path.join(self.tmp_dir, 'pungi_dnf_cache')
+        self.cachedir = os.path.join(self.tmp_dir, "pungi_dnf_cache")
         self.get_langpacks = False
 
-        logger = logging.getLogger('gather_dnf')
+        logger = logging.getLogger("gather_dnf")
         if not logger.handlers:
-            formatter = logging.Formatter('%(name)s:%(levelname)s: %(message)s')
+            formatter = logging.Formatter("%(name)s:%(levelname)s: %(message)s")
             console = logging.StreamHandler(sys.stdout)
             console.setFormatter(formatter)
             console.setLevel(logging.INFO)
@@ -2200,29 +2237,32 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         self.maxDiff = None
 
     def go(self, packages, groups, lookaside=None, **kwargs):
-        arch = kwargs.pop('arch', 'x86_64')
-        if 'greedy' in kwargs:
-            kwargs['greedy_method'] = kwargs.pop('greedy')
-        if 'nodeps' in kwargs:
-            kwargs['resolve_deps'] = not kwargs.pop('nodeps')
+        arch = kwargs.pop("arch", "x86_64")
+        if "greedy" in kwargs:
+            kwargs["greedy_method"] = kwargs.pop("greedy")
+        if "nodeps" in kwargs:
+            kwargs["resolve_deps"] = not kwargs.pop("nodeps")
         if lookaside:
-            kwargs['lookaside_repos'] = ['lookaside']
+            kwargs["lookaside_repos"] = ["lookaside"]
 
         self.dnf = self.dnf_instance(arch, lookaside=lookaside, persistdir=self.tmp_dir)
 
         if self.get_langpacks:
-            kwargs['langpacks'] = self.dnf.comps_wrapper.get_langpacks()
+            kwargs["langpacks"] = self.dnf.comps_wrapper.get_langpacks()
 
         groups = groups or []
         exclude_groups = []
-        _, conditional_packages = self.dnf.comps_wrapper.get_comps_packages(groups, exclude_groups)
+        _, conditional_packages = self.dnf.comps_wrapper.get_comps_packages(
+            groups, exclude_groups
+        )
         self.g = Gather(self.dnf, GatherOptions(**kwargs))
 
-        self.g.logger.handlers = [h for h in self.g.logger.handlers
-                                  if h.name != 'capture-logs']
+        self.g.logger.handlers = [
+            h for h in self.g.logger.handlers if h.name != "capture-logs"
+        ]
         log_output = cStringIO()
         handler = logging.StreamHandler(log_output)
-        handler.name = 'capture-logs'
+        handler.name = "capture-logs"
         handler.setLevel(logging.WARNING)
         self.g.logger.addHandler(handler)
 
@@ -2231,12 +2271,15 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         _, self.broken_deps, _ = PungiWrapper().parse_log(log_output)
 
         return {
-            'debuginfo': convert_dnf_packages(self.g.result_debug_packages,
-                                              self.g.result_package_flags),
-            'srpm': convert_dnf_packages(self.g.result_source_packages,
-                                         self.g.result_package_flags),
-            'rpm': convert_dnf_packages(self.g.result_binary_packages,
-                                        self.g.result_package_flags),
+            "debuginfo": convert_dnf_packages(
+                self.g.result_debug_packages, self.g.result_package_flags
+            ),
+            "srpm": convert_dnf_packages(
+                self.g.result_source_packages, self.g.result_package_flags
+            ),
+            "rpm": convert_dnf_packages(
+                self.g.result_binary_packages, self.g.result_package_flags
+            ),
         }
 
     def dnf_instance(self, base_arch, exclude=None, lookaside=False, persistdir=None):
@@ -2262,25 +2305,33 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         for pkg, flags in self.g.result_package_flags.items():
             if nvra == "%s-%s-%s.%s" % (pkg.name, pkg.version, pkg.release, pkg.arch):
                 self.assertEqual(
-                    flags, expected_flags,
-                    "pkg: %s; flags: %s; expected flags: %s" % (nvra, flags, expected_flags))
+                    flags,
+                    expected_flags,
+                    "pkg: %s; flags: %s; expected flags: %s"
+                    % (nvra, flags, expected_flags),
+                )
                 found = True
         if not found:
             flags = set()
             self.assertEqual(
-                flags, expected_flags,
-                "pkg: %s; flags: %s; expected flags: %s" % (nvra, flags, expected_flags))
+                flags,
+                expected_flags,
+                "pkg: %s; flags: %s; expected flags: %s"
+                % (nvra, flags, expected_flags),
+            )
 
     def test_langpacks(self):
         self.get_langpacks = True
         super(DNFDepsolvingTestCase, self).test_langpacks()
 
-    @unittest.skip('DNF code does not support NVR as input')
+    @unittest.skip("DNF code does not support NVR as input")
     def test_bash_older(self):
         pass
 
     def test_firefox_selfhosting_with_krb5_lookaside(self):
-        super(DNFDepsolvingTestCase, self).test_firefox_selfhosting_with_krb5_lookaside()
+        super(
+            DNFDepsolvingTestCase, self
+        ).test_firefox_selfhosting_with_krb5_lookaside()
         self.assertFlags("dummy-krb5-devel-1.10-5.x86_64", [PkgFlag.lookaside])
         self.assertFlags("dummy-krb5-1.10-5.src", [PkgFlag.lookaside])
 
@@ -2343,9 +2394,9 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
 
     def test_bash_multilib_exclude_debuginfo(self):
         packages = [
-            'dummy-bash.+',
-            '-dummy-bash-debuginfo',
-            '-dummy-bash-debugsource',
+            "dummy-bash.+",
+            "-dummy-bash-debuginfo",
+            "-dummy-bash-debugsource",
         ]
         pkg_map = self.go(packages, None, greedy="none")
 
@@ -2385,8 +2436,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
             "-dummy-bas*",
             "dummy-glibc",
         ]
-        pkg_map = self.go(packages, None,
-                          greedy="none", nodeps=True, fulltree=True)
+        pkg_map = self.go(packages, None, greedy="none", nodeps=True, fulltree=True)
 
         # neither dummy-bash or dummy-basesystem is pulled in
         six.assertCountEqual(
@@ -2454,7 +2504,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
             self,
             pkg_map["rpm"],
             [
-                "dummy-kmod-ipw3945-1.2.0-4.20.x86_64.rpm",         # Important
+                "dummy-kmod-ipw3945-1.2.0-4.20.x86_64.rpm",  # Important
                 "dummy-kmod-ipw3945-xen-1.2.0-4.20.x86_64.rpm",
             ],
         )
@@ -2465,8 +2515,13 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         packages = [
             "dummy-lvm2-devel",
         ]
-        pkg_map = self.go(packages, None, greedy="none", fulltree=False,
-                          multilib_methods=["devel", "runtime"])
+        pkg_map = self.go(
+            packages,
+            None,
+            greedy="none",
+            fulltree=False,
+            multilib_methods=["devel", "runtime"],
+        )
 
         six.assertCountEqual(
             self,
@@ -2478,8 +2533,8 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
                 "dummy-glibc-2.14-5.i686.rpm",
                 "dummy-glibc-common-2.14-5.x86_64.rpm",
                 "dummy-lvm2-2.02.84-4.x86_64.rpm",
-                "dummy-lvm2-devel-2.02.84-4.i686.rpm",          # Important
-                "dummy-lvm2-devel-2.02.84-4.x86_64.rpm",        # Important
+                "dummy-lvm2-devel-2.02.84-4.i686.rpm",  # Important
+                "dummy-lvm2-devel-2.02.84-4.x86_64.rpm",  # Important
                 "dummy-lvm2-libs-2.02.84-4.x86_64.rpm",
             ],
         )

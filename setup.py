@@ -76,6 +76,7 @@ setup(
         ]
     },
     tests_require = [
+        "black",
         "mock",
         "nose",
         "nose-cov",

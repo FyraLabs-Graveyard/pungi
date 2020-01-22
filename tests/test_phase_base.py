@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import mock
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -78,7 +79,7 @@ class TestWeaver(unittest.TestCase):
             weaver_phase.start()
             weaver_phase.stop()
 
-        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertEqual("BOOM", str(ctx.exception))
         self.assertFinalized(self.p1)
         self.assertInterrupted(self.p2)
         self.assertMissed(self.p3)
@@ -92,7 +93,7 @@ class TestWeaver(unittest.TestCase):
             weaver_phase.start()
             weaver_phase.stop()
 
-        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertEqual("BOOM", str(ctx.exception))
         self.assertFinalized(self.p1)
         self.assertInterrupted(self.p2)
         self.assertFinalized(self.p3)
@@ -107,7 +108,7 @@ class TestWeaver(unittest.TestCase):
             weaver_phase.start()
             weaver_phase.stop()
 
-        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertEqual("BOOM", str(ctx.exception))
         self.assertFinalized(self.p1)
         self.assertInterrupted(self.p2)
         self.assertMissed(self.p3)
@@ -125,7 +126,7 @@ class TestWeaver(unittest.TestCase):
             weaver_phase.start()
             weaver_phase.stop()
 
-        self.assertEqual('BOOM', str(ctx.exception))
+        self.assertEqual("BOOM", str(ctx.exception))
         self.assertFinalized(self.p1)
         self.assertInterrupted(self.p2)
         self.assertMissed(self.p3)

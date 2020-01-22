@@ -11,19 +11,14 @@ from tests import helpers
 from pungi.phases import extra_isos
 
 
-@mock.patch('pungi.phases.extra_isos.ThreadPool')
+@mock.patch("pungi.phases.extra_isos.ThreadPool")
 class ExtraIsosPhaseTest(helpers.PungiTestCase):
-
     def test_logs_extra_arches(self, ThreadPool):
         cfg = {
-            'include_variants': ['Client'],
-            'arches': ['x86_64', 'ppc64le', 'aarch64'],
+            "include_variants": ["Client"],
+            "arches": ["x86_64", "ppc64le", "aarch64"],
         }
-        compose = helpers.DummyCompose(self.topdir, {
-            'extra_isos': {
-                '^Server$': [cfg]
-            }
-        })
+        compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
         phase = extra_isos.ExtraIsosPhase(compose)
         phase.validate()
@@ -32,13 +27,9 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
 
     def test_one_task_for_each_arch(self, ThreadPool):
         cfg = {
-            'include_variants': ['Client'],
+            "include_variants": ["Client"],
         }
-        compose = helpers.DummyCompose(self.topdir, {
-            'extra_isos': {
-                '^Server$': [cfg]
-            }
-        })
+        compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
         phase = extra_isos.ExtraIsosPhase(compose)
         phase.run()
@@ -47,21 +38,19 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ThreadPool.return_value.queue_put.call_args_list,
-            [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
-             mock.call((compose, cfg, compose.variants['Server'], 'amd64')),
-             mock.call((compose, cfg, compose.variants['Server'], 'src'))]
+            [
+                mock.call((compose, cfg, compose.variants["Server"], "x86_64")),
+                mock.call((compose, cfg, compose.variants["Server"], "amd64")),
+                mock.call((compose, cfg, compose.variants["Server"], "src")),
+            ],
         )
 
     def test_filter_arches(self, ThreadPool):
         cfg = {
-            'include_variants': ['Client'],
-            'arches': ['x86_64'],
+            "include_variants": ["Client"],
+            "arches": ["x86_64"],
         }
-        compose = helpers.DummyCompose(self.topdir, {
-            'extra_isos': {
-                '^Server$': [cfg]
-            }
-        })
+        compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
         phase = extra_isos.ExtraIsosPhase(compose)
         phase.run()
@@ -70,20 +59,18 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ThreadPool.return_value.queue_put.call_args_list,
-            [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
-             mock.call((compose, cfg, compose.variants['Server'], 'src'))]
+            [
+                mock.call((compose, cfg, compose.variants["Server"], "x86_64")),
+                mock.call((compose, cfg, compose.variants["Server"], "src")),
+            ],
         )
 
     def test_skip_source(self, ThreadPool):
         cfg = {
-            'include_variants': ['Client'],
-            'skip_src': True,
+            "include_variants": ["Client"],
+            "skip_src": True,
         }
-        compose = helpers.DummyCompose(self.topdir, {
-            'extra_isos': {
-                '^Server$': [cfg]
-            }
-        })
+        compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
         phase = extra_isos.ExtraIsosPhase(compose)
         phase.run()
@@ -92,140 +79,28 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ThreadPool.return_value.queue_put.call_args_list,
-            [mock.call((compose, cfg, compose.variants['Server'], 'x86_64')),
-             mock.call((compose, cfg, compose.variants['Server'], 'amd64'))]
+            [
+                mock.call((compose, cfg, compose.variants["Server"], "x86_64")),
+                mock.call((compose, cfg, compose.variants["Server"], "amd64")),
+            ],
         )
 
 
-@mock.patch('pungi.phases.extra_isos.prepare_media_metadata')
-@mock.patch('pungi.phases.extra_isos.get_volume_id')
-@mock.patch('pungi.phases.extra_isos.get_filename')
-@mock.patch('pungi.phases.extra_isos.get_iso_contents')
-@mock.patch('pungi.phases.extra_isos.get_extra_files')
-@mock.patch('pungi.phases.extra_isos.run_createiso_command')
-@mock.patch('pungi.phases.extra_isos.add_iso_to_metadata')
+@mock.patch("pungi.phases.extra_isos.prepare_media_metadata")
+@mock.patch("pungi.phases.extra_isos.get_volume_id")
+@mock.patch("pungi.phases.extra_isos.get_filename")
+@mock.patch("pungi.phases.extra_isos.get_iso_contents")
+@mock.patch("pungi.phases.extra_isos.get_extra_files")
+@mock.patch("pungi.phases.extra_isos.run_createiso_command")
+@mock.patch("pungi.phases.extra_isos.add_iso_to_metadata")
 class ExtraIsosThreadTest(helpers.PungiTestCase):
-
     def test_binary_bootable_image(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
-        compose = helpers.DummyCompose(self.topdir, {
-            'bootable': True,
-            'buildinstall_method': 'lorax'
-        })
-        server = compose.variants['Server']
-        cfg = {
-            'include_variants': ['Client'],
-        }
-
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
-
-        t = extra_isos.ExtraIsosThread(mock.Mock())
-        with mock.patch('time.sleep'):
-            t.process((compose, cfg, server, 'x86_64'), 1)
-
-        self.assertEqual(gfn.call_args_list,
-                         [mock.call(compose, server, 'x86_64', None)])
-        self.assertEqual(gvi.call_args_list,
-                         [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(gef.call_args_list,
-                         [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(
-            gic.call_args_list,
-            [
-                mock.call(
-                    compose,
-                    server,
-                    'x86_64',
-                    ['Client'],
-                    'my.iso',
-                    bootable=True,
-                    inherit_extra_files=False,
-                ),
-            ],
+        compose = helpers.DummyCompose(
+            self.topdir, {"bootable": True, "buildinstall_method": "lorax"}
         )
-        self.assertEqual(
-            rcc.call_args_list,
-            [mock.call(1, compose, True, 'x86_64',
-                       ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
-                       [self.topdir],
-                       log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
-                       with_jigdo=True)]
-
-        )
-        self.assertEqual(
-            aitm.call_args_list,
-            [mock.call(compose, server, 'x86_64',
-                       os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
-                       True, additional_variants=["Client"])]
-        )
-        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
-
-    def test_binary_bootable_image_without_jigdo(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
-        compose = helpers.DummyCompose(self.topdir, {
-            'bootable': True,
-            'buildinstall_method': 'lorax',
-            'create_jigdo': False,
-        })
-        server = compose.variants['Server']
-        cfg = {
-            'include_variants': ['Client'],
-        }
-
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
-
-        t = extra_isos.ExtraIsosThread(mock.Mock())
-        with mock.patch('time.sleep'):
-            t.process((compose, cfg, server, 'x86_64'), 1)
-
-        self.assertEqual(gfn.call_args_list,
-                         [mock.call(compose, server, 'x86_64', None)])
-        self.assertEqual(gvi.call_args_list,
-                         [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(gef.call_args_list,
-                         [mock.call(compose, server, 'x86_64', [])])
-        self.assertEqual(
-            gic.call_args_list,
-            [
-                mock.call(
-                    compose,
-                    server,
-                    'x86_64',
-                    ['Client'],
-                    'my.iso',
-                    bootable=True,
-                    inherit_extra_files=False,
-                ),
-            ],
-        )
-        self.assertEqual(
-            rcc.call_args_list,
-            [mock.call(1, compose, True, 'x86_64',
-                       ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
-                       [self.topdir],
-                       log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
-                       with_jigdo=False)]
-
-        )
-        self.assertEqual(
-            aitm.call_args_list,
-            [mock.call(compose, server, 'x86_64',
-                       os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
-                       True, additional_variants=["Client"])]
-        )
-        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
-
-    def test_image_with_max_size(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
-        compose = helpers.DummyCompose(self.topdir, {
-            "bootable": True,
-            "buildinstall_method": "lorax"
-        })
         server = compose.variants["Server"]
         cfg = {
             "include_variants": ["Client"],
-            "max_size": 15,
         }
 
         gfn.return_value = "my.iso"
@@ -236,12 +111,11 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
-        self.assertEqual(gfn.call_args_list,
-                         [mock.call(compose, server, "x86_64", None)])
-        self.assertEqual(gvi.call_args_list,
-                         [mock.call(compose, server, "x86_64", [])])
-        self.assertEqual(gef.call_args_list,
-                         [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(
+            gfn.call_args_list, [mock.call(compose, server, "x86_64", None)]
+        )
+        self.assertEqual(gvi.call_args_list, [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(gef.call_args_list, [mock.call(compose, server, "x86_64", [])])
         self.assertEqual(
             gic.call_args_list,
             [
@@ -258,54 +132,225 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(1, compose, True, "x86_64",
-                       ["bash", os.path.join(self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh")],
-                       [self.topdir],
-                       log_file=os.path.join(self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"),
-                       with_jigdo=True)]
-
+            [
+                mock.call(
+                    1,
+                    compose,
+                    True,
+                    "x86_64",
+                    [
+                        "bash",
+                        os.path.join(
+                            self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh"
+                        ),
+                    ],
+                    [self.topdir],
+                    log_file=os.path.join(
+                        self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
+                    ),
+                    with_jigdo=True,
+                )
+            ],
         )
         self.assertEqual(
             aitm.call_args_list,
-            [mock.call(compose, server, "x86_64",
-                       os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
-                       True, additional_variants=["Client"])]
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
+                    True,
+                    additional_variants=["Client"],
+                )
+            ],
+        )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
+
+    def test_binary_bootable_image_without_jigdo(
+        self, aitm, rcc, gef, gic, gfn, gvi, pmm
+    ):
+        compose = helpers.DummyCompose(
+            self.topdir,
+            {"bootable": True, "buildinstall_method": "lorax", "create_jigdo": False},
+        )
+        server = compose.variants["Server"]
+        cfg = {
+            "include_variants": ["Client"],
+        }
+
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
+
+        t = extra_isos.ExtraIsosThread(mock.Mock())
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "x86_64"), 1)
+
+        self.assertEqual(
+            gfn.call_args_list, [mock.call(compose, server, "x86_64", None)]
+        )
+        self.assertEqual(gvi.call_args_list, [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(gef.call_args_list, [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    ["Client"],
+                    "my.iso",
+                    bootable=True,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
+        self.assertEqual(
+            rcc.call_args_list,
+            [
+                mock.call(
+                    1,
+                    compose,
+                    True,
+                    "x86_64",
+                    [
+                        "bash",
+                        os.path.join(
+                            self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh"
+                        ),
+                    ],
+                    [self.topdir],
+                    log_file=os.path.join(
+                        self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
+                    ),
+                    with_jigdo=False,
+                )
+            ],
+        )
+        self.assertEqual(
+            aitm.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
+                    True,
+                    additional_variants=["Client"],
+                )
+            ],
+        )
+        self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
+
+    def test_image_with_max_size(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
+        compose = helpers.DummyCompose(
+            self.topdir, {"bootable": True, "buildinstall_method": "lorax"}
+        )
+        server = compose.variants["Server"]
+        cfg = {
+            "include_variants": ["Client"],
+            "max_size": 15,
+        }
+
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
+
+        t = extra_isos.ExtraIsosThread(mock.Mock())
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "x86_64"), 1)
+
+        self.assertEqual(
+            gfn.call_args_list, [mock.call(compose, server, "x86_64", None)]
+        )
+        self.assertEqual(gvi.call_args_list, [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(gef.call_args_list, [mock.call(compose, server, "x86_64", [])])
+        self.assertEqual(
+            gic.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    ["Client"],
+                    "my.iso",
+                    bootable=True,
+                    inherit_extra_files=False,
+                ),
+            ],
+        )
+        self.assertEqual(
+            rcc.call_args_list,
+            [
+                mock.call(
+                    1,
+                    compose,
+                    True,
+                    "x86_64",
+                    [
+                        "bash",
+                        os.path.join(
+                            self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh"
+                        ),
+                    ],
+                    [self.topdir],
+                    log_file=os.path.join(
+                        self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
+                    ),
+                    with_jigdo=True,
+                )
+            ],
+        )
+        self.assertEqual(
+            aitm.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
+                    True,
+                    additional_variants=["Client"],
+                )
+            ],
         )
         self.assertEqual(aitm.return_value._max_size, 15)
         self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
     def test_binary_image_custom_naming(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
-        server = compose.variants['Server']
+        server = compose.variants["Server"]
         cfg = {
-            'include_variants': ['Client'],
-            'filename': 'fn',
-            'volid': ['v1', 'v2'],
+            "include_variants": ["Client"],
+            "filename": "fn",
+            "volid": ["v1", "v2"],
         }
 
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
 
         t = extra_isos.ExtraIsosThread(mock.Mock())
-        with mock.patch('time.sleep'):
-            t.process((compose, cfg, server, 'x86_64'), 1)
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "x86_64"), 1)
 
-        self.assertEqual(gfn.call_args_list,
-                         [mock.call(compose, server, 'x86_64', 'fn')])
-        self.assertEqual(gvi.call_args_list,
-                         [mock.call(compose, server, 'x86_64', ['v1', 'v2'])])
-        self.assertEqual(gef.call_args_list,
-                         [mock.call(compose, server, 'x86_64', [])])
+        self.assertEqual(
+            gfn.call_args_list, [mock.call(compose, server, "x86_64", "fn")]
+        )
+        self.assertEqual(
+            gvi.call_args_list, [mock.call(compose, server, "x86_64", ["v1", "v2"])]
+        )
+        self.assertEqual(gef.call_args_list, [mock.call(compose, server, "x86_64", [])])
         self.assertEqual(
             gic.call_args_list,
             [
                 mock.call(
                     compose,
                     server,
-                    'x86_64',
-                    ['Client'],
-                    'my.iso',
+                    "x86_64",
+                    ["Client"],
+                    "my.iso",
                     bootable=False,
                     inherit_extra_files=False,
                 ),
@@ -313,54 +358,70 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(1, compose, False, 'x86_64',
-                       ['bash', os.path.join(self.topdir, 'work/x86_64/tmp-Server/extraiso-my.iso.sh')],
-                       [self.topdir],
-                       log_file=os.path.join(self.topdir, 'logs/x86_64/extraiso-my.iso.x86_64.log'),
-                       with_jigdo=True)]
-
+            [
+                mock.call(
+                    1,
+                    compose,
+                    False,
+                    "x86_64",
+                    [
+                        "bash",
+                        os.path.join(
+                            self.topdir, "work/x86_64/tmp-Server/extraiso-my.iso.sh"
+                        ),
+                    ],
+                    [self.topdir],
+                    log_file=os.path.join(
+                        self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
+                    ),
+                    with_jigdo=True,
+                )
+            ],
         )
         self.assertEqual(
             aitm.call_args_list,
-            [mock.call(compose, server, 'x86_64',
-                       os.path.join(self.topdir, 'compose/Server/x86_64/iso/my.iso'),
-                       False, additional_variants=["Client"])]
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "x86_64",
+                    os.path.join(self.topdir, "compose/Server/x86_64/iso/my.iso"),
+                    False,
+                    additional_variants=["Client"],
+                )
+            ],
         )
         self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "x86_64")])
 
     def test_source_is_not_bootable(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
-        compose = helpers.DummyCompose(self.topdir, {
-            'bootable': True,
-            'buildinstall_method': 'lorax'
-        })
-        server = compose.variants['Server']
+        compose = helpers.DummyCompose(
+            self.topdir, {"bootable": True, "buildinstall_method": "lorax"}
+        )
+        server = compose.variants["Server"]
         cfg = {
-            'include_variants': ['Client'],
+            "include_variants": ["Client"],
         }
 
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
 
         t = extra_isos.ExtraIsosThread(mock.Mock())
-        with mock.patch('time.sleep'):
-            t.process((compose, cfg, server, 'src'), 1)
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "src"), 1)
 
-        self.assertEqual(gfn.call_args_list,
-                         [mock.call(compose, server, 'src', None)])
-        self.assertEqual(gvi.call_args_list,
-                         [mock.call(compose, server, 'src', [])])
-        self.assertEqual(gef.call_args_list,
-                         [mock.call(compose, server, 'src', [])])
+        self.assertEqual(gfn.call_args_list, [mock.call(compose, server, "src", None)])
+        self.assertEqual(gvi.call_args_list, [mock.call(compose, server, "src", [])])
+        self.assertEqual(gef.call_args_list, [mock.call(compose, server, "src", [])])
         self.assertEqual(
             gic.call_args_list,
             [
                 mock.call(
                     compose,
                     server,
-                    'src',
-                    ['Client'],
-                    'my.iso',
+                    "src",
+                    ["Client"],
+                    "my.iso",
                     bootable=False,
                     inherit_extra_files=False,
                 ),
@@ -368,70 +429,89 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         )
         self.assertEqual(
             rcc.call_args_list,
-            [mock.call(1, compose, False, 'src',
-                       ['bash', os.path.join(self.topdir, 'work/src/tmp-Server/extraiso-my.iso.sh')],
-                       [self.topdir],
-                       log_file=os.path.join(self.topdir, 'logs/src/extraiso-my.iso.src.log'),
-                       with_jigdo=True)]
-
+            [
+                mock.call(
+                    1,
+                    compose,
+                    False,
+                    "src",
+                    [
+                        "bash",
+                        os.path.join(
+                            self.topdir, "work/src/tmp-Server/extraiso-my.iso.sh"
+                        ),
+                    ],
+                    [self.topdir],
+                    log_file=os.path.join(
+                        self.topdir, "logs/src/extraiso-my.iso.src.log"
+                    ),
+                    with_jigdo=True,
+                )
+            ],
         )
         self.assertEqual(
             aitm.call_args_list,
-            [mock.call(compose, server, 'src',
-                       os.path.join(self.topdir, 'compose/Server/source/iso/my.iso'),
-                       False, additional_variants=["Client"])]
+            [
+                mock.call(
+                    compose,
+                    server,
+                    "src",
+                    os.path.join(self.topdir, "compose/Server/source/iso/my.iso"),
+                    False,
+                    additional_variants=["Client"],
+                )
+            ],
         )
         self.assertEqual(pmm.call_args_list, [mock.call(compose, server, "src")])
 
     def test_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
-        server = compose.variants['Server']
+        server = compose.variants["Server"]
         cfg = {
-            'include_variants': ['Client'],
-            'failable_arches': ['x86_64'],
+            "include_variants": ["Client"],
+            "failable_arches": ["x86_64"],
         }
 
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
         rcc.side_effect = helpers.mk_boom()
 
         t = extra_isos.ExtraIsosThread(mock.Mock())
-        with mock.patch('time.sleep'):
-            t.process((compose, cfg, server, 'x86_64'), 1)
+        with mock.patch("time.sleep"):
+            t.process((compose, cfg, server, "x86_64"), 1)
 
         self.assertEqual(aitm.call_args_list, [])
 
     def test_non_failable_failed(self, aitm, rcc, gef, gic, gfn, gvi, pmm):
         compose = helpers.DummyCompose(self.topdir, {})
-        server = compose.variants['Server']
+        server = compose.variants["Server"]
         cfg = {
-            'include_variants': ['Client'],
+            "include_variants": ["Client"],
         }
 
-        gfn.return_value = 'my.iso'
-        gvi.return_value = 'my volume id'
-        gic.return_value = '/tmp/iso-graft-points'
+        gfn.return_value = "my.iso"
+        gvi.return_value = "my volume id"
+        gic.return_value = "/tmp/iso-graft-points"
         rcc.side_effect = helpers.mk_boom(RuntimeError)
 
         t = extra_isos.ExtraIsosThread(mock.Mock())
         with self.assertRaises(RuntimeError):
-            with mock.patch('time.sleep'):
-                t.process((compose, cfg, server, 'x86_64'), 1)
+            with mock.patch("time.sleep"):
+                t.process((compose, cfg, server, "x86_64"), 1)
 
         self.assertEqual(aitm.call_args_list, [])
 
 
 @mock.patch("pungi.metadata.populate_extra_files_metadata")
-@mock.patch('pungi.phases.extra_isos.get_file_from_scm')
-@mock.patch('pungi.phases.extra_isos.get_dir_from_scm')
+@mock.patch("pungi.phases.extra_isos.get_file_from_scm")
+@mock.patch("pungi.phases.extra_isos.get_dir_from_scm")
 class GetExtraFilesTest(helpers.PungiTestCase):
-
     def setUp(self):
         super(GetExtraFilesTest, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
-        self.variant = self.compose.variants['Server']
-        self.arch = 'x86_64'
+        self.variant = self.compose.variants["Server"]
+        self.arch = "x86_64"
         self.dir = os.path.join(
             self.topdir, "work", self.arch, self.variant.uid, "extra-iso-extra-files"
         )
@@ -446,21 +526,17 @@ class GetExtraFilesTest(helpers.PungiTestCase):
     def test_get_file(self, get_dir, get_file, populate_md):
         get_file.return_value = ["GPL"]
         cfg = {
-            'scm': 'git',
-            'repo': 'https://pagure.io/pungi.git',
-            'file': 'GPL',
-            'target': 'legalese',
+            "scm": "git",
+            "repo": "https://pagure.io/pungi.git",
+            "file": "GPL",
+            "target": "legalese",
         }
         extra_isos.get_extra_files(self.compose, self.variant, self.arch, [cfg])
 
         self.assertEqual(get_dir.call_args_list, [])
         self.assertEqual(
             get_file.call_args_list,
-            [
-                mock.call(
-                    cfg, os.path.join(self.dir, "legalese"), compose=self.compose
-                ),
-            ],
+            [mock.call(cfg, os.path.join(self.dir, "legalese"), compose=self.compose)],
         )
         self.assertEqual(
             populate_md.call_args_list,
@@ -479,10 +555,10 @@ class GetExtraFilesTest(helpers.PungiTestCase):
     def test_get_dir(self, get_dir, get_file, populate_md):
         get_dir.return_value = ["a", "b"]
         cfg = {
-            'scm': 'git',
-            'repo': 'https://pagure.io/pungi.git',
-            'dir': 'docs',
-            'target': 'foo',
+            "scm": "git",
+            "repo": "https://pagure.io/pungi.git",
+            "dir": "docs",
+            "target": "foo",
         }
         extra_isos.get_extra_files(self.compose, self.variant, self.arch, [cfg])
 
@@ -508,10 +584,10 @@ class GetExtraFilesTest(helpers.PungiTestCase):
     def test_get_multiple_files(self, get_dir, get_file, populate_md):
         get_file.side_effect = [["GPL"], ["setup.py"]]
         cfg1 = {
-            'scm': 'git',
-            'repo': 'https://pagure.io/pungi.git',
-            'file': 'GPL',
-            'target': 'legalese',
+            "scm": "git",
+            "repo": "https://pagure.io/pungi.git",
+            "file": "GPL",
+            "target": "legalese",
         }
         cfg2 = {"scm": "git", "repo": "https://pagure.io/pungi.git", "file": "setup.py"}
         extra_isos.get_extra_files(self.compose, self.variant, self.arch, [cfg1, cfg2])
@@ -521,9 +597,7 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             get_file.call_args_list,
             [
                 mock.call(
-                    cfg1,
-                    os.path.join(self.dir, "legalese"),
-                    compose=self.compose,
+                    cfg1, os.path.join(self.dir, "legalese"), compose=self.compose,
                 ),
                 mock.call(cfg2, self.dir, compose=self.compose),
             ],
@@ -544,34 +618,37 @@ class GetExtraFilesTest(helpers.PungiTestCase):
 
 
 @mock.patch("pungi.phases.extra_isos.tweak_treeinfo")
-@mock.patch('pungi.wrappers.iso.write_graft_points')
-@mock.patch('pungi.wrappers.iso.get_graft_points')
+@mock.patch("pungi.wrappers.iso.write_graft_points")
+@mock.patch("pungi.wrappers.iso.get_graft_points")
 class GetIsoContentsTest(helpers.PungiTestCase):
-
     def setUp(self):
         super(GetIsoContentsTest, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
-        self.variant = self.compose.variants['Server']
+        self.variant = self.compose.variants["Server"]
 
     def test_non_bootable_binary(self, ggp, wgp, tt):
         gp = {
-            'compose/Client/x86_64/os/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
-            'compose/Client/x86_64/os/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
-            'compose/Server/x86_64/os/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
-            'compose/Server/x86_64/os/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/x86_64/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
+            "compose/Client/x86_64/os/Packages": {"f/foo.rpm": "/mnt/f/foo.rpm"},
+            "compose/Client/x86_64/os/repodata": {
+                "primary.xml": "/mnt/repodata/primary.xml"
+            },
+            "compose/Server/x86_64/os/Packages": {"b/bar.rpm": "/mnt/b/bar.rpm"},
+            "compose/Server/x86_64/os/repodata": {
+                "repomd.xml": "/mnt/repodata/repomd.xml"
+            },
+            "work/x86_64/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
         }
 
-        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
-        gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1 :]]
+        gp_file = os.path.join(self.topdir, "work/x86_64/iso/my.iso-graft-points")
 
         self.assertEqual(
             extra_isos.get_iso_contents(
                 self.compose,
                 self.variant,
-                'x86_64',
-                ['Client'],
-                'my.iso',
+                "x86_64",
+                ["Client"],
+                "my.iso",
                 False,
                 inherit_extra_files=False,
             ),
@@ -579,22 +656,24 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         )
 
         expected = {
-            'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
-            'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
-            'EULA': '/mnt/EULA',
-            'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
-            'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
+            "Client/Packages/f/foo.rpm": "/mnt/f/foo.rpm",
+            "Client/repodata/primary.xml": "/mnt/repodata/primary.xml",
+            "EULA": "/mnt/EULA",
+            "Server/Packages/b/bar.rpm": "/mnt/b/bar.rpm",
+            "Server/repodata/repomd.xml": "/mnt/repodata/repomd.xml",
         }
 
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
-        self.assertEqual(wgp.call_args_list[0][1], {'exclude': ["*/lost+found", "*/boot.iso"]})
+        self.assertEqual(
+            wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]}
+        )
 
         # Check correct call to tweak_treeinfo
         self.assertEqual(
@@ -607,7 +686,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                     os.path.join(
                         self.topdir,
                         "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
-                    )
+                    ),
                 ),
             ],
         )
@@ -615,15 +694,19 @@ class GetIsoContentsTest(helpers.PungiTestCase):
     def test_inherit_extra_files(self, ggp, wgp, tt):
         gp = {
             "compose/Client/x86_64/os/Packages": {"f/foo.rpm": "/mnt/f/foo.rpm"},
-            "compose/Client/x86_64/os/repodata": {"primary.xml": "/mnt/repodata/primary.xml"},
+            "compose/Client/x86_64/os/repodata": {
+                "primary.xml": "/mnt/repodata/primary.xml"
+            },
             "compose/Server/x86_64/os/Packages": {"b/bar.rpm": "/mnt/b/bar.rpm"},
-            "compose/Server/x86_64/os/repodata": {"repomd.xml": "/mnt/repodata/repomd.xml"},
+            "compose/Server/x86_64/os/repodata": {
+                "repomd.xml": "/mnt/repodata/repomd.xml"
+            },
             "work/x86_64/Client/extra-files": {"GPL": "/mnt/GPL"},
             "work/x86_64/Server/extra-files": {"AUTHORS": "/mnt/AUTHORS"},
             "work/x86_64/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
         }
 
-        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1 :]]
         gp_file = os.path.join(self.topdir, "work/x86_64/iso/my.iso-graft-points")
 
         self.assertEqual(
@@ -652,12 +735,14 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
-        self.assertEqual(wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]})
+        self.assertEqual(
+            wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]}
+        )
 
         # Check correct call to tweak_treeinfo
         self.assertEqual(
@@ -670,30 +755,34 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                     os.path.join(
                         self.topdir,
                         "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
-                    )
+                    ),
                 ),
             ],
         )
 
     def test_source(self, ggp, wgp, tt):
         gp = {
-            'compose/Client/source/tree/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
-            'compose/Client/source/tree/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
-            'compose/Server/source/tree/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
-            'compose/Server/source/tree/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/src/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
+            "compose/Client/source/tree/Packages": {"f/foo.rpm": "/mnt/f/foo.rpm"},
+            "compose/Client/source/tree/repodata": {
+                "primary.xml": "/mnt/repodata/primary.xml"
+            },
+            "compose/Server/source/tree/Packages": {"b/bar.rpm": "/mnt/b/bar.rpm"},
+            "compose/Server/source/tree/repodata": {
+                "repomd.xml": "/mnt/repodata/repomd.xml"
+            },
+            "work/src/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
         }
 
-        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]]
-        gp_file = os.path.join(self.topdir, 'work/src/iso/my.iso-graft-points')
+        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1 :]]
+        gp_file = os.path.join(self.topdir, "work/src/iso/my.iso-graft-points")
 
         self.assertEqual(
             extra_isos.get_iso_contents(
                 self.compose,
                 self.variant,
-                'src',
-                ['Client'],
-                'my.iso',
+                "src",
+                ["Client"],
+                "my.iso",
                 bootable=False,
                 inherit_extra_files=False,
             ),
@@ -701,22 +790,24 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         )
 
         expected = {
-            'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
-            'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
-            'EULA': '/mnt/EULA',
-            'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
-            'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
+            "Client/Packages/f/foo.rpm": "/mnt/f/foo.rpm",
+            "Client/repodata/primary.xml": "/mnt/repodata/primary.xml",
+            "EULA": "/mnt/EULA",
+            "Server/Packages/b/bar.rpm": "/mnt/b/bar.rpm",
+            "Server/repodata/repomd.xml": "/mnt/repodata/repomd.xml",
         }
 
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
-        self.assertEqual(wgp.call_args_list[0][1], {'exclude': ["*/lost+found", "*/boot.iso"]})
+        self.assertEqual(
+            wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]}
+        )
 
         # Check correct call to tweak_treeinfo
         self.assertEqual(
@@ -727,45 +818,52 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                     ["Client"],
                     os.path.join(self.topdir, "compose/Server/source/tree/.treeinfo"),
                     os.path.join(
-                        self.topdir,
-                        "work/src/Server/extra-iso-extra-files/.treeinfo",
-                    )
+                        self.topdir, "work/src/Server/extra-iso-extra-files/.treeinfo",
+                    ),
                 ),
             ],
         )
 
     def test_bootable(self, ggp, wgp, tt):
-        self.compose.conf['buildinstall_method'] = 'lorax'
+        self.compose.conf["buildinstall_method"] = "lorax"
 
-        bi_dir = os.path.join(self.topdir, 'work/x86_64/buildinstall/Server')
-        iso_dir = os.path.join(self.topdir, 'work/x86_64/iso/my.iso')
-        helpers.touch(os.path.join(bi_dir, 'isolinux/isolinux.bin'))
-        helpers.touch(os.path.join(bi_dir, 'images/boot.img'))
-        helpers.touch(os.path.join(bi_dir, 'images/efiboot.img'))
+        bi_dir = os.path.join(self.topdir, "work/x86_64/buildinstall/Server")
+        iso_dir = os.path.join(self.topdir, "work/x86_64/iso/my.iso")
+        helpers.touch(os.path.join(bi_dir, "isolinux/isolinux.bin"))
+        helpers.touch(os.path.join(bi_dir, "images/boot.img"))
+        helpers.touch(os.path.join(bi_dir, "images/efiboot.img"))
 
         gp = {
-            'compose/Client/x86_64/os/Packages': {'f/foo.rpm': '/mnt/f/foo.rpm'},
-            'compose/Client/x86_64/os/repodata': {'primary.xml': '/mnt/repodata/primary.xml'},
-            'compose/Server/x86_64/os/Packages': {'b/bar.rpm': '/mnt/b/bar.rpm'},
-            'compose/Server/x86_64/os/repodata': {'repomd.xml': '/mnt/repodata/repomd.xml'},
-            'work/x86_64/Server/extra-iso-extra-files': {'EULA': '/mnt/EULA'},
+            "compose/Client/x86_64/os/Packages": {"f/foo.rpm": "/mnt/f/foo.rpm"},
+            "compose/Client/x86_64/os/repodata": {
+                "primary.xml": "/mnt/repodata/primary.xml"
+            },
+            "compose/Server/x86_64/os/Packages": {"b/bar.rpm": "/mnt/b/bar.rpm"},
+            "compose/Server/x86_64/os/repodata": {
+                "repomd.xml": "/mnt/repodata/repomd.xml"
+            },
+            "work/x86_64/Server/extra-iso-extra-files": {"EULA": "/mnt/EULA"},
         }
         bi_gp = {
-            'isolinux/isolinux.bin': os.path.join(iso_dir, 'isolinux/isolinux.bin'),
-            'images/boot.img': os.path.join(iso_dir, 'images/boot.img'),
-            'images/efiboot.img': os.path.join(iso_dir, 'images/efiboot.img'),
+            "isolinux/isolinux.bin": os.path.join(iso_dir, "isolinux/isolinux.bin"),
+            "images/boot.img": os.path.join(iso_dir, "images/boot.img"),
+            "images/efiboot.img": os.path.join(iso_dir, "images/efiboot.img"),
         }
 
-        ggp.side_effect = lambda compose, x: gp[x[0][len(self.topdir) + 1:]] if len(x) == 1 else bi_gp
-        gp_file = os.path.join(self.topdir, 'work/x86_64/iso/my.iso-graft-points')
+        ggp.side_effect = (
+            lambda compose, x: gp[x[0][len(self.topdir) + 1 :]]
+            if len(x) == 1
+            else bi_gp
+        )
+        gp_file = os.path.join(self.topdir, "work/x86_64/iso/my.iso-graft-points")
 
         self.assertEqual(
             extra_isos.get_iso_contents(
                 self.compose,
                 self.variant,
-                'x86_64',
-                ['Client'],
-                'my.iso',
+                "x86_64",
+                ["Client"],
+                "my.iso",
                 bootable=True,
                 inherit_extra_files=False,
             ),
@@ -775,32 +873,37 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         self.maxDiff = None
 
         expected = {
-            'Client/Packages/f/foo.rpm': '/mnt/f/foo.rpm',
-            'Client/repodata/primary.xml': '/mnt/repodata/primary.xml',
-            'EULA': '/mnt/EULA',
-            'Server/Packages/b/bar.rpm': '/mnt/b/bar.rpm',
-            'Server/repodata/repomd.xml': '/mnt/repodata/repomd.xml',
-            'isolinux/isolinux.bin': os.path.join(iso_dir, 'isolinux/isolinux.bin'),
-            'images/boot.img': os.path.join(iso_dir, 'images/boot.img'),
-            'images/efiboot.img': os.path.join(
-                self.topdir, 'compose', self.variant.uid, 'x86_64/os/images/efiboot.img',
+            "Client/Packages/f/foo.rpm": "/mnt/f/foo.rpm",
+            "Client/repodata/primary.xml": "/mnt/repodata/primary.xml",
+            "EULA": "/mnt/EULA",
+            "Server/Packages/b/bar.rpm": "/mnt/b/bar.rpm",
+            "Server/repodata/repomd.xml": "/mnt/repodata/repomd.xml",
+            "isolinux/isolinux.bin": os.path.join(iso_dir, "isolinux/isolinux.bin"),
+            "images/boot.img": os.path.join(iso_dir, "images/boot.img"),
+            "images/efiboot.img": os.path.join(
+                self.topdir,
+                "compose",
+                self.variant.uid,
+                "x86_64/os/images/efiboot.img",
             ),
         }
 
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp] + [
-                mock.call(self.compose, [bi_dir, iso_dir])]
+            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
+            + [mock.call(self.compose, [bi_dir, iso_dir])],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
         self.assertDictEqual(dict(wgp.call_args_list[0][0][1]), expected)
-        self.assertEqual(wgp.call_args_list[0][1], {'exclude': ["*/lost+found", "*/boot.iso"]})
+        self.assertEqual(
+            wgp.call_args_list[0][1], {"exclude": ["*/lost+found", "*/boot.iso"]}
+        )
 
         # Check files were copied to temp directory
-        self.assertTrue(os.path.exists(os.path.join(iso_dir, 'isolinux/isolinux.bin')))
-        self.assertTrue(os.path.exists(os.path.join(iso_dir, 'images/boot.img')))
+        self.assertTrue(os.path.exists(os.path.join(iso_dir, "isolinux/isolinux.bin")))
+        self.assertTrue(os.path.exists(os.path.join(iso_dir, "images/boot.img")))
 
         # Check correct call to tweak_treeinfo
         self.assertEqual(
@@ -813,7 +916,7 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                     os.path.join(
                         self.topdir,
                         "work/x86_64/Server/extra-iso-extra-files/.treeinfo",
-                    )
+                    ),
                 ),
             ],
         )
@@ -823,56 +926,66 @@ class GetFilenameTest(helpers.PungiTestCase):
     def test_use_original_name(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
-        fn = extra_isos.get_filename(compose, compose.variants['Server'], 'x86_64',
-                                     'foo-{variant}-{arch}-{filename}')
+        fn = extra_isos.get_filename(
+            compose,
+            compose.variants["Server"],
+            "x86_64",
+            "foo-{variant}-{arch}-{filename}",
+        )
 
-        self.assertEqual(fn, 'foo-Server-x86_64-image-name')
+        self.assertEqual(fn, "foo-Server-x86_64-image-name")
 
     def test_use_default_without_format(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
-        fn = extra_isos.get_filename(compose, compose.variants['Server'], 'x86_64',
-                                     None)
+        fn = extra_isos.get_filename(
+            compose, compose.variants["Server"], "x86_64", None
+        )
 
-        self.assertEqual(fn, 'image-name')
+        self.assertEqual(fn, "image-name")
 
     def test_reports_unknown_placeholder(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
         with self.assertRaises(RuntimeError) as ctx:
-            extra_isos.get_filename(compose, compose.variants['Server'], 'x86_64',
-                                    'foo-{boom}')
+            extra_isos.get_filename(
+                compose, compose.variants["Server"], "x86_64", "foo-{boom}"
+            )
 
-        self.assertIn('boom', str(ctx.exception))
+        self.assertIn("boom", str(ctx.exception))
 
 
 class GetVolumeIDTest(helpers.PungiTestCase):
     def test_use_original_volume_id(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
-        volid = extra_isos.get_volume_id(compose, compose.variants['Server'],
-                                         'x86_64',
-                                         'f-{volid}')
+        volid = extra_isos.get_volume_id(
+            compose, compose.variants["Server"], "x86_64", "f-{volid}"
+        )
 
-        self.assertEqual(volid, 'f-test-1.0 Server.x86_64')
+        self.assertEqual(volid, "f-test-1.0 Server.x86_64")
 
     def test_falls_back_to_shorter(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
-        volid = extra_isos.get_volume_id(compose, compose.variants['Server'],
-                                         'x86_64',
-                                         ['long-foobar-{volid}', 'f-{volid}'])
+        volid = extra_isos.get_volume_id(
+            compose,
+            compose.variants["Server"],
+            "x86_64",
+            ["long-foobar-{volid}", "f-{volid}"],
+        )
 
-        self.assertEqual(volid, 'f-test-1.0 Server.x86_64')
+        self.assertEqual(volid, "f-test-1.0 Server.x86_64")
 
     def test_reports_unknown_placeholder(self):
         compose = helpers.DummyCompose(self.topdir, {})
 
         with self.assertRaises(RuntimeError) as ctx:
-            extra_isos.get_volume_id(compose, compose.variants['Server'],
-                                     'x86_64', 'f-{boom}')
+            extra_isos.get_volume_id(
+                compose, compose.variants["Server"], "x86_64", "f-{boom}"
+            )
 
-        self.assertIn('boom', str(ctx.exception))
+        self.assertIn("boom", str(ctx.exception))
 
 
 class TweakTreeinfoTest(helpers.PungiTestCase):

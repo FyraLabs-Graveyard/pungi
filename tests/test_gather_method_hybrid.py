@@ -244,6 +244,7 @@ class MockModule(object):
         def get_runtime_streams(platform):
             assert platform == "platform"
             return [self.platform]
+
         return [mock.Mock(get_runtime_streams=get_runtime_streams)]
 
     def get_rpm_artifacts(self):
@@ -368,9 +369,9 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
         self.assertEqual(
             self.compose.log_debug.call_args_list,
             [
-                mock.call('[BEGIN] Running fus (arch: x86_64, variant: Server)'),
-                mock.call('[DONE ] Running fus (arch: x86_64, variant: Server)')
-            ]
+                mock.call("[BEGIN] Running fus (arch: x86_64, variant: Server)"),
+                mock.call("[DONE ] Running fus (arch: x86_64, variant: Server)"),
+            ],
         )
 
     def test_with_modules_with_devel(self, run, gc, po, wc):
@@ -481,9 +482,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             "pkg-debuginfo-1.0-2.x86_64": dbg2,
         }
         self.phase.debuginfo = {
-            "x86_64": {
-                "pkg-debuginfo": [dbg1, dbg2],
-            },
+            "x86_64": {"pkg-debuginfo": [dbg1, dbg2]},
         }
         po.side_effect = [
             ([("pkg-1.0-1", "x86_64", frozenset())], []),
@@ -639,15 +638,11 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             (
                 [
                     ("pkg-devel-1.0-1", "x86_64", frozenset()),
-                    ("foo-1.0-1", "x86_64", frozenset())
+                    ("foo-1.0-1", "x86_64", frozenset()),
                 ],
-                frozenset()),
-            (
-                [
-                    ("pkg-devel-1.0-1", "i686", frozenset()),
-                ],
-                [],
+                frozenset(),
             ),
+            ([("pkg-devel-1.0-1", "i686", frozenset())], []),
         ]
 
         res = self.phase.run_solver(
@@ -666,7 +661,7 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
                 ("pkg-devel-1.0-1", "x86_64", frozenset()),
                 ("foo-1.0-1", "x86_64", frozenset()),
                 ("pkg-devel-1.0-1", "i686", frozenset()),
-            ]
+            ],
         )
         self.assertEqual(res[1], set())
         self.assertEqual(
@@ -761,16 +756,11 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             (
                 [
                     ("pkg-devel-1.0-1", "x86_64", frozenset()),
-                    ("foo-1.0-1", "x86_64", frozenset())
+                    ("foo-1.0-1", "x86_64", frozenset()),
                 ],
                 [],
             ),
-            (
-                [
-                    ("foo-1.0-1", "i686", frozenset()),
-                ],
-                [],
-            ),
+            ([("foo-1.0-1", "i686", frozenset())], []),
         ]
 
         res = self.phase.run_solver(
@@ -856,7 +846,7 @@ class TestExpandPackages(helpers.PungiTestCase):
             nevra_to_pkg["pkg-debuginfo-3:1-2.%s" % debug_arch] = pkg._replace(
                 name="pkg-debuginfo",
                 arch=debug_arch,
-                file_path="/tmp/pkg-debuginfo.%s.rpm" % debug_arch
+                file_path="/tmp/pkg-debuginfo.%s.rpm" % debug_arch,
             )
         return nevra_to_pkg
 

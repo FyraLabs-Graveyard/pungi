@@ -6,6 +6,7 @@ import os
 import re
 import six
 import sys
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -15,29 +16,26 @@ from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
 from pungi.module_util import Modulemd
 
-EVENT_INFO = {'id': 15681980, 'ts': 1460956382.81936}
+EVENT_INFO = {"id": 15681980, "ts": 1460956382.81936}
 TAG_INFO = {
     "maven_support": False,
     "locked": False,
     "name": "f25",
-    "extra": {
-        "mock.package_manager": "dnf"
-    },
+    "extra": {"mock.package_manager": "dnf"},
     "perm": None,
     "id": 335,
     "arches": None,
     "maven_include_all": None,
-    "perm_id": None
+    "perm_id": None,
 }
 
 
 class TestGetKojiEvent(helpers.PungiTestCase):
-
     def setUp(self):
         super(TestGetKojiEvent, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
 
-        self.event_file = self.topdir + '/work/global/koji-event'
+        self.event_file = self.topdir + "/work/global/koji-event"
 
     def test_use_preconfigured_event(self):
         koji_wrapper = mock.Mock()
@@ -49,9 +47,8 @@ class TestGetKojiEvent(helpers.PungiTestCase):
 
         self.assertEqual(event, EVENT_INFO)
         six.assertCountEqual(
-            self,
-            koji_wrapper.mock_calls,
-            [mock.call.koji_proxy.getEvent(123456)])
+            self, koji_wrapper.mock_calls, [mock.call.koji_proxy.getEvent(123456)]
+        )
         with open(self.event_file) as f:
             self.assertEqual(json.load(f), EVENT_INFO)
 
@@ -65,9 +62,8 @@ class TestGetKojiEvent(helpers.PungiTestCase):
 
         self.assertEqual(event, EVENT_INFO)
         six.assertCountEqual(
-            self,
-            koji_wrapper.mock_calls,
-            [mock.call.koji_proxy.getLastEvent()])
+            self, koji_wrapper.mock_calls, [mock.call.koji_proxy.getLastEvent()]
+        )
         with open(self.event_file) as f:
             self.assertEqual(json.load(f), EVENT_INFO)
 
@@ -75,16 +71,19 @@ class TestGetKojiEvent(helpers.PungiTestCase):
 class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     def setUp(self):
         super(TestPopulateGlobalPkgset, self).setUp()
-        self.compose = helpers.DummyCompose(self.topdir, {
-            'pkgset_koji_tag': 'f25',
-            'sigkeys': ["foo", "bar"],
-        })
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"pkgset_koji_tag": "f25", "sigkeys": ["foo", "bar"]}
+        )
         self.koji_wrapper = mock.Mock()
-        self.pkgset_path = os.path.join(self.topdir, 'work', 'global', 'pkgset_global.pickle')
-        self.koji_module_path = os.path.join(self.topdir, 'work', 'global', 'koji-module-Server.yaml')
+        self.pkgset_path = os.path.join(
+            self.topdir, "work", "global", "pkgset_global.pickle"
+        )
+        self.koji_module_path = os.path.join(
+            self.topdir, "work", "global", "koji-module-Server.yaml"
+        )
 
     @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
-    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
+    @mock.patch("pungi.phases.pkgset.pkgsets.KojiPackageSet")
     def test_populate(self, KojiPackageSet, materialize):
         materialize.side_effect = self.mock_materialize
 
@@ -106,14 +105,12 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         return pkgset
 
     @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
-    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet')
-    def test_populate_with_multiple_koji_tags(
-        self, KojiPackageSet, materialize
-    ):
-        self.compose = helpers.DummyCompose(self.topdir, {
-            'pkgset_koji_tag': ['f25', 'f25-extra'],
-            'sigkeys': ["foo", "bar"],
-        })
+    @mock.patch("pungi.phases.pkgset.pkgsets.KojiPackageSet")
+    def test_populate_with_multiple_koji_tags(self, KojiPackageSet, materialize):
+        self.compose = helpers.DummyCompose(
+            self.topdir,
+            {"pkgset_koji_tag": ["f25", "f25-extra"], "sigkeys": ["foo", "bar"]},
+        )
 
         materialize.side_effect = self.mock_materialize
 
@@ -123,7 +120,9 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
 
         self.assertEqual(len(pkgsets), 2)
         init_calls = KojiPackageSet.call_args_list
-        six.assertCountEqual(self, [call[0][0] for call in init_calls], ["f25", "f25-extra"])
+        six.assertCountEqual(
+            self, [call[0][0] for call in init_calls], ["f25", "f25-extra"]
+        )
         six.assertCountEqual(
             self, [call[0][1] for call in init_calls], [self.koji_wrapper] * 2
         )
@@ -143,22 +142,24 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         )
 
     @mock.patch("pungi.phases.pkgset.sources.source_koji.MaterializedPackageSet.create")
-    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.populate')
-    @mock.patch('pungi.phases.pkgset.pkgsets.KojiPackageSet.save_file_list')
+    @mock.patch("pungi.phases.pkgset.pkgsets.KojiPackageSet.populate")
+    @mock.patch("pungi.phases.pkgset.pkgsets.KojiPackageSet.save_file_list")
     def test_populate_packages_to_gather(self, save_file_list, popuplate, materialize):
-        self.compose = helpers.DummyCompose(self.topdir, {
-            'gather_method': 'nodeps',
-            'pkgset_koji_tag': 'f25',
-            'sigkeys': ["foo", "bar"],
-            'additional_packages': [
-                ('.*', {'*': ['pkg', 'foo.x86_64']}),
-            ]
-        })
+        self.compose = helpers.DummyCompose(
+            self.topdir,
+            {
+                "gather_method": "nodeps",
+                "pkgset_koji_tag": "f25",
+                "sigkeys": ["foo", "bar"],
+                "additional_packages": [(".*", {"*": ["pkg", "foo.x86_64"]})],
+            },
+        )
 
         materialize.side_effect = self.mock_materialize
 
         pkgsets = source_koji.populate_global_pkgset(
-            self.compose, self.koji_wrapper, '/prefix', 123456)
+            self.compose, self.koji_wrapper, "/prefix", 123456
+        )
         self.assertEqual(len(pkgsets), 1)
         six.assertCountEqual(self, pkgsets[0].packages, ["pkg", "foo"])
 
@@ -166,57 +167,55 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
 class TestGetPackageSetFromKoji(helpers.PungiTestCase):
     def setUp(self):
         super(TestGetPackageSetFromKoji, self).setUp()
-        self.compose = helpers.DummyCompose(self.topdir, {
-            'pkgset_koji_tag': 'f25',
-        })
+        self.compose = helpers.DummyCompose(self.topdir, {"pkgset_koji_tag": "f25"})
         self.compose.koji_event = None
         self.koji_wrapper = mock.Mock()
         self.koji_wrapper.koji_proxy.getLastEvent.return_value = EVENT_INFO
         self.koji_wrapper.koji_proxy.getTag.return_value = TAG_INFO
 
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.populate_global_pkgset')
+    @mock.patch("pungi.phases.pkgset.sources.source_koji.populate_global_pkgset")
     def test_get_package_sets(self, pgp):
         pkgsets = source_koji.get_pkgset_from_koji(
             self.compose, self.koji_wrapper, "/prefix"
         )
 
         six.assertCountEqual(
-            self,
-            self.koji_wrapper.koji_proxy.mock_calls,
-            [mock.call.getLastEvent()]
+            self, self.koji_wrapper.koji_proxy.mock_calls, [mock.call.getLastEvent()]
         )
         self.assertEqual(pkgsets, pgp.return_value)
 
         self.assertEqual(
             pgp.call_args_list,
-            [mock.call(self.compose, self.koji_wrapper, '/prefix', EVENT_INFO)],
+            [mock.call(self.compose, self.koji_wrapper, "/prefix", EVENT_INFO)],
         )
 
     def test_get_koji_modules(self):
-        mock_build_ids = [{'id': 1065873, 'name': 'testmodule2-master_dash-20180406051653.96c371af'}]
+        mock_build_ids = [
+            {"id": 1065873, "name": "testmodule2-master_dash-20180406051653.96c371af"}
+        ]
         mock_extra = {
-            'typeinfo': {
-                'module': {
-                    'content_koji_tag': 'module-b62270b82443edde',
-                    'modulemd_str': mock.Mock(),
-                    'name': 'testmodule2',
-                    'stream': 'master',
-                    'version': '20180406051653',
-                    'context': '96c371af',
+            "typeinfo": {
+                "module": {
+                    "content_koji_tag": "module-b62270b82443edde",
+                    "modulemd_str": mock.Mock(),
+                    "name": "testmodule2",
+                    "stream": "master",
+                    "version": "20180406051653",
+                    "context": "96c371af",
                 }
             }
         }
         mock_build_md = [
             {
-                'id': 1065873,
-                'epoch': None,
-                'extra': mock_extra,
-                'name': 'testmodule2',
-                'nvr': 'testmodule2-master_dash-20180406051653.2e6f5e0a',
-                'release': '20180406051653.2e6f5e0a',
-                'state': 1,
-                'version': 'master_dash',
-                'completion_ts': 1433473124.0,
+                "id": 1065873,
+                "epoch": None,
+                "extra": mock_extra,
+                "name": "testmodule2",
+                "nvr": "testmodule2-master_dash-20180406051653.2e6f5e0a",
+                "release": "20180406051653.2e6f5e0a",
+                "state": 1,
+                "version": "master_dash",
+                "completion_ts": 1433473124.0,
             }
         ]
 
@@ -239,9 +238,12 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.assertIn("tag", module)
 
         expected_query = "testmodule2-master_dash-20180406051653.96c371af"
-        self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
-                                                                    "glob")
-        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(
+            expected_query, "build", "glob"
+        )
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(
+            mock_build_ids[0]["id"]
+        )
 
     def test_get_koji_modules_filter_by_event(self):
         mock_build_ids = [
@@ -251,7 +253,8 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
             "typeinfo": {
                 "module": {
                     "content_koji_tag": "module-b62270b82443edde",
-                    "modulemd_str": mock.Mock()}
+                    "modulemd_str": mock.Mock(),
+                }
             }
         }
         mock_build_md = [
@@ -282,64 +285,66 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(
             "testmodule2-master_dash-*", "build", "glob"
         )
-        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(
+            mock_build_ids[0]["id"]
+        )
         self.koji_wrapper.koji_proxy.listArchives.assert_not_called()
         self.koji_wrapper.koji_proxy.listRPMs.assert_not_called()
 
     def test_get_koji_modules_no_version(self):
         mock_build_ids = [
-            {'id': 1065873, 'name': 'testmodule2-master-20180406051653.2e6f5e0a'},
-            {'id': 1065874, 'name': 'testmodule2-master-20180406051653.96c371af'}
+            {"id": 1065873, "name": "testmodule2-master-20180406051653.2e6f5e0a"},
+            {"id": 1065874, "name": "testmodule2-master-20180406051653.96c371af"},
         ]
         mock_extra = [
             {
-                'typeinfo': {
-                    'module': {
-                        'content_koji_tag': 'module-b62270b82443edde',
-                        'modulemd_str': mock.Mock(),
-                        'name': 'testmodule2',
-                        'stream': 'master',
-                        'version': '20180406051653',
-                        'context': '2e6f5e0a',
+                "typeinfo": {
+                    "module": {
+                        "content_koji_tag": "module-b62270b82443edde",
+                        "modulemd_str": mock.Mock(),
+                        "name": "testmodule2",
+                        "stream": "master",
+                        "version": "20180406051653",
+                        "context": "2e6f5e0a",
                     }
                 }
             },
             {
-                'typeinfo': {
-                    'module': {
-                        'content_koji_tag': 'module-52e40b9cdd3c0f7d',
-                        'modulemd_str': mock.Mock(),
-                        'name': 'testmodule2',
-                        'stream': 'master',
-                        'version': '20180406051653',
-                        'context': '96c371af',
+                "typeinfo": {
+                    "module": {
+                        "content_koji_tag": "module-52e40b9cdd3c0f7d",
+                        "modulemd_str": mock.Mock(),
+                        "name": "testmodule2",
+                        "stream": "master",
+                        "version": "20180406051653",
+                        "context": "96c371af",
                     }
                 }
-            }
+            },
         ]
         mock_build_md = [
             {
-                'id': 1065873,
-                'epoch': None,
-                'extra': mock_extra[0],
-                'name': 'testmodule2',
-                'nvr': 'testmodule2-master-20180406051653.2e6f5e0a',
-                'release': '20180406051653.2e6f5e0a',
-                'state': 1,
-                'version': 'master',
-                'completion_ts': 1433473124.0,
+                "id": 1065873,
+                "epoch": None,
+                "extra": mock_extra[0],
+                "name": "testmodule2",
+                "nvr": "testmodule2-master-20180406051653.2e6f5e0a",
+                "release": "20180406051653.2e6f5e0a",
+                "state": 1,
+                "version": "master",
+                "completion_ts": 1433473124.0,
             },
             {
-                'id': 1065874,
-                'epoch': None,
-                'extra': mock_extra[1],
-                'name': 'testmodule2',
-                'nvr': 'testmodule2-master-20180406051653.96c371af',
-                'release': '20180406051653.96c371af',
-                'state': 1,
-                'version': 'master',
-                'completion_ts': 1433473124.0,
-            }
+                "id": 1065874,
+                "epoch": None,
+                "extra": mock_extra[1],
+                "name": "testmodule2",
+                "nvr": "testmodule2-master-20180406051653.96c371af",
+                "release": "20180406051653.96c371af",
+                "state": 1,
+                "version": "master",
+                "completion_ts": 1433473124.0,
+            },
         ]
 
         self.koji_wrapper.koji_proxy.search.return_value = mock_build_ids
@@ -362,10 +367,14 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
             self.assertIn("module_context", module)
 
         expected_query = "testmodule2-master-*"
-        self.koji_wrapper.koji_proxy.search.assert_called_once_with(expected_query, "build",
-                                                                    "glob")
+        self.koji_wrapper.koji_proxy.search.assert_called_once_with(
+            expected_query, "build", "glob"
+        )
 
-        expected_calls = [mock.call(mock_build_ids[0]["id"]), mock.call(mock_build_ids[1]["id"])]
+        expected_calls = [
+            mock.call(mock_build_ids[0]["id"]),
+            mock.call(mock_build_ids[1]["id"]),
+        ]
         self.koji_wrapper.koji_proxy.getBuild.mock_calls == expected_calls
 
     def test_get_koji_modules_ignore_deleted(self):
@@ -416,31 +425,29 @@ class TestGetPackageSetFromKoji(helpers.PungiTestCase):
         self.koji_wrapper.koji_proxy.search.assert_called_once_with(
             "testmodule2-master_dash-*", "build", "glob"
         )
-        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(mock_build_ids[0]["id"])
+        self.koji_wrapper.koji_proxy.getBuild.assert_called_once_with(
+            mock_build_ids[0]["id"]
+        )
         self.koji_wrapper.koji_proxy.listArchives.assert_not_called()
         self.koji_wrapper.koji_proxy.listRPMs.assert_not_called()
 
 
 class TestSourceKoji(helpers.PungiTestCase):
-
-    @mock.patch('pungi.phases.pkgset.sources.source_koji.get_pkgset_from_koji')
-    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch("pungi.phases.pkgset.sources.source_koji.get_pkgset_from_koji")
+    @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
     def test_run(self, KojiWrapper, gpfk):
-        compose = helpers.DummyCompose(self.topdir, {
-            'koji_profile': 'koji'
-        })
-        KojiWrapper.return_value.koji_module.config.topdir = '/prefix'
+        compose = helpers.DummyCompose(self.topdir, {"koji_profile": "koji"})
+        KojiWrapper.return_value.koji_module.config.topdir = "/prefix"
 
         phase = source_koji.PkgsetSourceKoji(compose)
         pkgsets, path_prefix = phase()
 
         self.assertEqual(pkgsets, gpfk.return_value)
-        self.assertEqual(path_prefix, '/prefix/')
-        self.assertEqual(KojiWrapper.mock_calls, [mock.call('koji')])
+        self.assertEqual(path_prefix, "/prefix/")
+        self.assertEqual(KojiWrapper.mock_calls, [mock.call("koji")])
 
 
 class TestCorrectNVR(helpers.PungiTestCase):
-
     def setUp(self):
         super(TestCorrectNVR, self).setUp()
         self.compose = helpers.DummyCompose(self.topdir, {})
@@ -467,36 +474,39 @@ class TestCorrectNVR(helpers.PungiTestCase):
 
     def test_new_nv(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.new_nv)
-        expected = {
-            'name': 'base-runtime',
-            'stream': 'f26'}
+        expected = {"name": "base-runtime", "stream": "f26"}
 
         self.assertEqual(module_info, expected)
 
     def test_new_nvr(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.new_nvr)
         expected = {
-            'name': 'base-runtime',
-            'stream': 'f26',
-            'version': '20170502134116'}
+            "name": "base-runtime",
+            "stream": "f26",
+            "version": "20170502134116",
+        }
         self.assertEqual(module_info, expected)
 
     def test_new_nvrc(self):
         module_info = source_koji.variant_dict_from_str(self.compose, self.new_nvrc)
         expected = {
-            'name': 'base-runtime',
-            'stream': 'f26',
-            'version': '20170502134116',
-            'context': '0123abcd'}
+            "name": "base-runtime",
+            "stream": "f26",
+            "version": "20170502134116",
+            "context": "0123abcd",
+        }
         self.assertEqual(module_info, expected)
 
     def test_new_garbage_value(self):
-        self.assertRaises(ValueError, source_koji.variant_dict_from_str,
-                          self.compose, 'foo:bar:baz:quux:qaar')
+        self.assertRaises(
+            ValueError,
+            source_koji.variant_dict_from_str,
+            self.compose,
+            "foo:bar:baz:quux:qaar",
+        )
 
 
 class TestFilterInherited(unittest.TestCase):
-
     def test_empty_module_list(self):
         event = {"id": 123456}
         koji_proxy = mock.Mock()
@@ -504,7 +514,8 @@ class TestFilterInherited(unittest.TestCase):
         top_tag = "top-tag"
 
         koji_proxy.getFullInheritance.return_value = [
-            {"name": "middle-tag"}, {"name": "bottom-tag"}
+            {"name": "middle-tag"},
+            {"name": "bottom-tag"},
         ]
 
         result = source_koji.filter_inherited(koji_proxy, event, module_builds, top_tag)
@@ -521,7 +532,8 @@ class TestFilterInherited(unittest.TestCase):
         top_tag = "top-tag"
 
         koji_proxy.getFullInheritance.return_value = [
-            {"name": "middle-tag"}, {"name": "bottom-tag"}
+            {"name": "middle-tag"},
+            {"name": "bottom-tag"},
         ]
         module_builds = [
             {"name": "foo", "version": "1", "release": "1", "tag_name": "top-tag"},
@@ -547,7 +559,8 @@ class TestFilterInherited(unittest.TestCase):
         top_tag = "top-tag"
 
         koji_proxy.getFullInheritance.return_value = [
-            {"name": "middle-tag"}, {"name": "bottom-tag"}
+            {"name": "middle-tag"},
+            {"name": "bottom-tag"},
         ]
         module_builds = [
             {"name": "foo", "version": "1", "release": "2", "tag_name": "bottom-tag"},
@@ -671,7 +684,6 @@ class MockModule(object):
 @mock.patch("pungi.module_util.Modulemd.ModuleStream.read_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
 class TestAddModuleToVariant(helpers.PungiTestCase):
-
     def setUp(self):
         super(TestAddModuleToVariant, self).setUp()
         self.koji = mock.Mock()
@@ -695,9 +707,7 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
         }
 
     def test_adding_module(self):
-        variant = mock.Mock(
-            arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
-        )
+        variant = mock.Mock(arches=["armhfp", "x86_64"], arch_mmds={}, modules=[])
 
         source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
 
@@ -705,10 +715,14 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.armv7hl.txt"
+                    ),
                 },
                 "x86_64": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.x86_64.txt"
+                    ),
                 },
             },
         )
@@ -729,10 +743,14 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.armv7hl.txt"
+                    ),
                 },
                 "x86_64": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.x86_64.txt"
+                    ),
                     "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
                 },
             },
@@ -742,9 +760,7 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
         )
 
     def test_adding_module_with_add_module(self):
-        variant = mock.Mock(
-            arches=["armhfp", "x86_64"], arch_mmds={}, modules=[]
-        )
+        variant = mock.Mock(arches=["armhfp", "x86_64"], arch_mmds={}, modules=[])
 
         source_koji._add_module_to_variant(
             self.koji, variant, self.buildinfo, add_to_variant_modules=True
@@ -754,10 +770,14 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.armv7hl.txt"
+                    ),
                 },
                 "x86_64": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.x86_64.txt"
+                    ),
                 },
             },
         )
@@ -782,10 +802,14 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             variant.arch_mmds,
             {
                 "armhfp": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.armv7hl.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.armv7hl.txt"
+                    ),
                 },
                 "x86_64": {
-                    "module:master:20190318:abcdef": MockModule("/koji/modulemd.x86_64.txt"),
+                    "module:master:20190318:abcdef": MockModule(
+                        "/koji/modulemd.x86_64.txt"
+                    ),
                     "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
                 },
             },

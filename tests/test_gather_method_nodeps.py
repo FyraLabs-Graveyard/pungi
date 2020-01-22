@@ -9,7 +9,7 @@ import six
 from pungi.phases.gather.methods import method_nodeps as nodeps
 from tests import helpers
 
-COMPS_FILE = os.path.join(helpers.FIXTURE_DIR, 'comps.xml')
+COMPS_FILE = os.path.join(helpers.FIXTURE_DIR, "comps.xml")
 
 
 class TestWritePungiConfig(helpers.PungiTestCase):
@@ -19,7 +19,9 @@ class TestWritePungiConfig(helpers.PungiTestCase):
         self.compose.paths.work.comps = mock.Mock(return_value=COMPS_FILE)
 
     def test_expand_group(self):
-        packages = nodeps.expand_groups(self.compose, 'x86_64', None, ['core', 'text-internet'])
+        packages = nodeps.expand_groups(
+            self.compose, "x86_64", None, ["core", "text-internet"]
+        )
         six.assertCountEqual(
             self,
             packages,

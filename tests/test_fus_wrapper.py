@@ -101,12 +101,11 @@ class TestGetCmd(unittest.TestCase):
                 "x86_64",
                 "--repo=lookaside-0,lookaside,http:///tmp",
                 "@conf",
-            ]
+            ],
         )
 
 
 class TestWriteConfig(PungiTestCase):
-
     def test_write_sorted_mix(self):
         f = os.path.join(self.topdir, "solvables")
         fus.write_config(f, ["moda:master"], ["pkg", "foo"])
@@ -149,8 +148,7 @@ class TestParseOutput(unittest.TestCase):
         touch(self.file, "*pkg-1.0-1.x86_64@repo-0\n")
         packages, modules = fus.parse_output(self.file)
         self.assertEqual(
-            packages,
-            set([("pkg-1.0-1", "x86_64", frozenset(["modular"]))]),
+            packages, set([("pkg-1.0-1", "x86_64", frozenset(["modular"]))]),
         )
         self.assertEqual(modules, set())
 
