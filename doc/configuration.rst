@@ -550,6 +550,10 @@ Options
 **lorax_extra_sources**
     (*list*) -- a variant/arch mapping with urls for extra source repositories
     added to Lorax command line. Either one repo or a list can be specified.
+**lorax_use_koji_plugin** = False
+    (*bool*) -- When set to ``True``, the Koji pungi_buildinstall task will be
+    used to execute Lorax instead of runroot. Use only if the Koji instance
+    has the pungi_buildinstall plugin installed.
 **buildinstall_kickstart**
     (:ref:`scm_dict <scm_support>`) -- If specified, this kickstart file will
     be copied into each file and pointed to in boot configuration.

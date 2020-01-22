@@ -1262,6 +1262,10 @@ def make_schema():
             "lorax_extra_sources": _variant_arch_mapping({
                 "$ref": "#/definitions/strings",
             }),
+            "lorax_use_koji_plugin": {
+                "type": "boolean",
+                "default": False,
+            },
 
             "signing_key_id": {"type": "string"},
             "signing_key_password_file": {"type": "string"},

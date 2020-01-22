@@ -236,6 +236,35 @@ class Runroot(kobo.log.LoggingBase):
         else:
             raise ValueError("Unknown runroot_method %r." % self.runroot_method)
 
+    def run_pungi_buildinstall(self, args, log_file=None, arch=None, **kwargs):
+        """
+        Runs the Lorax buildinstall runroot command using the Pungi Buildinstall
+        Koji plugin as pungi_buildinstall task.
+
+        The **kwargs are optional and matches the
+        `KojiWrapper.get_pungi_buildinstall_cmd()` kwargs.
+
+        :param dict args: Arguments for the pungi_buildinstall Koji task.
+        :param str log_file: Log file into which the output of the task will
+            be logged.
+        :param str arch: Architecture on which the task should be executed.
+        """
+        runroot_channel = self.compose.conf.get("runroot_channel")
+        runroot_tag = self.compose.conf["runroot_tag"]
+
+        koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
+        koji_cmd = koji_wrapper.get_pungi_buildinstall_cmd(
+            runroot_tag, arch, args, channel=runroot_channel,
+            chown_uid=os.getuid(), **kwargs)
+
+        output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
+        if output["retcode"] != 0:
+            raise RuntimeError(
+                "Pungi-buildinstall task failed: %s. See %s for more details."
+                % (output["task_id"], log_file)
+            )
+        self._result = output
+
     def get_buildroot_rpms(self):
         """
         Returns the list of RPMs installed in a buildroot in which the runroot

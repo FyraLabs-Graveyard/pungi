@@ -21,7 +21,7 @@ import threading
 import contextlib
 
 import koji
-from kobo.shortcuts import run
+from kobo.shortcuts import run, force_list
 import six
 from six.moves import configparser, shlex_quote
 import six.moves.xmlrpc_client as xmlrpclib
@@ -120,6 +120,47 @@ class KojiWrapper(object):
             # and owned by the same user that is running the process
             command += " && chown -R %d %s" % (os.getuid(), paths)
         cmd.append(command)
+
+        return cmd
+
+    def get_pungi_buildinstall_cmd(
+            self, target, arch, args, channel=None, packages=None,
+            mounts=None, weight=None, chown_uid=None):
+        cmd = self._get_cmd("pungi-buildinstall", "--nowait", "--task-id")
+
+        if channel:
+            cmd.append("--channel-override=%s" % channel)
+        else:
+            cmd.append("--channel-override=runroot-local")
+
+        if weight:
+            cmd.append("--weight=%s" % int(weight))
+
+        for package in packages or []:
+            cmd.append("--package=%s" % package)
+
+        for mount in mounts or []:
+            # directories are *not* created here
+            cmd.append("--mount=%s" % mount)
+
+        if chown_uid:
+            cmd.append("--chown-uid=%s" % chown_uid)
+
+        # IMPORTANT: all --opts have to be provided *before* args
+
+        cmd.append(target)
+
+        # i686 -> i386 etc.
+        arch = getBaseArch(arch)
+        cmd.append(arch)
+
+        for k, v in args.items():
+            if v:
+                if isinstance(v, bool):
+                    cmd.append(k)
+                else:
+                    for arg in force_list(v):
+                        cmd.append("%s=%s" % (k, shlex_quote(arg)))
 
         return cmd
 
@@ -606,6 +647,12 @@ def get_buildroot_rpms(compose, task_id):
         # runroot
         koji = KojiWrapper(compose.conf['koji_profile'])
         buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
+        if not buildroot_infos:
+            children_tasks = koji.koji_proxy.getTaskChildren(task_id)
+            for child_task in children_tasks:
+                buildroot_infos = koji.koji_proxy.listBuildroots(taskID=child_task["id"])
+                if buildroot_infos:
+                    break
         buildroot_info = buildroot_infos[-1]
         data = koji.koji_proxy.listRPMs(componentBuildrootID=buildroot_info["id"])
         for rpm_info in data:

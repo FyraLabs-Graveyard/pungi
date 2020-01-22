@@ -21,7 +21,7 @@ import shutil
 import re
 
 from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run
+from kobo.shortcuts import run, force_list
 from productmd.images import Image
 from six.moves import shlex_quote
 
@@ -46,6 +46,7 @@ class BuildinstallPhase(PhaseBase):
         # is needed to skip copying files for failed tasks.
         self.pool.finished_tasks = set()
         self.buildinstall_method = self.compose.conf.get("buildinstall_method")
+        self.lorax_use_koji_plugin = self.compose.conf.get("lorax_use_koji_plugin")
         self.used_lorax = self.buildinstall_method == 'lorax'
         self.pkgset_phase = pkgset_phase
 
@@ -98,13 +99,6 @@ class BuildinstallPhase(PhaseBase):
         # only care about the directory anyway.
         log_dir = _get_log_dir(self.compose, variant, arch)
 
-        # If the buildinstall_topdir is set, it means Koji is used for
-        # buildinstall phase and the filesystem with Koji is read-only.
-        # In that case, we have to write logs to buildinstall_topdir and
-        # later copy them back to our local log directory.
-        if self.compose.conf.get("buildinstall_topdir", None):
-            output_dir = os.path.join(output_dir, "results")
-
         repos = repo_baseurl[:]
         repos.extend(
             get_arch_variant_data(self.compose.conf, "lorax_extra_sources", arch, variant)
@@ -115,31 +109,61 @@ class BuildinstallPhase(PhaseBase):
                 comps_repo = translate_path(self.compose, comps_repo)
             repos.append(comps_repo)
 
-        lorax = LoraxWrapper()
-        lorax_cmd = lorax.get_lorax_cmd(
-            self.compose.conf["release_name"],
-            version,
-            version,
-            repos,
-            output_dir,
-            variant=variant.uid,
-            buildinstallpackages=variant.buildinstallpackages,
-            is_final=self.compose.supported,
-            buildarch=buildarch,
-            volid=volid,
-            nomacboot=nomacboot,
-            bugurl=bugurl,
-            add_template=add_template,
-            add_arch_template=add_arch_template,
-            add_template_var=add_template_var,
-            add_arch_template_var=add_arch_template_var,
-            noupgrade=noupgrade,
-            rootfs_size=rootfs_size,
-            log_dir=log_dir,
-            dracut_args=dracut_args,
-        )
-        return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
-                                    ' '.join([shlex_quote(x) for x in lorax_cmd]))
+        if self.lorax_use_koji_plugin:
+            return {
+                "product": self.compose.conf["release_name"],
+                "version": version,
+                "release": version,
+                "sources": force_list(repos),
+                "variant": variant.uid,
+                "installpkgs": variant.buildinstallpackages,
+                "isfinal": self.compose.supported,
+                "buildarch": buildarch,
+                "volid": volid,
+                "nomacboot": nomacboot,
+                "bugurl": bugurl,
+                "add-template": add_template,
+                "add-arch-template": add_arch_template,
+                "add-template-var": add_template_var,
+                "add-arch-template-var": add_arch_template_var,
+                "noupgrade": noupgrade,
+                "rootfs-size": rootfs_size,
+                "dracut-args": dracut_args,
+                "outputdir": output_dir,
+            }
+        else:
+            # If the buildinstall_topdir is set, it means Koji is used for
+            # buildinstall phase and the filesystem with Koji is read-only.
+            # In that case, we have to write logs to buildinstall_topdir and
+            # later copy them back to our local log directory.
+            if self.compose.conf.get("buildinstall_topdir", None):
+                output_dir = os.path.join(output_dir, "results")
+
+            lorax = LoraxWrapper()
+            lorax_cmd = lorax.get_lorax_cmd(
+                self.compose.conf["release_name"],
+                version,
+                version,
+                repos,
+                output_dir,
+                variant=variant.uid,
+                buildinstallpackages=variant.buildinstallpackages,
+                is_final=self.compose.supported,
+                buildarch=buildarch,
+                volid=volid,
+                nomacboot=nomacboot,
+                bugurl=bugurl,
+                add_template=add_template,
+                add_arch_template=add_arch_template,
+                add_template_var=add_template_var,
+                add_arch_template_var=add_arch_template_var,
+                noupgrade=noupgrade,
+                rootfs_size=rootfs_size,
+                log_dir=log_dir,
+                dracut_args=dracut_args,
+            )
+            return 'rm -rf %s && %s' % (shlex_quote(output_topdir),
+                                        ' '.join([shlex_quote(x) for x in lorax_cmd]))
 
     def get_repos(self, arch):
         repos = []
@@ -423,6 +447,7 @@ class BuildinstallThread(WorkerThread):
 
     def worker(self, compose, arch, variant, cmd, num):
         buildinstall_method = compose.conf["buildinstall_method"]
+        lorax_use_koji_plugin = compose.conf["lorax_use_koji_plugin"]
         log_filename = ('buildinstall-%s' % variant.uid) if variant else 'buildinstall'
         log_file = compose.paths.log.log_file(arch, log_filename)
 
@@ -458,12 +483,19 @@ class BuildinstallThread(WorkerThread):
 
         # Start the runroot task.
         runroot = Runroot(compose, phase="buildinstall")
-        runroot.run(
-            cmd, log_file=log_file, arch=arch, packages=packages,
-            mounts=[compose.topdir],
-            weight=compose.conf['runroot_weights'].get('buildinstall'),
-            chown_paths=chown_paths,
-        )
+        if buildinstall_method == "lorax" and lorax_use_koji_plugin:
+            runroot.run_pungi_buildinstall(
+                cmd, log_file=log_file, arch=arch, packages=packages,
+                mounts=[compose.topdir],
+                weight=compose.conf['runroot_weights'].get('buildinstall'),
+            )
+        else:
+            runroot.run(
+                cmd, log_file=log_file, arch=arch, packages=packages,
+                mounts=[compose.topdir],
+                weight=compose.conf['runroot_weights'].get('buildinstall'),
+                chown_paths=chown_paths,
+            )
 
         if final_output_dir != output_dir:
             if not os.path.exists(final_output_dir):

@@ -158,6 +158,85 @@ class TestBuildinstallPhase(PungiTestCase):
              mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='DVD')])
 
     @mock.patch('pungi.phases.buildinstall.ThreadPool')
+    @mock.patch('pungi.phases.buildinstall.get_volid')
+    def test_starts_threads_for_each_cmd_with_lorax_koji_plugin(
+            self, get_volid, poolCls):
+        compose = BuildInstallCompose(self.topdir, {
+            'bootable': True,
+            'release_name': 'Test',
+            'release_short': 't',
+            'release_version': '1',
+            'buildinstall_method': 'lorax',
+            'lorax_use_koji_plugin': True,
+            'disc_types': {'dvd': 'DVD'},
+        })
+
+        get_volid.return_value = 'vol_id'
+
+        phase = BuildinstallPhase(compose, self._make_pkgset_phase(["p1", "p2"]))
+
+        phase.run()
+        self.maxDiff = None
+
+        expected_args = [
+            {
+                'product': 'Test', 'version': '1', 'release': '1',
+                'sources': [self.topdir + "/work/amd64/repo/p1",
+                            self.topdir + "/work/amd64/repo/p2",
+                            self.topdir + '/work/amd64/comps_repo_Server'],
+                'variant': 'Server', 'installpkgs': ['bash', 'vim'],
+                'isfinal': True, 'buildarch': 'amd64', 'volid': 'vol_id',
+                'nomacboot': True, 'bugurl': None, 'add-template': [],
+                'add-arch-template': [], 'add-template-var': [],
+                'add-arch-template-var': [], 'noupgrade': True,
+                'rootfs-size': None, 'dracut-args': [],
+                'outputdir': self.topdir + '/work/amd64/buildinstall/Server'
+            },
+            {
+                'product': 'Test', 'version': '1', 'release': '1',
+                'sources': [self.topdir + "/work/amd64/repo/p1",
+                            self.topdir + "/work/amd64/repo/p2",
+                            self.topdir + '/work/amd64/comps_repo_Client'],
+                'variant': 'Client', 'installpkgs': [],
+                'isfinal': True, 'buildarch': 'amd64', 'volid': 'vol_id',
+                'nomacboot': True, 'bugurl': None, 'add-template': [],
+                'add-arch-template': [], 'add-template-var': [],
+                'add-arch-template-var': [], 'noupgrade': True,
+                'rootfs-size': None, 'dracut-args': [],
+                'outputdir': self.topdir + '/work/amd64/buildinstall/Client'
+            },
+            {
+                'product': 'Test', 'version': '1', 'release': '1',
+                'sources': [self.topdir + "/work/x86_64/repo/p1",
+                            self.topdir + "/work/x86_64/repo/p2",
+                            self.topdir + '/work/x86_64/comps_repo_Server'],
+                'variant': 'Server', 'installpkgs': ['bash', 'vim'],
+                'isfinal': True, 'buildarch': 'x86_64', 'volid': 'vol_id',
+                'nomacboot': True, 'bugurl': None, 'add-template': [],
+                'add-arch-template': [], 'add-template-var': [],
+                'add-arch-template-var': [], 'noupgrade': True,
+                'rootfs-size': None, 'dracut-args': [],
+                'outputdir': self.topdir + '/work/x86_64/buildinstall/Server'
+            },
+        ]
+
+        # Three items added for processing in total.
+        # Server.x86_64, Client.amd64, Server.x86_64
+        pool = poolCls.return_value
+        self.assertEqual(3, len(pool.queue_put.mock_calls))
+        six.assertCountEqual(
+            self,
+            [call[0][0][3] for call in pool.queue_put.call_args_list],
+            expected_args)
+
+        six.assertCountEqual(
+            self,
+            get_volid.mock_calls,
+            [mock.call(compose, 'x86_64', variant=compose.variants['Server'], disc_type='DVD'),
+             mock.call(compose, 'amd64', variant=compose.variants['Client'], disc_type='DVD'),
+             mock.call(compose, 'amd64', variant=compose.variants['Server'], disc_type='DVD')])
+
+    @mock.patch('pungi.phases.buildinstall.ThreadPool')
     @mock.patch('pungi.phases.buildinstall.LoraxWrapper')
     @mock.patch('pungi.phases.buildinstall.get_volid')
     def test_lorax_skips_empty_variants(self, get_volid, loraxCls, poolCls):
@@ -633,6 +712,75 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertEqual(
             run_runroot_cmd.mock_calls,
             [mock.call(get_runroot_cmd.return_value,
+                       log_file=self.topdir + '/logs/x86_64/buildinstall-Server.x86_64.log')])
+        with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
+            rpms = f.read().strip().split('\n')
+        six.assertCountEqual(self, rpms, ["bash", "zsh"])
+        six.assertCountEqual(self, self.pool.finished_tasks, [("Server", "x86_64")])
+
+        self.assertEqual(
+            mock_tweak.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    destdir,
+                    os.path.join(self.topdir, "compose/Server/x86_64/os"),
+                    "x86_64",
+                    "Server",
+                    "",
+                    "dummy-volid",
+                    self.pool.kickstart_file,
+                )
+            ],
+        )
+        self.assertEqual(
+            mock_link.call_args_list,
+            [mock.call(compose, "x86_64", compose.variants["Server"], False)],
+        )
+
+    @mock.patch('pungi.phases.buildinstall.link_boot_iso')
+    @mock.patch('pungi.phases.buildinstall.tweak_buildinstall')
+    @mock.patch('pungi.wrappers.kojiwrapper.KojiWrapper')
+    @mock.patch('pungi.wrappers.kojiwrapper.get_buildroot_rpms')
+    @mock.patch('pungi.phases.buildinstall.run')
+    def test_buildinstall_thread_with_lorax_using_koji_plugin(
+        self, run, get_buildroot_rpms, KojiWrapperMock, mock_tweak, mock_link
+    ):
+        compose = BuildInstallCompose(self.topdir, {
+            'buildinstall_method': 'lorax',
+            'lorax_use_koji_plugin': True,
+            'runroot_tag': 'rrt',
+            'koji_profile': 'koji',
+            'runroot_weights': {'buildinstall': 123},
+        })
+
+        get_buildroot_rpms.return_value = ['bash', 'zsh']
+
+        get_pungi_buildinstall_cmd = KojiWrapperMock.return_value.get_pungi_buildinstall_cmd
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            'output': 'Foo bar baz',
+            'retcode': 0,
+            'task_id': 1234,
+        }
+
+        t = BuildinstallThread(self.pool)
+
+        with mock.patch('time.sleep'):
+            t.process((compose, 'x86_64', compose.variants['Server'], self.cmd), 0)
+
+        destdir = os.path.join(self.topdir, "work/x86_64/buildinstall/Server")
+        self.assertEqual(
+            get_pungi_buildinstall_cmd.mock_calls,
+            [mock.call(
+                'rrt', 'x86_64', self.cmd, channel=None,
+                packages=['lorax'], mounts=[self.topdir],
+                weight=123, chown_uid=os.getuid()
+            )])
+        self.assertEqual(
+            run_runroot_cmd.mock_calls,
+            [mock.call(get_pungi_buildinstall_cmd.return_value,
                        log_file=self.topdir + '/logs/x86_64/buildinstall-Server.x86_64.log')])
         with open(self.topdir + '/logs/x86_64/buildinstall-Server-RPMs.x86_64.log') as f:
             rpms = f.read().strip().split('\n')
