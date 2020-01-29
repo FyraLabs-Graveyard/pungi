@@ -145,7 +145,8 @@ def _try_read_cpuinfo():  # pragma: no cover
     """ Try to read /proc/cpuinfo ... if we can't ignore errors (ie. proc not
         mounted). """
     try:
-        return open("/proc/cpuinfo", "r")
+        with open("/proc/cpuinfo", "r") as f:
+            return f.readlines()
     except:
         return []
 
@@ -155,7 +156,8 @@ def _parse_auxv():  # pragma: no cover
         later on, very similar to what rpm does. """
     # In case we can't open and read /proc/self/auxv, just return
     try:
-        data = open("/proc/self/auxv", "rb").read()
+        with open("/proc/self/auxv", "rb") as f:
+            data = f.read()
     except:
         return
 
