@@ -50,7 +50,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
         self.assertEqual(pool.queue_put.call_args_list, [])
         six.assertCountEqual(
             self,
-            phase.logger.warn.call_args_list,
+            phase.logger.warning.call_args_list,
             [mock.call('No RPMs found for Everything.x86_64, skipping ISO'),
              mock.call('No RPMs found for Everything.amd64, skipping ISO'),
              mock.call('No RPMs found for Everything.src, skipping ISO'),
@@ -838,7 +838,7 @@ class SplitIsoTest(helpers.PungiTestCase):
                                      os.path.join(base_path, 'Packages/b/bash.rpm')],
                            'size': 5400166400}])
         self.assertEqual(
-            compose._logger.warn.call_args_list,
+            compose._logger.warning.call_args_list,
             [mock.call('ISO for Server.x86_64 does not fit on single media! '
                        'It is 710652160 bytes too big. (Total size: 5400166400 B)')]
         )

@@ -368,7 +368,9 @@ class Gather(GatherBase):
                 self.finished_get_package_deps_reqs[str(req)].update(deps)
                 result.update((dep, req) for dep in deps)
             else:
-                self.logger.warn("Unresolvable dependency %s in %s.%s" % (req, pkg.name, pkg.arch))
+                self.logger.warning(
+                    "Unresolvable dependency %s in %s.%s", req, pkg.name, pkg.arch
+                )
 
         return result
 
@@ -508,7 +510,7 @@ class Gather(GatherBase):
             if pkgs:
                 added.update(pkgs)
             else:
-                self.logger.warn("Prepopulate: Doesn't match: %s" % name_arch)
+                self.logger.warning("Prepopulate: Doesn't match: %s", name_arch)
 
         for pkg in added:
             self._set_flag(pkg, PkgFlag.prepopulate)

@@ -88,8 +88,9 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                     continue
 
                 if not self._find_rpms(os_tree):
-                    self.logger.warn("No RPMs found for %s.%s, skipping ISO"
-                                     % (variant.uid, arch))
+                    self.logger.warning(
+                        "No RPMs found for %s.%s, skipping ISO" % (variant.uid, arch)
+                    )
                     continue
 
                 bootable = self._is_bootable(variant, arch)
@@ -112,7 +113,9 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                     iso_path = self.compose.paths.compose.iso_path(
                         arch, variant, filename, symlink_to=symlink_isos_to)
                     if os.path.isfile(iso_path):
-                        self.logger.warn("Skipping mkisofs, image already exists: %s" % iso_path)
+                        self.logger.warning(
+                            "Skipping mkisofs, image already exists: %s", iso_path
+                        )
                         continue
                     deliverables.append(iso_path)
 
@@ -369,11 +372,10 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     logger.debug('Splitting media for %s.%s:' % (variant.uid, arch))
     result = ms.split()
     if no_split and result[0]['size'] > split_size:
-        logger.warn('ISO for %s.%s does not fit on single media! '
-                    'It is %s bytes too big. (Total size: %s B)'
-                    % (variant.uid, arch,
-                       result[0]['size'] - split_size,
-                       result[0]['size']))
+        logger.warning(
+            "ISO for %s.%s does not fit on single media! It is %s bytes too big. (Total size: %s B)"
+            % (variant.uid, arch, result[0]['size'] - split_size, result[0]['size'])
+        )
     return result
 
 

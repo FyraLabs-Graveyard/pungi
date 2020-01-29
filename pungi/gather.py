@@ -628,9 +628,8 @@ class Pungi(PungiBase):
                 deps = self.ayum.whatProvides(r, f, v).returnPackages()
                 deps = self.excludePackages(deps)
                 if not deps:
-                    self.logger.warn(
-                        "Unresolvable dependency %s in %s.%s"
-                        % (Req(req), po.name, po.arch)
+                    self.logger.warning(
+                        "Unresolvable dependency %s in %s.%s", Req(req), po.name, po.arch
                     )
                     continue
 
@@ -670,7 +669,13 @@ class Pungi(PungiBase):
                         added.add(dep)
 
             except (yum.Errors.InstallError, yum.Errors.YumBaseError) as ex:
-                self.logger.warn("Unresolvable dependency %s in %s.%s (repo: %s)" % (r, po.name, po.arch, po.repoid))
+                self.logger.warning(
+                    "Unresolvable dependency %s in %s.%s (repo: %s)",
+                    r,
+                    po.name,
+                    po.arch,
+                    po.repoid,
+                )
                 continue
             self.resolved_deps[req] = None
 
@@ -920,7 +925,9 @@ class Pungi(PungiBase):
                 matches = [ po for po in matches if po.arch in self.valid_multilib_arches ]
 
             if not matches:
-                self.logger.warn('Could not find a match for %s in any configured repo' % pattern)
+                self.logger.warning(
+                    "Could not find a match for %s in any configured repo", pattern
+                )
                 continue
 
             packages_by_name = {}
