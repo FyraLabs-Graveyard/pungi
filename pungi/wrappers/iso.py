@@ -417,6 +417,28 @@ def mount(image, logger=None, use_guestmount=True):
             # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
             env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
             cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
+            # guestmount caches files for faster mounting. However,
+            # systemd-tmpfiles is cleaning it up if the files have not been
+            # used in 30 days. It seems to be leaving an empty appliance.d
+            # directory in place, which is causing guestmount to fail because
+            # the files are missing and it only checks the directory.
+            #
+            # Thus we check if the directory is empty, and remove it in such
+            # case. There is still a possible race condition that the cleanup
+            # will happen between our check and libguestfs using the directory.
+            # The performance penalty for never reusing the cached files is too
+            # high given how unlikely the race condition is.
+            #
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1771976
+            guestfs_tmp_dir = "/var/tmp/.guestfs-%d" % os.getuid()
+            try:
+                if not os.listdir(os.path.join(guestfs_tmp_dir, "appliance.d")):
+                    if logger:
+                        logger.info("Cleaning up %s", guestfs_tmp_dir)
+                    util.rmtree(guestfs_tmp_dir)
+            except OSError:
+                # The directory is missing. That's fine for us too.
+                pass
         else:
             env = {}
             cmd = ["mount", "-o", "loop", image, mount_dir]
