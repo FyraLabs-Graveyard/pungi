@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.1.41
+Version:        4.2.0
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,40 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Jan 31 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.0-1
+- iso: Clean up cache for guestmount (lsedlar)
+- Remove deprecated warn() call (lsedlar)
+- arch_utils: Fix ResourceWarnings (lsedlar)
+- Add support for new Pungi Buildinstall Koji plugin. (jkaluza)
+- Make --task-id mandatory in get_runroot_cmd (hlin)
+- Wait on runroot tasks with wait-task command (hlin)
+- pkgset: Ignore deleted module builds (hlin)
+- Add tests for new exclude options (lsedlar)
+- Remove invalid parameters from osbs config (hlin)
+- pungi-gather: add options for excluding debug and source packages
+  (frederic.pierret)
+- Hide latest koji package via pkgset_koji_builds option (hlin)
+- Add a new option for customizing version in .treeinfo (lsedlar)
+- Kickstart on RHEL 7 does not have metalink attr (lsedlar)
+- Support generating ISOs when using link_type="symlink". (jkaluza)
+- pkgset: Hardlink downloaded packages (lsedlar)
+- Check dependency of --just-phase (hlin)
+- Update runroot_method documentation. (jkaluza)
+- Remove productimg phase (hlin)
+- Fix unified isos with missing images.json (lsedlar)
+- Allow setting runroot_method per Pungi phase. (jkaluza)
+- ostree: Fix arg passed to scm.get_dir_from_scm (hlin)
+- Improve detection of lookaside packages (lsedlar)
+- gather: Deduplicate packages before printing (lsedlar)
+- Do not mention pdc_client when missing modulemd (hlin)
+- gather: Improve logging for gathering (hlin)
+- gather: handle metalink in kickstart repos (frederic.pierret)
+- tests: drop sys.path modification (hlin)
+- cleanup: refactor scripts via entry points (hlin)
+- Avoid crash if a module is not available on all arches (lsedlar)
+- Add version constraint to productmd dependency (lsedlar)
+- Allow specifying temp dir in pungi-gather (frederic.pierret)
+
 * Mon Dec 02 2019 Lubomír Sedlář <lsedlar@redhat.com> - 4.1.41-1
 - repoclosure: Parse all fus logs (lsedlar)
 - runroot: Log different commands to different files (lsedlar)
