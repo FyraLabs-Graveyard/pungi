@@ -542,6 +542,31 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(config["foo"], "git://example.com/repo.git#HEAD")
         self.assertEqual(resolve_git_url.call_args_list, [])
 
+    def test_update_schema(self):
+        schema = checks.make_schema()
+        schema_override = {
+            "definitions": {
+                "scm_dict": {
+                    "properties": {
+                        "scm": {
+                            "enum": ["git"]
+                        },
+                        "repo": {
+                            "enum": ["git://localhost/pungi-fedora.git"]
+                        },
+                    }
+                }
+            }
+        }
+        schema = checks.update_schema(schema, schema_override)
+        scm_dict_properties = schema["definitions"]["scm_dict"]["properties"]
+        self.assertEqual(
+            scm_dict_properties["scm"],
+            {'enum': ['git'], 'type': 'string'})
+        self.assertEqual(
+            scm_dict_properties["repo"],
+            {'enum': ['git://localhost/pungi-fedora.git'], 'type': 'string'})
+        self.assertEqual(scm_dict_properties["file"], {"type": "string"})
 
 class TestUmask(unittest.TestCase):
     def setUp(self):

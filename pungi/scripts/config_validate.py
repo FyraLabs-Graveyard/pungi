@@ -72,7 +72,7 @@ def read_variants(compose, config):
             compose.all_variants[child.uid] = child
 
 
-def run(config, topdir, has_old, offline, defined_variables):
+def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
     # Load default values for undefined variables. This is useful for
     # validating templates that are supposed to be filled in later with
     # pungi-config-dump.
@@ -89,7 +89,13 @@ def run(config, topdir, has_old, offline, defined_variables):
     # Remove the dummy variables used for defaults.
     config_utils.remove_unknown(conf, defined_variables)
 
-    errors, warnings = pungi.checks.validate(conf, offline=offline)
+    # Load extra schemas JSON files.
+    schema = pungi.checks.make_schema()
+    for schema_override in schema_overrides:
+        with open(schema_override) as f:
+            schema = pungi.checks.update_schema(schema, json.load(f))
+
+    errors, warnings = pungi.checks.validate(conf, offline=offline, schema=schema)
     if errors or warnings:
         for error in errors + warnings:
             print(error)
@@ -169,11 +175,21 @@ def main(args=None):
             "Can be used multiple times."
         ),
     )
+    parser.add_argument(
+        '--schema-override',
+        action="append",
+        default=[],
+        help=(
+            'Path to extra JSON schema defining the values which will override '
+            'the original Pungi JSON schema values.'
+        ),
+    )
     opts = parser.parse_args(args)
     defines = config_utils.extract_defines(opts.define)
 
     with pungi.util.temp_dir() as topdir:
-        errors = run(opts.config, topdir, opts.old_composes, opts.offline, defines)
+        errors = run(opts.config, topdir, opts.old_composes, opts.offline, defines,
+                     opts.schema_override)
 
     for msg in errors:
         print(msg)

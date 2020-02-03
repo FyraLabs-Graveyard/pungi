@@ -185,12 +185,12 @@ def _check_dep(name, value, lst, matcher, fmt):
             yield fmt.format(name, value, dep)
 
 
-def validate(config, offline=False):
+def validate(config, offline=False, schema=None):
     """Test the configuration against schema.
 
     Undefined values for which a default value exists will be filled in.
     """
-    schema = make_schema()
+    schema = schema or make_schema()
     DefaultValidator = _extend_with_default_and_alias(
         jsonschema.Draft4Validator, offline=offline
     )
@@ -1440,6 +1440,25 @@ CONFIG_DEPS = {
         ],
     },
 }
+
+
+def update_schema(schema, update_dict):
+    """
+    Updates the leaf values in `schema` by the leaf values from `update_dict`.
+
+    This is different from `schema.update(update_dict)`, because
+    the `schema.update()` would override also non-leaf values.
+
+    :param schema: Schema to update.
+    :param updated_dict: Dict matching the schema with updated leaf values.
+    :returns: Updated schema
+    """
+    for k, v in update_dict.items():
+        if isinstance(v, dict):
+            schema[k] = update_schema(schema.get(k, {}), v)
+        else:
+            schema[k] = v
+    return schema
 
 
 def _get_gather_backends():
