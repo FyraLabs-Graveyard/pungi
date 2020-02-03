@@ -34,7 +34,7 @@ class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
 
     def __call__(self, arch, variant):
         groups = set()
-        if not self.compose.conf.get('comps_file'):
+        if not self.compose.conf.get("comps_file"):
             return set(), set()
 
         comps = CompsWrapper(self.compose.paths.work.comps(arch=arch, variant=variant))

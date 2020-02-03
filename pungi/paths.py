@@ -14,9 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-__all__ = (
-    "Paths",
-)
+__all__ = ("Paths",)
 
 
 import errno
@@ -30,7 +28,12 @@ class Paths(object):
         paths_module_name = compose.conf.get("paths_module")
         if paths_module_name:
             # custom paths
-            paths_module = __import__(paths_module_name, globals(), locals(), ["LogPaths", "WorkPaths", "ComposePaths"])
+            paths_module = __import__(
+                paths_module_name,
+                globals(),
+                locals(),
+                ["LogPaths", "WorkPaths", "ComposePaths"],
+            )
             self.compose = paths_module.ComposePaths(compose)
             self.log = paths_module.LogPaths(compose)
             self.work = paths_module.WorkPaths(compose)
@@ -62,7 +65,9 @@ class LogPaths(object):
         arch = arch or "global"
         if log_name.endswith(".log"):
             log_name = log_name[:-4]
-        return os.path.join(self.topdir(arch, create_dir=create_dir), "%s.%s.log" % (log_name, arch))
+        return os.path.join(
+            self.topdir(arch, create_dir=create_dir), "%s.%s.log" % (log_name, arch)
+        )
 
 
 class WorkPaths(object):
@@ -114,13 +119,13 @@ class WorkPaths(object):
             work/x86_64/pungi/Server.x86_64.conf
         """
         arch = arch or "global"
-        file_name = ''
+        file_name = ""
         if variant:
-            file_name += variant.uid + '.'
-        file_name += arch + '.'
+            file_name += variant.uid + "."
+        file_name += arch + "."
         if source_name:
-            file_name += source_name + '.'
-        file_name += 'conf'
+            file_name += source_name + "."
+        file_name += "conf"
         path = os.path.join(self.topdir(arch, create_dir=create_dir), "pungi")
         if create_dir:
             makedirs(path)
@@ -147,7 +152,7 @@ class WorkPaths(object):
         path = self.pungi_conf(arch, variant, create_dir=create_dir)
         path = path[:-5]
         if source_name:
-            path += '.' + source_name
+            path += "." + source_name
         return path + ".log"
 
     def pungi_cache_dir(self, arch, variant=None, create_dir=True):
@@ -200,13 +205,16 @@ class WorkPaths(object):
         Examples:
             work/x86_64/Server/lookaside_repo
         """
-        path = os.path.join(self.topdir(arch, create_dir=create_dir),
-                            variant.uid, "lookaside_repo")
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir), variant.uid, "lookaside_repo"
+        )
         if create_dir:
             makedirs(path)
         return path
 
-    def package_list(self, arch=None, variant=None, pkgset=None, pkg_type=None, create_dir=True):
+    def package_list(
+        self, arch=None, variant=None, pkgset=None, pkg_type=None, create_dir=True
+    ):
         """
         Examples:
             work/x86_64/package_list/x86_64.conf
@@ -234,7 +242,9 @@ class WorkPaths(object):
         Examples:
             work/x86_64/package_list/Server.x86_64.lookaside.conf
         """
-        return self.package_list(arch, variant, pkg_type='lookaside', create_dir=create_dir)
+        return self.package_list(
+            arch, variant, pkg_type="lookaside", create_dir=create_dir
+        )
 
     def pungi_download_dir(self, arch, create_dir=True):
         """
@@ -246,8 +256,9 @@ class WorkPaths(object):
             makedirs(path)
         return path
 
-    def buildinstall_dir(self, arch, create_dir=True,
-                         allow_topdir_override=False, variant=None):
+    def buildinstall_dir(
+        self, arch, create_dir=True, allow_topdir_override=False, variant=None
+    ):
         """
         :param bool allow_topdir_override: When True, the
             "buildinstall_topdir" will be used (if set) instead of real
@@ -262,9 +273,12 @@ class WorkPaths(object):
         if allow_topdir_override and buildinstall_topdir:
             topdir_basename = os.path.basename(self.compose.topdir)
             path = os.path.join(
-                buildinstall_topdir, "buildinstall-%s" % topdir_basename, arch)
+                buildinstall_topdir, "buildinstall-%s" % topdir_basename, arch
+            )
         else:
-            path = os.path.join(self.topdir(arch, create_dir=create_dir), "buildinstall")
+            path = os.path.join(
+                self.topdir(arch, create_dir=create_dir), "buildinstall"
+            )
 
         if variant:
             path = os.path.join(path, variant.uid)
@@ -277,7 +291,9 @@ class WorkPaths(object):
         """
         if arch == "global":
             raise RuntimeError("Global extra files dir makes no sense.")
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), variant.uid, "extra-files")
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir), variant.uid, "extra-files"
+        )
         if create_dir:
             makedirs(path)
         return path
@@ -289,7 +305,11 @@ class WorkPaths(object):
         """
         if arch == "global":
             raise RuntimeError("Global extra files dir makes no sense.")
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), variant.uid, "extra-iso-extra-files")
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir),
+            variant.uid,
+            "extra-iso-extra-files",
+        )
         if create_dir:
             makedirs(path)
         return path
@@ -303,7 +323,7 @@ class WorkPaths(object):
             self.topdir(arch, create_dir=create_dir),
             variant.uid,
             "iso-staging-dir",
-            filename
+            filename,
         )
         if create_dir:
             makedirs(path)
@@ -318,7 +338,9 @@ class WorkPaths(object):
         if pkg_type is not None:
             file_name += ".%s" % pkg_type
         file_name += ".conf"
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), "repo_package_list")
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir), "repo_package_list"
+        )
         if create_dir:
             makedirs(path)
         path = os.path.join(path, file_name)
@@ -357,7 +379,11 @@ class WorkPaths(object):
         # file_name = "%s.%s.pem" % (variant, arch)
         # HACK: modifyrepo doesn't handle renames -> $dir/productid
         file_name = "productid"
-        path = os.path.join(self.topdir(arch, create_dir=create_dir), "product_id", "%s.%s.pem" % (variant, arch))
+        path = os.path.join(
+            self.topdir(arch, create_dir=create_dir),
+            "product_id",
+            "%s.%s.pem" % (variant, arch),
+        )
         if create_dir:
             makedirs(path)
         path = os.path.join(path, file_name)
@@ -371,12 +397,16 @@ class WorkPaths(object):
         Examples:
             work/image-build/Server
         """
-        path = os.path.join(self.topdir('image-build', create_dir=create_dir), variant.uid)
+        path = os.path.join(
+            self.topdir("image-build", create_dir=create_dir), variant.uid
+        )
         if create_dir:
             makedirs(path)
         return path
 
-    def image_build_conf(self, variant, image_name, image_type, arches=None, create_dir=True):
+    def image_build_conf(
+        self, variant, image_name, image_type, arches=None, create_dir=True
+    ):
         """
         @param variant
         @param image-name
@@ -389,16 +419,18 @@ class WorkPaths(object):
             work/image-build/Server/docker_rhel-server-docker_x86_64.cfg
             work/image-build/Server/docker_rhel-server-docker_x86_64-ppc64le.cfg
         """
-        path = os.path.join(self.image_build_dir(variant), "%s_%s" % (image_type, image_name))
+        path = os.path.join(
+            self.image_build_dir(variant), "%s_%s" % (image_type, image_name)
+        )
         if arches is not None:
-            path = "%s_%s" % (path, '-'.join(list(arches)))
+            path = "%s_%s" % (path, "-".join(list(arches)))
         path = "%s.cfg" % path
         return path
 
     def module_defaults_dir(self, create_dir=True):
         """
         """
-        path = os.path.join(self.topdir(create_dir=create_dir), 'module_defaults')
+        path = os.path.join(self.topdir(create_dir=create_dir), "module_defaults")
         if create_dir:
             makedirs(path)
         return path
@@ -432,7 +464,9 @@ class ComposePaths(object):
 
         if arch or variant:
             if variant.type == "addon":
-                return self.topdir(arch, variant.parent, create_dir=create_dir, relative=relative)
+                return self.topdir(
+                    arch, variant.parent, create_dir=create_dir, relative=relative
+                )
             path = os.path.join(path, variant.uid, arch)
         if create_dir and not relative:
             makedirs(path)
@@ -453,7 +487,10 @@ class ComposePaths(object):
             # use 'os' dir due to historical reasons
             tree_dir = "os"
 
-        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), tree_dir)
+        path = os.path.join(
+            self.topdir(arch, variant, create_dir=create_dir, relative=relative),
+            tree_dir,
+        )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -468,9 +505,13 @@ class ComposePaths(object):
             compose/Server/x86_64/addons/LoadBalancer
         """
         if variant.type == "addon":
-            path = self.packages(arch, variant, create_dir=create_dir, relative=relative)
+            path = self.packages(
+                arch, variant, create_dir=create_dir, relative=relative
+            )
         else:
-            path = self.tree_dir(arch, variant, create_dir=create_dir, relative=relative)
+            path = self.tree_dir(
+                arch, variant, create_dir=create_dir, relative=relative
+            )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -483,9 +524,16 @@ class ComposePaths(object):
             compose/Server-optional/x86_64/os/Packages
         """
         if variant.type == "addon":
-            path = os.path.join(self.tree_dir(arch, variant, create_dir=create_dir, relative=relative), "addons", variant.id)
+            path = os.path.join(
+                self.tree_dir(arch, variant, create_dir=create_dir, relative=relative),
+                "addons",
+                variant.id,
+            )
         else:
-            path = os.path.join(self.tree_dir(arch, variant, create_dir=create_dir, relative=relative), "Packages")
+            path = os.path.join(
+                self.tree_dir(arch, variant, create_dir=create_dir, relative=relative),
+                "Packages",
+            )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -496,7 +544,10 @@ class ComposePaths(object):
             compose/Server/x86_64/debug
             compose/Server-optional/x86_64/debug
         """
-        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), "debug")
+        path = os.path.join(
+            self.topdir(arch, variant, create_dir=create_dir, relative=relative),
+            "debug",
+        )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -507,7 +558,10 @@ class ComposePaths(object):
             compose/Server/x86_64/debug/tree
             compose/Server-optional/x86_64/debug/tree
         """
-        path = os.path.join(self.debug_topdir(arch, variant, create_dir=create_dir, relative=relative), "tree")
+        path = os.path.join(
+            self.debug_topdir(arch, variant, create_dir=create_dir, relative=relative),
+            "tree",
+        )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -522,9 +576,20 @@ class ComposePaths(object):
         if arch in ("source", "src"):
             return None
         if variant.type == "addon":
-            path = os.path.join(self.debug_tree(arch, variant, create_dir=create_dir, relative=relative), "addons", variant.id)
+            path = os.path.join(
+                self.debug_tree(
+                    arch, variant, create_dir=create_dir, relative=relative
+                ),
+                "addons",
+                variant.id,
+            )
         else:
-            path = os.path.join(self.debug_tree(arch, variant, create_dir=create_dir, relative=relative), "Packages")
+            path = os.path.join(
+                self.debug_tree(
+                    arch, variant, create_dir=create_dir, relative=relative
+                ),
+                "Packages",
+            )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -539,9 +604,17 @@ class ComposePaths(object):
         if arch in ("source", "src"):
             return None
         if variant.type == "addon":
-            path = os.path.join(self.debug_tree(arch, variant, create_dir=create_dir, relative=relative), "addons", variant.id)
+            path = os.path.join(
+                self.debug_tree(
+                    arch, variant, create_dir=create_dir, relative=relative
+                ),
+                "addons",
+                variant.id,
+            )
         else:
-            path = self.debug_tree(arch, variant, create_dir=create_dir, relative=relative)
+            path = self.debug_tree(
+                arch, variant, create_dir=create_dir, relative=relative
+            )
         if create_dir and not relative:
             makedirs(path)
         return path
@@ -559,12 +632,14 @@ class ComposePaths(object):
                 return None
         if arch == "src":
             arch = "source"
-        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), "iso")
+        path = os.path.join(
+            self.topdir(arch, variant, create_dir=create_dir, relative=relative), "iso"
+        )
 
         if symlink_to:
             # TODO: create_dir
             topdir = self.compose.topdir.rstrip("/") + "/"
-            relative_dir = path[len(topdir):]
+            relative_dir = path[len(topdir) :]
             target_dir = os.path.join(symlink_to, self.compose.compose_id, relative_dir)
             if create_dir and not relative:
                 makedirs(target_dir)
@@ -583,13 +658,21 @@ class ComposePaths(object):
                 makedirs(path)
         return path
 
-    def iso_path(self, arch, variant, filename, symlink_to=None, create_dir=True, relative=False):
+    def iso_path(
+        self, arch, variant, filename, symlink_to=None, create_dir=True, relative=False
+    ):
         """
         Examples:
             compose/Server/x86_64/iso/rhel-7.0-20120127.0-Server-x86_64-dvd1.iso
             None
         """
-        path = self.iso_dir(arch, variant, symlink_to=symlink_to, create_dir=create_dir, relative=relative)
+        path = self.iso_dir(
+            arch,
+            variant,
+            symlink_to=symlink_to,
+            create_dir=create_dir,
+            relative=relative,
+        )
         if path is None:
             return None
 
@@ -605,11 +688,13 @@ class ComposePaths(object):
         @param symlink_to=None
         @param relative=False
         """
-        path = os.path.join(self.topdir('%(arch)s', variant, create_dir=False, relative=relative),
-                            "images")
+        path = os.path.join(
+            self.topdir("%(arch)s", variant, create_dir=False, relative=relative),
+            "images",
+        )
         if symlink_to:
             topdir = self.compose.topdir.rstrip("/") + "/"
-            relative_dir = path[len(topdir):]
+            relative_dir = path[len(topdir) :]
             target_dir = os.path.join(symlink_to, self.compose.compose_id, relative_dir)
             try:
                 os.symlink(target_dir, path)
@@ -636,7 +721,10 @@ class ComposePaths(object):
                 return None
         if arch == "src":
             arch = "source"
-        path = os.path.join(self.topdir(arch, variant, create_dir=create_dir, relative=relative), "jigdo")
+        path = os.path.join(
+            self.topdir(arch, variant, create_dir=create_dir, relative=relative),
+            "jigdo",
+        )
 
         if create_dir and not relative:
             makedirs(path)
@@ -648,7 +736,9 @@ class ComposePaths(object):
             compose/metadata
             compose/metadata/rpms.json
         """
-        path = os.path.join(self.topdir(create_dir=create_dir, relative=relative), "metadata")
+        path = os.path.join(
+            self.topdir(create_dir=create_dir, relative=relative), "metadata"
+        )
         if create_dir and not relative:
             makedirs(path)
         if file_name:

@@ -8,6 +8,7 @@ class SimpleAcyclicOrientedGraph(object):
     Graph is constructed by adding oriented edges one by one. It can not contain cycles.
     Main result is spanning line, it determines ordering of the nodes.
     """
+
     def __init__(self):
         self._graph = {}
         self._all_nodes = set()
@@ -18,7 +19,9 @@ class SimpleAcyclicOrientedGraph(object):
         This operation must not create a cycle in the graph.
         """
         if start == end:
-            raise ValueError("Can not add this kind of edge into graph: %s-%s" % (start, end))
+            raise ValueError(
+                "Can not add this kind of edge into graph: %s-%s" % (start, end)
+            )
         self._graph.setdefault(start, [])
         if end not in self._graph[start]:
             self._graph[start].append(end)

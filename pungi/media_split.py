@@ -61,6 +61,7 @@ class MediaSplitter(object):
     are added; there is no re-ordering. The number of disk is thus not the
     possible minimum.
     """
+
     def __init__(self, media_size, compose=None, logger=None):
         self.media_size = media_size
         self.files = []  # to preserve order
@@ -77,7 +78,9 @@ class MediaSplitter(object):
         old_size = self.file_sizes.get(name, None)
 
         if old_size is not None and old_size != size:
-            raise ValueError("File size mismatch; file: %s; sizes: %s vs %s" % (name, old_size, size))
+            raise ValueError(
+                "File size mismatch; file: %s; sizes: %s vs %s" % (name, old_size, size)
+            )
         if self.media_size and size > self.media_size:
             raise ValueError("File is larger than media size: %s" % name)
 

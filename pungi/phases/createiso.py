@@ -29,8 +29,14 @@ from pungi.wrappers import iso
 from pungi.wrappers.createrepo import CreaterepoWrapper
 from pungi.wrappers import kojiwrapper
 from pungi.phases.base import PhaseBase, PhaseLoggerMixin
-from pungi.util import (makedirs, get_volid, get_arch_variant_data, failable,
-                        get_file_size, get_mtime)
+from pungi.util import (
+    makedirs,
+    get_volid,
+    get_arch_variant_data,
+    failable,
+    get_file_size,
+    get_mtime,
+)
 from pungi.media_split import MediaSplitter, convert_media_size
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
 from pungi.runroot import Runroot
@@ -59,31 +65,42 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
             return False
         if variant.type != "variant":
             return False
-        skip = get_arch_variant_data(self.compose.conf, "buildinstall_skip", arch, variant)
+        skip = get_arch_variant_data(
+            self.compose.conf, "buildinstall_skip", arch, variant
+        )
         if skip == [True]:
             # Buildinstall is skipped for this tree. Can't create a bootable ISO.
             return False
-        return bool(self.compose.conf.get('buildinstall_method', ''))
+        return bool(self.compose.conf.get("buildinstall_method", ""))
 
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to")
-        disc_type = self.compose.conf['disc_types'].get('dvd', 'dvd')
+        disc_type = self.compose.conf["disc_types"].get("dvd", "dvd")
         deliverables = []
 
         commands = []
-        for variant in self.compose.get_variants(types=["variant", "layered-product", "optional"]):
+        for variant in self.compose.get_variants(
+            types=["variant", "layered-product", "optional"]
+        ):
             if variant.is_empty:
                 continue
             for arch in variant.arches + ["src"]:
-                skip_iso = get_arch_variant_data(self.compose.conf, "createiso_skip", arch, variant)
+                skip_iso = get_arch_variant_data(
+                    self.compose.conf, "createiso_skip", arch, variant
+                )
                 if skip_iso == [True]:
-                    self.logger.info("Skipping createiso for %s.%s due to config option" % (variant, arch))
+                    self.logger.info(
+                        "Skipping createiso for %s.%s due to config option"
+                        % (variant, arch)
+                    )
                     continue
 
                 volid = get_volid(self.compose, arch, variant, disc_type=disc_type)
                 os_tree = self.compose.paths.compose.os_tree(arch, variant)
 
-                iso_dir = self.compose.paths.compose.iso_dir(arch, variant, symlink_to=symlink_isos_to)
+                iso_dir = self.compose.paths.compose.iso_dir(
+                    arch, variant, symlink_to=symlink_isos_to
+                )
                 if not iso_dir:
                     continue
 
@@ -97,21 +114,25 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
 
                 if bootable and not self.bi.succeeded(variant, arch):
                     self.logger.warning(
-                        'ISO should be bootable, but buildinstall failed. Skipping for %s.%s'
-                        % (variant, arch))
+                        "ISO should be bootable, but buildinstall failed. Skipping for %s.%s"
+                        % (variant, arch)
+                    )
                     continue
 
-                split_iso_data = split_iso(self.compose, arch, variant, no_split=bootable,
-                                           logger=self.logger)
+                split_iso_data = split_iso(
+                    self.compose, arch, variant, no_split=bootable, logger=self.logger
+                )
                 disc_count = len(split_iso_data)
 
                 for disc_num, iso_data in enumerate(split_iso_data):
                     disc_num += 1
 
                     filename = self.compose.get_image_name(
-                        arch, variant, disc_type=disc_type, disc_num=disc_num)
+                        arch, variant, disc_type=disc_type, disc_num=disc_num
+                    )
                     iso_path = self.compose.paths.compose.iso_path(
-                        arch, variant, filename, symlink_to=symlink_isos_to)
+                        arch, variant, filename, symlink_to=symlink_isos_to
+                    )
                     if os.path.isfile(iso_path):
                         self.logger.warning(
                             "Skipping mkisofs, image already exists: %s", iso_path
@@ -119,9 +140,14 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                         continue
                     deliverables.append(iso_path)
 
-                    graft_points = prepare_iso(self.compose, arch, variant,
-                                               disc_num=disc_num, disc_count=disc_count,
-                                               split_iso_data=iso_data)
+                    graft_points = prepare_iso(
+                        self.compose,
+                        arch,
+                        variant,
+                        disc_num=disc_num,
+                        disc_count=disc_count,
+                        split_iso_data=iso_data,
+                    )
 
                     cmd = {
                         "iso_path": iso_path,
@@ -133,8 +159,9 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                     }
 
                     if os.path.islink(iso_dir):
-                        cmd["mount"] = os.path.abspath(os.path.join(os.path.dirname(iso_dir),
-                                                                    os.readlink(iso_dir)))
+                        cmd["mount"] = os.path.abspath(
+                            os.path.join(os.path.dirname(iso_dir), os.readlink(iso_dir))
+                        )
 
                     opts = createiso.CreateIsoOpts(
                         output_dir=iso_dir,
@@ -147,21 +174,25 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                     )
 
                     if bootable:
-                        opts = opts._replace(buildinstall_method=self.compose.conf['buildinstall_method'])
+                        opts = opts._replace(
+                            buildinstall_method=self.compose.conf["buildinstall_method"]
+                        )
 
-                    if self.compose.conf['create_jigdo']:
+                    if self.compose.conf["create_jigdo"]:
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
                         opts = opts._replace(jigdo_dir=jigdo_dir, os_tree=os_tree)
 
-                    script_file = os.path.join(self.compose.paths.work.tmp_dir(arch, variant),
-                                               'createiso-%s.sh' % filename)
-                    with open(script_file, 'w') as f:
+                    script_file = os.path.join(
+                        self.compose.paths.work.tmp_dir(arch, variant),
+                        "createiso-%s.sh" % filename,
+                    )
+                    with open(script_file, "w") as f:
                         createiso.write_script(opts, f)
-                    cmd['cmd'] = ['bash', script_file]
+                    cmd["cmd"] = ["bash", script_file]
                     commands.append((cmd, variant, arch))
 
         if self.compose.notifier:
-            self.compose.notifier.send('createiso-targets', deliverables=deliverables)
+            self.compose.notifier.send("createiso-targets", deliverables=deliverables)
 
         for (cmd, variant, arch) in commands:
             self.pool.add(CreateIsoThread(self.pool))
@@ -180,15 +211,19 @@ class CreateIsoThread(WorkerThread):
         except OSError:
             pass
         if compose.notifier:
-            compose.notifier.send('createiso-imagefail',
-                                  file=cmd['iso_path'],
-                                  arch=arch,
-                                  variant=str(variant))
+            compose.notifier.send(
+                "createiso-imagefail",
+                file=cmd["iso_path"],
+                arch=arch,
+                variant=str(variant),
+            )
 
     def process(self, item, num):
         compose, cmd, variant, arch = item
-        can_fail = compose.can_fail(variant, arch, 'iso')
-        with failable(compose, can_fail, variant, arch, 'iso', logger=self.pool._logger):
+        can_fail = compose.can_fail(variant, arch, "iso")
+        with failable(
+            compose, can_fail, variant, arch, "iso", logger=self.pool._logger
+        ):
             self.worker(compose, cmd, variant, arch, num)
 
     def worker(self, compose, cmd, variant, arch, num):
@@ -196,23 +231,35 @@ class CreateIsoThread(WorkerThread):
         if "mount" in cmd:
             mounts.append(cmd["mount"])
 
-        bootable = cmd['bootable']
+        bootable = cmd["bootable"]
         log_file = compose.paths.log.log_file(
-            arch, "createiso-%s" % os.path.basename(cmd["iso_path"]))
+            arch, "createiso-%s" % os.path.basename(cmd["iso_path"])
+        )
 
         msg = "Creating ISO (arch: %s, variant: %s): %s" % (
-            arch, variant, os.path.basename(cmd["iso_path"]))
+            arch,
+            variant,
+            os.path.basename(cmd["iso_path"]),
+        )
         self.pool.log_info("[BEGIN] %s" % msg)
 
         try:
-            run_createiso_command(num, compose, bootable, arch,
-                                  cmd['cmd'], mounts, log_file)
+            run_createiso_command(
+                num, compose, bootable, arch, cmd["cmd"], mounts, log_file
+            )
         except Exception:
             self.fail(compose, cmd, variant, arch)
             raise
 
-        add_iso_to_metadata(compose, variant, arch, cmd["iso_path"],
-                            cmd["bootable"], cmd["disc_num"], cmd["disc_count"])
+        add_iso_to_metadata(
+            compose,
+            variant,
+            arch,
+            cmd["iso_path"],
+            cmd["bootable"],
+            cmd["disc_num"],
+            cmd["disc_count"],
+        )
 
         # Delete staging directory if present.
         staging_dir = compose.paths.work.iso_staging_dir(
@@ -223,10 +270,12 @@ class CreateIsoThread(WorkerThread):
 
         self.pool.log_info("[DONE ] %s" % msg)
         if compose.notifier:
-            compose.notifier.send('createiso-imagedone',
-                                  file=cmd['iso_path'],
-                                  arch=arch,
-                                  variant=str(variant))
+            compose.notifier.send(
+                "createiso-imagedone",
+                file=cmd["iso_path"],
+                arch=arch,
+                variant=str(variant),
+            )
 
 
 def add_iso_to_metadata(
@@ -240,7 +289,7 @@ def add_iso_to_metadata(
     additional_variants=None,
 ):
     img = Image(compose.im)
-    img.path = iso_path.replace(compose.paths.compose.topdir(), '').lstrip('/')
+    img.path = iso_path.replace(compose.paths.compose.topdir(), "").lstrip("/")
     img.mtime = get_mtime(iso_path)
     img.size = get_file_size(iso_path)
     img.arch = arch
@@ -255,8 +304,8 @@ def add_iso_to_metadata(
     if additional_variants:
         img.unified = True
         img.additional_variants = additional_variants
-    setattr(img, 'can_fail', compose.can_fail(variant, arch, 'iso'))
-    setattr(img, 'deliverable', 'iso')
+    setattr(img, "can_fail", compose.can_fail(variant, arch, "iso"))
+    setattr(img, "deliverable", "iso")
     try:
         img.volume_id = iso.get_volume_id(iso_path)
     except RuntimeError:
@@ -269,15 +318,16 @@ def add_iso_to_metadata(
     return img
 
 
-def run_createiso_command(num, compose, bootable, arch, cmd, mounts,
-                          log_file, with_jigdo=True):
+def run_createiso_command(
+    num, compose, bootable, arch, cmd, mounts, log_file, with_jigdo=True
+):
     packages = ["coreutils", "genisoimage", "isomd5sum"]
-    if with_jigdo and compose.conf['create_jigdo']:
-        packages.append('jigdo')
+    if with_jigdo and compose.conf["create_jigdo"]:
+        packages.append("jigdo")
     if bootable:
         extra_packages = {
-            'lorax': ['lorax', 'which'],
-            'buildinstall': ['anaconda'],
+            "lorax": ["lorax", "which"],
+            "buildinstall": ["anaconda"],
         }
         packages.extend(extra_packages[compose.conf["buildinstall_method"]])
 
@@ -301,8 +351,13 @@ def run_createiso_command(num, compose, bootable, arch, cmd, mounts,
             build_arch = random.choice(tag_arches)
 
     runroot.run(
-        cmd, log_file=log_file, arch=build_arch, packages=packages, mounts=mounts,
-        weight=compose.conf['runroot_weights'].get('createiso'))
+        cmd,
+        log_file=log_file,
+        arch=build_arch,
+        packages=packages,
+        mounts=mounts,
+        weight=compose.conf["runroot_weights"].get("createiso"),
+    )
 
 
 def split_iso(compose, arch, variant, no_split=False, logger=None):
@@ -318,8 +373,8 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     """
     if not logger:
         logger = compose._logger
-    media_size = compose.conf['iso_size']
-    media_reserve = compose.conf['split_iso_reserve']
+    media_size = compose.conf["iso_size"]
+    media_reserve = compose.conf["split_iso_reserve"]
     split_size = convert_media_size(media_size) - convert_media_size(media_reserve)
     real_size = None if no_split else split_size
 
@@ -351,7 +406,9 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     for root, dirs, files in os.walk(os_tree):
         for dn in dirs[:]:
             repo_dir = os.path.join(root, dn)
-            if repo_dir == os.path.join(compose.paths.compose.repository(arch, variant), "repodata"):
+            if repo_dir == os.path.join(
+                compose.paths.compose.repository(arch, variant), "repodata"
+            ):
                 dirs.remove(dn)
 
         for fn in files:
@@ -369,17 +426,19 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     for path, size, sticky in all_files + packages:
         ms.add_file(path, size, sticky)
 
-    logger.debug('Splitting media for %s.%s:' % (variant.uid, arch))
+    logger.debug("Splitting media for %s.%s:" % (variant.uid, arch))
     result = ms.split()
-    if no_split and result[0]['size'] > split_size:
+    if no_split and result[0]["size"] > split_size:
         logger.warning(
             "ISO for %s.%s does not fit on single media! It is %s bytes too big. (Total size: %s B)"
-            % (variant.uid, arch, result[0]['size'] - split_size, result[0]['size'])
+            % (variant.uid, arch, result[0]["size"] - split_size, result[0]["size"])
         )
     return result
 
 
-def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_data=None):
+def prepare_iso(
+    compose, arch, variant, disc_num=1, disc_count=None, split_iso_data=None
+):
     tree_dir = compose.paths.compose.os_tree(arch, variant)
     filename = compose.get_image_name(arch, variant, disc_num=disc_num)
     iso_dir = compose.paths.work.iso_dir(arch, filename)
@@ -428,7 +487,9 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
             )
             run(cmd)
             # add repodata/repomd.xml back to checksums
-            ti.checksums.add("repodata/repomd.xml", createrepo_checksum, root_dir=iso_dir)
+            ti.checksums.add(
+                "repodata/repomd.xml", createrepo_checksum, root_dir=iso_dir
+            )
 
     new_ti_path = os.path.join(iso_dir, ".treeinfo")
     ti.dump(new_ti_path)
@@ -443,7 +504,9 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
     if not disc_count or disc_count == 1:
         data = iso.get_graft_points(compose, [tree_dir, iso_dir])
     else:
-        data = iso.get_graft_points(compose, [iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir])
+        data = iso.get_graft_points(
+            compose, [iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir]
+        )
 
     if compose.conf["createiso_break_hardlinks"]:
         compose.log_debug(
@@ -458,7 +521,9 @@ def prepare_iso(compose, arch, variant, disc_num=1, disc_count=None, split_iso_d
         )
         create_hardlinks(
             compose.paths.work.iso_staging_dir(arch, variant, filename),
-            log_file=compose.paths.log.log_file(arch, "iso-hardlink-%s.log" % variant.uid),
+            log_file=compose.paths.log.log_file(
+                arch, "iso-hardlink-%s.log" % variant.uid
+            ),
         )
 
     # TODO: /content /graft-points

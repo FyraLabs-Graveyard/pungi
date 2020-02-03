@@ -16,7 +16,7 @@ from ..runroot import Runroot
 
 
 class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
-    name = 'ostree_installer'
+    name = "ostree_installer"
 
     def __init__(self, compose, buildinstall_phase, pkgset_phase=None):
         super(OstreeInstallerPhase, self).__init__(compose)
@@ -27,18 +27,21 @@ class OstreeInstallerPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     def validate(self):
         errors = []
 
-        if not self.compose.conf['ostree_installer_overwrite'] and not self.bi.skip():
+        if not self.compose.conf["ostree_installer_overwrite"] and not self.bi.skip():
             for variant in self.compose.get_variants():
                 for arch in variant.arches:
-                    conf = util.get_arch_variant_data(self.compose.conf, self.name,
-                                                      arch, variant)
+                    conf = util.get_arch_variant_data(
+                        self.compose.conf, self.name, arch, variant
+                    )
                     if conf and not variant.is_empty:
-                        errors.append('Can not generate ostree installer for %s.%s: '
-                                      'it has buildinstall running already and the '
-                                      'files would clash.' % (variant.uid, arch))
+                        errors.append(
+                            "Can not generate ostree installer for %s.%s: "
+                            "it has buildinstall running already and the "
+                            "files would clash." % (variant.uid, arch)
+                        )
 
         if errors:
-            raise ValueError('\n'.join(errors))
+            raise ValueError("\n".join(errors))
 
     def get_repos(self):
         return [
@@ -67,38 +70,53 @@ class OstreeInstallerThread(WorkerThread):
     def process(self, item, num):
         compose, variant, arch, config = item
         self.num = num
-        failable_arches = config.get('failable', [])
+        failable_arches = config.get("failable", [])
         self.can_fail = util.can_arch_fail(failable_arches, arch)
-        with util.failable(compose, self.can_fail, variant, arch, 'ostree-installer',
-                           logger=self.pool._logger):
+        with util.failable(
+            compose,
+            self.can_fail,
+            variant,
+            arch,
+            "ostree-installer",
+            logger=self.pool._logger,
+        ):
             self.worker(compose, variant, arch, config)
 
     def worker(self, compose, variant, arch, config):
-        msg = 'Ostree phase for variant %s, arch %s' % (variant.uid, arch)
-        self.pool.log_info('[BEGIN] %s' % msg)
-        self.logdir = compose.paths.log.topdir('%s/%s/ostree_installer-%s' % (arch, variant, self.num))
+        msg = "Ostree phase for variant %s, arch %s" % (variant.uid, arch)
+        self.pool.log_info("[BEGIN] %s" % msg)
+        self.logdir = compose.paths.log.topdir(
+            "%s/%s/ostree_installer-%s" % (arch, variant, self.num)
+        )
 
-        repos = get_repo_urls(None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
-                              shortcuts.force_list(config['repo'])
-                              + self.baseurls,
-                              arch=arch,
-                              logger=self.pool)
+        repos = get_repo_urls(
+            None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
+            shortcuts.force_list(config["repo"]) + self.baseurls,
+            arch=arch,
+            logger=self.pool,
+        )
         if compose.has_comps:
             repos.append(
                 translate_path(
                     compose,
                     compose.paths.work.comps_repo(
-                        '$basearch', variant=variant, create_dir=False
+                        "$basearch", variant=variant, create_dir=False
                     ),
                 )
             )
-        repos = [url.replace('$arch', arch) for url in repos]
-        output_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'ostree_installer')
+        repos = [url.replace("$arch", arch) for url in repos]
+        output_dir = os.path.join(
+            compose.paths.work.topdir(arch), variant.uid, "ostree_installer"
+        )
         util.makedirs(os.path.dirname(output_dir))
 
-        self.template_dir = os.path.join(compose.paths.work.topdir(arch), variant.uid, 'lorax_templates')
-        self._clone_templates(compose, config.get('template_repo'), config.get('template_branch'))
-        disc_type = compose.conf['disc_types'].get('ostree', 'ostree')
+        self.template_dir = os.path.join(
+            compose.paths.work.topdir(arch), variant.uid, "lorax_templates"
+        )
+        self._clone_templates(
+            compose, config.get("template_repo"), config.get("template_branch")
+        )
+        disc_type = compose.conf["disc_types"].get("ostree", "ostree")
 
         volid = get_volid(compose, arch, variant, disc_type=disc_type)
         self._run_ostree_cmd(compose, variant, arch, config, repos, output_dir, volid)
@@ -106,24 +124,29 @@ class OstreeInstallerThread(WorkerThread):
         filename = compose.get_image_name(arch, variant, disc_type=disc_type)
         self._copy_image(compose, variant, arch, filename, output_dir)
         self._add_to_manifest(compose, variant, arch, filename)
-        self.pool.log_info('[DONE ] %s' % (msg))
+        self.pool.log_info("[DONE ] %s" % (msg))
 
-    def _clone_templates(self, compose, url, branch='master'):
+    def _clone_templates(self, compose, url, branch="master"):
         if not url:
             self.template_dir = None
             return
-        scm.get_dir_from_scm({'scm': 'git', 'repo': url, 'branch': branch, 'dir': '.'},
-                             self.template_dir, compose=compose)
+        scm.get_dir_from_scm(
+            {"scm": "git", "repo": url, "branch": branch, "dir": "."},
+            self.template_dir,
+            compose=compose,
+        )
 
     def _get_release(self, compose, config):
-        if 'release' in config:
-            return version_generator(compose, config['release']) or compose.image_release
-        return config.get('release', None)
+        if "release" in config:
+            return (
+                version_generator(compose, config["release"]) or compose.image_release
+            )
+        return config.get("release", None)
 
     def _copy_image(self, compose, variant, arch, filename, output_dir):
         iso_path = compose.paths.compose.iso_path(arch, variant, filename)
         os_path = compose.paths.compose.os_tree(arch, variant)
-        boot_iso = os.path.join(output_dir, 'images', 'boot.iso')
+        boot_iso = os.path.join(output_dir, "images", "boot.iso")
 
         util.copy_all(output_dir, os_path)
         try:
@@ -133,7 +156,9 @@ class OstreeInstallerThread(WorkerThread):
 
     def _add_to_manifest(self, compose, variant, arch, filename):
         full_iso_path = compose.paths.compose.iso_path(arch, variant, filename)
-        iso_path = compose.paths.compose.iso_path(arch, variant, filename, relative=True)
+        iso_path = compose.paths.compose.iso_path(
+            arch, variant, filename, relative=True
+        )
         implant_md5 = iso.get_implanted_md5(full_iso_path)
 
         img = images.Image(compose.im)
@@ -148,8 +173,8 @@ class OstreeInstallerThread(WorkerThread):
         img.bootable = True
         img.subvariant = variant.uid
         img.implant_md5 = implant_md5
-        setattr(img, 'can_fail', self.can_fail)
-        setattr(img, 'deliverable', 'ostree-installer')
+        setattr(img, "can_fail", self.can_fail)
+        setattr(img, "deliverable", "ostree-installer")
         try:
             img.volume_id = iso.get_volume_id(full_iso_path)
         except RuntimeError:
@@ -163,17 +188,21 @@ class OstreeInstallerThread(WorkerThread):
         """
         templates = []
         for template in config.get(key, []):
-            if template[0] != '/':
+            if template[0] != "/":
                 if not self.template_dir:
-                    raise RuntimeError('Relative path to template without setting template_repo.')
+                    raise RuntimeError(
+                        "Relative path to template without setting template_repo."
+                    )
                 template = os.path.join(self.template_dir, template)
             templates.append(template)
         return templates
 
-    def _run_ostree_cmd(self, compose, variant, arch, config, source_repo, output_dir, volid):
+    def _run_ostree_cmd(
+        self, compose, variant, arch, config, source_repo, output_dir, volid
+    ):
         lorax_wrapper = lorax.LoraxWrapper()
         lorax_cmd = lorax_wrapper.get_lorax_cmd(
-            compose.conf['release_name'],
+            compose.conf["release_name"],
             compose.conf["release_version"],
             self._get_release(compose, config),
             repo_baseurl=source_repo,
@@ -182,25 +211,32 @@ class OstreeInstallerThread(WorkerThread):
             nomacboot=True,
             volid=volid,
             buildarch=get_valid_arches(arch)[0],
-            buildinstallpackages=config.get('installpkgs'),
-            add_template=self._get_templates(config, 'add_template'),
-            add_arch_template=self._get_templates(config, 'add_arch_template'),
-            add_template_var=config.get('add_template_var'),
-            add_arch_template_var=config.get('add_arch_template_var'),
-            rootfs_size=config.get('rootfs_size'),
+            buildinstallpackages=config.get("installpkgs"),
+            add_template=self._get_templates(config, "add_template"),
+            add_arch_template=self._get_templates(config, "add_arch_template"),
+            add_template_var=config.get("add_template_var"),
+            add_arch_template_var=config.get("add_arch_template_var"),
+            rootfs_size=config.get("rootfs_size"),
             is_final=compose.supported,
             log_dir=self.logdir,
         )
-        cmd = 'rm -rf %s && %s' % (shlex_quote(output_dir),
-                                   ' '.join([shlex_quote(x) for x in lorax_cmd]))
+        cmd = "rm -rf %s && %s" % (
+            shlex_quote(output_dir),
+            " ".join([shlex_quote(x) for x in lorax_cmd]),
+        )
 
-        packages = ['pungi', 'lorax', 'ostree']
-        packages += config.get('extra_runroot_pkgs', [])
+        packages = ["pungi", "lorax", "ostree"]
+        packages += config.get("extra_runroot_pkgs", [])
 
-        log_file = os.path.join(self.logdir, 'runroot.log')
+        log_file = os.path.join(self.logdir, "runroot.log")
 
         runroot = Runroot(compose, phase="ostree_installer")
         runroot.run(
-            cmd, log_file=log_file, arch=arch, packages=packages,
-            mounts=[compose.topdir], chown_paths=[output_dir],
-            weight=compose.conf['runroot_weights'].get('ostree_installer'))
+            cmd,
+            log_file=log_file,
+            arch=arch,
+            packages=packages,
+            mounts=[compose.topdir],
+            chown_paths=[output_dir],
+            weight=compose.conf["runroot_weights"].get("ostree_installer"),
+        )

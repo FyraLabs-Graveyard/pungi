@@ -42,8 +42,8 @@ class Substitutions(dict):
     # DNF version of Substitutions detects host arch. We don't want that.
     def __init__(self, arch):
         super(Substitutions, self).__init__()
-        self['arch'] = arch
-        self['basearch'] = dnf_arch.basearch(arch)
+        self["arch"] = arch
+        self["basearch"] = dnf_arch.basearch(arch)
 
 
 class DnfWrapper(dnf.Base):
@@ -52,8 +52,9 @@ class DnfWrapper(dnf.Base):
         self.arch_wrapper = ArchWrapper(self.conf.substitutions["arch"])
         self.comps_wrapper = CompsWrapper(self)
 
-    def add_repo(self, repoid, baseurl=None, enablegroups=True, lookaside=False,
-                 **kwargs):
+    def add_repo(
+        self, repoid, baseurl=None, enablegroups=True, lookaside=False, **kwargs
+    ):
         self.repos.add_new_repo(
             repoid,
             self.conf,
@@ -83,7 +84,13 @@ class CompsWrapper(object):
             result[i.id] = i
         return result
 
-    def get_packages_from_group(self, group_id, include_default=True, include_optional=True, include_conditional=True):
+    def get_packages_from_group(
+        self,
+        group_id,
+        include_default=True,
+        include_optional=True,
+        include_conditional=True,
+    ):
         packages = []
         conditional = []
 
@@ -117,9 +124,11 @@ class CompsWrapper(object):
                 continue
 
             include_default = group_include in (1, 2)
-            include_optional = group_include in (2, )
+            include_optional = group_include in (2,)
             include_conditional = True
-            pkgs, cond = self.get_packages_from_group(group_id, include_default, include_optional, include_conditional)
+            pkgs, cond = self.get_packages_from_group(
+                group_id, include_default, include_optional, include_conditional
+            )
             packages.update(pkgs)
             for i in cond:
                 if i not in conditional:
@@ -136,7 +145,11 @@ class CompsWrapper(object):
 class ArchWrapper(object):
     def __init__(self, arch):
         self.base_arch = dnf_arch.basearch(arch)
-        self.all_arches = pungi.arch.get_valid_arches(self.base_arch, multilib=True, add_noarch=True)
-        self.native_arches = pungi.arch.get_valid_arches(self.base_arch, multilib=False, add_noarch=True)
+        self.all_arches = pungi.arch.get_valid_arches(
+            self.base_arch, multilib=True, add_noarch=True
+        )
+        self.native_arches = pungi.arch.get_valid_arches(
+            self.base_arch, multilib=False, add_noarch=True
+        )
         self.multilib_arches = pungi.arch.get_valid_multilib_arches(self.base_arch)
         self.source_arches = ["src", "nosrc"]

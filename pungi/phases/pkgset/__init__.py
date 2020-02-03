@@ -19,6 +19,7 @@ from pungi.phases.base import PhaseBase
 
 class PkgsetPhase(PhaseBase):
     """PKGSET"""
+
     name = "pkgset"
 
     def __init__(self, *args, **kwargs):
@@ -30,6 +31,7 @@ class PkgsetPhase(PhaseBase):
         pkgset_source = "PkgsetSource%s" % self.compose.conf["pkgset_source"]
         from .source import PkgsetSourceContainer
         from . import sources
+
         PkgsetSourceContainer.register_module(sources)
         container = PkgsetSourceContainer()
         SourceClass = container[pkgset_source]

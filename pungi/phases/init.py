@@ -32,6 +32,7 @@ from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
 
 class InitPhase(PhaseBase):
     """INIT is a mandatory phase"""
+
     name = "init"
 
     def skip(self):
@@ -44,7 +45,7 @@ class InitPhase(PhaseBase):
             # write global comps and arch comps, create comps repos
             global_comps = write_global_comps(self.compose)
             validate_comps(global_comps)
-            num_workers = self.compose.conf['createrepo_num_threads']
+            num_workers = self.compose.conf["createrepo_num_threads"]
             run_in_threads(
                 _arch_worker,
                 [(self.compose, arch) for arch in self.compose.get_arches()],
@@ -112,12 +113,18 @@ def write_arch_comps(compose, arch):
     comps_file_arch = compose.paths.work.comps(arch=arch)
 
     compose.log_debug("Writing comps file for arch '%s': %s", arch, comps_file_arch)
-    run(["comps_filter", "--arch=%s" % arch, "--no-cleanup",
-         "--output=%s" % comps_file_arch,
-         compose.paths.work.comps(arch="global")])
+    run(
+        [
+            "comps_filter",
+            "--arch=%s" % arch,
+            "--no-cleanup",
+            "--output=%s" % comps_file_arch,
+            compose.paths.work.comps(arch="global"),
+        ]
+    )
 
 
-UNMATCHED_GROUP_MSG = 'Variant %s.%s requires comps group %s which does not match anything in input comps file'
+UNMATCHED_GROUP_MSG = "Variant %s.%s requires comps group %s which does not match anything in input comps file"
 
 
 def get_lookaside_groups(compose, variant):
@@ -146,14 +153,14 @@ def write_variant_comps(compose, arch, variant):
         "--keep-empty-group=conflicts-%s" % variant.uid.lower(),
         "--variant=%s" % variant.uid,
         "--output=%s" % comps_file,
-        compose.paths.work.comps(arch="global")
+        compose.paths.work.comps(arch="global"),
     ]
     for group in get_lookaside_groups(compose, variant):
         cmd.append("--lookaside-group=%s" % group)
     run(cmd)
 
     comps = CompsWrapper(comps_file)
-    if variant.groups or variant.modules is not None or variant.type != 'variant':
+    if variant.groups or variant.modules is not None or variant.type != "variant":
         # Filter groups if the variant has some, or it's a modular variant, or
         # is not a base variant.
         unmatched = comps.filter_groups(variant.groups)
@@ -175,11 +182,15 @@ def create_comps_repo(compose, arch, variant):
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     comps_repo = compose.paths.work.comps_repo(arch=arch, variant=variant)
     comps_path = compose.paths.work.comps(arch=arch, variant=variant)
-    msg = "Creating comps repo for arch '%s' variant '%s'" % (arch, variant.uid if variant else None)
+    msg = "Creating comps repo for arch '%s' variant '%s'" % (
+        arch,
+        variant.uid if variant else None,
+    )
 
     compose.log_info("[BEGIN] %s" % msg)
     cmd = repo.get_createrepo_cmd(
-        comps_repo, database=False,
+        comps_repo,
+        database=False,
         outputdir=comps_repo,
         groupfile=comps_path,
         checksum=createrepo_checksum,
@@ -200,7 +211,9 @@ def write_module_defaults(compose):
     with temp_dir(prefix="moduledefaults_") as tmp_dir:
         get_dir_from_scm(scm_dict, tmp_dir, compose=compose)
         compose.log_debug("Writing module defaults")
-        shutil.copytree(tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False))
+        shutil.copytree(
+            tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False)
+        )
 
 
 def validate_module_defaults(path):

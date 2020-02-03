@@ -15,7 +15,6 @@
 
 
 class OptionsBase(object):
-
     def __init__(self, **kwargs):
         """
         inherit and initialize attributes
@@ -29,5 +28,7 @@ class OptionsBase(object):
         """
         for key, value in kwargs.items():
             if not hasattr(self, key):
-                raise ValueError("Invalid option in %s: %s" % (self.__class__.__name__, key))
+                raise ValueError(
+                    "Invalid option in %s: %s" % (self.__class__.__name__, key)
+                )
             setattr(self, key, value)

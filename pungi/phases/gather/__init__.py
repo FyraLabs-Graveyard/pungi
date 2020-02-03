@@ -22,6 +22,7 @@ import threading
 from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import run
 from productmd.rpms import Rpms
+
 try:
     from queue import Queue
 except ImportError:
@@ -35,8 +36,7 @@ import pungi.wrappers.kojiwrapper
 from pungi.compose import get_ordered_variant_uids
 from pungi.arch import get_compatible_arches, split_name_arch
 from pungi.phases.base import PhaseBase
-from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
-                        makedirs)
+from pungi.util import get_arch_data, get_arch_variant_data, get_variant_data, makedirs
 from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
@@ -44,6 +44,7 @@ from pungi.phases.createrepo import add_modular_metadata
 def get_gather_source(name):
     import pungi.phases.gather.sources
     from .source import GatherSourceContainer
+
     GatherSourceContainer.register_module(pungi.phases.gather.sources)
     container = GatherSourceContainer()
     return container["GatherSource%s" % name]
@@ -52,6 +53,7 @@ def get_gather_source(name):
 def get_gather_method(name):
     import pungi.phases.gather.methods
     from .method import GatherMethodContainer
+
     GatherMethodContainer.register_module(pungi.phases.gather.methods)
     container = GatherMethodContainer()
     return container["GatherMethod%s" % name]
@@ -59,6 +61,7 @@ def get_gather_method(name):
 
 class GatherPhase(PhaseBase):
     """GATHER"""
+
     name = "gather"
 
     def __init__(self, compose, pkgset_phase):
@@ -80,7 +83,7 @@ class GatherPhase(PhaseBase):
             # Modules are not supported, check if we need them
             for variant in self.compose.variants.values():
                 if variant.modules:
-                    errors.append('Modular compose requires libmodulemd package.')
+                    errors.append("Modular compose requires libmodulemd package.")
 
         # check whether variants from configuration value 'variant_as_lookaside' are correct
         variant_as_lookaside = self.compose.conf.get("variant_as_lookaside", [])
@@ -93,25 +96,30 @@ class GatherPhase(PhaseBase):
                 )
 
         if errors:
-            raise ValueError('\n'.join(errors))
+            raise ValueError("\n".join(errors))
 
     def _write_manifest(self):
         self.compose.log_info("Writing RPM manifest: %s" % self.manifest_file)
         self.manifest.dump(self.manifest_file)
 
     def run(self):
-        pkg_map = gather_wrapper(self.compose, self.pkgset_phase.package_sets,
-                                 self.pkgset_phase.path_prefix)
+        pkg_map = gather_wrapper(
+            self.compose, self.pkgset_phase.package_sets, self.pkgset_phase.path_prefix
+        )
 
         for variant_uid in get_ordered_variant_uids(self.compose):
             variant = self.compose.all_variants[variant_uid]
             if variant.is_empty:
                 continue
             for arch in variant.arches:
-                link_files(self.compose, arch, variant,
-                           pkg_map[arch][variant.uid],
-                           self.pkgset_phase.package_sets,
-                           manifest=self.manifest)
+                link_files(
+                    self.compose,
+                    arch,
+                    variant,
+                    pkg_map[arch][variant.uid],
+                    self.pkgset_phase.package_sets,
+                    manifest=self.manifest,
+                )
 
         self._write_manifest()
 
@@ -148,10 +156,12 @@ def get_gather_methods(compose, variant):
     global_method_name = methods
     if isinstance(methods, dict):
         try:
-            methods = get_variant_data(compose.conf, 'gather_method', variant)[-1]
+            methods = get_variant_data(compose.conf, "gather_method", variant)[-1]
             global_method_name = None
         except IndexError:
-            raise RuntimeError("Variant %s has no configured gather_method" % variant.uid)
+            raise RuntimeError(
+                "Variant %s has no configured gather_method" % variant.uid
+            )
     return global_method_name, methods
 
 
@@ -208,8 +218,9 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
 
         for source_name in ("module", "comps", "json"):
 
-            packages, groups, filter_packages = get_variant_packages(compose, arch, variant,
-                                                                     source_name, package_sets)
+            packages, groups, filter_packages = get_variant_packages(
+                compose, arch, variant, source_name, package_sets
+            )
             if not packages and not groups:
                 # No inputs, nothing to do really.
                 continue
@@ -217,20 +228,32 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
             try:
                 method_name = global_method_name or methods[source_name]
             except KeyError:
-                raise RuntimeError("Variant %s has no configured gather_method for source %s"
-                                   % (variant.uid, source_name))
+                raise RuntimeError(
+                    "Variant %s has no configured gather_method for source %s"
+                    % (variant.uid, source_name)
+                )
 
             GatherMethod = get_gather_method(method_name)
             method = GatherMethod(compose)
             method.source_name = source_name
             compose.log_debug(
-                "Gathering source %s, method %s (arch: %s, variant: %s)" % (source_name, method_name, arch, variant))
-            pkg_map = method(arch, variant, packages, groups, filter_packages,
-                             multilib_whitelist, multilib_blacklist, package_sets,
-                             fulltree_excludes=fulltree_excludes,
-                             prepopulate=prepopulate if source_name == 'comps' else set())
+                "Gathering source %s, method %s (arch: %s, variant: %s)"
+                % (source_name, method_name, arch, variant)
+            )
+            pkg_map = method(
+                arch,
+                variant,
+                packages,
+                groups,
+                filter_packages,
+                multilib_whitelist,
+                multilib_blacklist,
+                package_sets,
+                fulltree_excludes=fulltree_excludes,
+                prepopulate=prepopulate if source_name == "comps" else set(),
+            )
 
-            for t in ('rpm', 'srpm', 'debuginfo'):
+            for t in ("rpm", "srpm", "debuginfo"):
                 result[t].extend(pkg_map.get(t, []))
 
     compose.log_info("[DONE ] %s" % msg)
@@ -246,13 +269,15 @@ def write_packages(compose, arch, variant, pkg_map, path_prefix):
     compose.log_info("[BEGIN] %s" % msg)
 
     for pkg_type, pkgs in pkg_map.items():
-        file_name = compose.paths.work.package_list(arch=arch, variant=variant, pkg_type=pkg_type)
+        file_name = compose.paths.work.package_list(
+            arch=arch, variant=variant, pkg_type=pkg_type
+        )
         with open(file_name, "w") as pkg_list:
             for pkg in pkgs:
                 # TODO: flags?
                 pkg_path = pkg["path"]
                 if pkg_path.startswith(path_prefix):
-                    pkg_path = pkg_path[len(path_prefix):]
+                    pkg_path = pkg_path[len(path_prefix) :]
                 pkg_list.write("%s\n" % pkg_path)
 
     compose.log_info("[DONE ] %s" % msg)
@@ -299,18 +324,23 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
             if not pkg_path:
                 continue
             nvra = parse_nvra(pkg_path)
-            key = ((nvra["name"], nvra["arch"]))
+            key = (nvra["name"], nvra["arch"])
 
             if nvra["name"] in remove_pkgs.get(pkg_type, set()):
                 # TODO: make an option to turn this off
-                if variant.type == "layered-product" and pkg_type in ("srpm", "debuginfo"):
+                if variant.type == "layered-product" and pkg_type in (
+                    "srpm",
+                    "debuginfo",
+                ):
                     new_pkgs.append(pkg)
                     # User may not have addons available, therefore we need to
                     # keep addon SRPMs in layered products in order not to violate GPL.
                     # The same applies on debuginfo availability.
                     continue
-                compose.log_warning("Removed addon package (arch: %s, variant: %s): %s: %s" % (
-                    arch, variant, pkg_type, pkg_path))
+                compose.log_warning(
+                    "Removed addon package (arch: %s, variant: %s): %s: %s"
+                    % (arch, variant, pkg_type, pkg_path)
+                )
                 removed_pkgs[pkg_type].append(pkg)
             elif key not in parent_pkgs.get(pkg_type, set()):
                 if "fulltree-exclude" in pkg["flags"] and "input" not in pkg["flags"]:
@@ -326,10 +356,14 @@ def trim_packages(compose, arch, variant, pkg_map, parent_pkgs=None, remove_pkgs
                 removed_pkgs[pkg_type].append(pkg)
 
         pkg_map[pkg_type] = new_pkgs
-        compose.log_info("Removed packages (arch: %s, variant: %s): %s: %s" % (
-            arch, variant, pkg_type, len(removed_pkgs[pkg_type])))
-        compose.log_info("Moved to parent (arch: %s, variant: %s): %s: %s" % (
-            arch, variant, pkg_type, len(move_to_parent_pkgs[pkg_type])))
+        compose.log_info(
+            "Removed packages (arch: %s, variant: %s): %s: %s"
+            % (arch, variant, pkg_type, len(removed_pkgs[pkg_type]))
+        )
+        compose.log_info(
+            "Moved to parent (arch: %s, variant: %s): %s: %s"
+            % (arch, variant, pkg_type, len(move_to_parent_pkgs[pkg_type]))
+        )
 
     compose.log_info("[DONE ] %s" % msg)
     return addon_pkgs, move_to_parent_pkgs, removed_pkgs
@@ -347,39 +381,50 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
         return repo
 
     makedirs(repo)
-    msg = 'Generating lookaside repo from %s.%s' % (variant.uid, arch)
-    compose.log_info('[BEGIN] %s', msg)
+    msg = "Generating lookaside repo from %s.%s" % (variant.uid, arch)
+    compose.log_info("[BEGIN] %s", msg)
 
     prefixes = {
-        'repos': lambda: os.path.join(compose.paths.work.topdir(
-            arch="global"), "download") + "/",
-        'koji': lambda: pungi.wrappers.kojiwrapper.KojiWrapper(
-            compose.conf['koji_profile']).koji_module.config.topdir.rstrip("/") + "/"
+        "repos": lambda: os.path.join(
+            compose.paths.work.topdir(arch="global"), "download"
+        )
+        + "/",
+        "koji": lambda: pungi.wrappers.kojiwrapper.KojiWrapper(
+            compose.conf["koji_profile"]
+        ).koji_module.config.topdir.rstrip("/")
+        + "/",
     }
-    path_prefix = prefixes[compose.conf['pkgset_source']]()
+    path_prefix = prefixes[compose.conf["pkgset_source"]]()
     pkglist = compose.paths.work.lookaside_package_list(arch=arch, variant=variant)
-    with open(pkglist, 'w') as f:
+    with open(pkglist, "w") as f:
         for packages in pkg_map[arch][variant.uid].values():
             for pkg in packages:
-                pkg = pkg['path']
+                pkg = pkg["path"]
                 if path_prefix and pkg.startswith(path_prefix):
-                    pkg = pkg[len(path_prefix):]
-                f.write('%s\n' % pkg)
+                    pkg = pkg[len(path_prefix) :]
+                f.write("%s\n" % pkg)
 
-    cr = CreaterepoWrapper(compose.conf['createrepo_c'])
+    cr = CreaterepoWrapper(compose.conf["createrepo_c"])
     update_metadata = None
     if package_sets:
         pkgset = package_sets[-1]
         update_metadata = compose.paths.work.pkgset_repo(pkgset.name, arch)
-    cmd = cr.get_createrepo_cmd(path_prefix, update=True, database=True, skip_stat=True,
-                                pkglist=pkglist,
-                                outputdir=repo,
-                                baseurl="file://%s" % path_prefix,
-                                workers=compose.conf["createrepo_num_workers"],
-                                update_md_path=update_metadata)
-    run(cmd,
+    cmd = cr.get_createrepo_cmd(
+        path_prefix,
+        update=True,
+        database=True,
+        skip_stat=True,
+        pkglist=pkglist,
+        outputdir=repo,
+        baseurl="file://%s" % path_prefix,
+        workers=compose.conf["createrepo_num_workers"],
+        update_md_path=update_metadata,
+    )
+    run(
+        cmd,
         logfile=compose.paths.log.log_file(arch, "lookaside_repo_%s" % (variant.uid)),
-        show_cmd=True)
+        show_cmd=True,
+    )
 
     # Add modular metadata into the repo
     if variant.arch_mmds:
@@ -399,7 +444,7 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
         )
         add_modular_metadata(cr, repo, mod_index, log_file)
 
-    compose.log_info('[DONE ] %s', msg)
+    compose.log_info("[DONE ] %s", msg)
 
     return repo
 
@@ -408,8 +453,8 @@ def _update_config(compose, variant_uid, arch, repo):
     """
     Add the variant lookaside repository into the configuration.
     """
-    lookasides = compose.conf.setdefault('gather_lookaside_repos', [])
-    lookasides.append(('^%s$' % variant_uid, {arch: repo}))
+    lookasides = compose.conf.setdefault("gather_lookaside_repos", [])
+    lookasides.append(("^%s$" % variant_uid, {arch: repo}))
 
 
 def _update_lookaside_config(compose, variant, arch, pkg_map, package_sets=None):
@@ -417,13 +462,17 @@ def _update_lookaside_config(compose, variant, arch, pkg_map, package_sets=None)
     Make sure lookaside repo for all variants that the given one depends on
     exist, and that configuration is updated to use those repos.
     """
-    for dest, lookaside_variant_uid in compose.conf.get('variant_as_lookaside', []):
+    for dest, lookaside_variant_uid in compose.conf.get("variant_as_lookaside", []):
         lookaside_variant = compose.all_variants[lookaside_variant_uid]
         if dest != variant.uid:
             continue
         if arch not in lookaside_variant.arches:
-            compose.log_warning('[SKIP] Skipping lookaside from %s for %s.%s due to arch mismatch',
-                                lookaside_variant.uid, variant.uid, arch)
+            compose.log_warning(
+                "[SKIP] Skipping lookaside from %s for %s.%s due to arch mismatch",
+                lookaside_variant.uid,
+                variant.uid,
+                arch,
+            )
             continue
         repo = _make_lookaside_repo(
             compose, lookaside_variant, arch, pkg_map, package_sets
@@ -431,7 +480,9 @@ def _update_lookaside_config(compose, variant, arch, pkg_map, package_sets=None)
         _update_config(compose, variant.uid, arch, repo)
 
 
-def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltree=False):
+def _gather_variants(
+    result, compose, variant_type, package_sets, exclude_fulltree=False
+):
     """Run gathering on all arches of all variants of given type.
 
     If ``exclude_fulltree`` is set, all source packages from parent variants
@@ -448,7 +499,9 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
         for arch in variant.arches:
             fulltree_excludes = set()
             if exclude_fulltree:
-                for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)["srpm"]:
+                for pkg_name, pkg_arch in get_parent_pkgs(arch, variant, result)[
+                    "srpm"
+                ]:
                     fulltree_excludes.add(pkg_name)
 
             # Get lookaside repos for this variant from other variants. Based
@@ -467,7 +520,7 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
             t = threading.Thread(
                 target=worker,
                 args=(que, errors, arch, compose, arch, variant, package_sets),
-                kwargs={'fulltree_excludes': fulltree_excludes},
+                kwargs={"fulltree_excludes": fulltree_excludes},
             )
             threads_list.append(t)
             t.start()
@@ -487,7 +540,9 @@ def _gather_variants(result, compose, variant_type, package_sets, exclude_fulltr
         variant.nsvc_to_pkgset = None
 
 
-def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_parent=True):
+def _trim_variants(
+    result, compose, variant_type, remove_pkgs=None, move_to_parent=True
+):
     """Trim all varians of given type.
 
     Returns a map of all packages included in these variants.
@@ -498,7 +553,8 @@ def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_pare
             pkg_map = result[arch][variant.uid]
             parent_pkgs = get_parent_pkgs(arch, variant, result)
             included_packages, move_to_parent_pkgs, removed_pkgs = trim_packages(
-                compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=remove_pkgs)
+                compose, arch, variant, pkg_map, parent_pkgs, remove_pkgs=remove_pkgs
+            )
 
             # update all_addon_pkgs
             for pkg_type, pkgs in included_packages.items():
@@ -509,8 +565,15 @@ def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_pare
                 parent_pkg_map = result[arch][variant.parent.uid]
                 for pkg_type, pkgs in move_to_parent_pkgs.items():
                     for pkg in pkgs:
-                        compose.log_debug("Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s"
-                                          % (arch, variant.uid, pkg_type, os.path.basename(pkg["path"])))
+                        compose.log_debug(
+                            "Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s"
+                            % (
+                                arch,
+                                variant.uid,
+                                pkg_type,
+                                os.path.basename(pkg["path"]),
+                            )
+                        )
                         if pkg not in parent_pkg_map[pkg_type]:
                             parent_pkg_map[pkg_type].append(pkg)
     return all_included_packages
@@ -519,20 +582,28 @@ def _trim_variants(result, compose, variant_type, remove_pkgs=None, move_to_pare
 def gather_wrapper(compose, package_sets, path_prefix):
     result = {}
 
-    _gather_variants(result, compose, 'variant', package_sets)
-    _gather_variants(result, compose, 'addon', package_sets, exclude_fulltree=True)
-    _gather_variants(result, compose, 'layered-product', package_sets, exclude_fulltree=True)
-    _gather_variants(result, compose, 'optional', package_sets)
+    _gather_variants(result, compose, "variant", package_sets)
+    _gather_variants(result, compose, "addon", package_sets, exclude_fulltree=True)
+    _gather_variants(
+        result, compose, "layered-product", package_sets, exclude_fulltree=True
+    )
+    _gather_variants(result, compose, "optional", package_sets)
 
-    all_addon_pkgs = _trim_variants(result, compose, 'addon')
+    all_addon_pkgs = _trim_variants(result, compose, "addon")
     # TODO do we really want to move packages to parent here?
-    all_lp_pkgs = _trim_variants(result, compose, 'layered-product', remove_pkgs=all_addon_pkgs)
+    all_lp_pkgs = _trim_variants(
+        result, compose, "layered-product", remove_pkgs=all_addon_pkgs
+    )
 
     # merge all_addon_pkgs with all_lp_pkgs
     for pkg_type in set(all_addon_pkgs.keys()) | set(all_lp_pkgs.keys()):
-        all_addon_pkgs.setdefault(pkg_type, set()).update(all_lp_pkgs.get(pkg_type, set()))
+        all_addon_pkgs.setdefault(pkg_type, set()).update(
+            all_lp_pkgs.get(pkg_type, set())
+        )
 
-    _trim_variants(result, compose, 'optional', remove_pkgs=all_addon_pkgs, move_to_parent=False)
+    _trim_variants(
+        result, compose, "optional", remove_pkgs=all_addon_pkgs, move_to_parent=False
+    )
 
     # write packages (package lists) for all variants
     for arch in compose.get_arches():
@@ -549,17 +620,21 @@ def write_prepopulate_file(compose):
     It is stored in a location where ``get_prepopulate_packages`` function
     expects.
     """
-    if 'gather_prepopulate' not in compose.conf:
+    if "gather_prepopulate" not in compose.conf:
         return
 
-    prepopulate_file = os.path.join(compose.paths.work.topdir(arch="global"), "prepopulate.json")
+    prepopulate_file = os.path.join(
+        compose.paths.work.topdir(arch="global"), "prepopulate.json"
+    )
     msg = "Writing prepopulate file: %s" % prepopulate_file
 
     scm_dict = compose.conf["gather_prepopulate"]
     if isinstance(scm_dict, dict):
         file_name = os.path.basename(scm_dict["file"])
         if scm_dict["scm"] == "file":
-            scm_dict["file"] = os.path.join(compose.config_dir, os.path.basename(scm_dict["file"]))
+            scm_dict["file"] = os.path.join(
+                compose.config_dir, os.path.basename(scm_dict["file"])
+            )
     else:
         file_name = os.path.basename(scm_dict)
         scm_dict = os.path.join(compose.config_dir, os.path.basename(scm_dict))
@@ -581,7 +656,9 @@ def get_prepopulate_packages(compose, arch, variant, include_arch=True):
     """
     result = set()
 
-    prepopulate_file = os.path.join(compose.paths.work.topdir(arch="global"), "prepopulate.json")
+    prepopulate_file = os.path.join(
+        compose.paths.work.topdir(arch="global"), "prepopulate.json"
+    )
     if not os.path.isfile(prepopulate_file):
         return result
 
@@ -597,7 +674,8 @@ def get_prepopulate_packages(compose, arch, variant, include_arch=True):
                 if pkg_arch not in get_compatible_arches(arch, multilib=True):
                     raise ValueError(
                         "Incompatible package arch '%s' for tree arch '%s' in prepopulate package '%s'"
-                        % (pkg_arch, arch, pkg_name))
+                        % (pkg_arch, arch, pkg_name)
+                    )
                 if include_arch:
                     result.add(i)
                 else:
@@ -609,10 +687,13 @@ def get_additional_packages(compose, arch, variant):
     result = set()
     for i in get_arch_variant_data(compose.conf, "additional_packages", arch, variant):
         pkg_name, pkg_arch = split_name_arch(i)
-        if pkg_arch is not None and pkg_arch not in get_compatible_arches(arch, multilib=True):
+        if pkg_arch is not None and pkg_arch not in get_compatible_arches(
+            arch, multilib=True
+        ):
             raise ValueError(
                 "Incompatible package arch '%s' for tree arch '%s' in additional package '%s'"
-                % (pkg_arch, arch, pkg_name))
+                % (pkg_arch, arch, pkg_name)
+            )
         result.add((pkg_name, pkg_arch))
     return result
 
@@ -669,23 +750,28 @@ def get_variant_packages(compose, arch, variant, source_name, package_sets=None)
     packages |= get_additional_packages(compose, arch, variant)
     filter_packages |= get_filter_packages(compose, arch, variant)
 
-    if compose.conf['filter_system_release_packages']:
-        system_release_packages, system_release_filter_packages = get_system_release_packages(
-            compose, arch, variant, package_sets)
+    if compose.conf["filter_system_release_packages"]:
+        (
+            system_release_packages,
+            system_release_filter_packages,
+        ) = get_system_release_packages(compose, arch, variant, package_sets)
         packages |= system_release_packages
         filter_packages |= system_release_filter_packages
 
     if variant.type == "optional":
         for var in variant.parent.get_variants(
-                arch=arch, types=["self", "variant", "addon", "layered-product"]):
+            arch=arch, types=["self", "variant", "addon", "layered-product"]
+        ):
             var_packages, var_groups, _ = get_variant_packages(
-                compose, arch, var, source_name, package_sets=package_sets)
+                compose, arch, var, source_name, package_sets=package_sets
+            )
             packages |= var_packages
             groups |= var_groups
 
     if variant.type in ["addon", "layered-product"]:
         var_packages, var_groups, _ = get_variant_packages(
-            compose, arch, variant.parent, source_name, package_sets=package_sets)
+            compose, arch, variant.parent, source_name, package_sets=package_sets
+        )
         packages |= var_packages
         groups |= var_groups
 
@@ -714,12 +800,16 @@ def get_system_release_packages(compose, arch, variant, package_sets):
             # search for best match
             best_match = None
             for pkg in system_release_packages:
-                if pkg.name.endswith("release-%s" % variant.uid.lower()) or pkg.name.startswith("%s-release" % variant.uid.lower()):
+                if pkg.name.endswith(
+                    "release-%s" % variant.uid.lower()
+                ) or pkg.name.startswith("%s-release" % variant.uid.lower()):
                     best_match = pkg
                     break
         else:
             # addons: return release packages from parent variant
-            return get_system_release_packages(compose, arch, variant.parent, package_sets)
+            return get_system_release_packages(
+                compose, arch, variant.parent, package_sets
+            )
 
         if not best_match:
             # no package matches variant name -> pick the first one
@@ -734,8 +824,9 @@ def get_system_release_packages(compose, arch, variant, package_sets):
     return packages, filter_packages
 
 
-def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
-                           include_prepopulated=False):
+def get_packages_to_gather(
+    compose, arch=None, variant=None, include_arch=True, include_prepopulated=False
+):
     """
     Returns the list of names of packages and list of names of groups which
     would be included in a compose as GATHER phase result.
@@ -771,7 +862,8 @@ def get_packages_to_gather(compose, arch=None, variant=None, include_arch=True,
 
             if include_prepopulated:
                 prepopulated = get_prepopulate_packages(
-                    compose, arch, variant, include_arch)
+                    compose, arch, variant, include_arch
+                )
                 packages = packages.union(prepopulated)
 
     return list(packages), list(groups)

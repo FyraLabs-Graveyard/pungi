@@ -30,7 +30,7 @@ from .. import util
 from ..arch_utils import getBaseArch
 
 
-KOJI_BUILD_DELETED = koji.BUILD_STATES['DELETED']
+KOJI_BUILD_DELETED = koji.BUILD_STATES["DELETED"]
 
 
 class KojiWrapper(object):
@@ -41,38 +41,65 @@ class KojiWrapper(object):
         with self.lock:
             self.koji_module = koji.get_profile_module(profile)
             session_opts = {}
-            for key in ('krbservice', 'timeout', 'keepalive',
-                        'max_retries', 'retry_interval', 'anon_retry',
-                        'offline_retry', 'offline_retry_interval',
-                        'debug', 'debug_xmlrpc', 'krb_rdns',
-                        'serverca',
-                        'use_fast_upload'):
+            for key in (
+                "krbservice",
+                "timeout",
+                "keepalive",
+                "max_retries",
+                "retry_interval",
+                "anon_retry",
+                "offline_retry",
+                "offline_retry_interval",
+                "debug",
+                "debug_xmlrpc",
+                "krb_rdns",
+                "serverca",
+                "use_fast_upload",
+            ):
                 value = getattr(self.koji_module.config, key, None)
                 if value is not None:
                     session_opts[key] = value
-            self.koji_proxy = koji.ClientSession(self.koji_module.config.server, session_opts)
+            self.koji_proxy = koji.ClientSession(
+                self.koji_module.config.server, session_opts
+            )
 
     def login(self):
         """Authenticate to the hub."""
         auth_type = self.koji_module.config.authtype
-        if auth_type == 'ssl' or (os.path.isfile(os.path.expanduser(self.koji_module.config.cert))
-                                  and auth_type is None):
-            self.koji_proxy.ssl_login(os.path.expanduser(self.koji_module.config.cert),
-                                      os.path.expanduser(self.koji_module.config.ca),
-                                      os.path.expanduser(self.koji_module.config.serverca))
-        elif auth_type == 'kerberos':
+        if auth_type == "ssl" or (
+            os.path.isfile(os.path.expanduser(self.koji_module.config.cert))
+            and auth_type is None
+        ):
+            self.koji_proxy.ssl_login(
+                os.path.expanduser(self.koji_module.config.cert),
+                os.path.expanduser(self.koji_module.config.ca),
+                os.path.expanduser(self.koji_module.config.serverca),
+            )
+        elif auth_type == "kerberos":
             self.koji_proxy.krb_login(
-                getattr(self.koji_module.config, 'principal', None),
-                getattr(self.koji_module.config, 'keytab', None))
+                getattr(self.koji_module.config, "principal", None),
+                getattr(self.koji_module.config, "keytab", None),
+            )
         else:
-            raise RuntimeError('Unsupported authentication type in Koji')
+            raise RuntimeError("Unsupported authentication type in Koji")
 
     def _get_cmd(self, *args):
         return ["koji", "--profile=%s" % self.profile] + list(args)
 
-    def get_runroot_cmd(self, target, arch, command, quiet=False, use_shell=True,
-                        channel=None, packages=None, mounts=None, weight=None,
-                        new_chroot=False, chown_paths=None):
+    def get_runroot_cmd(
+        self,
+        target,
+        arch,
+        command,
+        quiet=False,
+        use_shell=True,
+        channel=None,
+        packages=None,
+        mounts=None,
+        weight=None,
+        new_chroot=False,
+        chown_paths=None,
+    ):
         cmd = self._get_cmd("runroot", "--nowait", "--task-id")
 
         if quiet:
@@ -111,7 +138,9 @@ class KojiWrapper(object):
             command = " ".join([shlex_quote(i) for i in command])
 
         # HACK: remove rpmdb and yum cache
-        command = "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
+        command = (
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; " + command
+        )
 
         if chown_paths:
             paths = " ".join(shlex_quote(pth) for pth in chown_paths)
@@ -124,8 +153,16 @@ class KojiWrapper(object):
         return cmd
 
     def get_pungi_buildinstall_cmd(
-            self, target, arch, args, channel=None, packages=None,
-            mounts=None, weight=None, chown_uid=None):
+        self,
+        target,
+        arch,
+        args,
+        channel=None,
+        packages=None,
+        mounts=None,
+        weight=None,
+        chown_uid=None,
+    ):
         cmd = self._get_cmd("pungi-buildinstall", "--nowait", "--task-id")
 
         if channel:
@@ -171,10 +208,10 @@ class KojiWrapper(object):
         If we are authenticated with a keytab, we need a fresh credentials
         cache to avoid possible race condition.
         """
-        if getattr(self.koji_module.config, 'keytab', None):
-            with util.temp_dir(prefix='krb_ccache') as tempdir:
+        if getattr(self.koji_module.config, "keytab", None):
+            with util.temp_dir(prefix="krb_ccache") as tempdir:
                 env = os.environ.copy()
-                env['KRB5CCNAME'] = 'DIR:%s' % tempdir
+                env["KRB5CCNAME"] = "DIR:%s" % tempdir
                 yield env
         else:
             yield None
@@ -188,11 +225,17 @@ class KojiWrapper(object):
         """
         task_id = None
         with self.get_koji_cmd_env() as env:
-            retcode, output = run(command, can_fail=True, logfile=log_file,
-                                  show_cmd=True, env=env, universal_newlines=True)
+            retcode, output = run(
+                command,
+                can_fail=True,
+                logfile=log_file,
+                show_cmd=True,
+                env=env,
+                universal_newlines=True,
+            )
 
         first_line = output.splitlines()[0]
-        match = re.search(r'^(\d+)$', first_line)
+        match = re.search(r"^(\d+)$", first_line)
         if not match:
             raise RuntimeError(
                 "Could not find task ID in output. Command '%s' returned '%s'."
@@ -209,7 +252,9 @@ class KojiWrapper(object):
             "task_id": task_id,
         }
 
-    def get_image_build_cmd(self, config_options, conf_file_dest, wait=True, scratch=False):
+    def get_image_build_cmd(
+        self, config_options, conf_file_dest, wait=True, scratch=False
+    ):
         """
         @param config_options
         @param conf_file_dest -  a destination in compose workdir for the conf file to be written
@@ -219,14 +264,27 @@ class KojiWrapper(object):
         # Usage: koji image-build [options] <name> <version> <target> <install-tree-url> <arch> [<arch>...]
         sub_command = "image-build"
         # The minimum set of options
-        min_options = ("name", "version", "target", "install_tree", "arches", "format", "kickstart", "ksurl", "distro")
-        assert set(min_options).issubset(set(config_options['image-build'].keys())), "image-build requires at least %s got '%s'" % (", ".join(min_options), config_options)
+        min_options = (
+            "name",
+            "version",
+            "target",
+            "install_tree",
+            "arches",
+            "format",
+            "kickstart",
+            "ksurl",
+            "distro",
+        )
+        assert set(min_options).issubset(set(config_options["image-build"].keys())), (
+            "image-build requires at least %s got '%s'"
+            % (", ".join(min_options), config_options)
+        )
         cfg_parser = configparser.ConfigParser()
         for section, opts in config_options.items():
             cfg_parser.add_section(section)
             for option, value in opts.items():
                 if isinstance(value, list):
-                    value = ','.join(value)
+                    value = ",".join(value)
                 if not isinstance(value, six.string_types):
                     # Python 3 configparser will reject non-string values.
                     value = str(value)
@@ -246,42 +304,55 @@ class KojiWrapper(object):
 
     def get_live_media_cmd(self, options, wait=True):
         # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
-        cmd = self._get_cmd('spin-livemedia')
+        cmd = self._get_cmd("spin-livemedia")
 
-        for key in ('name', 'version', 'target', 'arch', 'ksfile'):
+        for key in ("name", "version", "target", "arch", "ksfile"):
             if key not in options:
                 raise ValueError('Expected options to have key "%s"' % key)
             cmd.append(options[key])
-        if 'install_tree' not in options:
+        if "install_tree" not in options:
             raise ValueError('Expected options to have key "install_tree"')
-        cmd.append('--install-tree=%s' % options['install_tree'])
+        cmd.append("--install-tree=%s" % options["install_tree"])
 
-        for repo in options.get('repo', []):
-            cmd.append('--repo=%s' % repo)
+        for repo in options.get("repo", []):
+            cmd.append("--repo=%s" % repo)
 
-        if options.get('scratch'):
-            cmd.append('--scratch')
+        if options.get("scratch"):
+            cmd.append("--scratch")
 
-        if options.get('skip_tag'):
-            cmd.append('--skip-tag')
+        if options.get("skip_tag"):
+            cmd.append("--skip-tag")
 
-        if 'ksurl' in options:
-            cmd.append('--ksurl=%s' % options['ksurl'])
+        if "ksurl" in options:
+            cmd.append("--ksurl=%s" % options["ksurl"])
 
-        if 'release' in options:
-            cmd.append('--release=%s' % options['release'])
+        if "release" in options:
+            cmd.append("--release=%s" % options["release"])
 
-        if 'can_fail' in options:
-            cmd.append('--can-fail=%s' % ','.join(options['can_fail']))
+        if "can_fail" in options:
+            cmd.append("--can-fail=%s" % ",".join(options["can_fail"]))
 
         if wait:
-            cmd.append('--wait')
+            cmd.append("--wait")
 
         return cmd
 
-    def get_create_image_cmd(self, name, version, target, arch, ks_file, repos,
-                             image_type="live", image_format=None, release=None,
-                             wait=True, archive=False, specfile=None, ksurl=None):
+    def get_create_image_cmd(
+        self,
+        name,
+        version,
+        target,
+        arch,
+        ks_file,
+        repos,
+        image_type="live",
+        image_format=None,
+        release=None,
+        wait=True,
+        archive=False,
+        specfile=None,
+        ksurl=None,
+    ):
         # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
         # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>
         # Examples:
@@ -327,7 +398,10 @@ class KojiWrapper(object):
                 raise ValueError("Format can be specified only for appliance images'")
             supported_formats = ["raw", "qcow", "qcow2", "vmx"]
             if image_format not in supported_formats:
-                raise ValueError("Format is not supported: %s. Supported formats: %s" % (image_format, " ".join(sorted(supported_formats))))
+                raise ValueError(
+                    "Format is not supported: %s. Supported formats: %s"
+                    % (image_format, " ".join(sorted(supported_formats)))
+                )
             cmd.append("--format=%s" % image_format)
 
         if release is not None:
@@ -350,23 +424,27 @@ class KojiWrapper(object):
 
     def _has_connection_error(self, output):
         """Checks if output indicates connection error."""
-        return re.search('error: failed to connect\n$', output)
+        return re.search("error: failed to connect\n$", output)
 
     def _has_offline_error(self, output):
         """Check if output indicates server offline."""
-        return re.search('koji: ServerOffline:', output)
+        return re.search("koji: ServerOffline:", output)
 
     def _wait_for_task(self, task_id, logfile=None, max_retries=None):
         """Tries to wait for a task to finish. On connection error it will
         retry with `watch-task` command.
         """
-        cmd = self._get_cmd('watch-task', str(task_id))
+        cmd = self._get_cmd("watch-task", str(task_id))
         attempt = 0
 
         while True:
-            retcode, output = run(cmd, can_fail=True, logfile=logfile, universal_newlines=True)
+            retcode, output = run(
+                cmd, can_fail=True, logfile=logfile, universal_newlines=True
+            )
 
-            if retcode == 0 or not (self._has_connection_error(output) or self._has_offline_error(output)):
+            if retcode == 0 or not (
+                self._has_connection_error(output) or self._has_offline_error(output)
+            ):
                 # Task finished for reason other than connection error or server offline error.
                 return retcode, output
 
@@ -375,7 +453,9 @@ class KojiWrapper(object):
                 break
             time.sleep(attempt * 10)
 
-        raise RuntimeError('Failed to wait for task %s. Too many connection errors.' % task_id)
+        raise RuntimeError(
+            "Failed to wait for task %s. Too many connection errors." % task_id
+        )
 
     def run_blocking_cmd(self, command, log_file=None, max_retries=None):
         """
@@ -384,17 +464,28 @@ class KojiWrapper(object):
         command finishes.
         """
         with self.get_koji_cmd_env() as env:
-            retcode, output = run(command, can_fail=True, logfile=log_file,
-                                  env=env, universal_newlines=True)
+            retcode, output = run(
+                command,
+                can_fail=True,
+                logfile=log_file,
+                env=env,
+                universal_newlines=True,
+            )
 
         match = re.search(r"Created task: (\d+)", output)
         if not match:
-            raise RuntimeError("Could not find task ID in output. Command '%s' returned '%s'."
-                               % (" ".join(command), output))
+            raise RuntimeError(
+                "Could not find task ID in output. Command '%s' returned '%s'."
+                % (" ".join(command), output)
+            )
         task_id = int(match.groups()[0])
 
-        if retcode != 0 and (self._has_connection_error(output) or self._has_offline_error(output)):
-            retcode, output = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
+        if retcode != 0 and (
+            self._has_connection_error(output) or self._has_offline_error(output)
+        ):
+            retcode, output = self._wait_for_task(
+                task_id, logfile=log_file, max_retries=max_retries
+            )
 
         return {
             "retcode": retcode,
@@ -403,7 +494,9 @@ class KojiWrapper(object):
         }
 
     def watch_task(self, task_id, log_file=None, max_retries=None):
-        retcode, _ = self._wait_for_task(task_id, logfile=log_file, max_retries=max_retries)
+        retcode, _ = self._wait_for_task(
+            task_id, logfile=log_file, max_retries=max_retries
+        )
         return retcode
 
     def get_image_paths(self, task_id, callback=None):
@@ -420,26 +513,32 @@ class KojiWrapper(object):
         children_tasks = self.koji_proxy.getTaskChildren(task_id, request=True)
 
         for child_task in children_tasks:
-            if child_task['method'] not in ['createImage', 'createLiveMedia', 'createAppliance']:
+            if child_task["method"] not in [
+                "createImage",
+                "createLiveMedia",
+                "createAppliance",
+            ]:
                 continue
 
-            if child_task['state'] != koji.TASK_STATES['CLOSED']:
+            if child_task["state"] != koji.TASK_STATES["CLOSED"]:
                 # The subtask is failed, which can happen with the can_fail
                 # option. If given, call the callback, and go to next child.
                 if callback:
-                    callback(child_task['arch'])
+                    callback(child_task["arch"])
                 continue
 
-            is_scratch = child_task['request'][-1].get('scratch', False)
-            task_result = self.koji_proxy.getTaskResult(child_task['id'])
+            is_scratch = child_task["request"][-1].get("scratch", False)
+            task_result = self.koji_proxy.getTaskResult(child_task["id"])
 
             if is_scratch:
                 topdir = os.path.join(
                     self.koji_module.pathinfo.work(),
-                    self.koji_module.pathinfo.taskrelpath(child_task['id'])
+                    self.koji_module.pathinfo.taskrelpath(child_task["id"]),
                 )
             else:
-                build = self.koji_proxy.getImageBuild("%(name)s-%(version)s-%(release)s" % task_result)
+                build = self.koji_proxy.getImageBuild(
+                    "%(name)s-%(version)s-%(release)s" % task_result
+                )
                 build["name"] = task_result["name"]
                 build["version"] = task_result["version"]
                 build["release"] = task_result["release"]
@@ -447,7 +546,9 @@ class KojiWrapper(object):
                 topdir = self.koji_module.pathinfo.imagebuild(build)
 
             for i in task_result["files"]:
-                result.setdefault(task_result['arch'], []).append(os.path.join(topdir, i))
+                result.setdefault(task_result["arch"], []).append(
+                    os.path.join(topdir, i)
+                )
 
         return result
 
@@ -460,7 +561,7 @@ class KojiWrapper(object):
         # scan parent and child tasks for certain methods
         task_info = None
         for i in task_info_list:
-            if i["method"] in ("createAppliance", "createLiveCD", 'createImage'):
+            if i["method"] in ("createAppliance", "createLiveCD", "createImage"):
                 task_info = i
                 break
 
@@ -469,9 +570,14 @@ class KojiWrapper(object):
         task_result.pop("rpmlist", None)
 
         if scratch:
-            topdir = os.path.join(self.koji_module.pathinfo.work(), self.koji_module.pathinfo.taskrelpath(task_info["id"]))
+            topdir = os.path.join(
+                self.koji_module.pathinfo.work(),
+                self.koji_module.pathinfo.taskrelpath(task_info["id"]),
+            )
         else:
-            build = self.koji_proxy.getImageBuild("%(name)s-%(version)s-%(release)s" % task_result)
+            build = self.koji_proxy.getImageBuild(
+                "%(name)s-%(version)s-%(release)s" % task_result
+            )
             build["name"] = task_result["name"]
             build["version"] = task_result["version"]
             build["release"] = task_result["release"]
@@ -501,7 +607,10 @@ class KojiWrapper(object):
         task_result = self.koji_proxy.getTaskResult(task_info["id"])
 
         # Get koji dir with results (rpms, srpms, logs, ...)
-        topdir = os.path.join(self.koji_module.pathinfo.work(), self.koji_module.pathinfo.taskrelpath(task_info["id"]))
+        topdir = os.path.join(
+            self.koji_module.pathinfo.work(),
+            self.koji_module.pathinfo.taskrelpath(task_info["id"]),
+        )
 
         # TODO: Maybe use different approach for non-scratch builds - see get_image_path()
 
@@ -550,7 +659,10 @@ class KojiWrapper(object):
         for i in result_files:
             rpminfo = self.koji_proxy.getRPM(i)
             build = self.koji_proxy.getBuild(rpminfo["build_id"])
-            path = os.path.join(self.koji_module.pathinfo.build(build), self.koji_module.pathinfo.signed(rpminfo, sigkey))
+            path = os.path.join(
+                self.koji_module.pathinfo.build(build),
+                self.koji_module.pathinfo.signed(rpminfo, sigkey),
+            )
             result.append(path)
 
         return result
@@ -559,7 +671,9 @@ class KojiWrapper(object):
         builds = self.koji_proxy.listBuilds(taskID=task_id)
         return [build.get("nvr") for build in builds if build.get("nvr")]
 
-    def multicall_map(self, koji_session, koji_session_fnc, list_of_args=None, list_of_kwargs=None):
+    def multicall_map(
+        self, koji_session, koji_session_fnc, list_of_args=None, list_of_kwargs=None
+    ):
         """
         Calls the `koji_session_fnc` using Koji multicall feature N times based on the list of
         arguments passed in `list_of_args` and `list_of_kwargs`.
@@ -578,8 +692,10 @@ class KojiWrapper(object):
         if list_of_args is None and list_of_kwargs is None:
             raise ValueError("One of list_of_args or list_of_kwargs must be set.")
 
-        if (type(list_of_args) not in [type(None), list] or
-                type(list_of_kwargs) not in [type(None), list]):
+        if type(list_of_args) not in [type(None), list] or type(list_of_kwargs) not in [
+            type(None),
+            list,
+        ]:
             raise ValueError("list_of_args and list_of_kwargs must be list or None.")
 
         if list_of_kwargs is None:
@@ -588,7 +704,9 @@ class KojiWrapper(object):
             list_of_args = [[]] * len(list_of_kwargs)
 
         if len(list_of_args) != len(list_of_kwargs):
-            raise ValueError("Length of list_of_args and list_of_kwargs must be the same.")
+            raise ValueError(
+                "Length of list_of_args and list_of_kwargs must be the same."
+            )
 
         koji_session.multicall = True
         for args, kwargs in zip(list_of_args, list_of_kwargs):
@@ -604,8 +722,9 @@ class KojiWrapper(object):
             return None
         if type(responses) != list:
             raise ValueError(
-                "Fault element was returned for multicall of method %r: %r" % (
-                    koji_session_fnc, responses))
+                "Fault element was returned for multicall of method %r: %r"
+                % (koji_session_fnc, responses)
+            )
 
         results = []
 
@@ -619,13 +738,15 @@ class KojiWrapper(object):
             if type(response) == list:
                 if not response:
                     raise ValueError(
-                        "Empty list returned for multicall of method %r with args %r, %r" % (
-                        koji_session_fnc, args, kwargs))
+                        "Empty list returned for multicall of method %r with args %r, %r"
+                        % (koji_session_fnc, args, kwargs)
+                    )
                 results.append(response[0])
             else:
                 raise ValueError(
-                    "Unexpected data returned for multicall of method %r with args %r, %r: %r" % (
-                        koji_session_fnc, args, kwargs, response))
+                    "Unexpected data returned for multicall of method %r with args %r, %r: %r"
+                    % (koji_session_fnc, args, kwargs, response)
+                )
 
         return results
 
@@ -645,12 +766,14 @@ def get_buildroot_rpms(compose, task_id):
     result = []
     if task_id:
         # runroot
-        koji = KojiWrapper(compose.conf['koji_profile'])
+        koji = KojiWrapper(compose.conf["koji_profile"])
         buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
         if not buildroot_infos:
             children_tasks = koji.koji_proxy.getTaskChildren(task_id)
             for child_task in children_tasks:
-                buildroot_infos = koji.koji_proxy.listBuildroots(taskID=child_task["id"])
+                buildroot_infos = koji.koji_proxy.listBuildroots(
+                    taskID=child_task["id"]
+                )
                 if buildroot_infos:
                     break
         buildroot_info = buildroot_infos[-1]
@@ -660,8 +783,10 @@ def get_buildroot_rpms(compose, task_id):
             result.append(fmt % rpm_info)
     else:
         # local
-        retcode, output = run("rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
-                              universal_newlines=True)
+        retcode, output = run(
+            "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",
+            universal_newlines=True,
+        )
         for i in output.splitlines():
             if not i:
                 continue

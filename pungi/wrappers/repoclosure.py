@@ -19,15 +19,23 @@ import os
 from kobo.shortcuts import force_list
 
 
-def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
+def get_repoclosure_cmd(backend="yum", arch=None, repos=None, lookaside=None):
     cmds = {
-        'yum': {'cmd': ['/usr/bin/repoclosure', '--tempcache'], 'repoarg': '--repoid=%s', 'lookaside': '--lookaside=%s'},
-        'dnf': {'cmd': ['dnf', 'repoclosure'], 'repoarg': '--repo=%s', 'lookaside': '--repo=%s'},
+        "yum": {
+            "cmd": ["/usr/bin/repoclosure", "--tempcache"],
+            "repoarg": "--repoid=%s",
+            "lookaside": "--lookaside=%s",
+        },
+        "dnf": {
+            "cmd": ["dnf", "repoclosure"],
+            "repoarg": "--repo=%s",
+            "lookaside": "--repo=%s",
+        },
     }
     try:
-        cmd = cmds[backend]['cmd']
+        cmd = cmds[backend]["cmd"]
     except KeyError:
-        raise RuntimeError('Unknown repoclosure backend: %s' % backend)
+        raise RuntimeError("Unknown repoclosure backend: %s" % backend)
 
     # There are options that are not exposed here, because we don't need
     # them.
@@ -38,17 +46,17 @@ def get_repoclosure_cmd(backend='yum', arch=None, repos=None, lookaside=None):
     repos = repos or {}
     for repo_id, repo_path in repos.items():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
-        cmd.append(cmds[backend]['repoarg'] % repo_id)
-        if backend == 'dnf':
+        cmd.append(cmds[backend]["repoarg"] % repo_id)
+        if backend == "dnf":
             # For dnf we want to add all repos with the --repo option (which
             # enables only those and not any system repo), and the repos to
             # check are also listed with the --check option.
-            cmd.append('--check=%s' % repo_id)
+            cmd.append("--check=%s" % repo_id)
 
     lookaside = lookaside or {}
     for repo_id, repo_path in lookaside.items():
         cmd.append("--repofrompath=%s,%s" % (repo_id, _to_url(repo_path)))
-        cmd.append(cmds[backend]['lookaside'] % repo_id)
+        cmd.append(cmds[backend]["lookaside"] % repo_id)
 
     return cmd
 

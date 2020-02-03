@@ -22,7 +22,9 @@ import pungi.util
 
 
 LINE_PATTERN_RE = re.compile(r"^\s*(?P<line>[^#]+)(:?\s+(?P<comment>#.*))?$")
-RUNTIME_PATTERN_SPLIT_RE = re.compile(r"^\s*(?P<path>[^\s]+)\s+(?P<pattern>[^\s]+)(:?\s+(?P<comment>#.*))?$")
+RUNTIME_PATTERN_SPLIT_RE = re.compile(
+    r"^\s*(?P<path>[^\s]+)\s+(?P<pattern>[^\s]+)(:?\s+(?P<comment>#.*))?$"
+)
 SONAME_PATTERN_RE = re.compile(r"^(.+\.so\.[a-zA-Z0-9_\.]+).*$")
 
 
@@ -86,6 +88,7 @@ def expand_runtime_patterns(patterns):
 
 class MultilibMethodBase(object):
     """a base class for multilib methods"""
+
     name = "base"
 
     def __init__(self, config_path):
@@ -95,7 +98,11 @@ class MultilibMethodBase(object):
         raise NotImplementedError
 
     def skip(self, po):
-        if pungi.gather.is_noarch(po) or pungi.gather.is_source(po) or pungi.util.pkg_is_debug(po):
+        if (
+            pungi.gather.is_noarch(po)
+            or pungi.gather.is_source(po)
+            or pungi.util.pkg_is_debug(po)
+        ):
             return True
         return False
 
@@ -120,6 +127,7 @@ class MultilibMethodBase(object):
 
 class NoneMultilibMethod(MultilibMethodBase):
     """multilib disabled"""
+
     name = "none"
 
     def select(self, po):
@@ -128,6 +136,7 @@ class NoneMultilibMethod(MultilibMethodBase):
 
 class AllMultilibMethod(MultilibMethodBase):
     """all packages are multilib"""
+
     name = "all"
 
     def select(self, po):
@@ -138,13 +147,20 @@ class AllMultilibMethod(MultilibMethodBase):
 
 class RuntimeMultilibMethod(MultilibMethodBase):
     """pre-defined paths to libs"""
+
     name = "runtime"
 
     def __init__(self, *args, **kwargs):
         super(RuntimeMultilibMethod, self).__init__(*args, **kwargs)
-        self.blacklist = read_lines_from_file(self.config_path+"runtime-blacklist.conf")
-        self.whitelist = read_lines_from_file(self.config_path+"runtime-whitelist.conf")
-        self.patterns = expand_runtime_patterns(read_runtime_patterns_from_file(self.config_path+"runtime-patterns.conf"))
+        self.blacklist = read_lines_from_file(
+            self.config_path + "runtime-blacklist.conf"
+        )
+        self.whitelist = read_lines_from_file(
+            self.config_path + "runtime-whitelist.conf"
+        )
+        self.patterns = expand_runtime_patterns(
+            read_runtime_patterns_from_file(self.config_path + "runtime-patterns.conf")
+        )
 
     def select(self, po):
         if self.skip(po):
@@ -186,6 +202,7 @@ class RuntimeMultilibMethod(MultilibMethodBase):
 
 class KernelMultilibMethod(MultilibMethodBase):
     """kernel and kernel-devel"""
+
     name = "kernel"
 
     def __init__(self, *args, **kwargs):
@@ -199,6 +216,7 @@ class KernelMultilibMethod(MultilibMethodBase):
 
 class YabootMultilibMethod(MultilibMethodBase):
     """yaboot on ppc"""
+
     name = "yaboot"
 
     def __init__(self, *args, **kwargs):
@@ -213,12 +231,13 @@ class YabootMultilibMethod(MultilibMethodBase):
 
 class DevelMultilibMethod(MultilibMethodBase):
     """all -devel and -static packages"""
+
     name = "devel"
 
     def __init__(self, *args, **kwargs):
         super(DevelMultilibMethod, self).__init__(*args, **kwargs)
-        self.blacklist = read_lines_from_file(self.config_path+"devel-blacklist.conf")
-        self.whitelist = read_lines_from_file(self.config_path+"devel-whitelist.conf")
+        self.blacklist = read_lines_from_file(self.config_path + "devel-blacklist.conf")
+        self.whitelist = read_lines_from_file(self.config_path + "devel-whitelist.conf")
 
     def select(self, po):
         if self.skip(po):
@@ -254,8 +273,14 @@ def init(config_path="/usr/share/pungi/multilib/"):
     if not config_path.endswith("/"):
         config_path += "/"
 
-    for cls in (AllMultilibMethod, DevelMultilibMethod, KernelMultilibMethod,
-                NoneMultilibMethod, RuntimeMultilibMethod, YabootMultilibMethod):
+    for cls in (
+        AllMultilibMethod,
+        DevelMultilibMethod,
+        KernelMultilibMethod,
+        NoneMultilibMethod,
+        RuntimeMultilibMethod,
+        YabootMultilibMethod,
+    ):
         method = cls(config_path)
         METHOD_MAP[method.name] = method
 

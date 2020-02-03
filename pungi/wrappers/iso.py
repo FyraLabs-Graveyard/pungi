@@ -30,76 +30,88 @@ def get_boot_options(arch, createfrom, efi=True, hfs_compat=True):
         result = []
         return result
 
-    if arch in ("aarch64", ):
+    if arch in ("aarch64",):
         result = [
-            '-eltorito-alt-boot',
-            '-e', 'images/efiboot.img',
-            '-no-emul-boot',
+            "-eltorito-alt-boot",
+            "-e",
+            "images/efiboot.img",
+            "-no-emul-boot",
         ]
         return result
 
     if arch in ("i386", "i686", "x86_64"):
         result = [
-            '-b', 'isolinux/isolinux.bin',
-            '-c', 'isolinux/boot.cat',
-            '-no-emul-boot',
-            '-boot-load-size', '4',
-            '-boot-info-table',
+            "-b",
+            "isolinux/isolinux.bin",
+            "-c",
+            "isolinux/boot.cat",
+            "-no-emul-boot",
+            "-boot-load-size",
+            "4",
+            "-boot-info-table",
         ]
 
         # EFI args
         if arch == "x86_64":
-            result.extend([
-                '-eltorito-alt-boot',
-                '-e', 'images/efiboot.img',
-                '-no-emul-boot',
-            ])
+            result.extend(
+                ["-eltorito-alt-boot", "-e", "images/efiboot.img", "-no-emul-boot"]
+            )
         return result
 
     if arch == "ia64":
         result = [
-            '-b', 'images/boot.img',
-            '-no-emul-boot',
+            "-b",
+            "images/boot.img",
+            "-no-emul-boot",
         ]
         return result
 
     if arch in ("ppc", "ppc64") or (arch == "ppc64le" and hfs_compat):
         result = [
-            '-part',
-            '-hfs',
-            '-r',
-            '-l',
-            '-sysid', 'PPC',
-            '-no-desktop',
-            '-allow-multidot',
-            '-chrp-boot',
-            "-map", os.path.join(createfrom, 'mapping'),  # -map %s/ppc/mapping
-            '-hfs-bless', "/ppc/mac",  # must be the last
+            "-part",
+            "-hfs",
+            "-r",
+            "-l",
+            "-sysid",
+            "PPC",
+            "-no-desktop",
+            "-allow-multidot",
+            "-chrp-boot",
+            "-map",
+            os.path.join(createfrom, "mapping"),  # -map %s/ppc/mapping
+            "-hfs-bless",
+            "/ppc/mac",  # must be the last
         ]
         return result
 
     if arch == "ppc64le" and not hfs_compat:
         result = [
-            '-r',
-            '-l',
-            '-sysid', 'PPC',
-            '-chrp-boot',
+            "-r",
+            "-l",
+            "-sysid",
+            "PPC",
+            "-chrp-boot",
         ]
         return result
 
     if arch == "sparc":
         result = [
-            '-G', '/boot/isofs.b',
-            '-B', '...',
-            '-s', '/boot/silo.conf',
-            '-sparc-label', '"sparc"',
+            "-G",
+            "/boot/isofs.b",
+            "-B",
+            "...",
+            "-s",
+            "/boot/silo.conf",
+            "-sparc-label",
+            '"sparc"',
         ]
         return result
 
     if arch in ("s390", "s390x"):
         result = [
-            '-eltorito-boot', 'images/cdboot.img',
-            '-no-emul-boot',
+            "-eltorito-boot",
+            "images/cdboot.img",
+            "-no-emul-boot",
         ]
         return result
 
@@ -122,7 +134,18 @@ def _truncate_volid(volid):
     return volid
 
 
-def get_mkisofs_cmd(iso, paths, appid=None, volid=None, volset=None, exclude=None, verbose=False, boot_args=None, input_charset="utf-8", graft_points=None):
+def get_mkisofs_cmd(
+    iso,
+    paths,
+    appid=None,
+    volid=None,
+    volset=None,
+    exclude=None,
+    verbose=False,
+    boot_args=None,
+    input_charset="utf-8",
+    graft_points=None,
+):
     # following options are always enabled
     untranslated_filenames = True
     translation_table = True
@@ -201,7 +224,7 @@ def get_checkisomd5_data(iso_path, logger=None):
     retcode, output = run(cmd, universal_newlines=True)
     items = [line.strip().rsplit(":", 1) for line in output.splitlines()]
     items = dict([(k, v.strip()) for k, v in items])
-    md5 = items.get(iso_path, '')
+    md5 = items.get(iso_path, "")
     if len(md5) != 32:
         # We have seen cases where the command finished successfully, but
         # returned garbage value. We need to handle it, otherwise there would
@@ -209,8 +232,10 @@ def get_checkisomd5_data(iso_path, logger=None):
         # This only logs information about the problem and leaves the hash
         # empty, which is valid from productmd point of view.
         if logger:
-            logger.critical('Implanted MD5 in %s is not valid: %r', iso_path, md5)
-            logger.critical('Ran command %r; exit code %r; output %r', cmd, retcode, output)
+            logger.critical("Implanted MD5 in %s is not valid: %r", iso_path, md5)
+            logger.critical(
+                "Ran command %r; exit code %r; output %r", cmd, retcode, output
+            )
         return None
     return items
 
@@ -231,7 +256,9 @@ def get_isohybrid_cmd(iso_path, arch):
 
 def get_manifest_cmd(iso_name):
     return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (
-        shlex_quote(iso_name), shlex_quote(iso_name))
+        shlex_quote(iso_name),
+        shlex_quote(iso_name),
+    )
 
 
 def get_volume_id(path):
@@ -289,7 +316,7 @@ def _paths_from_list(root, paths):
     result = {}
     for i in paths:
         i = os.path.normpath(os.path.join(root, i))
-        key = i[len(root):]
+        key = i[len(root) :]
         result[key] = i
     return result
 
@@ -315,7 +342,9 @@ def _scan_tree(path):
 def _merge_trees(tree1, tree2, exclusive=False):
     # tree2 has higher priority
     result = tree2.copy()
-    all_dirs = set([os.path.dirname(i).rstrip("/") for i in result if os.path.dirname(i) != ""])
+    all_dirs = set(
+        [os.path.dirname(i).rstrip("/") for i in result if os.path.dirname(i) != ""]
+    )
 
     for i in tree1:
         dn = os.path.dirname(i)
@@ -408,14 +437,18 @@ def mount(image, logger=None, use_guestmount=True):
     The yielded path will only be valid in the with block and is removed once
     the image is unmounted.
     """
-    with util.temp_dir(prefix='iso-mount-') as mount_dir:
+    with util.temp_dir(prefix="iso-mount-") as mount_dir:
         ret, __ = run(["which", "guestmount"], can_fail=True)
         # return code 0 means that guestmount is available
         guestmount_available = use_guestmount and not bool(ret)
         if guestmount_available:
             # use guestmount to mount the image, which doesn't require root privileges
             # LIBGUESTFS_BACKEND=direct: running qemu directly without libvirt
-            env = {'LIBGUESTFS_BACKEND': 'direct', 'LIBGUESTFS_DEBUG': '1', 'LIBGUESTFS_TRACE': '1'}
+            env = {
+                "LIBGUESTFS_BACKEND": "direct",
+                "LIBGUESTFS_DEBUG": "1",
+                "LIBGUESTFS_TRACE": "1",
+            }
             cmd = ["guestmount", "-a", image, "-m", "/dev/sda", mount_dir]
             # guestmount caches files for faster mounting. However,
             # systemd-tmpfiles is cleaning it up if the files have not been
@@ -446,13 +479,14 @@ def mount(image, logger=None, use_guestmount=True):
         if ret != 0:
             # The mount command failed, something is wrong. Log the output and raise an exception.
             if logger:
-                logger.error('Command %s exited with %s and output:\n%s'
-                             % (cmd, ret, out))
-            raise RuntimeError('Failed to mount %s' % image)
+                logger.error(
+                    "Command %s exited with %s and output:\n%s" % (cmd, ret, out)
+                )
+            raise RuntimeError("Failed to mount %s" % image)
         try:
             yield mount_dir
         finally:
             if guestmount_available:
-                util.run_unmount_cmd(['fusermount', '-u', mount_dir], path=mount_dir)
+                util.run_unmount_cmd(["fusermount", "-u", mount_dir], path=mount_dir)
             else:
-                util.run_unmount_cmd(['umount', mount_dir], path=mount_dir)
+                util.run_unmount_cmd(["umount", mount_dir], path=mount_dir)

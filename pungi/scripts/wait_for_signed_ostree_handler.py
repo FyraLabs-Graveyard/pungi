@@ -39,40 +39,40 @@ def ts_log(msg):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('cmd')
+    parser.add_argument("cmd")
     opts = parser.parse_args()
 
-    if opts.cmd != 'ostree':
+    if opts.cmd != "ostree":
         # Not an announcement of new ostree commit, nothing to do.
         sys.exit()
 
     try:
         data = json.load(sys.stdin)
     except ValueError:
-        print('Failed to decode data', file=sys.stderr)
+        print("Failed to decode data", file=sys.stderr)
         sys.exit(1)
 
-    repo = data['local_repo_path']
-    commit = data['commitid']
+    repo = data["local_repo_path"]
+    commit = data["commitid"]
     if not commit:
         print("No new commit was created, nothing will get signed.")
         sys.exit(0)
 
-    path = '%s/objects/%s/%s.commitmeta' % (repo, commit[:2], commit[2:])
+    path = "%s/objects/%s/%s.commitmeta" % (repo, commit[:2], commit[2:])
 
     config = fedmsg.config.load_config()
-    config['active'] = True           # Connect out to a fedmsg-relay instance
-    config['cert_prefix'] = 'releng'  # Use this cert.
+    config["active"] = True  # Connect out to a fedmsg-relay instance
+    config["cert_prefix"] = "releng"  # Use this cert.
     fedmsg.init(**config)
-    topic = 'compose.%s' % opts.cmd.replace('-', '.').lower()
+    topic = "compose.%s" % opts.cmd.replace("-", ".").lower()
 
     count = 0
     while not os.path.exists(path):
         ts_log("Commit not signed yet, waiting...")
         count += 1
         if count >= 60:  # Repeat every 5 minutes
-            print('Repeating notification')
-            fedmsg.publish(topic=topic, modname='pungi', msg=data)
+            print("Repeating notification")
+            fedmsg.publish(topic=topic, modname="pungi", msg=data)
             count = 0
         time.sleep(5)
 

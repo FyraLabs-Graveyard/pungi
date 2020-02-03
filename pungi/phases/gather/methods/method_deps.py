@@ -32,18 +32,43 @@ import pungi.phases.gather.method
 class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
 
-    def __call__(self, arch, variant, packages, groups, filter_packages, multilib_whitelist, multilib_blacklist, package_sets, path_prefix=None, fulltree_excludes=None, prepopulate=None):
+    def __call__(
+        self,
+        arch,
+        variant,
+        packages,
+        groups,
+        filter_packages,
+        multilib_whitelist,
+        multilib_blacklist,
+        package_sets,
+        path_prefix=None,
+        fulltree_excludes=None,
+        prepopulate=None,
+    ):
         # result = {
         #     "rpm": [],
         #     "srpm": [],
         #     "debuginfo": [],
         # }
 
-        write_pungi_config(self.compose, arch, variant, packages, groups, filter_packages,
-                           multilib_whitelist, multilib_blacklist,
-                           fulltree_excludes=fulltree_excludes, prepopulate=prepopulate,
-                           source_name=self.source_name, package_sets=package_sets)
-        result, missing_deps = resolve_deps(self.compose, arch, variant, source_name=self.source_name)
+        write_pungi_config(
+            self.compose,
+            arch,
+            variant,
+            packages,
+            groups,
+            filter_packages,
+            multilib_whitelist,
+            multilib_blacklist,
+            fulltree_excludes=fulltree_excludes,
+            prepopulate=prepopulate,
+            source_name=self.source_name,
+            package_sets=package_sets,
+        )
+        result, missing_deps = resolve_deps(
+            self.compose, arch, variant, source_name=self.source_name
+        )
         raise_on_invalid_sigkeys(arch, variant, package_sets, result)
         check_deps(self.compose, arch, variant, missing_deps)
         return result
@@ -83,12 +108,25 @@ def _format_packages(pkgs):
     return sorted(result)
 
 
-def write_pungi_config(compose, arch, variant, packages, groups, filter_packages,
-                       multilib_whitelist, multilib_blacklist, fulltree_excludes=None,
-                       prepopulate=None, source_name=None, package_sets=None):
+def write_pungi_config(
+    compose,
+    arch,
+    variant,
+    packages,
+    groups,
+    filter_packages,
+    multilib_whitelist,
+    multilib_blacklist,
+    fulltree_excludes=None,
+    prepopulate=None,
+    source_name=None,
+    package_sets=None,
+):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
-    pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch, source_name=source_name)
+    pungi_cfg = compose.paths.work.pungi_conf(
+        variant=variant, arch=arch, source_name=source_name
+    )
 
     compose.log_info(
         "Writing pungi config (arch: %s, variant: %s): %s", arch, variant, pungi_cfg
@@ -102,13 +140,20 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
         repos["comps-repo"] = compose.paths.work.comps_repo(arch=arch, variant=variant)
     if variant.type == "optional":
         for var in variant.parent.get_variants(
-                arch=arch, types=["self", "variant", "addon", "layered-product"]):
-            repos['%s-comps' % var.uid] = compose.paths.work.comps_repo(arch=arch, variant=var)
+            arch=arch, types=["self", "variant", "addon", "layered-product"]
+        ):
+            repos["%s-comps" % var.uid] = compose.paths.work.comps_repo(
+                arch=arch, variant=var
+            )
     if variant.type in ["addon", "layered-product"]:
-        repos['parent-comps'] = compose.paths.work.comps_repo(arch=arch, variant=variant.parent)
+        repos["parent-comps"] = compose.paths.work.comps_repo(
+            arch=arch, variant=variant.parent
+        )
 
     lookaside_repos = {}
-    for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
+    for i, repo_url in enumerate(
+        pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
+    ):
         lookaside_repos["lookaside-repo-%s" % i] = repo_url
 
     packages_str = list(_format_packages(packages))
@@ -116,15 +161,22 @@ def write_pungi_config(compose, arch, variant, packages, groups, filter_packages
 
     if not groups and not packages_str and not prepopulate:
         raise RuntimeError(
-            'No packages included in %s.%s (no comps groups, no input packages, no prepopulate)'
-            % (variant.uid, arch))
+            "No packages included in %s.%s (no comps groups, no input packages, no prepopulate)"
+            % (variant.uid, arch)
+        )
 
     pungi_wrapper.write_kickstart(
-        ks_path=pungi_cfg, repos=repos, groups=groups, packages=packages_str,
+        ks_path=pungi_cfg,
+        repos=repos,
+        groups=groups,
+        packages=packages_str,
         exclude_packages=filter_packages_str,
-        lookaside_repos=lookaside_repos, fulltree_excludes=fulltree_excludes,
-        multilib_whitelist=multilib_whitelist, multilib_blacklist=multilib_blacklist,
-        prepopulate=prepopulate)
+        lookaside_repos=lookaside_repos,
+        fulltree_excludes=fulltree_excludes,
+        multilib_whitelist=multilib_whitelist,
+        multilib_blacklist=multilib_blacklist,
+        prepopulate=prepopulate,
+    )
 
 
 def resolve_deps(compose, arch, variant, source_name=None):
@@ -136,7 +188,7 @@ def resolve_deps(compose, arch, variant, source_name=None):
     compose.log_info("[BEGIN] %s" % msg)
     pungi_conf = compose.paths.work.pungi_conf(arch, variant, source_name=source_name)
 
-    multilib_methods = get_arch_variant_data(compose.conf, 'multilib', arch, variant)
+    multilib_methods = get_arch_variant_data(compose.conf, "multilib", arch, variant)
 
     greedy_method = compose.conf["greedy_method"]
 
@@ -159,7 +211,9 @@ def resolve_deps(compose, arch, variant, source_name=None):
         selfhosting = False
 
     lookaside_repos = {}
-    for i, repo_url in enumerate(pungi.phases.gather.get_lookaside_repos(compose, arch, variant)):
+    for i, repo_url in enumerate(
+        pungi.phases.gather.get_lookaside_repos(compose, arch, variant)
+    ):
         lookaside_repos["lookaside-repo-%s" % i] = repo_url
 
     yum_arch = tree_arch_to_yum_arch(arch)
@@ -167,28 +221,40 @@ def resolve_deps(compose, arch, variant, source_name=None):
     cache_dir = compose.paths.work.pungi_cache_dir(arch, variant)
     # TODO: remove YUM code, fully migrate to DNF
     backends = {
-        'yum': pungi_wrapper.get_pungi_cmd,
-        'dnf': pungi_wrapper.get_pungi_cmd_dnf,
+        "yum": pungi_wrapper.get_pungi_cmd,
+        "dnf": pungi_wrapper.get_pungi_cmd_dnf,
     }
-    get_cmd = backends[compose.conf['gather_backend']]
-    cmd = get_cmd(pungi_conf, destdir=tmp_dir, name=variant.uid,
-                  selfhosting=selfhosting, fulltree=fulltree, arch=yum_arch,
-                  full_archlist=True, greedy=greedy_method, cache_dir=cache_dir,
-                  lookaside_repos=lookaside_repos, multilib_methods=multilib_methods,
-                  profiler=profiler)
+    get_cmd = backends[compose.conf["gather_backend"]]
+    cmd = get_cmd(
+        pungi_conf,
+        destdir=tmp_dir,
+        name=variant.uid,
+        selfhosting=selfhosting,
+        fulltree=fulltree,
+        arch=yum_arch,
+        full_archlist=True,
+        greedy=greedy_method,
+        cache_dir=cache_dir,
+        lookaside_repos=lookaside_repos,
+        multilib_methods=multilib_methods,
+        profiler=profiler,
+    )
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    with temp_dir(prefix='pungi_') as tmp_dir:
+    with temp_dir(prefix="pungi_") as tmp_dir:
         run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
 
     with open(pungi_log, "r") as f:
         packages, broken_deps, missing_comps_pkgs = pungi_wrapper.parse_log(f)
 
     if missing_comps_pkgs:
-        log_msg = ("Packages mentioned in comps do not exist for %s.%s: %s"
-                   % (variant.uid, arch, ", ".join(sorted(missing_comps_pkgs))))
+        log_msg = "Packages mentioned in comps do not exist for %s.%s: %s" % (
+            variant.uid,
+            arch,
+            ", ".join(sorted(missing_comps_pkgs)),
+        )
         compose.log_warning(log_msg)
-        if compose.conf['require_all_comps_packages']:
+        if compose.conf["require_all_comps_packages"]:
             raise RuntimeError(log_msg)
 
     compose.log_info("[DONE ] %s" % msg)
@@ -202,5 +268,7 @@ def check_deps(compose, arch, variant, missing_deps):
     if missing_deps:
         for pkg in sorted(missing_deps):
             compose.log_error(
-                "Unresolved dependencies for %s.%s in package %s: %s" % (variant, arch, pkg, sorted(missing_deps[pkg])))
+                "Unresolved dependencies for %s.%s in package %s: %s"
+                % (variant, arch, pkg, sorted(missing_deps[pkg]))
+            )
         raise RuntimeError("Unresolved dependencies detected")

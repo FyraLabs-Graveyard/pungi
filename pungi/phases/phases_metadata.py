@@ -14,7 +14,9 @@ def gather_phases_metadata(source_object):
     """
 
     if not source_object:
-        raise ValueError("PhasesMetadata can not load any data - it got empty parameter")
+        raise ValueError(
+            "PhasesMetadata can not load any data - it got empty parameter"
+        )
 
     phases = []
     for item in dir(source_object):
@@ -23,9 +25,11 @@ def gather_phases_metadata(source_object):
             continue
         if issubclass(cls, PhaseBase):
             try:
-                name_attr = getattr(cls, 'name')
+                name_attr = getattr(cls, "name")
                 phases.append(name_attr)
             except AttributeError:
-                raise AttributeError("Bad phase-class format: '%s' is missing attribute 'name'" % item)
+                raise AttributeError(
+                    "Bad phase-class format: '%s' is missing attribute 'name'" % item
+                )
 
     return phases

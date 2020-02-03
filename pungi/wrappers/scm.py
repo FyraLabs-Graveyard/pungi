@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 # -*- coding: utf-8 -*-
 
 
@@ -25,8 +26,7 @@ from fnmatch import fnmatch
 
 import kobo.log
 from kobo.shortcuts import run, force_list
-from pungi.util import (explode_rpm_package, makedirs, copy_all, temp_dir,
-                        retry)
+from pungi.util import explode_rpm_package, makedirs, copy_all, temp_dir, retry
 from .kojiwrapper import KojiWrapper
 
 
@@ -55,31 +55,34 @@ class ScmBase(kobo.log.LoggingBase):
                 universal_newlines=True,
             )
             if retcode != 0:
-                self.log_error('Output was: %r' % output)
-                raise RuntimeError('%r failed with exit code %s'
-                                   % (self.command, retcode))
+                self.log_error("Output was: %r" % output)
+                raise RuntimeError(
+                    "%r failed with exit code %s" % (self.command, retcode)
+                )
 
 
 class FileWrapper(ScmBase):
     def export_dir(self, scm_root, scm_dir, target_dir, scm_branch=None):
-        self.log_debug("Exporting directory %s from current working directory..."
-                       % (scm_dir))
+        self.log_debug(
+            "Exporting directory %s from current working directory..." % (scm_dir)
+        )
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
         dirs = glob.glob(scm_dir)
         if not dirs:
-            raise RuntimeError('No directories matched, can not export.')
+            raise RuntimeError("No directories matched, can not export.")
         for i in dirs:
             copy_all(i, target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         if scm_root:
             raise ValueError("FileWrapper: 'scm_root' should be empty.")
-        self.log_debug("Exporting file %s from current working directory..."
-                       % (scm_file))
+        self.log_debug(
+            "Exporting file %s from current working directory..." % (scm_file)
+        )
         files = glob.glob(scm_file)
         if not files:
-            raise RuntimeError('No files matched, can not export.')
+            raise RuntimeError("No files matched, can not export.")
         for i in files:
             target_path = os.path.join(target_dir, os.path.basename(i))
             shutil.copy2(i, target_path)
@@ -90,10 +93,24 @@ class CvsWrapper(ScmBase):
         scm_dir = scm_dir.lstrip("/")
         scm_branch = scm_branch or "HEAD"
         with temp_dir() as tmp_dir:
-            self.log_debug("Exporting directory %s from CVS %s (branch %s)..."
-                           % (scm_dir, scm_root, scm_branch))
-            self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_dir],
-                           workdir=tmp_dir, show_cmd=True)
+            self.log_debug(
+                "Exporting directory %s from CVS %s (branch %s)..."
+                % (scm_dir, scm_root, scm_branch)
+            )
+            self.retry_run(
+                [
+                    "/usr/bin/cvs",
+                    "-q",
+                    "-d",
+                    scm_root,
+                    "export",
+                    "-r",
+                    scm_branch,
+                    scm_dir,
+                ],
+                workdir=tmp_dir,
+                show_cmd=True,
+            )
             copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
@@ -101,16 +118,30 @@ class CvsWrapper(ScmBase):
         scm_branch = scm_branch or "HEAD"
         with temp_dir() as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
-            self.log_debug("Exporting file %s from CVS %s (branch %s)..." % (scm_file, scm_root, scm_branch))
-            self.retry_run(["/usr/bin/cvs", "-q", "-d", scm_root, "export", "-r", scm_branch, scm_file],
-                           workdir=tmp_dir, show_cmd=True)
+            self.log_debug(
+                "Exporting file %s from CVS %s (branch %s)..."
+                % (scm_file, scm_root, scm_branch)
+            )
+            self.retry_run(
+                [
+                    "/usr/bin/cvs",
+                    "-q",
+                    "-d",
+                    scm_root,
+                    "export",
+                    "-r",
+                    scm_branch,
+                    scm_file,
+                ],
+                workdir=tmp_dir,
+                show_cmd=True,
+            )
 
             makedirs(target_dir)
             shutil.copy2(os.path.join(tmp_dir, scm_file), target_path)
 
 
 class GitWrapper(ScmBase):
-
     def _clone(self, repo, branch, destdir):
         """Get a single commit from a repository.
 
@@ -142,8 +173,10 @@ class GitWrapper(ScmBase):
         scm_branch = scm_branch or "master"
 
         with temp_dir() as tmp_dir:
-            self.log_debug("Exporting directory %s from git %s (branch %s)..."
-                           % (scm_dir, scm_root, scm_branch))
+            self.log_debug(
+                "Exporting directory %s from git %s (branch %s)..."
+                % (scm_dir, scm_root, scm_branch)
+            )
 
             self._clone(scm_root, scm_branch, tmp_dir)
 
@@ -156,8 +189,10 @@ class GitWrapper(ScmBase):
         with temp_dir() as tmp_dir:
             target_path = os.path.join(target_dir, os.path.basename(scm_file))
 
-            self.log_debug("Exporting file %s from git %s (branch %s)..."
-                           % (scm_file, scm_root, scm_branch))
+            self.log_debug(
+                "Exporting file %s from git %s (branch %s)..."
+                % (scm_file, scm_root, scm_branch)
+            )
 
             self._clone(scm_root, scm_branch, tmp_dir)
 
@@ -175,7 +210,9 @@ class RpmScmWrapper(ScmBase):
         for rpm in self._list_rpms(scm_root):
             scm_dir = scm_dir.lstrip("/")
             with temp_dir() as tmp_dir:
-                self.log_debug("Extracting directory %s from RPM package %s..." % (scm_dir, rpm))
+                self.log_debug(
+                    "Extracting directory %s from RPM package %s..." % (scm_dir, rpm)
+                )
                 explode_rpm_package(rpm, tmp_dir)
 
                 makedirs(target_dir)
@@ -183,14 +220,21 @@ class RpmScmWrapper(ScmBase):
                 if scm_dir.endswith("/"):
                     copy_all(os.path.join(tmp_dir, scm_dir), target_dir)
                 else:
-                    run("cp -a %s %s/" % (shlex_quote(os.path.join(tmp_dir, scm_dir)),
-                                          shlex_quote(target_dir)))
+                    run(
+                        "cp -a %s %s/"
+                        % (
+                            shlex_quote(os.path.join(tmp_dir, scm_dir)),
+                            shlex_quote(target_dir),
+                        )
+                    )
 
     def export_file(self, scm_root, scm_file, target_dir, scm_branch=None):
         for rpm in self._list_rpms(scm_root):
             scm_file = scm_file.lstrip("/")
             with temp_dir() as tmp_dir:
-                self.log_debug("Exporting file %s from RPM file %s..." % (scm_file, rpm))
+                self.log_debug(
+                    "Exporting file %s from RPM file %s..." % (scm_file, rpm)
+                )
                 explode_rpm_package(rpm, tmp_dir)
 
                 makedirs(target_dir)
@@ -232,9 +276,7 @@ class KojiScmWrapper(ScmBase):
         self._download_build(builds[0], file_pattern, target_dir)
 
     def _get_from_build(self, build_id, file_pattern, target_dir):
-        self.log_debug(
-            "Exporting file %s from Koji build %s", file_pattern, build_id
-        )
+        self.log_debug("Exporting file %s from Koji build %s", file_pattern, build_id)
         build = self.proxy.getBuild(build_id)
         self._download_build(build, file_pattern, target_dir)
 
@@ -307,7 +349,7 @@ def get_file_from_scm(scm_dict, target_path, compose=None):
         scm_repo = scm_dict["repo"]
         scm_file = scm_dict["file"]
         scm_branch = scm_dict.get("branch", None)
-        command = scm_dict.get('command')
+        command = scm_dict.get("command")
 
     logger = compose._logger if compose else None
     scm = _get_wrapper(scm_type, logger=logger, command=command, compose=compose)

@@ -34,29 +34,29 @@ class ValidationCompose(pungi.compose.Compose):
 
     @property
     def old_composes(self):
-        return '/dummy' if self.has_old_composes else None
+        return "/dummy" if self.has_old_composes else None
 
     @property
     def compose_id(self):
-        return 'Dummy-1.0-20160811.t.0'
+        return "Dummy-1.0-20160811.t.0"
 
     @property
     def compose_type(self):
-        return 'test'
+        return "test"
 
     @property
     def compose_date(self):
-        return '20160811'
+        return "20160811"
 
     @property
     def compose_respin(self):
-        return '0'
+        return "0"
 
 
 def read_variants(compose, config):
     with pungi.util.temp_dir() as tmp_dir:
         scm_dict = compose.conf["variants_file"]
-        if isinstance(scm_dict, six.string_types) and scm_dict[0] != '/':
+        if isinstance(scm_dict, six.string_types) and scm_dict[0] != "/":
             config_dir = os.path.dirname(config)
             scm_dict = os.path.join(config_dir, scm_dict)
         files = pungi.wrappers.scm.get_file_from_scm(scm_dict, tmp_dir)
@@ -144,24 +144,29 @@ def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
 
 class DumpSchemaAction(argparse.Action):
     def __call__(self, parser, ns, values, option_string=None):
-        json.dump(pungi.checks.make_schema(), sys.stdout,
-                  sort_keys=True, indent=4)
-        print('')
+        json.dump(pungi.checks.make_schema(), sys.stdout, sort_keys=True, indent=4)
+        print("")
         sys.exit(0)
 
 
 def main(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dump-schema', nargs=0, action=DumpSchemaAction,
-                        help='print JSON Schema of configuration and exit')
-    parser.add_argument('config', metavar='CONFIG',
-                        help='configuration file to validate')
-    parser.add_argument('--old-composes', action='store_true',
-                        help='indicate if pungi-koji will be run with --old-composes option')
     parser.add_argument(
-        "--offline",
+        "--dump-schema",
+        nargs=0,
+        action=DumpSchemaAction,
+        help="print JSON Schema of configuration and exit",
+    )
+    parser.add_argument(
+        "config", metavar="CONFIG", help="configuration file to validate"
+    )
+    parser.add_argument(
+        "--old-composes",
         action="store_true",
-        help="Do not validate git references in URLs",
+        help="indicate if pungi-koji will be run with --old-composes option",
+    )
+    parser.add_argument(
+        "--offline", action="store_true", help="Do not validate git references in URLs",
     )
     parser.add_argument(
         "-e",

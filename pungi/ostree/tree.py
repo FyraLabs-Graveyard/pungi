@@ -20,14 +20,18 @@ from kobo import shortcuts
 
 from pungi.util import makedirs
 from .base import OSTree
-from .utils import (make_log_file, tweak_treeconf,
-                    get_ref_from_treefile, get_commitid_from_commitid_file)
+from .utils import (
+    make_log_file,
+    tweak_treeconf,
+    get_ref_from_treefile,
+    get_commitid_from_commitid_file,
+)
 
 
 class Tree(OSTree):
     def _make_tree(self):
         """Compose OSTree tree"""
-        log_file = make_log_file(self.logdir, 'create-ostree-repo')
+        log_file = make_log_file(self.logdir, "create-ostree-repo")
         cmd = [
             "rpm-ostree",
             "compose",
@@ -41,11 +45,11 @@ class Tree(OSTree):
         ]
         if self.version:
             # Add versioning metadata
-            cmd.append('--add-metadata-string=version=%s' % self.version)
+            cmd.append("--add-metadata-string=version=%s" % self.version)
         # Note renamed from rpm-ostree --force-nocache since it's a better
         # name; more clearly describes what we're doing here.
         if self.force_new_commit:
-            cmd.append('--force-nocache')
+            cmd.append("--force-nocache")
         cmd.append(self.treefile)
 
         shortcuts.run(
@@ -54,9 +58,9 @@ class Tree(OSTree):
 
     def _update_summary(self):
         """Update summary metadata"""
-        log_file = make_log_file(self.logdir, 'ostree-summary')
+        log_file = make_log_file(self.logdir, "ostree-summary")
         shortcuts.run(
-            ['ostree', 'summary', '-u', '--repo=%s' % self.repo],
+            ["ostree", "summary", "-u", "--repo=%s" % self.repo],
             show_cmd=True,
             stdout=True,
             logfile=log_file,
@@ -73,24 +77,24 @@ class Tree(OSTree):
         """
         tag_ref = True
         if self.extra_config:
-            tag_ref = self.extra_config.get('tag_ref', True)
+            tag_ref = self.extra_config.get("tag_ref", True)
         if not tag_ref:
-            print('Not updating ref as configured')
+            print("Not updating ref as configured")
             return
         ref = get_ref_from_treefile(self.treefile)
         commitid = get_commitid_from_commitid_file(self.commitid_file)
-        print('Ref: %r, Commit ID: %r' % (ref, commitid))
+        print("Ref: %r, Commit ID: %r" % (ref, commitid))
         if ref and commitid:
-            print('Updating ref')
+            print("Updating ref")
             # Let's write the tag out ourselves
-            heads_dir = os.path.join(self.repo, 'refs', 'heads')
+            heads_dir = os.path.join(self.repo, "refs", "heads")
             if not os.path.exists(heads_dir):
-                raise RuntimeError('Refs/heads did not exist in ostree repo')
+                raise RuntimeError("Refs/heads did not exist in ostree repo")
 
             ref_path = os.path.join(heads_dir, ref)
             makedirs(os.path.dirname(ref_path))
-            with open(ref_path, 'w') as f:
-                f.write(commitid + '\n')
+            with open(ref_path, "w") as f:
+                f.write(commitid + "\n")
 
     def run(self):
         self.repo = self.args.repo
@@ -104,9 +108,11 @@ class Tree(OSTree):
 
         if self.extra_config or self.ostree_ref:
             if self.extra_config:
-                self.extra_config = json.load(open(self.extra_config, 'r'))
-                repos = self.extra_config.get('repo', [])
-                keep_original_sources = self.extra_config.get('keep_original_sources', False)
+                self.extra_config = json.load(open(self.extra_config, "r"))
+                repos = self.extra_config.get("repo", [])
+                keep_original_sources = self.extra_config.get(
+                    "keep_original_sources", False
+                )
             else:
                 # missing extra_config mustn't affect tweak_treeconf call
                 repos = []
@@ -115,16 +121,16 @@ class Tree(OSTree):
             update_dict = {}
             if self.ostree_ref:
                 # override ref value in treefile
-                update_dict['ref'] = self.ostree_ref
+                update_dict["ref"] = self.ostree_ref
 
             self.treefile = tweak_treeconf(
                 self.treefile,
                 source_repos=repos,
                 keep_original_sources=keep_original_sources,
-                update_dict=update_dict
+                update_dict=update_dict,
             )
 
-        self.commitid_file = make_log_file(self.logdir, 'commitid')
+        self.commitid_file = make_log_file(self.logdir, "commitid")
 
         self._make_tree()
         self._update_ref()

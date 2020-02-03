@@ -26,16 +26,17 @@ class Multilib(object):
     method that accepts a DNF sach and an iterable of globs that will be used
     to find package names.
     """
+
     def __init__(self, methods, blacklist, whitelist):
         self.methods = {}
         self.blacklist = blacklist
         self.whitelist = whitelist
 
         self.all_methods = {
-            'none': multilib.NoMultilibMethod(None),
-            'all': multilib.AllMultilibMethod(None),
-            'devel': multilib.DevelMultilibMethod(None),
-            'runtime': multilib.RuntimeMultilibMethod(None),
+            "none": multilib.NoMultilibMethod(None),
+            "all": multilib.AllMultilibMethod(None),
+            "devel": multilib.DevelMultilibMethod(None),
+            "runtime": multilib.RuntimeMultilibMethod(None),
         }
 
         for method in methods:
@@ -44,15 +45,17 @@ class Multilib(object):
     @classmethod
     def from_globs(cls, sack, methods, blacklist=None, whitelist=None):
         """Create a Multilib instance with expanded blacklist and whitelist."""
-        return cls(methods,
-                   _expand_list(sack, blacklist or []),
-                   _expand_list(sack, whitelist or []))
+        return cls(
+            methods,
+            _expand_list(sack, blacklist or []),
+            _expand_list(sack, whitelist or []),
+        )
 
     def is_multilib(self, pkg):
         if pkg.name in self.blacklist:
             return False
         if pkg.name in self.whitelist:
-            return 'whitelist'
+            return "whitelist"
         for method, cls in self.methods.items():
             if cls.select(pkg):
                 return method

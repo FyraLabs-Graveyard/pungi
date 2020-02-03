@@ -18,7 +18,6 @@ import kobo.plugins
 
 
 class GatherMethodBase(kobo.plugins.Plugin):
-
     def __init__(self, compose):
         self.compose = compose
 

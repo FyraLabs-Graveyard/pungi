@@ -29,6 +29,7 @@ from pungi import metadata
 
 class ExtraFilesPhase(ConfigGuardedPhase):
     """EXTRA_FILES"""
+
     name = "extra_files"
 
     def __init__(self, compose, pkgset_phase):
@@ -58,8 +59,10 @@ class ExtraFilesPhase(ConfigGuardedPhase):
                         self.metadata,
                     )
                 else:
-                    self.compose.log_info('[SKIP ] No extra files (arch: %s, variant: %s)'
-                                          % (arch, variant.uid))
+                    self.compose.log_info(
+                        "[SKIP ] No extra files (arch: %s, variant: %s)"
+                        % (arch, variant.uid)
+                    )
 
         metadata_path = self.compose.paths.compose.metadata("extra_files.json")
         self.compose.log_info("Writing global extra files metadata: %s" % metadata_path)
@@ -69,7 +72,7 @@ class ExtraFilesPhase(ConfigGuardedPhase):
 def copy_extra_files(
     compose, cfg, arch, variant, package_sets, extra_metadata, checksum_type=None
 ):
-    checksum_type = checksum_type or compose.conf['media_checksums']
+    checksum_type = checksum_type or compose.conf["media_checksums"]
     var_dict = {
         "arch": arch,
         "variant_id": variant.id,
@@ -95,14 +98,20 @@ def copy_extra_files(
             for package_set in package_sets:
                 for pkgset_file in package_set[arch]:
                     pkg_obj = package_set[arch][pkgset_file]
-                    if pkg_is_rpm(pkg_obj) and _pkg_matches(pkg_obj, pkg_name, pkg_arch):
+                    if pkg_is_rpm(pkg_obj) and _pkg_matches(
+                        pkg_obj, pkg_name, pkg_arch
+                    ):
                         rpms.append(pkg_obj.file_path)
             if not rpms:
-                raise RuntimeError('No package matching %s in the package set.' % pattern)
+                raise RuntimeError(
+                    "No package matching %s in the package set." % pattern
+                )
             scm_dict["repo"] = rpms
 
-        getter = get_file_from_scm if 'file' in scm_dict else get_dir_from_scm
-        target_path = os.path.join(extra_files_dir, scm_dict.get('target', '').lstrip('/'))
+        getter = get_file_from_scm if "file" in scm_dict else get_dir_from_scm
+        target_path = os.path.join(
+            extra_files_dir, scm_dict.get("target", "").lstrip("/")
+        )
         getter(scm_dict, target_path, compose=compose)
 
     if os.listdir(extra_files_dir):
@@ -121,11 +130,12 @@ def copy_extra_files(
 
 def _pkg_matches(pkg_obj, name_glob, arch):
     """Check if `pkg_obj` matches name and arch."""
-    return (fnmatch.fnmatch(pkg_obj.name, name_glob) and
-            (arch is None or arch == pkg_obj.arch))
+    return fnmatch.fnmatch(pkg_obj.name, name_glob) and (
+        arch is None or arch == pkg_obj.arch
+    )
 
 
 def _is_external(rpm):
     """Check if path to rpm points outside of the compose: i.e. it is an
     absolute path or a URL."""
-    return rpm.startswith('/') or '://' in rpm
+    return rpm.startswith("/") or "://" in rpm

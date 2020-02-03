@@ -83,9 +83,13 @@ class Runroot(kobo.log.LoggingBase):
 
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_runroot_cmd(
-            runroot_tag, arch, command,
-            channel=runroot_channel, use_shell=True,
-            packages=packages, **kwargs
+            runroot_tag,
+            arch,
+            command,
+            channel=runroot_channel,
+            use_shell=True,
+            packages=packages,
+            **kwargs
         )
 
         output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
@@ -115,8 +119,15 @@ class Runroot(kobo.log.LoggingBase):
     def _log_file(self, base, suffix):
         return base.replace(".log", "." + suffix + ".log")
 
-    def _run_openssh(self, command, log_file=None, arch=None, packages=None,
-                     chown_paths=None, **kwargs):
+    def _run_openssh(
+        self,
+        command,
+        log_file=None,
+        arch=None,
+        packages=None,
+        chown_paths=None,
+        **kwargs
+    ):
         """
         Runs the runroot command on remote machine using ssh.
         """
@@ -176,7 +187,9 @@ class Runroot(kobo.log.LoggingBase):
                 fmt_dict["runroot_key"] = runroot_key
             self._ssh_run(hostname, user, run_template, fmt_dict, log_file=log_file)
 
-            fmt_dict["command"] = "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"
+            fmt_dict[
+                "command"
+            ] = "rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'"
             buildroot_rpms = self._ssh_run(
                 hostname,
                 user,
@@ -254,8 +267,13 @@ class Runroot(kobo.log.LoggingBase):
 
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_pungi_buildinstall_cmd(
-            runroot_tag, arch, args, channel=runroot_channel,
-            chown_uid=os.getuid(), **kwargs)
+            runroot_tag,
+            arch,
+            args,
+            channel=runroot_channel,
+            chown_uid=os.getuid(),
+            **kwargs
+        )
 
         output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
         if output["retcode"] != 0:

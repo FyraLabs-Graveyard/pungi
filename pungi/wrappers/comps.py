@@ -41,12 +41,14 @@ if sys.version_info[:2] < (2, 7):
     xml.dom.minidom.Element = Element
 
 
-TYPE_MAPPING = collections.OrderedDict([
-    (libcomps.PACKAGE_TYPE_MANDATORY, 'mandatory'),
-    (libcomps.PACKAGE_TYPE_DEFAULT, 'default'),
-    (libcomps.PACKAGE_TYPE_OPTIONAL, 'optional'),
-    (libcomps.PACKAGE_TYPE_CONDITIONAL, 'conditional'),
-])
+TYPE_MAPPING = collections.OrderedDict(
+    [
+        (libcomps.PACKAGE_TYPE_MANDATORY, "mandatory"),
+        (libcomps.PACKAGE_TYPE_DEFAULT, "default"),
+        (libcomps.PACKAGE_TYPE_OPTIONAL, "optional"),
+        (libcomps.PACKAGE_TYPE_CONDITIONAL, "conditional"),
+    ]
+)
 
 
 class CompsValidationError(ValueError):
@@ -89,10 +91,13 @@ class CompsFilter(object):
         If only_arch is set, then only packages for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_attr("/comps/group/packagelist/packagereq", 'arch', arch, only_arch)
+        self._filter_elements_by_attr(
+            "/comps/group/packagelist/packagereq", "arch", arch, only_arch
+        )
         if variant:
-            self._filter_elements_by_attr("/comps/group/packagelist/packagereq",
-                                          'variant', variant, only_arch)
+            self._filter_elements_by_attr(
+                "/comps/group/packagelist/packagereq", "variant", variant, only_arch
+            )
 
     def filter_groups(self, arch, variant, only_arch=False):
         """
@@ -100,9 +105,9 @@ class CompsFilter(object):
         If only_arch is set, then only groups for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_attr("/comps/group", 'arch', arch, only_arch)
+        self._filter_elements_by_attr("/comps/group", "arch", arch, only_arch)
         if variant:
-            self._filter_elements_by_attr("/comps/group", 'variant', variant, only_arch)
+            self._filter_elements_by_attr("/comps/group", "variant", variant, only_arch)
 
     def filter_environments(self, arch, variant, only_arch=False):
         """
@@ -110,9 +115,11 @@ class CompsFilter(object):
         If only_arch is set, then only environments for the specified arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
-        self._filter_elements_by_attr("/comps/environment", 'arch', arch, only_arch)
+        self._filter_elements_by_attr("/comps/environment", "arch", arch, only_arch)
         if variant:
-            self._filter_elements_by_attr("/comps/environment", 'variant', variant, only_arch)
+            self._filter_elements_by_attr(
+                "/comps/environment", "variant", variant, only_arch
+            )
 
     def filter_category_groups(self):
         """
@@ -196,7 +203,12 @@ class CompsFilter(object):
             i.getparent().remove(i)
 
     def write(self, file_obj):
-        self.tree.write(file_obj, pretty_print=self.reindent, xml_declaration=True, encoding=self.encoding)
+        self.tree.write(
+            file_obj,
+            pretty_print=self.reindent,
+            xml_declaration=True,
+            encoding=self.encoding,
+        )
         file_obj.write(b"\n")
 
     def cleanup(self, keep_groups=[], lookaside_groups=[]):
@@ -235,7 +247,7 @@ class CompsWrapper(object):
         for grp in self.comps.groups:
             if grp.id == group:
                 return [pkg.name for pkg in grp.packages]
-        raise KeyError('No such group %r' % group)
+        raise KeyError("No such group %r" % group)
 
     def get_langpacks(self):
         langpacks = {}
@@ -273,11 +285,13 @@ class CompsWrapper(object):
 
     def generate_comps(self):
         impl = xml.dom.minidom.getDOMImplementation()
-        doctype = impl.createDocumentType("comps", "-//Red Hat, Inc.//DTD Comps info//EN", "comps.dtd")
+        doctype = impl.createDocumentType(
+            "comps", "-//Red Hat, Inc.//DTD Comps info//EN", "comps.dtd"
+        )
         doc = impl.createDocument(None, "comps", doctype)
         msg_elem = doc.documentElement
 
-        for group in sorted(self.comps.groups, key=attrgetter('id')):
+        for group in sorted(self.comps.groups, key=attrgetter("id")):
             group_node = doc.createElement("group")
             msg_elem.appendChild(group_node)
 
@@ -294,13 +308,14 @@ class CompsWrapper(object):
             for pkg in group.packages:
                 if pkg.type == libcomps.PACKAGE_TYPE_UNKNOWN:
                     raise RuntimeError(
-                        'Failed to process comps file. Package %s in group %s has unknown type'
-                        % (pkg.name, group.id))
+                        "Failed to process comps file. Package %s in group %s has unknown type"
+                        % (pkg.name, group.id)
+                    )
 
                 packages_by_type[TYPE_MAPPING[pkg.type]].append(pkg)
 
             for type_name in TYPE_MAPPING.values():
-                for pkg in sorted(packages_by_type[type_name], key=attrgetter('name')):
+                for pkg in sorted(packages_by_type[type_name], key=attrgetter("name")):
                     kwargs = {"type": type_name}
                     if type_name == "conditional":
                         kwargs["requires"] = pkg.requires
@@ -309,7 +324,9 @@ class CompsWrapper(object):
             group_node.appendChild(packagelist)
 
         for category in self.comps.categories:
-            groups = set(x.name for x in category.group_ids) & set(self.get_comps_groups())
+            groups = set(x.name for x in category.group_ids) & set(
+                self.get_comps_groups()
+            )
             if not groups:
                 continue
             cat_node = doc.createElement("category")
@@ -322,7 +339,7 @@ class CompsWrapper(object):
 
             append_grouplist(doc, cat_node, groups)
 
-        for environment in sorted(self.comps.environments, key=attrgetter('id')):
+        for environment in sorted(self.comps.environments, key=attrgetter("id")):
             groups = set(x.name for x in environment.group_ids)
             if not groups:
                 continue
@@ -337,14 +354,25 @@ class CompsWrapper(object):
             append_grouplist(doc, env_node, groups)
 
             if environment.option_ids:
-                append_grouplist(doc, env_node, (x.name for x in environment.option_ids), "optionlist")
+                append_grouplist(
+                    doc,
+                    env_node,
+                    (x.name for x in environment.option_ids),
+                    "optionlist",
+                )
 
         if self.comps.langpacks:
             lang_node = doc.createElement("langpacks")
             msg_elem.appendChild(lang_node)
 
             for name in sorted(self.comps.langpacks):
-                append(doc, lang_node, "match", name=name, install=self.comps.langpacks[name])
+                append(
+                    doc,
+                    lang_node,
+                    "match",
+                    name=name,
+                    install=self.comps.langpacks[name],
+                )
 
         return doc
 
@@ -446,7 +474,7 @@ def append_common_info(doc, parent, obj, force_description=False):
         append(doc, parent, "name", text, lang=lang)
 
     if obj.desc or force_description:
-        append(doc, parent, "description", obj.desc or '')
+        append(doc, parent, "description", obj.desc or "")
 
         for lang in sorted(obj.desc_by_lang):
             text = obj.desc_by_lang[lang]

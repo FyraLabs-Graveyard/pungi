@@ -17,6 +17,7 @@ class WeaverPhase(object):
     :param phases_schema: two-dimensional array of phases. Top dimension
         denotes particular pipelines. Second dimension contains phases.
     """
+
     name = "weaver"
 
     def __init__(self, compose, phases_schema):
@@ -32,7 +33,10 @@ class WeaverPhase(object):
 
     def start(self):
         if self.finished:
-            msg = "Phase '%s' has already finished and can not be started twice" % self.name
+            msg = (
+                "Phase '%s' has already finished and can not be started twice"
+                % self.name
+            )
             self.pool.log_error(msg)
             raise RuntimeError(msg)
 
@@ -59,10 +63,15 @@ class PipelineThread(WorkerThread):
     """
     Launches phases in pipeline sequentially
     """
+
     def process(self, item, num):
         pipeline = shortcuts.force_list(item)
         phases_names = ", ".join(phase.name for phase in pipeline)
-        msg = "Running pipeline (%d/%d). Phases: %s" % (num, self.pool.queue_total, phases_names)
+        msg = "Running pipeline (%d/%d). Phases: %s" % (
+            num,
+            self.pool.queue_total,
+            phases_names,
+        )
         self.pool.log_info("[BEGIN] %s" % (msg,))
 
         for phase in pipeline:

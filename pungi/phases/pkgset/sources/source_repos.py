@@ -47,7 +47,9 @@ def get_pkgset_from_repos(compose):
 
     pool = LinkerPool.with_workers(10, "hardlink-or-copy", logger=compose._logger)
 
-    path_prefix = os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
+    path_prefix = (
+        os.path.join(compose.paths.work.topdir(arch="global"), "download") + "/"
+    )
     makedirs(path_prefix)
 
     seen_packages = set()
@@ -55,7 +57,8 @@ def get_pkgset_from_repos(compose):
         # write a pungi config for remote repos and a local comps repo
         repos = {}
         for num, repo in enumerate(
-            compose.conf["pkgset_repos"].get(arch, []) + compose.conf["pkgset_repos"].get("*", [])
+            compose.conf["pkgset_repos"].get(arch, [])
+            + compose.conf["pkgset_repos"].get("*", [])
         ):
             repo_path = repo
             if "://" not in repo_path:
@@ -74,16 +77,24 @@ def get_pkgset_from_repos(compose):
         pungi_dir = compose.paths.work.pungi_download_dir(arch)
 
         backends = {
-            'yum': pungi.get_pungi_cmd,
-            'dnf': pungi.get_pungi_cmd_dnf,
+            "yum": pungi.get_pungi_cmd,
+            "dnf": pungi.get_pungi_cmd_dnf,
         }
-        get_cmd = backends[compose.conf['gather_backend']]
-        cmd = get_cmd(pungi_conf, destdir=pungi_dir, name="FOO",
-                      selfhosting=True, fulltree=True, multilib_methods=["all"],
-                      nodownload=False, full_archlist=True, arch=arch,
-                      cache_dir=compose.paths.work.pungi_cache_dir(arch=arch),
-                      profiler=profiler)
-        if compose.conf['gather_backend'] == 'yum':
+        get_cmd = backends[compose.conf["gather_backend"]]
+        cmd = get_cmd(
+            pungi_conf,
+            destdir=pungi_dir,
+            name="FOO",
+            selfhosting=True,
+            fulltree=True,
+            multilib_methods=["all"],
+            nodownload=False,
+            full_archlist=True,
+            arch=arch,
+            cache_dir=compose.paths.work.pungi_cache_dir(arch=arch),
+            profiler=profiler,
+        )
+        if compose.conf["gather_backend"] == "yum":
             cmd.append("--force")
 
         # TODO: runroot
@@ -127,7 +138,9 @@ def populate_global_pkgset(compose, file_list, path_prefix):
     return pkgset
 
 
-def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, package_set=None):
+def write_pungi_config(
+    compose, arch, variant, repos=None, comps_repo=None, package_set=None
+):
     """write pungi config (kickstart) for arch/variant"""
     pungi_wrapper = PungiWrapper()
     pungi_cfg = compose.paths.work.pungi_conf(variant=variant, arch=arch)
@@ -142,4 +155,12 @@ def write_pungi_config(compose, arch, variant, repos=None, comps_repo=None, pack
         packages.append("system-release")
 
     prepopulate = get_prepopulate_packages(compose, arch, None)
-    pungi_wrapper.write_kickstart(ks_path=pungi_cfg, repos=repos, groups=grps, packages=packages, exclude_packages=[], comps_repo=None, prepopulate=prepopulate)
+    pungi_wrapper.write_kickstart(
+        ks_path=pungi_cfg,
+        repos=repos,
+        groups=grps,
+        packages=packages,
+        exclude_packages=[],
+        comps_repo=None,
+        prepopulate=prepopulate,
+    )

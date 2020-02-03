@@ -64,6 +64,7 @@ class Profiler(object):
         def decorated(*args, **kwargs):
             with self:
                 return func(*args, **kwargs)
+
         return decorated
 
     @classmethod
@@ -72,5 +73,6 @@ class Profiler(object):
         results = cls._data.items()
         results = sorted(results, key=lambda x: x[1]["time"], reverse=True)
         for name, data in results:
-            print("  %6.2f %5d %s" % (data["time"], data["calls"], name),
-                  file=sys.stdout)
+            print(
+                "  %6.2f %5d %s" % (data["time"], data["calls"], name), file=sys.stdout
+            )

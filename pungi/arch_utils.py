@@ -12,12 +12,13 @@ import struct
 _ppc64_native_is_best = True
 
 # dict mapping arch -> ( multicompat, best personality, biarch personality )
-multilibArches = {"x86_64": ("athlon", "x86_64", "athlon"),
-                  "sparc64v": ("sparcv9v", "sparcv9v", "sparc64v"),
-                  "sparc64": ("sparcv9", "sparcv9", "sparc64"),
-                  "ppc64": ("ppc", "ppc", "ppc64"),
-                  "s390x": ("s390", "s390x", "s390"),
-                  }
+multilibArches = {
+    "x86_64": ("athlon", "x86_64", "athlon"),
+    "sparc64v": ("sparcv9v", "sparcv9v", "sparc64v"),
+    "sparc64": ("sparcv9", "sparcv9", "sparc64"),
+    "ppc64": ("ppc", "ppc", "ppc64"),
+    "s390x": ("s390", "s390x", "s390"),
+}
 if _ppc64_native_is_best:
     multilibArches["ppc64"] = ("ppc", "ppc64", "ppc64")
 
@@ -29,26 +30,21 @@ arches = {
     "i586": "i486",
     "i486": "i386",
     "i386": "noarch",
-
     # amd64
     "x86_64": "athlon",
     "amd64": "x86_64",
     "ia32e": "x86_64",
-
     # ppc64le
     "ppc64le": "noarch",
-
     # ppc
     "ppc64p7": "ppc64",
     "ppc64pseries": "ppc64",
     "ppc64iseries": "ppc64",
     "ppc64": "ppc",
     "ppc": "noarch",
-
     # s390{,x}
     "s390x": "s390",
     "s390": "noarch",
-
     # sparc
     "sparc64v": "sparcv9v",
     "sparc64": "sparcv9",
@@ -56,7 +52,6 @@ arches = {
     "sparcv9": "sparcv8",
     "sparcv8": "sparc",
     "sparc": "noarch",
-
     # alpha
     "alphaev7": "alphaev68",
     "alphaev68": "alphaev67",
@@ -68,29 +63,23 @@ arches = {
     "alphaev45": "alphaev4",
     "alphaev4": "alpha",
     "alpha": "noarch",
-
     # arm
     "armv7l": "armv6l",
     "armv6l": "armv5tejl",
     "armv5tejl": "armv5tel",
     "armv5tel": "noarch",
-
     # arm hardware floating point
     "armv7hnl": "armv7hl",
     "armv7hl": "armv6hl",
     "armv6hl": "noarch",
-
     # arm64
     "arm64": "noarch",
-
     # aarch64
     "aarch64": "noarch",
-
     # super-h
     "sh4a": "sh4",
     "sh4": "noarch",
     "sh3": "noarch",
-
     # itanium
     "ia64": "noarch",
 }
@@ -137,7 +126,7 @@ def getArchList(thisarch=None):  # pragma: no cover
 
     # if we're a weirdo arch - add noarch on there.
     if len(archlist) == 1 and archlist[0] == thisarch:
-        archlist.append('noarch')
+        archlist.append("noarch")
     return archlist
 
 
@@ -208,10 +197,10 @@ def getCanonX86Arch(arch):  # pragma: no cover
 
 def getCanonARMArch(arch):  # pragma: no cover
     # the %{_target_arch} macro in rpm will let us know the abi we are using
-    target = rpm.expandMacro('%{_target_cpu}')
-    if target.startswith('armv6h'):
+    target = rpm.expandMacro("%{_target_cpu}")
+    if target.startswith("armv6h"):
         return target
-    if target.startswith('armv7h'):
+    if target.startswith("armv7h"):
         return target
     return arch
 
@@ -224,7 +213,7 @@ def getCanonPPCArch(arch):  # pragma: no cover
     machine = None
     for line in _try_read_cpuinfo():
         if line.find("machine") != -1:
-            machine = line.split(':')[1]
+            machine = line.split(":")[1]
             break
 
     platform = _aux_vector["platform"]
@@ -232,7 +221,7 @@ def getCanonPPCArch(arch):  # pragma: no cover
         return arch
 
     try:
-        if platform.startswith("power") and int(platform[5:].rstrip('+')) >= 7:
+        if platform.startswith("power") and int(platform[5:].rstrip("+")) >= 7:
             return "ppc64p7"
     except:
         pass
@@ -252,7 +241,7 @@ def getCanonSPARCArch(arch):  # pragma: no cover
     SPARCtype = None
     for line in _try_read_cpuinfo():
         if line.startswith("type"):
-            SPARCtype = line.split(':')[1]
+            SPARCtype = line.split(":")[1]
             break
     if SPARCtype is None:
         return arch
@@ -279,7 +268,7 @@ def getCanonX86_64Arch(arch):  # pragma: no cover
     vendor = None
     for line in _try_read_cpuinfo():
         if line.startswith("vendor_id"):
-            vendor = line.split(':')[1]
+            vendor = line.split(":")[1]
             break
     if vendor is None:
         return arch
@@ -308,7 +297,7 @@ def getCanonArch(skipRpmPlatform=0):  # pragma: no cover
 
     _parse_auxv()
 
-    if (len(arch) == 4 and arch[0] == "i" and arch[2:4] == "86"):
+    if len(arch) == 4 and arch[0] == "i" and arch[2:4] == "86":
         return getCanonX86Arch(arch)
 
     if arch.startswith("arm"):
@@ -370,7 +359,7 @@ def getBaseArch(myarch=None):  # pragma: no cover
     if myarch in arches:
         basearch = myarch
         value = arches[basearch]
-        while value != 'noarch':
+        while value != "noarch":
             basearch = value
             value = arches[basearch]
 

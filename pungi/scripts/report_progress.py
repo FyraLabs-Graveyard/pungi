@@ -8,7 +8,7 @@ import sys
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('cmd')
+    parser.add_argument("cmd")
     opts = parser.parse_args()
 
     data = json.load(sys.stdin)

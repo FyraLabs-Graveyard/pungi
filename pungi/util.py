@@ -39,13 +39,27 @@ from productmd.common import get_major_version
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
 
 
-def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=subprocess.PIPE, env=None):
+def _doRunCommand(
+    command,
+    logger,
+    rundir="/tmp",
+    output=subprocess.PIPE,
+    error=subprocess.PIPE,
+    env=None,
+):
     """Run a command and log the output.  Error out if we get something on stderr"""
 
     logger.info("Running %s" % subprocess.list2cmdline(command))
 
-    p1 = subprocess.Popen(command, cwd=rundir, stdout=output, stderr=error, universal_newlines=True, env=env,
-                          close_fds=True)
+    p1 = subprocess.Popen(
+        command,
+        cwd=rundir,
+        stdout=output,
+        stderr=error,
+        universal_newlines=True,
+        env=env,
+        close_fds=True,
+    )
     (out, err) = p1.communicate()
 
     if out:
@@ -54,7 +68,9 @@ def _doRunCommand(command, logger, rundir='/tmp', output=subprocess.PIPE, error=
     if p1.returncode != 0:
         logger.error("Got an error from %s" % command[0])
         logger.error(err)
-        raise OSError("Got an error (%d) from %s: %s" % (p1.returncode, command[0], err))
+        raise OSError(
+            "Got an error (%d) from %s: %s" % (p1.returncode, command[0], err)
+        )
 
 
 def _link(local, target, logger, force=False):
@@ -72,7 +88,7 @@ def _link(local, target, logger, force=False):
         os.link(local, target)
     except OSError as e:
         if e.errno != 18:  # EXDEV
-            logger.error('Got an error linking from cache: %s' % e)
+            logger.error("Got an error linking from cache: %s" % e)
             raise OSError(e)
 
         # Can't hardlink cross file systems
@@ -86,7 +102,7 @@ def _ensuredir(target, logger, force=False, clean=False):
     # We have to check existance of a logger, as setting the logger could
     # itself cause an issue.
     def whoops(func, path, exc_info):
-        message = 'Could not remove %s' % path
+        message = "Could not remove %s" % path
         if logger:
             logger.error(message)
         else:
@@ -94,7 +110,7 @@ def _ensuredir(target, logger, force=False, clean=False):
         sys.exit(1)
 
     if os.path.exists(target) and not os.path.isdir(target):
-        message = '%s exists but is not a directory.' % target
+        message = "%s exists but is not a directory." % target
         if logger:
             logger.error(message)
         else:
@@ -109,7 +125,7 @@ def _ensuredir(target, logger, force=False, clean=False):
     elif force:
         return
     else:
-        message = 'Directory %s already exists.  Use --force to overwrite.' % target
+        message = "Directory %s already exists.  Use --force to overwrite." % target
         if logger:
             logger.error(message)
         else:
@@ -130,7 +146,7 @@ def _doCheckSum(path, hash, logger):
 
     # Try to open the file, using binary flag.
     try:
-        myfile = open(path, 'rb')
+        myfile = open(path, "rb")
     except IOError as e:
         logger.error("Could not open file %s: %s" % (path, e))
         return False
@@ -138,13 +154,15 @@ def _doCheckSum(path, hash, logger):
     # Loop through the file reading chunks at a time as to not
     # put the entire file in memory.  That would suck for DVDs
     while True:
-        chunk = myfile.read(8192)  # magic number!  Taking suggestions for better blocksize
+        chunk = myfile.read(
+            8192
+        )  # magic number!  Taking suggestions for better blocksize
         if not chunk:
             break  # we're done with the file
         sum.update(chunk)
     myfile.close()
 
-    return '%s:%s' % (hash, sum.hexdigest())
+    return "%s:%s" % (hash, sum.hexdigest())
 
 
 def makedirs(path, mode=0o775):
@@ -168,7 +186,10 @@ def explode_rpm_package(pkg_path, target_dir):
     """Explode a rpm package into target_dir."""
     pkg_path = os.path.abspath(pkg_path)
     makedirs(target_dir)
-    run("rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % shlex_quote(pkg_path), workdir=target_dir)
+    run(
+        "rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % shlex_quote(pkg_path),
+        workdir=target_dir,
+    )
 
 
 def pkg_is_rpm(pkg_obj):
@@ -232,15 +253,15 @@ def get_arch_variant_data(conf, var_name, arch, variant, keys=None):
 
 def is_arch_multilib(conf, arch):
     """Check if at least one variant has multilib enabled on this variant."""
-    return bool(get_arch_variant_data(conf, 'multilib', arch, None))
+    return bool(get_arch_variant_data(conf, "multilib", arch, None))
 
 
 def _get_git_ref(fragment):
-    if fragment == 'HEAD':
+    if fragment == "HEAD":
         return fragment
-    if fragment.startswith('origin/'):
-        branch = fragment.split('/', 1)[1]
-        return 'refs/heads/' + branch
+    if fragment.startswith("origin/"):
+        branch = fragment.split("/", 1)[1]
+        return "refs/heads/" + branch
     return None
 
 
@@ -296,15 +317,15 @@ def resolve_git_url(url):
 
     # Remove git+ prefix from scheme if present. This is for resolving only,
     # the final result must use original scheme.
-    scheme = r.scheme.replace('git+', '')
+    scheme = r.scheme.replace("git+", "")
 
-    baseurl = urllib.parse.urlunsplit((scheme, r.netloc, r.path, '', ''))
+    baseurl = urllib.parse.urlunsplit((scheme, r.netloc, r.path, "", ""))
     fragment = resolve_git_ref(baseurl, ref)
 
     result = urllib.parse.urlunsplit((r.scheme, r.netloc, r.path, r.query, fragment))
-    if '?#' in url:
+    if "?#" in url:
         # The urllib library drops empty query string. This hack puts it back in.
-        result = result.replace('#', '?#')
+        result = result.replace("#", "?#")
     return result
 
 
@@ -313,6 +334,7 @@ class GitUrlResolver(object):
     URL with fragment describing reference, or url and refname. It will return
     either url with changed fragment or just resolved ref.
     """
+
     def __init__(self, offline=False):
         self.offline = offline
         self.cache = {}
@@ -373,7 +395,7 @@ def get_variant_data(conf, var_name, variant, keys=None):
 
 
 def _apply_substitutions(compose, volid):
-    substitutions = compose.conf['volume_id_substitutions'].items()
+    substitutions = compose.conf["volume_id_substitutions"].items()
     # processing should start with the longest pattern, otherwise, we could
     # unexpectedly replace a substring of that longest pattern
     for k, v in sorted(substitutions, key=lambda x: len(x[0]), reverse=True):
@@ -381,8 +403,7 @@ def _apply_substitutions(compose, volid):
     return volid
 
 
-def get_volid(compose, arch, variant=None, disc_type=False,
-              formats=None, **kwargs):
+def get_volid(compose, arch, variant=None, disc_type=False, formats=None, **kwargs):
     """Get ISO volume ID for arch and variant"""
     if variant and variant.type == "addon":
         # addons are part of parent variant media
@@ -398,13 +419,15 @@ def get_volid(compose, arch, variant=None, disc_type=False,
     else:
         release_short = compose.conf["release_short"]
         release_version = compose.conf["release_version"]
-        release_is_layered = True if compose.conf.get("base_product_name", "") else False
+        release_is_layered = (
+            True if compose.conf.get("base_product_name", "") else False
+        )
         base_product_short = compose.conf.get("base_product_short", "")
         base_product_version = compose.conf.get("base_product_version", "")
         variant_uid = variant and variant.uid or None
 
-    products = compose.conf['image_volid_formats']
-    layered_products = compose.conf['image_volid_layered_product_formats']
+    products = compose.conf["image_volid_formats"]
+    layered_products = compose.conf["image_volid_layered_product_formats"]
 
     volid = None
     if release_is_layered:
@@ -418,26 +441,32 @@ def get_volid(compose, arch, variant=None, disc_type=False,
         if not variant_uid and "%(variant)s" in i:
             continue
         try:
-            args = get_format_substs(compose,
-                                     variant=variant_uid,
-                                     release_short=release_short,
-                                     version=release_version,
-                                     arch=arch,
-                                     disc_type=disc_type or '',
-                                     base_product_short=base_product_short,
-                                     base_product_version=base_product_version,
-                                     **kwargs)
+            args = get_format_substs(
+                compose,
+                variant=variant_uid,
+                release_short=release_short,
+                version=release_version,
+                arch=arch,
+                disc_type=disc_type or "",
+                base_product_short=base_product_short,
+                base_product_version=base_product_version,
+                **kwargs
+            )
             volid = (i % args).format(**args)
         except KeyError as err:
-            raise RuntimeError('Failed to create volume id: unknown format element: %s' % err)
+            raise RuntimeError(
+                "Failed to create volume id: unknown format element: %s" % err
+            )
         volid = _apply_substitutions(compose, volid)
         if len(volid) <= 32:
             break
         tried.add(volid)
 
     if volid and len(volid) > 32:
-        raise ValueError("Could not create volume ID longer than 32 bytes, options are %r",
-                         sorted(tried, key=len))
+        raise ValueError(
+            "Could not create volume ID longer than 32 bytes, options are %r",
+            sorted(tried, key=len),
+        )
 
     if compose.conf["restricted_volid"]:
         # Replace all non-alphanumeric characters and non-underscores) with
@@ -455,16 +484,22 @@ def get_file_size(path):
     return os.path.getsize(path)
 
 
-def find_old_compose(old_compose_dirs, release_short, release_version,
-                     release_type_suffix, base_product_short=None,
-                     base_product_version=None, allowed_statuses=None):
+def find_old_compose(
+    old_compose_dirs,
+    release_short,
+    release_version,
+    release_type_suffix,
+    base_product_short=None,
+    base_product_version=None,
+    allowed_statuses=None,
+):
     allowed_statuses = allowed_statuses or ("FINISHED", "FINISHED_INCOMPLETE", "DOOMED")
     composes = []
 
     def _sortable(compose_id):
         """Convert ID to tuple where respin is an integer for proper sorting."""
         try:
-            prefix, respin = compose_id.rsplit('.', 1)
+            prefix, respin = compose_id.rsplit(".", 1)
             return (prefix, int(respin))
         except Exception:
             return compose_id
@@ -486,7 +521,7 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
             if not i.startswith(pattern):
                 continue
 
-            suffix = i[len(pattern):]
+            suffix = i[len(pattern) :]
             if len(suffix) < 2 or not suffix[1].isdigit():
                 # This covers the case where we are looking for -updates, but there
                 # is an updates-testing as well.
@@ -504,7 +539,7 @@ def find_old_compose(old_compose_dirs, release_short, release_version,
                 continue
 
             try:
-                with open(status_path, 'r') as f:
+                with open(status_path, "r") as f:
                     if f.read().strip() in allowed_statuses:
                         composes.append((_sortable(i), os.path.abspath(path)))
             except:
@@ -526,7 +561,9 @@ def process_args(fmt, args):
 
 
 @contextlib.contextmanager
-def failable(compose, can_fail, variant, arch, deliverable, subvariant=None, logger=None):
+def failable(
+    compose, can_fail, variant, arch, deliverable, subvariant=None, logger=None
+):
     """If a deliverable can fail, log a message and go on as if it succeeded."""
     if not logger:
         logger = compose._logger
@@ -540,17 +577,21 @@ def failable(compose, can_fail, variant, arch, deliverable, subvariant=None, log
         if not can_fail:
             raise
         else:
-            log_failed_task(compose, variant, arch, deliverable, subvariant, logger=logger, exc=exc)
+            log_failed_task(
+                compose, variant, arch, deliverable, subvariant, logger=logger, exc=exc
+            )
 
 
-def log_failed_task(compose, variant, arch, deliverable, subvariant, logger=None, exc=None):
+def log_failed_task(
+    compose, variant, arch, deliverable, subvariant, logger=None, exc=None
+):
     logger = logger or compose._logger
-    msg = deliverable.replace('-', ' ').capitalize()
+    msg = deliverable.replace("-", " ").capitalize()
     compose.fail_deliverable(variant, arch, deliverable, subvariant)
-    ident = 'variant %s, arch %s' % (variant.uid if variant else 'None', arch)
+    ident = "variant %s, arch %s" % (variant.uid if variant else "None", arch)
     if subvariant:
-        ident += ', subvariant %s' % subvariant
-    logger.error('[FAIL] %s (%s) failed, but going on anyway.' % (msg, ident))
+        ident += ", subvariant %s" % subvariant
+    logger.error("[FAIL] %s (%s) failed, but going on anyway." % (msg, ident))
     if exc:
         logger.error(str(exc))
         tb = traceback.format_exc()
@@ -559,7 +600,7 @@ def log_failed_task(compose, variant, arch, deliverable, subvariant, logger=None
 
 def can_arch_fail(failable_arches, arch):
     """Check if `arch` is in `failable_arches` or `*` can fail."""
-    return '*' in failable_arches or arch in failable_arches
+    return "*" in failable_arches or arch in failable_arches
 
 
 def get_format_substs(compose, **kwargs):
@@ -568,15 +609,15 @@ def get_format_substs(compose, **kwargs):
     Any kwargs will be added as well.
     """
     substs = {
-        'compose_id': compose.compose_id,
-        'release_short': compose.ci_base.release.short,
-        'version': compose.ci_base.release.version,
-        'date': compose.compose_date,
-        'respin': compose.compose_respin,
-        'type': compose.compose_type,
-        'type_suffix': compose.compose_type_suffix,
-        'label': compose.compose_label,
-        'label_major_version': compose.compose_label_major_version,
+        "compose_id": compose.compose_id,
+        "release_short": compose.ci_base.release.short,
+        "version": compose.ci_base.release.version,
+        "date": compose.compose_date,
+        "respin": compose.compose_respin,
+        "type": compose.compose_type,
+        "type_suffix": compose.compose_type_suffix,
+        "label": compose.compose_label,
+        "label_major_version": compose.compose_label_major_version,
     }
     substs.update(kwargs)
     return substs
@@ -603,7 +644,7 @@ def copy_all(src, dest):
     """
     contents = os.listdir(src)
     if not contents:
-        raise RuntimeError('Source directory %s is empty.' % src)
+        raise RuntimeError("Source directory %s is empty." % src)
     makedirs(dest)
     for item in contents:
         source = os.path.join(src, item)
@@ -651,9 +692,9 @@ def levenshtein(a, b):
     for j in range(1, len(b) + 1):
         for i in range(1, len(a) + 1):
             cost = 0 if a[i - 1] == b[j - 1] else 1
-            mat[j][i] = min(mat[j - 1][i] + 1,
-                            mat[j][i - 1] + 1,
-                            mat[j - 1][i - 1] + cost)
+            mat[j][i] = min(
+                mat[j - 1][i] + 1, mat[j][i - 1] + 1, mat[j - 1][i - 1] + cost
+            )
 
     return mat[len(b)][len(a)]
 
@@ -661,10 +702,10 @@ def levenshtein(a, b):
 @contextlib.contextmanager
 def temp_dir(log=None, *args, **kwargs):
     """Create a temporary directory and ensure it's deleted."""
-    if kwargs.get('dir'):
+    if kwargs.get("dir"):
         # If we are supposed to create the temp dir in a particular location,
         # ensure the location already exists.
-        makedirs(kwargs['dir'])
+        makedirs(kwargs["dir"])
     dir = tempfile.mkdtemp(*args, **kwargs)
     try:
         yield dir
@@ -674,7 +715,7 @@ def temp_dir(log=None, *args, **kwargs):
         except OSError as exc:
             # Okay, we failed to delete temporary dir.
             if log:
-                log.warning('Error removing %s: %s', dir, exc.strerror)
+                log.warning("Error removing %s: %s", dir, exc.strerror)
 
 
 def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
@@ -687,33 +728,41 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     printed in case of failure.
     """
     for i in range(max_retries):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                universal_newlines=True)
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+        )
         out, err = proc.communicate()
         if proc.returncode == 0:
             # We were successful
             return
-        if 'Device or resource busy' not in err:
-            raise RuntimeError('Unhandled error when running %r: %r' % (cmd, err))
+        if "Device or resource busy" not in err:
+            raise RuntimeError("Unhandled error when running %r: %r" % (cmd, err))
         time.sleep(i)
     # Still busy, there's something wrong.
     if path and logger:
         commands = [
-            ['ls', '-lA', path],
-            ['fuser', '-vm', path],
-            ['lsof', '+D', path],
+            ["ls", "-lA", path],
+            ["fuser", "-vm", path],
+            ["lsof", "+D", path],
         ]
         for c in commands:
             try:
-                proc = subprocess.Popen(c, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                        universal_newlines=True)
+                proc = subprocess.Popen(
+                    c,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                )
                 out, _ = proc.communicate()
-                logger.debug('`%s` exited with %s and following output:\n%s',
-                             ' '.join(c), proc.returncode, out)
+                logger.debug(
+                    "`%s` exited with %s and following output:\n%s",
+                    " ".join(c),
+                    proc.returncode,
+                    out,
+                )
             except OSError:
-                logger.debug('`%s` command not available for debugging',
-                             ' '.join(c))
-    raise RuntimeError('Failed to run %r: Device or resource busy.' % cmd)
+                logger.debug("`%s` command not available for debugging", " ".join(c))
+    raise RuntimeError("Failed to run %r: Device or resource busy." % cmd)
 
 
 def translate_path_raw(mapping, path):
@@ -721,7 +770,7 @@ def translate_path_raw(mapping, path):
     for prefix, newvalue in mapping:
         prefix = os.path.normpath(prefix)
         # Strip trailing slashes: the prefix has them stripped by `normpath`.
-        newvalue = newvalue.rstrip('/')
+        newvalue = newvalue.rstrip("/")
         if normpath.startswith(prefix):
             # We can't call os.path.normpath on result since it is not actually
             # a path - http:// would get changed to  http:/ and so on.
@@ -739,7 +788,7 @@ def translate_path(compose, path):
     return translate_path_raw(mapping, path)
 
 
-def get_repo_url(compose, repo, arch='$basearch'):
+def get_repo_url(compose, repo, arch="$basearch"):
     """
     Convert repo to repo URL.
 
@@ -751,25 +800,27 @@ def get_repo_url(compose, repo, arch='$basearch'):
     """
     if isinstance(repo, dict):
         try:
-            repo = repo['baseurl']
+            repo = repo["baseurl"]
         except KeyError:
-            raise RuntimeError('Baseurl is required in repo dict %s' % str(repo))
+            raise RuntimeError("Baseurl is required in repo dict %s" % str(repo))
     if repo.startswith("/"):
         # It's an absolute path, translate it and return it
         return translate_path(compose, repo)
-    if '://' not in repo:
+    if "://" not in repo:
         # this is a variant name
         if compose is not None:
             v = compose.all_variants.get(repo)
             if not v:
-                raise RuntimeError('There is no variant %s to get repo from.' % repo)
+                raise RuntimeError("There is no variant %s to get repo from." % repo)
         else:
             return None
-        repo = translate_path(compose, compose.paths.compose.repository(arch, v, create_dir=False))
+        repo = translate_path(
+            compose, compose.paths.compose.repository(arch, v, create_dir=False)
+        )
     return repo
 
 
-def get_repo_urls(compose, repos, arch='$basearch', logger=None):
+def get_repo_urls(compose, repos, arch="$basearch", logger=None):
     """
     Convert repos to a list of repo URLs.
 
@@ -782,7 +833,10 @@ def get_repo_urls(compose, repos, arch='$basearch', logger=None):
         repo = get_repo_url(compose, repo, arch=arch)
         if repo is None:
             if logger:
-                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'OSTreeInstaller' phase: %s" % (repo))
+                logger.log_warning(
+                    "Variant-type source repository is deprecated and will be ignored during 'OSTreeInstaller' phase: %s"
+                    % (repo)
+                )
         else:
             urls.append(repo)
     return urls
@@ -792,8 +846,8 @@ def _translate_url_to_repo_id(url):
     """
     Translate url to valid repo id by replacing any invalid char to '_'.
     """
-    _REPOID_CHARS = string.ascii_letters + string.digits + '-_.:'
-    return ''.join([s if s in list(_REPOID_CHARS) else '_' for s in url])
+    _REPOID_CHARS = string.ascii_letters + string.digits + "-_.:"
+    return "".join([s if s in list(_REPOID_CHARS) else "_" for s in url])
 
 
 def get_repo_dict(repo):
@@ -809,23 +863,23 @@ def get_repo_dict(repo):
     """
     repo_dict = {}
     if isinstance(repo, dict):
-        url = repo['baseurl']
-        name = repo.get('name', None)
-        if '://' in url:
+        url = repo["baseurl"]
+        name = repo.get("name", None)
+        if "://" in url:
             if name is None:
                 name = _translate_url_to_repo_id(url)
         else:
             # url is variant uid - this possibility is now discontinued
             return {}
-        repo['name'] = name
-        repo['baseurl'] = url
+        repo["name"] = name
+        repo["baseurl"] = url
         return repo
     else:
         # repo is normal url or variant uid
         repo_dict = {}
-        if '://' in repo:
-            repo_dict['name'] = _translate_url_to_repo_id(repo)
-            repo_dict['baseurl'] = repo
+        if "://" in repo:
+            repo_dict["name"] = _translate_url_to_repo_id(repo)
+            repo_dict["baseurl"] = repo
         else:
             return {}
     return repo_dict
@@ -842,7 +896,10 @@ def get_repo_dicts(repos, logger=None):
         repo_dict = get_repo_dict(repo)
         if repo_dict == {}:
             if logger:
-                logger.log_warning("Variant-type source repository is deprecated and will be ignored during 'OSTree' phase: %s" % (repo))
+                logger.log_warning(
+                    "Variant-type source repository is deprecated and will be ignored during 'OSTree' phase: %s"
+                    % (repo)
+                )
         else:
             repo_dicts.append(repo_dict)
     return repo_dicts
@@ -852,19 +909,21 @@ def version_generator(compose, gen):
     """If ``gen`` is a known generator, create a value. Otherwise return
        the argument value unchanged.
     """
-    if gen == '!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN':
-        return '%s.%s' % (compose.image_version, compose.image_release)
-    elif gen == '!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN':
+    if gen == "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN":
+        return "%s.%s" % (compose.image_version, compose.image_release)
+    elif gen == "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN":
         return compose.image_release
-    elif gen == '!RELEASE_FROM_DATE_RESPIN':
-        return '%s.%s' % (compose.compose_date, compose.compose_respin)
-    elif gen == '!VERSION_FROM_VERSION_DATE_RESPIN':
-        return '%s.%s.%s' % (compose.ci_base.release.version,
-                             compose.compose_date,
-                             compose.compose_respin)
-    elif gen == '!VERSION_FROM_VERSION':
-        return '%s' % (compose.ci_base.release.version)
-    elif gen and gen[0] == '!':
+    elif gen == "!RELEASE_FROM_DATE_RESPIN":
+        return "%s.%s" % (compose.compose_date, compose.compose_respin)
+    elif gen == "!VERSION_FROM_VERSION_DATE_RESPIN":
+        return "%s.%s.%s" % (
+            compose.ci_base.release.version,
+            compose.compose_date,
+            compose.compose_respin,
+        )
+    elif gen == "!VERSION_FROM_VERSION":
+        return "%s" % (compose.ci_base.release.version)
+    elif gen and gen[0] == "!":
         raise RuntimeError("Unknown version generator '%s'" % gen)
     return gen
 
@@ -873,6 +932,7 @@ def retry(timeout=120, interval=30, wait_on=Exception):
     """ A decorator that allows to retry a section of code until success or
         timeout.
     """
+
     def wrapper(function):
         @functools.wraps(function)
         def inner(*args, **kwargs):
@@ -884,13 +944,15 @@ def retry(timeout=120, interval=30, wait_on=Exception):
                     return function(*args, **kwargs)
                 except wait_on:
                     time.sleep(interval)
+
         return inner
+
     return wrapper
 
 
 @retry(wait_on=RuntimeError)
 def git_ls_remote(baseurl, ref):
-    return run(['git', 'ls-remote', baseurl, ref], universal_newlines=True)
+    return run(["git", "ls-remote", baseurl, ref], universal_newlines=True)
 
 
 def get_tz_offset():

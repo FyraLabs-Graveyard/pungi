@@ -14,9 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-__all__ = (
-    "Compose",
-)
+__all__ = ("Compose",)
 
 
 import errno
@@ -38,7 +36,10 @@ from pungi.wrappers.variants import VariantsXmlParser
 from pungi.paths import Paths
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.util import (
-    makedirs, get_arch_variant_data, get_format_substs, get_variant_data
+    makedirs,
+    get_arch_variant_data,
+    get_format_substs,
+    get_variant_data,
 )
 from pungi.metadata import compose_to_composeinfo
 
@@ -50,7 +51,15 @@ except ImportError:
     SUPPORTED_MILESTONES = ["RC", "Update", "SecurityFix"]
 
 
-def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, compose_respin=None, compose_label=None, already_exists_callbacks=None):
+def get_compose_dir(
+    topdir,
+    conf,
+    compose_type="production",
+    compose_date=None,
+    compose_respin=None,
+    compose_label=None,
+    already_exists_callbacks=None,
+):
     already_exists_callbacks = already_exists_callbacks or []
 
     # create an incomplete composeinfo to generate compose ID
@@ -107,7 +116,18 @@ def get_compose_dir(topdir, conf, compose_type="production", compose_date=None, 
 
 
 class Compose(kobo.log.LoggingBase):
-    def __init__(self, conf, topdir, skip_phases=None, just_phases=None, old_composes=None, koji_event=None, supported=False, logger=None, notifier=None):
+    def __init__(
+        self,
+        conf,
+        topdir,
+        skip_phases=None,
+        just_phases=None,
+        old_composes=None,
+        koji_event=None,
+        supported=False,
+        logger=None,
+        notifier=None,
+    ):
         kobo.log.LoggingBase.__init__(self, logger)
         # TODO: check if minimal conf values are set
         self.conf = conf
@@ -128,18 +148,27 @@ class Compose(kobo.log.LoggingBase):
 
         # Set up logging to file
         if logger:
-            kobo.log.add_file_logger(logger, self.paths.log.log_file("global", "pungi.log"))
-            kobo.log.add_file_logger(logger, self.paths.log.log_file("global", "excluding-arch.log"))
+            kobo.log.add_file_logger(
+                logger, self.paths.log.log_file("global", "pungi.log")
+            )
+            kobo.log.add_file_logger(
+                logger, self.paths.log.log_file("global", "excluding-arch.log")
+            )
 
             class PungiLogFilter(logging.Filter):
                 def filter(self, record):
-                    return False if record.funcName and record.funcName == 'is_excluded' else True
+                    return (
+                        False
+                        if record.funcName and record.funcName == "is_excluded"
+                        else True
+                    )
 
             class ExcludingArchLogFilter(logging.Filter):
                 def filter(self, record):
                     message = record.getMessage()
-                    if 'Populating package set for arch:' in message or \
-                            (record.funcName and record.funcName == 'is_excluded'):
+                    if "Populating package set for arch:" in message or (
+                        record.funcName and record.funcName == "is_excluded"
+                    ):
                         return True
                     else:
                         return False
@@ -147,18 +176,26 @@ class Compose(kobo.log.LoggingBase):
             for handler in logger.handlers:
                 if isinstance(handler, logging.FileHandler):
                     log_file_name = os.path.basename(handler.stream.name)
-                    if log_file_name == 'pungi.global.log':
+                    if log_file_name == "pungi.global.log":
                         handler.addFilter(PungiLogFilter())
-                    elif log_file_name == 'excluding-arch.global.log':
+                    elif log_file_name == "excluding-arch.global.log":
                         handler.addFilter(ExcludingArchLogFilter())
 
         # to provide compose_id, compose_date and compose_respin
         self.ci_base = ComposeInfo()
-        self.ci_base.load(os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json"))
+        self.ci_base.load(
+            os.path.join(self.paths.work.topdir(arch="global"), "composeinfo-base.json")
+        )
 
         self.supported = supported
-        if self.compose_label and self.compose_label.split("-")[0] in SUPPORTED_MILESTONES:
-            self.log_info("Automatically setting 'supported' flag due to label: %s." % self.compose_label)
+        if (
+            self.compose_label
+            and self.compose_label.split("-")[0] in SUPPORTED_MILESTONES
+        ):
+            self.log_info(
+                "Automatically setting 'supported' flag due to label: %s."
+                % self.compose_label
+            )
             self.supported = True
 
         self.im = Images()
@@ -179,10 +216,10 @@ class Compose(kobo.log.LoggingBase):
             self.cache_region = make_region().configure(
                 self.conf.get("dogpile_cache_backend"),
                 expiration_time=self.conf.get("dogpile_cache_expiration_time", 3600),
-                arguments=self.conf.get("dogpile_cache_arguments", {})
+                arguments=self.conf.get("dogpile_cache_arguments", {}),
             )
         else:
-            self.cache_region = make_region().configure('dogpile.cache.null')
+            self.cache_region = make_region().configure("dogpile.cache.null")
 
     get_compose_dir = staticmethod(get_compose_dir)
 
@@ -234,10 +271,10 @@ class Compose(kobo.log.LoggingBase):
         """Explicit configuration trumps all. Otherwise check gather backend
         and only create it for Yum.
         """
-        config = self.conf.get('createrepo_database')
+        config = self.conf.get("createrepo_database")
         if config is not None:
             return config
-        return self.conf['gather_backend'] == 'yum'
+        return self.conf["gather_backend"] == "yum"
 
     def read_variants(self):
         # TODO: move to phases/init ?
@@ -263,7 +300,9 @@ class Compose(kobo.log.LoggingBase):
         tree_arches = self.conf.get("tree_arches", None)
         tree_variants = self.conf.get("tree_variants", None)
         with open(variants_file, "r") as file_obj:
-            parser = VariantsXmlParser(file_obj, tree_arches, tree_variants, logger=self._logger)
+            parser = VariantsXmlParser(
+                file_obj, tree_arches, tree_variants, logger=self._logger
+            )
             self.variants = parser.parse()
 
         self.all_variants = {}
@@ -294,21 +333,28 @@ class Compose(kobo.log.LoggingBase):
     @property
     def status_file(self):
         """Path to file where the compose status will be stored."""
-        if not hasattr(self, '_status_file'):
-            self._status_file = os.path.join(self.topdir, 'STATUS')
+        if not hasattr(self, "_status_file"):
+            self._status_file = os.path.join(self.topdir, "STATUS")
         return self._status_file
 
     def _log_failed_deliverables(self):
         for kind, data in self.failed_deliverables.items():
             for variant, arch, subvariant in data:
-                self.log_info('Failed %s on variant <%s>, arch <%s>, subvariant <%s>.'
-                              % (kind, variant, arch, subvariant))
-        log = os.path.join(self.paths.log.topdir('global'), 'deliverables.json')
-        with open(log, 'w') as f:
-            json.dump({'required': self.required_deliverables,
-                       'failed': self.failed_deliverables,
-                       'attempted': self.attempted_deliverables},
-                      f, indent=4)
+                self.log_info(
+                    "Failed %s on variant <%s>, arch <%s>, subvariant <%s>."
+                    % (kind, variant, arch, subvariant)
+                )
+        log = os.path.join(self.paths.log.topdir("global"), "deliverables.json")
+        with open(log, "w") as f:
+            json.dump(
+                {
+                    "required": self.required_deliverables,
+                    "failed": self.failed_deliverables,
+                    "attempted": self.attempted_deliverables,
+                },
+                f,
+                indent=4,
+            )
 
     def write_status(self, stat_msg):
         if stat_msg not in ("STARTED", "FINISHED", "DOOMED", "TERMINATED"):
@@ -321,8 +367,8 @@ class Compose(kobo.log.LoggingBase):
             self.log_error(msg)
             raise RuntimeError(msg)
 
-        if stat_msg == 'FINISHED' and self.failed_deliverables:
-            stat_msg = 'FINISHED_INCOMPLETE'
+        if stat_msg == "FINISHED" and self.failed_deliverables:
+            stat_msg = "FINISHED_INCOMPLETE"
 
         self._log_failed_deliverables()
 
@@ -330,21 +376,22 @@ class Compose(kobo.log.LoggingBase):
             f.write(stat_msg + "\n")
 
         if self.notifier:
-            self.notifier.send('status-change', status=stat_msg)
+            self.notifier.send("status-change", status=stat_msg)
 
     def get_status(self):
         if not os.path.isfile(self.status_file):
             return
         return open(self.status_file, "r").read().strip()
 
-    def get_image_name(self, arch, variant, disc_type='dvd',
-                       disc_num=1, suffix='.iso', format=None):
+    def get_image_name(
+        self, arch, variant, disc_type="dvd", disc_num=1, suffix=".iso", format=None
+    ):
         """Create a filename for image with given parameters.
 
         :raises RuntimeError: when unknown ``disc_type`` is given
         """
         default_format = "{compose_id}-{variant}-{arch}-{disc_type}{disc_num}{suffix}"
-        format = format or self.conf.get('image_name_format', default_format)
+        format = format or self.conf.get("image_name_format", default_format)
 
         if isinstance(format, dict):
             conf = get_variant_data(self.conf, "image_name_format", variant)
@@ -359,47 +406,54 @@ class Compose(kobo.log.LoggingBase):
             disc_num = ""
 
         kwargs = {
-            'arch': arch,
-            'disc_type': disc_type,
-            'disc_num': disc_num,
-            'suffix': suffix
+            "arch": arch,
+            "disc_type": disc_type,
+            "disc_num": disc_num,
+            "suffix": suffix,
         }
         if variant.type == "layered-product":
             variant_uid = variant.parent.uid
-            kwargs['compose_id'] = self.ci_base[variant.uid].compose_id
+            kwargs["compose_id"] = self.ci_base[variant.uid].compose_id
         else:
             variant_uid = variant.uid
         args = get_format_substs(self, variant=variant_uid, **kwargs)
         try:
             return (format % args).format(**args)
         except KeyError as err:
-            raise RuntimeError('Failed to create image name: unknown format element: %s' % err)
+            raise RuntimeError(
+                "Failed to create image name: unknown format element: %s" % err
+            )
 
     def can_fail(self, variant, arch, deliverable):
         """Figure out if deliverable can fail on variant.arch.
 
         Variant can be None.
         """
-        failable = get_arch_variant_data(self.conf, 'failable_deliverables', arch, variant)
+        failable = get_arch_variant_data(
+            self.conf, "failable_deliverables", arch, variant
+        )
         return deliverable in failable
 
     def attempt_deliverable(self, variant, arch, kind, subvariant=None):
         """Log information about attempted deliverable."""
-        variant_uid = variant.uid if variant else ''
+        variant_uid = variant.uid if variant else ""
         self.attempted_deliverables.setdefault(kind, []).append(
-            (variant_uid, arch, subvariant))
+            (variant_uid, arch, subvariant)
+        )
 
     def require_deliverable(self, variant, arch, kind, subvariant=None):
         """Log information about attempted deliverable."""
-        variant_uid = variant.uid if variant else ''
+        variant_uid = variant.uid if variant else ""
         self.required_deliverables.setdefault(kind, []).append(
-            (variant_uid, arch, subvariant))
+            (variant_uid, arch, subvariant)
+        )
 
     def fail_deliverable(self, variant, arch, kind, subvariant=None):
         """Log information about failed deliverable."""
-        variant_uid = variant.uid if variant else ''
+        variant_uid = variant.uid if variant else ""
         self.failed_deliverables.setdefault(kind, []).append(
-            (variant_uid, arch, subvariant))
+            (variant_uid, arch, subvariant)
+        )
 
     @property
     def image_release(self):
@@ -409,11 +463,14 @@ class Compose(kobo.log.LoggingBase):
         otherwise we will create a string with date, compose type and respin.
         """
         if self.compose_label:
-            milestone, release = self.compose_label.split('-')
+            milestone, release = self.compose_label.split("-")
             return release
 
-        return '%s%s.%s' % (self.compose_date, self.ci_base.compose.type_suffix,
-                            self.compose_respin)
+        return "%s%s.%s" % (
+            self.compose_date,
+            self.ci_base.compose.type_suffix,
+            self.compose_respin,
+        )
 
     @property
     def image_version(self):
@@ -423,9 +480,9 @@ class Compose(kobo.log.LoggingBase):
         milestone from it is appended to the version (unless it is RC).
         """
         version = self.ci_base.release.version
-        if self.compose_label and not self.compose_label.startswith('RC-'):
-            milestone, release = self.compose_label.split('-')
-            return '%s_%s' % (version, milestone)
+        if self.compose_label and not self.compose_label.startswith("RC-"):
+            milestone, release = self.compose_label.split("-")
+            return "%s_%s" % (version, milestone)
 
         return version
 
@@ -451,7 +508,7 @@ def get_ordered_variant_uids(compose):
         setattr(
             compose,
             "_ordered_variant_uids",
-            unordered_variant_uids + ordered_variant_uids
+            unordered_variant_uids + ordered_variant_uids,
         )
     return getattr(compose, "_ordered_variant_uids")
 
@@ -469,7 +526,9 @@ def _prepare_variant_as_lookaside(compose):
         try:
             graph.add_edge(variant, lookaside_variant)
         except ValueError as e:
-            raise ValueError("There is a bad configuration in 'variant_as_lookaside': %s" % e)
+            raise ValueError(
+                "There is a bad configuration in 'variant_as_lookaside': %s" % e
+            )
 
     variant_processing_order = reversed(graph.prune_graph())
     return list(variant_processing_order)

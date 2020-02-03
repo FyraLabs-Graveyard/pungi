@@ -26,12 +26,7 @@ Pungi).
 
 
 def get_cmd(
-    conf_file,
-    arch,
-    repos,
-    lookasides,
-    platform=None,
-    filter_packages=None,
+    conf_file, arch, repos, lookasides, platform=None, filter_packages=None,
 ):
     cmd = ["fus", "--verbose", "--arch", arch]
 
@@ -64,7 +59,7 @@ def write_config(conf_file, modules, packages):
 def _prep_path(path):
     """Strip file:// from the path if present."""
     if path.startswith("file://"):
-        return path[len("file://"):]
+        return path[len("file://") :]
     return path
 
 

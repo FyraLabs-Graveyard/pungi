@@ -32,7 +32,7 @@ from pungi.util import DEBUG_PATTERNS
 
 def get_source_name(pkg):
     # Workaround for rhbz#1418298
-    return pkg.sourcerpm.rsplit('-', 2)[0]
+    return pkg.sourcerpm.rsplit("-", 2)[0]
 
 
 class GatherOptions(pungi.common.OptionsBase):
@@ -79,21 +79,21 @@ class GatherOptions(pungi.common.OptionsBase):
 
     def __str__(self):
         lines = [
-            'fulltree=%s' % self.fulltree,
-            'fulltree_excludes=%d items' % len(self.fulltree_excludes),
-            'resolve_deps=%s' % self.resolve_deps,
-            'selfhosting=%s' % self.selfhosting,
-            'greedy_method=%s' % self.greedy_method,
-            'langpacks=%s' % self.langpacks,
-            'multilib_methods=%s' % self.multilib_methods,
-            'multilib_blacklist=%d items' % len(self.multilib_blacklist),
-            'multilib_whitelist=%d items' % len(self.multilib_whitelist),
-            'lookaside_repos=%s' % self.lookaside_repos,
-            'prepopulate=%d items' % len(self.prepopulate),
-            'exclude_source=%s' % self.exclude_source,
-            'exclude_debug=%s' % self.exclude_debug
+            "fulltree=%s" % self.fulltree,
+            "fulltree_excludes=%d items" % len(self.fulltree_excludes),
+            "resolve_deps=%s" % self.resolve_deps,
+            "selfhosting=%s" % self.selfhosting,
+            "greedy_method=%s" % self.greedy_method,
+            "langpacks=%s" % self.langpacks,
+            "multilib_methods=%s" % self.multilib_methods,
+            "multilib_blacklist=%d items" % len(self.multilib_blacklist),
+            "multilib_whitelist=%d items" % len(self.multilib_whitelist),
+            "lookaside_repos=%s" % self.lookaside_repos,
+            "prepopulate=%d items" % len(self.prepopulate),
+            "exclude_source=%s" % self.exclude_source,
+            "exclude_debug=%s" % self.exclude_debug,
         ]
-        return '[\n%s\n]' % '\n'.join('    ' + l for l in lines)
+        return "[\n%s\n]" % "\n".join("    " + l for l in lines)
 
 
 class QueryCache(object):
@@ -142,7 +142,9 @@ class GatherBase(object):
         # lookaside.
 
         # source packages
-        self.q_source_packages = q.filter(arch=self.dnf.arch_wrapper.source_arches).apply()
+        self.q_source_packages = q.filter(
+            arch=self.dnf.arch_wrapper.source_arches
+        ).apply()
         q = q.difference(self.q_source_packages)
 
         # filter arches
@@ -191,8 +193,12 @@ class Gather(GatherBase):
             if not self.logger.handlers:
                 # default logging handler
                 handler = logging.StreamHandler()
-                handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)-8s] %(message)s",
-                                                       datefmt="%Y-%m-%d %H:%M:%S"))
+                handler.setFormatter(
+                    logging.Formatter(
+                        "%(asctime)s [%(levelname)-8s] %(message)s",
+                        datefmt="%Y-%m-%d %H:%M:%S",
+                    )
+                )
                 handler.setLevel(logging.DEBUG)
                 self.logger.addHandler(handler)
 
@@ -202,22 +208,23 @@ class Gather(GatherBase):
             self.dnf._sack,
             gather_options.multilib_methods,
             blacklist=self.opts.multilib_blacklist,
-            whitelist=self.opts.multilib_whitelist)
+            whitelist=self.opts.multilib_whitelist,
+        )
 
         # already processed packages
-        self.finished_add_binary_package_deps = {}      # {pkg: [deps]}
-        self.finished_add_debug_package_deps = {}       # {pkg: [deps]}
-        self.finished_add_source_package_deps = {}      # {pkg: [deps]}
+        self.finished_add_binary_package_deps = {}  # {pkg: [deps]}
+        self.finished_add_debug_package_deps = {}  # {pkg: [deps]}
+        self.finished_add_source_package_deps = {}  # {pkg: [deps]}
 
         self.finished_get_package_deps_reqs = {}
 
-        self.finished_add_conditional_packages = {}     # {pkg: [pkgs]}
-        self.finished_add_source_packages = {}          # {pkg: src-pkg|None}
-        self.sourcerpm_cache = {}                       # {src_nvra: src-pkg|None}
-        self.finished_add_debug_packages = {}           # {pkg: [debug-pkgs]}
-        self.finished_add_fulltree_packages = {}        # {pkg: [pkgs]}
-        self.finished_add_langpack_packages = {}        # {pkg: [pkgs]}
-        self.finished_add_multilib_packages = {}        # {pkg: pkg|None}
+        self.finished_add_conditional_packages = {}  # {pkg: [pkgs]}
+        self.finished_add_source_packages = {}  # {pkg: src-pkg|None}
+        self.sourcerpm_cache = {}  # {src_nvra: src-pkg|None}
+        self.finished_add_debug_packages = {}  # {pkg: [debug-pkgs]}
+        self.finished_add_fulltree_packages = {}  # {pkg: [pkgs]}
+        self.finished_add_langpack_packages = {}  # {pkg: [pkgs]}
+        self.finished_add_multilib_packages = {}  # {pkg: pkg|None}
 
         # result
         self.result_binary_packages = set()
@@ -254,11 +261,17 @@ class Gather(GatherBase):
                 all_pkgs.append(pkg)
 
         if not debuginfo:
-            native_pkgs = set(self.q_native_binary_packages.filter(pkg=all_pkgs).apply())
-            multilib_pkgs = set(self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply())
+            native_pkgs = set(
+                self.q_native_binary_packages.filter(pkg=all_pkgs).apply()
+            )
+            multilib_pkgs = set(
+                self.q_multilib_binary_packages.filter(pkg=all_pkgs).apply()
+            )
         else:
             native_pkgs = set(self.q_native_debug_packages.filter(pkg=all_pkgs).apply())
-            multilib_pkgs = set(self.q_multilib_debug_packages.filter(pkg=all_pkgs).apply())
+            multilib_pkgs = set(
+                self.q_multilib_debug_packages.filter(pkg=all_pkgs).apply()
+            )
 
         result = set()
 
@@ -307,7 +320,7 @@ class Gather(GatherBase):
             version=pkg.version,
             release=pkg.release,
             arch=pkg.arch,
-            reponame=self.opts.lookaside_repos
+            reponame=self.opts.lookaside_repos,
         )
         return pkg in pkgs
 
@@ -328,7 +341,7 @@ class Gather(GatherBase):
                 # lookaside
                 if self.is_from_lookaside(i):
                     self._set_flag(i, PkgFlag.lookaside)
-                if i.sourcerpm.rsplit('-', 2)[0] in self.opts.fulltree_excludes:
+                if i.sourcerpm.rsplit("-", 2)[0] in self.opts.fulltree_excludes:
                     self._set_flag(i, PkgFlag.fulltree_exclude)
 
     def _get_package_deps(self, pkg, debuginfo=False):
@@ -350,8 +363,8 @@ class Gather(GatherBase):
         # empty.
         requires = (
             pkg.requires
-            + getattr(pkg, 'requires_pre', [])
-            + getattr(pkg, 'requires_post', [])
+            + getattr(pkg, "requires_pre", [])
+            + getattr(pkg, "requires_post", [])
         )
 
         q = queue.filter(provides=requires).apply()
@@ -378,7 +391,9 @@ class Gather(GatherBase):
         """Given an name of a queue (stored as attribute in `self`), exclude
         all given packages and keep only the latest per package name and arch.
         """
-        setattr(self, queue, getattr(self, queue).filter(pkg__neq=exclude).latest().apply())
+        setattr(
+            self, queue, getattr(self, queue).filter(pkg__neq=exclude).latest().apply()
+        )
 
     @Profiler("Gather._apply_excludes()")
     def _apply_excludes(self, excludes):
@@ -395,20 +410,22 @@ class Gather(GatherBase):
             with Profiler("Gather._apply_excludes():exclude"):
                 if pattern.endswith(".+"):
                     pkgs = self.q_multilib_binary_packages.filter(
-                        name__glob=pattern[:-2], arch__neq='noarch',
-                        reponame__neq=self.opts.lookaside_repos)
+                        name__glob=pattern[:-2],
+                        arch__neq="noarch",
+                        reponame__neq=self.opts.lookaside_repos,
+                    )
                 elif pattern.endswith(".src"):
                     pkgs = self.q_source_packages.filter(
-                        name__glob=pattern[:-4],
-                        reponame__neq=self.opts.lookaside_repos)
+                        name__glob=pattern[:-4], reponame__neq=self.opts.lookaside_repos
+                    )
                 elif pungi.util.pkg_is_debug(pattern):
                     pkgs = self.q_debug_packages.filter(
-                        name__glob=pattern,
-                        reponame__neq=self.opts.lookaside_repos)
+                        name__glob=pattern, reponame__neq=self.opts.lookaside_repos
+                    )
                 else:
                     pkgs = self.q_binary_packages.filter(
-                        name__glob=pattern,
-                        reponame__neq=self.opts.lookaside_repos)
+                        name__glob=pattern, reponame__neq=self.opts.lookaside_repos
+                    )
 
                 exclude.update(pkgs)
                 self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
@@ -417,15 +434,22 @@ class Gather(GatherBase):
         for pattern in self.opts.multilib_blacklist:
             with Profiler("Gather._apply_excludes():exclude-multilib-blacklist"):
                 # TODO: does whitelist affect this in any way?
-                pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern, arch__neq='noarch')
+                pkgs = self.q_multilib_binary_packages.filter(
+                    name__glob=pattern, arch__neq="noarch"
+                )
                 exclude.update(pkgs)
                 self.logger.debug("EXCLUDED by %s: %s", pattern, [str(p) for p in pkgs])
                 self.dnf._sack.add_excludes(pkgs)
 
-        all_queues = ['q_binary_packages', 'q_native_binary_packages',
-                      'q_multilib_binary_packages', 'q_noarch_binary_packages',
-                      'q_source_packages', 'q_native_debug_packages',
-                      'q_multilib_debug_packages']
+        all_queues = [
+            "q_binary_packages",
+            "q_native_binary_packages",
+            "q_multilib_binary_packages",
+            "q_noarch_binary_packages",
+            "q_source_packages",
+            "q_native_debug_packages",
+            "q_multilib_debug_packages",
+        ]
 
         with Profiler("Gather._apply_excludes():exclude-queries"):
             for queue in all_queues:
@@ -449,10 +473,14 @@ class Gather(GatherBase):
         for pattern in includes:
             with Profiler("Gather.add_initial_packages():include"):
                 if pattern == "system-release" and self.opts.greedy_method == "all":
-                    pkgs = self.q_binary_packages.filter(provides="system-release").apply()
+                    pkgs = self.q_binary_packages.filter(
+                        provides="system-release"
+                    ).apply()
                 else:
                     if pattern.endswith(".+"):
-                        pkgs = self.q_multilib_binary_packages.filter(name__glob=pattern[:-2]).apply()
+                        pkgs = self.q_multilib_binary_packages.filter(
+                            name__glob=pattern[:-2]
+                        ).apply()
                     else:
                         pkgs = self.q_binary_packages.filter(name__glob=pattern).apply()
 
@@ -482,19 +510,37 @@ class Gather(GatherBase):
         # Must be executed *after* add_initial_packages() to exclude packages properly.
 
         # source
-        self.source_pkgs_cache = QueryCache(self.q_source_packages, "name", "version", "release")
+        self.source_pkgs_cache = QueryCache(
+            self.q_source_packages, "name", "version", "release"
+        )
 
         # debug
-        self.native_debug_packages_cache = QueryCache(self.q_native_debug_packages, "sourcerpm")
-        self.multilib_debug_packages_cache = QueryCache(self.q_multilib_debug_packages, "sourcerpm")
+        self.native_debug_packages_cache = QueryCache(
+            self.q_native_debug_packages, "sourcerpm"
+        )
+        self.multilib_debug_packages_cache = QueryCache(
+            self.q_multilib_debug_packages, "sourcerpm"
+        )
 
         # packages by sourcerpm
-        self.q_native_pkgs_by_sourcerpm_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch__neq="noarch")
-        self.q_multilib_pkgs_by_sourcerpm_cache = QueryCache(self.q_multilib_binary_packages, "sourcerpm", arch__neq="noarch")
-        self.q_noarch_pkgs_by_sourcerpm_cache = QueryCache(self.q_native_binary_packages, "sourcerpm", arch="noarch")
+        self.q_native_pkgs_by_sourcerpm_cache = QueryCache(
+            self.q_native_binary_packages, "sourcerpm", arch__neq="noarch"
+        )
+        self.q_multilib_pkgs_by_sourcerpm_cache = QueryCache(
+            self.q_multilib_binary_packages, "sourcerpm", arch__neq="noarch"
+        )
+        self.q_noarch_pkgs_by_sourcerpm_cache = QueryCache(
+            self.q_native_binary_packages, "sourcerpm", arch="noarch"
+        )
 
         # multilib
-        self.q_multilib_binary_packages_cache = QueryCache(self.q_multilib_binary_packages, "name", "version", "release", arch__neq="noarch")
+        self.q_multilib_binary_packages_cache = QueryCache(
+            self.q_multilib_binary_packages,
+            "name",
+            "version",
+            "release",
+            arch__neq="noarch",
+        )
 
         # prepopulate
         self.prepopulate_cache = QueryCache(self.q_binary_packages, "name", "arch")
@@ -531,7 +577,9 @@ class Gather(GatherBase):
                 deps = self._get_package_deps(pkg)
                 for i, req in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg, req=req, reason='binary-dep')
+                        self._add_packages(
+                            [i], pulled_by=pkg, req=req, reason="binary-dep"
+                        )
                         added.add(i)
                 self.finished_add_binary_package_deps[pkg] = deps
 
@@ -593,7 +641,7 @@ class Gather(GatherBase):
 
             for i in deps:
                 if i not in self.result_binary_packages:
-                    self._add_packages([i], pulled_by=pkg, reason='cond-dep')
+                    self._add_packages([i], pulled_by=pkg, reason="cond-dep")
                     self._set_flag(pkg, PkgFlag.conditional)
                     added.add(i)
 
@@ -617,10 +665,14 @@ class Gather(GatherBase):
                 deps = self.finished_add_source_package_deps[pkg]
             except KeyError:
                 deps = self._get_package_deps(pkg)
-                self.finished_add_source_package_deps[pkg] = set(dep for (dep, req) in deps)
+                self.finished_add_source_package_deps[pkg] = set(
+                    dep for (dep, req) in deps
+                )
                 for i, req in deps:
                     if i not in self.result_binary_packages:
-                        self._add_packages([i], pulled_by=pkg, req=req, reason='source-dep')
+                        self._add_packages(
+                            [i], pulled_by=pkg, req=req, reason="source-dep"
+                        )
                         added.add(i)
                         self._set_flag(pkg, PkgFlag.self_hosting)
 
@@ -658,7 +710,9 @@ class Gather(GatherBase):
                     source_pkg = self.sourcerpm_cache.get(pkg.sourcerpm, None)
                     if source_pkg is None:
                         nvra = parse_nvra(pkg.sourcerpm)
-                        source_pkgs = self.source_pkgs_cache.get(nvra["name"], nvra["version"], nvra["release"])
+                        source_pkgs = self.source_pkgs_cache.get(
+                            nvra["name"], nvra["version"], nvra["release"]
+                        )
                         if source_pkgs:
                             source_pkg = self._get_matching_srpm(pkg, source_pkgs)
                             self.sourcerpm_cache[pkg.sourcerpm] = source_pkg
@@ -667,8 +721,10 @@ class Gather(GatherBase):
             if not source_pkg:
                 continue
 
-            if (source_pkg.repoid in self.opts.lookaside_repos
-                    or pkg.repoid in self.opts.lookaside_repos):
+            if (
+                source_pkg.repoid in self.opts.lookaside_repos
+                or pkg.repoid in self.opts.lookaside_repos
+            ):
                 self._set_flag(source_pkg, PkgFlag.lookaside)
             if source_pkg not in self.result_source_packages:
                 added.add(source_pkg)
@@ -741,15 +797,21 @@ class Gather(GatherBase):
             assert pkg is not None
 
             if get_source_name(pkg) in self.opts.fulltree_excludes:
-                self.logger.debug('No fulltree for %s due to exclude list', pkg)
+                self.logger.debug("No fulltree for %s due to exclude list", pkg)
                 continue
 
             try:
                 fulltree_pkgs = self.finished_add_fulltree_packages[pkg]
             except KeyError:
-                native_fulltree_pkgs = self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
-                multilib_fulltree_pkgs = self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
-                noarch_fulltree_pkgs = self.q_noarch_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                native_fulltree_pkgs = (
+                    self.q_native_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                )
+                multilib_fulltree_pkgs = (
+                    self.q_multilib_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                )
+                noarch_fulltree_pkgs = (
+                    self.q_noarch_pkgs_by_sourcerpm_cache.get(pkg.sourcerpm) or []
+                )
 
                 if not native_fulltree_pkgs:
                     # no existing native pkgs -> pull multilib
@@ -767,9 +829,9 @@ class Gather(GatherBase):
                 # We pull packages determined by `pull_native`, or everything
                 # if we're greedy
                 fulltree_pkgs = []
-                if pull_native or self.opts.greedy_method == 'all':
+                if pull_native or self.opts.greedy_method == "all":
                     fulltree_pkgs.extend(native_fulltree_pkgs)
-                if not pull_native or self.opts.greedy_method == 'all':
+                if not pull_native or self.opts.greedy_method == "all":
                     fulltree_pkgs.extend(multilib_fulltree_pkgs)
 
                 # always pull all noarch subpackages
@@ -777,7 +839,7 @@ class Gather(GatherBase):
 
             for i in fulltree_pkgs:
                 if i not in self.result_binary_packages:
-                    self._add_packages([i], reason='fulltree')
+                    self._add_packages([i], reason="fulltree")
                     self._set_flag(i, PkgFlag.fulltree)
                     added.add(i)
 
@@ -809,15 +871,21 @@ class Gather(GatherBase):
             try:
                 langpack_pkgs = self.finished_add_langpack_packages[pkg]
             except KeyError:
-                patterns = [i["install"] for i in langpack_patterns if i["name"] == pkg.name]
+                patterns = [
+                    i["install"] for i in langpack_patterns if i["name"] == pkg.name
+                ]
                 patterns = [i.replace("%s", "*") for i in patterns]
 
                 if not patterns:
                     self.finished_add_langpack_packages[pkg] = []
                     continue
 
-                langpack_pkgs = self.q_binary_packages.filter(name__glob=patterns).apply()
-                langpack_pkgs = langpack_pkgs.filter(name__glob__not=["*-devel", "*-static"])
+                langpack_pkgs = self.q_binary_packages.filter(
+                    name__glob=patterns
+                ).apply()
+                langpack_pkgs = langpack_pkgs.filter(
+                    name__glob__not=["*-devel", "*-static"]
+                )
                 langpack_pkgs = langpack_pkgs.filter(name__neq=exceptions)
 
             pkgs_by_name = {}
@@ -834,7 +902,7 @@ class Gather(GatherBase):
                 langpack_pkgs.add(i)
                 self._set_flag(i, PkgFlag.langpack)
                 if i not in self.result_binary_packages:
-                    self._add_packages([i], pulled_by=pkg, reason='langpack')
+                    self._add_packages([i], pulled_by=pkg, reason="langpack")
                     added.add(pkg)
             self.finished_add_langpack_packages[pkg] = langpack_pkgs
 
@@ -856,7 +924,9 @@ class Gather(GatherBase):
                 self.finished_add_multilib_packages[pkg] = None
                 continue
 
-            pkgs = self.q_multilib_binary_packages_cache.get(pkg.name, pkg.version, pkg.release)
+            pkgs = self.q_multilib_binary_packages_cache.get(
+                pkg.name, pkg.version, pkg.release
+            )
             pkgs = self._get_best_package(pkgs)
             multilib_pkgs = []
             for i in pkgs:
@@ -865,7 +935,7 @@ class Gather(GatherBase):
                     multilib_pkgs.append(i)
                     added.add(i)
                     self._set_flag(i, PkgFlag.multilib)
-                    self._add_packages([i], reason='multilib:%s' % is_multilib)
+                    self._add_packages([i], reason="multilib:%s" % is_multilib)
                     self.finished_add_multilib_packages[pkg] = i
                     # TODO: ^^^ may get multiple results; i686, i586, etc.
 
@@ -879,45 +949,51 @@ class Gather(GatherBase):
         added = self.add_initial_packages(pattern_list)
         self._add_packages(added)
 
-        added = self.log_count('PREPOPULATE', self.add_prepopulate_packages)
-        self._add_packages(added, reason='prepopulate')
+        added = self.log_count("PREPOPULATE", self.add_prepopulate_packages)
+        self._add_packages(added, reason="prepopulate")
 
         for pass_num in count(1):
             self.logger.debug("PASS %s" % pass_num)
 
-            if self.log_count('CONDITIONAL DEPS', self.add_conditional_packages):
+            if self.log_count("CONDITIONAL DEPS", self.add_conditional_packages):
                 continue
 
             # resolve deps
-            if self.log_count('BINARY DEPS', self.add_binary_package_deps):
+            if self.log_count("BINARY DEPS", self.add_binary_package_deps):
                 continue
 
-            if self.log_count('SOURCE DEPS', self.add_source_package_deps):
+            if self.log_count("SOURCE DEPS", self.add_source_package_deps):
                 continue
 
-            if self.log_count('SOURCE PACKAGES', self.add_source_packages):
+            if self.log_count("SOURCE PACKAGES", self.add_source_packages):
                 continue
 
-            if self.log_count('DEBUG PACKAGES', self.add_debug_packages):
+            if self.log_count("DEBUG PACKAGES", self.add_debug_packages):
                 continue
 
             if self.log_count("DEBUG DEPS", self.add_debug_package_deps):
                 continue
 
-            if self.log_count('FULLTREE', self.add_fulltree_packages):
+            if self.log_count("FULLTREE", self.add_fulltree_packages):
                 continue
 
-            if self.log_count('LANGPACKS', self.add_langpack_packages, self.opts.langpacks):
+            if self.log_count(
+                "LANGPACKS", self.add_langpack_packages, self.opts.langpacks
+            ):
                 continue
 
-            if self.log_count('MULTILIB', self.add_multilib_packages):
+            if self.log_count("MULTILIB", self.add_multilib_packages):
                 continue
 
             # nothing added -> break depsolving cycle
             break
 
     def download(self, destdir):
-        pkglist = (self.result_binary_packages | self.result_debug_packages | self.result_source_packages)
+        pkglist = (
+            self.result_binary_packages
+            | self.result_debug_packages
+            | self.result_source_packages
+        )
         self.dnf.download_packages(pkglist)
         linker = Linker(logger=self.logger)
 
@@ -937,7 +1013,7 @@ class Gather(GatherBase):
         Print a message, run the function with given arguments and log length
         of result.
         """
-        self.logger.debug('%s', msg)
+        self.logger.debug("%s", msg)
         added = method(*args)
-        self.logger.debug('ADDED: %s', len(added))
+        self.logger.debug("ADDED: %s", len(added))
         return added

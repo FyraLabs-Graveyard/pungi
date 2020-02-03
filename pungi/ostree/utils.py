@@ -30,7 +30,7 @@ def make_log_file(log_dir, filename):
     if not log_dir:
         return None
     makedirs(log_dir)
-    return os.path.join(log_dir, '%s.log' % filename)
+    return os.path.join(log_dir, "%s.log" % filename)
 
 
 def get_ref_from_treefile(treefile, arch=None, logger=None):
@@ -40,7 +40,7 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
     """
     logger = logger or logging.getLogger(__name__)
     if os.path.isfile(treefile):
-        with open(treefile, 'r') as f:
+        with open(treefile, "r") as f:
             try:
                 # rpm-ostree now supports YAML
                 #   https://github.com/projectatomic/rpm-ostree/pull/1377
@@ -50,9 +50,9 @@ def get_ref_from_treefile(treefile, arch=None, logger=None):
                     parsed = json.load(f)
                 return parsed["ref"].replace("${basearch}", getBaseArch(arch))
             except Exception as e:
-                logger.error('Unable to get ref from treefile: %s' % e)
+                logger.error("Unable to get ref from treefile: %s" % e)
     else:
-        logger.error('Unable to open treefile')
+        logger.error("Unable to open treefile")
     return None
 
 
@@ -61,11 +61,13 @@ def get_commitid_from_commitid_file(commitid_file):
     if not os.path.exists(commitid_file + ".stamp"):
         # The stamp does not exist, so no new commit.
         return None
-    with open(commitid_file, 'r') as f:
-        return f.read().replace('\n', '')
+    with open(commitid_file, "r") as f:
+        return f.read().replace("\n", "")
 
 
-def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, update_dict=None):
+def tweak_treeconf(
+    treeconf, source_repos=None, keep_original_sources=False, update_dict=None
+):
     """
     Update tree config file by adding new repos, and remove existing repos
     from the tree config file if 'keep_original_sources' is not enabled.
@@ -74,51 +76,51 @@ def tweak_treeconf(treeconf, source_repos=None, keep_original_sources=False, upd
     """
 
     # backup the old tree config
-    shutil.copy2(treeconf, '{0}.bak'.format(treeconf))
+    shutil.copy2(treeconf, "{0}.bak".format(treeconf))
 
     treeconf_dir = os.path.dirname(treeconf)
-    with open(treeconf, 'r') as f:
+    with open(treeconf, "r") as f:
         # rpm-ostree now supports YAML, but we'll end up converting it to JSON.
         # https://github.com/projectatomic/rpm-ostree/pull/1377
-        if treeconf.endswith('.yaml'):
+        if treeconf.endswith(".yaml"):
             treeconf_content = yaml.safe_load(f)
-            treeconf = treeconf.replace('.yaml', '.json')
+            treeconf = treeconf.replace(".yaml", ".json")
         else:
             treeconf_content = json.load(f)
 
     repos = []
     if source_repos:
         # Sort to ensure reliable ordering
-        source_repos = sorted(source_repos, key=lambda x: x['name'])
+        source_repos = sorted(source_repos, key=lambda x: x["name"])
         # Now, since pungi includes timestamps in the repo names which
         # currently defeats rpm-ostree's change detection, let's just
         # use repos named 'repo-<number>'.
         # https://pagure.io/pungi/issue/811
-        with open("{0}/pungi.repo".format(treeconf_dir), 'w') as f:
+        with open("{0}/pungi.repo".format(treeconf_dir), "w") as f:
             for i, repo in enumerate(source_repos):
-                name = 'repo-{0}'.format(i)
+                name = "repo-{0}".format(i)
                 f.write("[%s]\n" % name)
                 f.write("name=%s\n" % name)
-                f.write("baseurl=%s\n" % repo['baseurl'])
-                exclude = repo.get('exclude', None)
+                f.write("baseurl=%s\n" % repo["baseurl"])
+                exclude = repo.get("exclude", None)
                 if exclude:
                     f.write("exclude=%s\n" % exclude)
-                gpgcheck = '1' if repo.get('gpgcheck', False) else '0'
+                gpgcheck = "1" if repo.get("gpgcheck", False) else "0"
                 f.write("gpgcheck=%s\n" % gpgcheck)
 
                 repos.append(name)
 
-    original_repos = treeconf_content.get('repos', [])
+    original_repos = treeconf_content.get("repos", [])
     if keep_original_sources:
-        treeconf_content['repos'] = original_repos + repos
+        treeconf_content["repos"] = original_repos + repos
     else:
-        treeconf_content['repos'] = repos
+        treeconf_content["repos"] = repos
 
     # update content with config values from dictionary (for example 'ref')
     if isinstance(update_dict, dict):
         treeconf_content.update(update_dict)
 
     # update tree config to add new repos
-    with open(treeconf, 'w') as f:
+    with open(treeconf, "w") as f:
         json.dump(treeconf_content, f, indent=4)
     return treeconf

@@ -21,14 +21,29 @@ from ..util import process_args
 
 
 class LoraxWrapper(object):
-    def get_lorax_cmd(self, product, version, release, repo_baseurl, output_dir,
-                      variant=None, bugurl=None, nomacboot=False, noupgrade=False,
-                      is_final=False, buildarch=None, volid=None, buildinstallpackages=None,
-                      add_template=None, add_arch_template=None,
-                      add_template_var=None, add_arch_template_var=None,
-                      rootfs_size=None,
-                      log_dir=None,
-                      dracut_args=None):
+    def get_lorax_cmd(
+        self,
+        product,
+        version,
+        release,
+        repo_baseurl,
+        output_dir,
+        variant=None,
+        bugurl=None,
+        nomacboot=False,
+        noupgrade=False,
+        is_final=False,
+        buildarch=None,
+        volid=None,
+        buildinstallpackages=None,
+        add_template=None,
+        add_arch_template=None,
+        add_template_var=None,
+        add_arch_template_var=None,
+        rootfs_size=None,
+        log_dir=None,
+        dracut_args=None,
+    ):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
         cmd.append("--version=%s" % version)
@@ -60,17 +75,17 @@ class LoraxWrapper(object):
         if volid:
             cmd.append("--volid=%s" % volid)
 
-        cmd.extend(process_args('--installpkgs=%s', buildinstallpackages))
-        cmd.extend(process_args('--add-template=%s', add_template))
-        cmd.extend(process_args('--add-arch-template=%s', add_arch_template))
-        cmd.extend(process_args('--add-template-var=%s', add_template_var))
-        cmd.extend(process_args('--add-arch-template-var=%s', add_arch_template_var))
+        cmd.extend(process_args("--installpkgs=%s", buildinstallpackages))
+        cmd.extend(process_args("--add-template=%s", add_template))
+        cmd.extend(process_args("--add-arch-template=%s", add_arch_template))
+        cmd.extend(process_args("--add-template-var=%s", add_template_var))
+        cmd.extend(process_args("--add-arch-template-var=%s", add_arch_template_var))
 
         if log_dir:
-            cmd.append('--logfile=%s' % os.path.join(log_dir, 'lorax.log'))
+            cmd.append("--logfile=%s" % os.path.join(log_dir, "lorax.log"))
 
         if rootfs_size is not None:
-            cmd.append('--rootfs-size=%s' % (rootfs_size))
+            cmd.append("--rootfs-size=%s" % (rootfs_size))
 
         for i in force_list(dracut_args or []):
             cmd.append("--dracut-arg=%s" % i)
@@ -82,7 +97,22 @@ class LoraxWrapper(object):
 
         return cmd
 
-    def get_buildinstall_cmd(self, product, version, release, repo_baseurl, output_dir, variant=None, bugurl=None, nomacboot=False, noupgrade=False, is_final=False, buildarch=None, volid=None, brand=None):
+    def get_buildinstall_cmd(
+        self,
+        product,
+        version,
+        release,
+        repo_baseurl,
+        output_dir,
+        variant=None,
+        bugurl=None,
+        nomacboot=False,
+        noupgrade=False,
+        is_final=False,
+        buildarch=None,
+        volid=None,
+        brand=None,
+    ):
         # RHEL 6 compatibility
         # Usage: buildinstall [--debug] --version <version> --brand <brand> --product <product> --release <comment> --final [--output outputdir] [--discs <discstring>] <root>
 

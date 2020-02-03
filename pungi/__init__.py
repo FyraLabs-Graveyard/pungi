@@ -9,15 +9,20 @@ def get_full_version():
     Find full version of Pungi: if running from git, this will return cleaned
     output of `git describe`, otherwise it will look for installed version.
     """
-    location = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
-    if os.path.isdir(os.path.join(location, '.git')):
+    location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+    if os.path.isdir(os.path.join(location, ".git")):
         import subprocess
-        proc = subprocess.Popen(['git', '--git-dir=%s/.git' % location, 'describe', '--tags'],
-                                stdout=subprocess.PIPE, universal_newlines=True)
+
+        proc = subprocess.Popen(
+            ["git", "--git-dir=%s/.git" % location, "describe", "--tags"],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
         output, _ = proc.communicate()
-        return re.sub(r'-1.fc\d\d?', '', output.strip().replace('pungi-', ''))
+        return re.sub(r"-1.fc\d\d?", "", output.strip().replace("pungi-", ""))
     else:
         import subprocess
+
         proc = subprocess.Popen(
             ["rpm", "-q", "pungi"], stdout=subprocess.PIPE, universal_newlines=True
         )
@@ -25,4 +30,4 @@ def get_full_version():
         if not err:
             return output.rstrip()
         else:
-            return 'unknown'
+            return "unknown"

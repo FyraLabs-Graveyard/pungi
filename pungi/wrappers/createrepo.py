@@ -28,13 +28,37 @@ class CreaterepoWrapper(object):
             self.mergerepo = "mergerepo"
             self.modifyrepo = "modifyrepo"
 
-    def get_createrepo_cmd(self, directory, baseurl=None, outputdir=None, basedir=None, excludes=None,
-                           pkglist=None, groupfile=None, cachedir=None, update=True,
-                           update_md_path=None, skip_stat=False, checkts=False, split=False,
-                           pretty=True, database=True, checksum=None, unique_md_filenames=True,
-                           distro=None, content=None, repo=None, revision=None, deltas=False,
-                           oldpackagedirs=None, num_deltas=None, workers=None, use_xz=False,
-                           compress_type=None, extra_args=None):
+    def get_createrepo_cmd(
+        self,
+        directory,
+        baseurl=None,
+        outputdir=None,
+        basedir=None,
+        excludes=None,
+        pkglist=None,
+        groupfile=None,
+        cachedir=None,
+        update=True,
+        update_md_path=None,
+        skip_stat=False,
+        checkts=False,
+        split=False,
+        pretty=True,
+        database=True,
+        checksum=None,
+        unique_md_filenames=True,
+        distro=None,
+        content=None,
+        repo=None,
+        revision=None,
+        deltas=False,
+        oldpackagedirs=None,
+        num_deltas=None,
+        workers=None,
+        use_xz=False,
+        compress_type=None,
+        extra_args=None,
+    ):
         # groupfile = /path/to/comps.xml
 
         cmd = [self.createrepo, directory]
@@ -129,7 +153,15 @@ class CreaterepoWrapper(object):
 
         return cmd
 
-    def get_mergerepo_cmd(self, outputdir, repos, database=True, pkglist=None, nogroups=False, noupdateinfo=None):
+    def get_mergerepo_cmd(
+        self,
+        outputdir,
+        repos,
+        database=True,
+        pkglist=None,
+        nogroups=False,
+        noupdateinfo=None,
+    ):
         cmd = [self.mergerepo]
 
         cmd.append("--outputdir=%s" % outputdir)
@@ -156,7 +188,9 @@ class CreaterepoWrapper(object):
 
         return cmd
 
-    def get_modifyrepo_cmd(self, repo_path, file_path, mdtype=None, compress_type=None, remove=False):
+    def get_modifyrepo_cmd(
+        self, repo_path, file_path, mdtype=None, compress_type=None, remove=False
+    ):
         cmd = [self.modifyrepo]
 
         cmd.append(file_path)

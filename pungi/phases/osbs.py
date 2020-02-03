@@ -12,7 +12,7 @@ from ..wrappers import kojiwrapper
 
 
 class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
-    name = 'osbs'
+    name = "osbs"
 
     def __init__(self, compose):
         super(OSBSPhase, self).__init__(compose)
@@ -32,9 +32,10 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
         """Create a file with image metadata if the phase actually ran."""
         if self._skipped:
             return
-        with open(self.compose.paths.compose.metadata('osbs.json'), 'w') as f:
-            json.dump(self.pool.metadata, f, indent=4, sort_keys=True,
-                      separators=(',', ': '))
+        with open(self.compose.paths.compose.metadata("osbs.json"), "w") as f:
+            json.dump(
+                self.pool.metadata, f, indent=4, sort_keys=True, separators=(",", ": ")
+            )
 
     def request_push(self):
         """Store configuration data about where to push the created images and
@@ -73,100 +74,117 @@ class OSBSThread(WorkerThread):
     def process(self, item, num):
         compose, variant, config = item
         self.num = num
-        with util.failable(compose, bool(config.pop('failable', None)), variant, '*', 'osbs',
-                           logger=self.pool._logger):
+        with util.failable(
+            compose,
+            bool(config.pop("failable", None)),
+            variant,
+            "*",
+            "osbs",
+            logger=self.pool._logger,
+        ):
             self.worker(compose, variant, config)
 
     def worker(self, compose, variant, config):
-        msg = 'OSBS task for variant %s' % variant.uid
-        self.pool.log_info('[BEGIN] %s' % msg)
-        koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
+        msg = "OSBS task for variant %s" % variant.uid
+        self.pool.log_info("[BEGIN] %s" % msg)
+        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
         koji.login()
 
         # Start task
-        source = config.pop('url')
-        target = config.pop('target')
-        priority = config.pop('priority', None)
-        gpgkey = config.pop('gpgkey', None)
-        repos = [self._get_repo(compose, v, gpgkey=gpgkey)
-                 for v in [variant.uid] + shortcuts.force_list(config.pop('repo', []))]
+        source = config.pop("url")
+        target = config.pop("target")
+        priority = config.pop("priority", None)
+        gpgkey = config.pop("gpgkey", None)
+        repos = [
+            self._get_repo(compose, v, gpgkey=gpgkey)
+            for v in [variant.uid] + shortcuts.force_list(config.pop("repo", []))
+        ]
         # Deprecated in 4.1.36
         registry = config.pop("registry", None)
 
-        config['yum_repourls'] = repos
+        config["yum_repourls"] = repos
 
-        task_id = koji.koji_proxy.buildContainer(source, target, config,
-                                                 priority=priority)
+        task_id = koji.koji_proxy.buildContainer(
+            source, target, config, priority=priority
+        )
 
         # Wait for it to finish and capture the output into log file (even
         # though there is not much there).
-        log_dir = os.path.join(compose.paths.log.topdir(), 'osbs')
+        log_dir = os.path.join(compose.paths.log.topdir(), "osbs")
         util.makedirs(log_dir)
-        log_file = os.path.join(log_dir, '%s-%s-watch-task.log'
-                                % (variant.uid, self.num))
+        log_file = os.path.join(
+            log_dir, "%s-%s-watch-task.log" % (variant.uid, self.num)
+        )
         if koji.watch_task(task_id, log_file) != 0:
-            raise RuntimeError('OSBS: task %s failed: see %s for details'
-                               % (task_id, log_file))
+            raise RuntimeError(
+                "OSBS: task %s failed: see %s for details" % (task_id, log_file)
+            )
 
-        scratch = config.get('scratch', False)
+        scratch = config.get("scratch", False)
         nvr = self._add_metadata(variant, task_id, compose, scratch)
         if nvr:
             registry = get_registry(compose, nvr, registry)
             if registry:
                 self.pool.registries[nvr] = registry
 
-        self.pool.log_info('[DONE ] %s' % msg)
+        self.pool.log_info("[DONE ] %s" % msg)
 
     def _add_metadata(self, variant, task_id, compose, is_scratch):
         # Create new Koji session. The task could take so long to finish that
         # our session will expire. This second session does not need to be
         # authenticated since it will only do reading operations.
-        koji = kojiwrapper.KojiWrapper(compose.conf['koji_profile'])
+        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
 
         # Create metadata
         metadata = {
-            'compose_id': compose.compose_id,
-            'koji_task': task_id,
+            "compose_id": compose.compose_id,
+            "koji_task": task_id,
         }
 
         result = koji.koji_proxy.getTaskResult(task_id)
         if is_scratch:
-            metadata.update({
-                'repositories': result['repositories'],
-            })
+            metadata.update(
+                {"repositories": result["repositories"]}
+            )
             # add a fake arch of 'scratch', so we can construct the metadata
             # in same data structure as real builds.
-            self.pool.metadata.setdefault(
-                variant.uid, {}).setdefault('scratch', []).append(metadata)
+            self.pool.metadata.setdefault(variant.uid, {}).setdefault(
+                "scratch", []
+            ).append(metadata)
             return None
 
         else:
-            build_id = int(result['koji_builds'][0])
+            build_id = int(result["koji_builds"][0])
             buildinfo = koji.koji_proxy.getBuild(build_id)
             archives = koji.koji_proxy.listArchives(build_id)
 
             nvr = "%(name)s-%(version)s-%(release)s" % buildinfo
 
-            metadata.update({
-                'name': buildinfo['name'],
-                'version': buildinfo['version'],
-                'release': buildinfo['release'],
-                'nvr': nvr,
-                'creation_time': buildinfo['creation_time'],
-            })
+            metadata.update(
+                {
+                    "name": buildinfo["name"],
+                    "version": buildinfo["version"],
+                    "release": buildinfo["release"],
+                    "nvr": nvr,
+                    "creation_time": buildinfo["creation_time"],
+                }
+            )
             for archive in archives:
                 data = {
-                    'filename': archive['filename'],
-                    'size': archive['size'],
-                    'checksum': archive['checksum'],
+                    "filename": archive["filename"],
+                    "size": archive["size"],
+                    "checksum": archive["checksum"],
                 }
-                data.update(archive['extra'])
+                data.update(archive["extra"])
                 data.update(metadata)
-                arch = archive['extra']['image']['arch']
-                self.pool.log_debug('Created Docker base image %s-%s-%s.%s' % (
-                    metadata['name'], metadata['version'], metadata['release'], arch))
-                self.pool.metadata.setdefault(
-                    variant.uid, {}).setdefault(arch, []).append(data)
+                arch = archive["extra"]["image"]["arch"]
+                self.pool.log_debug(
+                    "Created Docker base image %s-%s-%s.%s"
+                    % (metadata["name"], metadata["version"], metadata["release"], arch)
+                )
+                self.pool.metadata.setdefault(variant.uid, {}).setdefault(
+                    arch, []
+                ).append(data)
             return nvr
 
     def _get_repo(self, compose, repo, gpgkey=None):
@@ -201,17 +219,17 @@ class OSBSThread(WorkerThread):
 
             repo_file = os.path.join(
                 compose.paths.work.tmp_dir(None, variant),
-                'compose-rpms-%s-%s.repo' % (variant, self.num),
+                "compose-rpms-%s-%s.repo" % (variant, self.num),
             )
 
         gpgcheck = 1 if gpgkey else 0
-        with open(repo_file, 'w') as f:
-            f.write('[%s-%s-%s]\n' % (compose.compose_id, variant, self.num))
-            f.write('name=Compose %s (RPMs) - %s\n' % (compose.compose_id, variant))
-            f.write('baseurl=%s\n' % util.translate_path(compose, repo_path))
-            f.write('enabled=1\n')
-            f.write('gpgcheck=%s\n' % gpgcheck)
+        with open(repo_file, "w") as f:
+            f.write("[%s-%s-%s]\n" % (compose.compose_id, variant, self.num))
+            f.write("name=Compose %s (RPMs) - %s\n" % (compose.compose_id, variant))
+            f.write("baseurl=%s\n" % util.translate_path(compose, repo_path))
+            f.write("enabled=1\n")
+            f.write("gpgcheck=%s\n" % gpgcheck)
             if gpgcheck:
-                f.write('gpgkey=%s\n' % gpgkey)
+                f.write("gpgkey=%s\n" % gpgkey)
 
         return util.translate_path(compose, repo_file)

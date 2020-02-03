@@ -26,8 +26,13 @@ def get_variants_dtd(logger=None):
     """
     variants_dtd = "/usr/share/pungi/variants.dtd"
     if not os.path.isfile(variants_dtd):
-        devel_variants_dtd = os.path.normpath(os.path.realpath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "share", "variants.dtd")))
+        devel_variants_dtd = os.path.normpath(
+            os.path.realpath(
+                os.path.join(
+                    os.path.dirname(__file__), "..", "..", "share", "variants.dtd"
+                )
+            )
+        )
         msg = "Variants DTD not found: %s" % variants_dtd
         if os.path.isfile(devel_variants_dtd):
             if logger:
@@ -57,7 +62,7 @@ NO_WHITESPACE_ELEMENTS = [
 class VariantsXmlParser(object):
     def __init__(self, file_obj, tree_arches=None, tree_variants=None, logger=None):
         self.tree = lxml.etree.parse(file_obj)
-        with open(get_variants_dtd(logger), 'r') as f:
+        with open(get_variants_dtd(logger), "r") as f:
             self.dtd = lxml.etree.DTD(f)
         self.addons = {}
         self.variants = {}
@@ -111,10 +116,15 @@ class VariantsXmlParser(object):
             "parent": parent,
         }
         if self.tree_arches:
-            variant_dict["arches"] = [i for i in variant_dict["arches"] if i in self.tree_arches]
+            variant_dict["arches"] = [
+                i for i in variant_dict["arches"] if i in self.tree_arches
+            ]
         if not variant_dict["arches"]:
             if self.logger:
-                self.logger.info('Excluding variant %s: all its arches are filtered.' % variant_dict['id'])
+                self.logger.info(
+                    "Excluding variant %s: all its arches are filtered."
+                    % variant_dict["id"]
+                )
             return None
 
         for grouplist_node in variant_node.xpath("groups"):
@@ -141,7 +151,7 @@ class VariantsXmlParser(object):
             for module_node in modulelist_node.xpath("module"):
                 module = {
                     "name": str(module_node.text),
-                    "glob": self._is_true(module_node.attrib.get("glob", "false"))
+                    "glob": self._is_true(module_node.attrib.get("glob", "false")),
                 }
 
                 variant_dict["modules"].append(module)
@@ -151,7 +161,9 @@ class VariantsXmlParser(object):
                     "name": str(kojitag_node.text),
                 }
 
-                variant_dict["modular_koji_tags"] = variant_dict["modular_koji_tags"] or []
+                variant_dict["modular_koji_tags"] = (
+                    variant_dict["modular_koji_tags"] or []
+                )
                 variant_dict["modular_koji_tags"].append(kojitag)
 
         for environments_node in variant_node.xpath("environments"):
@@ -188,28 +200,37 @@ class VariantsXmlParser(object):
 
         has_optional = self._is_true(variant_node.attrib.get("has_optional", "false"))
         if has_optional and not contains_optional:
-            optional = Variant(id="optional", name="optional", type="optional",
-                               arches=variant.arches, groups=[], parent=variant)
+            optional = Variant(
+                id="optional",
+                name="optional",
+                type="optional",
+                arches=variant.arches,
+                groups=[],
+                parent=variant,
+            )
             self.add_child(optional, variant)
 
         for ref in variant_node.xpath("variants/ref/@id"):
             try:
                 child_variant = self.parse_variant_node(self.addons[ref], variant)
             except KeyError:
-                raise RuntimeError("Variant %s references non-existing variant %s"
-                                   % (variant.uid, ref))
+                raise RuntimeError(
+                    "Variant %s references non-existing variant %s" % (variant.uid, ref)
+                )
             self.add_child(child_variant, variant)
 
-# XXX: top-level optional
-#    for ref in variant_node.xpath("variants/ref/@id"):
-#        variant["variants"].append(copy.deepcopy(addons[ref]))
+        # XXX: top-level optional
+        #    for ref in variant_node.xpath("variants/ref/@id"):
+        #        variant["variants"].append(copy.deepcopy(addons[ref]))
 
         return variant
 
     def _is_excluded(self, variant):
         if self.tree_variants and variant.uid not in self.tree_variants:
             if self.logger:
-                self.logger.info('Excluding variant %s: filtered by configuration.' % variant)
+                self.logger.info(
+                    "Excluding variant %s: filtered by configuration." % variant
+                )
             return True
         return False
 
@@ -225,7 +246,9 @@ class VariantsXmlParser(object):
             variant_id = str(variant_node.attrib["id"])
             self.addons[variant_id] = variant_node
 
-        for variant_node in self.tree.xpath("/variants/variant[@type='layered-product']"):
+        for variant_node in self.tree.xpath(
+            "/variants/variant[@type='layered-product']"
+        ):
             variant_id = str(variant_node.attrib["id"])
             self.addons[variant_id] = variant_node
 
@@ -239,9 +262,20 @@ class VariantsXmlParser(object):
 
 
 class Variant(object):
-    def __init__(self, id, name, type, arches, groups, environments=None,
-                 buildinstallpackages=None, is_empty=False, parent=None,
-                 modules=None, modular_koji_tags=None):
+    def __init__(
+        self,
+        id,
+        name,
+        type,
+        arches,
+        groups,
+        environments=None,
+        buildinstallpackages=None,
+        is_empty=False,
+        parent=None,
+        modules=None,
+        modular_koji_tags=None,
+    ):
 
         environments = environments or []
         buildinstallpackages = buildinstallpackages or []
@@ -257,7 +291,9 @@ class Variant(object):
             self.modules = sorted(self.modules, key=lambda x: x["name"])
         self.modular_koji_tags = copy.deepcopy(modular_koji_tags)
         if self.modular_koji_tags:
-            self.modular_koji_tags = sorted(self.modular_koji_tags, key=lambda x: x["name"])
+            self.modular_koji_tags = sorted(
+                self.modular_koji_tags, key=lambda x: x["name"]
+            )
         self.buildinstallpackages = sorted(buildinstallpackages)
         self.variants = {}
         self.parent = parent
@@ -275,7 +311,9 @@ class Variant(object):
         return self.uid
 
     def __repr__(self):
-        return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(self)
+        return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(
+            self
+        )
 
     def __eq__(self, other):
         return self.type == other.type and self.uid == other.uid
@@ -284,7 +322,7 @@ class Variant(object):
         return not (self == other)
 
     def __lt__(self, other):
-        ORDERING = {'variant': 0, 'addon': 1, 'layered-product': 1, 'optional': 2}
+        ORDERING = {"variant": 0, "addon": 1, "layered-product": 1, "optional": 2}
         return (ORDERING[self.type], self.uid) < (ORDERING[other.type], other.uid)
 
     def __le__(self, other):
@@ -313,11 +351,17 @@ class Variant(object):
             raise RuntimeError("Only 'variant' can contain another variants.")
         if variant.id == self.id:
             # due to os/<variant.id> path -- addon id would conflict with parent variant id
-            raise RuntimeError("Child variant id must be different than parent variant id: %s" % variant.id)
+            raise RuntimeError(
+                "Child variant id must be different than parent variant id: %s"
+                % variant.id
+            )
         # sometimes an addon or layered product can be part of multiple variants with different set of arches
         arches = sorted(set(self.arches).intersection(set(variant.arches)))
         if self.arches and not arches:
-            raise RuntimeError("%s: arch list %s does not intersect with parent arch list: %s" % (variant, variant.arches, self.arches))
+            raise RuntimeError(
+                "%s: arch list %s does not intersect with parent arch list: %s"
+                % (variant, variant.arches, self.arches)
+            )
         variant.arches = arches
         self.variants[variant.id] = variant
         variant.parent = self
@@ -327,11 +371,12 @@ class Variant(object):
 
         types = types or ["self"]
         result = copy.deepcopy(self.groups)
-        for variant in self.get_variants(arch=arch, types=types,
-                                         recursive=recursive):
+        for variant in self.get_variants(arch=arch, types=types, recursive=recursive):
             if variant == self:
                 continue
-            for group in variant.get_groups(arch=arch, types=types, recursive=recursive):
+            for group in variant.get_groups(
+                arch=arch, types=types, recursive=recursive
+            ):
                 if group not in result:
                     result.append(group)
         return result
@@ -344,12 +389,12 @@ class Variant(object):
 
         types = types or ["self"]
         result = copy.deepcopy(self.modules)
-        for variant in self.get_variants(arch=arch, types=types,
-                                         recursive=recursive):
+        for variant in self.get_variants(arch=arch, types=types, recursive=recursive):
             if variant == self:
                 continue
-            for module in variant.get_modules(arch=arch, types=types,
-                                              recursive=recursive):
+            for module in variant.get_modules(
+                arch=arch, types=types, recursive=recursive
+            ):
                 if module not in result:
                     result.append(module)
         return result
@@ -362,12 +407,12 @@ class Variant(object):
 
         types = types or ["self"]
         result = copy.deepcopy(self.modular_koji_tags)
-        for variant in self.get_variants(arch=arch, types=types,
-                                         recursive=recursive):
+        for variant in self.get_variants(arch=arch, types=types, recursive=recursive):
             if variant == self:
                 continue
             for koji_tag in variant.get_modular_koji_tags(
-                    arch=arch, types=types, recursive=recursive):
+                arch=arch, types=types, recursive=recursive
+            ):
                 if koji_tag not in result:
                     result.append(koji_tag)
         return result
@@ -398,7 +443,11 @@ class Variant(object):
                 continue
             result.append(variant)
             if recursive:
-                result.extend(variant.get_variants(types=[i for i in types if i != "self"], recursive=True))
+                result.extend(
+                    variant.get_variants(
+                        types=[i for i in types if i != "self"], recursive=True
+                    )
+                )
 
         return result
 

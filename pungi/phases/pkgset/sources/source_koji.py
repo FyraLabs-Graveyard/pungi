@@ -62,8 +62,9 @@ def variant_dict_from_str(compose, module_str):
         nsv = module_str.split(":")
         if len(nsv) > 4:
             raise ValueError(
-                "Module string \"%s\" is not recognized. "
-                "Only NAME:STREAM[:VERSION[:CONTEXT]] is allowed.")
+                'Module string "%s" is not recognized. '
+                "Only NAME:STREAM[:VERSION[:CONTEXT]] is allowed."
+            )
         if len(nsv) > 3:
             module_info["context"] = nsv[3]
         if len(nsv) > 2:
@@ -77,23 +78,24 @@ def variant_dict_from_str(compose, module_str):
         compose.log_warning(
             "Variant file uses old format of module definition with '-'"
             "delimiter, please switch to official format defined by "
-            "Modules Naming Policy.")
+            "Modules Naming Policy."
+        )
 
         module_info = {}
         # The regex is matching a string which should represent the release number
         # of a module. The release number is in format: "%Y%m%d%H%M%S"
         release_regex = re.compile(r"^(\d){14}$")
 
-        section_start = module_str.rfind('-')
-        module_str_first_part = module_str[section_start+1:]
+        section_start = module_str.rfind("-")
+        module_str_first_part = module_str[section_start + 1 :]
         if release_regex.match(module_str_first_part):
-            module_info['version'] = module_str_first_part
+            module_info["version"] = module_str_first_part
             module_str = module_str[:section_start]
-            section_start = module_str.rfind('-')
-            module_info['stream'] = module_str[section_start+1:]
+            section_start = module_str.rfind("-")
+            module_info["stream"] = module_str[section_start + 1 :]
         else:
-            module_info['stream'] = module_str_first_part
-        module_info['name'] = module_str[:section_start]
+            module_info["stream"] = module_str_first_part
+        module_info["name"] = module_str[:section_start]
 
         return module_info
 
@@ -120,7 +122,7 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
         module_info.get("version", "*"),
         module_info.get("context", "*"),
     )
-    query_str = query_str.replace('*.*', '*')
+    query_str = query_str.replace("*.*", "*")
 
     koji_builds = koji_proxy.search(query_str, "build", "glob")
 
@@ -149,7 +151,7 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
         except KeyError:
             continue
 
-        if md['state'] == pungi.wrappers.kojiwrapper.KOJI_BUILD_DELETED:
+        if md["state"] == pungi.wrappers.kojiwrapper.KOJI_BUILD_DELETED:
             compose.log_debug(
                 "Module build %s has been deleted, ignoring it." % build["name"]
             )
@@ -166,7 +168,7 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
     # If there is version provided, then all modules with that version will go
     # in. In case version is missing, we will find the latest version and
     # include all modules with that version.
-    if not module_info.get('version'):
+    if not module_info.get("version"):
         # select all found modules with latest version
         sorted_modules = sorted(
             modules, key=lambda item: item["module_version"], reverse=True
@@ -188,7 +190,9 @@ class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
         self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
         # path prefix must contain trailing '/'
         path_prefix = self.koji_wrapper.koji_module.config.topdir.rstrip("/") + "/"
-        package_sets = get_pkgset_from_koji(self.compose, self.koji_wrapper, path_prefix)
+        package_sets = get_pkgset_from_koji(
+            self.compose, self.koji_wrapper, path_prefix
+        )
         return (package_sets, path_prefix)
 
 
@@ -327,7 +331,10 @@ def _get_modules_from_koji(
                 compose.log_info(
                     "Module '%s' in variant '%s' will use Koji tag '%s' "
                     "(as a result of querying module '%s')",
-                    nsvc, variant, tag, module["name"]
+                    nsvc,
+                    variant,
+                    tag,
+                    module["name"],
                 )
 
                 # Store mapping NSVC --> koji_tag into variant. This is needed
@@ -450,7 +457,8 @@ def _get_modules_from_koji_tags(
         # "release" in Koji build and with latest=True, Koji would return
         # only builds with highest release.
         module_builds = koji_proxy.listTagged(
-            tag, event=event_id["id"], inherit=True, type="module")
+            tag, event=event_id["id"], inherit=True, type="module"
+        )
 
         # Filter out builds inherited from non-top tag
         module_builds = filter_inherited(koji_proxy, event_id, module_builds, tag)
@@ -482,9 +490,11 @@ def _get_modules_from_koji_tags(
         latest_builds = []
         module_builds = sorted(module_builds, key=_key, reverse=True)
         for ns, ns_builds in groupby(
-                module_builds, key=lambda x: ":".join([x["name"], x["version"]])):
+            module_builds, key=lambda x: ":".join([x["name"], x["version"]])
+        ):
             for nsv, nsv_builds in groupby(
-                    ns_builds, key=lambda x: x["release"].split(".")[0]):
+                ns_builds, key=lambda x: x["release"].split(".")[0]
+            ):
                 latest_builds += list(nsv_builds)
                 break
 
@@ -493,8 +503,12 @@ def _get_modules_from_koji_tags(
         for build in latest_builds:
             # Get the Build from Koji to get modulemd and module_tag.
             build = koji_proxy.getBuild(build["build_id"])
-            module_tag = build.get("extra", {}).get("typeinfo", {}).get(
-                "module", {}).get("content_koji_tag", "")
+            module_tag = (
+                build.get("extra", {})
+                .get("typeinfo", {})
+                .get("module", {})
+                .get("content_koji_tag", "")
+            )
 
             variant_tags[variant].append(module_tag)
 
@@ -516,7 +530,9 @@ def _get_modules_from_koji_tags(
             if tag_to_mmd[module_tag]:
                 compose.log_info(
                     "Module %s in variant %s will use Koji tag %s.",
-                    nsvc, variant, module_tag
+                    nsvc,
+                    variant,
+                    module_tag,
                 )
 
                 # Store mapping module-uid --> koji_tag into variant. This is
@@ -543,14 +559,18 @@ def _find_old_file_cache_path(compose, tag_name):
         compose.ci_base.release.short,
         compose.ci_base.release.version,
         compose.ci_base.release.type_suffix,
-        compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
-        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
+        compose.ci_base.base_product.short
+        if compose.ci_base.release.is_layered
+        else None,
+        compose.ci_base.base_product.version
+        if compose.ci_base.release.is_layered
+        else None,
     )
     if not old_compose_path:
         return None
 
     old_file_cache_dir = compose.paths.work.pkgset_file_cache(tag_name)
-    rel_dir = relative_path(old_file_cache_dir, compose.topdir.rstrip('/') + '/')
+    rel_dir = relative_path(old_file_cache_dir, compose.topdir.rstrip("/") + "/")
     old_file_cache_path = os.path.join(old_compose_path, rel_dir)
     if not os.path.exists(old_file_cache_path):
         return None
@@ -573,12 +593,15 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # here. This only works if we are not creating bootable images. Those could
     # include packages that are not in the compose.
     packages_to_gather, groups = get_packages_to_gather(
-        compose, include_arch=False, include_prepopulated=True)
+        compose, include_arch=False, include_prepopulated=True
+    )
     if groups:
         comps = CompsWrapper(compose.paths.work.comps())
         for group in groups:
             packages_to_gather += comps.get_packages(group)
-    if compose.conf["gather_method"] == "nodeps" and not compose.conf.get('buildinstall_method'):
+    if compose.conf["gather_method"] == "nodeps" and not compose.conf.get(
+        "buildinstall_method"
+    ):
         populate_only_packages_to_gather = True
     else:
         populate_only_packages_to_gather = False
@@ -605,9 +628,12 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             raise ValueError(
                 "pygobject module or libmodulemd library is not installed, "
                 "support for modules is disabled, but compose contains "
-                "modules.")
+                "modules."
+            )
 
-        if modular_koji_tags or (compose.conf["pkgset_koji_module_tag"] and variant.modules):
+        if modular_koji_tags or (
+            compose.conf["pkgset_koji_module_tag"] and variant.modules
+        ):
             # List modules tagged in particular tags.
             _get_modules_from_koji_tags(
                 compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
@@ -647,12 +673,16 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 
         pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             compose_tag,
-            koji_wrapper, compose.conf["sigkeys"], logger=compose._logger,
-            arches=all_arches, packages=packages_to_gather,
+            koji_wrapper,
+            compose.conf["sigkeys"],
+            logger=compose._logger,
+            arches=all_arches,
+            packages=packages_to_gather,
             allow_invalid_sigkeys=allow_invalid_sigkeys,
             populate_only_packages=populate_only_packages_to_gather,
             cache_region=compose.cache_region,
-            extra_builds=extra_builds)
+            extra_builds=extra_builds,
+        )
 
         # Check if we have cache for this tag from previous compose. If so, use
         # it.
@@ -726,7 +756,9 @@ def get_koji_event_info(compose, koji_wrapper):
     compose.log_info("Getting koji event")
     result = get_koji_event_raw(koji_wrapper, compose.koji_event, event_file)
     if compose.koji_event:
-        compose.log_info("Setting koji event to a custom value: %s" % compose.koji_event)
+        compose.log_info(
+            "Setting koji event to a custom value: %s" % compose.koji_event
+        )
     else:
         compose.log_info("Koji event: %s" % result["id"])
 

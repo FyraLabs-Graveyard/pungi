@@ -82,7 +82,7 @@ class FulltreeExcludesSection(pykickstart.sections.Section):
         if not self.handler:
             return
 
-        (h, s, t) = line.partition('#')
+        (h, s, t) = line.partition("#")
         line = h.rstrip()
 
         self.handler.fulltree_excludes.add(line)
@@ -95,7 +95,7 @@ class MultilibBlacklistSection(pykickstart.sections.Section):
         if not self.handler:
             return
 
-        (h, s, t) = line.partition('#')
+        (h, s, t) = line.partition("#")
         line = h.rstrip()
 
         self.handler.multilib_blacklist.add(line)
@@ -108,7 +108,7 @@ class MultilibWhitelistSection(pykickstart.sections.Section):
         if not self.handler:
             return
 
-        (h, s, t) = line.partition('#')
+        (h, s, t) = line.partition("#")
         line = h.rstrip()
 
         self.handler.multilib_whitelist.add(line)
@@ -121,7 +121,7 @@ class PrepopulateSection(pykickstart.sections.Section):
         if not self.handler:
             return
 
-        (h, s, t) = line.partition('#')
+        (h, s, t) = line.partition("#")
         line = h.rstrip()
 
         self.handler.prepopulate.add(line)
@@ -154,7 +154,15 @@ class KickstartParser(pykickstart.parser.KickstartParser):
                 include_default = True
                 include_optional = True
 
-            group_packages, group_conditional_packages = dnf_obj.comps_wrapper.get_packages_from_group(group_id, include_default=include_default, include_optional=include_optional, include_conditional=True)
+            (
+                group_packages,
+                group_conditional_packages,
+            ) = dnf_obj.comps_wrapper.get_packages_from_group(
+                group_id,
+                include_default=include_default,
+                include_optional=include_optional,
+                include_conditional=True,
+            )
             packages.update(group_packages)
             for i in group_conditional_packages:
                 if i not in conditional_packages:
@@ -178,7 +186,15 @@ class KickstartParser(pykickstart.parser.KickstartParser):
                 include_default = True
                 include_optional = True
 
-            group_packages, group_conditional_packages = dnf_obj.comps_wrapper.get_packages_from_group(group_id, include_default=include_default, include_optional=include_optional, include_conditional=False)
+            (
+                group_packages,
+                group_conditional_packages,
+            ) = dnf_obj.comps_wrapper.get_packages_from_group(
+                group_id,
+                include_default=include_default,
+                include_optional=include_optional,
+                include_conditional=False,
+            )
             excluded.update(group_packages)
 
         return excluded

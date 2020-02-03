@@ -14,9 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-__all__ = (
-    "create_variant_repo",
-)
+__all__ = ("create_variant_repo",)
 
 
 import copy
@@ -56,18 +54,18 @@ class CreaterepoPhase(PhaseBase):
     def validate(self):
         errors = []
 
-        if not self.compose.old_composes and self.compose.conf.get('createrepo_deltas'):
-            errors.append('Can not generate deltas without old compose')
+        if not self.compose.old_composes and self.compose.conf.get("createrepo_deltas"):
+            errors.append("Can not generate deltas without old compose")
 
         if errors:
-            raise ValueError('\n'.join(errors))
+            raise ValueError("\n".join(errors))
 
     def run(self):
         get_productids_from_scm(self.compose)
         reference_pkgset = None
         if self.pkgset_phase and self.pkgset_phase.package_sets:
             reference_pkgset = self.pkgset_phase.package_sets[-1]
-        for i in range(self.compose.conf['createrepo_num_threads']):
+        for i in range(self.compose.conf["createrepo_num_threads"]):
             self.pool.add(
                 CreaterepoThread(self.pool, reference_pkgset, self.modules_metadata)
             )
@@ -87,18 +85,34 @@ class CreaterepoPhase(PhaseBase):
         self.modules_metadata.write_modules_metadata()
 
 
-def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metadata=None):
+def create_variant_repo(
+    compose, arch, variant, pkg_type, pkgset, modules_metadata=None
+):
     types = {
-        'rpm': ('binary',
-                lambda **kwargs: compose.paths.compose.repository(arch=arch, variant=variant, **kwargs)),
-        'srpm': ('source',
-                 lambda **kwargs: compose.paths.compose.repository(arch='src', variant=variant, **kwargs)),
-        'debuginfo': ('debug',
-                      lambda **kwargs: compose.paths.compose.debug_repository(arch=arch, variant=variant, **kwargs)),
+        "rpm": (
+            "binary",
+            lambda **kwargs: compose.paths.compose.repository(
+                arch=arch, variant=variant, **kwargs
+            ),
+        ),
+        "srpm": (
+            "source",
+            lambda **kwargs: compose.paths.compose.repository(
+                arch="src", variant=variant, **kwargs
+            ),
+        ),
+        "debuginfo": (
+            "debug",
+            lambda **kwargs: compose.paths.compose.debug_repository(
+                arch=arch, variant=variant, **kwargs
+            ),
+        ),
     }
 
-    if variant.is_empty or (arch is None and pkg_type != 'srpm'):
-        compose.log_info("[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant))
+    if variant.is_empty or (arch is None and pkg_type != "srpm"):
+        compose.log_info(
+            "[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant)
+        )
         return
 
     createrepo_c = compose.conf["createrepo_c"]
@@ -128,7 +142,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
     compose.log_info("[BEGIN] %s" % msg)
 
     # We only want delta RPMs for binary repos.
-    with_deltas = pkg_type == 'rpm' and _has_deltas(compose, variant, arch)
+    with_deltas = pkg_type == "rpm" and _has_deltas(compose, variant, arch)
 
     rpms = set()
     rpm_nevras = set()
@@ -143,7 +157,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
             continue
         for srpm_data in data.values():
             for rpm_nevra, rpm_data in srpm_data.items():
-                if types[pkg_type][0] != rpm_data['category']:
+                if types[pkg_type][0] != rpm_data["category"]:
                     continue
                 path = os.path.join(compose.topdir, "compose", rpm_data["path"])
                 rel_path = relative_path(path, repo_dir.rstrip("/") + "/")
@@ -151,7 +165,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
                 rpm_nevras.add(str(rpm_nevra))
 
     file_list = compose.paths.work.repo_package_list(arch, variant, pkg_type)
-    with open(file_list, 'w') as f:
+    with open(file_list, "w") as f:
         for rel_path in sorted(rpms):
             f.write("%s\n" % rel_path)
 
@@ -166,18 +180,25 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
-    cmd = repo.get_createrepo_cmd(repo_dir, update=True,
-                                  database=compose.should_create_yum_database,
-                                  skip_stat=True,
-                                  pkglist=file_list, outputdir=repo_dir,
-                                  workers=compose.conf["createrepo_num_workers"],
-                                  groupfile=comps_path, update_md_path=repo_dir_arch,
-                                  checksum=createrepo_checksum,
-                                  deltas=with_deltas,
-                                  oldpackagedirs=old_package_dirs,
-                                  use_xz=compose.conf['createrepo_use_xz'],
-                                  extra_args=compose.conf["createrepo_extra_args"])
-    log_file = compose.paths.log.log_file(arch, "createrepo-%s.%s" % (variant, pkg_type))
+    cmd = repo.get_createrepo_cmd(
+        repo_dir,
+        update=True,
+        database=compose.should_create_yum_database,
+        skip_stat=True,
+        pkglist=file_list,
+        outputdir=repo_dir,
+        workers=compose.conf["createrepo_num_workers"],
+        groupfile=comps_path,
+        update_md_path=repo_dir_arch,
+        checksum=createrepo_checksum,
+        deltas=with_deltas,
+        oldpackagedirs=old_package_dirs,
+        use_xz=compose.conf["createrepo_use_xz"],
+        extra_args=compose.conf["createrepo_extra_args"],
+    )
+    log_file = compose.paths.log.log_file(
+        arch, "createrepo-%s.%s" % (variant, pkg_type)
+    )
     run(cmd, logfile=log_file, show_cmd=True)
 
     # call modifyrepo to inject productid
@@ -186,12 +207,16 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
         # add product certificate to base (rpm) repo; skip source and debug
         product_id_path = compose.paths.work.product_id(arch, variant)
         if os.path.isfile(product_id_path):
-            cmd = repo.get_modifyrepo_cmd(os.path.join(repo_dir, "repodata"), product_id_path, compress_type="gz")
+            cmd = repo.get_modifyrepo_cmd(
+                os.path.join(repo_dir, "repodata"), product_id_path, compress_type="gz"
+            )
             log_file = compose.paths.log.log_file(arch, "modifyrepo-%s" % variant)
             run(cmd, logfile=log_file, show_cmd=True)
             # productinfo is not supported by modifyrepo in any way
             # this is a HACK to make CDN happy (dmach: at least I think, need to confirm with dgregor)
-            shutil.copy2(product_id_path, os.path.join(repo_dir, "repodata", "productid"))
+            shutil.copy2(
+                product_id_path, os.path.join(repo_dir, "repodata", "productid")
+            )
 
     # call modifyrepo to inject modulemd if needed
     if pkg_type == "rpm" and arch in variant.arch_mmds and Modulemd is not None:
@@ -217,7 +242,7 @@ def create_variant_repo(compose, arch, variant, pkg_type, pkgset, modules_metada
         for module_id, module_rpms in metadata:
             modulemd_path = os.path.join(
                 types[pkg_type][1](relative=True),
-                find_file_in_repodata(repo_dir, 'modules'),
+                find_file_in_repodata(repo_dir, "modules"),
             )
             modules_metadata.prepare_module_metadata(
                 variant,
@@ -246,18 +271,18 @@ def add_modular_metadata(repo, repo_path, mod_index, log_file):
             os.path.join(repo_path, "repodata"),
             modules_path,
             mdtype="modules",
-            compress_type="gz"
+            compress_type="gz",
         )
         run(cmd, logfile=log_file, show_cmd=True)
 
 
 def find_file_in_repodata(repo_path, type_):
-    dom = xml.dom.minidom.parse(os.path.join(repo_path, 'repodata', 'repomd.xml'))
-    for entry in dom.getElementsByTagName('data'):
-        if entry.getAttribute('type') == type_:
-            return entry.getElementsByTagName('location')[0].getAttribute('href')
+    dom = xml.dom.minidom.parse(os.path.join(repo_path, "repodata", "repomd.xml"))
+    for entry in dom.getElementsByTagName("data"):
+        if entry.getAttribute("type") == type_:
+            return entry.getElementsByTagName("location")[0].getAttribute("href")
         entry.unlink()
-    raise RuntimeError('No such file in repodata: %s' % type_)
+    raise RuntimeError("No such file in repodata: %s" % type_)
 
 
 class CreaterepoThread(WorkerThread):
@@ -274,7 +299,7 @@ class CreaterepoThread(WorkerThread):
             variant,
             pkg_type=pkg_type,
             pkgset=self.reference_pkgset,
-            modules_metadata=self.modules_metadata
+            modules_metadata=self.modules_metadata,
         )
 
 
@@ -308,7 +333,8 @@ def get_productids_from_scm(compose):
             # pem_files = glob.glob("%s/*.pem" % tmp_dir)[-1:]
             if not pem_files:
                 warning = "No product certificate found (arch: %s, variant: %s)" % (
-                    arch, variant.uid
+                    arch,
+                    variant.uid,
                 )
                 if product_id_allow_missing:
                     compose.log_warning(warning)
@@ -318,7 +344,14 @@ def get_productids_from_scm(compose):
                     raise RuntimeError(warning)
             if len(pem_files) > 1:
                 shutil.rmtree(tmp_dir)
-                raise RuntimeError("Multiple product certificates found (arch: %s, variant: %s): %s" % (arch, variant.uid, ", ".join(sorted([os.path.basename(i) for i in pem_files]))))
+                raise RuntimeError(
+                    "Multiple product certificates found (arch: %s, variant: %s): %s"
+                    % (
+                        arch,
+                        variant.uid,
+                        ", ".join(sorted([os.path.basename(i) for i in pem_files])),
+                    )
+                )
             product_id_path = compose.paths.work.product_id(arch, variant)
             shutil.copy2(pem_files[0], product_id_path)
 
@@ -331,23 +364,27 @@ def _get_old_package_dirs(compose, repo_dir):
     repo in an older compose and return a list of paths to directories with
     packages in it.
     """
-    if not compose.conf['createrepo_deltas']:
+    if not compose.conf["createrepo_deltas"]:
         return None
     old_compose_path = find_old_compose(
         compose.old_composes,
         compose.ci_base.release.short,
         compose.ci_base.release.version,
         compose.ci_base.release.type_suffix,
-        compose.ci_base.base_product.short if compose.ci_base.release.is_layered else None,
-        compose.ci_base.base_product.version if compose.ci_base.release.is_layered else None,
-        allowed_statuses=['FINISHED', 'FINISHED_INCOMPLETE'],
+        compose.ci_base.base_product.short
+        if compose.ci_base.release.is_layered
+        else None,
+        compose.ci_base.base_product.version
+        if compose.ci_base.release.is_layered
+        else None,
+        allowed_statuses=["FINISHED", "FINISHED_INCOMPLETE"],
     )
     if not old_compose_path:
         compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
         return None
-    rel_dir = relative_path(repo_dir, compose.topdir.rstrip('/') + '/')
-    old_package_dirs = os.path.join(old_compose_path, rel_dir, 'Packages')
-    if compose.conf['hashed_directories']:
+    rel_dir = relative_path(repo_dir, compose.topdir.rstrip("/") + "/")
+    old_package_dirs = os.path.join(old_compose_path, rel_dir, "Packages")
+    if compose.conf["hashed_directories"]:
         old_package_dirs = _find_package_dirs(old_package_dirs)
     return old_package_dirs
 
@@ -370,7 +407,7 @@ def _find_package_dirs(base):
 
 def _has_deltas(compose, variant, arch):
     """Check if delta RPMs are enabled for given variant and architecture."""
-    key = 'createrepo_deltas'
+    key = "createrepo_deltas"
     if isinstance(compose.conf.get(key), bool):
         return compose.conf[key]
     return any(get_arch_variant_data(compose.conf, key, arch, variant))
@@ -383,18 +420,28 @@ class ModulesMetadata(object):
         self.modules_metadata_file = self.compose.paths.compose.metadata("modules.json")
         self.productmd_modules_metadata = productmd.modules.Modules()
         self.productmd_modules_metadata.compose.id = copy.copy(self.compose.compose_id)
-        self.productmd_modules_metadata.compose.type = copy.copy(self.compose.compose_type)
-        self.productmd_modules_metadata.compose.date = copy.copy(self.compose.compose_date)
-        self.productmd_modules_metadata.compose.respin = copy.copy(self.compose.compose_respin)
+        self.productmd_modules_metadata.compose.type = copy.copy(
+            self.compose.compose_type
+        )
+        self.productmd_modules_metadata.compose.date = copy.copy(
+            self.compose.compose_date
+        )
+        self.productmd_modules_metadata.compose.respin = copy.copy(
+            self.compose.compose_respin
+        )
 
     def write_modules_metadata(self):
         """
         flush modules metadata into file
         """
-        self.compose.log_info("Writing modules metadata: %s" % self.modules_metadata_file)
+        self.compose.log_info(
+            "Writing modules metadata: %s" % self.modules_metadata_file
+        )
         self.productmd_modules_metadata.dump(self.modules_metadata_file)
 
-    def prepare_module_metadata(self, variant, arch, nsvc, modulemd_path, category, module_rpms):
+    def prepare_module_metadata(
+        self, variant, arch, nsvc, modulemd_path, category, module_rpms
+    ):
         """
         Find koji tag which corresponds to the module and add record into
         module metadata structure.

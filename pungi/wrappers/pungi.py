@@ -29,7 +29,9 @@ PACKAGES_RE = {
 
 UNRESOLVED_DEPENDENCY_RE = re.compile(r"^.*Unresolvable dependency (.+) in ([^ ]+).*$")
 
-MISSING_COMPS_PACKAGE_RE = re.compile(r"^.*Could not find a match for (.+) in any configured repo")
+MISSING_COMPS_PACKAGE_RE = re.compile(
+    r"^.*Could not find a match for (.+) in any configured repo"
+)
 
 
 def _write_ks_section(f, section, lines):
@@ -42,12 +44,20 @@ def _write_ks_section(f, section, lines):
 
 
 class PungiWrapper(object):
-
-    def write_kickstart(self, ks_path, repos, groups, packages,
-                        exclude_packages=None, comps_repo=None,
-                        lookaside_repos=None, fulltree_excludes=None,
-                        multilib_blacklist=None, multilib_whitelist=None,
-                        prepopulate=None):
+    def write_kickstart(
+        self,
+        ks_path,
+        repos,
+        groups,
+        packages,
+        exclude_packages=None,
+        comps_repo=None,
+        lookaside_repos=None,
+        fulltree_excludes=None,
+        multilib_blacklist=None,
+        multilib_whitelist=None,
+        prepopulate=None,
+    ):
         groups = groups or []
         exclude_packages = exclude_packages or {}
         lookaside_repos = lookaside_repos or {}
@@ -95,7 +105,25 @@ class PungiWrapper(object):
 
         kickstart.close()
 
-    def get_pungi_cmd(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None, profiler=False):
+    def get_pungi_cmd(
+        self,
+        config,
+        destdir,
+        name,
+        version=None,
+        flavor=None,
+        selfhosting=False,
+        fulltree=False,
+        greedy=None,
+        nodeps=False,
+        nodownload=True,
+        full_archlist=False,
+        arch=None,
+        cache_dir=None,
+        lookaside_repos=None,
+        multilib_methods=None,
+        profiler=False,
+    ):
         cmd = ["pungi"]
 
         # Gather stage
@@ -155,7 +183,25 @@ class PungiWrapper(object):
 
         return cmd
 
-    def get_pungi_cmd_dnf(self, config, destdir, name, version=None, flavor=None, selfhosting=False, fulltree=False, greedy=None, nodeps=False, nodownload=True, full_archlist=False, arch=None, cache_dir=None, lookaside_repos=None, multilib_methods=None, profiler=False):
+    def get_pungi_cmd_dnf(
+        self,
+        config,
+        destdir,
+        name,
+        version=None,
+        flavor=None,
+        selfhosting=False,
+        fulltree=False,
+        greedy=None,
+        nodeps=False,
+        nodownload=True,
+        full_archlist=False,
+        arch=None,
+        cache_dir=None,
+        lookaside_repos=None,
+        multilib_methods=None,
+        profiler=False,
+    ):
         cmd = ["pungi-gather"]
 
         # path to a kickstart file
@@ -223,39 +269,51 @@ class PungiWrapper(object):
 
         return packages, broken_deps, missing_comps
 
-    def run_pungi(self, ks_file, destdir, name, selfhosting=False, fulltree=False,
-                  greedy='', cache_dir=None, arch='', multilib_methods=[],
-                  nodeps=False, lookaside_repos=[]):
+    def run_pungi(
+        self,
+        ks_file,
+        destdir,
+        name,
+        selfhosting=False,
+        fulltree=False,
+        greedy="",
+        cache_dir=None,
+        arch="",
+        multilib_methods=[],
+        nodeps=False,
+        lookaside_repos=[],
+    ):
         """
         This is a replacement for get_pungi_cmd that runs it in-process. Not
         all arguments are supported.
         """
         from .. import ks, gather, config
+
         ksparser = ks.get_ksparser(ks_path=ks_file)
         cfg = config.Config()
-        cfg.set('pungi', 'destdir', destdir)
-        cfg.set('pungi', 'family', name)
-        cfg.set('pungi', 'iso_basename', name)
-        cfg.set('pungi', 'fulltree', str(fulltree))
-        cfg.set('pungi', 'selfhosting', str(selfhosting))
-        cfg.set('pungi', 'cachedir', cache_dir)
-        cfg.set('pungi', 'full_archlist', "True")
-        cfg.set('pungi', 'workdirbase', "%s/work" % destdir)
-        cfg.set('pungi', 'greedy', greedy)
-        cfg.set('pungi', 'nosource', 'False')
-        cfg.set('pungi', 'nodebuginfo', 'False')
-        cfg.set('pungi', 'force', 'False')
-        cfg.set('pungi', 'resolve_deps', str(not nodeps))
+        cfg.set("pungi", "destdir", destdir)
+        cfg.set("pungi", "family", name)
+        cfg.set("pungi", "iso_basename", name)
+        cfg.set("pungi", "fulltree", str(fulltree))
+        cfg.set("pungi", "selfhosting", str(selfhosting))
+        cfg.set("pungi", "cachedir", cache_dir)
+        cfg.set("pungi", "full_archlist", "True")
+        cfg.set("pungi", "workdirbase", "%s/work" % destdir)
+        cfg.set("pungi", "greedy", greedy)
+        cfg.set("pungi", "nosource", "False")
+        cfg.set("pungi", "nodebuginfo", "False")
+        cfg.set("pungi", "force", "False")
+        cfg.set("pungi", "resolve_deps", str(not nodeps))
         if arch:
-            cfg.set('pungi', 'arch', arch)
+            cfg.set("pungi", "arch", arch)
         if multilib_methods:
-            cfg.set('pungi', 'multilib', " ".join(multilib_methods))
+            cfg.set("pungi", "multilib", " ".join(multilib_methods))
         if lookaside_repos:
-            cfg.set('pungi', 'lookaside_repos', " ".join(lookaside_repos))
+            cfg.set("pungi", "lookaside_repos", " ".join(lookaside_repos))
 
         mypungi = gather.Pungi(cfg, ksparser)
 
-        with open(os.path.join(destdir, 'out'), 'w') as f:
+        with open(os.path.join(destdir, "out"), "w") as f:
             with mypungi.yumlock:
                 mypungi._inityum()
                 mypungi.gather()

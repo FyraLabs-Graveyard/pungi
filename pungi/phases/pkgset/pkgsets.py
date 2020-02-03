@@ -45,8 +45,9 @@ class ReaderThread(WorkerThread):
         # rpm_info, build_info = item
 
         if (num % 100 == 0) or (num == self.pool.queue_total):
-            self.pool.package_set.log_debug("Processed %s out of %s packages"
-                                            % (num, self.pool.queue_total))
+            self.pool.package_set.log_debug(
+                "Processed %s out of %s packages" % (num, self.pool.queue_total)
+            )
 
         rpm_path = self.pool.package_set.get_package_path(item)
         if rpm_path is None:
@@ -79,9 +80,14 @@ class ReaderThread(WorkerThread):
 
 
 class PackageSetBase(kobo.log.LoggingBase):
-
-    def __init__(self, name, sigkey_ordering, arches=None, logger=None,
-                 allow_invalid_sigkeys=False):
+    def __init__(
+        self,
+        name,
+        sigkey_ordering,
+        arches=None,
+        logger=None,
+        allow_invalid_sigkeys=False,
+    ):
         super(PackageSetBase, self).__init__(logger=logger)
         self.name = name
         self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
@@ -122,14 +128,20 @@ class PackageSetBase(kobo.log.LoggingBase):
         Raises RuntimeError containing details of RPMs with invalid
         sigkeys defined in `rpminfos`.
         """
+
         def nvr_formatter(package_info):
             # joins NVR parts of the package with '-' character.
-            return '-'.join((package_info['name'], package_info['version'], package_info['release']))
+            return "-".join(
+                (package_info["name"], package_info["version"], package_info["release"])
+            )
 
         def get_error(sigkeys, infos):
-            return "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s" % (
-                sigkeys,
-                '\n'.join(sorted(set(nvr_formatter(rpminfo) for rpminfo in infos))),
+            return (
+                "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s"
+                % (
+                    sigkeys,
+                    "\n".join(sorted(set(nvr_formatter(rpminfo) for rpminfo in infos))),
+                )
             )
 
         if not isinstance(rpminfos, dict):
@@ -198,14 +210,15 @@ class PackageSetBase(kobo.log.LoggingBase):
         # arches (excluding multilib arches)
         if primary_arch:
             exclusivearch_list = get_valid_arches(
-                primary_arch, multilib=False, add_noarch=False, add_src=False)
+                primary_arch, multilib=False, add_noarch=False, add_src=False
+            )
             # We don't want to consider noarch: if a package is true noarch
             # build (not just a subpackage), it has to have noarch in
             # ExclusiveArch otherwise rpm will refuse to build it.
             # This should eventually become a default, but it could have a big
             # impact and thus it's hidden behind an option.
-            if not exclusive_noarch and 'noarch' in exclusivearch_list:
-                exclusivearch_list.remove('noarch')
+            if not exclusive_noarch and "noarch" in exclusivearch_list:
+                exclusivearch_list.remove("noarch")
         else:
             exclusivearch_list = None
         for arch in arch_list:
@@ -237,7 +250,7 @@ class PackageSetBase(kobo.log.LoggingBase):
                 for i in self.rpms_by_arch[arch]:
                     rpm_path = i.file_path
                     if remove_path_prefix and rpm_path.startswith(remove_path_prefix):
-                        rpm_path = rpm_path[len(remove_path_prefix):]
+                        rpm_path = rpm_path[len(remove_path_prefix) :]
                     f.write("%s\n" % rpm_path)
 
     @staticmethod
@@ -256,7 +269,7 @@ class PackageSetBase(kobo.log.LoggingBase):
         """
         Saves the current FileCache using the pickle module to `file_path`.
         """
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             pickle.dump(self.file_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -282,10 +295,19 @@ class FilelistPackageSet(PackageSetBase):
 
 
 class KojiPackageSet(PackageSetBase):
-    def __init__(self, name, koji_wrapper, sigkey_ordering, arches=None, logger=None,
-                 packages=None, allow_invalid_sigkeys=False,
-                 populate_only_packages=False, cache_region=None,
-                 extra_builds=None):
+    def __init__(
+        self,
+        name,
+        koji_wrapper,
+        sigkey_ordering,
+        arches=None,
+        logger=None,
+        packages=None,
+        allow_invalid_sigkeys=False,
+        populate_only_packages=False,
+        cache_region=None,
+        extra_builds=None,
+    ):
         """
         Creates new KojiPackageSet.
 
@@ -320,7 +342,7 @@ class KojiPackageSet(PackageSetBase):
             sigkey_ordering=sigkey_ordering,
             arches=arches,
             logger=logger,
-            allow_invalid_sigkeys=allow_invalid_sigkeys
+            allow_invalid_sigkeys=allow_invalid_sigkeys,
         )
         self.koji_wrapper = koji_wrapper
         # Names of packages to look for in the Koji tag.
@@ -356,9 +378,13 @@ class KojiPackageSet(PackageSetBase):
         builds = []
 
         builds = self.koji_wrapper.retrying_multicall_map(
-            self.koji_proxy, self.koji_proxy.getBuild, list_of_args=self.extra_builds)
+            self.koji_proxy, self.koji_proxy.getBuild, list_of_args=self.extra_builds
+        )
         rpms_in_builds = self.koji_wrapper.retrying_multicall_map(
-            self.koji_proxy, self.koji_proxy.listBuildRPMs, list_of_args=self.extra_builds)
+            self.koji_proxy,
+            self.koji_proxy.listBuildRPMs,
+            list_of_args=self.extra_builds,
+        )
 
         rpms = []
         for rpms_in_build in rpms_in_builds:
@@ -371,18 +397,23 @@ class KojiPackageSet(PackageSetBase):
 
         if self.cache_region:
             cache_key = "KojiPackageSet.get_latest_rpms_%s_%s_%s" % (
-                tag, str(event), str(inherit))
+                tag,
+                str(event),
+                str(inherit),
+            )
             cached_response = self.cache_region.get(cache_key)
             if cached_response:
                 return cached_response
             else:
                 response = self.koji_proxy.listTaggedRPMS(
-                    tag, event=event, inherit=inherit, latest=True)
+                    tag, event=event, inherit=inherit, latest=True
+                )
                 self.cache_region.set(cache_key, response)
                 return response
         else:
             return self.koji_proxy.listTaggedRPMS(
-                tag, event=event, inherit=inherit, latest=True)
+                tag, event=event, inherit=inherit, latest=True
+            )
 
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item
@@ -393,12 +424,14 @@ class KojiPackageSet(PackageSetBase):
                 # we're looking for *signed* copies here
                 continue
             sigkey = sigkey.lower()
-            rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey))
+            rpm_path = os.path.join(
+                pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey)
+            )
             paths.append(rpm_path)
             if os.path.isfile(rpm_path):
                 return rpm_path
 
-        if None in self.sigkey_ordering or '' in self.sigkey_ordering:
+        if None in self.sigkey_ordering or "" in self.sigkey_ordering:
             # use an unsigned copy (if allowed)
             rpm_path = os.path.join(pathinfo.build(build_info), pathinfo.rpm(rpm_info))
             paths.append(rpm_path)
@@ -414,8 +447,10 @@ class KojiPackageSet(PackageSetBase):
                 return rpm_path
 
         self._invalid_sigkey_rpms.append(rpm_info)
-        self.log_error("RPM %s not found for sigs: %s. Paths checked: %s"
-                       % (rpm_info, self.sigkey_ordering, paths))
+        self.log_error(
+            "RPM %s not found for sigs: %s. Paths checked: %s"
+            % (rpm_info, self.sigkey_ordering, paths)
+        )
         return None
 
     def populate(self, tag, event=None, inherit=True, include_packages=None):
@@ -433,7 +468,11 @@ class KojiPackageSet(PackageSetBase):
         if type(event) is dict:
             event = event["id"]
 
-        msg = "Getting latest RPMs (tag: %s, event: %s, inherit: %s)" % (tag, event, inherit)
+        msg = "Getting latest RPMs (tag: %s, event: %s, inherit: %s)" % (
+            tag,
+            event,
+            inherit,
+        )
         self.log_info("[BEGIN] %s" % msg)
         rpms, builds = self.get_latest_rpms(tag, event, inherit=inherit)
         extra_rpms, extra_builds = self.get_extra_rpms()
@@ -442,13 +481,16 @@ class KojiPackageSet(PackageSetBase):
 
         extra_builds_by_name = {}
         for build_info in extra_builds:
-            extra_builds_by_name[build_info['name']] = build_info['build_id']
+            extra_builds_by_name[build_info["name"]] = build_info["build_id"]
 
         builds_by_id = {}
         exclude_build_id = []
         for build_info in builds:
-            build_id, build_name = build_info['build_id'], build_info['name']
-            if build_name in extra_builds_by_name and build_id != extra_builds_by_name[build_name]:
+            build_id, build_name = build_info["build_id"], build_info["name"]
+            if (
+                build_name in extra_builds_by_name
+                and build_id != extra_builds_by_name[build_name]
+            ):
                 exclude_build_id.append(build_id)
             else:
                 builds_by_id.setdefault(build_id, build_info)
@@ -461,9 +503,11 @@ class KojiPackageSet(PackageSetBase):
         # it would be missing from the package set. Even if it ultimately does
         # not end in the compose, we need it to extract ExcludeArch and
         # ExclusiveArch for noarch packages.
-        for rpm_info in itertools.chain((rpm for rpm in rpms if not _is_src(rpm)),
-                                        (rpm for rpm in rpms if _is_src(rpm))):
-            if rpm_info['build_id'] in exclude_build_id:
+        for rpm_info in itertools.chain(
+            (rpm for rpm in rpms if not _is_src(rpm)),
+            (rpm for rpm in rpms if _is_src(rpm)),
+        ):
+            if rpm_info["build_id"] in exclude_build_id:
                 continue
 
             if self.arches and rpm_info["arch"] not in self.arches:
@@ -482,8 +526,11 @@ class KojiPackageSet(PackageSetBase):
                 )
                 continue
 
-            if (self.populate_only_packages and self.packages and
-                    rpm_info['name'] not in self.packages):
+            if (
+                self.populate_only_packages
+                and self.packages
+                and rpm_info["name"] not in self.packages
+            ):
                 skipped_packages_count += 1
                 continue
 
@@ -494,19 +541,22 @@ class KojiPackageSet(PackageSetBase):
                 result_rpms.append((rpm_info, build_info))
                 if self.populate_only_packages and self.packages:
                     # Only add the package if we already have some whitelist.
-                    self.packages.add(build_info['name'])
+                    self.packages.add(build_info["name"])
 
         if skipped_packages_count:
-            self.log_debug("Skipped %d packages, not marked as to be "
-                           "included in a compose." % skipped_packages_count)
+            self.log_debug(
+                "Skipped %d packages, not marked as to be "
+                "included in a compose." % skipped_packages_count
+            )
 
         result = self.read_packages(result_rpms, result_srpms)
 
         # Check that after reading the packages, every package that is
         # included in a compose has the right sigkey.
         if self._invalid_sigkey_rpms:
-            invalid_sigkey_rpms = [rpm for rpm in self._invalid_sigkey_rpms
-                                   if rpm["name"] in self.packages]
+            invalid_sigkey_rpms = [
+                rpm for rpm in self._invalid_sigkey_rpms if rpm["name"] in self.packages
+            ]
             if invalid_sigkey_rpms:
                 self.raise_invalid_sigkeys_exception(invalid_sigkey_rpms)
 
@@ -516,4 +566,4 @@ class KojiPackageSet(PackageSetBase):
 
 def _is_src(rpm_info):
     """Check if rpm info object returned by Koji refers to source packages."""
-    return rpm_info['arch'] in ('src', 'nosrc')
+    return rpm_info["arch"] in ("src", "nosrc")

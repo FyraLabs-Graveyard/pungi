@@ -32,11 +32,22 @@ def get_description(compose, variant, arch):
         result = compose.conf["release_discinfo_description"]
     elif variant.type == "layered-product":
         # we need to make sure the layered product behaves as it was composed separately
-        result = "%s %s for %s %s" % (variant.release_name, variant.release_version, compose.conf["release_name"], get_major_version(compose.conf["release_version"]))
+        result = "%s %s for %s %s" % (
+            variant.release_name,
+            variant.release_version,
+            compose.conf["release_name"],
+            get_major_version(compose.conf["release_version"]),
+        )
     else:
-        result = "%s %s" % (compose.conf["release_name"], compose.conf["release_version"])
+        result = "%s %s" % (
+            compose.conf["release_name"],
+            compose.conf["release_version"],
+        )
         if compose.conf.get("base_product_name", ""):
-            result += " for %s %s" % (compose.conf["base_product_name"], compose.conf["base_product_version"])
+            result += " for %s %s" % (
+                compose.conf["base_product_name"],
+                compose.conf["base_product_version"],
+            )
 
     result = result % {"variant_name": variant.name, "arch": arch}
     return result
@@ -112,32 +123,122 @@ def compose_to_composeinfo(compose):
 
         for arch in variant.arches:
             # paths: binaries
-            var.paths.os_tree[arch] = relative_path(compose.paths.compose.os_tree(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.repository[arch] = relative_path(compose.paths.compose.repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.packages[arch] = relative_path(compose.paths.compose.packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            iso_dir = compose.paths.compose.iso_dir(arch=arch, variant=variant, create_dir=False) or ""
-            if iso_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), iso_dir)):
-                var.paths.isos[arch] = relative_path(iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            jigdo_dir = compose.paths.compose.jigdo_dir(arch=arch, variant=variant, create_dir=False) or ""
-            if jigdo_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), jigdo_dir)):
-                var.paths.jigdos[arch] = relative_path(jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
+            var.paths.os_tree[arch] = relative_path(
+                compose.paths.compose.os_tree(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.repository[arch] = relative_path(
+                compose.paths.compose.repository(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.packages[arch] = relative_path(
+                compose.paths.compose.packages(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            iso_dir = (
+                compose.paths.compose.iso_dir(
+                    arch=arch, variant=variant, create_dir=False
+                )
+                or ""
+            )
+            if iso_dir and os.path.isdir(
+                os.path.join(compose.paths.compose.topdir(), iso_dir)
+            ):
+                var.paths.isos[arch] = relative_path(
+                    iso_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
+            jigdo_dir = (
+                compose.paths.compose.jigdo_dir(
+                    arch=arch, variant=variant, create_dir=False
+                )
+                or ""
+            )
+            if jigdo_dir and os.path.isdir(
+                os.path.join(compose.paths.compose.topdir(), jigdo_dir)
+            ):
+                var.paths.jigdos[arch] = relative_path(
+                    jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
 
             # paths: sources
-            var.paths.source_tree[arch] = relative_path(compose.paths.compose.os_tree(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.source_repository[arch] = relative_path(compose.paths.compose.repository(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.source_packages[arch] = relative_path(compose.paths.compose.packages(arch="source", variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            source_iso_dir = compose.paths.compose.iso_dir(arch="source", variant=variant, create_dir=False) or ""
-            if source_iso_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), source_iso_dir)):
-                var.paths.source_isos[arch] = relative_path(source_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            source_jigdo_dir = compose.paths.compose.jigdo_dir(arch="source", variant=variant, create_dir=False) or ""
-            if source_jigdo_dir and os.path.isdir(os.path.join(compose.paths.compose.topdir(), source_jigdo_dir)):
-                var.paths.source_jigdos[arch] = relative_path(source_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
+            var.paths.source_tree[arch] = relative_path(
+                compose.paths.compose.os_tree(
+                    arch="source", variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.source_repository[arch] = relative_path(
+                compose.paths.compose.repository(
+                    arch="source", variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.source_packages[arch] = relative_path(
+                compose.paths.compose.packages(
+                    arch="source", variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            source_iso_dir = (
+                compose.paths.compose.iso_dir(
+                    arch="source", variant=variant, create_dir=False
+                )
+                or ""
+            )
+            if source_iso_dir and os.path.isdir(
+                os.path.join(compose.paths.compose.topdir(), source_iso_dir)
+            ):
+                var.paths.source_isos[arch] = relative_path(
+                    source_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
+            source_jigdo_dir = (
+                compose.paths.compose.jigdo_dir(
+                    arch="source", variant=variant, create_dir=False
+                )
+                or ""
+            )
+            if source_jigdo_dir and os.path.isdir(
+                os.path.join(compose.paths.compose.topdir(), source_jigdo_dir)
+            ):
+                var.paths.source_jigdos[arch] = relative_path(
+                    source_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
 
             # paths: debug
-            var.paths.debug_tree[arch] = relative_path(compose.paths.compose.debug_tree(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.debug_repository[arch] = relative_path(compose.paths.compose.debug_repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            var.paths.debug_packages[arch] = relative_path(compose.paths.compose.debug_packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            '''
+            var.paths.debug_tree[arch] = relative_path(
+                compose.paths.compose.debug_tree(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.debug_repository[arch] = relative_path(
+                compose.paths.compose.debug_repository(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            var.paths.debug_packages[arch] = relative_path(
+                compose.paths.compose.debug_packages(
+                    arch=arch, variant=variant, create_dir=False
+                ).rstrip("/")
+                + "/",
+                compose.paths.compose.topdir().rstrip("/") + "/",
+            ).rstrip("/")
+            """
             # XXX: not suported (yet?)
             debug_iso_dir = compose.paths.compose.debug_iso_dir(arch=arch, variant=variant) or ""
             if debug_iso_dir:
@@ -145,7 +246,7 @@ def compose_to_composeinfo(compose):
             debug_jigdo_dir = compose.paths.compose.debug_jigdo_dir(arch=arch, variant=variant) or ""
             if debug_jigdo_dir:
                 var.debug_jigdo_dir[arch] = relative_path(debug_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            '''
+            """
 
         for v in variant.get_variants(recursive=False):
             x = dump_variant(v, parent=variant)
@@ -187,17 +288,22 @@ def write_compose_info(compose):
 
 
 def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
-    if variant.type in ("addon", ) or variant.is_empty:
+    if variant.type in ("addon",) or variant.is_empty:
         return
 
-    compose.log_debug("on arch '%s' looking at variant '%s' of type '%s'" % (arch, variant, variant.type))
+    compose.log_debug(
+        "on arch '%s' looking at variant '%s' of type '%s'"
+        % (arch, variant, variant.type)
+    )
 
     if not timestamp:
         timestamp = int(time.time())
     else:
         timestamp = int(timestamp)
 
-    os_tree = compose.paths.compose.os_tree(arch=arch, variant=variant).rstrip("/") + "/"
+    os_tree = (
+        compose.paths.compose.os_tree(arch=arch, variant=variant).rstrip("/") + "/"
+    )
 
     ti = productmd.treeinfo.TreeInfo()
     # load from buildinstall .treeinfo
@@ -224,9 +330,13 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
     else:
         # release
         ti.release.name = compose.conf["release_name"]
-        ti.release.version = compose.conf.get("treeinfo_version", compose.conf["release_version"])
+        ti.release.version = compose.conf.get(
+            "treeinfo_version", compose.conf["release_version"]
+        )
         ti.release.short = compose.conf["release_short"]
-        ti.release.is_layered = True if compose.conf.get("base_product_name", "") else False
+        ti.release.is_layered = (
+            True if compose.conf.get("base_product_name", "") else False
+        )
         ti.release.type = compose.conf["release_type"].lower()
 
         # base product
@@ -254,8 +364,26 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         var.name = variant.name
         var.type = variant.type
 
-    var.paths.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
-    var.paths.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=variant, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+    var.paths.packages = (
+        relative_path(
+            compose.paths.compose.packages(
+                arch=arch, variant=variant, create_dir=False
+            ).rstrip("/")
+            + "/",
+            os_tree,
+        ).rstrip("/")
+        or "."
+    )
+    var.paths.repository = (
+        relative_path(
+            compose.paths.compose.repository(
+                arch=arch, variant=variant, create_dir=False
+            ).rstrip("/")
+            + "/",
+            os_tree,
+        ).rstrip("/")
+        or "."
+    )
 
     ti.variants.add(var)
 
@@ -270,11 +398,32 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         addon.uid = i.uid
         addon.name = i.name
         addon.type = i.type
-        compose.log_debug("variant '%s' inserting addon uid '%s' type '%s'" % (variant, addon.uid, addon.type))
+        compose.log_debug(
+            "variant '%s' inserting addon uid '%s' type '%s'"
+            % (variant, addon.uid, addon.type)
+        )
 
         os_tree = compose.paths.compose.os_tree(arch=arch, variant=i).rstrip("/") + "/"
-        addon.paths.packages = relative_path(compose.paths.compose.packages(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
-        addon.paths.repository = relative_path(compose.paths.compose.repository(arch=arch, variant=i, create_dir=False).rstrip("/") + "/", os_tree).rstrip("/") or "."
+        addon.paths.packages = (
+            relative_path(
+                compose.paths.compose.packages(
+                    arch=arch, variant=i, create_dir=False
+                ).rstrip("/")
+                + "/",
+                os_tree,
+            ).rstrip("/")
+            or "."
+        )
+        addon.paths.repository = (
+            relative_path(
+                compose.paths.compose.repository(
+                    arch=arch, variant=i, create_dir=False
+                ).rstrip("/")
+                + "/",
+                os_tree,
+            ).rstrip("/")
+            or "."
+        )
         var.add(addon)
 
         repomd_path = os.path.join(addon.paths.repository, "repodata", "repomd.xml")
@@ -299,7 +448,7 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
         # clone all but 'general' sections from buildinstall .treeinfo
 
         bi_dir = compose.paths.work.buildinstall_dir(arch)
-        if compose.conf.get('buildinstall_method') == 'lorax':
+        if compose.conf.get("buildinstall_method") == "lorax":
             # The .treeinfo file produced by lorax is nested in variant
             # subdirectory. Legacy buildinstall runs once per arch, so there is
             # only one file.
@@ -313,12 +462,16 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
             # stage2 - mainimage
             if bi_ti.stage2.mainimage:
                 ti.stage2.mainimage = bi_ti.stage2.mainimage
-                ti.checksums.add(ti.stage2.mainimage, createrepo_checksum, root_dir=os_tree)
+                ti.checksums.add(
+                    ti.stage2.mainimage, createrepo_checksum, root_dir=os_tree
+                )
 
             # stage2 - instimage
             if bi_ti.stage2.instimage:
                 ti.stage2.instimage = bi_ti.stage2.instimage
-                ti.checksums.add(ti.stage2.instimage, createrepo_checksum, root_dir=os_tree)
+                ti.checksums.add(
+                    ti.stage2.instimage, createrepo_checksum, root_dir=os_tree
+                )
 
             # images
             for platform in bi_ti.images.images:
@@ -332,7 +485,9 @@ def write_tree_info(compose, arch, variant, timestamp=None, bi=None):
                     ti.images.images[platform][image] = path
                     ti.checksums.add(path, createrepo_checksum, root_dir=os_tree)
 
-    path = os.path.join(compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo")
+    path = os.path.join(
+        compose.paths.compose.os_tree(arch=arch, variant=variant), ".treeinfo"
+    )
     compose.log_info("Writing treeinfo: %s" % path)
     ti.dump(path)
 
@@ -365,6 +520,8 @@ def populate_extra_files_metadata(
             copied_file = os.path.relpath(full_path, relative_root)
         metadata.add(variant.uid, arch, copied_file, size, checksums)
 
-    strip_prefix = (os.path.relpath(topdir, relative_root) + "/") if relative_root else ""
+    strip_prefix = (
+        (os.path.relpath(topdir, relative_root) + "/") if relative_root else ""
+    )
     with open(os.path.join(topdir, "extra_files.json"), "w") as f:
         metadata.dump_for_tree(f, variant.uid, arch, strip_prefix)

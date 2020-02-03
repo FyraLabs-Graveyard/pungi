@@ -19,7 +19,6 @@ from pungi import util
 
 
 class PhaseBase(object):
-
     def __init__(self, compose):
         self.compose = compose
         self.msg = "---------- PHASE: %s ----------" % self.name.upper()
@@ -60,7 +59,7 @@ class PhaseBase(object):
             self.finished = True
             return
         self.compose.log_info("[BEGIN] %s" % self.msg)
-        self.compose.notifier.send('phase-start', phase_name=self.name)
+        self.compose.notifier.send("phase-start", phase_name=self.name)
         self.run()
 
     def get_config_block(self, variant, arch=None):
@@ -70,11 +69,13 @@ class PhaseBase(object):
         """
         self.used_patterns = self.used_patterns or set()
         if arch is not None:
-            return util.get_arch_variant_data(self.compose.conf, self.name,
-                                              arch, variant, keys=self.used_patterns)
+            return util.get_arch_variant_data(
+                self.compose.conf, self.name, arch, variant, keys=self.used_patterns
+            )
         else:
-            return util.get_variant_data(self.compose.conf, self.name,
-                                         variant, keys=self.used_patterns)
+            return util.get_variant_data(
+                self.compose.conf, self.name, variant, keys=self.used_patterns
+            )
 
     def get_all_patterns(self):
         """Get all variant patterns from config file for this phase."""
@@ -93,10 +94,12 @@ class PhaseBase(object):
         unused_patterns = all_patterns - self.used_patterns
         if unused_patterns:
             self.compose.log_warning(
-                '[%s] Patterns in config do not match any variant: %s'
-                % (self.name.upper(), ', '.join(sorted(unused_patterns))))
+                "[%s] Patterns in config do not match any variant: %s"
+                % (self.name.upper(), ", ".join(sorted(unused_patterns)))
+            )
             self.compose.log_info(
-                'Note that variants can be excluded in configuration file')
+                "Note that variants can be excluded in configuration file"
+            )
 
     def stop(self):
         if self.finished:
@@ -108,7 +111,7 @@ class PhaseBase(object):
         if self.used_patterns is not None:
             # We only want to report this if the config was actually queried.
             self.report_unused_patterns()
-        self.compose.notifier.send('phase-stop', phase_name=self.name)
+        self.compose.notifier.send("phase-stop", phase_name=self.name)
 
     def run(self):
         raise NotImplementedError
@@ -121,7 +124,9 @@ class ConfigGuardedPhase(PhaseBase):
         if super(ConfigGuardedPhase, self).skip():
             return True
         if not self.compose.conf.get(self.name):
-            self.compose.log_info("Config section '%s' was not found. Skipping." % self.name)
+            self.compose.log_info(
+                "Config section '%s' was not found. Skipping." % self.name
+            )
             return True
         return False
 
@@ -140,9 +145,11 @@ class ImageConfigMixin(object):
 
     def get_config(self, cfg, opt):
         return cfg.get(
-            opt, self.compose.conf.get(
-                '%s_%s' % (self.name, opt), self.compose.conf.get(
-                    'global_%s' % opt)))
+            opt,
+            self.compose.conf.get(
+                "%s_%s" % (self.name, opt), self.compose.conf.get("global_%s" % opt)
+            ),
+        )
 
     def get_version(self, cfg):
         """
@@ -161,11 +168,16 @@ class ImageConfigMixin(object):
         deprecated), replace it with a generated value. Uses configuration
         passed as argument, phase specific settings and global settings.
         """
-        for key, conf in [('release', cfg),
-                          ('%s_release' % self.name, self.compose.conf),
-                          ('global_release', self.compose.conf)]:
+        for key, conf in [
+            ("release", cfg),
+            ("%s_release" % self.name, self.compose.conf),
+            ("global_release", self.compose.conf),
+        ]:
             if key in conf:
-                return util.version_generator(self.compose, conf[key]) or self.compose.image_release
+                return (
+                    util.version_generator(self.compose, conf[key])
+                    or self.compose.image_release
+                )
         return None
 
     def get_ksurl(self, cfg):
@@ -185,6 +197,7 @@ class PhaseLoggerMixin(object):
     A mixin that can extend a phase with a new logging logger that copy
     handlers from compose, but with different formatter that includes phase name.
     """
+
     def __init__(self, *args, **kwargs):
         super(PhaseLoggerMixin, self).__init__(*args, **kwargs)
         self.logger = None
@@ -193,6 +206,7 @@ class PhaseLoggerMixin(object):
             self.logger.setLevel(logging.DEBUG)
             format = "%(asctime)s [%(name)-16s] [%(levelname)-8s] %(message)s"
             import copy
+
             for handler in self.compose._logger.handlers:
                 hl = copy.copy(handler)
                 hl.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))

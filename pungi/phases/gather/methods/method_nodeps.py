@@ -30,16 +30,28 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
     enabled = True
 
     def __call__(self, arch, variant, *args, **kwargs):
-        fname = 'gather-nodeps-%s' % variant.uid
+        fname = "gather-nodeps-%s" % variant.uid
         if self.source_name:
-            fname += '-' + self.source_name
+            fname += "-" + self.source_name
         log_file = self.compose.paths.log.log_file(arch, fname)
-        with open(log_file, 'w') as log:
+        with open(log_file, "w") as log:
             return self.worker(log, arch, variant, *args, **kwargs)
 
-    def worker(self, log, arch, variant, pkgs, groups, filter_packages,
-               multilib_whitelist, multilib_blacklist, package_sets,
-               path_prefix=None, fulltree_excludes=None, prepopulate=None):
+    def worker(
+        self,
+        log,
+        arch,
+        variant,
+        pkgs,
+        groups,
+        filter_packages,
+        multilib_whitelist,
+        multilib_blacklist,
+        package_sets,
+        path_prefix=None,
+        fulltree_excludes=None,
+        prepopulate=None,
+    ):
         result = {
             "rpm": [],
             "srpm": [],
@@ -48,7 +60,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
 
         group_packages = expand_groups(self.compose, arch, variant, groups)
         packages = pkgs | group_packages
-        log.write('Requested packages:\n%s\n' % pformat(packages))
+        log.write("Requested packages:\n%s\n" % pformat(packages))
 
         seen_rpms = {}
         seen_srpms = {}
@@ -58,59 +70,65 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
         for i in valid_arches:
             compatible_arches[i] = pungi.arch.get_compatible_arches(i)
 
-        log.write('\nGathering rpms\n')
+        log.write("\nGathering rpms\n")
         for pkg in iterate_packages(package_sets, arch):
             if not pkg_is_rpm(pkg):
                 continue
             for gathered_pkg, pkg_arch in packages:
-                if isinstance(gathered_pkg, six.string_types) and not fnmatch(pkg.name, gathered_pkg):
+                if isinstance(gathered_pkg, six.string_types) and not fnmatch(
+                    pkg.name, gathered_pkg
+                ):
                     continue
-                elif (type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
-                      and pkg.nevra != gathered_pkg.nevra):
+                elif (
+                    type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
+                    and pkg.nevra != gathered_pkg.nevra
+                ):
                     continue
-                if pkg_arch is not None and pkg.arch != pkg_arch and pkg.arch != 'noarch':
+                if (
+                    pkg_arch is not None
+                    and pkg.arch != pkg_arch
+                    and pkg.arch != "noarch"
+                ):
                     continue
-                result["rpm"].append({
-                    "path": pkg.file_path,
-                    "flags": ["input"],
-                })
+                result["rpm"].append(
+                    {"path": pkg.file_path, "flags": ["input"]}
+                )
                 seen_rpms.setdefault(pkg.name, set()).add(pkg.arch)
                 seen_srpms.setdefault(pkg.sourcerpm, set()).add(pkg.arch)
-                log.write('Added %s (matched %s.%s) (sourcerpm: %s)\n'
-                          % (pkg, gathered_pkg, pkg_arch, pkg.sourcerpm))
+                log.write(
+                    "Added %s (matched %s.%s) (sourcerpm: %s)\n"
+                    % (pkg, gathered_pkg, pkg_arch, pkg.sourcerpm)
+                )
 
-        log.write('\nGathering source rpms\n')
+        log.write("\nGathering source rpms\n")
         for pkg in iterate_packages(package_sets, arch):
             if not pkg_is_srpm(pkg):
                 continue
             if pkg.file_name in seen_srpms:
-                result["srpm"].append({
-                    "path": pkg.file_path,
-                    "flags": ["input"],
-                })
-                log.write('Adding %s\n' % pkg)
+                result["srpm"].append(
+                    {"path": pkg.file_path, "flags": ["input"]}
+                )
+                log.write("Adding %s\n" % pkg)
 
-        log.write('\nGathering debuginfo packages\n')
+        log.write("\nGathering debuginfo packages\n")
         for pkg in iterate_packages(package_sets, arch):
             if not pkg_is_debug(pkg):
                 continue
             if pkg.sourcerpm not in seen_srpms:
-                log.write('Not considering %s: corresponding srpm not included\n' % pkg)
+                log.write("Not considering %s: corresponding srpm not included\n" % pkg)
                 continue
-            pkg_arches = set(compatible_arches[pkg.arch]) - set(['noarch'])
-            seen_arches = set(seen_srpms[pkg.sourcerpm]) - set(['noarch'])
+            pkg_arches = set(compatible_arches[pkg.arch]) - set(["noarch"])
+            seen_arches = set(seen_srpms[pkg.sourcerpm]) - set(["noarch"])
             if not (pkg_arches & seen_arches):
                 # We only want to pull in a debuginfo if we have a binary
                 # package for a compatible arch. Noarch packages should not
                 # pull debuginfo (they would pull in all architectures).
-                log.write('Not including %s: no package for this arch\n'
-                          % pkg)
+                log.write("Not including %s: no package for this arch\n" % pkg)
                 continue
-            result["debuginfo"].append({
-                "path": pkg.file_path,
-                "flags": ["input"],
-            })
-            log.write('Adding %s\n' % pkg)
+            result["debuginfo"].append(
+                {"path": pkg.file_path, "flags": ["input"]}
+            )
+            log.write("Adding %s\n" % pkg)
 
         return result
 
@@ -130,10 +148,12 @@ def expand_groups(compose, arch, variant, groups, set_pkg_arch=True):
     comps.append(CompsWrapper(comps_file))
 
     if variant and variant.parent:
-        parent_comps_file = compose.paths.work.comps(arch, variant.parent, create_dir=False)
+        parent_comps_file = compose.paths.work.comps(
+            arch, variant.parent, create_dir=False
+        )
         comps.append(CompsWrapper(parent_comps_file))
 
-        if variant.type == 'optional':
+        if variant.type == "optional":
             for v in variant.parent.variants.values():
                 if v.id == variant.id:
                     continue

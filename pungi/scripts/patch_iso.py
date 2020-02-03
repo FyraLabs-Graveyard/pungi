@@ -22,24 +22,32 @@ from pungi_utils import patch_iso
 
 def main(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Print debugging information')
-    parser.add_argument('--supported', choices=('true', 'false'),
-                        help='Override supported bit on the ISO')
-    parser.add_argument('--volume-id',
-                        help='Override volume ID on the ISO')
-    parser.add_argument('--force-arch',
-                        help='Treat the ISO as bootable on given architecture')
-    parser.add_argument('target', metavar='TARGET_ISO',
-                        help='which file to write the result to')
-    parser.add_argument('source', metavar='SOURCE_ISO',
-                        help='source ISO to work with')
-    parser.add_argument('dirs', nargs="+", metavar='GRAFT_DIR',
-                        help='extra directories to graft on the ISO')
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Print debugging information"
+    )
+    parser.add_argument(
+        "--supported",
+        choices=("true", "false"),
+        help="Override supported bit on the ISO",
+    )
+    parser.add_argument("--volume-id", help="Override volume ID on the ISO")
+    parser.add_argument(
+        "--force-arch", help="Treat the ISO as bootable on given architecture"
+    )
+    parser.add_argument(
+        "target", metavar="TARGET_ISO", help="which file to write the result to"
+    )
+    parser.add_argument("source", metavar="SOURCE_ISO", help="source ISO to work with")
+    parser.add_argument(
+        "dirs",
+        nargs="+",
+        metavar="GRAFT_DIR",
+        help="extra directories to graft on the ISO",
+    )
     opts = parser.parse_args(args)
 
     level = logging.DEBUG if opts.verbose else logging.INFO
-    format = '%(levelname)s: %(message)s'
+    format = "%(levelname)s: %(message)s"
     logging.basicConfig(level=level, format=format)
     log = logging.getLogger()
 

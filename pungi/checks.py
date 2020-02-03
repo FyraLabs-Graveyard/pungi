@@ -53,7 +53,7 @@ from . import util
 
 
 def is_jigdo_needed(conf):
-    return conf.get('create_jigdo', True)
+    return conf.get("create_jigdo", True)
 
 
 def is_isohybrid_needed(conf):
@@ -62,12 +62,14 @@ def is_isohybrid_needed(conf):
     to check for it. Additionally, the syslinux package is only available on
     x86_64 and i386.
     """
-    runroot_tag = conf.get('runroot_tag', '')
+    runroot_tag = conf.get("runroot_tag", "")
     if runroot_tag:
         return False
-    if platform.machine() not in ('x86_64', 'i686', 'i386'):
-        print('Not checking for /usr/bin/isohybrid due to current architecture. '
-              'Expect failures in productimg phase.')
+    if platform.machine() not in ("x86_64", "i686", "i386"):
+        print(
+            "Not checking for /usr/bin/isohybrid due to current architecture. "
+            "Expect failures in productimg phase."
+        )
         return False
     return True
 
@@ -75,14 +77,14 @@ def is_isohybrid_needed(conf):
 def is_genisoimage_needed(conf):
     """This is only needed locally for createiso without runroot.
     """
-    runroot_tag = conf.get('runroot_tag', '')
+    runroot_tag = conf.get("runroot_tag", "")
     if runroot_tag:
         return False
     return True
 
 
 def is_createrepo_c_needed(conf):
-    return conf.get('createrepo_c', True)
+    return conf.get("createrepo_c", True)
 
 
 # The first element in the tuple is package name expected to have the
@@ -97,8 +99,16 @@ tools = [
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     # createrepo, modifyrepo and mergerepo are not needed by default, only when
     # createrepo_c is not configured
-    ("createrepo", "/usr/bin/createrepo", lambda conf: not is_createrepo_c_needed(conf)),
-    ("createrepo", "/usr/bin/modifyrepo", lambda conf: not is_createrepo_c_needed(conf)),
+    (
+        "createrepo",
+        "/usr/bin/createrepo",
+        lambda conf: not is_createrepo_c_needed(conf),
+    ),
+    (
+        "createrepo",
+        "/usr/bin/modifyrepo",
+        lambda conf: not is_createrepo_c_needed(conf),
+    ),
     ("createrepo", "/usr/bin/mergerepo", lambda conf: not is_createrepo_c_needed(conf)),
     ("createrepo_c", "/usr/bin/createrepo_c", is_createrepo_c_needed),
     ("createrepo_c", "/usr/bin/modifyrepo_c", is_createrepo_c_needed),
@@ -127,8 +137,11 @@ def check_umask(logger):
     os.umask(mask)
 
     if mask > 0o022:
-        logger.warning('Unusually strict umask detected (0%03o), '
-                       'expect files with broken permissions.', mask)
+        logger.warning(
+            "Unusually strict umask detected (0%03o), "
+            "expect files with broken permissions.",
+            mask,
+        )
 
 
 def check_skip_phases(logger, skip_phases, just_phases):
@@ -140,8 +153,8 @@ def check_skip_phases(logger, skip_phases, just_phases):
     :returns: True if checking passed else False
     """
     needed_by = {
-        'pkgset': 'gather',
-        'gather': 'createrepo',
+        "pkgset": "gather",
+        "gather": "createrepo",
     }
     fail = False
     for k, v in needed_by.items():
@@ -166,15 +179,25 @@ def _validate_requires(schema, conf, valid_options):
     errors = []
 
     def has_default(x):
-        return schema['properties'].get(x, {}).get('default') == conf[x]
+        return schema["properties"].get(x, {}).get("default") == conf[x]
 
     for name, opt in valid_options.items():
         value = conf.get(name)
 
-        errors.extend(_check_dep(name, value, opt.get('conflicts', []),
-                                 lambda x: x in conf and not has_default(x), CONFLICTS))
-        errors.extend(_check_dep(name, value, opt.get('requires', []),
-                                 lambda x: x not in conf, REQUIRES))
+        errors.extend(
+            _check_dep(
+                name,
+                value,
+                opt.get("conflicts", []),
+                lambda x: x in conf and not has_default(x),
+                CONFLICTS,
+            )
+        )
+        errors.extend(
+            _check_dep(
+                name, value, opt.get("requires", []), lambda x: x not in conf, REQUIRES
+            )
+        )
 
     return errors
 
@@ -196,19 +219,19 @@ def validate(config, offline=False, schema=None):
     )
     validator = DefaultValidator(
         schema,
-        {"array": (tuple, list), "regex": six.string_types, "url": six.string_types}
+        {"array": (tuple, list), "regex": six.string_types, "url": six.string_types},
     )
     errors = []
     warnings = []
     for error in validator.iter_errors(config):
         if isinstance(error, ConfigDeprecation):
-            warnings.append(REMOVED.format('.'.join(error.path), error.message))
+            warnings.append(REMOVED.format(".".join(error.path), error.message))
         elif isinstance(error, ConfigOptionWarning):
             warnings.append(error.message)
         elif isinstance(error, ConfigOptionError):
             errors.append(error.message)
-        elif not error.path and error.validator == 'additionalProperties':
-            allowed_keys = set(error.schema['properties'].keys())
+        elif not error.path and error.validator == "additionalProperties":
+            allowed_keys = set(error.schema["properties"].keys())
             used_keys = set(error.instance.keys())
             for key in used_keys - allowed_keys:
                 suggestion = _get_suggestion(key, allowed_keys)
@@ -217,13 +240,14 @@ def validate(config, offline=False, schema=None):
                 else:
                     warnings.append(UNKNOWN.format(key))
         else:
-            errors.append('Failed validation in %s: %s' % (
-                '.'.join([str(x) for x in error.path]), error.message))
+            errors.append(
+                "Failed validation in %s: %s"
+                % (".".join([str(x) for x in error.path]), error.message)
+            )
             if error.validator in ("anyOf", "oneOf"):
                 for suberror in error.context:
                     errors.append("    Possible reason: %s" % suberror.message)
-    return (errors + _validate_requires(schema, config, CONFIG_DEPS),
-            warnings)
+    return (errors + _validate_requires(schema, config, CONFIG_DEPS), warnings)
 
 
 def _get_suggestion(desired, names):
@@ -242,18 +266,18 @@ def _get_suggestion(desired, names):
     return closest
 
 
-CONFLICTS = 'ERROR: Config option {0}={1} conflicts with option {2}.'
-REQUIRES = 'ERROR: Config option {0}={1} requires {2} which is not set.'
-REMOVED = 'WARNING: Config option {0} was removed and has no effect; {1}.'
-UNKNOWN = 'WARNING: Unrecognized config option: {0}.'
-UNKNOWN_SUGGEST = 'WARNING: Unrecognized config option: {0}. Did you mean {1}?'
+CONFLICTS = "ERROR: Config option {0}={1} conflicts with option {2}."
+REQUIRES = "ERROR: Config option {0}={1} requires {2} which is not set."
+REMOVED = "WARNING: Config option {0} was removed and has no effect; {1}."
+UNKNOWN = "WARNING: Unrecognized config option: {0}."
+UNKNOWN_SUGGEST = "WARNING: Unrecognized config option: {0}. Did you mean {1}?"
 
 
 def _extend_with_default_and_alias(validator_class, offline=False):
     validate_properties = validator_class.VALIDATORS["properties"]
-    validate_type = validator_class.VALIDATORS['type']
-    validate_required = validator_class.VALIDATORS['required']
-    validate_additional_properties = validator_class.VALIDATORS['additionalProperties']
+    validate_type = validator_class.VALIDATORS["type"]
+    validate_required = validator_class.VALIDATORS["required"]
+    validate_additional_properties = validator_class.VALIDATORS["additionalProperties"]
     resolver = util.GitUrlResolver(offline=offline)
 
     def _hook_errors(properties, instance, schema):
@@ -265,38 +289,49 @@ def _extend_with_default_and_alias(validator_class, offline=False):
             # If alias option for the property is present and property is not specified,
             # update the property in instance with value from alias option.
             if "alias" in subschema:
-                if subschema['alias'] in instance:
-                    msg = "WARNING: Config option '%s' is deprecated and now an alias to '%s', " \
-                          "please use '%s' instead. " \
-                          "In:\n%s" % (subschema['alias'], property, property, instance)
+                if subschema["alias"] in instance:
+                    msg = (
+                        "WARNING: Config option '%s' is deprecated and now an alias to '%s', "
+                        "please use '%s' instead. "
+                        "In:\n%s" % (subschema["alias"], property, property, instance)
+                    )
                     yield ConfigOptionWarning(msg)
                     if property in instance:
-                        msg = "ERROR: Config option '%s' is an alias of '%s', only one can be used." \
-                              % (subschema['alias'], property)
+                        msg = (
+                            "ERROR: Config option '%s' is an alias of '%s', only one can be used."
+                            % (subschema["alias"], property)
+                        )
                         yield ConfigOptionError(msg)
-                        instance.pop(subschema['alias'])
+                        instance.pop(subschema["alias"])
                     else:
-                        instance.setdefault(property, instance.pop(subschema['alias']))
+                        instance.setdefault(property, instance.pop(subschema["alias"]))
             # update instance for append option
             # If append is defined in schema, append values from append options to property. If property
             # is not present in instance, set it to empty list, and append the values from append options.
             # Note: property's schema must support a list of values.
             if "append" in subschema:
-                appends = force_list(subschema['append'])
+                appends = force_list(subschema["append"])
                 for append in appends:
                     if append in instance:
-                        msg = "WARNING: Config option '%s' is deprecated, its value will be appended to option '%s'. " \
-                              "In:\n%s" % (append, property, instance)
+                        msg = (
+                            "WARNING: Config option '%s' is deprecated, its value will be appended to option '%s'. "
+                            "In:\n%s" % (append, property, instance)
+                        )
                         yield ConfigOptionWarning(msg)
                         if property in instance:
-                            msg = "WARNING: Value from config option '%s' is now appended to option '%s'." \
-                                  % (append, property)
+                            msg = (
+                                "WARNING: Value from config option '%s' is now appended to option '%s'."
+                                % (append, property)
+                            )
                             yield ConfigOptionWarning(msg)
                             instance[property] = force_list(instance[property])
                             instance[property].extend(force_list(instance.pop(append)))
                         else:
-                            msg = "WARNING: Config option '%s' is not found, but '%s' is specified, value from '%s' " \
-                                  "is now added as '%s'." % (property, append, append, property)
+                            msg = (
+                                "WARNING: Config option '%s' is not found, but '%s' is specified, value from '%s' "
+                                "is now added as '%s'."
+                                % (property, append, append, property)
+                            )
                             yield ConfigOptionWarning(msg)
                             instance[property] = instance.pop(append)
 
@@ -363,12 +398,12 @@ def _extend_with_default_and_alias(validator_class, offline=False):
         Extend standard type validation to check correctness in regular
         expressions.
         """
-        if properties == 'regex':
+        if properties == "regex":
             try:
                 re.compile(instance)
             except re.error as exc:
                 yield jsonschema.ValidationError(
-                    'incorrect regular expression: %s' % str(exc),
+                    "incorrect regular expression: %s" % str(exc),
                 )
         else:
             # Not a regular expression, delegate to original validator.
@@ -426,7 +461,6 @@ def make_schema():
     return {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "Pungi Configuration",
-
         "definitions": {
             "multilib_list": {
                 "type": "object",
@@ -435,11 +469,9 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
-
             "package_mapping": _variant_arch_mapping(
                 {"$ref": "#/definitions/list_of_strings"}
             ),
-
             "scm_dict": {
                 "type": "object",
                 "properties": {
@@ -455,14 +487,9 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
-
             "str_or_scm_dict": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"$ref": "#/definitions/scm_dict"},
-                ]
+                "anyOf": [{"type": "string"}, {"$ref": "#/definitions/scm_dict"}]
             },
-
             "repo_dict": {
                 "type": "object",
                 "properties": {
@@ -475,30 +502,13 @@ def make_schema():
                 "additionalProperties": False,
                 "required": ["baseurl"],
             },
-
             "repo": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"$ref": "#/definitions/repo_dict"},
-                ]
+                "anyOf": [{"type": "string"}, {"$ref": "#/definitions/repo_dict"}]
             },
-
             "repos": _one_or_list({"$ref": "#/definitions/repo"}),
-
-            "list_of_strings": {
-                "type": "array",
-                "items": {"type": "string"},
-            },
-
+            "list_of_strings": {"type": "array", "items": {"type": "string"}},
             "strings": _one_or_list({"type": "string"}),
-
-            "optional_string": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"type": "null"},
-                ],
-            },
-
+            "optional_string": {"anyOf": [{"type": "string"}, {"type": "null"}]},
             "live_image_config": {
                 "type": "object",
                 "properties": {
@@ -520,7 +530,6 @@ def make_schema():
                 "additionalProperties": False,
                 "type": "object",
             },
-
             "osbs_config": {
                 "type": "object",
                 "properties": {
@@ -528,130 +537,71 @@ def make_schema():
                     "target": {"type": "string"},
                     "scratch": {"type": "boolean"},
                     "priority": {"type": "number"},
-                    "repo": {
-                        "$ref": "#/definitions/repos",
-                        "append": "repo_from",
-                    },
+                    "repo": {"$ref": "#/definitions/repos", "append": "repo_from"},
                     "gpgkey": {"type": "string"},
                     "git_branch": {"type": "string"},
                 },
-                "required": ["url", "target", "git_branch"]
+                "required": ["url", "target", "git_branch"],
             },
-
             "string_pairs": {
                 "type": "array",
                 "items": {
                     "type": "array",
-                    "items": [
-                        {"type": "string"},
-                        {"type": "string"},
-                    ],
+                    "items": [{"type": "string"}, {"type": "string"}],
                     "additionalItems": False,
-                }
-            }
+                },
+            },
         },
-
         "type": "object",
         "properties": {
             "release_name": {"type": "string"},
             "release_short": {"type": "string"},
             "release_version": {"type": "string"},
-            "release_type": {
-                "type": "string",
-                "enum": RELEASE_TYPES,
-                "default": "ga",
-            },
+            "release_type": {"type": "string", "enum": RELEASE_TYPES, "default": "ga"},
             "release_is_layered": {
                 "deprecated": "remove it. It's layered if there's configuration for base product"
             },
             "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
-
             "treeinfo_version": {"type": "string"},
-
-            "compose_type": {
-                "type": "string",
-                "enum": COMPOSE_TYPES,
-            },
-
+            "compose_type": {"type": "string", "enum": COMPOSE_TYPES},
             "base_product_name": {"type": "string"},
             "base_product_short": {"type": "string"},
             "base_product_version": {"type": "string"},
-            "base_product_type": {
-                "type": "string",
-                "default": "ga"
-            },
-
+            "base_product_type": {"type": "string", "default": "ga"},
             "runroot": {
                 "deprecated": "remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally",
             },
-            "global_runroot_method": {
-                "type": "string",
-                "enum": RUNROOT_TYPES,
-            },
+            "global_runroot_method": {"type": "string", "enum": RUNROOT_TYPES},
             "runroot_method": {
                 "oneOf": [
-                    {
-                        "type": "string",
-                        "enum": RUNROOT_TYPES,
-                    },
+                    {"type": "string", "enum": RUNROOT_TYPES},
                     {
                         "type": "object",
                         "properties": {
-                            "buildinstall": {
-                                "type": "string",
-                                "enum": RUNROOT_TYPES,
-                            },
+                            "buildinstall": {"type": "string", "enum": RUNROOT_TYPES},
                             "ostree_installer": {
                                 "type": "string",
                                 "enum": RUNROOT_TYPES,
                             },
-                            "ostree": {
-                                "type": "string",
-                                "enum": RUNROOT_TYPES,
-                            },
-                            "createiso": {
-                                "type": "string",
-                                "enum": RUNROOT_TYPES,
-                            },
+                            "ostree": {"type": "string", "enum": RUNROOT_TYPES},
+                            "createiso": {"type": "string", "enum": RUNROOT_TYPES},
                         },
                         "additionalProperties": False,
-                    }
+                    },
                 ]
             },
-            "runroot_ssh_username": {
-                "type": "string",
-                "default": "root",
-            },
-            "runroot_ssh_hostnames": {
-                "type": "object",
-                "default": {},
-            },
-            "runroot_ssh_init_template": {
-                "type": "string",
-            },
-            "runroot_ssh_install_packages_template": {
-                "type": "string",
-            },
-            "runroot_ssh_run_template": {
-                "type": "string",
-            },
-            "create_jigdo": {
-                "type": "boolean",
-                "default": True,
-            },
-            "check_deps": {
-                "type": "boolean",
-                "default": True
-            },
-            "require_all_comps_packages": {
-                "type": "boolean",
-                "default": False,
-            },
+            "runroot_ssh_username": {"type": "string", "default": "root"},
+            "runroot_ssh_hostnames": {"type": "object", "default": {}},
+            "runroot_ssh_init_template": {"type": "string"},
+            "runroot_ssh_install_packages_template": {"type": "string"},
+            "runroot_ssh_run_template": {"type": "string"},
+            "create_jigdo": {"type": "boolean", "default": True},
+            "check_deps": {"type": "boolean", "default": True},
+            "require_all_comps_packages": {"type": "boolean", "default": False},
             "bootable": {
                 "deprecated": "remove it. Setting buildinstall_method option if you want a bootable installer"
             },
-
             "gather_method": {
                 "oneOf": [
                     {
@@ -659,10 +609,7 @@ def make_schema():
                         "patternProperties": {
                             ".+": {
                                 "oneOf": [
-                                    {
-                                        "type": "string",
-                                        "enum": ["hybrid"],
-                                    },
+                                    {"type": "string", "enum": ["hybrid"]},
                                     {
                                         "type": "object",
                                         "patternProperties": {
@@ -671,29 +618,18 @@ def make_schema():
                                                 "enum": ["deps", "nodeps"],
                                             }
                                         },
-                                    }
+                                    },
                                 ]
                             }
                         },
                         "additionalProperties": False,
                     },
-                    {
-                        "type": "string",
-                        "enum": ["deps", "nodeps", "hybrid"],
-                    }
+                    {"type": "string", "enum": ["deps", "nodeps", "hybrid"]},
                 ],
             },
-            "gather_source": {
-                "deprecated": "remove it",
-            },
-            "gather_fulltree": {
-                "type": "boolean",
-                "default": False,
-            },
-            "gather_selfhosting": {
-                "type": "boolean",
-                "default": False,
-            },
+            "gather_source": {"deprecated": "remove it"},
+            "gather_fulltree": {"type": "boolean", "default": False},
+            "gather_selfhosting": {"type": "boolean", "default": False},
             "gather_prepopulate": {"$ref": "#/definitions/str_or_scm_dict"},
             "gather_source_mapping": {"type": "string"},
             "gather_backend": {
@@ -701,66 +637,40 @@ def make_schema():
                 "enum": _get_gather_backends(),
                 "default": _get_default_gather_backend(),
             },
-            "gather_profiler": {
-                "type": "boolean",
-                "default": False,
-            },
-
-            "pkgset_source": {
-                "type": "string",
-                "enum": ["koji", "repos"],
-            },
-
-            "createrepo_c": {
-                "type": "boolean",
-                "default": True,
-            },
+            "gather_profiler": {"type": "boolean", "default": False},
+            "pkgset_source": {"type": "string", "enum": ["koji", "repos"]},
+            "createrepo_c": {"type": "boolean", "default": True},
             "createrepo_checksum": {
                 "type": "string",
                 "default": "sha256",
                 "enum": ["sha", "sha256", "sha512"],
             },
-            "createrepo_use_xz": {
-                "type": "boolean",
-                "default": False,
-            },
-            "createrepo_num_threads": {
-                "type": "number",
-                "default": get_num_cpus(),
-            },
-            "createrepo_num_workers": {
-                "type": "number",
-                "default": 3,
-            },
-            "createrepo_database": {
-                "type": "boolean",
-            },
+            "createrepo_use_xz": {"type": "boolean", "default": False},
+            "createrepo_num_threads": {"type": "number", "default": get_num_cpus()},
+            "createrepo_num_workers": {"type": "number", "default": 3},
+            "createrepo_database": {"type": "boolean"},
             "createrepo_extra_args": {
                 "type": "array",
                 "default": [],
-                "items": {
-                    "type": "string",
-                },
+                "items": {"type": "string"},
             },
-            "repoclosure_strictness": _variant_arch_mapping({
-                "type": "string",
-                "default": "lenient",
-                "enum": ["off", "lenient", "fatal"],
-            }),
+            "repoclosure_strictness": _variant_arch_mapping(
+                {
+                    "type": "string",
+                    "default": "lenient",
+                    "enum": ["off", "lenient", "fatal"],
+                }
+            ),
             "repoclosure_backend": {
                 "type": "string",
                 # Gather and repoclosure both have the same backends: yum + dnf
                 "default": _get_default_gather_backend(),
                 "enum": _get_gather_backends(),
             },
-
             "old_composes_per_release_type": {
                 "deprecated": "remove it. It is the default behavior now"
             },
-            "hashed_directories": {
-                "type": "boolean",
-                "default": False,
-            },
+            "hashed_directories": {"type": "boolean", "default": False},
             "multilib_whitelist": {
                 "$ref": "#/definitions/multilib_list",
                 "default": {},
@@ -782,10 +692,7 @@ def make_schema():
                 "$ref": "#/definitions/package_mapping",
                 "default": [],
             },
-            "filter_modules": {
-                "$ref": "#/definitions/package_mapping",
-                "default": [],
-            },
+            "filter_modules": {"$ref": "#/definitions/package_mapping", "default": []},
             "sigkeys": {
                 "type": "array",
                 "items": {"$ref": "#/definitions/optional_string"},
@@ -794,49 +701,31 @@ def make_schema():
             },
             "variants_file": {"$ref": "#/definitions/str_or_scm_dict"},
             "comps_file": {"$ref": "#/definitions/str_or_scm_dict"},
-            "comps_filter_environments": {
-                "type": "boolean",
-                "default": True
-            },
+            "comps_filter_environments": {"type": "boolean", "default": True},
             "module_defaults_dir": {"$ref": "#/definitions/str_or_scm_dict"},
             "module_defaults_override_dir": {"type": "string"},
-
             "pkgset_repos": {
                 "type": "object",
-                "patternProperties": {
-                    ".+": {"$ref": "#/definitions/strings"},
-                },
+                "patternProperties": {".+": {"$ref": "#/definitions/strings"}},
                 "additionalProperties": False,
             },
-            "create_optional_isos": {
-                "type": "boolean",
-                "default": False
-            },
+            "create_optional_isos": {"type": "boolean", "default": False},
             "symlink_isos_to": {"type": "string"},
             "dogpile_cache_backend": {"type": "string"},
             "dogpile_cache_expiration_time": {"type": "number"},
-            "dogpile_cache_arguments": {
-                "type": "object",
-                "default": {},
-            },
+            "dogpile_cache_arguments": {"type": "object", "default": {}},
             "createiso_skip": _variant_arch_mapping({"type": "boolean"}),
             "createiso_max_size": _variant_arch_mapping({"type": "number"}),
             "createiso_max_size_is_strict": _variant_arch_mapping(
                 {"type": "boolean", "default": False}
             ),
-            "createiso_break_hardlinks": {
-                "type": "boolean",
-                "default": False,
-            },
+            "createiso_break_hardlinks": {"type": "boolean", "default": False},
             "iso_hfs_ppc64le_compatible": {"type": "boolean", "default": True},
-            "multilib": _variant_arch_mapping({
-                "$ref": "#/definitions/list_of_strings"
-            }),
-
+            "multilib": _variant_arch_mapping(
+                {"$ref": "#/definitions/list_of_strings"}
+            ),
             "runroot_tag": {"type": "string"},
-            "runroot_channel": {
-                "$ref": "#/definitions/optional_string",
-            },
+            "runroot_channel": {"$ref": "#/definitions/optional_string"},
             "runroot_weights": {
                 "type": "object",
                 "default": {},
@@ -851,14 +740,10 @@ def make_schema():
             "createrepo_deltas": {
                 "anyOf": [
                     # Deprecated in favour of more granular settings.
-                    {
-                        "type": "boolean",
-                        "default": False,
-                    },
-                    _variant_arch_mapping({"type": "boolean"})
+                    {"type": "boolean", "default": False},
+                    _variant_arch_mapping({"type": "boolean"}),
                 ]
             },
-
             "buildinstall_method": {
                 "type": "string",
                 "enum": ["lorax", "buildinstall"],
@@ -867,58 +752,34 @@ def make_schema():
             "buildinstall_kickstart": {"$ref": "#/definitions/str_or_scm_dict"},
             "buildinstall_use_guestmount": {"type": "boolean", "default": True},
             "buildinstall_skip": _variant_arch_mapping({"type": "boolean"}),
-
             "global_ksurl": {"type": "url"},
             "global_version": {"type": "string"},
             "global_target": {"type": "string"},
             "global_release": {"$ref": "#/definitions/optional_string"},
-
             "pdc_url": {"deprecated": "Koji is queried instead"},
             "pdc_develop": {"deprecated": "Koji is queried instead"},
             "pdc_insecure": {"deprecated": "Koji is queried instead"},
-
             "koji_profile": {"type": "string"},
             "koji_event": {"type": "number"},
-
             "pkgset_koji_tag": {"$ref": "#/definitions/strings"},
             "pkgset_koji_builds": {"$ref": "#/definitions/strings"},
-            "pkgset_koji_module_tag": {
-                "$ref": "#/definitions/strings",
-                "default": [],
-            },
-            "pkgset_koji_inherit": {
-                "type": "boolean",
-                "default": True
-            },
-            "pkgset_koji_inherit_modules": {
-                "type": "boolean",
-                "default": False
-            },
+            "pkgset_koji_module_tag": {"$ref": "#/definitions/strings", "default": []},
+            "pkgset_koji_inherit": {"type": "boolean", "default": True},
+            "pkgset_koji_inherit_modules": {"type": "boolean", "default": False},
             "pkgset_exclusive_arch_considers_noarch": {
                 "type": "boolean",
                 "default": True,
             },
-
-            "disc_types": {
-                "type": "object",
-                "default": {},
-            },
-
+            "disc_types": {"type": "object", "default": {}},
             "paths_module": {"type": "string"},
             "skip_phases": {
                 "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": PHASES_NAMES,
-                },
+                "items": {"type": "string", "enum": PHASES_NAMES},
                 "default": [],
             },
-
             "image_name_format": {
                 "oneOf": [
-                    {
-                        "type": "string"
-                    },
+                    {"type": "string"},
                     {
                         "type": "object",
                         "patternProperties": {
@@ -945,88 +806,52 @@ def make_schema():
                     "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",
                 ],
             },
-            "restricted_volid": {
-                "type": "boolean",
-                "default": False,
-            },
-            "volume_id_substitutions": {
-                "type": "object",
-                "default": {},
-            },
-
-            "live_images_no_rename": {
-                "type": "boolean",
-                "default": False,
-            },
+            "restricted_volid": {"type": "boolean", "default": False},
+            "volume_id_substitutions": {"type": "object", "default": {}},
+            "live_images_no_rename": {"type": "boolean", "default": False},
             "live_images_ksurl": {"type": "url"},
             "live_images_target": {"type": "string"},
             "live_images_release": {"$ref": "#/definitions/optional_string"},
             "live_images_version": {"type": "string"},
-
             "image_build_ksurl": {"type": "url"},
             "image_build_target": {"type": "string"},
             "image_build_release": {"$ref": "#/definitions/optional_string"},
             "image_build_version": {"type": "string"},
-
             "live_media_ksurl": {"type": "url"},
             "live_media_target": {"type": "string"},
             "live_media_release": {"$ref": "#/definitions/optional_string"},
             "live_media_version": {"type": "string"},
-
             "media_checksums": {
                 "$ref": "#/definitions/list_of_strings",
-                "default": ['md5', 'sha1', 'sha256']
+                "default": ["md5", "sha1", "sha256"],
             },
-            "media_checksum_one_file": {
-                "type": "boolean",
-                "default": False
-            },
-            "media_checksum_base_filename": {
-                "type": "string",
-                "default": ""
-            },
-
-            "filter_system_release_packages": {
-                "type": "boolean",
-                "default": True,
-            },
+            "media_checksum_one_file": {"type": "boolean", "default": False},
+            "media_checksum_base_filename": {"type": "string", "default": ""},
+            "filter_system_release_packages": {"type": "boolean", "default": True},
             "keep_original_comps": {
                 "deprecated": "remove <groups> tag from respective variant in variants XML"
             },
-
             "link_type": {
                 "type": "string",
-                "enum": ["hardlink", "copy", "hardlink-or-copy", "symlink", "abspath-symlink"],
-                "default": "hardlink-or-copy"
+                "enum": [
+                    "hardlink",
+                    "copy",
+                    "hardlink-or-copy",
+                    "symlink",
+                    "abspath-symlink",
+                ],
+                "default": "hardlink-or-copy",
             },
-
             "product_id": {"$ref": "#/definitions/str_or_scm_dict"},
-            "product_id_allow_missing": {
-                "type": "boolean",
-                "default": False
-            },
-
+            "product_id_allow_missing": {"type": "boolean", "default": False},
             # Deprecated in favour of regular local/phase/global setting.
             "live_target": {"type": "string"},
-
-            "tree_arches": {
-                "$ref": "#/definitions/list_of_strings",
-                "default": []
-            },
-            "tree_variants": {
-                "$ref": "#/definitions/list_of_strings",
-                "default": []
-            },
-
-            "translate_paths": {
-                "$ref": "#/definitions/string_pairs",
-                "default": [],
-            },
-
-            "failable_deliverables": _variant_arch_mapping({
-                "$ref": "#/definitions/list_of_strings"
-            }),
-
+            "tree_arches": {"$ref": "#/definitions/list_of_strings", "default": []},
+            "tree_variants": {"$ref": "#/definitions/list_of_strings", "default": []},
+            "translate_paths": {"$ref": "#/definitions/string_pairs", "default": []},
+            "failable_deliverables": _variant_arch_mapping(
+                {"$ref": "#/definitions/list_of_strings"}
+            ),
             "extra_isos": {
                 "type": "object",
                 "patternProperties": {
@@ -1039,28 +864,29 @@ def make_schema():
                             "type": "object",
                             "properties": {
                                 "include_variants": {"$ref": "#/definitions/strings"},
-                                "extra_files": _one_or_list({
-                                    "type": "object",
-                                    "properties": {
-                                        "scm": {"type": "string"},
-                                        "repo": {"type": "string"},
-                                        "branch": {"$ref": "#/definitions/optional_string"},
-                                        "file": {"$ref": "#/definitions/strings"},
-                                        "dir": {"$ref": "#/definitions/strings"},
-                                        "target": {"type": "string"},
-                                    },
-                                    "additionalProperties": False,
-                                }),
+                                "extra_files": _one_or_list(
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "scm": {"type": "string"},
+                                            "repo": {"type": "string"},
+                                            "branch": {
+                                                "$ref": "#/definitions/optional_string"
+                                            },
+                                            "file": {"$ref": "#/definitions/strings"},
+                                            "dir": {"$ref": "#/definitions/strings"},
+                                            "target": {"type": "string"},
+                                        },
+                                        "additionalProperties": False,
+                                    }
+                                ),
                                 "filename": {"type": "string"},
                                 "volid": {"$ref": "#/definitions/strings"},
                                 "arches": {"$ref": "#/definitions/list_of_strings"},
                                 "failable_arches": {
                                     "$ref": "#/definitions/list_of_strings"
                                 },
-                                "skip_src": {
-                                    "type": "boolean",
-                                    "default": False,
-                                },
+                                "skip_src": {"type": "boolean", "default": False},
                                 "inherit_extra_files": {
                                     "type": "boolean",
                                     "default": False,
@@ -1068,12 +894,11 @@ def make_schema():
                                 "max_size": {"type": "number"},
                             },
                             "required": ["include_variants"],
-                            "additionalProperties": False
-                        }
+                            "additionalProperties": False,
+                        },
                     }
-                }
+                },
             },
-
             "live_media": {
                 "type": "object",
                 "patternProperties": {
@@ -1107,7 +932,6 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
-
             "ostree": {
                 "anyOf": [
                     {
@@ -1116,84 +940,94 @@ def make_schema():
                             # Warning: this pattern is a variant uid regex, but the
                             # format does not let us validate it as there is no regular
                             # expression to describe all regular expressions.
-                            ".+": _one_or_list({
-                                "type": "object",
-                                "properties": {
-                                    "treefile": {"type": "string"},
-                                    "config_url": {"type": "string"},
-                                    "repo": {"$ref": "#/definitions/repos"},
-                                    "keep_original_sources": {"type": "boolean"},
-                                    "ostree_repo": {"type": "string"},
-                                    "arches": {"$ref": "#/definitions/list_of_strings"},
-                                    "failable": {"$ref": "#/definitions/list_of_strings"},
-                                    "update_summary": {"type": "boolean"},
-                                    "force_new_commit": {"type": "boolean"},
-                                    "version": {"type": "string"},
-                                    "config_branch": {"type": "string"},
-                                    "tag_ref": {"type": "boolean"},
-                                    "ostree_ref": {"type": "string"},
-                                },
-                                "required": ["treefile", "config_url", "repo", "ostree_repo"],
-                                "additionalProperties": False,
-                            }),
+                            ".+": _one_or_list(
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "treefile": {"type": "string"},
+                                        "config_url": {"type": "string"},
+                                        "repo": {"$ref": "#/definitions/repos"},
+                                        "keep_original_sources": {"type": "boolean"},
+                                        "ostree_repo": {"type": "string"},
+                                        "arches": {
+                                            "$ref": "#/definitions/list_of_strings"
+                                        },
+                                        "failable": {
+                                            "$ref": "#/definitions/list_of_strings"
+                                        },
+                                        "update_summary": {"type": "boolean"},
+                                        "force_new_commit": {"type": "boolean"},
+                                        "version": {"type": "string"},
+                                        "config_branch": {"type": "string"},
+                                        "tag_ref": {"type": "boolean"},
+                                        "ostree_ref": {"type": "string"},
+                                    },
+                                    "required": [
+                                        "treefile",
+                                        "config_url",
+                                        "repo",
+                                        "ostree_repo",
+                                    ],
+                                    "additionalProperties": False,
+                                }
+                            ),
                         },
                         "additionalProperties": False,
                     },
                     # Deprecated in favour of the dict version above.
-                    _variant_arch_mapping({
-                        "type": "object",
-                        "properties": {
-                            "treefile": {"type": "string"},
-                            "config_url": {"type": "string"},
-                            "repo": {
-                                "$ref": "#/definitions/repos",
-                                "alias": "extra_source_repos",
-                                "append": ["repo_from", "source_repo_from"],
+                    _variant_arch_mapping(
+                        {
+                            "type": "object",
+                            "properties": {
+                                "treefile": {"type": "string"},
+                                "config_url": {"type": "string"},
+                                "repo": {
+                                    "$ref": "#/definitions/repos",
+                                    "alias": "extra_source_repos",
+                                    "append": ["repo_from", "source_repo_from"],
+                                },
+                                "keep_original_sources": {"type": "boolean"},
+                                "ostree_repo": {"type": "string"},
+                                "failable": {"$ref": "#/definitions/list_of_strings"},
+                                "update_summary": {"type": "boolean"},
+                                "force_new_commit": {"type": "boolean"},
+                                "version": {"type": "string"},
+                                "config_branch": {"type": "string"},
+                                "tag_ref": {"type": "boolean"},
+                                "ostree_ref": {"type": "string"},
                             },
-                            "keep_original_sources": {"type": "boolean"},
-                            "ostree_repo": {"type": "string"},
-                            "failable": {"$ref": "#/definitions/list_of_strings"},
-                            "update_summary": {"type": "boolean"},
-                            "force_new_commit": {"type": "boolean"},
-                            "version": {"type": "string"},
-                            "config_branch": {"type": "string"},
-                            "tag_ref": {"type": "boolean"},
-                            "ostree_ref": {"type": "string"},
-                        },
-                        "required": ["treefile", "config_url", "ostree_repo"],
-                        "additionalProperties": False,
-                    }),
+                            "required": ["treefile", "config_url", "ostree_repo"],
+                            "additionalProperties": False,
+                        }
+                    ),
                 ]
             },
-
-            "ostree_installer": _variant_arch_mapping({
-                "type": "object",
-                "properties": {
-                    "repo": {"$ref": "#/definitions/repos"},
-                    "release": {"$ref": "#/definitions/optional_string"},
-                    "failable": {"$ref": "#/definitions/list_of_strings"},
-                    "installpkgs": {"$ref": "#/definitions/list_of_strings"},
-                    "add_template": {"$ref": "#/definitions/list_of_strings"},
-                    "add_arch_template": {"$ref": "#/definitions/list_of_strings"},
-                    "add_template_var": {"$ref": "#/definitions/list_of_strings"},
-                    "add_arch_template_var": {"$ref": "#/definitions/list_of_strings"},
-                    "rootfs_size": {"type": "string"},
-                    "template_repo": {"type": "string"},
-                    "template_branch": {"type": "string"},
-                    "extra_runroot_pkgs": {"$ref": "#/definitions/list_of_strings"},
-                },
-                "additionalProperties": False,
-            }),
-
-            "ostree_installer_overwrite": {
-                "type": "boolean",
-                "default": False,
-            },
-
+            "ostree_installer": _variant_arch_mapping(
+                {
+                    "type": "object",
+                    "properties": {
+                        "repo": {"$ref": "#/definitions/repos"},
+                        "release": {"$ref": "#/definitions/optional_string"},
+                        "failable": {"$ref": "#/definitions/list_of_strings"},
+                        "installpkgs": {"$ref": "#/definitions/list_of_strings"},
+                        "add_template": {"$ref": "#/definitions/list_of_strings"},
+                        "add_arch_template": {"$ref": "#/definitions/list_of_strings"},
+                        "add_template_var": {"$ref": "#/definitions/list_of_strings"},
+                        "add_arch_template_var": {
+                            "$ref": "#/definitions/list_of_strings"
+                        },
+                        "rootfs_size": {"type": "string"},
+                        "template_repo": {"type": "string"},
+                        "template_branch": {"type": "string"},
+                        "extra_runroot_pkgs": {"$ref": "#/definitions/list_of_strings"},
+                    },
+                    "additionalProperties": False,
+                }
+            ),
+            "ostree_installer_overwrite": {"type": "boolean", "default": False},
             "live_images": _variant_arch_mapping(
                 _one_or_list({"$ref": "#/definitions/live_image_config"})
             ),
-
             "image_build": {
                 "type": "object",
                 "patternProperties": {
@@ -1208,13 +1042,17 @@ def make_schema():
                                 "image-build": {
                                     "type": "object",
                                     "properties": {
-                                        "failable": {"$ref": "#/definitions/list_of_strings"},
+                                        "failable": {
+                                            "$ref": "#/definitions/list_of_strings"
+                                        },
                                         "disc_size": {"type": "number"},
                                         "distro": {"type": "string"},
                                         "name": {"type": "string"},
                                         "kickstart": {"type": "string"},
                                         "ksurl": {"type": "url"},
-                                        "arches": {"$ref": "#/definitions/list_of_strings"},
+                                        "arches": {
+                                            "$ref": "#/definitions/list_of_strings"
+                                        },
                                         "repo": {
                                             "$ref": "#/definitions/repos",
                                             "append": "repo_from",
@@ -1225,48 +1063,44 @@ def make_schema():
                                             "anyOf": [
                                                 # The variant with explicit extension is deprecated.
                                                 {"$ref": "#/definitions/string_pairs"},
-                                                {"$ref": "#/definitions/strings"}
+                                                {"$ref": "#/definitions/strings"},
                                             ]
                                         },
                                     },
                                 },
-                                "factory-parameters": {
-                                    "type": "object",
-                                },
+                                "factory-parameters": {"type": "object"},
                             },
                             "required": ["image-build"],
                             "additionalProperties": False,
-                        }
+                        },
                     }
                 },
                 "additionalProperties": False,
             },
-
-            "lorax_options": _variant_arch_mapping({
-                "type": "object",
-                "properties": {
-                    "bugurl": {"type": "string"},
-                    "nomacboot": {"type": "boolean"},
-                    "noupgrade": {"type": "boolean"},
-                    'add_template': {"$ref": "#/definitions/list_of_strings"},
-                    'add_arch_template': {"$ref": "#/definitions/list_of_strings"},
-                    'add_template_var': {"$ref": "#/definitions/list_of_strings"},
-                    'add_arch_template_var': {"$ref": "#/definitions/list_of_strings"},
-                    "rootfs_size": {"type": "integer"},
-                    "version": {"type": "string"},
-                    "dracut_args": {"$ref": "#/definitions/list_of_strings"},
-                },
-                "additionalProperties": False,
-            }),
-
-            "lorax_extra_sources": _variant_arch_mapping({
-                "$ref": "#/definitions/strings",
-            }),
-            "lorax_use_koji_plugin": {
-                "type": "boolean",
-                "default": False,
-            },
-
+            "lorax_options": _variant_arch_mapping(
+                {
+                    "type": "object",
+                    "properties": {
+                        "bugurl": {"type": "string"},
+                        "nomacboot": {"type": "boolean"},
+                        "noupgrade": {"type": "boolean"},
+                        "add_template": {"$ref": "#/definitions/list_of_strings"},
+                        "add_arch_template": {"$ref": "#/definitions/list_of_strings"},
+                        "add_template_var": {"$ref": "#/definitions/list_of_strings"},
+                        "add_arch_template_var": {
+                            "$ref": "#/definitions/list_of_strings"
+                        },
+                        "rootfs_size": {"type": "integer"},
+                        "version": {"type": "string"},
+                        "dracut_args": {"$ref": "#/definitions/list_of_strings"},
+                    },
+                    "additionalProperties": False,
+                }
+            ),
+            "lorax_extra_sources": _variant_arch_mapping(
+                {"$ref": "#/definitions/strings"}
+            ),
+            "lorax_use_koji_plugin": {"type": "boolean", "default": False},
             "signing_key_id": {"type": "string"},
             "signing_key_password_file": {"type": "string"},
             "signing_command": {"type": "string"},
@@ -1274,20 +1108,13 @@ def make_schema():
                 "deprecated": "remove it. Productimg phase has been removed"
             },
             "iso_size": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"type": "number"},
-                ],
+                "anyOf": [{"type": "string"}, {"type": "number"}],
                 "default": 4700000000,
             },
             "split_iso_reserve": {
-                "anyOf": [
-                    {"type": "string"},
-                    {"type": "number"},
-                ],
-                "default": 10 * 1024 * 1024
+                "anyOf": [{"type": "string"}, {"type": "number"}],
+                "default": 10 * 1024 * 1024,
             },
-
             "osbs": {
                 "type": "object",
                 "patternProperties": {
@@ -1306,45 +1133,44 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
-
-            "extra_files": _variant_arch_mapping({
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "scm": {"type": "string"},
-                        "repo": {"type": "string"},
-                        "branch": {"$ref": "#/definitions/optional_string"},
-                        "file": {"$ref": "#/definitions/strings"},
-                        "dir": {"type": "string"},
-                        "target": {"type": "string"},
+            "extra_files": _variant_arch_mapping(
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "scm": {"type": "string"},
+                            "repo": {"type": "string"},
+                            "branch": {"$ref": "#/definitions/optional_string"},
+                            "file": {"$ref": "#/definitions/strings"},
+                            "dir": {"type": "string"},
+                            "target": {"type": "string"},
+                        },
+                        "additionalProperties": False,
                     },
-                    "additionalProperties": False,
                 }
-            }),
-
-            "gather_lookaside_repos": _variant_arch_mapping({
-                "$ref": "#/definitions/strings",
-            }),
-
+            ),
+            "gather_lookaside_repos": _variant_arch_mapping(
+                {"$ref": "#/definitions/strings"}
+            ),
             "variant_as_lookaside": {
                 "type": "array",
                 "items": {
                     "type": "array",
-                    "items": [
-                        {"type": "string"},
-                        {"type": "string"},
-                    ],
+                    "items": [{"type": "string"}, {"type": "string"}],
                     "minItems": 2,
                     "maxItems": 2,
                 },
             },
         },
-
-        "required": ["release_name", "release_short", "release_version",
-                     "variants_file",
-                     "pkgset_source",
-                     "gather_method"],
+        "required": [
+            "release_name",
+            "release_short",
+            "release_version",
+            "variants_file",
+            "pkgset_source",
+            "gather_method",
+        ],
         "additionalProperties": False,
     }
 
@@ -1359,26 +1185,20 @@ def _variant_arch_mapping(value):
                 {
                     "type": "object",
                     "patternProperties": {".+": value},
-                    "additionalProperties": False
-                }
+                    "additionalProperties": False,
+                },
             ],
             "additionalItems": False,
             "minItems": 2,
         },
-        "default": []
+        "default": [],
     }
 
 
 def _one_or_list(value):
     """Require either `value` or a list of `value`s."""
     return {
-        "anyOf": [
-            value,
-            {
-                "type": "array",
-                "items": value,
-            },
-        ],
+        "anyOf": [value, {"type": "array", "items": value}],
     }
 
 
@@ -1402,38 +1222,24 @@ CONFIG_DEPS = {
         ),
     },
     "base_product_name": {
-        "requires": (
-            (lambda x: x, ["base_product_short", "base_product_version"]),
-        ),
+        "requires": ((lambda x: x, ["base_product_short", "base_product_version"]),),
         "conflicts": (
             (lambda x: not x, ["base_product_short", "base_product_version"]),
         ),
     },
     "base_product_short": {
-        "requires": (
-            (lambda x: x, ["base_product_name", "base_product_version"]),
-        ),
+        "requires": ((lambda x: x, ["base_product_name", "base_product_version"]),),
         "conflicts": (
             (lambda x: not x, ["base_product_name", "base_product_version"]),
         ),
     },
     "base_product_version": {
-        "requires": (
-            (lambda x: x, ["base_product_name", "base_product_short"]),
-        ),
-        "conflicts": (
-            (lambda x: not x, ["base_product_name", "base_product_short"]),
-        ),
+        "requires": ((lambda x: x, ["base_product_name", "base_product_short"]),),
+        "conflicts": ((lambda x: not x, ["base_product_name", "base_product_short"]),),
     },
-    "product_id": {
-        "conflicts": [
-            (lambda x: not x, ['product_id_allow_missing']),
-        ],
-    },
+    "product_id": {"conflicts": [(lambda x: not x, ["product_id_allow_missing"])]},
     "pkgset_source": {
-        "requires": [
-            (lambda x: x == "repos", ["pkgset_repos"]),
-        ],
+        "requires": [(lambda x: x == "repos", ["pkgset_repos"])],
         "conflicts": [
             (lambda x: x == "koji", ["pkgset_repos"]),
             (lambda x: x == "repos", ["pkgset_koji_tag", "pkgset_koji_inherit"]),
@@ -1463,9 +1269,9 @@ def update_schema(schema, update_dict):
 
 def _get_gather_backends():
     if six.PY2:
-        return ['yum', 'dnf']
-    return ['dnf']
+        return ["yum", "dnf"]
+    return ["dnf"]
 
 
 def _get_default_gather_backend():
-    return 'yum' if six.PY2 else 'dnf'
+    return "yum" if six.PY2 else "dnf"

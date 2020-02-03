@@ -56,7 +56,9 @@ class LinkerThread(WorkerThread):
         src, dst = item
 
         if (num % 100 == 0) or (num == self.pool.queue_total):
-            self.pool.log_debug("Linked %s out of %s packages" % (num, self.pool.queue_total))
+            self.pool.log_debug(
+                "Linked %s out of %s packages" % (num, self.pool.queue_total)
+            )
 
         directory = os.path.dirname(dst)
         makedirs(directory)
@@ -113,7 +115,10 @@ class Linker(kobo.log.LoggingBase):
             if os.path.islink(dst) and self._is_same(old_src, dst):
                 if os.readlink(dst) != src:
                     raise
-                self.log_debug("The same file already exists, skipping symlink %s -> %s" % (dst, src))
+                self.log_debug(
+                    "The same file already exists, skipping symlink %s -> %s"
+                    % (dst, src)
+                )
             else:
                 raise
 
@@ -134,9 +139,15 @@ class Linker(kobo.log.LoggingBase):
                 raise
             if self._is_same(src, dst):
                 if not self._is_same_type(src, dst):
-                    self.log_error("File %s already exists but has different type than %s" % (dst, src))
+                    self.log_error(
+                        "File %s already exists but has different type than %s"
+                        % (dst, src)
+                    )
                     raise
-                self.log_debug("The same file already exists, skipping hardlink %s to %s" % (src, dst))
+                self.log_debug(
+                    "The same file already exists, skipping hardlink %s to %s"
+                    % (src, dst)
+                )
             else:
                 raise
 
@@ -157,9 +168,14 @@ class Linker(kobo.log.LoggingBase):
         if os.path.exists(dst):
             if self._is_same(src, dst):
                 if not self._is_same_type(src, dst):
-                    self.log_error("File %s already exists but has different type than %s" % (dst, src))
+                    self.log_error(
+                        "File %s already exists but has different type than %s"
+                        % (dst, src)
+                    )
                     raise OSError(errno.EEXIST, "File exists")
-                self.log_debug("The same file already exists, skipping copy %s to %s" % (src, dst))
+                self.log_debug(
+                    "The same file already exists, skipping copy %s to %s" % (src, dst)
+                )
                 return
             else:
                 raise OSError(errno.EEXIST, "File exists")
@@ -174,7 +190,10 @@ class Linker(kobo.log.LoggingBase):
         src_key = (src_stat.st_dev, src_stat.st_ino)
         if src_key in self._inode_map:
             # (st_dev, st_ino) found in the mapping
-            self.log_debug("Harlink detected, hardlinking in destination %s to %s" % (self._inode_map[src_key], dst))
+            self.log_debug(
+                "Harlink detected, hardlinking in destination %s to %s"
+                % (self._inode_map[src_key], dst)
+            )
             os.link(self._inode_map[src_key], dst)
             return
 

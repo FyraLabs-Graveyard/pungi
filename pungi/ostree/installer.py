@@ -23,7 +23,7 @@ from ..wrappers import lorax
 
 class Installer(OSTree):
     def _merge_config(self, config):
-        self.installpkgs.extend(config.get('installpkgs', []))
+        self.installpkgs.extend(config.get("installpkgs", []))
         self.add_template.extend(config.get("add_template", []))
         self.add_template_var.extend(config.get("add_template_var"))
         self.add_arch_template.extend(config.get("add_arch_template", []))
@@ -52,7 +52,7 @@ class Installer(OSTree):
 
         self.extra_config = self.args.extra_config
         if self.extra_config:
-            self.extra_config = json.load(open(self.extra_config, 'r'))
+            self.extra_config = json.load(open(self.extra_config, "r"))
             self._merge_config(self.extra_config)
 
         lorax_wrapper = lorax.LoraxWrapper()
@@ -72,6 +72,6 @@ class Installer(OSTree):
             add_arch_template_var=self.add_arch_template_var,
             rootfs_size=self.rootfs_size,
             is_final=self.isfinal,
-            log_dir=self.logdir
+            log_dir=self.logdir,
         )
         shortcuts.run(cmd)

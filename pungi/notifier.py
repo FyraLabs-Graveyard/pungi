@@ -29,6 +29,7 @@ class PungiNotifier(object):
     script fails, a warning will be logged, but the compose process will not be
     interrupted.
     """
+
     def __init__(self, cmds):
         self.cmds = cmds
         self.lock = threading.Lock()
@@ -38,30 +39,31 @@ class PungiNotifier(object):
         """Add compose related information to the data."""
         if not self.compose:
             return
-        data.setdefault('compose_id', self.compose.compose_id)
+        data.setdefault("compose_id", self.compose.compose_id)
 
         # Publish where in the world this compose will end up living
         location = pungi.util.translate_path(
-            self.compose, self.compose.paths.compose.topdir())
-        data.setdefault('location', location)
+            self.compose, self.compose.paths.compose.topdir()
+        )
+        data.setdefault("location", location)
 
         # Add information about the compose itself.
-        data.setdefault('compose_date', self.compose.compose_date)
-        data.setdefault('compose_type', self.compose.compose_type)
-        data.setdefault('compose_respin', self.compose.compose_respin)
-        data.setdefault('compose_label', self.compose.compose_label)
-        data.setdefault('release_short', self.compose.conf['release_short'])
-        data.setdefault('release_name', self.compose.conf['release_name'])
-        data.setdefault('release_version', self.compose.conf['release_version'])
-        data.setdefault('release_type', self.compose.conf['release_type'].lower())
-        data.setdefault('release_is_layered', False)
+        data.setdefault("compose_date", self.compose.compose_date)
+        data.setdefault("compose_type", self.compose.compose_type)
+        data.setdefault("compose_respin", self.compose.compose_respin)
+        data.setdefault("compose_label", self.compose.compose_label)
+        data.setdefault("release_short", self.compose.conf["release_short"])
+        data.setdefault("release_name", self.compose.conf["release_name"])
+        data.setdefault("release_version", self.compose.conf["release_version"])
+        data.setdefault("release_type", self.compose.conf["release_type"].lower())
+        data.setdefault("release_is_layered", False)
 
-        if self.compose.conf.get('base_product_name', ''):
-            data['release_is_layered'] = True
-            data['base_product_name'] = self.compose.conf["base_product_name"]
-            data['base_product_version'] = self.compose.conf["base_product_version"]
-            data['base_product_short'] = self.compose.conf["base_product_short"]
-            data['base_product_type'] = self.compose.conf["base_product_type"].lower()
+        if self.compose.conf.get("base_product_name", ""):
+            data["release_is_layered"] = True
+            data["base_product_name"] = self.compose.conf["base_product_name"]
+            data["base_product_version"] = self.compose.conf["base_product_version"]
+            data["base_product_short"] = self.compose.conf["base_product_short"]
+            data["base_product_type"] = self.compose.conf["base_product_type"].lower()
 
     def send(self, msg, workdir=None, **kwargs):
         """Send a message.
@@ -89,23 +91,24 @@ class PungiNotifier(object):
         """Run a single notification script with proper logging."""
         logfile = None
         if self.compose:
-            self.compose.log_debug("Notification: %r %r, %r" % (
-                cmd, msg, kwargs))
+            self.compose.log_debug("Notification: %r %r, %r" % (cmd, msg, kwargs))
             logfile = os.path.join(
                 self.compose.paths.log.topdir(),
-                'notifications',
-                'notification-%s.log' % datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
+                "notifications",
+                "notification-%s.log" % datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S"),
             )
             pungi.util.makedirs(os.path.dirname(logfile))
 
-        ret, _ = shortcuts.run((cmd, msg),
-                               stdin_data=json.dumps(kwargs),
-                               can_fail=True,
-                               workdir=workdir,
-                               return_stdout=False,
-                               show_cmd=True,
-                               universal_newlines=True,
-                               logfile=logfile)
+        ret, _ = shortcuts.run(
+            (cmd, msg),
+            stdin_data=json.dumps(kwargs),
+            can_fail=True,
+            workdir=workdir,
+            return_stdout=False,
+            show_cmd=True,
+            universal_newlines=True,
+            logfile=logfile,
+        )
         if ret != 0:
             if self.compose:
-                self.compose.log_warning('Failed to invoke notification script.')
+                self.compose.log_warning("Failed to invoke notification script.")

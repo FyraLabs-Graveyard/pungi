@@ -21,7 +21,9 @@ from kobo.shortcuts import force_list
 
 
 class JigdoWrapper(kobo.log.LoggingBase):
-    def get_jigdo_cmd(self, image, files, output_dir, cache=None, no_servers=False, report=None):
+    def get_jigdo_cmd(
+        self, image, files, output_dir, cache=None, no_servers=False, report=None
+    ):
         """
             files: [{"path", "label", "uri"}]
         """

@@ -19,12 +19,12 @@ class ImageChecksumPhase(PhaseBase):
     checksums. The manifest will be updated with the checksums.
     """
 
-    name = 'image_checksum'
+    name = "image_checksum"
 
     def __init__(self, compose):
         super(ImageChecksumPhase, self).__init__(compose)
-        self.checksums = self.compose.conf['media_checksums']
-        self.one_file = self.compose.conf['media_checksum_one_file']
+        self.checksums = self.compose.conf["media_checksums"]
+        self.one_file = self.compose.conf["media_checksum_one_file"]
 
     def skip(self):
         # Skipping this phase does not make sense:
@@ -40,7 +40,7 @@ class ImageChecksumPhase(PhaseBase):
             errors.append(MULTIPLE_CHECKSUMS_ERROR)
 
         if errors:
-            raise ValueError('\n'.join(errors))
+            raise ValueError("\n".join(errors))
 
     def _get_images(self):
         """Returns a mapping from directories to sets of ``Image``s.
@@ -57,20 +57,37 @@ class ImageChecksumPhase(PhaseBase):
         return images
 
     def _get_base_filename(self, variant, arch, **kwargs):
-        base_checksum_name = self.compose.conf['media_checksum_base_filename']
+        base_checksum_name = self.compose.conf["media_checksum_base_filename"]
         if base_checksum_name:
-            substs = get_format_substs(self.compose, variant=variant, arch=arch, **kwargs)
+            substs = get_format_substs(
+                self.compose, variant=variant, arch=arch, **kwargs
+            )
             base_checksum_name = (base_checksum_name % substs).format(**substs)
-            base_checksum_name += '-'
+            base_checksum_name += "-"
         return base_checksum_name
 
     def run(self):
         topdir = self.compose.paths.compose.topdir()
-        make_checksums(topdir, self.compose.im, self.checksums, self.one_file, self._get_base_filename)
+        make_checksums(
+            topdir,
+            self.compose.im,
+            self.checksums,
+            self.one_file,
+            self._get_base_filename,
+        )
 
 
-def _compute_checksums(results, cache, variant, arch, path, images,
-                       checksum_types, base_checksum_name_gen, one_file):
+def _compute_checksums(
+    results,
+    cache,
+    variant,
+    arch,
+    path,
+    images,
+    checksum_types,
+    base_checksum_name_gen,
+    one_file,
+):
     for image in images:
         filename = os.path.basename(image.path)
         full_path = os.path.join(path, filename)
@@ -83,23 +100,29 @@ def _compute_checksums(results, cache, variant, arch, path, images,
             # Source ISO is listed under each binary architecture. There's no
             # point in checksumming it twice, so we can just remember the
             # digest from first run..
-            cache[full_path] = shortcuts.compute_file_checksums(full_path, checksum_types)
+            cache[full_path] = shortcuts.compute_file_checksums(
+                full_path, checksum_types
+            )
         digests = cache[full_path]
         for checksum, digest in digests.items():
             # Update metadata with the checksum
             image.add_checksum(None, checksum, digest)
             # If not turned of, create the file-specific checksum file
             if not one_file:
-                checksum_filename = os.path.join(path, '%s.%sSUM' % (filename, checksum.upper()))
+                checksum_filename = os.path.join(
+                    path, "%s.%sSUM" % (filename, checksum.upper())
+                )
                 results[checksum_filename].add((filename, filesize, checksum, digest))
 
             if one_file:
                 dirname = os.path.basename(path)
-                base_checksum_name = base_checksum_name_gen(variant, arch, dirname=dirname)
-                checksum_filename = base_checksum_name + 'CHECKSUM'
+                base_checksum_name = base_checksum_name_gen(
+                    variant, arch, dirname=dirname
+                )
+                checksum_filename = base_checksum_name + "CHECKSUM"
             else:
                 base_checksum_name = base_checksum_name_gen(variant, arch)
-                checksum_filename = '%s%sSUM' % (base_checksum_name, checksum.upper())
+                checksum_filename = "%s%sSUM" % (base_checksum_name, checksum.upper())
             checksum_path = os.path.join(path, checksum_filename)
 
             results[checksum_path].add((filename, filesize, checksum, digest))
@@ -109,8 +132,17 @@ def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen)
     results = defaultdict(set)
     cache = {}
     for (variant, arch, path), images in get_images(topdir, im).items():
-        _compute_checksums(results, cache, variant, arch, path, images,
-                           checksum_types, base_checksum_name_gen, one_file)
+        _compute_checksums(
+            results,
+            cache,
+            variant,
+            arch,
+            path,
+            images,
+            checksum_types,
+            base_checksum_name_gen,
+            one_file,
+        )
 
     for file in results:
         dump_checksums(file, results[file])
@@ -122,10 +154,10 @@ def dump_checksums(checksum_file, data):
     :param checksum_file: where to write the checksums
     :param data: an iterable of tuples (filename, filesize, checksum_type, hash)
     """
-    with open(checksum_file, 'w') as f:
+    with open(checksum_file, "w") as f:
         for filename, filesize, alg, checksum in sorted(data):
-            f.write('# %s: %s bytes\n' % (filename, filesize))
-            f.write('%s (%s) = %s\n' % (alg.upper(), filename, checksum))
+            f.write("# %s: %s bytes\n" % (filename, filesize))
+            f.write("%s (%s) = %s\n" % (alg.upper(), filename, checksum))
 
 
 def get_images(top_dir, manifest):

@@ -25,6 +25,7 @@ from pungi.linker import LinkerPool
 # DONE: show overall progress, not each file
 #   TODO: (these should be logged separately)
 
+
 def _get_src_nevra(compose, pkg_obj, srpm_map):
     """Return source N-E:V-R.A.rpm; guess if necessary."""
     result = srpm_map.get(pkg_obj.sourcerpm, None)
@@ -32,7 +33,10 @@ def _get_src_nevra(compose, pkg_obj, srpm_map):
         nvra = kobo.rpmlib.parse_nvra(pkg_obj.sourcerpm)
         nvra["epoch"] = pkg_obj.epoch
         result = kobo.rpmlib.make_nvra(nvra, add_rpm=True, force_epoch=True)
-        compose.log_warning("Package %s has no SRPM available, guessing epoch: %s" % (pkg_obj.nevra, result))
+        compose.log_warning(
+            "Package %s has no SRPM available, guessing epoch: %s"
+            % (pkg_obj.nevra, result)
+        )
     return result
 
 
@@ -77,8 +81,14 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     for pkg in pkg_map["srpm"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
-        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst = os.path.join(
+            packages_dir,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
+        dst_relpath = os.path.join(
+            packages_dir_relpath,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
 
         # link file
         pool.queue_put((pkg["path"], dst))
@@ -86,7 +96,14 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         # update rpm manifest
         pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
-        manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="source")
+        manifest.add(
+            variant.uid,
+            arch,
+            nevra,
+            path=dst_relpath,
+            sigkey=pkg_obj.signature,
+            category="source",
+        )
 
         # update srpm_map
         srpm_map.setdefault(pkg_obj.file_name, nevra)
@@ -96,8 +113,14 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     for pkg in pkg_map["rpm"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
-        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst = os.path.join(
+            packages_dir,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
+        dst_relpath = os.path.join(
+            packages_dir_relpath,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
 
         # link file
         pool.queue_put((pkg["path"], dst))
@@ -106,15 +129,31 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
-        manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="binary", srpm_nevra=src_nevra)
+        manifest.add(
+            variant.uid,
+            arch,
+            nevra,
+            path=dst_relpath,
+            sigkey=pkg_obj.signature,
+            category="binary",
+            srpm_nevra=src_nevra,
+        )
 
     packages_dir = compose.paths.compose.debug_packages(arch, variant)
-    packages_dir_relpath = compose.paths.compose.debug_packages(arch, variant, relative=True)
+    packages_dir_relpath = compose.paths.compose.debug_packages(
+        arch, variant, relative=True
+    )
     for pkg in pkg_map["debuginfo"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(packages_dir, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
-        dst_relpath = os.path.join(packages_dir_relpath, get_package_path(os.path.basename(pkg["path"]), hashed_directories))
+        dst = os.path.join(
+            packages_dir,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
+        dst_relpath = os.path.join(
+            packages_dir_relpath,
+            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        )
 
         # link file
         pool.queue_put((pkg["path"], dst))
@@ -123,7 +162,15 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
         pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
-        manifest.add(variant.uid, arch, nevra, path=dst_relpath, sigkey=pkg_obj.signature, category="debug", srpm_nevra=src_nevra)
+        manifest.add(
+            variant.uid,
+            arch,
+            nevra,
+            path=dst_relpath,
+            sigkey=pkg_obj.signature,
+            category="debug",
+            srpm_nevra=src_nevra,
+        )
 
     pool.start()
     pool.stop()

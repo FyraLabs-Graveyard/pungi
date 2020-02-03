@@ -18,22 +18,17 @@ from pungi.util import temp_dir
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--profiler",
-        action="store_true",
+        "--profiler", action="store_true",
     )
     parser.add_argument(
-        "--arch",
-        required=True,
+        "--arch", required=True,
     )
     parser.add_argument(
-        "--config",
-        metavar="PATH",
-        required=True,
-        help="path to kickstart config file",
+        "--config", metavar="PATH", required=True, help="path to kickstart config file",
     )
     parser.add_argument(
         "--download-to",
-        metavar='PATH',
+        metavar="PATH",
         help="download packages to given directory instead of just printing paths",
     )
 
@@ -47,9 +42,7 @@ def get_parser():
 
     group = parser.add_argument_group("Gather options")
     group.add_argument(
-        "--nodeps",
-        action="store_true",
-        help="disable resolving dependencies",
+        "--nodeps", action="store_true", help="disable resolving dependencies",
     )
     group.add_argument(
         "--selfhosting",
@@ -68,9 +61,7 @@ def get_parser():
         choices=["none", "all", "build"],
     )
     group.add_argument(
-        "--multilib",
-        metavar="[METHOD]",
-        action="append",
+        "--multilib", metavar="[METHOD]", action="append",
     )
     group.add_argument(
         "--tempdir",
@@ -135,13 +126,13 @@ def main(ns, persistdir, cachedir):
             continue
 
         if not getattr(ks_repo, "metalink", False):
-            dnf_obj.add_repo(
-                ks_repo.name, ks_repo.baseurl, enablegroups=False
-            )
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, enablegroups=False)
         else:
             dnf_obj.add_repo(
-                ks_repo.name, ks_repo.baseurl, enablegroups=False,
-                metalink=ks_repo.metalink
+                ks_repo.name,
+                ks_repo.baseurl,
+                enablegroups=False,
+                metalink=ks_repo.metalink,
             )
 
     for ks_repo in ksparser.handler.repo.repoList:
@@ -150,8 +141,7 @@ def main(ns, persistdir, cachedir):
         if not getattr(ks_repo, "metalink", False):
             dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
         else:
-            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl,
-                             metalink=ks_repo.metalink)
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, metalink=ks_repo.metalink)
 
     with Profiler("DnfWrapper.fill_sack()"):
         dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
@@ -190,7 +180,7 @@ def _get_url(pkg):
 
 
 def _fmt_flags(flags):
-    return "(%s)" % ",".join(sorted(f.name.replace('_', '-') for f in flags))
+    return "(%s)" % ",".join(sorted(f.name.replace("_", "-") for f in flags))
 
 
 def deduplicate(gather_obj, items):

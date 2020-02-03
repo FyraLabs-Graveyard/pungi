@@ -47,15 +47,19 @@ def run_repoclosure(compose):
             if variant.is_empty:
                 continue
 
-            conf = get_arch_variant_data(compose.conf, 'repoclosure_strictness', arch, variant)
-            if conf and conf[-1] == 'off':
+            conf = get_arch_variant_data(
+                compose.conf, "repoclosure_strictness", arch, variant
+            )
+            if conf and conf[-1] == "off":
                 continue
 
             prefix = "%s-repoclosure" % compose.compose_id
             lookaside = {}
             if variant.parent:
                 repo_id = "%s-%s.%s" % (prefix, variant.parent.uid, arch)
-                repo_dir = compose.paths.compose.repository(arch=arch, variant=variant.parent)
+                repo_dir = compose.paths.compose.repository(
+                    arch=arch, variant=variant.parent
+                )
                 lookaside[repo_id] = repo_dir
 
             repos = {}
@@ -63,8 +67,12 @@ def run_repoclosure(compose):
             repo_dir = compose.paths.compose.repository(arch=arch, variant=variant)
             repos[repo_id] = repo_dir
 
-            for i, lookaside_url in enumerate(get_lookaside_repos(compose, arch, variant)):
-                lookaside["%s-lookaside-%s.%s-%s" % (compose.compose_id, variant.uid, arch, i)] = lookaside_url
+            for i, lookaside_url in enumerate(
+                get_lookaside_repos(compose, arch, variant)
+            ):
+                lookaside[
+                    "%s-lookaside-%s.%s-%s" % (compose.compose_id, variant.uid, arch, i)
+                ] = lookaside_url
 
             logfile = compose.paths.log.log_file(arch, "repoclosure-%s" % variant)
 
@@ -80,11 +88,12 @@ def run_repoclosure(compose):
                 else:
                     _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile)
             except RuntimeError as exc:
-                if conf and conf[-1] == 'fatal':
+                if conf and conf[-1] == "fatal":
                     raise
                 else:
-                    compose.log_warning('Repoclosure failed for %s.%s\n%s'
-                                        % (variant.uid, arch, exc))
+                    compose.log_warning(
+                        "Repoclosure failed for %s.%s\n%s" % (variant.uid, arch, exc)
+                    )
             finally:
                 if methods != "hybrid":
                     _delete_repoclosure_cache_dirs(compose)
@@ -93,16 +102,18 @@ def run_repoclosure(compose):
 
 
 def _delete_repoclosure_cache_dirs(compose):
-    if 'dnf' == compose.conf["repoclosure_backend"]:
+    if "dnf" == compose.conf["repoclosure_backend"]:
         from dnf.const import SYSTEM_CACHEDIR
         from dnf.util import am_i_root
         from dnf.yum.misc import getCacheDir
+
         if am_i_root():
             top_cache_dir = SYSTEM_CACHEDIR
         else:
             top_cache_dir = getCacheDir()
     else:
         from yum.misc import getCacheDir
+
         top_cache_dir = getCacheDir()
 
     for name in os.listdir(top_cache_dir):
@@ -115,8 +126,12 @@ def _delete_repoclosure_cache_dirs(compose):
 
 
 def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
-    cmd = repoclosure.get_repoclosure_cmd(backend=compose.conf["repoclosure_backend"],
-                                          repos=repos, lookaside=lookaside, arch=arches)
+    cmd = repoclosure.get_repoclosure_cmd(
+        backend=compose.conf["repoclosure_backend"],
+        repos=repos,
+        lookaside=lookaside,
+        arch=arches,
+    )
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     with temp_dir(prefix="repoclosure_") as tmp_dir:
@@ -147,22 +162,26 @@ def check_image_sanity(compose):
 
 def check_sanity(compose, variant, arch, image):
     path = os.path.join(compose.paths.compose.topdir(), image.path)
-    deliverable = getattr(image, 'deliverable')
-    can_fail = getattr(image, 'can_fail', False)
-    with failable(compose, can_fail, variant, arch, deliverable,
-                  subvariant=image.subvariant):
-        with open(path, 'rb') as f:
+    deliverable = getattr(image, "deliverable")
+    can_fail = getattr(image, "can_fail", False)
+    with failable(
+        compose, can_fail, variant, arch, deliverable, subvariant=image.subvariant
+    ):
+        with open(path, "rb") as f:
             iso = is_iso(f)
-            if image.format == 'iso' and not iso:
-                raise RuntimeError('%s does not look like an ISO file' % path)
-            if (image.arch in ('x86_64', 'i386') and
-                    image.bootable and
-                    not has_mbr(f) and
-                    not has_gpt(f) and
-                    not (iso and has_eltorito(f))):
+            if image.format == "iso" and not iso:
+                raise RuntimeError("%s does not look like an ISO file" % path)
+            if (
+                image.arch in ("x86_64", "i386")
+                and image.bootable
+                and not has_mbr(f)
+                and not has_gpt(f)
+                and not (iso and has_eltorito(f))
+            ):
                 raise RuntimeError(
-                    '%s is supposed to be bootable, but does not have MBR nor '
-                    'GPT nor is it a bootable ISO' % path)
+                    "%s is supposed to be bootable, but does not have MBR nor "
+                    "GPT nor is it a bootable ISO" % path
+                )
     # If exception is raised above, failable may catch it, in which case
     # nothing else will happen.
 
@@ -174,19 +193,19 @@ def _check_magic(f, offset, bytes):
 
 
 def is_iso(f):
-    return _check_magic(f, 0x8001, b'CD001')
+    return _check_magic(f, 0x8001, b"CD001")
 
 
 def has_mbr(f):
-    return _check_magic(f, 0x1fe, b'\x55\xAA')
+    return _check_magic(f, 0x1FE, b"\x55\xAA")
 
 
 def has_gpt(f):
-    return _check_magic(f, 0x200, b'EFI PART')
+    return _check_magic(f, 0x200, b"EFI PART")
 
 
 def has_eltorito(f):
-    return _check_magic(f, 0x8801, b'CD001\1EL TORITO SPECIFICATION')
+    return _check_magic(f, 0x8801, b"CD001\1EL TORITO SPECIFICATION")
 
 
 def check_size_limit(compose, variant, arch, img):
@@ -207,7 +226,9 @@ def check_size_limit(compose, variant, arch, img):
             compose.conf, "createiso_max_size_is_strict", arch, variant
         )
         msg = "ISO %s is too big. Expected max %dB, got %dB" % (
-            img.path, limit, img.size
+            img.path,
+            limit,
+            img.size,
         )
         if any(is_strict):
             raise RuntimeError(msg)

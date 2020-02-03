@@ -505,12 +505,14 @@ def get_compose_data(compose_path):
             "release_is_layered": compose.info.release.is_layered,
         }
         if compose.info.release.is_layered:
-            data.update({
-                "base_product_name": compose.info.base_product.name,
-                "base_product_short": compose.info.base_product.short,
-                "base_product_version": compose.info.base_product.version,
-                "base_product_type": compose.info.base_product.type,
-            })
+            data.update(
+                {
+                    "base_product_name": compose.info.base_product.name,
+                    "base_product_short": compose.info.base_product.short,
+                    "base_product_version": compose.info.base_product.version,
+                    "base_product_type": compose.info.base_product.type,
+                }
+            )
         return data
     except Exception as exc:
         return {}
@@ -549,6 +551,7 @@ def send_notification(compose_dir, command, parts):
     if not command:
         return
     from pungi.notifier import PungiNotifier
+
     data = get_compose_data(compose_dir)
     data["location"] = try_translate_path(parts, compose_dir)
     notifier = PungiNotifier([command])
