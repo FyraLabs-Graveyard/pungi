@@ -94,7 +94,7 @@ def get_arguments(config):
         "--fulltree",
         action="store_true",
         dest="fulltree",
-        help="build a tree that includes all packages built from corresponding source rpms (optional)",
+        help="build a tree that includes all packages built from corresponding source rpms (optional)",  # noqa: E501
     )
     parser.add_argument(
         "--nosource",
@@ -112,7 +112,7 @@ def get_arguments(config):
         "--nodownload",
         action="store_true",
         dest="nodownload",
-        help="disable downloading of packages. instead, print the package URLs (optional)",
+        help="disable downloading of packages. instead, print the package URLs (optional)",  # noqa: E501
     )
     parser.add_argument(
         "--norelnotes",
@@ -150,7 +150,7 @@ def get_arguments(config):
         "--isfinal",
         default=False,
         action="store_true",
-        help="Specify this is a GA tree, which causes betanag to be turned off during install",
+        help="Specify this is a GA tree, which causes betanag to be turned off during install",  # noqa: E501
     )
     parser.add_argument(
         "--nohash",
@@ -171,14 +171,14 @@ def get_arguments(config):
         "--multilib",
         action="append",
         metavar="METHOD",
-        help="Multilib method; can be specified multiple times; recommended: devel, runtime",
+        help="Multilib method; can be specified multiple times; recommended: devel, runtime",  # noqa: E501
     )
     parser.add_argument(
         "--lookaside-repo",
         action="append",
         dest="lookaside_repos",
         metavar="NAME",
-        help="Specify lookaside repo name(s) (packages will used for depsolving but not be included in the output)",
+        help="Specify lookaside repo name(s) (packages will used for depsolving but not be included in the output)",  # noqa: E501
     )
     parser.add_argument(
         "--workdirbase",
@@ -200,7 +200,7 @@ def get_arguments(config):
         default=[],
         action="append",
         metavar="STRING",
-        help="Package glob for lorax to install before runtime-install.tmpl runs. (may be listed multiple times)",
+        help="Package glob for lorax to install before runtime-install.tmpl runs. (may be listed multiple times)",  # noqa: E501
     )
     parser.add_argument(
         "--multilibconf",
@@ -275,7 +275,7 @@ def get_arguments(config):
         dest="rootfs_size",
         action=SetConfig,
         default=False,
-        help="Size of root filesystem in GiB. If not specified, use lorax default value",
+        help="Size of root filesystem in GiB. If not specified, use lorax default value",  # noqa: E501
     )
 
     parser.add_argument(
@@ -341,7 +341,7 @@ def main():
             enforcing = False
         if enforcing:
             print(
-                "WARNING: SELinux is enforcing.  This may lead to a compose with selinux disabled."
+                "WARNING: SELinux is enforcing.  This may lead to a compose with selinux disabled."  # noqa: E501
             )
             print("Consider running with setenforce 0.")
 

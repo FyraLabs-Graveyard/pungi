@@ -477,7 +477,8 @@ def mount(image, logger=None, use_guestmount=True):
             cmd = ["mount", "-o", "loop", image, mount_dir]
         ret, out = run(cmd, env=env, can_fail=True, universal_newlines=True)
         if ret != 0:
-            # The mount command failed, something is wrong. Log the output and raise an exception.
+            # The mount command failed, something is wrong.
+            # Log the output and raise an exception.
             if logger:
                 logger.error(
                     "Command %s exited with %s and output:\n%s" % (cmd, ret, out)

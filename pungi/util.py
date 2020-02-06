@@ -240,7 +240,8 @@ def get_arch_variant_data(conf, var_name, arch, variant, keys=None):
             if conf_arch != "*" and conf_arch != arch:
                 continue
             if conf_arch == "*" and arch == "src":
-                # src is excluded from '*' and needs to be explicitly added to the mapping
+                # src is excluded from '*' and needs to be explicitly
+                # added to the mapping
                 continue
             if keys is not None:
                 keys.add(conf_variant)
@@ -834,8 +835,8 @@ def get_repo_urls(compose, repos, arch="$basearch", logger=None):
         if repo is None:
             if logger:
                 logger.log_warning(
-                    "Variant-type source repository is deprecated and will be ignored during 'OSTreeInstaller' phase: %s"
-                    % (repo)
+                    "Variant-type source repository is deprecated and will "
+                    "be ignored during 'OSTreeInstaller' phase: %s" % (repo)
                 )
         else:
             urls.append(repo)
@@ -897,8 +898,8 @@ def get_repo_dicts(repos, logger=None):
         if repo_dict == {}:
             if logger:
                 logger.log_warning(
-                    "Variant-type source repository is deprecated and will be ignored during 'OSTree' phase: %s"
-                    % (repo)
+                    "Variant-type source repository is deprecated and will "
+                    "be ignored during 'OSTree' phase: %s" % (repo)
                 )
         else:
             repo_dicts.append(repo_dict)

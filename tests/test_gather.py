@@ -1176,7 +1176,7 @@ class DepsolvingBase(object):
 
     def test_bash_multilib_exclude(self):
         # test if excluding a package really works
-        # NOTE: dummy-bash-doc would pull x86_64 bash in (we want noarch pulling 64bit deps in composes)
+        # NOTE: dummy-bash-doc would pull x86_64 bash in (we want noarch pulling 64bit deps in composes)  # noqa: E501
         packages = [
             "dummy-bash.+",
             "-dummy-bash-doc",

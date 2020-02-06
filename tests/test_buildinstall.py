@@ -1407,10 +1407,10 @@ class BuildinstallThreadTestCase(PungiTestCase):
         compose._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Buildinstall (variant None, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Buildinstall (variant None, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
-                    "Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details."
+                    "Runroot task failed: 1234. See %s/logs/x86_64/buildinstall.x86_64.log for more details."  # noqa: E501
                     % self.topdir
                 ),
             ]
@@ -1448,10 +1448,10 @@ class BuildinstallThreadTestCase(PungiTestCase):
         compose._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
-                    "Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details."
+                    "Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details."  # noqa: E501
                     % self.topdir
                 ),
             ]

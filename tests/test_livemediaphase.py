@@ -634,7 +634,7 @@ class TestLiveMediaThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway."
+                    "[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
                     "Live media task failed: 1234. See %s for more details."
@@ -709,7 +709,7 @@ class TestLiveMediaThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway."
+                    "[FAIL] Live media (variant Server, arch *, subvariant KDE) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]

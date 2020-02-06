@@ -257,11 +257,12 @@ class KojiWrapper(object):
     ):
         """
         @param config_options
-        @param conf_file_dest -  a destination in compose workdir for the conf file to be written
+        @param conf_file_dest - a destination in compose workdir for
+                                the conf file to be written
         @param wait=True
         @param scratch=False
         """
-        # Usage: koji image-build [options] <name> <version> <target> <install-tree-url> <arch> [<arch>...]
+        # Usage: koji image-build [options] <name> <version> <target> <install-tree-url> <arch> [<arch>...]  # noqa: E501
         sub_command = "image-build"
         # The minimum set of options
         min_options = (
@@ -303,7 +304,7 @@ class KojiWrapper(object):
         return cmd
 
     def get_live_media_cmd(self, options, wait=True):
-        # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>
+        # Usage: koji spin-livemedia [options] <name> <version> <target> <arch> <kickstart-file>  # noqa: E501
         cmd = self._get_cmd("spin-livemedia")
 
         for key in ("name", "version", "target", "arch", "ksfile"):
@@ -353,8 +354,8 @@ class KojiWrapper(object):
         specfile=None,
         ksurl=None,
     ):
-        # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
-        # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>
+        # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>  # noqa: E501
+        # Usage: koji spin-appliance [options] <name> <version> <target> <arch> <kickstart-file>  # noqa: E501
         # Examples:
         #  * name: RHEL-7.0
         #  * name: Satellite-6.0.1-RHEL-6
@@ -408,7 +409,8 @@ class KojiWrapper(object):
             cmd.append("--release=%s" % release)
 
         # IMPORTANT: all --opts have to be provided *before* args
-        # Usage: koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
+        # Usage:
+        #  koji spin-livecd [options] <name> <version> <target> <arch> <kickstart-file>
 
         cmd.append(name)
         cmd.append(version)
@@ -445,7 +447,8 @@ class KojiWrapper(object):
             if retcode == 0 or not (
                 self._has_connection_error(output) or self._has_offline_error(output)
             ):
-                # Task finished for reason other than connection error or server offline error.
+                # Task finished for reason other than connection error
+                # or server offline error.
                 return retcode, output
 
             attempt += 1
@@ -612,7 +615,8 @@ class KojiWrapper(object):
             self.koji_module.pathinfo.taskrelpath(task_info["id"]),
         )
 
-        # TODO: Maybe use different approach for non-scratch builds - see get_image_path()
+        # TODO: Maybe use different approach for non-scratch
+        # builds - see get_image_path()
 
         # Get list of filenames that should be returned
         result_files = task_result["rpms"]
@@ -675,19 +679,22 @@ class KojiWrapper(object):
         self, koji_session, koji_session_fnc, list_of_args=None, list_of_kwargs=None
     ):
         """
-        Calls the `koji_session_fnc` using Koji multicall feature N times based on the list of
-        arguments passed in `list_of_args` and `list_of_kwargs`.
-        Returns list of responses sorted the same way as input args/kwargs. In case of error,
-        the error message is logged and None is returned.
+        Calls the `koji_session_fnc` using Koji multicall feature N times based on
+        the list of arguments passed in `list_of_args` and `list_of_kwargs`.
+        Returns list of responses sorted the same way as input args/kwargs.
+        In case of error, the error message is logged and None is returned.
 
         For example to get the package ids of "httpd" and "apr" packages:
             ids = multicall_map(session, session.getPackageID, ["httpd", "apr"])
             # ids is now [280, 632]
 
         :param KojiSessions koji_session: KojiSession to use for multicall.
-        :param object koji_session_fnc: Python object representing the KojiSession method to call.
-        :param list list_of_args: List of args which are passed to each call of koji_session_fnc.
-        :param list list_of_kwargs: List of kwargs which are passed to each call of koji_session_fnc.
+        :param object koji_session_fnc: Python object representing the
+            KojiSession method to call.
+        :param list list_of_args: List of args which are passed to each
+            call of koji_session_fnc.
+        :param list list_of_kwargs: List of kwargs which are passed to
+            each call of koji_session_fnc.
         """
         if list_of_args is None and list_of_kwargs is None:
             raise ValueError("One of list_of_args or list_of_kwargs must be set.")
@@ -729,22 +736,23 @@ class KojiWrapper(object):
         results = []
 
         # For the response specification, see
-        # https://web.archive.org/web/20060624230303/http://www.xmlrpc.com/discuss/msgReader$1208?mode=topic
+        # https://web.archive.org/web/20060624230303/http://www.xmlrpc.com/discuss/msgReader$1208?mode=topic  # noqa: E501
         # Relevant part of this:
-        # Multicall returns an array of responses. There will be one response for each call in
-        # the original array. The result will either be a one-item array containing the result value,
+        # Multicall returns an array of responses. There will be one response
+        # for each call in the original array. The result will either be
+        # a one-item array containing the result value,
         # or a struct of the form found inside the standard <fault> element.
         for response, args, kwargs in zip(responses, list_of_args, list_of_kwargs):
             if type(response) == list:
                 if not response:
                     raise ValueError(
-                        "Empty list returned for multicall of method %r with args %r, %r"
+                        "Empty list returned for multicall of method %r with args %r, %r"  # noqa: E501
                         % (koji_session_fnc, args, kwargs)
                     )
                 results.append(response[0])
             else:
                 raise ValueError(
-                    "Unexpected data returned for multicall of method %r with args %r, %r: %r"
+                    "Unexpected data returned for multicall of method %r with args %r, %r: %r"  # noqa: E501
                     % (koji_session_fnc, args, kwargs, response)
                 )
 

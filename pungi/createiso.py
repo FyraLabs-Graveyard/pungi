@@ -46,13 +46,7 @@ def emit(f, cmd):
         print(" ".join([quote(x) for x in cmd]), file=f)
 
 
-FIND_TEMPLATE_SNIPPET = """
-if ! TEMPLATE="$($(head -n1 $(which lorax) | cut -c3-) -c 'import pylorax; print(pylorax.find_templates())')"; then
-  TEMPLATE=/usr/share/lorax;
-fi
-""".replace(
-    "\n", ""
-)
+FIND_TEMPLATE_SNIPPET = """if ! TEMPLATE="$($(head -n1 $(which lorax) | cut -c3-) -c 'import pylorax; print(pylorax.find_templates())')"; then TEMPLATE=/usr/share/lorax; fi"""  # noqa: E501
 
 
 def make_image(f, opts):

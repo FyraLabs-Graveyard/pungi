@@ -850,7 +850,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]
@@ -896,7 +896,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
                     "Runroot task failed: 1234. See %s for more details."
@@ -987,7 +987,7 @@ class CreateisoThreadTest(helpers.PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Iso (variant Server, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]

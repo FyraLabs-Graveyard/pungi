@@ -85,14 +85,15 @@ class GatherPhase(PhaseBase):
                 if variant.modules:
                     errors.append("Modular compose requires libmodulemd package.")
 
-        # check whether variants from configuration value 'variant_as_lookaside' are correct
+        # check whether variants from configuration value
+        # 'variant_as_lookaside' are correct
         variant_as_lookaside = self.compose.conf.get("variant_as_lookaside", [])
         all_variants = self.compose.all_variants
         for (requiring, required) in variant_as_lookaside:
             if requiring in all_variants and required not in all_variants:
                 errors.append(
-                    "variant_as_lookaside: variant %r doesn't exist but is required by %r"
-                    % (required, requiring)
+                    "variant_as_lookaside: variant %r doesn't exist but is "
+                    "required by %r" % (required, requiring)
                 )
 
         if errors:
@@ -566,7 +567,8 @@ def _trim_variants(
                 for pkg_type, pkgs in move_to_parent_pkgs.items():
                     for pkg in pkgs:
                         compose.log_debug(
-                            "Moving package to parent (arch: %s, variant: %s, pkg_type: %s): %s"
+                            "Moving package to parent "
+                            "(arch: %s, variant: %s, pkg_type: %s): %s"
                             % (
                                 arch,
                                 variant.uid,
@@ -673,8 +675,8 @@ def get_prepopulate_packages(compose, arch, variant, include_arch=True):
                 pkg_name, pkg_arch = split_name_arch(i)
                 if pkg_arch not in get_compatible_arches(arch, multilib=True):
                     raise ValueError(
-                        "Incompatible package arch '%s' for tree arch '%s' in prepopulate package '%s'"
-                        % (pkg_arch, arch, pkg_name)
+                        "Incompatible package arch '%s' for tree arch '%s' "
+                        "in prepopulate package '%s'" % (pkg_arch, arch, pkg_name)
                     )
                 if include_arch:
                     result.add(i)
@@ -691,8 +693,8 @@ def get_additional_packages(compose, arch, variant):
             arch, multilib=True
         ):
             raise ValueError(
-                "Incompatible package arch '%s' for tree arch '%s' in additional package '%s'"
-                % (pkg_arch, arch, pkg_name)
+                "Incompatible package arch '%s' for tree arch '%s' in "
+                "additional package '%s'" % (pkg_arch, arch, pkg_name)
             )
         result.add((pkg_name, pkg_arch))
     return result

@@ -42,7 +42,7 @@ setup(
             "pungi-make-ostree = pungi.ostree:main",
             "pungi-notification-report-progress = pungi.scripts.report_progress:main",
             "pungi-orchestrate = pungi_utils.orchestrator:main",
-            "pungi-wait-for-signed-ostree-handler = pungi.scripts.wait_for_signed_ostree_handler:main",
+            "pungi-wait-for-signed-ostree-handler = pungi.scripts.wait_for_signed_ostree_handler:main",  # noqa: E501
             "pungi-koji = pungi.scripts.pungi_koji:cli_main",
             "pungi-gather = pungi.scripts.pungi_gather:cli_main",
             "pungi-config-dump = pungi.scripts.config_dump:cli_main",

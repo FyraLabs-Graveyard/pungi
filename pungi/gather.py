@@ -301,7 +301,8 @@ class Pungi(PungiBase):
         # greedy methods:
         #  * none: only best match package
         #  * all: all packages matching a provide
-        #  * build: best match package + all other packages from the same SRPM having the same provide
+        #  * build: best match package + all other packages from
+        #           the same SRPM having the same provide
         self.greedy_method = self.config.get("pungi", "greedy")
 
         self.lookaside_repos = self.config.get("pungi", "lookaside_repos").split(" ")
@@ -318,12 +319,12 @@ class Pungi(PungiBase):
         self.sourcerpm_srpmpo_map = {}
 
         # flags
-        self.input_packages = (
-            set()
-        )  # packages specified in %packages kickstart section including those defined via comps groups
-        self.comps_packages = (
-            set()
-        )  # packages specified in %packages kickstart section *indirectly* via comps groups
+        # packages specified in %packages kickstart section including
+        # those defined via comps groups
+        self.input_packages = set()
+        # packages specified in %packages kickstart section
+        # *indirectly* via comps groups
+        self.comps_packages = set()
         self.prepopulate_packages = (
             set()
         )  # packages specified in %prepopulate kickstart section
@@ -724,7 +725,8 @@ class Pungi(PungiBase):
                     found = False
                     for dep in deps:
                         if dep in self.po_list:
-                            # HACK: there can be builds in the input list on which we want to apply the "build" greedy rules
+                            # HACK: there can be builds in the input list on
+                            # which we want to apply the "build" greedy rules
                             if (
                                 self.greedy_method == "build"
                                 and dep.sourcerpm not in self.completed_greedy_build
@@ -878,7 +880,8 @@ class Pungi(PungiBase):
                     break
             if found:
                 msg = (
-                    "Added multilib package %s.%s (repo: %s) for package %s.%s (method: %s)"
+                    "Added multilib package %s.%s (repo: %s) for "
+                    "package %s.%s (method: %s)"
                     % (
                         match.name,
                         match.arch,
@@ -973,7 +976,8 @@ class Pungi(PungiBase):
         except yum.Errors.GroupsError:
             # no groups or no comps at all
             self.logger.warning(
-                "Could not get langpacks due to missing comps in repodata or --ignoregroups=true option."
+                "Could not get langpacks due to missing comps in repodata "
+                "or --ignoregroups=true option."
             )
             self.langpacks = []
 
@@ -1018,14 +1022,16 @@ class Pungi(PungiBase):
         if "core" in [i.groupid for i in self.ayum.comps.groups]:
             if "core" not in [i.name for i in self.ksparser.handler.packages.groupList]:
                 self.logger.warning(
-                    "The @core group is no longer added by default; Please add @core to the kickstart if you want it in."
+                    "The @core group is no longer added by default; Please add "
+                    "@core to the kickstart if you want it in."
                 )
 
         if "base" in [i.groupid for i in self.ayum.comps.groups]:
             if "base" not in [i.name for i in self.ksparser.handler.packages.groupList]:
                 if self.ksparser.handler.packages.addBase:
                     self.logger.warning(
-                        "The --nobase kickstart option is no longer supported; Please add @base to the kickstart if you want it in."
+                        "The --nobase kickstart option is no longer supported; "
+                        "Please add @base to the kickstart if you want it in."
                     )
 
         # Check to see if we want all the defaults
@@ -1059,7 +1065,8 @@ class Pungi(PungiBase):
                 multilib = True
 
             if self.greedy_method == "all" and name == "system-release":
-                # HACK: handles a special case, when system-release virtual provide is specified in the greedy mode
+                # HACK: handles a special case, when system-release virtual
+                # provide is specified in the greedy mode
                 matches = self.ayum.whatProvides(name, None, None).returnPackages()
             else:
                 exactmatched, matched, unmatched = yum.packages.parsePackages(
@@ -1131,7 +1138,8 @@ class Pungi(PungiBase):
                 for txmbr in self.ayum.tsInfo:
                     if not txmbr.po in self.po_list:
                         if not is_package(txmbr.po):
-                            # we don't want sources which can be pulled in, because 'src' arch is part of self.valid_arches
+                            # we don't want sources which can be pulled in,
+                            # because 'src' arch is part of self.valid_arches
                             continue
                         if not txmbr.isDep:
                             continue
@@ -1182,7 +1190,8 @@ class Pungi(PungiBase):
                 continue
 
     def get_srpm_po(self, po):
-        """Given a package object, get a package object for the corresponding source rpm."""
+        """Given a package object, get a package object for the
+        corresponding source rpm."""
 
         # return srpm_po from cache if available
         srpm_po = self.sourcerpm_srpmpo_map.get(po.sourcerpm, None)
@@ -1315,11 +1324,15 @@ class Pungi(PungiBase):
             if not include_native:
                 # if there's no native package already pulled in...
                 if has_native and not include_multilib:
-                    # include all native packages, but only if we're not pulling multilib already
-                    # SCENARIO: a noarch package was already pulled in and there are x86_64 and i686 packages -> we want x86_64 in to complete the package set
+                    # include all native packages, but only if we're not pulling
+                    # multilib already
+                    # SCENARIO: a noarch package was already pulled in and there
+                    # are x86_64 and i686 packages -> we want x86_64 in to complete
+                    # the package set
                     include_native = True
                 elif has_multilib:
-                    # SCENARIO: a noarch package was already pulled in and there are no x86_64 packages; we want i686 in to complete the package set
+                    # SCENARIO: a noarch package was already pulled in and there are
+                    # no x86_64 packages; we want i686 in to complete the package set
                     include_multilib = True
 
             for po in self.excludePackages(self.bin_by_src[srpm_po]):
@@ -1405,7 +1418,8 @@ class Pungi(PungiBase):
 
         # Ensure the pkgdir exists, force if requested, and make sure we clean it out
         if relpkgdir.endswith("SRPMS"):
-            # Since we share source dirs with other arches don't clean, but do allow us to use it
+            # Since we share source dirs with other arches don't clean, but
+            # do allow us to use it
             pungi.util._ensuredir(pkgdir, self.logger, force=True, clean=False)
         else:
             pungi.util._ensuredir(
@@ -1433,7 +1447,8 @@ class Pungi(PungiBase):
                 target = os.path.join(pkgdir, basename)
             else:
                 target = os.path.join(pkgdir, po.name[0].lower(), basename)
-                # Make sure we have the hashed dir available to link into we only want dirs there to corrospond to packages
+                # Make sure we have the hashed dir available to link into we
+                # only want dirs there to corrospond to packages
                 # that we are including so we can not just do A-Z 0-9
                 pungi.util._ensuredir(
                     os.path.join(pkgdir, po.name[0].lower()),
@@ -1504,7 +1519,8 @@ class Pungi(PungiBase):
         ourcomps.write(self.ayum.comps.xml())
         ourcomps.close()
 
-        # Disable this until https://bugzilla.redhat.com/show_bug.cgi?id=442097 is fixed.
+        # Disable this until https://bugzilla.redhat.com/show_bug.cgi?id=442097
+        # is fixed.
         # Run the xslt filter over our comps file
         # compsfilter = ['/usr/bin/xsltproc', '--novalid']
         # compsfilter.append('-o')
@@ -1819,13 +1835,15 @@ class Pungi(PungiBase):
             cmd.append("--isfinal")
         cmd.extend(["--volid", self._shortenVolID()])
 
-        # on ppc64 we need to tell lorax to only use ppc64 packages so that the media will run on all 64 bit ppc boxes
+        # on ppc64 we need to tell lorax to only use ppc64 packages so that
+        # the media will run on all 64 bit ppc boxes
         if self.tree_arch == "ppc64":
             cmd.extend(["--buildarch", "ppc64"])
         elif self.tree_arch == "ppc64le":
             cmd.extend(["--buildarch", "ppc64le"])
 
-        # Only supported mac hardware is x86 make sure we only enable mac support on arches that need it
+        # Only supported mac hardware is x86 make sure we only enable mac
+        # support on arches that need it
         if self.tree_arch in ["x86_64"] and not self.is_nomacboot:
             cmd.append("--macboot")
         else:

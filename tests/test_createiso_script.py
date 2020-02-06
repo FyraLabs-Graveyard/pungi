@@ -56,7 +56,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-x86_64.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -113,7 +113,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ["/usr/bin/isohybrid", "--uefi", "DP-1.0-20160405.t.3-x86_64.iso"]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-x86_64.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -165,7 +165,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                 ),
                 " ".join(["/usr/bin/isohybrid", "DP-1.0-20160405.t.3-i386.iso"]),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-i386.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-i386.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-i386.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-i386.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-i386.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -218,7 +218,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-ppc64.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -262,7 +262,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-s390x.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-s390x.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-s390x.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-s390x.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-s390x.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -314,7 +314,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-ppc64.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-ppc64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-ppc64.iso.manifest",  # noqa: E501
             ]
         )
 
@@ -373,7 +373,7 @@ class CreateIsoScriptTest(helpers.PungiTestCase):
                     ]
                 ),
                 " ".join(["/usr/bin/implantisomd5", "DP-1.0-20160405.t.3-x86_64.iso"]),
-                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",
+                "isoinfo -R -f -i DP-1.0-20160405.t.3-x86_64.iso | grep -v '/TRANS.TBL$' | sort >> DP-1.0-20160405.t.3-x86_64.iso.manifest",  # noqa: E501
                 " ".join(
                     [
                         "jigdo-file",

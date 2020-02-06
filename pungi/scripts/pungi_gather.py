@@ -52,7 +52,7 @@ def get_parser():
     group.add_argument(
         "--fulltree",
         action="store_true",
-        help="build a tree that includes all packages built from corresponding source rpms (optional)",
+        help="build a tree that includes all packages built from corresponding source rpms (optional)",  # noqa: E501
     )
     group.add_argument(
         "--greedy",

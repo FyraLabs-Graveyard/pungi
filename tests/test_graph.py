@@ -24,7 +24,8 @@ class SimpleAcyclicOrientedGraphTestCase(unittest.TestCase):
         spanning_line = self.g.prune_graph()
 
         self.assertEqual(4, len(spanning_line))
-        # 'Base' as a lookaside should be at the end of the spanning line, order of others is not crucial
+        # 'Base' as a lookaside should be at the end of the spanning line,
+        # order of others is not crucial
         self.assertEqual("Base", spanning_line[-1])
 
     def test_complex_graph(self):

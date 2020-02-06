@@ -236,7 +236,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         self.compose.supported = False
         pool = mock.Mock()
         cfg = {
-            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
+            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
             "release": "20160321.n.0",
         }
         koji = KojiWrapper.return_value
@@ -324,7 +324,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             "release": "20160321.n.0",
             "repo": [
-                "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
+                "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
                 "https://example.com/extra-repo1.repo",
                 "https://example.com/extra-repo2.repo",
             ],
@@ -369,8 +369,8 @@ class OstreeThreadTest(helpers.PungiTestCase):
         cfg = {
             "release": "20160321.n.0",
             "repo": [
-                "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
-                "Server",  # this variant-type repo is deprecated, in result will be replaced with default repo
+                "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
+                "Server",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
                 "https://example.com/extra-repo1.repo",
                 "https://example.com/extra-repo2.repo",
             ],
@@ -493,7 +493,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
     ):
         pool = mock.Mock()
         cfg = {
-            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
+            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
             "release": "20160321.n.0",
             "add_template": ["some_file.txt"],
             "add_arch_template": ["other_file.txt"],
@@ -562,7 +562,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
     ):
         pool = mock.Mock()
         cfg = {
-            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
+            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
             "release": "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN",
             "installpkgs": ["fedora-productimg-atomic"],
             "add_template": [
@@ -576,7 +576,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                 "/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"
             ],
             "add_arch_template_var": [
-                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                 "ostree_osname=fedora-atomic",
                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
             ],
@@ -606,13 +606,13 @@ class OstreeThreadTest(helpers.PungiTestCase):
             isfinal=True,
             extra=[
                 "--installpkgs=fedora-productimg-atomic",
-                "--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl",
-                "--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl",
+                "--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl",  # noqa: E501
+                "--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl",  # noqa: E501
                 "--add-template-var=ostree_osname=fedora-atomic",
-                "--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
-                "--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",  # noqa: E501
+                "--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                 "--add-arch-template-var=ostree_osname=fedora-atomic",
-                "--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                "--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",  # noqa: E501
                 "--logfile=%s/%s/lorax.log" % (self.topdir, LOG_PATH),
             ],
             weight=123,
@@ -633,7 +633,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
     ):
         pool = mock.Mock()
         cfg = {
-            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo
+            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo. # noqa: E501
             "release": None,
             "installpkgs": ["fedora-productimg-atomic"],
             "add_template": [
@@ -647,7 +647,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
                 "/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"
             ],
             "add_arch_template_var": [
-                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                 "ostree_osname=fedora-atomic",
                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
             ],
@@ -677,13 +677,13 @@ class OstreeThreadTest(helpers.PungiTestCase):
             isfinal=True,
             extra=[
                 "--installpkgs=fedora-productimg-atomic",
-                "--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl",
-                "--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl",
+                "--add-template=/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl",  # noqa: E501
+                "--add-arch-template=/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl",  # noqa: E501
                 "--add-template-var=ostree_osname=fedora-atomic",
-                "--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
-                "--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                "--add-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",  # noqa: E501
+                "--add-arch-template-var=ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                 "--add-arch-template-var=ostree_osname=fedora-atomic",
-                "--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
+                "--add-arch-template-var=ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",  # noqa: E501
                 "--logfile=%s/%s/lorax.log" % (self.topdir, LOG_PATH),
             ],
             weight=123,
@@ -713,7 +713,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]
@@ -748,7 +748,7 @@ class OstreeThreadTest(helpers.PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Ostree installer (variant Everything, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
                     "Runroot task failed: 1234. See %s/%s/runroot.log for more details."

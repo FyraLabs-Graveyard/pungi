@@ -107,7 +107,7 @@ class TestImageChecksumPhase(PungiTestCase):
             {
                 "media_checksums": ["sha256"],
                 "media_checksum_one_file": True,
-                "media_checksum_base_filename": "%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s_%(label)s-%(dirname)s",
+                "media_checksum_base_filename": "%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s_%(label)s-%(dirname)s",  # noqa: E501
             },
         )
         compose.compose_label = "Alpha-1.0"
@@ -121,7 +121,7 @@ class TestImageChecksumPhase(PungiTestCase):
 
         dump_checksums.assert_called_once_with(
             self.topdir
-            + "/compose/Client/i386/iso/test-Client-1.0-20151203.t.0_Alpha-1.0-iso-CHECKSUM",
+            + "/compose/Client/i386/iso/test-Client-1.0-20151203.t.0_Alpha-1.0-iso-CHECKSUM",  # noqa: E501
             set([("image.iso", 123, "sha256", "cafebabe")]),
         )
         cc.assert_called_once_with(
@@ -137,7 +137,7 @@ class TestImageChecksumPhase(PungiTestCase):
             self.topdir,
             {
                 "media_checksums": ["md5", "sha256"],
-                "media_checksum_base_filename": "%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s",
+                "media_checksum_base_filename": "%(release_short)s-%(variant)s-%(version)s-%(date)s%(type_suffix)s.%(respin)s",  # noqa: E501
             },
         )
 
@@ -189,7 +189,7 @@ class TestImageChecksumPhase(PungiTestCase):
             self.topdir,
             {
                 "media_checksums": ["md5", "sha256"],
-                "media_checksum_base_filename": "{release_short}-{variant}-{version}-{date}{type_suffix}.{respin}",
+                "media_checksum_base_filename": "{release_short}-{variant}-{version}-{date}{type_suffix}.{respin}",  # noqa: E501
             },
         )
 

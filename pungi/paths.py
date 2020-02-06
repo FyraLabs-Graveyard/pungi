@@ -160,7 +160,8 @@ class WorkPaths(object):
         Examples:
             work/global/pungi-cache
         """
-        # WARNING: Using the same cache dir with repos of the same names may lead to a race condition
+        # WARNING: Using the same cache dir with repos of the same names
+        # may lead to a race condition.
         # We should use per arch variant cache dirs to workaround this.
         path = os.path.join(self.topdir(arch, create_dir=create_dir), "pungi-cache")
         if variant:

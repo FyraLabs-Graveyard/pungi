@@ -80,7 +80,8 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch("pungi.wrappers.iso.run")
     def test_mount_iso(self, mock_run, mock_unmount):
         # first tuple is return value for command 'which guestmount'
-        # value determines type of the mount/unmount command ('1' - guestmount is not available)
+        # value determines type of the mount/unmount
+        # command ('1' - guestmount is not available)
         # for approach as a root, pair commands mount-umount are used
         mock_run.side_effect = [(1, ""), (0, "")]
         with iso.mount("dummy") as temp_dir:
@@ -99,7 +100,8 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch("pungi.wrappers.iso.run")
     def test_guestmount(self, mock_run, mock_unmount, mock_rmtree):
         # first tuple is return value for command 'which guestmount'
-        # value determines type of the mount/unmount command ('0' - guestmount is available)
+        # value determines type of the mount/unmount
+        # command ('0' - guestmount is available)
         # for approach as a non-root, pair commands guestmount-fusermount are used
         mock_run.side_effect = [(0, ""), (0, "")]
         with iso.mount("dummy") as temp_dir:
@@ -118,7 +120,8 @@ class TestIsoUtils(unittest.TestCase):
     @mock.patch("pungi.wrappers.iso.run")
     def test_guestmount_cleans_up_cache(self, mock_run, mock_unmount, mock_rmtree):
         # first tuple is return value for command 'which guestmount'
-        # value determines type of the mount/unmount command ('0' - guestmount is available)
+        # value determines type of the mount/unmount
+        # command ('0' - guestmount is available)
         # for approach as a non-root, pair commands guestmount-fusermount are used
         mock_run.side_effect = [(0, ""), (0, "")]
         with iso.mount("dummy") as temp_dir:
@@ -139,7 +142,8 @@ class TestIsoUtils(unittest.TestCase):
         self, mock_run, mock_unmount, mock_rmtree
     ):
         # first tuple is return value for command 'which guestmount'
-        # value determines type of the mount/unmount command ('0' - guestmount is available)
+        # value determines type of the mount/unmount
+        # command ('0' - guestmount is available)
         # for approach as a non-root, pair commands guestmount-fusermount are used
         mock_run.side_effect = [(0, ""), (0, "")]
         with iso.mount("dummy") as temp_dir:

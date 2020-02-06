@@ -160,16 +160,16 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                             "id": 563977,
                             "state": 1,
                         },
-                        "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/i386/os/",
+                        "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/i386/os/",  # noqa: E501
                         {
                             "disk_size": "3",
                             "distro": "Fedora-20",
                             "format": ["qcow2", "raw-xz"],
-                            "kickstart": "work/cli-image/1451798116.800155.wYJWTVHw/fedora-cloud-base-2878aa0.ks",
+                            "kickstart": "work/cli-image/1451798116.800155.wYJWTVHw/fedora-cloud-base-2878aa0.ks",  # noqa: E501
                             "release": "20160103",
                             "repo": [
-                                "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/$arch/os/",
-                                "http://infrastructure.fedoraproject.org/pub/fedora/linux/updates/23/$arch/",
+                                "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/$arch/os/",  # noqa: E501
+                                "http://infrastructure.fedoraproject.org/pub/fedora/linux/updates/23/$arch/",  # noqa: E501
                             ],
                             "scratch": True,
                         },
@@ -216,16 +216,16 @@ class KojiWrapperTest(KojiWrapperBaseTestCase):
                             "id": 563977,
                             "state": 1,
                         },
-                        "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/x86_64/os/",
+                        "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/x86_64/os/",  # noqa: E501
                         {
                             "disk_size": "3",
                             "distro": "Fedora-20",
                             "format": ["qcow2", "raw-xz"],
-                            "kickstart": "work/cli-image/1451798116.800155.wYJWTVHw/fedora-cloud-base-2878aa0.ks",
+                            "kickstart": "work/cli-image/1451798116.800155.wYJWTVHw/fedora-cloud-base-2878aa0.ks",  # noqa: E501
                             "release": "20160103",
                             "repo": [
-                                "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/$arch/os/",
-                                "http://infrastructure.fedoraproject.org/pub/fedora/linux/updates/23/$arch/",
+                                "http://infrastructure.fedoraproject.org/pub/alt/releases/23/Cloud/$arch/os/",  # noqa: E501
+                                "http://infrastructure.fedoraproject.org/pub/fedora/linux/updates/23/$arch/",  # noqa: E501
                             ],
                             "scratch": True,
                         },
@@ -593,7 +593,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-2], "s390x")
         self.assertEqual(
             cmd[-1],
-            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir' /foo && chown -R 1010 '/output dir' /foo",
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir' /foo && chown -R 1010 '/output dir' /foo",  # noqa: E501
         )
         six.assertCountEqual(
             self,

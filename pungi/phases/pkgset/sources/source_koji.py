@@ -544,8 +544,8 @@ def _get_modules_from_koji_tags(
         # There are some module names that were listed in configuration and not
         # found in any tag...
         raise RuntimeError(
-            "Configuration specified patterns (%s) that don't match any modules in the configured tags."
-            % ", ".join(expected_modules)
+            "Configuration specified patterns (%s) that don't match "
+            "any modules in the configured tags." % ", ".join(expected_modules)
         )
 
 

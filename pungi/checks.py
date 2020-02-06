@@ -291,45 +291,48 @@ def _extend_with_default_and_alias(validator_class, offline=False):
             if "alias" in subschema:
                 if subschema["alias"] in instance:
                     msg = (
-                        "WARNING: Config option '%s' is deprecated and now an alias to '%s', "
-                        "please use '%s' instead. "
+                        "WARNING: Config option '%s' is deprecated and "
+                        "now an alias to '%s', please use '%s' instead. "
                         "In:\n%s" % (subschema["alias"], property, property, instance)
                     )
                     yield ConfigOptionWarning(msg)
                     if property in instance:
                         msg = (
-                            "ERROR: Config option '%s' is an alias of '%s', only one can be used."
-                            % (subschema["alias"], property)
+                            "ERROR: Config option '%s' is an alias of '%s', "
+                            "only one can be used." % (subschema["alias"], property)
                         )
                         yield ConfigOptionError(msg)
                         instance.pop(subschema["alias"])
                     else:
                         instance.setdefault(property, instance.pop(subschema["alias"]))
             # update instance for append option
-            # If append is defined in schema, append values from append options to property. If property
-            # is not present in instance, set it to empty list, and append the values from append options.
+            # If append is defined in schema, append values from append
+            # options to property. If property is not present in instance,
+            # set it to empty list, and append the values from append options.
             # Note: property's schema must support a list of values.
             if "append" in subschema:
                 appends = force_list(subschema["append"])
                 for append in appends:
                     if append in instance:
                         msg = (
-                            "WARNING: Config option '%s' is deprecated, its value will be appended to option '%s'. "
+                            "WARNING: Config option '%s' is deprecated, "
+                            "its value will be appended to option '%s'. "
                             "In:\n%s" % (append, property, instance)
                         )
                         yield ConfigOptionWarning(msg)
                         if property in instance:
                             msg = (
-                                "WARNING: Value from config option '%s' is now appended to option '%s'."
-                                % (append, property)
+                                "WARNING: Value from config option '%s' is "
+                                "now appended to option '%s'." % (append, property)
                             )
                             yield ConfigOptionWarning(msg)
                             instance[property] = force_list(instance[property])
                             instance[property].extend(force_list(instance.pop(append)))
                         else:
                             msg = (
-                                "WARNING: Config option '%s' is not found, but '%s' is specified, value from '%s' "
-                                "is now added as '%s'."
+                                "WARNING: Config option '%s' is not found, "
+                                "but '%s' is specified, "
+                                "value from '%s' is now added as '%s'."
                                 % (property, append, append, property)
                             )
                             yield ConfigOptionWarning(msg)
@@ -559,7 +562,7 @@ def make_schema():
             "release_version": {"type": "string"},
             "release_type": {"type": "string", "enum": RELEASE_TYPES, "default": "ga"},
             "release_is_layered": {
-                "deprecated": "remove it. It's layered if there's configuration for base product"
+                "deprecated": "remove it. It's layered if there's configuration for base product"  # noqa: E501
             },
             "release_internal": {"type": "boolean", "default": False},
             "release_discinfo_description": {"type": "string"},
@@ -570,7 +573,7 @@ def make_schema():
             "base_product_version": {"type": "string"},
             "base_product_type": {"type": "string", "default": "ga"},
             "runroot": {
-                "deprecated": "remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally",
+                "deprecated": "remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally",  # noqa: E501
             },
             "global_runroot_method": {"type": "string", "enum": RUNROOT_TYPES},
             "runroot_method": {
@@ -600,7 +603,7 @@ def make_schema():
             "check_deps": {"type": "boolean", "default": True},
             "require_all_comps_packages": {"type": "boolean", "default": False},
             "bootable": {
-                "deprecated": "remove it. Setting buildinstall_method option if you want a bootable installer"
+                "deprecated": "remove it. Setting buildinstall_method option if you want a bootable installer"  # noqa: E501
             },
             "gather_method": {
                 "oneOf": [
@@ -802,8 +805,8 @@ def make_schema():
             "image_volid_layered_product_formats": {
                 "$ref": "#/definitions/list_of_strings",
                 "default": [
-                    "{release_short}-{version} {base_product_short}-{base_product_version} {variant}.{arch}",
-                    "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",
+                    "{release_short}-{version} {base_product_short}-{base_product_version} {variant}.{arch}",  # noqa: E501
+                    "{release_short}-{version} {base_product_short}-{base_product_version} {arch}",  # noqa: E501
                 ],
             },
             "restricted_volid": {"type": "boolean", "default": False},
@@ -829,7 +832,7 @@ def make_schema():
             "media_checksum_base_filename": {"type": "string", "default": ""},
             "filter_system_release_packages": {"type": "boolean", "default": True},
             "keep_original_comps": {
-                "deprecated": "remove <groups> tag from respective variant in variants XML"
+                "deprecated": "remove <groups> tag from respective variant in variants XML"  # noqa: E501
             },
             "link_type": {
                 "type": "string",
@@ -1061,7 +1064,7 @@ def make_schema():
                                         "subvariant": {"type": "string"},
                                         "format": {
                                             "anyOf": [
-                                                # The variant with explicit extension is deprecated.
+                                                # The variant with explicit extension is deprecated.  # noqa: E501
                                                 {"$ref": "#/definitions/string_pairs"},
                                                 {"$ref": "#/definitions/strings"},
                                             ]

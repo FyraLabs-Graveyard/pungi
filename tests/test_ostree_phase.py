@@ -200,7 +200,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
                 },
                 {
                     "name": "http:__example.com_work__basearch_comps_repo_Everything",
-                    "baseurl": "http://example.com/work/$basearch/comps_repo_Everything",
+                    "baseurl": "http://example.com/work/$basearch/comps_repo_Everything",  # noqa: E501
                 },
             ]
         }
@@ -295,7 +295,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.compose._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
                     "Runroot task failed: 1234. See %s for more details."
@@ -322,7 +322,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         self.compose._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway."
+                    "[FAIL] Ostree (variant Everything, arch x86_64) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]
@@ -675,7 +675,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         koji.run_runroot_cmd.side_effect = self._mock_runroot(0)
 
         cfg = {
-            "repo": [  # Variant type repos will not be included into extra_config. This part of the config is deprecated
+            "repo": [  # Variant type repos will not be included into extra_config. This part of the config is deprecated  # noqa: E501
                 "Everything",  # do not include
                 {
                     "name": "repo_a",
@@ -704,7 +704,7 @@ class OSTreeThreadTest(helpers.PungiTestCase):
         with open(extra_config_file, "r") as extra_config_fd:
             extra_config = json.load(extra_config_fd)
         self.assertTrue(extra_config.get("keep_original_sources", False))
-        # should equal to number of valid repositories in cfg['repo'] + default repository + comps repository
+        # should equal to number of valid repositories in cfg['repo'] + default repository + comps repository  # noqa: E501
         self.assertEqual(len(extra_config.get("repo", [])), 3)
         self.assertEqual(
             extra_config.get("repo").pop()["baseurl"],

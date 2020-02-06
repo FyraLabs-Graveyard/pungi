@@ -91,7 +91,7 @@ class TestLiveImagesPhase(PungiTestCase):
                     compose.variants["Client"],
                     disc_num=None,
                     disc_type="live",
-                    format="%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s",
+                    format="%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s",  # noqa: E501
                 )
             ],
         )
@@ -345,7 +345,7 @@ class TestLiveImagesPhase(PungiTestCase):
                         {
                             "amd64": {
                                 "kickstart": "test.ks",
-                                "ksurl": "https://git.example.com/kickstarts.git?#CAFEBABE",
+                                "ksurl": "https://git.example.com/kickstarts.git?#CAFEBABE",  # noqa: E501
                                 "repo": ["http://example.com/repo/", "Everything"],
                                 "type": "appliance",
                                 "target": "f27",
@@ -618,7 +618,7 @@ class TestLiveImagesPhase(PungiTestCase):
                     compose.variants["Client"],
                     disc_num=None,
                     disc_type="Live",
-                    format="%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s",
+                    format="%(compose_id)s-%(variant)s-%(arch)s-%(disc_type)s%(disc_num)s%(suffix)s",  # noqa: E501
                 )
             ],
         )
@@ -695,7 +695,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         write_manifest_cmd = " && ".join(
             [
                 "cd " + self.topdir + "/compose/Client/amd64/iso",
-                "isoinfo -R -f -i image-name | grep -v '/TRANS.TBL$' | sort >> image-name.manifest",
+                "isoinfo -R -f -i image-name | grep -v '/TRANS.TBL$' | sort >> image-name.manifest",  # noqa: E501
             ]
         )
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
@@ -806,7 +806,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         write_manifest_cmd = " && ".join(
             [
                 "cd " + self.topdir + "/compose/Client/amd64/iso",
-                "isoinfo -R -f -i image.iso | grep -v '/TRANS.TBL$' | sort >> image.iso.manifest",
+                "isoinfo -R -f -i image.iso | grep -v '/TRANS.TBL$' | sort >> image.iso.manifest",  # noqa: E501
             ]
         )
         self.assertEqual(run.mock_calls, [mock.call(write_manifest_cmd)])
@@ -998,10 +998,10 @@ class TestCreateLiveImageThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway."
+                    "[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
-                    "LiveImage task failed: 123. See %s/logs/amd64/liveimage-None-None-xyz.amd64.log for more details."
+                    "LiveImage task failed: 123. See %s/logs/amd64/liveimage-None-None-xyz.amd64.log for more details."  # noqa: E501
                     % self.topdir
                 ),
             ]
@@ -1046,7 +1046,7 @@ class TestCreateLiveImageThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway."
+                    "[FAIL] Live (variant Client, arch amd64, subvariant Client) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]

@@ -295,7 +295,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         )
 
         figure = re.compile(
-            r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",
+            r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",  # noqa: E501
             re.DOTALL,
         )
         self.assertRegexpMatches(str(ctx.exception), figure)
@@ -320,7 +320,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             pkgset.raise_invalid_sigkeys_exception(pkgset.invalid_sigkey_rpms)
 
         figure = re.compile(
-            r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",
+            r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",  # noqa: E501
             re.DOTALL,
         )
         self.assertRegexpMatches(str(ctx.exception), figure)

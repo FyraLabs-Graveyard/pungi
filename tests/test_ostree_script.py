@@ -397,7 +397,7 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
                         "--add-template=/path/to/lorax.tmpl",
                         "--add-arch-template=/path/to/lorax-embed.tmpl",
                         "--add-template-var=ostree_osname=dummy",
-                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",
+                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",  # noqa: E501
                         "--rootfs-size=None",
                         self.output,
                     ],
@@ -463,7 +463,7 @@ class OstreeInstallerScriptTest(helpers.PungiTestCase):
                         "--add-template-var=ostree_osname=dummy-atomic",
                         "--add-template-var=ostree_ref=dummy/x86_64/docker",
                         "--add-arch-template-var=ostree_osname=dummy-atomic",
-                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",
+                        "--add-arch-template-var=ostree_repo=http://www.example.com/ostree",  # noqa: E501
                         "--rootfs-size=None",
                         self.output,
                     ],

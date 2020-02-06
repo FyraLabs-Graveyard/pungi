@@ -73,7 +73,7 @@ class ReleaseConfigTestCase(ConfigTestCase):
         self.assertValidation(
             cfg,
             warnings=[
-                "WARNING: Config option release_is_layered was removed and has no effect; remove it. It's layered if there's configuration for base product."
+                "WARNING: Config option release_is_layered was removed and has no effect; remove it. It's layered if there's configuration for base product."  # noqa: E501
             ],
         )
 
@@ -158,7 +158,7 @@ class RunrootConfigTestCase(ConfigTestCase):
         self.assertValidation(
             cfg,
             warnings=[
-                "WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."
+                "WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."  # noqa: E501
             ],
         )
 
@@ -168,7 +168,7 @@ class RunrootConfigTestCase(ConfigTestCase):
         self.assertValidation(
             cfg,
             warnings=[
-                "WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."
+                "WARNING: Config option runroot was removed and has no effect; remove it. Please specify 'runroot_method' if you want to enable runroot, otherwise run things locally."  # noqa: E501
             ],
         )
 
@@ -180,7 +180,7 @@ class BuildinstallConfigTestCase(ConfigTestCase):
         self.assertValidation(
             cfg,
             warnings=[
-                "WARNING: Config option bootable was removed and has no effect; remove it. Setting buildinstall_method option if you want a bootable installer."
+                "WARNING: Config option bootable was removed and has no effect; remove it. Setting buildinstall_method option if you want a bootable installer."  # noqa: E501
             ],
         )
 
@@ -298,7 +298,7 @@ class OstreeConfigTestCase(ConfigTestCase):
                     {
                         "x86_64": {
                             "treefile": "fedora-atomic-docker-host.json",
-                            "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",
+                            "config_url": "https://git.fedorahosted.org/git/fedora-atomic.git",  # noqa: E501
                             "repo": "Everything",
                             "ostree_repo": "/mnt/koji/compose/atomic/Rawhide/",
                             "version": "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN",
@@ -329,18 +329,18 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
                             "release": None,
                             "installpkgs": ["fedora-productimg-atomic"],
                             "add_template": [
-                                "/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"
+                                "/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"  # noqa: E501
                             ],
                             "add_template_var": [
                                 "ostree_osname=fedora-atomic",
                                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                             ],
                             "add_arch_template": [
-                                "/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"
+                                "/spin-kickstarts/atomic-installer/lorax-embed-repo.tmpl"  # noqa: E501
                             ],
                             "rootfs_size": "3",
                             "add_arch_template_var": [
-                                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                                 "ostree_osname=fedora-atomic",
                                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                             ],
@@ -364,7 +364,7 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
                             "release": None,
                             "installpkgs": ["fedora-productimg-atomic"],
                             "add_template": [
-                                "/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"
+                                "/spin-kickstarts/atomic-installer/lorax-configure-repo.tmpl"  # noqa: E501
                             ],
                             "add_template_var": [
                                 "ostree_osname=fedora-atomic",
@@ -372,7 +372,7 @@ class OstreeInstallerConfigTestCase(ConfigTestCase):
                             ],
                             "add_arch_template": 15,
                             "add_arch_template_var": [
-                                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",
+                                "ostree_repo=https://kojipkgs.fedoraproject.org/compose/atomic/Rawhide/",  # noqa: E501
                                 "ostree_osname=fedora-atomic",
                                 "ostree_ref=fedora-atomic/Rawhide/x86_64/docker-host",
                             ],
@@ -420,7 +420,7 @@ class TestRegexValidation(ConfigTestCase):
     def test_incorrect_regular_expression(self):
         cfg = load_config(PKGSET_REPOS, multilib=[("^*$", {"*": []})])
 
-        msg = "Failed validation in multilib.0.0: incorrect regular expression: nothing to repeat"
+        msg = "Failed validation in multilib.0.0: incorrect regular expression: nothing to repeat"  # noqa: E501
         if six.PY3:
             msg += " at position 1"
         self.assertValidation(cfg, [msg], [])

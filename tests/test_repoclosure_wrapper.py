@@ -148,5 +148,5 @@ class FusExtractorTestCase(helpers.PungiTestCase):
 
         self.assertFileContent(
             self.output,
-            "Problem 1/1\n - nothing provides foo\nProblem 1/1\n - nothing provides quux\n",
+            "Problem 1/1\n - nothing provides foo\nProblem 1/1\n - nothing provides quux\n",  # noqa: E501
         )

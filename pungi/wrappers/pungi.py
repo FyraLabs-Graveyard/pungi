@@ -132,7 +132,8 @@ class PungiWrapper(object):
         # path to a kickstart file
         cmd.append("--config=%s" % config)
 
-        # destdir is optional in Pungi (defaults to current dir), but want it mandatory here
+        # destdir is optional in Pungi (defaults to current dir), but
+        # want it mandatory here
         cmd.append("--destdir=%s" % destdir)
 
         # name

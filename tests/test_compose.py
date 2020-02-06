@@ -544,7 +544,7 @@ class ComposeTestCase(unittest.TestCase):
                 mock.call("Excluding variant Live: filtered by configuration."),
                 mock.call("Excluding variant Crashy: all its arches are filtered."),
                 mock.call(
-                    "Excluding variant Server-ResilientStorage: filtered by configuration."
+                    "Excluding variant Server-ResilientStorage: filtered by configuration."  # noqa: E501
                 ),
                 mock.call(
                     "Excluding variant Server-Gluster: filtered by configuration."
@@ -635,7 +635,7 @@ class StatusTest(unittest.TestCase):
                 ),
                 mock.call(
                     20,
-                    "Failed live on variant <Server>, arch <x86_64>, subvariant <None>.",
+                    "Failed live on variant <Server>, arch <x86_64>, subvariant <None>.",  # noqa: E501
                 ),
             ],
             any_order=True,

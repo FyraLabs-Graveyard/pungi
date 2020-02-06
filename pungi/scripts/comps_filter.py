@@ -68,7 +68,7 @@ def main():
         default=[],
         action="append",
         metavar="GROUPID",
-        help="keep this group in environments even if they are not defined in the comps",
+        help="keep this group in environments even if they are not defined in the comps",  # noqa: E501
     )
     parser.add_argument(
         "--no-cleanup",

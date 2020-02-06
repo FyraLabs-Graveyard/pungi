@@ -90,7 +90,7 @@ class OstreeInstallerThread(WorkerThread):
         )
 
         repos = get_repo_urls(
-            None,  # compose==None. Special value says that method should ignore deprecated variant-type repo
+            None,  # compose==None. Special value says that method should ignore deprecated variant-type repo  # noqa: E501
             shortcuts.force_list(config["repo"]) + self.baseurls,
             arch=arch,
             logger=self.pool,

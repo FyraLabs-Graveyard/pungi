@@ -213,7 +213,8 @@ def create_variant_repo(
             log_file = compose.paths.log.log_file(arch, "modifyrepo-%s" % variant)
             run(cmd, logfile=log_file, show_cmd=True)
             # productinfo is not supported by modifyrepo in any way
-            # this is a HACK to make CDN happy (dmach: at least I think, need to confirm with dgregor)
+            # this is a HACK to make CDN happy (dmach: at least I think,
+            # need to confirm with dgregor)
             shutil.copy2(
                 product_id_path, os.path.join(repo_dir, "repodata", "productid")
             )

@@ -161,8 +161,8 @@ def write_pungi_config(
 
     if not groups and not packages_str and not prepopulate:
         raise RuntimeError(
-            "No packages included in %s.%s (no comps groups, no input packages, no prepopulate)"
-            % (variant.uid, arch)
+            "No packages included in %s.%s "
+            "(no comps groups, no input packages, no prepopulate)" % (variant.uid, arch)
         )
 
     pungi_wrapper.write_kickstart(
@@ -206,7 +206,8 @@ def resolve_deps(compose, arch, variant, source_name=None):
 
     # addon
     if variant.type in ["addon", "layered-product"]:
-        # packages having SRPM in parent variant are excluded from fulltree (via %fulltree-excludes)
+        # packages having SRPM in parent variant are excluded from
+        # fulltree (via %fulltree-excludes)
         fulltree = True
         selfhosting = False
 

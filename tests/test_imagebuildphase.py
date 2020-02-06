@@ -28,7 +28,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -110,7 +110,7 @@ class TestImageBuildPhase(PungiTestCase):
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build_ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                "image_build_ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                 "image_build_release": "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN",
                 "image_build_target": "f24",
                 "image_build_version": "Rawhide",
@@ -173,7 +173,7 @@ class TestImageBuildPhase(PungiTestCase):
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build_ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                "image_build_ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                 "image_build_release": "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN",
                 "image_build_target": "f24",
                 "image_build": {
@@ -241,7 +241,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -277,7 +277,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -346,7 +346,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -414,7 +414,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -488,7 +488,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -555,7 +555,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -598,7 +598,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -641,7 +641,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -681,7 +681,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -745,7 +745,7 @@ class TestImageBuildPhase(PungiTestCase):
                                 "name": "Fedora-Docker-Base",
                                 "target": "f24",
                                 "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",
+                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                                 "kickstart": "fedora-docker-base.ks",
                                 "distro": "Fedora-20",
                                 "disk_size": 3,
@@ -873,7 +873,7 @@ class TestCreateImageBuildThread(PungiTestCase):
                 mock.call(
                     koji_wrapper.get_image_build_cmd.return_value,
                     log_file=self.topdir
-                    + "/logs/amd64-x86_64/imagebuild-Client-KDE-docker-qcow2.amd64-x86_64.log",
+                    + "/logs/amd64-x86_64/imagebuild-Client-KDE-docker-qcow2.amd64-x86_64.log",  # noqa: E501
                 )
             ],
         )
@@ -885,25 +885,25 @@ class TestCreateImageBuildThread(PungiTestCase):
                 mock.call.link(
                     "/koji/task/1235/Fedora-Docker-Base-20160103.amd64.qcow2",
                     self.topdir
-                    + "/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2",
+                    + "/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.qcow2",  # noqa: E501
                     link_type="hardlink-or-copy",
                 ),
                 mock.call.link(
                     "/koji/task/1235/Fedora-Docker-Base-20160103.amd64.tar.gz",
                     self.topdir
-                    + "/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.gz",
+                    + "/compose/Client/amd64/images/Fedora-Docker-Base-20160103.amd64.tar.gz",  # noqa: E501
                     link_type="hardlink-or-copy",
                 ),
                 mock.call.link(
                     "/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.qcow2",
                     self.topdir
-                    + "/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2",
+                    + "/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.qcow2",  # noqa: E501
                     link_type="hardlink-or-copy",
                 ),
                 mock.call.link(
                     "/koji/task/1235/Fedora-Docker-Base-20160103.x86_64.tar.gz",
                     self.topdir
-                    + "/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.gz",
+                    + "/compose/Client/x86_64/images/Fedora-Docker-Base-20160103.x86_64.tar.gz",  # noqa: E501
                     link_type="hardlink-or-copy",
                 ),
             ],
@@ -992,14 +992,14 @@ class TestCreateImageBuildThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway."
+                    "[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call(
                     "ImageBuild task failed: 1234. See %s for more details."
                     % (
                         os.path.join(
                             self.topdir,
-                            "logs/amd64-x86_64/imagebuild-Client-Client-docker-qcow2.amd64-x86_64.log",
+                            "logs/amd64-x86_64/imagebuild-Client-Client-docker-qcow2.amd64-x86_64.log",  # noqa: E501
                         )
                     )
                 ),
@@ -1046,7 +1046,7 @@ class TestCreateImageBuildThread(PungiTestCase):
         pool._logger.error.assert_has_calls(
             [
                 mock.call(
-                    "[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway."
+                    "[FAIL] Image build (variant Client, arch *, subvariant Client) failed, but going on anyway."  # noqa: E501
                 ),
                 mock.call("BOOM"),
             ]

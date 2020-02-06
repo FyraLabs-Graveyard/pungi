@@ -72,8 +72,8 @@ class ImageBuildPhase(
         install_tree_source = self.compose.all_variants.get(install_tree_from)
         if not install_tree_source:
             raise RuntimeError(
-                "There is no variant %s to get install tree from when building image for %s."
-                % (install_tree_from, variant.uid)
+                "There is no variant %s to get install tree from "
+                "when building image for %s." % (install_tree_from, variant.uid)
             )
         return translate_path(
             self.compose,
@@ -236,7 +236,8 @@ class CreateImageBuildThread(WorkerThread):
         )
 
         # avoid race conditions?
-        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        # Kerberos authentication failed:
+        #   Permission denied in replay cache code (-1765328215)
         time.sleep(num * 3)
         output = koji_wrapper.run_blocking_cmd(koji_cmd, log_file=log_file)
         self.pool.log_debug("build-image outputs: %s" % (output))

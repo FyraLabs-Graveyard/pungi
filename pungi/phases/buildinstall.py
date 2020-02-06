@@ -538,7 +538,8 @@ class BuildinstallThread(WorkerThread):
 
         # This should avoid a possible race condition with multiple processes
         # trying to get a kerberos ticket at the same time.
-        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        # Kerberos authentication failed:
+        #   Permission denied in replay cache code (-1765328215)
         time.sleep(num * 3)
 
         # Start the runroot task.

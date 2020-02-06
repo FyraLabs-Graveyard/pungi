@@ -867,7 +867,7 @@ class GetRepoFuncsTestCase(unittest.TestCase):
     def test_get_repo_dicts(self):
         repos = [
             "http://example.com/repo",
-            "Server",  # this repo format is deprecated (and will not be included into final repo_dict)
+            "Server",  # this repo format is deprecated (and will not be included into final repo_dict)  # noqa: E501
             {"baseurl": "Client"},  # this repo format is deprecated
             {"baseurl": "ftp://example.com/linux/repo"},
             {"name": "testrepo", "baseurl": "ftp://example.com/linux/repo"},

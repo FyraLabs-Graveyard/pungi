@@ -137,7 +137,8 @@ class PackageSetBase(kobo.log.LoggingBase):
 
         def get_error(sigkeys, infos):
             return (
-                "RPM(s) not found for sigs: %s. Check log for details. Unsigned packages:\n%s"
+                "RPM(s) not found for sigs: %s. Check log for details. "
+                "Unsigned packages:\n%s"
                 % (
                     sigkeys,
                     "\n".join(sorted(set(nvr_formatter(rpminfo) for rpminfo in infos))),
@@ -181,7 +182,8 @@ class PackageSetBase(kobo.log.LoggingBase):
         return self.rpms_by_arch
 
     def subset(self, primary_arch, arch_list, exclusive_noarch=True):
-        """Create a subset of this package set that only includes packages compatible with"""
+        """Create a subset of this package set that only includes
+        packages compatible with"""
         pkgset = PackageSetBase(
             self.name, self.sigkey_ordering, logger=self._logger, arches=arch_list
         )

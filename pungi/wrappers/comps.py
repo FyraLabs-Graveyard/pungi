@@ -112,7 +112,8 @@ class CompsFilter(object):
     def filter_environments(self, arch, variant, only_arch=False):
         """
         Filter environments according to arch.
-        If only_arch is set, then only environments for the specified arch are preserved.
+        If only_arch is set, then only environments for the specified
+        arch are preserved.
         Multiple arches separated by comma can be specified in the XML.
         """
         self._filter_elements_by_attr("/comps/environment", "arch", arch, only_arch)
@@ -265,7 +266,7 @@ class CompsWrapper(object):
                 stripped_pkg = pkg.strip()
                 if pkg != stripped_pkg:
                     errors.append(
-                        "Package name %s in group '%s' contains leading or trailing whitespace"
+                        "Package name %s in group '%s' contains leading or trailing whitespace"  # noqa: E501
                         % (stripped_pkg, group)
                     )
 
@@ -308,7 +309,7 @@ class CompsWrapper(object):
             for pkg in group.packages:
                 if pkg.type == libcomps.PACKAGE_TYPE_UNKNOWN:
                     raise RuntimeError(
-                        "Failed to process comps file. Package %s in group %s has unknown type"
+                        "Failed to process comps file. Package %s in group %s has unknown type"  # noqa: E501
                         % (pkg.name, group.id)
                     )
 

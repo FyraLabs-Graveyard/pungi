@@ -126,13 +126,13 @@ ARCHIVES = [
         "checksum_type": 0,
         "extra": {
             "docker": {
-                "id": "408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7",
-                "parent_id": "6c3a84d798dc449313787502060b6d5b4694d7527d64a7c99ba199e3b2df834e",
+                "id": "408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7",  # noqa: E501
+                "parent_id": "6c3a84d798dc449313787502060b6d5b4694d7527d64a7c99ba199e3b2df834e",  # noqa: E501
                 "repositories": ["registry.example.com:8888/rcm/buildroot:1.0-1"],
             },
             "image": {"arch": "x86_64"},
         },
-        "filename": "docker-image-408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7.x86_64.tar.gz",
+        "filename": "docker-image-408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7.x86_64.tar.gz",  # noqa: E501
         "id": 1436049,
         "metadata_only": False,
         "size": 174038795,
@@ -155,8 +155,8 @@ METADATA = {
                 "filename": ARCHIVES[0]["filename"],
                 "size": ARCHIVES[0]["size"],
                 "docker": {
-                    "id": "408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7",
-                    "parent_id": "6c3a84d798dc449313787502060b6d5b4694d7527d64a7c99ba199e3b2df834e",
+                    "id": "408c4cd37a87a807bec65dd13b049a32fe090d2fa1a8e891f65e3e3e683996d7",  # noqa: E501
+                    "parent_id": "6c3a84d798dc449313787502060b6d5b4694d7527d64a7c99ba199e3b2df834e",  # noqa: E501
                     "repositories": ["registry.example.com:8888/rcm/buildroot:1.0-1"],
                 },
                 "image": {"arch": "x86_64"},
@@ -179,7 +179,7 @@ SCRATCH_METADATA = {
             {
                 "koji_task": 12345,
                 "repositories": [
-                    "registry.example.com:8888/rcm/buildroot:f24-docker-candidate-20160617141632",
+                    "registry.example.com:8888/rcm/buildroot:f24-docker-candidate-20160617141632",  # noqa: E501
                 ],
             }
         ]
@@ -288,7 +288,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
         config["osbs"] = {"^Server$": cfg}
         errors, warnings = checks.validate(config, offline=True)
         self.assertIn(
-            "Failed validation in osbs.^Server$: %r is not valid under any of the given schemas"
+            "Failed validation in osbs.^Server$: %r is not valid under any of the given schemas"  # noqa: E501
             % cfg,
             errors,
         )

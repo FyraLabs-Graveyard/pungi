@@ -47,8 +47,8 @@ class LiveMediaPhase(PhaseLoggerMixin, ImageConfigMixin, ConfigGuardedPhase):
                 variant = self.compose.all_variants[variant_uid]
             except KeyError:
                 raise RuntimeError(
-                    "There is no variant %s to get repo from when building live media for %s."
-                    % (variant_uid, variant.uid)
+                    "There is no variant %s to get repo from when building "
+                    "live media for %s." % (variant_uid, variant.uid)
                 )
         return translate_path(
             self.compose,

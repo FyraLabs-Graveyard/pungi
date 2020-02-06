@@ -114,8 +114,8 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
 
                 if bootable and not self.bi.succeeded(variant, arch):
                     self.logger.warning(
-                        "ISO should be bootable, but buildinstall failed. Skipping for %s.%s"
-                        % (variant, arch)
+                        "ISO should be bootable, but buildinstall failed. "
+                        "Skipping for %s.%s" % (variant, arch)
                     )
                     continue
 
@@ -430,7 +430,8 @@ def split_iso(compose, arch, variant, no_split=False, logger=None):
     result = ms.split()
     if no_split and result[0]["size"] > split_size:
         logger.warning(
-            "ISO for %s.%s does not fit on single media! It is %s bytes too big. (Total size: %s B)"
+            "ISO for %s.%s does not fit on single media! It is %s bytes too big. "
+            "(Total size: %s B)"
             % (variant.uid, arch, result[0]["size"] - split_size, result[0]["size"])
         )
     return result

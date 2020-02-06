@@ -51,7 +51,7 @@ def main():
     )
     parser.add_argument(
         "--label",
-        help="specify compose label (example: Snapshot-1.0); required for production composes",
+        help="specify compose label (example: Snapshot-1.0); required for production composes",  # noqa: E501
     )
     parser.add_argument(
         "--no-label",
@@ -71,7 +71,7 @@ def main():
         dest="old_composes",
         default=[],
         action="append",
-        help="Path to directory with old composes. Reuse an existing repodata from the most recent compose.",
+        help="Path to directory with old composes. Reuse an existing repodata from the most recent compose.",  # noqa: E501
     )
     parser.add_argument("--config", help="Config file", required=True)
     parser.add_argument(
@@ -149,7 +149,7 @@ def main():
         metavar="STATUS",
         action="append",
         default=[],
-        help="only create latest symbol link to this compose when compose status matches specified status",
+        help="only create latest symbol link to this compose when compose status matches specified status",  # noqa: E501
     )
     parser.add_argument(
         "--print-output-dir",
@@ -241,7 +241,7 @@ def main():
     # Remove when all config files are up to date
     if "productimg" in opts.skip_phase or "productimg" in opts.just_phase:
         print(
-            "WARNING: productimg phase has been removed, please remove it from --skip-phase or --just-phase option",
+            "WARNING: productimg phase has been removed, please remove it from --skip-phase or --just-phase option",  # noqa: E501
             file=sys.stderr,
         )
     for err in errors[:]:
@@ -402,8 +402,9 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
                     .rstrip("\n")
                 )
             except IOError:
-                # Filename is not print intentionally in case someone puts password directly into the option
-                err_msg = "Cannot load password from file specified by 'signing_key_password_file' option"
+                # Filename is not print intentionally in case someone puts
+                # password directly into the option
+                err_msg = "Cannot load password from file specified by 'signing_key_password_file' option"  # noqa: E501
                 compose.log_error(err_msg)
                 print(err_msg)
                 raise RuntimeError(err_msg)
@@ -479,7 +480,8 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     latest_link = False
     if create_latest_link:
         if latest_link_status is None:
-            # create latest symbol link by default if latest_link_status is not specified
+            # create latest symbol link by default if latest_link_status
+            # is not specified
             latest_link = True
         else:
             latest_link_status = [s.upper() for s in latest_link_status]
@@ -487,7 +489,8 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
                 latest_link = True
             else:
                 compose.log_warning(
-                    "Compose status (%s) doesn't match with specified latest-link-status (%s), not create latest link."
+                    "Compose status (%s) doesn't match with specified "
+                    "latest-link-status (%s), not create latest link."
                     % (compose.get_status(), str(latest_link_status))
                 )
 

@@ -124,7 +124,7 @@ def write_arch_comps(compose, arch):
     )
 
 
-UNMATCHED_GROUP_MSG = "Variant %s.%s requires comps group %s which does not match anything in input comps file"
+UNMATCHED_GROUP_MSG = "Variant %s.%s requires comps group %s which does not match anything in input comps file"  # noqa: E501
 
 
 def get_lookaside_groups(compose, variant):

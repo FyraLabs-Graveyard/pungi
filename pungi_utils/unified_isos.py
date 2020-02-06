@@ -235,7 +235,8 @@ class UnifiedISO(object):
                 # override paths
                 arch_ti[variant.uid].repository = variant.uid
                 arch_ti[variant.uid].packages = variant.uid
-                # set to None, replace with source_*; requires productmd changes or upstream version
+                # set to None, replace with source_*; requires productmd
+                # changes or upstream version
                 # arch_ti[variant.uid].source_repository = variant.uid
                 # arch_ti[variant.uid].source_packages = variant.uid
 
@@ -387,7 +388,8 @@ class UnifiedISO(object):
             run(iso.get_manifest_cmd(iso_path))
 
             img = productmd.images.Image(im)
-            # temporary path, just a file name; to be replaced with variant specific path
+            # temporary path, just a file name; to be replaced with
+            # variant specific path
             img.path = os.path.basename(iso_path)
             img.mtime = int(os.stat(iso_path).st_mtime)
             img.size = os.path.getsize(iso_path)

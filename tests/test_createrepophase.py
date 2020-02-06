@@ -745,9 +745,9 @@ class TestCreateVariantRepo(PungiTestCase):
                     deltas=True,
                     oldpackagedirs=[
                         self.topdir
-                        + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/a",
+                        + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/a",  # noqa: E501
                         self.topdir
-                        + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/b",
+                        + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages/b",  # noqa: E501
                     ],
                     use_xz=False,
                     extra_args=[],
@@ -1168,7 +1168,7 @@ class TestCreateVariantRepo(PungiTestCase):
 
         modules_metadata = ModulesMetadata(compose)
 
-        modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a723e1bd69826e591508f07e377d2212769b59178a9-modules.yaml.gz"
+        modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a723e1bd69826e591508f07e377d2212769b59178a9-modules.yaml.gz"  # noqa: E501
         create_variant_repo(
             compose,
             "x86_64",
@@ -1270,7 +1270,7 @@ class TestGetProductIds(PungiTestCase):
         self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
         self.assertRegexpMatches(
             str(ctx.exception),
-            r"No product certificate found \(arch: amd64, variant: (Everything|Client)\)",
+            r"No product certificate found \(arch: amd64, variant: (Everything|Client)\)",  # noqa: E501
         )
 
     @mock.patch("pungi.phases.createrepo.get_dir_from_scm")

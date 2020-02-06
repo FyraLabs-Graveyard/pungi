@@ -27,7 +27,8 @@ class SimpleAcyclicOrientedGraph(object):
             self._graph[start].append(end)
         self._all_nodes.add(start)
         self._all_nodes.add(end)
-        # try to find opposite direction path (from end to start) to detect newly created cycle
+        # try to find opposite direction path (from end to start)
+        # to detect newly created cycle
         path = SimpleAcyclicOrientedGraph.find_path(self._graph, end, start)
         if path:
             raise ValueError("There is a cycle in the graph: %s" % path)
@@ -95,7 +96,9 @@ class SimpleAcyclicOrientedGraph(object):
                     # orphan node = no edge is connected with this node
                     orphans = self._all_nodes - self.get_active_nodes()
                     if orphans:
-                        break  # restart iteration not to set size self._all_nodes during iteration
+                        # restart iteration not to set size self._all_nodes
+                        # during iteration
+                        break
             for orphan in orphans:
                 if orphan not in spanning_line:
                     spanning_line.insert(0, orphan)

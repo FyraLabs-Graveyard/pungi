@@ -217,7 +217,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
@@ -270,7 +270,7 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
@@ -297,12 +297,12 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertRegexpMatches(
             errors[0],
-            r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*",
+            r"^ERROR: Config option 'product_name' is an alias of 'release_name', only one can be used.*",  # noqa: E501
         )
         self.assertEqual(len(warnings), 1)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",
+            r"^WARNING: Config option 'product_name' is deprecated and now an alias to 'release_name'.*",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
 
@@ -384,11 +384,11 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 2)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[1],
-            r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'",
+            r"^WARNING: Value from config option 'repo_from' is now appended to option 'repo'",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
@@ -426,11 +426,11 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 2)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[1],
-            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(config.get("repo", None), ["http://url/to/repo", "Server"])
@@ -472,19 +472,19 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 4)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[1],
-            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified,",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[2],
-            r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'",
+            r"^WARNING: Config option 'source_repo_from' is deprecated, its value will be appended to option 'repo'",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[3],
-            r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.",
+            r"^WARNING: Value from config option 'source_repo_from' is now appended to option 'repo'.",  # noqa: E501
         )
         self.assertEqual(config.get("release_name", None), "dummy product")
         self.assertEqual(
@@ -534,11 +534,11 @@ class TestSchemaValidator(unittest.TestCase):
         self.assertEqual(len(warnings), 2)
         self.assertRegexpMatches(
             warnings[0],
-            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",
+            r"^WARNING: Config option 'repo_from' is deprecated, its value will be appended to option 'repo'.*",  # noqa: E501
         )
         self.assertRegexpMatches(
             warnings[1],
-            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*",
+            r"^WARNING: Config option 'repo' is not found, but 'repo_from' is specified, value from 'repo_from' is now added as 'repo'.*",  # noqa: E501
         )
         self.assertEqual(
             config.get("live_images")[0][1]["armhfp"]["repo"], "Everything"

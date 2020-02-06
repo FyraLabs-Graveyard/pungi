@@ -114,7 +114,7 @@ class LoraxWrapper(object):
         brand=None,
     ):
         # RHEL 6 compatibility
-        # Usage: buildinstall [--debug] --version <version> --brand <brand> --product <product> --release <comment> --final [--output outputdir] [--discs <discstring>] <root>
+        # Usage: buildinstall [--debug] --version <version> --brand <brand> --product <product> --release <comment> --final [--output outputdir] [--discs <discstring>] <root>  # noqa: E501
 
         brand = brand or "redhat"
         # HACK: ignore provided release

@@ -146,7 +146,7 @@ class TestWritePungiConfig(helpers.PungiTestCase):
             )
         self.assertEqual(
             str(ctx.exception),
-            "No packages included in Server.x86_64 (no comps groups, no input packages, no prepopulate)",
+            "No packages included in Server.x86_64 (no comps groups, no input packages, no prepopulate)",  # noqa: E501
         )
         self.assertEqual(PungiWrapper.return_value.mock_calls, [])
 
@@ -188,7 +188,7 @@ class TestCheckDeps(helpers.PungiTestCase):
             self.compose.log_error.call_args_list,
             [
                 mock.call(
-                    "Unresolved dependencies for %s.%s in package foo.noarch: ['bar = 1.1']"
+                    "Unresolved dependencies for %s.%s in package foo.noarch: ['bar = 1.1']"  # noqa: E501
                     % (self.variant, self.arch)
                 )
             ],

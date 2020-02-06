@@ -210,7 +210,8 @@ class CreateLiveImageThread(WorkerThread):
         )
 
         # avoid race conditions?
-        # Kerberos authentication failed: Permission denied in replay cache code (-1765328215)
+        # Kerberos authentication failed:
+        #   Permission denied in replay cache code (-1765328215)
         time.sleep(num * 3)
 
         output = koji_wrapper.run_blocking_cmd(koji_cmd, log_file=log_file)

@@ -240,12 +240,20 @@ def compose_to_composeinfo(compose):
             ).rstrip("/")
             """
             # XXX: not suported (yet?)
-            debug_iso_dir = compose.paths.compose.debug_iso_dir(arch=arch, variant=variant) or ""
+            debug_iso_dir = (
+                compose.paths.compose.debug_iso_dir(arch=arch, variant=variant) or ""
+            )
             if debug_iso_dir:
-                var.debug_iso_dir[arch] = relative_path(debug_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
-            debug_jigdo_dir = compose.paths.compose.debug_jigdo_dir(arch=arch, variant=variant) or ""
+                var.debug_iso_dir[arch] = relative_path(
+                    debug_iso_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
+            debug_jigdo_dir = (
+                compose.paths.compose.debug_jigdo_dir(arch=arch, variant=variant) or ""
+            )
             if debug_jigdo_dir:
-                var.debug_jigdo_dir[arch] = relative_path(debug_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/").rstrip("/")
+                var.debug_jigdo_dir[arch] = relative_path(
+                    debug_jigdo_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                ).rstrip("/")
             """
 
         for v in variant.get_variants(recursive=False):

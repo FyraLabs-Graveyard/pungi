@@ -311,7 +311,7 @@ class Variant(object):
         return self.uid
 
     def __repr__(self):
-        return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(
+        return 'Variant(id="{0.id}", name="{0.name}", type="{0.type}", parent={0.parent})'.format(  # noqa: E501
             self
         )
 
@@ -350,12 +350,14 @@ class Variant(object):
         if self.type != "variant":
             raise RuntimeError("Only 'variant' can contain another variants.")
         if variant.id == self.id:
-            # due to os/<variant.id> path -- addon id would conflict with parent variant id
+            # due to os/<variant.id> path -- addon id would conflict with
+            # parent variant id
             raise RuntimeError(
                 "Child variant id must be different than parent variant id: %s"
                 % variant.id
             )
-        # sometimes an addon or layered product can be part of multiple variants with different set of arches
+        # sometimes an addon or layered product can be part of multiple
+        # variants with different set of arches
         arches = sorted(set(self.arches).intersection(set(variant.arches)))
         if self.arches and not arches:
             raise RuntimeError(

@@ -616,7 +616,8 @@ class Gather(GatherBase):
     @Profiler("Gather.add_conditional_packages()")
     def add_conditional_packages(self):
         """
-        For each binary package add their conditional dependencies as specified in comps.
+        For each binary package add their conditional dependencies
+        as specified in comps.
         Return newly added packages.
         """
         added = set()
