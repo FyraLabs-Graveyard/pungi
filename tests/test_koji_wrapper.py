@@ -10,7 +10,6 @@ except ImportError:
 import tempfile
 
 import os
-import sys
 
 import six
 

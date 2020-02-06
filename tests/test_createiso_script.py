@@ -3,7 +3,6 @@
 import mock
 
 import os
-import sys
 from six.moves import StringIO
 
 from tests import helpers

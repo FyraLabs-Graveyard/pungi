@@ -5,8 +5,6 @@ try:
 except ImportError:
     import unittest
 import argparse
-import os
-import sys
 
 from parameterized import parameterized
 

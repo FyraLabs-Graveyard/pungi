@@ -6,9 +6,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-import os
 import random
-import sys
 import time
 
 from pungi.phases import weaver

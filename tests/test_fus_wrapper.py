@@ -10,7 +10,6 @@ from textwrap import dedent
 import six
 
 import os
-import sys
 
 from pungi.wrappers import fus
 

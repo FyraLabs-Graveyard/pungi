@@ -2,7 +2,6 @@
 
 import mock
 import os
-import sys
 
 from pungi.runroot import Runroot
 from tests import helpers

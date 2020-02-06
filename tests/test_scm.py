@@ -10,7 +10,6 @@ import shutil
 import tempfile
 
 import os
-import sys
 import six
 
 from pungi.wrappers import scm

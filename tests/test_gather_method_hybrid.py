@@ -4,7 +4,6 @@ from collections import namedtuple
 import copy
 import mock
 import os
-import sys
 
 import six
 

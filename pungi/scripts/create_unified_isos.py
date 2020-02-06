@@ -7,8 +7,6 @@ repos.
 """
 
 import argparse
-import os
-import sys
 
 
 from pungi_utils.unified_isos import UnifiedISO

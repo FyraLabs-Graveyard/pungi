@@ -6,9 +6,7 @@ try:
 except ImportError:
     import unittest
 
-import os
 import six
-import sys
 import mock
 
 from pungi import checks

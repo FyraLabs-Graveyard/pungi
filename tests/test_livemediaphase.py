@@ -2,7 +2,6 @@
 
 import mock
 
-import sys
 import os
 
 import six

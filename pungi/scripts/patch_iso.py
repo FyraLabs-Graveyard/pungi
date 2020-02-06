@@ -14,7 +14,6 @@
 
 import argparse
 import logging
-import os
 import sys
 
 from pungi_utils import patch_iso

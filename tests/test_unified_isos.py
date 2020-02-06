@@ -3,7 +3,6 @@
 import mock
 import os
 import shutil
-import sys
 import six
 from six.moves.configparser import SafeConfigParser
 

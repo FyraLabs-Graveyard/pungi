@@ -3,7 +3,6 @@
 import copy
 import mock
 import os
-import sys
 
 try:
     import unittest2 as unittest

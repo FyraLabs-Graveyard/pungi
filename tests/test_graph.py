@@ -5,9 +5,6 @@ try:
 except ImportError:
     import unittest
 
-import os
-import sys
-
 from pungi.graph import SimpleAcyclicOrientedGraph
 
 

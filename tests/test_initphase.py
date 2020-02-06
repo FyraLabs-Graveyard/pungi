@@ -10,7 +10,6 @@ import mock
 import six
 
 import os
-import sys
 
 from pungi.module_util import Modulemd
 from pungi.phases import init

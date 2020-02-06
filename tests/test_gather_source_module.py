@@ -7,8 +7,6 @@ except ImportError:
 
 import mock
 import six
-import os
-import sys
 
 from pungi.phases.gather.sources.source_module import GatherSourceModule
 from tests import helpers

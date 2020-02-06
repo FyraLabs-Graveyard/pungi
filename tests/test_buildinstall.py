@@ -5,7 +5,6 @@ import mock
 import six
 
 import os
-import sys
 
 from pungi.phases.buildinstall import (
     BuildinstallPhase,

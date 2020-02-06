@@ -3,8 +3,6 @@
 
 import mock
 import os
-import subprocess
-import sys
 import six
 
 from pungi.scripts.config_validate import cli_main

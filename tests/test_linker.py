@@ -5,7 +5,6 @@ import mock
 import errno
 import os
 import stat
-import sys
 
 from pungi import linker
 from tests import helpers

@@ -7,7 +7,6 @@ try:
 except ImportError:
     import unittest
 import os
-import sys
 from six import StringIO
 
 import kobo.conf

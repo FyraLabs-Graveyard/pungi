@@ -2,7 +2,6 @@
 
 import difflib
 import errno
-import imp
 import os
 import shutil
 import tempfile

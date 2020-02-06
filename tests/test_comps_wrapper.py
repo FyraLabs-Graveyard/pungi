@@ -7,7 +7,6 @@ except ImportError:
 import tempfile
 
 import os
-import sys
 
 from pungi.wrappers.comps import CompsWrapper, CompsFilter, CompsValidationError
 from tests.helpers import BaseTestCase, FIXTURE_DIR

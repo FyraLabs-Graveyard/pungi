@@ -5,7 +5,6 @@ import mock
 import six
 
 import os
-import sys
 
 from pungi.phases.image_build import ImageBuildPhase, CreateImageBuildThread
 from tests.helpers import DummyCompose, PungiTestCase, boom

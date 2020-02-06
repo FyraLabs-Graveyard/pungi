@@ -3,9 +3,6 @@
 
 import mock
 
-import os
-import sys
-
 import six
 
 from pungi.phases.live_images import LiveImagesPhase, CreateLiveImageThread

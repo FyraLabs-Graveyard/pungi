@@ -5,9 +5,6 @@ try:
 except ImportError:
     import unittest
 
-import os
-import sys
-
 import six
 
 from pungi.wrappers.lorax import LoraxWrapper

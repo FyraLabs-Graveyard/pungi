@@ -7,7 +7,6 @@ except ImportError:
 import mock
 
 import os
-import sys
 import tempfile
 import shutil
 

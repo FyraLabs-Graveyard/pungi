@@ -5,7 +5,6 @@ import mock
 import os
 import re
 import six
-import sys
 
 try:
     import unittest2 as unittest

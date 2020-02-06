@@ -2,8 +2,6 @@
 
 
 import unittest
-import os
-import sys
 
 from pungi.pathmatch import PathMatch, head_tail_split
 

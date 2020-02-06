@@ -4,8 +4,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-import os
-import sys
 import mock
 
 from pungi import media_split

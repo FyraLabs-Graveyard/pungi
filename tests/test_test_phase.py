@@ -9,20 +9,19 @@ except ImportError:
 import mock
 import os
 import six
-import sys
 
 import pungi.phases.test as test_phase
 from tests.helpers import DummyCompose, PungiTestCase, touch, mk_boom
 
 try:
-    import dnf
+    import dnf  # noqa: F401
 
     HAS_DNF = True
 except ImportError:
     HAS_DNF = False
 
 try:
-    import yum
+    import yum  # noqa: F401
 
     HAS_YUM = True
 except ImportError:

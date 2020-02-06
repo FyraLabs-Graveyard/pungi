@@ -5,7 +5,6 @@ import json
 import mock
 
 import os
-import sys
 
 from tests import helpers
 from pungi.phases import ostree

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import mock
-import os
-import sys
 
 from pungi.phases.gather.methods import method_deps as deps
 from tests import helpers

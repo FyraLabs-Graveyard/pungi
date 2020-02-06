@@ -10,7 +10,6 @@ import mock
 import glob
 import os
 import six
-import sys
 
 from pungi.phases.createrepo import (
     CreaterepoPhase,

@@ -4,8 +4,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-import os
-import sys
 from six.moves import cStringIO
 
 from pungi.wrappers.variants import VariantsXmlParser

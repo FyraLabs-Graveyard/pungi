@@ -3,7 +3,6 @@
 import mock
 
 import os
-import sys
 
 from kobo.shortcuts import force_list
 

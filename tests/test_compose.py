@@ -9,7 +9,6 @@ except ImportError:
     import unittest
 import os
 import six
-import sys
 import tempfile
 import shutil
 

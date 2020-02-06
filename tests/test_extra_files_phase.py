@@ -2,7 +2,6 @@
 
 import mock
 import os
-import sys
 
 from productmd.extra_files import ExtraFiles
 

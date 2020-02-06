@@ -5,7 +5,6 @@ import mock
 import six
 
 import os
-import sys
 
 from tests import helpers
 from pungi.createiso import CreateIsoOpts

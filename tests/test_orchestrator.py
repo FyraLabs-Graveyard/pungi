@@ -7,7 +7,6 @@ import operator
 import os
 import shutil
 import subprocess
-import sys
 from textwrap import dedent
 
 import mock

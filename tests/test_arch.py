@@ -3,9 +3,6 @@
 import mock
 import unittest
 
-import os
-import sys
-
 from pungi.arch import (
     get_compatible_arches,
     get_valid_arches,
