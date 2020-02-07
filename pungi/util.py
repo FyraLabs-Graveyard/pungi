@@ -543,7 +543,7 @@ def find_old_compose(
                 with open(status_path, "r") as f:
                     if f.read().strip() in allowed_statuses:
                         composes.append((_sortable(i), os.path.abspath(path)))
-            except:
+            except Exception:
                 continue
 
     if not composes:

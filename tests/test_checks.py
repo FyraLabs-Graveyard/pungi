@@ -602,6 +602,7 @@ class TestSchemaValidator(unittest.TestCase):
             {'enum': ['git://localhost/pungi-fedora.git'], 'type': 'string'})
         self.assertEqual(scm_dict_properties["file"], {"type": "string"})
 
+
 class TestUmask(unittest.TestCase):
     def setUp(self):
         self.orig_umask = os.umask(0)

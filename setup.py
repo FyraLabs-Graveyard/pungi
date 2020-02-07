@@ -49,7 +49,7 @@ setup(
             "pungi-config-validate = pungi.scripts.config_validate:cli_main",
         ]
     },
-    scripts=["contrib/yum-dnf-compare/pungi-compare-depsolving",],
+    scripts=["contrib/yum-dnf-compare/pungi-compare-depsolving"],
     data_files=[
         ("/usr/share/pungi", glob.glob("share/*.xsl")),
         ("/usr/share/pungi", glob.glob("share/*.ks")),
@@ -65,6 +65,6 @@ setup(
         "six",
         "dogpile.cache",
     ],
-    extras_require={':python_version=="2.7"': ["enum34", "lockfile", "dict.sorted",]},
-    tests_require=["mock", "nose", "nose-cov",],
+    extras_require={':python_version=="2.7"': ["enum34", "lockfile", "dict.sorted"]},
+    tests_require=["mock", "nose", "nose-cov"],
 )

@@ -136,7 +136,7 @@ def _try_read_cpuinfo():  # pragma: no cover
     try:
         with open("/proc/cpuinfo", "r") as f:
             return f.readlines()
-    except:
+    except Exception:
         return []
 
 
@@ -147,7 +147,7 @@ def _parse_auxv():  # pragma: no cover
     try:
         with open("/proc/self/auxv", "rb") as f:
             data = f.read()
-    except:
+    except Exception:
         return
 
     # Define values from /usr/include/elf.h
@@ -223,7 +223,7 @@ def getCanonPPCArch(arch):  # pragma: no cover
     try:
         if platform.startswith("power") and int(platform[5:].rstrip("+")) >= 7:
             return "ppc64p7"
-    except:
+    except Exception:
         pass
 
     if machine is None:
@@ -290,7 +290,7 @@ def getCanonArch(skipRpmPlatform=0):  # pragma: no cover
             f.close()
             (arch, vendor, opersys) = line.split("-", 2)
             return arch
-        except:
+        except Exception:
             pass
 
     arch = os.uname()[4]

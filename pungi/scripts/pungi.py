@@ -336,7 +336,7 @@ def main():
     if opts.do_all or opts.do_buildinstall:
         try:
             enforcing = selinux.security_getenforce()
-        except:
+        except Exception:
             print("INFO: selinux disabled")
             enforcing = False
         if enforcing:

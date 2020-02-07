@@ -514,7 +514,7 @@ def get_compose_data(compose_path):
                 }
             )
         return data
-    except Exception as exc:
+    except Exception:
         return {}
 
 

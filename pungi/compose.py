@@ -310,9 +310,9 @@ class Compose(kobo.log.LoggingBase):
             self.all_variants[variant.uid] = variant
 
         # populate ci_base with variants - needed for layered-products (compose_id)
-        ####FIXME - compose_to_composeinfo is no longer needed and has been
-        ####        removed, but I'm not entirely sure what this is needed for
-        ####        or if it is at all
+        # FIXME - compose_to_composeinfo is no longer needed and has been
+        #         removed, but I'm not entirely sure what this is needed for
+        #         or if it is at all
         self.ci_base = compose_to_composeinfo(self)
 
     def get_variants(self, types=None, arch=None):

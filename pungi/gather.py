@@ -450,7 +450,7 @@ class Pungi(PungiBase):
         # deal with our repos
         try:
             self.ksparser.handler.repo.methodToRepo()
-        except:
+        except Exception:
             pass
 
         for repo in self.ksparser.handler.repo.repoList:
@@ -777,7 +777,7 @@ class Pungi(PungiBase):
                         self.add_package(dep, msg)
                         added.add(dep)
 
-            except (yum.Errors.InstallError, yum.Errors.YumBaseError) as ex:
+            except (yum.Errors.InstallError, yum.Errors.YumBaseError):
                 self.logger.warning(
                     "Unresolvable dependency %s in %s.%s (repo: %s)",
                     r,
@@ -1136,7 +1136,7 @@ class Pungi(PungiBase):
             if self.is_resolve_deps:
                 # get conditional deps (defined in comps)
                 for txmbr in self.ayum.tsInfo:
-                    if not txmbr.po in self.po_list:
+                    if txmbr.po not in self.po_list:
                         if not is_package(txmbr.po):
                             # we don't want sources which can be pulled in,
                             # because 'src' arch is part of self.valid_arches
@@ -1381,7 +1381,7 @@ class Pungi(PungiBase):
             # flags
             try:
                 srpm_po = self.sourcerpm_srpmpo_map[po.sourcerpm]
-            except:
+            except Exception:
                 self.logger.warning("Failed to find source for %s", po.sourcerpm)
                 srpm_po = None
             if srpm_po in self.input_packages:
@@ -1461,7 +1461,7 @@ class Pungi(PungiBase):
             try:
                 pungi.util._link(local, target, self.logger, force=True)
                 continue
-            except:
+            except Exception:
                 self.logger.error("Unable to link %s from the yum cache." % po.name)
                 sys.exit(1)
 
@@ -1492,9 +1492,9 @@ class Pungi(PungiBase):
         # Filter out things we don't include
         ourgroups = []
         for item in self.ksparser.handler.packages.groupList:
-            g = self.ayum.comps.return_group(item.name)
-            if g:
-                ourgroups.append(g.groupid)
+            grp = self.ayum.comps.return_group(item.name)
+            if grp:
+                ourgroups.append(grp.groupid)
         allgroups = [g.groupid for g in self.ayum.comps.get_groups()]
         for group in allgroups:
             if (
@@ -1595,7 +1595,7 @@ class Pungi(PungiBase):
                     "flags": sorted(flags),
                 }
             )
-        result.sort(lambda x, y: cmp(x["path"], y["path"]))
+        result.sort(lambda x, y: cmp(x["path"], y["path"]))  # noqa: F821 (py2 only)
         return result
 
     def list_packages(self):
@@ -1796,7 +1796,7 @@ class Pungi(PungiBase):
         try:
             # Convert url method to a repo
             self.ksparser.handler.repo.methodToRepo()
-        except:
+        except Exception:
             pass
 
         for repo in self.ksparser.handler.repo.repoList:
@@ -2028,7 +2028,7 @@ class Pungi(PungiBase):
                             stderr=subprocess.PIPE,
                             universal_newlines=True,
                         ).communicate()
-                    except:
+                    except Exception:
                         self.logger.error("Got an error from rpm2cpio")
                         self.logger.error(err)
                         raise
