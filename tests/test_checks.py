@@ -582,12 +582,8 @@ class TestSchemaValidator(unittest.TestCase):
             "definitions": {
                 "scm_dict": {
                     "properties": {
-                        "scm": {
-                            "enum": ["git"]
-                        },
-                        "repo": {
-                            "enum": ["git://localhost/pungi-fedora.git"]
-                        },
+                        "scm": {"enum": ["git"]},
+                        "repo": {"enum": ["git://localhost/pungi-fedora.git"]},
                     }
                 }
             }
@@ -595,11 +591,12 @@ class TestSchemaValidator(unittest.TestCase):
         schema = checks.update_schema(schema, schema_override)
         scm_dict_properties = schema["definitions"]["scm_dict"]["properties"]
         self.assertEqual(
-            scm_dict_properties["scm"],
-            {'enum': ['git'], 'type': 'string'})
+            scm_dict_properties["scm"], {"enum": ["git"], "type": "string"}
+        )
         self.assertEqual(
             scm_dict_properties["repo"],
-            {'enum': ['git://localhost/pungi-fedora.git'], 'type': 'string'})
+            {"enum": ["git://localhost/pungi-fedora.git"], "type": "string"},
+        )
         self.assertEqual(scm_dict_properties["file"], {"type": "string"})
 
 

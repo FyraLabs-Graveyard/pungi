@@ -143,9 +143,7 @@ class OSBSThread(WorkerThread):
 
         result = koji.koji_proxy.getTaskResult(task_id)
         if is_scratch:
-            metadata.update(
-                {"repositories": result["repositories"]}
-            )
+            metadata.update({"repositories": result["repositories"]})
             # add a fake arch of 'scratch', so we can construct the metadata
             # in same data structure as real builds.
             self.pool.metadata.setdefault(variant.uid, {}).setdefault(

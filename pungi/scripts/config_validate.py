@@ -181,20 +181,26 @@ def main(args=None):
         ),
     )
     parser.add_argument(
-        '--schema-override',
+        "--schema-override",
         action="append",
         default=[],
         help=(
-            'Path to extra JSON schema defining the values which will override '
-            'the original Pungi JSON schema values.'
+            "Path to extra JSON schema defining the values which will override "
+            "the original Pungi JSON schema values."
         ),
     )
     opts = parser.parse_args(args)
     defines = config_utils.extract_defines(opts.define)
 
     with pungi.util.temp_dir() as topdir:
-        errors = run(opts.config, topdir, opts.old_composes, opts.offline, defines,
-                     opts.schema_override)
+        errors = run(
+            opts.config,
+            topdir,
+            opts.old_composes,
+            opts.offline,
+            defines,
+            opts.schema_override,
+        )
 
     for msg in errors:
         print(msg)

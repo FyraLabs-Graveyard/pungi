@@ -90,9 +90,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                     and pkg.arch != "noarch"
                 ):
                     continue
-                result["rpm"].append(
-                    {"path": pkg.file_path, "flags": ["input"]}
-                )
+                result["rpm"].append({"path": pkg.file_path, "flags": ["input"]})
                 seen_rpms.setdefault(pkg.name, set()).add(pkg.arch)
                 seen_srpms.setdefault(pkg.sourcerpm, set()).add(pkg.arch)
                 log.write(
@@ -105,9 +103,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
             if not pkg_is_srpm(pkg):
                 continue
             if pkg.file_name in seen_srpms:
-                result["srpm"].append(
-                    {"path": pkg.file_path, "flags": ["input"]}
-                )
+                result["srpm"].append({"path": pkg.file_path, "flags": ["input"]})
                 log.write("Adding %s\n" % pkg)
 
         log.write("\nGathering debuginfo packages\n")
@@ -125,9 +121,7 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 # pull debuginfo (they would pull in all architectures).
                 log.write("Not including %s: no package for this arch\n" % pkg)
                 continue
-            result["debuginfo"].append(
-                {"path": pkg.file_path, "flags": ["input"]}
-            )
+            result["debuginfo"].append({"path": pkg.file_path, "flags": ["input"]})
             log.write("Adding %s\n" % pkg)
 
         return result
