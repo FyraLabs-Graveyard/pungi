@@ -99,6 +99,8 @@ Currently the development workflow for Pungi is on master branch:
     git checkout my_topic_branch
 
     # make changes to setup.py
+    black setup.py
+    tox
     git add setup.py
     git commit -s -m "added awesome feature to setup.py"
 
@@ -115,8 +117,11 @@ Currently the development workflow for Pungi is on master branch:
     git push origin my_topic_branch
 
   .. note::
-      In order to for your commit to be merged, you must sign-off on it. Use
-      ``-s`` option when running ``git commit``.
+      In order to for your commit to be merged:
+
+      - you must sign-off on it. Use ``-s`` option when running ``git commit``.
+
+      - The code must be well formatted via ``black`` and pass ``flake8`` checking. Run ``tox`` to do the check.
 
 - Create pull request in the pagure.io web UI
 
