@@ -12,3 +12,4 @@ tests/_composes
 htmlcov/
 .coverage
 .idea/
+.tox
