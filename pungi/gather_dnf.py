@@ -18,6 +18,7 @@ from enum import Enum
 from itertools import count
 import logging
 import os
+import re
 
 from kobo.rpmlib import parse_nvra
 
@@ -325,7 +326,7 @@ class Gather(GatherBase):
         return pkg in pkgs
 
     def _add_packages(self, packages, pulled_by=None, req=None, reason=None, dest=None):
-        dest = dest or self.result_binary_packages
+        dest = dest if dest is not None else self.result_binary_packages
         for i in packages:
             assert i is not None
             if i not in dest:
@@ -458,6 +459,7 @@ class Gather(GatherBase):
     @Profiler("Gather.add_initial_packages()")
     def add_initial_packages(self, pattern_list):
         added = set()
+        added_debuginfo = set()
 
         excludes = []
         includes = []
@@ -472,17 +474,35 @@ class Gather(GatherBase):
 
         for pattern in includes:
             with Profiler("Gather.add_initial_packages():include"):
+                debuginfo = False
                 if pattern == "system-release" and self.opts.greedy_method == "all":
                     pkgs = self.q_binary_packages.filter(
                         provides="system-release"
                     ).apply()
                 else:
-                    if pattern.endswith(".+"):
-                        pkgs = self.q_multilib_binary_packages.filter(
-                            name__glob=pattern[:-2]
-                        ).apply()
+                    for p in DEBUG_PATTERNS:
+                        p = p.replace("*", ".+")
+                        if re.match(p, pattern):
+                            debuginfo = True
+                            break
+                    if debuginfo:
+                        if pattern.endswith(".+"):
+                            pkgs = self.q_multilib_debug_packages.filter(
+                                name__glob=pattern[:-2]
+                            ).apply()
+                        else:
+                            pkgs = self.q_debug_packages.filter(
+                                name__glob=pattern
+                            ).apply()
                     else:
-                        pkgs = self.q_binary_packages.filter(name__glob=pattern).apply()
+                        if pattern.endswith(".+"):
+                            pkgs = self.q_multilib_binary_packages.filter(
+                                name__glob=pattern[:-2]
+                            ).apply()
+                        else:
+                            pkgs = self.q_binary_packages.filter(
+                                name__glob=pattern
+                            ).apply()
 
                 if not pkgs:
                     self.logger.error("No package matches pattern %s" % pattern)
@@ -495,14 +515,17 @@ class Gather(GatherBase):
                     packages_by_name.setdefault(po.name, []).append(po)
 
                 for name, packages in packages_by_name.items():
-                    pkgs = self._get_best_package(packages)
+                    pkgs = self._get_best_package(packages, debuginfo=debuginfo)
                     if pkgs:
-                        added.update(pkgs)
+                        if debuginfo:
+                            added_debuginfo.update(pkgs)
+                        else:
+                            added.update(pkgs)
 
-        for pkg in added:
+        for pkg in added | added_debuginfo:
             self._set_flag(pkg, PkgFlag.input)
 
-        return added
+        return added, added_debuginfo
 
     @Profiler("Gather.init_query_cache()")
     def init_query_cache(self):
@@ -947,8 +970,10 @@ class Gather(GatherBase):
         self.conditional_packages = conditional_packages or []
 
         self.logger.debug("INITIAL PACKAGES")
-        added = self.add_initial_packages(pattern_list)
+        added, added_debuginfo = self.add_initial_packages(pattern_list)
         self._add_packages(added)
+        if added_debuginfo:
+            self._add_packages(added_debuginfo, dest=self.result_debug_packages)
 
         added = self.log_count("PREPOPULATE", self.add_prepopulate_packages)
         self._add_packages(added, reason="prepopulate")

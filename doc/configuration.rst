@@ -706,6 +706,11 @@ Options
     used, so wildcards are possible. The package can be specified as name only
     or ``name.arch``.
 
+    With ``dnf`` gathering backend, you can specify a debuginfo package to be
+    included. This is meant to include a package if autodetection does not get
+    it. If you add a debuginfo package that does not have anything else from
+    the same build included in the compose, the sources will not be pulled in.
+
 **filter_packages**
     (*list*) -- packages to be excluded from a variant and architecture;
     format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
