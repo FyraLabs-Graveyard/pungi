@@ -72,6 +72,15 @@ def read_variants(compose, config):
             compose.all_variants[child.uid] = child
 
 
+def make_final_schema(schema_overrides):
+    # Load schema including extra schemas JSON files.
+    schema = pungi.checks.make_schema()
+    for schema_override in schema_overrides:
+        with open(schema_override) as f:
+            schema = pungi.checks.update_schema(schema, json.load(f))
+    return schema
+
+
 def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
     # Load default values for undefined variables. This is useful for
     # validating templates that are supposed to be filled in later with
@@ -88,12 +97,8 @@ def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
     conf = pungi.util.load_config(config, defined_variables)
     # Remove the dummy variables used for defaults.
     config_utils.remove_unknown(conf, defined_variables)
-
     # Load extra schemas JSON files.
-    schema = pungi.checks.make_schema()
-    for schema_override in schema_overrides:
-        with open(schema_override) as f:
-            schema = pungi.checks.update_schema(schema, json.load(f))
+    schema = make_final_schema(schema_overrides)
 
     errors, warnings = pungi.checks.validate(conf, offline=offline, schema=schema)
     if errors or warnings:
@@ -142,19 +147,18 @@ def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
     return errors
 
 
-class DumpSchemaAction(argparse.Action):
-    def __call__(self, parser, ns, values, option_string=None):
-        json.dump(pungi.checks.make_schema(), sys.stdout, sort_keys=True, indent=4)
-        print("")
-        sys.exit(0)
+def dump_schema(schema_overrides):
+    # Load extra schemas JSON files.
+    schema = make_final_schema(schema_overrides)
+    json.dump(schema, sys.stdout, sort_keys=True, indent=4)
+    print("")
 
 
 def main(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dump-schema",
-        nargs=0,
-        action=DumpSchemaAction,
+        action="store_true",
         help="print JSON Schema of configuration and exit",
     )
     parser.add_argument(
@@ -166,7 +170,7 @@ def main(args=None):
         help="indicate if pungi-koji will be run with --old-composes option",
     )
     parser.add_argument(
-        "--offline", action="store_true", help="Do not validate git references in URLs",
+        "--offline", action="store_true", help="Do not validate git references in URLs"
     )
     parser.add_argument(
         "-e",
@@ -191,6 +195,10 @@ def main(args=None):
     )
     opts = parser.parse_args(args)
     defines = config_utils.extract_defines(opts.define)
+
+    if opts.dump_schema:
+        dump_schema(opts.schema_override)
+        sys.exit(0)
 
     with pungi.util.temp_dir() as topdir:
         errors = run(
