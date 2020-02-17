@@ -65,6 +65,6 @@ setup(
         "six",
         "dogpile.cache",
     ],
-    extras_require={':python_version=="2.7"': ["enum34", "lockfile", "dict.sorted"]},
+    extras_require={':python_version=="2.7"': ["enum34", "lockfile"]},
     tests_require=["mock", "nose", "nose-cov"],
 )
