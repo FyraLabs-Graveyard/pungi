@@ -527,7 +527,7 @@ class BuildinstallThread(WorkerThread):
 
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        # Get list of packages which are neded in runroot.
+        # Get list of packages which are needed in runroot.
         packages = []
         chown_paths = [output_dir]
         if buildinstall_method == "lorax":

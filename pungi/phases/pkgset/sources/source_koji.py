@@ -589,7 +589,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     # In case we use "nodeps" gather_method, we might know the final list of
     # packages which will end up in the compose even now, so instead of reading
     # all the packages from Koji tag, we can just cherry-pick the ones which
-    # are really needed to do the compose and safe lot of time and resources
+    # are really needed to do the compose and save lot of time and resources
     # here. This only works if we are not creating bootable images. Those could
     # include packages that are not in the compose.
     packages_to_gather, groups = get_packages_to_gather(
