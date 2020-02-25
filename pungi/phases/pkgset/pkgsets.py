@@ -20,6 +20,7 @@ It automatically finds a signed copies according to *sigkey_ordering*.
 """
 
 import itertools
+import json
 import os
 from six.moves import cPickle as pickle
 
@@ -30,7 +31,7 @@ import kobo.rpmlib
 from kobo.threads import WorkerThread, ThreadPool
 
 import pungi.wrappers.kojiwrapper
-from pungi.util import pkg_is_srpm
+from pungi.util import pkg_is_srpm, copy_all
 from pungi.arch import get_valid_arches, is_excluded
 
 
@@ -370,6 +371,7 @@ class KojiPackageSet(PackageSetBase):
         self.populate_only_packages = populate_only_packages
         self.cache_region = cache_region
         self.extra_builds = extra_builds or []
+        self.reuse = None
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -582,6 +584,127 @@ class KojiPackageSet(PackageSetBase):
 
         self.log_info("[DONE ] %s" % msg)
         return result
+
+    def write_reuse_file(self, compose, include_packages):
+        """Write data to files for reusing in future.
+
+        :param compose: compose object
+        :param include_packages: an iterable of tuples (package name, arch) that should
+                                 be included.
+        """
+        reuse_file = compose.paths.work.pkgset_reuse_file(self.name)
+        self.log_info("Writing pkgset reuse file: %s" % reuse_file)
+        try:
+            with open(reuse_file, "wb") as f:
+                pickle.dump(
+                    {
+                        "name": self.name,
+                        "allow_invalid_sigkeys": self._allow_invalid_sigkeys,
+                        "arches": self.arches,
+                        "sigkeys": self.sigkey_ordering,
+                        "packages": self.packages,
+                        "populate_only_packages": self.populate_only_packages,
+                        "rpms_by_arch": self.rpms_by_arch,
+                        "srpms_by_name": self.srpms_by_name,
+                        "extra_builds": self.extra_builds,
+                        "include_packages": include_packages,
+                    },
+                    f,
+                    protocol=pickle.HIGHEST_PROTOCOL,
+                )
+        except Exception as e:
+            self.log_warning("Writing pkgset reuse file failed: %s" % str(e))
+
+    def _get_koji_event_from_file(self, event_file):
+        with open(event_file, "r") as f:
+            return json.load(f)["id"]
+
+    def try_to_reuse(self, compose, tag, inherit=True, include_packages=None):
+        """Try to reuse pkgset data of old compose.
+        :param compose: compose object
+        :param str tag: koji tag name
+        :param inherit: whether to enable tag inheritance
+        :param include_packages: an iterable of tuples (package name, arch) that should
+                                 be included.
+        """
+        self.log_info("Trying to reuse pkgset data of old compose")
+        if not compose.paths.get_old_compose_topdir():
+            self.log_debug("No old compose found. Nothing to reuse.")
+            return False
+
+        event_file = os.path.join(
+            compose.paths.work.topdir(arch="global", create_dir=False), "koji-event"
+        )
+        old_event_file = compose.paths.old_compose_path(event_file)
+
+        try:
+            koji_event = self._get_koji_event_from_file(event_file)
+            old_koji_event = self._get_koji_event_from_file(old_event_file)
+        except Exception as e:
+            self.log_debug("Can't read koji event from file: %s" % str(e))
+            return False
+
+        if koji_event != old_koji_event:
+            self.log_debug(
+                "Koji event doesn't match, querying changes between event %d and %d"
+                % (old_koji_event, koji_event)
+            )
+            changed = self.koji_proxy.queryHistory(
+                tables=["tag_listing"], tag=tag, afterEvent=old_koji_event
+            )
+            if changed["tag_listing"]:
+                self.log_debug("Builds under tag %s changed. Can't reuse." % tag)
+                return False
+
+            if inherit:
+                inherit_tags = self.koji_proxy.getFullInheritance(tag, koji_event)
+                for t in inherit_tags:
+                    changed = self.koji_proxy.queryHistory(
+                        tables=["tag_listing"],
+                        tag=t["name"],
+                        afterEvent=old_koji_event,
+                        beforeEvent=koji_event + 1,
+                    )
+                    if changed["tag_listing"]:
+                        self.log_debug(
+                            "Builds under inherited tag %s changed. Can't reuse."
+                            % t["name"]
+                        )
+                        return False
+
+        repo_dir = compose.paths.work.pkgset_repo(tag, create_dir=False)
+        old_repo_dir = compose.paths.old_compose_path(repo_dir)
+
+        old_reuse_file = compose.paths.old_compose_path(
+            compose.paths.work.pkgset_reuse_file(tag)
+        )
+
+        try:
+            self.log_debug("Loading reuse file: %s" % old_reuse_file)
+            reuse_data = self.load_old_file_cache(old_reuse_file)
+        except Exception as e:
+            self.log_debug("Failed to load reuse file: %s" % str(e))
+            return False
+
+        if (
+            reuse_data["allow_invalid_sigkeys"] == self._allow_invalid_sigkeys
+            and reuse_data["packages"] == self.packages
+            and reuse_data["populate_only_packages"] == self.populate_only_packages
+            and reuse_data["extra_builds"] == self.extra_builds
+            and reuse_data["sigkeys"] == self.sigkey_ordering
+            and reuse_data["include_packages"] == include_packages
+        ):
+            self.log_info("Copying repo data for reuse: %s" % old_repo_dir)
+            copy_all(old_repo_dir, repo_dir)
+            self.reuse = old_repo_dir
+            self.rpms_by_arch = reuse_data["rpms_by_arch"]
+            self.srpms_by_name = reuse_data["srpms_by_name"]
+            if self.old_file_cache:
+                self.file_cache = self.old_file_cache
+            return True
+        else:
+            self.log_info("Criteria does not match. Nothing to reuse.")
+            return False
 
 
 def _is_src(rpm_info):

@@ -514,6 +514,203 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         )
 
 
+class TestReuseKojiPkgset(helpers.PungiTestCase):
+    def setUp(self):
+        super(TestReuseKojiPkgset, self).setUp()
+        self.old_compose_dir = tempfile.mkdtemp()
+        self.old_compose = helpers.DummyCompose(self.old_compose_dir, {})
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"old_composes": os.path.dirname(self.old_compose_dir)}
+        )
+
+        self.koji_wrapper = mock.Mock()
+
+        self.tag = "test-tag"
+        self.inherited_tag = "inherited-test-tag"
+        self.pkgset = pkgsets.KojiPackageSet(
+            self.tag, self.koji_wrapper, [None], arches=["x86_64"]
+        )
+        self.pkgset.log_debug = mock.Mock()
+        self.pkgset.log_info = mock.Mock()
+
+    def assert_not_reuse(self):
+        self.assertIsNone(getattr(self.pkgset, "reuse", None))
+
+    def test_resue_no_old_compose_found(self):
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+        self.pkgset.log_info.assert_called_once_with(
+            "Trying to reuse pkgset data of old compose"
+        )
+        self.pkgset.log_debug.assert_called_once_with(
+            "No old compose found. Nothing to reuse."
+        )
+        self.assert_not_reuse()
+
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_read_koji_event_file_failed(self, mock_old_topdir):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(
+            side_effect=Exception("unknown error")
+        )
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+        self.pkgset.log_debug.assert_called_once_with(
+            "Can't read koji event from file: unknown error"
+        )
+        self.assert_not_reuse()
+
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_build_under_tag_changed(self, mock_old_topdir):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": [{}]}
+
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+
+        self.assertEqual(
+            self.pkgset.log_debug.mock_calls,
+            [
+                mock.call(
+                    "Koji event doesn't match, querying changes between event 1 and 3"
+                ),
+                mock.call("Builds under tag %s changed. Can't reuse." % self.tag),
+            ],
+        )
+        self.assert_not_reuse()
+
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_build_under_inherited_tag_changed(self, mock_old_topdir):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
+        self.koji_wrapper.koji_proxy.queryHistory.side_effect = [
+            {"tag_listing": []},
+            {"tag_listing": [{}]},
+        ]
+        self.koji_wrapper.koji_proxy.getFullInheritance.return_value = [
+            {"name": self.inherited_tag}
+        ]
+
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+
+        self.assertEqual(
+            self.pkgset.log_debug.mock_calls,
+            [
+                mock.call(
+                    "Koji event doesn't match, querying changes between event 1 and 3"
+                ),
+                mock.call(
+                    "Builds under inherited tag %s changed. Can't reuse."
+                    % self.inherited_tag
+                ),
+            ],
+        )
+        self.assert_not_reuse()
+
+    @mock.patch("pungi.paths.os.path.exists", return_value=True)
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_failed_load_reuse_file(self, mock_old_topdir, mock_exists):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
+        self.pkgset.load_old_file_cache = mock.Mock(
+            side_effect=Exception("unknown error")
+        )
+
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+
+        self.assertEqual(
+            self.pkgset.log_debug.mock_calls,
+            [
+                mock.call(
+                    "Koji event doesn't match, querying changes between event 1 and 3"
+                ),
+                mock.call(
+                    "Loading reuse file: %s"
+                    % os.path.join(
+                        self.old_compose_dir,
+                        "work/global",
+                        "pkgset_%s_reuse.pickle" % self.tag,
+                    )
+                ),
+                mock.call("Failed to load reuse file: unknown error"),
+            ],
+        )
+        self.assert_not_reuse()
+
+    @mock.patch("pungi.paths.os.path.exists", return_value=True)
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_criteria_not_match(self, mock_old_topdir, mock_exists):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
+        self.pkgset.load_old_file_cache = mock.Mock(
+            return_value={"allow_invalid_sigkeys": True}
+        )
+
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+
+        self.assertEqual(
+            self.pkgset.log_debug.mock_calls,
+            [
+                mock.call(
+                    "Koji event doesn't match, querying changes between event 1 and 3"
+                ),
+                mock.call(
+                    "Loading reuse file: %s"
+                    % os.path.join(
+                        self.old_compose_dir,
+                        "work/global",
+                        "pkgset_%s_reuse.pickle" % self.tag,
+                    )
+                ),
+            ],
+        )
+        self.assertEqual(
+            self.pkgset.log_info.mock_calls,
+            [
+                mock.call("Trying to reuse pkgset data of old compose"),
+                mock.call("Criteria does not match. Nothing to reuse."),
+            ],
+        )
+        self.assert_not_reuse()
+
+    @mock.patch("pungi.phases.pkgset.pkgsets.copy_all")
+    @mock.patch("pungi.paths.os.path.exists", return_value=True)
+    @mock.patch.object(helpers.paths.Paths, "get_old_compose_topdir")
+    def test_reuse_pkgset(self, mock_old_topdir, mock_exists, mock_copy_all):
+        mock_old_topdir.return_value = self.old_compose_dir
+        self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
+        self.pkgset.load_old_file_cache = mock.Mock(
+            return_value={
+                "allow_invalid_sigkeys": self.pkgset._allow_invalid_sigkeys,
+                "packages": self.pkgset.packages,
+                "populate_only_packages": self.pkgset.populate_only_packages,
+                "extra_builds": self.pkgset.extra_builds,
+                "sigkeys": self.pkgset.sigkey_ordering,
+                "include_packages": None,
+                "rpms_by_arch": mock.Mock(),
+                "srpms_by_name": mock.Mock(),
+            }
+        )
+        self.pkgset.old_file_cache = mock.Mock()
+
+        self.pkgset.try_to_reuse(self.compose, self.tag)
+
+        old_repo_dir = os.path.join(self.old_compose_dir, "work/global/repo", self.tag)
+        self.assertEqual(
+            self.pkgset.log_info.mock_calls,
+            [
+                mock.call("Trying to reuse pkgset data of old compose"),
+                mock.call("Copying repo data for reuse: %s" % old_repo_dir),
+            ],
+        )
+        self.assertEqual(old_repo_dir, self.pkgset.reuse)
+        self.assertEqual(self.pkgset.file_cache, self.pkgset.old_file_cache)
+
+
 @mock.patch("kobo.pkgset.FileCache", new=MockFileCache)
 class TestMergePackageSets(PkgsetCompareMixin, unittest.TestCase):
     def test_merge_in_another_arch(self):

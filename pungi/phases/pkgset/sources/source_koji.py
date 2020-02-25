@@ -696,12 +696,20 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                         nevra = parse_nvra(rpm_nevra)
                         modular_packages.add((nevra["name"], nevra["arch"]))
 
-        pkgset.populate(
+        pkgset.try_to_reuse(
+            compose,
             compose_tag,
-            event,
             inherit=should_inherit,
             include_packages=modular_packages,
         )
+
+        if pkgset.reuse is None:
+            pkgset.populate(
+                compose_tag,
+                event,
+                inherit=should_inherit,
+                include_packages=modular_packages,
+            )
         for variant in compose.all_variants.values():
             if compose_tag in variant_tags[variant]:
 
@@ -720,6 +728,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 compose, pkgset, path_prefix, mmd=tag_to_mmd.get(pkgset.name)
             ),
         )
+
+        pkgset.write_reuse_file(compose, include_packages=modular_packages)
 
     return pkgsets
 

@@ -48,12 +48,6 @@ def get_create_global_repo_cmd(compose, path_prefix, repo_dir_global, pkgset):
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
 
-    pkgset.save_file_list(
-        compose.paths.work.package_list(arch="global", pkgset=pkgset),
-        remove_path_prefix=path_prefix,
-    )
-    pkgset.save_file_cache(compose.paths.work.pkgset_file_cache(pkgset.name))
-
     # find an old compose suitable for repodata reuse
     update_md_path = None
     old_repo_dir = compose.paths.old_compose_path(
@@ -196,21 +190,32 @@ class MaterializedPackageSet(object):
             pkgset_global.name, arch="global"
         )
         paths = {"global": repo_dir_global}
-        cmd = get_create_global_repo_cmd(
-            compose, path_prefix, repo_dir_global, pkgset_global
+
+        pkgset_global.save_file_list(
+            compose.paths.work.package_list(arch="global", pkgset=pkgset_global),
+            remove_path_prefix=path_prefix,
         )
-        logfile = compose.paths.log.log_file(
-            "global", "arch_repo.%s" % pkgset_global.name
+        pkgset_global.save_file_cache(
+            compose.paths.work.pkgset_file_cache(pkgset_global.name)
         )
-        t = threading.Thread(
-            target=run_create_global_repo, args=(compose, cmd, logfile)
-        )
-        t.start()
+
+        if getattr(pkgset_global, "reuse", None) is None:
+            cmd = get_create_global_repo_cmd(
+                compose, path_prefix, repo_dir_global, pkgset_global
+            )
+            logfile = compose.paths.log.log_file(
+                "global", "arch_repo.%s" % pkgset_global.name
+            )
+            t = threading.Thread(
+                target=run_create_global_repo, args=(compose, cmd, logfile)
+            )
+            t.start()
 
         package_sets = populate_arch_pkgsets(compose, path_prefix, pkgset_global)
         package_sets["global"] = pkgset_global
 
-        t.join()
+        if getattr(pkgset_global, "reuse", None) is None:
+            t.join()
 
         create_arch_repos(compose, path_prefix, paths, pkgset_global, mmd)
 

@@ -45,6 +45,7 @@ class TestMaterializedPkgsetCreate(helpers.PungiTestCase):
     def _make_pkgset(self, name):
         pkgset = mock.Mock()
         pkgset.name = name
+        pkgset.reuse = None
 
         def mock_subset(primary, arch_list, exclusive_noarch):
             self.subsets[primary] = mock.Mock()

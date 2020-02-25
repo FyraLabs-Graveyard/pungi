@@ -504,6 +504,14 @@ class WorkPaths(object):
         filename = "pkgset_%s_file_cache.pickle" % pkgset_name
         return os.path.join(self.topdir(arch="global"), filename)
 
+    def pkgset_reuse_file(self, pkgset_name):
+        """
+        Example:
+            work/global/pkgset_f30-compose_reuse.pickle
+        """
+        filename = "pkgset_%s_reuse.pickle" % pkgset_name
+        return os.path.join(self.topdir(arch="global", create_dir=False), filename)
+
 
 class ComposePaths(object):
     def __init__(self, compose):

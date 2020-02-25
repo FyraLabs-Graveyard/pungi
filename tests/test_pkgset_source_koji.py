@@ -86,6 +86,7 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
     def test_populate(self, KojiPackageSet, materialize):
         materialize.side_effect = self.mock_materialize
 
+        KojiPackageSet.return_value.reuse = None
         orig_pkgset = KojiPackageSet.return_value
 
         pkgsets = source_koji.populate_global_pkgset(
@@ -112,6 +113,8 @@ class TestPopulateGlobalPkgset(helpers.PungiTestCase):
         )
 
         materialize.side_effect = self.mock_materialize
+
+        KojiPackageSet.return_value.reuse = None
 
         pkgsets = source_koji.populate_global_pkgset(
             self.compose, self.koji_wrapper, "/prefix", 123456
