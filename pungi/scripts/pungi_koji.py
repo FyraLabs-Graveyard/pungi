@@ -239,23 +239,23 @@ def main():
         sys.exit(1)
     errors, warnings = pungi.checks.validate(conf)
 
-    # TODO: workaround for config files containing skip_phase = productimg
-    # Remove when all config files are up to date
     if not opts.quiet:
+        # TODO: workaround for config files containing skip_phase = productimg
+        # Remove when all config files are up to date
         if "productimg" in opts.skip_phase or "productimg" in opts.just_phase:
             print(
                 "WARNING: productimg phase has been removed, please remove it from "
                 "--skip-phase or --just-phase option",
                 file=sys.stderr,
             )
-    for err in errors[:]:
-        if "'productimg' is not one of" in err:
-            errors.remove(err)
-            print("WARNING: %s" % err, file=sys.stderr)
+        for err in errors[:]:
+            if "'productimg' is not one of" in err:
+                errors.remove(err)
+                print("WARNING: %s" % err, file=sys.stderr)
 
-    if not opts.quiet:
         for warning in warnings:
             print(warning, file=sys.stderr)
+
     if errors:
         for error in errors:
             print(error, file=sys.stderr)
