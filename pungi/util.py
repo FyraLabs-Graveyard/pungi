@@ -662,6 +662,34 @@ def copy_all(src, dest):
     return recursive_file_list(src)
 
 
+def move_all(src, dest, rm_src_dir=False):
+    """
+    Copy all files and directories within ``src`` to the ``dest`` directory.
+
+    This is equivalent to running ``mv src/* dest``.
+
+    :param src:
+        Source directory to move from.
+
+    :param dest:
+        Destination directory to move to.
+
+    :param rm_src_dir:
+        If True, the `src` directory is removed once its content is moved.
+    """
+    contents = os.listdir(src)
+    if not contents:
+        raise RuntimeError("Source directory %s is empty." % src)
+    makedirs(dest)
+    for item in contents:
+        source = os.path.join(src, item)
+        destination = os.path.join(dest, item)
+        shutil.move(source, destination)
+
+    if rm_src_dir:
+        os.rmdir(src)
+
+
 def recursive_file_list(directory):
     """Return a list of files contained in ``directory``.
 

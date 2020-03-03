@@ -28,7 +28,7 @@ from six.moves import shlex_quote
 from pungi.arch import get_valid_arches
 from pungi.util import get_volid, get_arch_variant_data
 from pungi.util import get_file_size, get_mtime, failable, makedirs
-from pungi.util import copy_all, translate_path
+from pungi.util import copy_all, translate_path, move_all
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm
@@ -577,6 +577,20 @@ class BuildinstallThread(WorkerThread):
                 makedirs(final_log_dir)
             log_dir = os.path.join(output_dir, "logs")
             copy_all(log_dir, final_log_dir)
+        elif lorax_use_koji_plugin:
+            # If Koji pungi-buildinstall is used, then the buildinstall results are
+            # not stored directly in `output_dir` dir, but in "results" and "logs"
+            # subdirectories. We need to move them to final_output_dir.
+            results_dir = os.path.join(output_dir, "results")
+            move_all(results_dir, final_output_dir, rm_src_dir=True)
+
+            # Get the log_dir into which we should copy the resulting log files.
+            log_fname = "buildinstall-%s-logs/dummy" % variant.uid
+            final_log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_fname))
+            if not os.path.exists(final_log_dir):
+                makedirs(final_log_dir)
+            log_dir = os.path.join(output_dir, "logs")
+            move_all(log_dir, final_log_dir, rm_src_dir=True)
 
         log_file = compose.paths.log.log_file(arch, log_filename + "-RPMs")
         rpms = runroot.get_buildroot_rpms()

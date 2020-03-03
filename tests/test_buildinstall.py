@@ -1200,8 +1200,9 @@ class BuildinstallThreadTestCase(PungiTestCase):
     @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
     @mock.patch("pungi.wrappers.kojiwrapper.get_buildroot_rpms")
     @mock.patch("pungi.phases.buildinstall.run")
+    @mock.patch("pungi.phases.buildinstall.move_all")
     def test_buildinstall_thread_with_lorax_using_koji_plugin(
-        self, run, get_buildroot_rpms, KojiWrapperMock, mock_tweak, mock_link
+        self, move_all, run, get_buildroot_rpms, KojiWrapperMock, mock_tweak, mock_link
     ):
         compose = BuildInstallCompose(
             self.topdir,
@@ -1283,6 +1284,17 @@ class BuildinstallThreadTestCase(PungiTestCase):
         self.assertEqual(
             mock_link.call_args_list,
             [mock.call(compose, "x86_64", compose.variants["Server"], False)],
+        )
+        self.assertEqual(
+            move_all.call_args_list,
+            [
+                mock.call(os.path.join(destdir, "results"), destdir, rm_src_dir=True),
+                mock.call(
+                    os.path.join(destdir, "logs"),
+                    os.path.join(self.topdir, "logs/x86_64/buildinstall-Server-logs"),
+                    rm_src_dir=True,
+                ),
+            ],
         )
 
     @mock.patch("pungi.phases.buildinstall.link_boot_iso")

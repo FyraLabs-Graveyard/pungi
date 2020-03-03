@@ -1008,6 +1008,30 @@ class TestCopyAll(PungiTestCase):
         self.assertEqual(os.readlink(os.path.join(self.dst, "symlink")), "broken")
 
 
+class TestMoveAll(PungiTestCase):
+    def setUp(self):
+        super(TestMoveAll, self).setUp()
+        self.src = os.path.join(self.topdir, "src")
+        self.dst = os.path.join(self.topdir, "dst")
+        util.makedirs(self.src)
+
+    def test_move_all(self):
+        touch(os.path.join(self.src, "target"))
+        util.move_all(self.src, self.dst)
+
+        self.assertTrue(os.path.isfile(os.path.join(self.dst, "target")))
+        self.assertTrue(os.path.exists(os.path.join(self.src)))
+        self.assertFalse(os.path.isfile(os.path.join(self.src, "target")))
+
+    def test_move_all_rm_src_dir(self):
+        touch(os.path.join(self.src, "target"))
+        util.move_all(self.src, self.dst, rm_src_dir=True)
+
+        self.assertTrue(os.path.isfile(os.path.join(self.dst, "target")))
+        self.assertFalse(os.path.exists(os.path.join(self.src)))
+        self.assertFalse(os.path.isfile(os.path.join(self.src, "target")))
+
+
 @mock.patch("six.moves.urllib.request.urlretrieve")
 class TestAsLocalFile(PungiTestCase):
     def test_local_file(self, urlretrieve):
