@@ -21,6 +21,9 @@ import os
 import sys
 import time
 
+RESEND_INTERVAL = 300  # In seconds
+SLEEP_TIME = 5
+
 
 def is_ref_updated(ref_file, commit):
     """The ref is updated when the file points to the correct commit."""
@@ -66,21 +69,19 @@ def main():
     fedmsg.init(**config)
     topic = "compose.%s" % opts.cmd.replace("-", ".").lower()
 
-    count = 0
-    while not os.path.exists(path):
-        ts_log("Commit not signed yet, waiting...")
-        count += 1
-        if count >= 60:  # Repeat every 5 minutes
-            print("Repeating notification")
-            fedmsg.publish(topic=topic, modname="pungi", msg=data)
-            count = 0
-        time.sleep(5)
+    def wait_for(msg, test, *args):
+        time_slept = 0
+        while not test(*args):
+            ts_log(msg)
+            time_slept += SLEEP_TIME
+            if time_slept >= RESEND_INTERVAL:
+                ts_log("Repeating notification")
+                fedmsg.publish(topic=topic, modname="pungi", msg=data)
+                time_slept = 0
+            time.sleep(SLEEP_TIME)
 
-    print("Found signature, waiting for ref to be updated.")
-
+    wait_for("Commit not signed yet", os.path.exists, path)
+    ts_log("Found signature, waiting for ref to be updated.")
     ref_file = os.path.join(repo, "refs/heads", data["ref"])
-    while not is_ref_updated(ref_file, commit):
-        ts_log("Ref is not yet up-to-date, waiting...")
-        time.sleep(5)
-
-    print("Ref is up-to-date. All done!")
+    wait_for("Ref is not yet up-to-date", is_ref_updated, ref_file, commit)
+    ts_log("Ref is up-to-date. All done!")
