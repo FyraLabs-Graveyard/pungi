@@ -532,9 +532,6 @@ def find_old_compose(
             if not os.path.isdir(path):
                 continue
 
-            if os.path.islink(path):
-                continue
-
             status_path = os.path.join(path, "STATUS")
             if not os.path.isfile(status_path):
                 continue

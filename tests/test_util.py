@@ -465,10 +465,14 @@ class TestFindOldCompose(unittest.TestCase):
         old = util.find_old_compose(self.tmp_dir + "/file", "Fedora", "Rawhide", "")
         self.assertIsNone(old)
 
-    def test_skips_symlink(self):
-        os.symlink(self.tmp_dir, self.tmp_dir + "/Fedora-Rawhide-20160229.0")
+    def test_do_not_skip_symlink(self):
+        touch(self.tmp_dir + "/Fedora-Rawhide-20160228.n.10/STATUS", "FINISHED")
+        os.symlink(
+            self.tmp_dir + "/Fedora-Rawhide-20160228.n.10",
+            self.tmp_dir + "/Fedora-Rawhide-20160229.n.0",
+        )
         old = util.find_old_compose(self.tmp_dir, "Fedora", "Rawhide", "")
-        self.assertIsNone(old)
+        self.assertEqual(old, self.tmp_dir + "/Fedora-Rawhide-20160229.n.0")
 
     def test_finds_layered_product(self):
         touch(self.tmp_dir + "/Fedora-Rawhide-Base-1-20160229.0/STATUS", "FINISHED")
