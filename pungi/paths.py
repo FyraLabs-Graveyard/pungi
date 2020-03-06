@@ -20,11 +20,13 @@ __all__ = ("Paths",)
 import errno
 import os
 
-from pungi.util import makedirs
+from kobo.shortcuts import relative_path
+from pungi.util import makedirs, find_old_compose
 
 
 class Paths(object):
     def __init__(self, compose):
+        self._compose = compose
         paths_module_name = compose.conf.get("paths_module")
         if paths_module_name:
             # custom paths
@@ -43,6 +45,46 @@ class Paths(object):
             self.log = LogPaths(compose)
             self.work = WorkPaths(compose)
         # self.metadata ?
+
+    def get_old_compose_topdir(self, **kwargs):
+        """
+        Finds old compose using the `find_old_compose` function and returns
+        the path to it. The `kwargs` are passed to `find_old_compose`.
+        """
+        is_layered = self._compose.ci_base.release.is_layered
+        return find_old_compose(
+            self._compose.old_composes,
+            self._compose.ci_base.release.short,
+            self._compose.ci_base.release.version,
+            self._compose.ci_base.release.type_suffix,
+            self._compose.ci_base.base_product.short if is_layered else None,
+            self._compose.ci_base.base_product.version if is_layered else None,
+            **kwargs
+        )
+
+    def old_compose_path(self, path, **kwargs):
+        """
+        Translates `path` to the topdir of old compose.
+
+        :param str path: Path to translate.
+        :param kwargs: The kwargs passed to `find_old_compose` function.
+        :return: None if old compose cannot be used or if `path` does not exist
+            in the old compose topdir. Otherwise path translated to old_compose
+            topdir.
+
+        Example:
+            old_repo_dir = compose.old_compose_path(
+                compose.paths.work.pkgset_repo(pkgset.name, arch="global"))
+        """
+        old_compose_topdir = self.get_old_compose_topdir(**kwargs)
+        if not old_compose_topdir:
+            return None
+
+        rel_path = relative_path(path, self._compose.topdir.rstrip("/") + "/")
+        old_path = os.path.join(old_compose_topdir, rel_path)
+        if not os.path.exists(old_path):
+            return None
+        return old_path
 
 
 class LogPaths(object):

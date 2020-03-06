@@ -21,13 +21,13 @@ from fnmatch import fnmatch
 from itertools import groupby
 
 from kobo.rpmlib import parse_nvra
-from kobo.shortcuts import force_list, relative_path
+from kobo.shortcuts import force_list
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import getBaseArch
-from pungi.util import retry, find_old_compose, get_arch_variant_data
+from pungi.util import retry, get_arch_variant_data
 from pungi.module_util import Modulemd
 
 from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
@@ -549,34 +549,6 @@ def _get_modules_from_koji_tags(
         )
 
 
-def _find_old_file_cache_path(compose, tag_name):
-    """
-    Finds the old compose with "pkgset_file_cache.pickled" and returns
-    the path to it. If no compose is found, returns None.
-    """
-    old_compose_path = find_old_compose(
-        compose.old_composes,
-        compose.ci_base.release.short,
-        compose.ci_base.release.version,
-        compose.ci_base.release.type_suffix,
-        compose.ci_base.base_product.short
-        if compose.ci_base.release.is_layered
-        else None,
-        compose.ci_base.base_product.version
-        if compose.ci_base.release.is_layered
-        else None,
-    )
-    if not old_compose_path:
-        return None
-
-    old_file_cache_dir = compose.paths.work.pkgset_file_cache(tag_name)
-    rel_dir = relative_path(old_file_cache_dir, compose.topdir.rstrip("/") + "/")
-    old_file_cache_path = os.path.join(old_compose_path, rel_dir)
-    if not os.path.exists(old_file_cache_path):
-        return None
-    return old_file_cache_path
-
-
 def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
     all_arches = get_all_arches(compose)
 
@@ -686,7 +658,9 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
 
         # Check if we have cache for this tag from previous compose. If so, use
         # it.
-        old_cache_path = _find_old_file_cache_path(compose, compose_tag)
+        old_cache_path = compose.paths.old_compose_path(
+            compose.paths.work.pkgset_file_cache(compose_tag)
+        )
         if old_cache_path:
             pkgset.set_old_file_cache(
                 pungi.phases.pkgset.pkgsets.KojiPackageSet.load_old_file_cache(

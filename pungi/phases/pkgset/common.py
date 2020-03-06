@@ -17,12 +17,12 @@
 import os
 import threading
 
-from kobo.shortcuts import run, relative_path
+from kobo.shortcuts import run
 from kobo.threads import run_in_threads
 
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib, find_old_compose
+from pungi.util import is_arch_multilib
 from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
@@ -55,31 +55,16 @@ def get_create_global_repo_cmd(compose, path_prefix, repo_dir_global, pkgset):
     pkgset.save_file_cache(compose.paths.work.pkgset_file_cache(pkgset.name))
 
     # find an old compose suitable for repodata reuse
-    old_compose_path = None
     update_md_path = None
-    if compose.old_composes:
-        is_layered = compose.ci_base.release.is_layered
-        old_compose_path = find_old_compose(
-            compose.old_composes,
-            compose.ci_base.release.short,
-            compose.ci_base.release.version,
-            compose.ci_base.release.type_suffix,
-            compose.ci_base.base_product.short if is_layered else None,
-            compose.ci_base.base_product.version if is_layered else None,
-        )
-        if old_compose_path is None:
-            compose.log_info(
-                "No suitable old compose found in: %s", compose.old_composes
-            )
-        else:
-            repo_dir = compose.paths.work.pkgset_repo(pkgset.name, arch="global")
-            rel_path = relative_path(
-                repo_dir, os.path.abspath(compose.topdir).rstrip("/") + "/"
-            )
-            old_repo_dir = os.path.join(old_compose_path, rel_path)
-            if os.path.isdir(os.path.join(old_repo_dir, "repodata")):
-                compose.log_info("Using old repodata from: %s", old_repo_dir)
-                update_md_path = old_repo_dir
+    old_repo_dir = compose.paths.old_compose_path(
+        compose.paths.work.pkgset_repo(pkgset.name, arch="global")
+    )
+    if old_repo_dir:
+        if os.path.isdir(os.path.join(old_repo_dir, "repodata")):
+            compose.log_info("Using old repodata from: %s", old_repo_dir)
+            update_md_path = old_repo_dir
+    else:
+        compose.log_info("No suitable old compose found in: %s", compose.old_composes)
 
     # IMPORTANT: must not use --skip-stat here -- to make sure that correctly
     # signed files are pulled in

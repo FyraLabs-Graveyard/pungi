@@ -485,6 +485,10 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture("server-rpms.json", compose.paths.compose.metadata("rpms.json"))
 
+        os.makedirs(
+            self.topdir + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages"
+        )
+
         create_variant_repo(
             compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
         )
@@ -537,6 +541,9 @@ class TestCreateVariantRepo(PungiTestCase):
         touch(
             os.path.join(self.topdir, "old", "test-1.0-20151203.0", "STATUS"),
             "FINISHED",
+        )
+        os.makedirs(
+            self.topdir + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages"
         )
 
         repo = CreaterepoWrapperCls.return_value
@@ -806,7 +813,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     update=True,
                     update_md_path="/repo/x86_64",
                     deltas=True,
-                    oldpackagedirs=[],
+                    oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
                 )

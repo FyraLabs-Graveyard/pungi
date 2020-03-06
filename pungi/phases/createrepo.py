@@ -31,7 +31,7 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import find_old_compose, get_arch_variant_data, temp_dir
+from ..util import get_arch_variant_data, temp_dir
 from ..module_util import Modulemd, collect_module_defaults
 
 import productmd.rpms
@@ -367,24 +367,13 @@ def _get_old_package_dirs(compose, repo_dir):
     """
     if not compose.conf["createrepo_deltas"]:
         return None
-    old_compose_path = find_old_compose(
-        compose.old_composes,
-        compose.ci_base.release.short,
-        compose.ci_base.release.version,
-        compose.ci_base.release.type_suffix,
-        compose.ci_base.base_product.short
-        if compose.ci_base.release.is_layered
-        else None,
-        compose.ci_base.base_product.version
-        if compose.ci_base.release.is_layered
-        else None,
-        allowed_statuses=["FINISHED", "FINISHED_INCOMPLETE"],
+    old_package_dirs = compose.paths.old_compose_path(
+        repo_dir, allowed_statuses=["FINISHED", "FINISHED_INCOMPLETE"]
     )
-    if not old_compose_path:
+    if not old_package_dirs:
         compose.log_info("No suitable old compose found in: %s" % compose.old_composes)
         return None
-    rel_dir = relative_path(repo_dir, compose.topdir.rstrip("/") + "/")
-    old_package_dirs = os.path.join(old_compose_path, rel_dir, "Packages")
+    old_package_dirs = os.path.join(old_package_dirs, "Packages")
     if compose.conf["hashed_directories"]:
         old_package_dirs = _find_package_dirs(old_package_dirs)
     return old_package_dirs
