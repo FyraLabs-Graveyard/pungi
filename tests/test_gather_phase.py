@@ -24,12 +24,14 @@ class MockPackageSet(dict):
 
 
 class MockPkg(object):
-    def __init__(self, path, is_system_release=False):
+    def __init__(self, path, is_system_release=False, **kwargs):
         self.path = path
         self.is_system_release = is_system_release
         filename = os.path.basename(path)
         self.nvr, self.arch, _ = filename.rsplit(".", 2)
         self.name, self.version, self.release = self.nvr.rsplit("-", 2)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def __repr__(self):
         return self.nvr
@@ -1080,6 +1082,11 @@ class TestGatherPackages(helpers.PungiTestCase):
             if s == "comps"
             else (None, None, None)
         )
+        get_gather_method.return_value.return_value.return_value = {
+            "rpm": [],
+            "srpm": [],
+            "debuginfo": [],
+        }
         compose = helpers.DummyCompose(self.topdir, {"gather_method": "hybrid"})
         variant = compose.variants["Server"]
         pkg_set = mock.Mock()
@@ -1092,6 +1099,297 @@ class TestGatherPackages(helpers.PungiTestCase):
         method_kwargs = get_gather_method.return_value.return_value.call_args_list[0][1]
         self.assertEqual(method_kwargs["packages"], packages)
         self.assertEqual(method_kwargs["groups"], groups)
+
+
+class TestReuseOldGatherPackages(helpers.PungiTestCase):
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    def test_reuse_no_old_gather_result(self, load_old_gather_result):
+        load_old_gather_result.return_value = None
+
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], []
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_no_old_compose_config(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        load_old_gather_result.return_value = {
+            "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
+            "srpm": [],
+            "debuginfo": [],
+        }
+
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = None
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], []
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_compose_config_different(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        load_old_gather_result.return_value = {
+            "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
+            "srpm": [],
+            "debuginfo": [],
+        }
+
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        compose_conf_copy = dict(compose.conf)
+        compose_conf_copy["gather_method"] = "nodeps"
+        load_old_compose_config.return_value = compose_conf_copy
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], []
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_compose_config_different(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        load_old_gather_result.return_value = {
+            "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
+            "srpm": [],
+            "debuginfo": [],
+        }
+
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        compose_conf_copy = dict(compose.conf)
+        compose_conf_copy["gather_method"] = "nodeps"
+        load_old_compose_config.return_value = compose_conf_copy
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], []
+        )
+        self.assertEqual(result, None)
+
+    def _prepare_package_sets(
+        self, load_old_gather_result, extra_global_pkgs=None, **kwargs
+    ):
+        old_rpm = "/build/bash-1.0.0-1.x86_64.rpm"
+        new_rpm = "/build/bash-1.0.0-2.x86_64.rpm"
+
+        pkg_old = MockPkg(old_rpm, sourcerpm="bash", requires=[], provides=[])
+        pkg_new = MockPkg(new_rpm, sourcerpm="bash", **kwargs)
+        pkgset = MockPackageSet(pkg_new)
+        pkgset.old_file_cache = {pkg_old.path: pkg_old}
+        pkgset.file_cache = {pkg_new.path: pkg_new}
+        package_sets = [{"global": pkgset, "x86_64": pkgset}]
+
+        load_old_gather_result.return_value = {
+            "rpm": [{"path": old_rpm}],
+            "srpm": [],
+            "debuginfo": [],
+        }
+        return package_sets
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse(self, load_old_compose_config, load_old_gather_result):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(
+            result,
+            {
+                "debuginfo": [],
+                "rpm": [{"path": "/build/bash-1.0.0-2.x86_64.rpm"}],
+                "srpm": [],
+            },
+        )
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_update_gather_lookaside_repos(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = copy.deepcopy(compose.conf)
+
+        gather._update_config(compose, "Server", "x86_64", compose.topdir)
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(
+            result,
+            {
+                "debuginfo": [],
+                "rpm": [{"path": "/build/bash-1.0.0-2.x86_64.rpm"}],
+                "srpm": [],
+            },
+        )
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_update_gather_lookaside_repos_different_initial_repos(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        lookasides = compose.conf["gather_lookaside_repos"]
+        lookasides.append(("^Server$", {"x86_64": "http://localhost/real.repo"}))
+        load_old_compose_config.return_value = copy.deepcopy(compose.conf)
+
+        gather._update_config(compose, "Server", "x86_64", compose.topdir)
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_no_old_file_cache(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        package_sets[0]["global"].old_file_cache = {
+            "/build/foo-1-1.x86_64.rpm": MockPkg("foo-1-1.x86_64.rpm", sourcerpm="foo")
+        }
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_no_old_file_cache(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        package_sets[0]["global"].old_file_cache = {
+            "/build/foo-1-1.x86_64.rpm": MockPkg("foo-1-1.x86_64.rpm", sourcerpm="foo")
+        }
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_two_rpms_from_same_source(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        bash_pkg = MockPkg(
+            "bash-1-2.x86_64.rpm", sourcerpm="bash", requires=[], provides=[]
+        )
+        pkg_set = package_sets[0]["global"]
+        pkg_set.old_file_cache["/build/bash-1-2.x86_64.rpm"] = bash_pkg
+        pkg_set.file_cache["/build/bash-1-2.x86_64.rpm"] = bash_pkg
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_rpm_added_removed(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        foo_pkg = MockPkg(
+            "foo-1-1.x86_64.rpm", sourcerpm="foo", requires=[], provides=[]
+        )
+        file_pkg = MockPkg(
+            "file-1-1.x86_64.rpm", sourcerpm="file", requires=[], provides=[]
+        )
+        pkg_set = package_sets[0]["global"]
+        pkg_set.old_file_cache["/build/file-1-1.x86_64.rpm"] = file_pkg
+        pkg_set.file_cache["/build/foo-1-1.x86_64.rpm"] = foo_pkg
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_different_packages(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=["foo"]
+        )
+        package_sets[0]["global"].old_file_cache = None
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_requires_changed(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=["foo"], provides=[]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_provides_changed(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=["foo"]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        load_old_compose_config.return_value = compose.conf
+
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
 
 
 class TestWritePrepopulate(helpers.PungiTestCase):

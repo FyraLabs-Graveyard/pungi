@@ -642,6 +642,10 @@ Options
     (*bool*) -- When set to ``True``, *Pungi* will build a self-hosting tree by
     following build dependencies. Only use when ``gather_method = "deps"``.
 
+**gather_allow_reuse** = False
+    (*bool*) -- When set to ``True``, *Pungi* will try to reuse gather results
+    from old compose specified by ``--old-composes``.
+
 **greedy_method**
     (*str*) -- This option controls how package requirements are satisfied in
     case a particular ``Requires`` has multiple candidates.

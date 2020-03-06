@@ -18,6 +18,8 @@ import json
 import os
 import shutil
 import threading
+import six
+from six.moves import cPickle as pickle
 
 from kobo.rpmlib import parse_nvra
 from kobo.shortcuts import run
@@ -166,6 +168,206 @@ def get_gather_methods(compose, variant):
     return global_method_name, methods
 
 
+def load_old_gather_result(compose, arch, variant):
+    """
+    Helper method to load `gather_packages` result from old compose.
+    """
+    gather_result = compose.paths.work.gather_result(variant=variant, arch=arch)
+    old_gather_result = compose.paths.old_compose_path(gather_result)
+    if not old_gather_result:
+        return None
+
+    compose.log_info("Loading old GATHER phase results: %s", old_gather_result)
+    with open(old_gather_result, "rb") as f:
+        old_result = pickle.load(f)
+        return old_result
+
+
+def load_old_compose_config(compose):
+    """
+    Helper method to load Pungi config dump from old compose.
+    """
+    config_dump_full = compose.paths.log.log_file("global", "config-dump")
+    config_dump_full = compose.paths.old_compose_path(config_dump_full)
+    if not config_dump_full:
+        return None
+
+    compose.log_info("Loading old config file: %s", config_dump_full)
+    with open(config_dump_full, "r") as f:
+        old_config = json.load(f)
+        return old_config
+
+
+def reuse_old_gather_packages(compose, arch, variant, package_sets):
+    """
+    Tries to reuse `gather_packages` result from older compose.
+
+    :param Compose compose: Compose instance.
+    :param str arch: Architecture to reuse old gather data for.
+    :param str variant: Variant to reuse old gather data for.
+    :param list package_sets: List of package sets to gather packages from.
+    :return: Old `gather_packages` result or None if old result cannot be used.
+    """
+    log_msg = "Cannot reuse old GATHER phase results - %s"
+    if not compose.conf["gather_allow_reuse"]:
+        compose.log_info(log_msg % "reuse of old gather results is disabled.")
+        return
+
+    old_result = load_old_gather_result(compose, arch, variant)
+    if old_result is None:
+        compose.log_info(log_msg % "no old gather results.")
+        return
+
+    old_config = load_old_compose_config(compose)
+    if old_config is None:
+        compose.log_info(log_msg % "no old compose config dump.")
+        return
+
+    # The dumps/loads is needed to convert all unicode strings to non-unicode ones.
+    config = json.loads(json.dumps(compose.conf))
+    for opt, value in old_config.items():
+        # Gather lookaside repos are updated during the gather phase. Check that
+        # the gather_lookaside_repos except the ones added are the same.
+        if opt == "gather_lookaside_repos" and opt in config:
+            value_to_compare = []
+            # Filter out repourls which starts with `compose.topdir` and also remove
+            # their parent list in case it would be empty.
+            for variant, per_arch_repos in config[opt]:
+                per_arch_repos_to_compare = {}
+                for arch, repourl in per_arch_repos.items():
+                    # The gather_lookaside_repos config allows setting multiple repourls
+                    # using list, but `_update_config` always uses strings. Therefore we
+                    # only try to filter out string_types.
+                    if isinstance(repourl, six.string_types):
+                        continue
+                    if not repourl.startswith(compose.topdir):
+                        per_arch_repos_to_compare[arch] = repourl
+                if per_arch_repos_to_compare:
+                    value_to_compare.append([variant, per_arch_repos_to_compare])
+            if value != value_to_compare:
+                compose.log_info(
+                    log_msg
+                    % ("compose configuration option gather_lookaside_repos changed.")
+                )
+                return
+            continue
+        if opt not in config or config[opt] != value:
+            compose.log_info(
+                log_msg % ("compose configuration option %s changed." % opt)
+            )
+            return
+
+    result = {
+        "rpm": [],
+        "srpm": [],
+        "debuginfo": [],
+    }
+
+    for pkgset in package_sets:
+        global_pkgset = pkgset["global"]
+
+        # Return in case the old file cache does not exist.
+        if global_pkgset.old_file_cache is None:
+            compose.log_info(log_msg % "old file cache does not exist.")
+            return
+
+        # Do quick check to find out the number of input RPMs is the same in both
+        # old and new cache.
+        if len(global_pkgset.old_file_cache) != len(global_pkgset.file_cache):
+            compose.log_info(log_msg % "some RPMs have been added/removed.")
+            return
+
+        # Create temporary dict mapping RPM path to record in `old_result`. This
+        # is needed later to make things faster.
+        old_result_cache = {}
+        for old_result_key, old_result_records in old_result.items():
+            for old_result_record in old_result_records:
+                old_result_cache[old_result_record["path"]] = [
+                    old_result_key,
+                    old_result_record,
+                ]
+
+        # The `old_file_cache` contains all the input RPMs from old pkgset. Some
+        # of these RPMs will be in older versions/releases than the ones in the
+        # new `file_cache`. This is OK, but we need to be able to pair them so we
+        # know that particular RPM package from `old_file_cache` has been updated
+        # by another package in the new `file_cache`.
+        # Following code uses "`rpm_obj.arch`-`rpm_obj.sourcerpm`-`rpm_obj.name`"
+        # as a key to map RPMs from `old_file_cache` to RPMs in `file_cache`.
+        #
+        # At first, we need to create helper dict with the mentioned key. The value
+        # is tuple in (rpm_obj, old_result_key, old_result_record) format.
+        key_to_old_rpm_obj = {}
+        for rpm_path, rpm_obj in global_pkgset.old_file_cache.items():
+            key = "%s-%s-%s" % (
+                rpm_obj.arch,
+                rpm_obj.sourcerpm or rpm_obj.name,
+                rpm_obj.name,
+            )
+
+            # With the current aproach, we cannot reuse old gather result in case
+            # there are multiple RPMs with the same arch, sourcerpm and name.
+            if key in key_to_old_rpm_obj:
+                compose.log_info(
+                    log_msg % ("two RPMs with the same key exist: %s." % key)
+                )
+                return
+
+            old_result_key, old_result_record = old_result_cache.get(
+                rpm_path, [None, None]
+            )
+            key_to_old_rpm_obj[key] = [rpm_obj, old_result_key, old_result_record]
+
+        # The `key_to_old_rpm_obj` now contains all the RPMs in the old global
+        # package set. We will now compare these old RPMs with the RPMs in the
+        # current global package set.
+        for rpm_path, rpm_obj in global_pkgset.file_cache.items():
+            key = "%s-%s-%s" % (
+                rpm_obj.arch,
+                rpm_obj.sourcerpm or rpm_obj.name,
+                rpm_obj.name,
+            )
+
+            # Check that this RPM existed even in the old package set.
+            if key not in key_to_old_rpm_obj:
+                compose.log_info(log_msg % "some RPMs have been added.")
+                return
+
+            # Check that requires or provides of this RPM is stil the same.
+            old_rpm_obj, old_result_key, old_result_record = key_to_old_rpm_obj[key]
+            if (
+                old_rpm_obj.requires != rpm_obj.requires
+                or old_rpm_obj.provides != rpm_obj.provides
+            ):
+                compose.log_info(
+                    log_msg % "requires or provides of some RPMs have changed."
+                )
+                return
+
+            # Add this RPM into the current result in case it has been in the
+            # old result.
+            if old_result_key and old_result_record:
+                # Update the path to RPM, because in the `old_result_record`,
+                # we might have path to old build of this RPM, but the rpm_path
+                # contains the updated one with the same requires/provides.
+                old_result_record["path"] = rpm_path
+                result[old_result_key].append(old_result_record)
+
+            # Delete the key from key_to_old_rpm_obj so we can find out later if all
+            # RPMs from the old package set have their counterpart in the current
+            # package set.
+            del key_to_old_rpm_obj[key]
+
+        # Check that all the RPMs from old_file_cache has been mapped to some RPM
+        # in the new file cache.
+        for per_arch_dict in key_to_old_rpm_obj.values():
+            if len(per_arch_dict) != 0:
+                compose.log_info(log_msg % "some RPMs have been removed.")
+                return
+
+    return result
+
+
 def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None):
     # multilib white/black-list is per-arch, common for all variants
     multilib_whitelist = get_multilib_whitelist(compose, arch)
@@ -189,7 +391,10 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     prepopulate = get_prepopulate_packages(compose, arch, variant)
     fulltree_excludes = fulltree_excludes or set()
 
-    if methods == "hybrid":
+    reused_result = reuse_old_gather_packages(compose, arch, variant, package_sets)
+    if reused_result:
+        result = reused_result
+    elif methods == "hybrid":
         # This variant is using a hybrid solver. Gather all inputs and run the
         # method once.
 
@@ -256,6 +461,10 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
 
             for t in ("rpm", "srpm", "debuginfo"):
                 result[t].extend(pkg_map.get(t, []))
+
+    gather_result = compose.paths.work.gather_result(variant=variant, arch=arch)
+    with open(gather_result, "wb") as f:
+        pickle.dump(result, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     compose.log_info("[DONE ] %s" % msg)
     return result

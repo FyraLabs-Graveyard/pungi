@@ -25,6 +25,7 @@ from pungi.wrappers.pungi import PungiWrapper
 
 from pungi.arch import tree_arch_to_yum_arch
 import pungi.phases.gather
+from pungi.phases.pkgset.pkgsets import ExtendedRpmWrapper
 
 import pungi.phases.gather.method
 
@@ -97,7 +98,7 @@ def _format_packages(pkgs):
     """Sort packages and merge name with arch."""
     result = set()
     for pkg, pkg_arch in pkgs:
-        if type(pkg) in [SimpleRpmWrapper, RpmWrapper]:
+        if type(pkg) in [SimpleRpmWrapper, RpmWrapper, ExtendedRpmWrapper]:
             pkg_name = pkg.name
         else:
             pkg_name = pkg

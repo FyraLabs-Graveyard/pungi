@@ -34,6 +34,19 @@ from pungi.util import pkg_is_srpm
 from pungi.arch import get_valid_arches, is_excluded
 
 
+class ExtendedRpmWrapper(kobo.pkgset.SimpleRpmWrapper):
+    """
+    ExtendedRpmWrapper extracts only certain RPM fields instead of
+    keeping the whole RPM header in memory.
+    """
+
+    def __init__(self, file_path, ts=None, **kwargs):
+        kobo.pkgset.SimpleRpmWrapper.__init__(self, file_path, ts=ts)
+        header = kobo.rpmlib.get_rpm_header(file_path, ts=ts)
+        self.requires = set(kobo.rpmlib.get_header_field(header, "requires"))
+        self.provides = set(kobo.rpmlib.get_header_field(header, "provides"))
+
+
 class ReaderPool(ThreadPool):
     def __init__(self, package_set, logger=None):
         ThreadPool.__init__(self, logger)
@@ -55,14 +68,19 @@ class ReaderThread(WorkerThread):
 
         # In case we have old file cache data, try to reuse it.
         if self.pool.package_set.old_file_cache:
-            # The kobo.pkgset.FileCache does not have any method to check if
-            # the RPM is in cache. Instead it just re-uses the cached RPM data,
-            # if available, in .add() method.
-            # Therefore we call `old_file_cache.add()` which either returns the
-            # cached RPM object fast or just loads it from filesystem. We then
-            # add the returned RPM object to real `file_cache` directly.
-            rpm_obj = self.pool.package_set.old_file_cache.add(rpm_path)
-            self.pool.package_set.file_cache[rpm_path] = rpm_obj
+            # Try to find the RPM in old_file_cache and reuse it instead of
+            # reading its headers again.
+            try:
+                rpm_obj = self.pool.package_set.old_file_cache[rpm_path]
+            except KeyError:
+                rpm_obj = None
+
+            # Also reload rpm_obj if it's not ExtendedRpmWrapper object
+            # to get the requires/provides data into the cache.
+            if rpm_obj and isinstance(rpm_obj, ExtendedRpmWrapper):
+                self.pool.package_set.file_cache[rpm_path] = rpm_obj
+            else:
+                rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
         else:
             rpm_obj = self.pool.package_set.file_cache.add(rpm_path)
         self.pool.package_set.rpms_by_arch.setdefault(rpm_obj.arch, []).append(rpm_obj)
@@ -90,7 +108,7 @@ class PackageSetBase(kobo.log.LoggingBase):
     ):
         super(PackageSetBase, self).__init__(logger=logger)
         self.name = name
-        self.file_cache = kobo.pkgset.FileCache(kobo.pkgset.SimpleRpmWrapper)
+        self.file_cache = kobo.pkgset.FileCache(ExtendedRpmWrapper)
         self.old_file_cache = None
         self.sigkey_ordering = tuple(sigkey_ordering or [None])
         self.arches = arches

@@ -154,6 +154,24 @@ class WorkPaths(object):
         path = os.path.join(path, file_name)
         return path
 
+    def gather_result(self, arch=None, variant=None, create_dir=True):
+        """
+        Examples:
+            work/x86_64/gather_result/x86_64.result
+            work/x86_64/gather_result/Server.x86_64.result
+        """
+        arch = arch or "global"
+        file_name = ""
+        if variant:
+            file_name += variant.uid + "."
+        file_name += arch + "."
+        file_name += "result"
+        path = os.path.join(self.topdir(arch, create_dir=create_dir), "gather_result")
+        if create_dir:
+            makedirs(path)
+        path = os.path.join(path, file_name)
+        return path
+
     def pungi_conf(self, arch=None, variant=None, create_dir=True, source_name=None):
         """
         Examples:

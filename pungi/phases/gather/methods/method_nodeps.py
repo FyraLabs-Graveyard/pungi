@@ -21,6 +21,7 @@ import six
 import pungi.arch
 from pungi.util import pkg_is_rpm, pkg_is_srpm, pkg_is_debug
 from pungi.wrappers.comps import CompsWrapper
+from pungi.phases.pkgset.pkgsets import ExtendedRpmWrapper
 
 import pungi.phases.gather.method
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
@@ -83,7 +84,8 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 ):
                     continue
                 elif (
-                    type(gathered_pkg) in [SimpleRpmWrapper, RpmWrapper]
+                    type(gathered_pkg)
+                    in [SimpleRpmWrapper, RpmWrapper, ExtendedRpmWrapper]
                     and pkg.nevra != gathered_pkg.nevra
                 ):
                     continue
