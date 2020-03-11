@@ -152,6 +152,12 @@ def main():
         help="only create latest symbol link to this compose when compose status matches specified status",  # noqa: E501
     )
     parser.add_argument(
+        "--latest-link-components",
+        type=int,
+        default=-1,
+        help="number of product version components used when creating latest symlink",  # noqa: E501
+    )
+    parser.add_argument(
         "--print-output-dir",
         action="store_true",
         default=False,
@@ -203,6 +209,7 @@ def main():
 
     create_latest_link = not opts.no_latest_link
     latest_link_status = opts.latest_link_status or None
+    latest_link_components = opts.latest_link_components
 
     import kobo.conf
     import kobo.log
@@ -289,10 +296,13 @@ def main():
         compose,
         create_latest_link=create_latest_link,
         latest_link_status=latest_link_status,
+        latest_link_components=latest_link_components,
     )
 
 
-def run_compose(compose, create_latest_link=True, latest_link_status=None):
+def run_compose(
+    compose, create_latest_link=True, latest_link_status=None, latest_link_components=-1
+):
     import pungi.phases
     import pungi.metadata
     import pungi.util
@@ -501,15 +511,19 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
 
     if latest_link:
         compose_dir = os.path.basename(compose.topdir)
-        if len(compose.conf["release_version"].split(".")) == 1:
-            symlink_name = "latest-%s-%s" % (
-                compose.conf["release_short"],
-                compose.conf["release_version"],
-            )
+        # Omit version entirely if latest_link_components == 0
+        if latest_link_components == 0:
+            symlink_name = "latest-%s" % compose.conf["release_short"]
         else:
+            hunks = compose.conf["release_version"].split(".")
+            # Set up our min/max so we don't overrun our array
+            if latest_link_components > 0:
+                latest_link_components = min(len(hunks), latest_link_components)
+            else:
+                latest_link_components = max(1, len(hunks) + latest_link_components)
             symlink_name = "latest-%s-%s" % (
                 compose.conf["release_short"],
-                ".".join(compose.conf["release_version"].split(".")[:-1]),
+                ".".join(hunks[:latest_link_components]),
             )
         if compose.conf.get("base_product_name", ""):
             symlink_name += "-%s-%s" % (
