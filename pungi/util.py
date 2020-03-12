@@ -14,7 +14,6 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 import argparse
-import fnmatch
 import json
 import subprocess
 import os
@@ -37,6 +36,7 @@ from productmd.common import get_major_version
 
 # Patterns that match all names of debuginfo packages
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
+DEBUG_PATTERN_RE = re.compile(r".*-debuginfo(?:-.*)?|.*-debuginfo-.*|.*-debugsource")
 
 
 def _doRunCommand(
@@ -223,11 +223,7 @@ def pkg_is_debug(pkg_obj):
     else:
         name = pkg_obj.name
 
-    for pattern in DEBUG_PATTERNS:
-        if fnmatch.fnmatch(name, pattern):
-            return True
-
-    return False
+    return DEBUG_PATTERN_RE.match(name)
 
 
 # fomat: [(variant_uid_regex, {arch|*: [data]})]
