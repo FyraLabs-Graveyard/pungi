@@ -32,6 +32,7 @@ from six.moves import urllib, range, shlex_quote
 
 import kobo.conf
 from kobo.shortcuts import run, force_list
+from kobo.threads import WorkerThread, ThreadPool
 from productmd.common import get_major_version
 
 # Patterns that match all names of debuginfo packages
@@ -1037,3 +1038,37 @@ def as_local_file(url):
     else:
         # Not a remote url, return unchanged.
         yield url
+
+
+class PartialFuncWorkerThread(WorkerThread):
+    """
+    Worker thread executing partial_func and storing results
+    in the PartialFuncThreadPool.
+    """
+
+    def process(self, partial_func, num):
+        self.pool._results.append(partial_func())
+
+
+class PartialFuncThreadPool(ThreadPool):
+    """
+    Thread pool for PartialFuncWorkerThread threads.
+
+    Example:
+
+        # Execute `pow` in one thread and print result.
+        pool = PartialFuncThreadPool()
+        pool.add(PartialFuncWorkerThread(pool))
+        pool.queue_put(functools.partial(pow, 323, 1235))
+        pool.start()
+        pool.stop()
+        print(pool.results)
+    """
+
+    def __init__(self, logger=None):
+        ThreadPool.__init__(self, logger)
+        self._results = []
+
+    @property
+    def results(self):
+        return self._results

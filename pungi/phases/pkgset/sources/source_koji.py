@@ -17,6 +17,7 @@
 import os
 import json
 import re
+import functools
 from fnmatch import fnmatch
 from itertools import groupby
 
@@ -723,15 +724,23 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 # Optimization for case where we have just single compose
                 # tag - we do not have to merge in this case...
                 variant.pkgsets.add(compose_tag)
-        pkgsets.append(
-            MaterializedPackageSet.create(
-                compose, pkgset, path_prefix, mmd=tag_to_mmd.get(pkgset.name)
-            ),
-        )
 
         pkgset.write_reuse_file(compose, include_packages=modular_packages)
+        pkgsets.append(pkgset)
 
-    return pkgsets
+    # Create MaterializedPackageSets.
+    partials = []
+    for pkgset in pkgsets:
+        partials.append(
+            functools.partial(
+                MaterializedPackageSet.create,
+                compose,
+                pkgset,
+                path_prefix,
+                mmd=tag_to_mmd.get(pkgset.name),
+            )
+        )
+    return MaterializedPackageSet.create_many(partials)
 
 
 def get_koji_event_info(compose, koji_wrapper):

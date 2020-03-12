@@ -22,7 +22,7 @@ from kobo.threads import run_in_threads
 
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib
+from pungi.util import is_arch_multilib, PartialFuncWorkerThread, PartialFuncThreadPool
 from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
@@ -220,6 +220,40 @@ class MaterializedPackageSet(object):
         create_arch_repos(compose, path_prefix, paths, pkgset_global, mmd)
 
         return klass(package_sets, paths)
+
+    @classmethod
+    def create_many(klass, create_partials):
+        """
+        Creates multiple MaterializedPackageSet in threads.
+
+        :param list of functools.partial create_partials: List of Partial objects
+            created using functools.partial(MaterializedPackageSet.create, compose,
+            pkgset_global, path_prefix, mmd=mmd).
+        :return: List of MaterializedPackageSet objects.
+        """
+        # Create two pools - small pool for small package sets and big pool for
+        # big package sets. This ensure there will not be too many createrepo
+        # tasks which would need lot of CPU or memory at the same time.
+        big_pool = PartialFuncThreadPool()
+        big_pool.add(PartialFuncWorkerThread(big_pool))
+        small_pool = PartialFuncThreadPool()
+        for i in range(10):
+            small_pool.add(PartialFuncWorkerThread(small_pool))
+
+        # Divide the package sets into big_pool/small_pool based on their size.
+        for partial in create_partials:
+            pkgset = partial.args[1]
+            if len(pkgset) < 500:
+                small_pool.queue_put(partial)
+            else:
+                big_pool.queue_put(partial)
+
+        small_pool.start()
+        big_pool.start()
+        small_pool.stop()
+        big_pool.stop()
+
+        return small_pool.results + big_pool.results
 
 
 def get_all_arches(compose):
