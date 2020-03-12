@@ -11,7 +11,7 @@
    inkscape:export-xdpi="90"
    inkscape:export-filename="/home/lsedlar/repos/pungi/doc/_static/phases.png"
    sodipodi:docname="phases.svg"
-   inkscape:version="1.0beta2 (2b71d25, 2019-12-03)"
+   inkscape:version="0.92.4 (unknown)"
    version="1.1"
    id="svg2"
    viewBox="0 0 771.66458 221.50019"
@@ -27,16 +27,16 @@
      inkscape:document-rotation="0"
      units="px"
      inkscape:window-maximized="1"
-     inkscape:window-y="23"
+     inkscape:window-y="0"
      inkscape:window-x="0"
-     inkscape:window-height="1035"
+     inkscape:window-height="1015"
      inkscape:window-width="1920"
      showgrid="false"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g3668"
      inkscape:document-units="px"
-     inkscape:cy="97.894202"
-     inkscape:cx="396.63448"
-     inkscape:zoom="1.169022"
+     inkscape:cy="137.85275"
+     inkscape:cx="228.82868"
+     inkscape:zoom="3.3064935"
      inkscape:pageshadow="2"
      inkscape:pageopacity="1"
      borderopacity="1.0"
@@ -223,7 +223,8 @@
              style="font-size:13.1479px;line-height:1.25">Gather</tspan></text>
       </g>
       <g
-         id="g3647">
+         id="g3647"
+         transform="translate(-59.99997,63.749968)">
         <g
            id="g3644">
           <rect
@@ -245,10 +246,11 @@
              id="tspan3374"
              x="165.23042"
              y="923.25934"
-             style="font-size:13.1479px;line-height:1.25">ExtraFiles</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">ExtraFiles</tspan></text>
       </g>
       <g
-         id="g3658">
+         id="g3658"
+         transform="translate(-78.74996)">
         <rect
            style="fill:#e9b96e;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
            id="rect3348"
@@ -267,7 +269,7 @@
              id="tspan3378"
              x="243.95874"
              y="921.86945"
-             style="font-size:13.1479px;line-height:1.25">Createrepo</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">Createrepo</tspan></text>
       </g>
       <g
          transform="translate(-150.564,114.11662)"

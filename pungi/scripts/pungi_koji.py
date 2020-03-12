@@ -426,7 +426,8 @@ def run_compose(compose, create_latest_link=True, latest_link_status=None):
     # WEAVER phase - launches other phases which can safely run in parallel
     essentials_schema = (
         buildinstall_phase,
-        (gather_phase, extrafiles_phase, createrepo_phase),
+        (gather_phase, createrepo_phase),
+        extrafiles_phase,
         (ostree_phase, ostree_installer_phase),
     )
     essentials_phase = pungi.phases.WeaverPhase(compose, essentials_schema)
