@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.0
+Version:        4.2.1
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,40 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Mar 13 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.1-1
+- Create MaterializedPackageSets in threads to make pkgset faster. (jkaluza)
+- pungi-koji: Allow user to specify version component count in latest symlink
+  (lhh)
+- pkgset: Reuse pkgset repos (hlin)
+- Allow reusing gather phase results. (jkaluza)
+- Remove fnmatch from nodeps gather method (lsedlar)
+- Remove fnmatch from pkg_is_debug (lsedlar)
+- Run extra_files phase in parallel to other phases. (jkaluza)
+- Add Compose.old_compose_path and use it when searching for files in old
+  compose. (jkaluza)
+- Do not skip symlinks when searching for old compose. (jkaluza)
+- Display black output in tests (lsedlar)
+- Resend message while waiting for ostree ref (lsedlar)
+- Silence all productimg related warnings (lsedlar)
+- Move buildinstall results to final directories if using pungi-buildinstall
+  Koji plugin. (jkaluza)
+- Silence productimg warning in quiet mode (lsedlar)
+- Check skip_phases in config file (hlin)
+- Fix typos in comments (hlin)
+- Remove dependency on dict.sorted (lsedlar)
+- The pungi-config-validate --dump-schema now respects --schema-override.
+  (jkaluza)
+- gather: Make additional_packages accept debuginfo packages (hlin)
+- doc: add code convention requirements (hlin)
+- Fix formatting issues (hlin)
+- Run flake8 and black via tox (hlin)
+- Fix other flake8 complaints (hlin)
+- Fix flake8 complaints - E501 (hlin)
+- Fix flake8 complaints - F401 (hlin)
+- Format code base with black (hlin)
+- Format tests with black (hlin)
+- Add --schema-override to pungi-config-validate script (jkaluza)
+
 * Fri Jan 31 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.0-1
 - iso: Clean up cache for guestmount (lsedlar)
 - Remove deprecated warn() call (lsedlar)
