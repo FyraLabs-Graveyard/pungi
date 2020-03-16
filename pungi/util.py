@@ -37,7 +37,9 @@ from productmd.common import get_major_version
 
 # Patterns that match all names of debuginfo packages
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
-DEBUG_PATTERN_RE = re.compile(r".*-debuginfo(?:-.*)?|.*-debuginfo-.*|.*-debugsource")
+DEBUG_PATTERN_RE = re.compile(
+    r"^(?:.*-debuginfo(?:-.*)?|.*-debuginfo-.*|.*-debugsource)$"
+)
 
 
 def _doRunCommand(
