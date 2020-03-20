@@ -536,7 +536,7 @@ class KojiSCMTestCase(SCMBaseTest):
             [
                 mock.call("koji"),
                 mock.call().koji_proxy.listTagged(
-                    "images", package="my-build", latest=True
+                    "images", package="my-build", inherit=True, latest=True
                 ),
                 mock.call().koji_proxy.listArchives(123),
                 mock.call().koji_module.pathinfo.typedir({"build_id": 123}, "image"),

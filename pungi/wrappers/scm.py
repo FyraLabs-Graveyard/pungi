@@ -270,7 +270,9 @@ class KojiScmWrapper(ScmBase):
             package,
             koji_tag,
         )
-        builds = self.proxy.listTagged(koji_tag, package=package, latest=True)
+        builds = self.proxy.listTagged(
+            koji_tag, package=package, inherit=True, latest=True
+        )
         if len(builds) != 1:
             raise RuntimeError("No package %s in tag %s", package, koji_tag)
         self._download_build(builds[0], file_pattern, target_dir)
