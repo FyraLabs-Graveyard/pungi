@@ -22,7 +22,12 @@ from kobo.threads import run_in_threads
 
 from pungi.arch import get_valid_arches
 from pungi.wrappers.createrepo import CreaterepoWrapper
-from pungi.util import is_arch_multilib, PartialFuncWorkerThread, PartialFuncThreadPool
+from pungi.util import (
+    copy_all,
+    is_arch_multilib,
+    PartialFuncWorkerThread,
+    PartialFuncThreadPool,
+)
 from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.createrepo import add_modular_metadata
 
@@ -85,8 +90,9 @@ def run_create_global_repo(compose, cmd, logfile):
 
 
 def create_arch_repos(compose, path_prefix, paths, pkgset, mmds):
+    reuse = getattr(pkgset, "reuse", None)
     run_in_threads(
-        _create_arch_repo,
+        _create_arch_repo if reuse is None else _reuse_arch_repo,
         [
             (
                 compose,
@@ -147,6 +153,19 @@ def _create_arch_repo(worker_thread, args, task_num):
             compose.paths.log.log_file(arch, "arch_repo_modulemd.%s" % pkgset.name),
         )
 
+    compose.log_info("[DONE ] %s", msg)
+
+
+def _reuse_arch_repo(worker_thread, args, task_num):
+    """Reuse a single pkgset repo for given arch."""
+    compose, arch, _, paths, pkgset, _ = args
+    repo_dir = compose.paths.work.pkgset_repo(pkgset.name, arch=arch)
+    paths[arch] = repo_dir
+    old_repo_dir = compose.paths.old_compose_path(repo_dir)
+    msg = "Copying repodata for reuse: %s" % old_repo_dir
+
+    compose.log_info("[BEGIN] %s", msg)
+    copy_all(old_repo_dir, repo_dir)
     compose.log_info("[DONE ] %s", msg)
 
 
