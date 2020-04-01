@@ -569,7 +569,9 @@ Options
     (*list*) -- mapping that defines which variants and arches to skip during
     buildinstall; format: ``[(variant_uid_regex, {arch|*: True})]``. This is
     only supported for lorax.
-
+**buildinstall_allow_reuse** = False
+    (*bool*) -- When set to ``True``, *Pungi* will try to reuse buildinstall
+    results from old compose specified by ``--old-composes``.
 
 Example
 -------

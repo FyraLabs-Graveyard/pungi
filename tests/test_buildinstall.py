@@ -3,6 +3,7 @@
 
 import mock
 import six
+from copy import copy
 
 import os
 
@@ -13,7 +14,7 @@ from pungi.phases.buildinstall import (
     BOOT_CONFIGS,
     tweak_configs,
 )
-from tests.helpers import DummyCompose, PungiTestCase, touch
+from tests.helpers import DummyCompose, PungiTestCase, touch, MockPackageSet, MockPkg
 
 
 class BuildInstallCompose(DummyCompose):
@@ -1100,7 +1101,7 @@ class BuildinstallThreadTestCase(PungiTestCase):
     def setUp(self):
         super(BuildinstallThreadTestCase, self).setUp()
         self.pool = mock.Mock(finished_tasks=set())
-        self.cmd = mock.Mock()
+        self.cmd = ["echo", "1"]
 
     @mock.patch("pungi.phases.buildinstall.link_boot_iso")
     @mock.patch("pungi.phases.buildinstall.tweak_buildinstall")
@@ -1134,7 +1135,11 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", compose.variants["Server"], self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
 
         destdir = os.path.join(self.topdir, "work/x86_64/buildinstall/Server")
         self.assertEqual(
@@ -1231,7 +1236,11 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", compose.variants["Server"], self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
 
         destdir = os.path.join(self.topdir, "work/x86_64/buildinstall/Server")
         self.assertEqual(
@@ -1328,7 +1337,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "amd64", None, self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process((compose, "amd64", None, self.cmd, pkgset_phase), 0)
 
         destdir = os.path.join(self.topdir, "work/amd64/buildinstall")
         self.assertEqual(
@@ -1414,7 +1424,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", None, self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process((compose, "x86_64", None, self.cmd, pkgset_phase), 0)
 
         compose._logger.error.assert_has_calls(
             [
@@ -1455,7 +1466,11 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", compose.variants["Server"], self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
 
         compose._logger.error.assert_has_calls(
             [
@@ -1494,7 +1509,11 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", compose.variants["Server"], self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
 
         self.assertEqual(0, len(run.mock_calls))
 
@@ -1535,7 +1554,11 @@ class BuildinstallThreadTestCase(PungiTestCase):
         t = BuildinstallThread(self.pool)
 
         with mock.patch("time.sleep"):
-            t.process((compose, "x86_64", compose.variants["Server"], self.cmd), 0)
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
 
         self.assertEqual(
             get_runroot_cmd.mock_calls,
@@ -1612,6 +1635,203 @@ class BuildinstallThreadTestCase(PungiTestCase):
             mock_link.call_args_list,
             [mock.call(compose, "x86_64", compose.variants["Server"], False)],
         )
+
+    def _prepare_buildinstall_reuse_test(self):
+        compose = BuildInstallCompose(
+            self.topdir,
+            {
+                "buildinstall_allow_reuse": True,
+                "buildinstall_method": "lorax",
+                "runroot_tag": "rrt",
+                "koji_profile": "koji",
+            },
+        )
+
+        pkgset = MockPackageSet(
+            MockPkg("/build/kernel-1.0.0-1.x86_64.rpm"),
+            MockPkg("/build/kernel-1.0.0-1.i686.rpm"),
+            MockPkg("/build/bash-1.0.0-1.x86_64.rpm"),
+        )
+        pkgset.file_cache = pkgset
+        pkgsets = [{"global": pkgset, "x86_64": pkgset}]
+        pkgset_phase = mock.Mock(package_sets=pkgsets)
+
+        cmd = {
+            "add-arch-template": [],
+            "buildarch": "x86_64",
+            "outputdir": self.topdir,
+            "product": "Fedora",
+            "release": "31",
+            "sources": ["/tmp/test/repo"],
+            "variant": "Server",
+            "version": "1",
+        }
+        return compose, pkgset_phase, cmd
+
+    @mock.patch("os.listdir")
+    @mock.patch("os.path.exists")
+    def test_generate_buildinstall_metadata(self, exists, listdir):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+        buildroot_rpms = ["bash-1-1.x86_64", "httpd-1-1.x86_64"]
+        listdir.return_value = ["kernel"]
+
+        t = BuildinstallThread(self.pool)
+        metadata = t._generate_buildinstall_metadata(
+            compose,
+            "x86_64",
+            compose.variants["Server"],
+            cmd,
+            buildroot_rpms,
+            pkgset_phase,
+        )
+        self.assertEqual(metadata["cmd"], cmd)
+        self.assertEqual(metadata["buildroot_rpms"], buildroot_rpms)
+        self.assertEqual(
+            metadata["installed_rpms"],
+            ["/build/kernel-1.0.0-1.i686.rpm", "/build/kernel-1.0.0-1.x86_64.rpm"],
+        )
+
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._write_buildinstall_metadata"
+    )
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
+    )
+    @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
+    @mock.patch("pungi.phases.buildinstall.copy_all")
+    def test_reuse_old_buildinstall_result(
+        self,
+        copy_all,
+        KojiWrapperMock,
+        load_old_buildinstall_metadata,
+        write_buildinstall_metadata,
+    ):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+
+        listTaggedRPMS = KojiWrapperMock.return_value.koji_proxy.listTaggedRPMS
+        listTaggedRPMS.return_value = [
+            [{"name": "bash", "version": "1", "release": 1, "arch": "x86_64"}],
+            [],
+        ]
+
+        load_old_buildinstall_metadata.return_value = {
+            "cmd": cmd,
+            "installed_rpms": ["/build/kernel-1.0.0-1.x86_64.rpm"],
+            "buildroot_rpms": ["bash-1-1.x86_64"],
+        }
+
+        t = BuildinstallThread(self.pool)
+        with mock.patch.object(compose.paths, "old_compose_path") as old_compose_path:
+            old_compose_path.side_effect = ["/tmp/old/1", "/tmp/old/2"]
+            ret = t._reuse_old_buildinstall_result(
+                compose, "x86_64", compose.variants["Server"], cmd, pkgset_phase
+            )
+
+        self.assertEqual(ret, True)
+        self.assertEqual(
+            copy_all.mock_calls,
+            [
+                mock.call(
+                    "/tmp/old/1",
+                    os.path.join(self.topdir, "work/x86_64/buildinstall/Server"),
+                ),
+                mock.call(
+                    "/tmp/old/2",
+                    os.path.join(self.topdir, "logs/x86_64/buildinstall-Server-logs"),
+                ),
+            ],
+        )
+        write_buildinstall_metadata.assert_called_once_with(
+            compose,
+            "x86_64",
+            compose.variants["Server"],
+            cmd,
+            ["bash-1-1.x86_64"],
+            pkgset_phase,
+        )
+
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
+    )
+    def test_reuse_old_buildinstall_result_no_old_compose(
+        self, load_old_buildinstall_metadata,
+    ):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+        load_old_buildinstall_metadata.return_value = None
+
+        t = BuildinstallThread(self.pool)
+        ret = t._reuse_old_buildinstall_result(
+            compose, "x86_64", compose.variants["Server"], cmd, pkgset_phase
+        )
+        self.assertEqual(ret, None)
+
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
+    )
+    def test_reuse_old_buildinstall_result_different_cmd(
+        self, load_old_buildinstall_metadata,
+    ):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+
+        old_cmd = copy(cmd)
+        old_cmd["version"] = "32"
+
+        load_old_buildinstall_metadata.return_value = {
+            "cmd": old_cmd,
+            "installed_rpms": ["/build/kernel-1.0.0-1.x86_64.rpm"],
+            "buildroot_rpms": ["bash-1-1.x86_64"],
+        }
+
+        t = BuildinstallThread(self.pool)
+        ret = t._reuse_old_buildinstall_result(
+            compose, "x86_64", compose.variants["Server"], cmd, pkgset_phase
+        )
+        self.assertEqual(ret, None)
+
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
+    )
+    def test_reuse_old_buildinstall_result_different_installed_pkgs(
+        self, load_old_buildinstall_metadata,
+    ):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+        load_old_buildinstall_metadata.return_value = {
+            "cmd": cmd,
+            "installed_rpms": ["/build/kernel-1.0.0-0.x86_64.rpm"],
+            "buildroot_rpms": ["bash-1-1.x86_64"],
+        }
+
+        t = BuildinstallThread(self.pool)
+        ret = t._reuse_old_buildinstall_result(
+            compose, "x86_64", compose.variants["Server"], cmd, pkgset_phase
+        )
+        self.assertEqual(ret, None)
+
+    @mock.patch(
+        "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
+    )
+    @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
+    def test_reuse_old_buildinstall_result_different_buildroot_rpms(
+        self, KojiWrapperMock, load_old_buildinstall_metadata,
+    ):
+        compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
+        load_old_buildinstall_metadata.return_value = {
+            "cmd": cmd,
+            "installed_rpms": ["/build/kernel-1.0.0-1.x86_64.rpm"],
+            "buildroot_rpms": ["bash-1-1.x86_64"],
+        }
+
+        listTaggedRPMS = KojiWrapperMock.return_value.koji_proxy.listTaggedRPMS
+        listTaggedRPMS.return_value = [
+            [{"name": "bash", "version": "1", "release": 2, "arch": "x86_64"}],
+            [],
+        ]
+
+        t = BuildinstallThread(self.pool)
+        ret = t._reuse_old_buildinstall_result(
+            compose, "x86_64", compose.variants["Server"], cmd, pkgset_phase
+        )
+        self.assertEqual(ret, None)
 
 
 class TestSymlinkIso(PungiTestCase):

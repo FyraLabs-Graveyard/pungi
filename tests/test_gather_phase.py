@@ -15,29 +15,7 @@ from pungi.phases import gather
 from pungi.phases.pkgset.common import MaterializedPackageSet
 from pungi.phases.gather import _mk_pkg_map
 from tests import helpers
-
-
-class MockPackageSet(dict):
-    def __init__(self, *args):
-        for pkg in args:
-            self[pkg.path] = pkg
-
-
-class MockPkg(object):
-    def __init__(self, path, is_system_release=False, **kwargs):
-        self.path = path
-        self.is_system_release = is_system_release
-        filename = os.path.basename(path)
-        self.nvr, self.arch, _ = filename.rsplit(".", 2)
-        self.name, self.version, self.release = self.nvr.rsplit("-", 2)
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return self.nvr
-
-    def __lt__(self, another):
-        return self.nvr < another.nvr
+from tests.helpers import MockPackageSet, MockPkg
 
 
 def _join(a, *rest):

@@ -748,6 +748,7 @@ def make_schema():
                     _variant_arch_mapping({"type": "boolean"}),
                 ]
             },
+            "buildinstall_allow_reuse": {"type": "boolean", "default": False},
             "buildinstall_method": {
                 "type": "string",
                 "enum": ["lorax", "buildinstall"],

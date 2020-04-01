@@ -19,9 +19,12 @@ import os
 import time
 import shutil
 import re
+from six.moves import cPickle as pickle
+from copy import copy
 
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import run, force_list
+import kobo.rpmlib
 from productmd.images import Image
 from six.moves import shlex_quote
 
@@ -32,6 +35,7 @@ from pungi.util import copy_all, translate_path, move_all
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_file_from_scm
+from pungi.wrappers import kojiwrapper
 from pungi.phases.base import PhaseBase
 from pungi.runroot import Runroot
 
@@ -268,7 +272,9 @@ class BuildinstallPhase(PhaseBase):
 
             for (variant, cmd) in commands:
                 self.pool.add(BuildinstallThread(self.pool))
-                self.pool.queue_put((self.compose, arch, variant, cmd))
+                self.pool.queue_put(
+                    (self.compose, arch, variant, cmd, self.pkgset_phase)
+                )
 
         self.pool.start()
 
@@ -495,12 +501,224 @@ def link_boot_iso(compose, arch, variant, can_fail):
 class BuildinstallThread(WorkerThread):
     def process(self, item, num):
         # The variant is None unless lorax is used as buildinstall method.
-        compose, arch, variant, cmd = item
+        compose, arch, variant, cmd, pkgset_phase = item
         can_fail = compose.can_fail(variant, arch, "buildinstall")
         with failable(compose, can_fail, variant, arch, "buildinstall"):
-            self.worker(compose, arch, variant, cmd, num)
+            self.worker(compose, arch, variant, cmd, pkgset_phase, num)
 
-    def worker(self, compose, arch, variant, cmd, num):
+    def _generate_buildinstall_metadata(
+        self, compose, arch, variant, cmd, buildroot_rpms, pkgset_phase
+    ):
+        """
+        Generate buildinstall.metadata dict.
+
+        :param Compose compose: Current compose.
+        :param str arch: Current architecture.
+        :param Variant variant: Compose variant.
+        :param list cmd: List of command line arguments passed to buildinstall task.
+        :param list buildroot_rpms: List of NVRAs of all RPMs installed in the
+            buildinstall task's buildroot.
+        :param PkgsetPhase pkgset_phase: Package set phase instance.
+        :return: The buildinstall.metadata dict.
+        """
+        # Load the list of packages installed in the boot.iso.
+        # The list of installed packages is logged by Lorax in the "pkglists"
+        # directory. There is one file for each installed RPM and the name
+        # of the file is the name of the RPM.
+        # We need to resolve the name of each RPM back to its NVRA.
+        installed_rpms = []
+        log_fname = "buildinstall-%s-logs/dummy" % variant.uid
+        log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_fname, False))
+        pkglists_dir = os.path.join(log_dir, "pkglists")
+        if os.path.exists(pkglists_dir):
+            for pkg_name in os.listdir(pkglists_dir):
+                for pkgset in pkgset_phase.package_sets:
+                    global_pkgset = pkgset["global"]
+                    # We actually do not care from which package_set the RPM
+                    # came from or if there are multiple versions/release of
+                    # the single RPM in more packages sets. We simply include
+                    # all RPMs with this name in the metadata.
+                    # Later when deciding if the buildinstall phase results
+                    # can be reused, we check that all the RPMs with this name
+                    # are still the same in old/new compose.
+                    for rpm_path, rpm_obj in global_pkgset.file_cache.items():
+                        if rpm_obj.name == pkg_name:
+                            installed_rpms.append(rpm_path)
+
+        # Store the metadata in `buildinstall.metadata`.
+        metadata = {
+            "cmd": cmd,
+            "buildroot_rpms": sorted(buildroot_rpms),
+            "installed_rpms": sorted(installed_rpms),
+        }
+        return metadata
+
+    def _write_buildinstall_metadata(
+        self, compose, arch, variant, cmd, buildroot_rpms, pkgset_phase
+    ):
+        """
+        Write buildinstall.metadata file containing all the information about
+        buildinstall phase input and environment.
+
+        This file is later used to decide whether old buildinstall results can
+        be reused instead of generating them again.
+
+        :param Compose compose: Current compose.
+        :param str arch: Current architecture.
+        :param Variant variant: Compose variant.
+        :param list cmd: List of command line arguments passed to buildinstall task.
+        :param list buildroot_rpms: List of NVRAs of all RPMs installed in the
+            buildinstall task's buildroot.
+        :param PkgsetPhase pkgset_phase: Package set phase instance.
+        """
+        # Generate the list of `*-RPMs` log file.
+        log_filename = ("buildinstall-%s" % variant.uid) if variant else "buildinstall"
+        log_file = compose.paths.log.log_file(arch, log_filename + "-RPMs")
+        with open(log_file, "w") as f:
+            f.write("\n".join(buildroot_rpms))
+
+        # Write buildinstall.metadata only if particular variant is defined.
+        # The `variant` is `None` only if old "buildinstall" method is used.
+        if not variant:
+            return
+
+        metadata = self._generate_buildinstall_metadata(
+            compose, arch, variant, cmd, buildroot_rpms, pkgset_phase
+        )
+
+        log_fname = "buildinstall-%s-logs/dummy" % variant.uid
+        log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_fname))
+        metadata_path = os.path.join(log_dir, "buildinstall.metadata")
+        with open(metadata_path, "wb") as f:
+            pickle.dump(metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _load_old_buildinstall_metadata(self, compose, arch, variant):
+        """
+        Helper method to load "buildinstall.metadata" from old compose.
+
+        :param Compose compose: Current compose.
+        :param str arch: Current architecture.
+        :param Variant variant: Compose variant.
+        """
+        if not variant:
+            return None
+
+        log_fname = "buildinstall-%s-logs/dummy" % variant.uid
+        metadata = os.path.join(
+            os.path.dirname(compose.paths.log.log_file(arch, log_fname)),
+            "buildinstall.metadata",
+        )
+        old_metadata = compose.paths.old_compose_path(metadata)
+        if not old_metadata:
+            return None
+
+        compose.log_info("Loading old BUILDINSTALL phase metadata: %s", old_metadata)
+        with open(old_metadata, "rb") as f:
+            old_result = pickle.load(f)
+            return old_result
+
+    def _reuse_old_buildinstall_result(self, compose, arch, variant, cmd, pkgset_phase):
+        """
+        Try to reuse old buildinstall results.
+
+        :param Compose compose: Current compose.
+        :param str arch: Current architecture.
+        :param Variant variant: Compose variant.
+        :param list cmd: List of command line arguments passed to buildinstall task.
+        :param list buildroot_rpms: List of NVRAs of all RPMs installed in the
+            buildinstall task's buildroot.
+        :param PkgsetPhase pkgset_phase: Package set phase instance.
+        :return: True if old buildinstall phase results have been reused.
+        """
+        log_msg = "Cannot reuse old BUILDINSTALL phase results - %s"
+
+        if not compose.conf["buildinstall_allow_reuse"]:
+            compose.log_info(log_msg % "reuse of old buildinstall results is disabled.")
+            return
+
+        # Load the old buildinstall.metadata.
+        old_metadata = self._load_old_buildinstall_metadata(compose, arch, variant)
+        if old_metadata is None:
+            compose.log_info(log_msg % "no old BUILDINSTALL metadata.")
+            return
+
+        # For now try to reuse only if pungi_buildinstall plugin is used.
+        # This is the easiest approach, because we later need to filter out
+        # some parts of `cmd` and for pungi_buildinstall, the `cmd` is a dict
+        # which makes this easy.
+        if not isinstance(old_metadata["cmd"], dict) or not isinstance(cmd, dict):
+            compose.log_info(log_msg % "pungi_buildinstall plugin is not used.")
+            return
+
+        # Filter out "outputdir" and "sources" because they change everytime.
+        # The "sources" are not important, because we check the buildinstall
+        # input on RPM level.
+        cmd_copy = copy(cmd)
+        for key in ["outputdir", "sources"]:
+            del cmd_copy[key]
+            del old_metadata["cmd"][key]
+
+        # Do not reuse if command line arguments are not the same.
+        if old_metadata["cmd"] != cmd_copy:
+            compose.log_info(log_msg % "lorax command line arguments differ.")
+            return
+
+        # Check that the RPMs installed in the old boot.iso exists in the very
+        # same versions/releases in this compose.
+        for rpm_path in old_metadata["installed_rpms"]:
+            found = False
+            for pkgset in pkgset_phase.package_sets:
+                global_pkgset = pkgset["global"]
+                if rpm_path in global_pkgset.file_cache:
+                    found = True
+                    break
+            if not found:
+                compose.log_info(
+                    log_msg % "RPM %s does not exist in new compose." % rpm_path
+                )
+                return
+
+        # Ask Koji for all the RPMs in the `runroot_tag` and check that
+        # those installed in the old buildinstall buildroot are still in the
+        # very same versions/releases.
+        koji_wrapper = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        rpms = koji_wrapper.koji_proxy.listTaggedRPMS(
+            compose.conf.get("runroot_tag"), inherit=True, latest=True
+        )[0]
+        rpm_nvras = set()
+        for rpm in rpms:
+            rpm_nvras.add(kobo.rpmlib.make_nvra(rpm, add_rpm=False, force_epoch=False))
+        for old_nvra in old_metadata["buildroot_rpms"]:
+            if old_nvra not in rpm_nvras:
+                compose.log_info(
+                    log_msg % "RPM %s does not exist in new buildroot." % old_nvra
+                )
+                return
+
+        # We can reuse the old buildinstall results!
+        compose.log_info("Reusing old BUILDINSTALL phase output")
+
+        # Copy old buildinstall output to this this compose.
+        final_output_dir = compose.paths.work.buildinstall_dir(arch, variant=variant)
+        old_final_output_dir = compose.paths.old_compose_path(final_output_dir)
+        copy_all(old_final_output_dir, final_output_dir)
+
+        # Copy old buildinstall logs to this compose.
+        log_fname = "buildinstall-%s-logs/dummy" % variant.uid
+        final_log_dir = os.path.dirname(compose.paths.log.log_file(arch, log_fname))
+        old_final_log_dir = compose.paths.old_compose_path(final_log_dir)
+        if not os.path.exists(final_log_dir):
+            makedirs(final_log_dir)
+        copy_all(old_final_log_dir, final_log_dir)
+
+        # Write the buildinstall metadata so next compose can reuse this compose.
+        self._write_buildinstall_metadata(
+            compose, arch, variant, cmd, old_metadata["buildroot_rpms"], pkgset_phase
+        )
+
+        return True
+
+    def worker(self, compose, arch, variant, cmd, pkgset_phase, num):
         buildinstall_method = compose.conf["buildinstall_method"]
         lorax_use_koji_plugin = compose.conf["lorax_use_koji_plugin"]
         log_filename = ("buildinstall-%s" % variant.uid) if variant else "buildinstall"
@@ -535,6 +753,14 @@ class BuildinstallThread(WorkerThread):
             chown_paths.append(_get_log_dir(compose, variant, arch))
         elif buildinstall_method == "buildinstall":
             packages += ["anaconda"]
+
+        if self._reuse_old_buildinstall_result(
+            compose, arch, variant, cmd, pkgset_phase
+        ):
+            self.copy_files(compose, variant, arch)
+            self.pool.finished_tasks.add((variant.uid if variant else None, arch))
+            self.pool.log_info("[DONE ] %s" % msg)
+            return
 
         # This should avoid a possible race condition with multiple processes
         # trying to get a kerberos ticket at the same time.
@@ -592,14 +818,14 @@ class BuildinstallThread(WorkerThread):
             log_dir = os.path.join(output_dir, "logs")
             move_all(log_dir, final_log_dir, rm_src_dir=True)
 
-        log_file = compose.paths.log.log_file(arch, log_filename + "-RPMs")
         rpms = runroot.get_buildroot_rpms()
-        with open(log_file, "w") as f:
-            f.write("\n".join(rpms))
-
-        self.pool.finished_tasks.add((variant.uid if variant else None, arch))
+        self._write_buildinstall_metadata(
+            compose, arch, variant, cmd, rpms, pkgset_phase
+        )
 
         self.copy_files(compose, variant, arch)
+
+        self.pool.finished_tasks.add((variant.uid if variant else None, arch))
 
         self.pool.log_info("[DONE ] %s" % msg)
 
