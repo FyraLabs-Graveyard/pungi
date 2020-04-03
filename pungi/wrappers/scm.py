@@ -34,6 +34,7 @@ class ScmBase(kobo.log.LoggingBase):
     def __init__(self, logger=None, command=None, compose=None):
         kobo.log.LoggingBase.__init__(self, logger=logger)
         self.command = command
+        self.compose = compose
 
     @retry(interval=60, timeout=300, wait_on=RuntimeError)
     def retry_run(self, cmd, **kwargs):
@@ -159,12 +160,23 @@ class GitWrapper(ScmBase):
         try:
             run(["git", "fetch", "--depth=1", repo, branch], workdir=destdir)
             run(["git", "checkout", "FETCH_HEAD"], workdir=destdir)
-        except RuntimeError:
+        except RuntimeError as e:
             # Fetch failed, to do a full clone we add a remote to our empty
             # repo, get its content and check out the reference we want.
-            run(["git", "remote", "add", "origin", repo], workdir=destdir)
-            self.retry_run(["git", "remote", "update", "origin"], workdir=destdir)
-            run(["git", "checkout", branch], workdir=destdir)
+            self.log_debug(
+                "Trying to do a full clone because shallow clone failed: %s %s"
+                % (e, e.output)
+            )
+            try:
+                run(["git", "remote", "add", "origin", repo], workdir=destdir)
+                self.retry_run(["git", "remote", "update", "origin"], workdir=destdir)
+                run(["git", "checkout", branch], workdir=destdir)
+            except RuntimeError:
+                debugdir = os.path.join(self.compose.topdir, os.path.basename(destdir))
+                self.log_debug("Copying %s to %s for debugging" % (destdir, debugdir))
+                makedirs(debugdir)
+                copy_all(destdir, debugdir)
+                raise
 
         self.run_process_command(destdir)
 
