@@ -1173,6 +1173,28 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         )
         self.assertEqual(result, None)
 
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_compose_config_different_whitelist(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        for whitelist_opt in ["product_id"]:
+            load_old_gather_result.return_value = {
+                "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
+                "srpm": [],
+                "debuginfo": [],
+            }
+
+            compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+            compose_conf_copy = dict(compose.conf)
+            compose_conf_copy[whitelist_opt] = "different"
+            load_old_compose_config.return_value = compose_conf_copy
+
+            result = gather.reuse_old_gather_packages(
+                compose, "x86_64", compose.variants["Server"], []
+            )
+            self.assertEqual(result, {"rpm": [], "srpm": [], "debuginfo": []})
+
     def _prepare_package_sets(
         self, load_old_gather_result, extra_global_pkgs=None, **kwargs
     ):

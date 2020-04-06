@@ -251,6 +251,13 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
                 )
                 return
             continue
+
+        # Skip checking for frequently changing configuration options which do *not*
+        # influence Gather phase.
+        config_whitelist = ["product_id"]
+        if opt in config_whitelist:
+            continue
+
         if opt not in config or config[opt] != value:
             compose.log_info(
                 log_msg % ("compose configuration option %s changed." % opt)
