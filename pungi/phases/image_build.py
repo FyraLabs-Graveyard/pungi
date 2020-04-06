@@ -238,7 +238,8 @@ class CreateImageBuildThread(WorkerThread):
         # avoid race conditions?
         # Kerberos authentication failed:
         #   Permission denied in replay cache code (-1765328215)
-        # [workaround] Increased time delay from 3 to 10 sec until the issue in koji gets fixed https://pagure.io/koji/issue/2138
+        # [workaround] Increased time delay from 3 to 10 sec until the issue in
+        # koji gets fixed https://pagure.io/koji/issue/2138
         time.sleep(num * 10)
         output = koji_wrapper.run_blocking_cmd(koji_cmd, log_file=log_file)
         self.pool.log_debug("build-image outputs: %s" % (output))
