@@ -52,9 +52,19 @@ class Tree(OSTree):
             cmd.append("--force-nocache")
         cmd.append(self.treefile)
 
-        shortcuts.run(
-            cmd, show_cmd=True, stdout=True, logfile=log_file, universal_newlines=True
-        )
+        # Set the umask to be more permissive so directories get group write
+        # permissions. See https://pagure.io/releng/issue/8811#comment-629051
+        oldumask = os.umask(0o0002)
+        try:
+            shortcuts.run(
+                cmd,
+                show_cmd=True,
+                stdout=True,
+                logfile=log_file,
+                universal_newlines=True,
+            )
+        finally:
+            os.umask(oldumask)
 
     def _update_summary(self):
         """Update summary metadata"""
@@ -92,7 +102,13 @@ class Tree(OSTree):
                 raise RuntimeError("Refs/heads did not exist in ostree repo")
 
             ref_path = os.path.join(heads_dir, ref)
-            makedirs(os.path.dirname(ref_path))
+            # Set the umask to be more permissive so directories get group write
+            # permissions. See https://pagure.io/releng/issue/8811#comment-629051
+            oldumask = os.umask(0o0002)
+            try:
+                makedirs(os.path.dirname(ref_path))
+            finally:
+                os.umask(oldumask)
             with open(ref_path, "w") as f:
                 f.write(commitid + "\n")
 
