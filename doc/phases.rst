@@ -132,6 +132,13 @@ Creates bootable media that carry an ostree repository as a payload. These
 images are created by running ``lorax`` with special templates. Again it runs
 in Koji runroot.
 
+Repoclosure
+-----------
+
+Run ``repoclosure`` on each repository. By default errors are only reported
+in the log, the compose will still be considered a success. The actual error
+has to be looked up in the compose logs directory. Configuration allows customizing this.
+
 ImageChecksum
 -------------
 
@@ -145,12 +152,7 @@ Test
 
 This phase is supposed to run some sanity checks on the finished compose.
 
-The first test is to run ``repoclosure`` on each repository. By default errors
-are only reported in the log, the compose will still be considered a success.
-The actual error has to be looked up in the compose logs directory.
-Configuration allows customizing this.
-
-The other test is to check all images listed the metadata and verify that they
+The only test is to check all images listed the metadata and verify that they
 look sane. For ISO files headers are checked to verify the format is correct,
 and for bootable media a check is run to verify they have properties that allow
 booting.

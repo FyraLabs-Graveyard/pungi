@@ -11,12 +11,12 @@
    inkscape:export-xdpi="90"
    inkscape:export-filename="/home/lsedlar/repos/pungi/doc/_static/phases.png"
    sodipodi:docname="phases.svg"
-   inkscape:version="0.92.4 (unknown)"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
    version="1.1"
    id="svg2"
-   viewBox="0 0 771.66458 221.50019"
-   height="221.50018"
-   width="771.66455">
+   viewBox="0 0 669.66458 255.18195"
+   height="255.18195"
+   width="669.66455">
   <sodipodi:namedview
      fit-margin-bottom="0"
      fit-margin-right="0"
@@ -27,16 +27,16 @@
      inkscape:document-rotation="0"
      units="px"
      inkscape:window-maximized="1"
-     inkscape:window-y="0"
+     inkscape:window-y="1"
      inkscape:window-x="0"
-     inkscape:window-height="1015"
+     inkscape:window-height="1035"
      inkscape:window-width="1920"
      showgrid="false"
-     inkscape:current-layer="g3668"
+     inkscape:current-layer="layer1"
      inkscape:document-units="px"
-     inkscape:cy="137.85275"
-     inkscape:cx="228.82868"
-     inkscape:zoom="3.3064935"
+     inkscape:cy="127.3243"
+     inkscape:cx="420.82921"
+     inkscape:zoom="1.5"
      inkscape:pageshadow="2"
      inkscape:pageopacity="1"
      borderopacity="1.0"
@@ -69,7 +69,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -77,7 +77,7 @@
      inkscape:label="Vrstva 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="matrix(1.066667,0,0,1.066667,-2.473231,-910.85239)">
+     transform="matrix(1.066667,0,0,1.066667,-78.473216,-910.85239)">
     <g
        id="g3411"
        transform="translate(71.99326,-80.817124)">
@@ -95,7 +95,7 @@
          x="51.554729"
          style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-size:13.1479px;line-height:1.25"
+           style="font-size:13.14789963px;line-height:1.25"
            y="970.26605"
            x="51.554729"
            id="tspan3362"
@@ -118,7 +118,7 @@
          x="556.95709"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-size:13.1475px;line-height:1.25"
+           style="font-size:13.14750004px;line-height:1.25"
            id="tspan3391"
            sodipodi:role="line"
            x="556.95709"
@@ -141,7 +141,7 @@
          x="557.61566"
          style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-size:13.1479px;line-height:1.25"
+           style="font-size:13.14789963px;line-height:1.25"
            y="971.33813"
            x="557.61566"
            id="tspan3398"
@@ -164,7 +164,7 @@
          x="6.2600794"
          style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-size:13.1479px;line-height:1.25"
+           style="font-size:13.14789963px;line-height:1.25"
            y="891.1604"
            x="6.2600794"
            id="tspan3358"
@@ -198,7 +198,7 @@
              id="tspan3366"
              x="105.76799"
              y="891.06732"
-             style="font-size:13.1479px;line-height:1.25">Buildinstall</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">Buildinstall</tspan></text>
       </g>
       <g
          id="g3639">
@@ -220,7 +220,7 @@
              id="tspan3370"
              x="106.1384"
              y="923.25934"
-             style="font-size:13.1479px;line-height:1.25">Gather</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">Gather</tspan></text>
       </g>
       <g
          id="g3647"
@@ -246,7 +246,7 @@
              id="tspan3374"
              x="165.23042"
              y="923.25934"
-             style="font-size:13.14789963px;line-height:1.25">ExtraFiles</tspan></text>
+             style="font-size:13.1479px;line-height:1.25">ExtraFiles</tspan></text>
       </g>
       <g
          id="g3658"
@@ -269,7 +269,7 @@
              id="tspan3378"
              x="243.95874"
              y="921.86945"
-             style="font-size:13.14789963px;line-height:1.25">Createrepo</tspan></text>
+             style="font-size:13.1479px;line-height:1.25">Createrepo</tspan></text>
       </g>
       <g
          transform="translate(-150.564,114.11662)"
@@ -292,7 +292,7 @@
              x="256.90588"
              sodipodi:role="line"
              id="tspan3406"
-             style="font-size:13.1479px;line-height:1.25">OSTree</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">OSTree</tspan></text>
       </g>
       <g
          id="g288"
@@ -323,11 +323,10 @@
       </g>
     </g>
     <g
-       transform="translate(-29.683562,-0.34408888)"
-       id="g236">
+       id="g1061">
       <g
          id="g3458"
-         transform="translate(28.723958,-80.473035)">
+         transform="translate(-0.959604,-80.817124)">
         <rect
            y="420.13605"
            x="953.49097"
@@ -342,14 +341,14 @@
            x="422.99252"
            y="971.54041"
            id="text3384"><tspan
-             style="font-size:13.1479px;line-height:1.25"
+             style="font-size:13.14789963px;line-height:1.25"
              sodipodi:role="line"
              id="tspan3386"
              x="422.99252"
              y="971.54041">Createiso</tspan></text>
       </g>
       <g
-         transform="translate(28.467511,-84.181232)"
+         transform="translate(-1.216051,-84.525321)"
          id="g3453">
         <rect
            style="fill:#73d216;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -365,14 +364,14 @@
            x="422.69772"
            y="1006.4276"
            id="text3388"><tspan
-             style="font-size:13.1479px;line-height:1.25"
+             style="font-size:13.14789963px;line-height:1.25"
              sodipodi:role="line"
              id="tspan3390"
              x="422.69772"
              y="1006.4276">LiveImages</tspan></text>
       </g>
       <g
-         transform="translate(28.467511,-88.141877)"
+         transform="translate(-1.216051,-88.485966)"
          id="g3448">
         <rect
            style="fill:#f57900;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -388,14 +387,14 @@
            x="422.69772"
            y="1042.8416"
            id="text3392"><tspan
-             style="font-size:13.1479px;line-height:1.25"
+             style="font-size:13.14789963px;line-height:1.25"
              sodipodi:role="line"
              id="tspan3394"
              x="422.69772"
              y="1042.8416">ImageBuild</tspan></text>
       </g>
       <g
-         transform="translate(27.760419,-92.458101)"
+         transform="translate(-1.923143,-92.80219)"
          id="g3443">
         <rect
            transform="matrix(0,1,1,0,0,0)"
@@ -411,38 +410,37 @@
            x="423.40482"
            style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
            xml:space="preserve"><tspan
-             style="font-size:13.1479px;line-height:1.25"
+             style="font-size:13.14789963px;line-height:1.25"
              y="1079.6111"
              x="423.40482"
              sodipodi:role="line"
              id="tspan3434">LiveMedia</tspan></text>
       </g>
       <g
-         id="g306"
-         transform="translate(-41.476764,-46.1016)">
+         id="g204">
         <rect
            transform="matrix(0,1,1,0,0,0)"
-           y="490.33765"
-           x="1048.9327"
+           y="419.17731"
+           x="1002.4871"
            height="101.85102"
            width="26.295755"
            id="rect290"
            style="fill:#c17d11;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
         <text
            id="text294"
-           y="1065.7078"
-           x="492.642"
+           y="1019.2621"
+           x="421.48166"
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
            xml:space="preserve"><tspan
              style="font-size:12px;line-height:0"
              id="tspan301"
              sodipodi:role="line"
-             x="492.642"
-             y="1065.7078">OSBS</tspan></text>
+             x="421.48166"
+             y="1019.2621">OSBS</tspan></text>
       </g>
       <g
          id="g3819"
-         transform="translate(0,-16.949078)">
+         transform="translate(-29.683562,-17.293167)">
         <rect
            transform="matrix(0,1,1,0,0,0)"
            y="448.86087"
@@ -461,7 +459,51 @@
              y="1069.0087"
              x="451.16522"
              sodipodi:role="line"
-             style="font-size:13.1479px;line-height:1.25">ExtraIsos</tspan></text>
+             style="font-size:13.14789963px;line-height:1.25">ExtraIsos</tspan></text>
+      </g>
+      <g
+         id="g1031">
+        <rect
+           transform="matrix(0,1,1,0,0,0)"
+           style="fill:#5ed4ec;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           id="rect206"
+           width="26.295755"
+           height="102.36562"
+           x="1066.8611"
+           y="418.66275" />
+        <text
+           id="text210"
+           y="1084.9105"
+           x="421.51923"
+           style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           xml:space="preserve"><tspan
+             y="1084.9105"
+             x="421.51923"
+             id="tspan208"
+             sodipodi:role="line"
+             style="font-size:13.14789963px;line-height:1.25">Repoclosure</tspan></text>
+      </g>
+      <g
+         id="g1031">
+        <rect
+           transform="matrix(0,1,1,0,0,0)"
+           style="fill:#5ed4ec;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           id="rect206"
+           width="26.295755"
+           height="102.36562"
+           x="1066.8611"
+           y="418.66275" />
+        <text
+           id="text210"
+           y="1084.9105"
+           x="421.51923"
+           style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           xml:space="preserve"><tspan
+             y="1084.9105"
+             x="421.51923"
+             id="tspan208"
+             sodipodi:role="line"
+             style="font-size:13.1479px;line-height:1.25">Repoclosure</tspan></text>
       </g>
     </g>
   </g>

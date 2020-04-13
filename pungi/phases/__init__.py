@@ -27,6 +27,7 @@ from .createiso import CreateisoPhase  # noqa
 from .extra_isos import ExtraIsosPhase  # noqa
 from .live_images import LiveImagesPhase  # noqa
 from .image_build import ImageBuildPhase  # noqa
+from .repoclosure import RepoclosurePhase  # noqa
 from .test import TestPhase  # noqa
 from .image_checksum import ImageChecksumPhase  # noqa
 from .livemedia_phase import LiveMediaPhase  # noqa

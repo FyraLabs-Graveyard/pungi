@@ -349,6 +349,7 @@ def run_compose(
     image_build_phase = pungi.phases.ImageBuildPhase(compose)
     osbs_phase = pungi.phases.OSBSPhase(compose)
     image_checksum_phase = pungi.phases.ImageChecksumPhase(compose)
+    repoclosure_phase = pungi.phases.RepoclosurePhase(compose)
     test_phase = pungi.phases.TestPhase(compose)
 
     # check if all config options are set
@@ -467,6 +468,7 @@ def run_compose(
         image_build_phase,
         livemedia_phase,
         osbs_phase,
+        repoclosure_phase,
     )
     compose_images_phase = pungi.phases.WeaverPhase(compose, compose_images_schema)
     compose_images_phase.start()
