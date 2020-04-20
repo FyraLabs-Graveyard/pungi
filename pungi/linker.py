@@ -201,11 +201,6 @@ class Linker(kobo.log.LoggingBase):
         shutil.copy2(src, dst)
         self._inode_map[src_key] = dst
 
-        if not self._is_same(src, dst):
-            self.log_error("File %s doesn't match the copied file %s" % (src, dst))
-            # XXX:
-            raise OSError(errno.EEXIST, "File exists")
-
     def _link_file(self, src, dst, link_type):
         if link_type == "hardlink":
             self.hardlink(src, dst)
