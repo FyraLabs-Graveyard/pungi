@@ -79,7 +79,8 @@ class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
                 if isinstance(gathered_pkg, six.string_types) and not re.match(
                     gathered_pkg.replace(".", "\\.")
                     .replace("+", "\\+")
-                    .replace("*", ".*"),
+                    .replace("*", ".*")
+                    + "$",
                     pkg.name,
                 ):
                     continue
