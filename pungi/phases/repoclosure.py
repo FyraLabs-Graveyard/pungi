@@ -134,8 +134,4 @@ def _run_repoclosure_cmd(compose, repos, lookaside, arches, logfile):
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
     with temp_dir(prefix="repoclosure_") as tmp_dir:
-        # Ideally we would want show_cmd=True here to include the
-        # command in the logfile, but due to a bug in Kobo that would
-        # cause any error to be printed directly to stderr.
-        #  https://github.com/release-engineering/kobo/pull/26
         run(cmd, logfile=logfile, workdir=tmp_dir, show_cmd=True)
