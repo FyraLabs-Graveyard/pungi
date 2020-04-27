@@ -249,7 +249,7 @@ def main():
     if not opts.quiet:
         # TODO: workaround for config files containing skip_phase = productimg
         # Remove when all config files are up to date
-        if "productimg" in opts.skip_phase or "productimg" in opts.just_phase:
+        if "productimg" in opts.skip_phase + opts.just_phase + conf["skip_phases"]:
             print(
                 "WARNING: productimg phase has been removed, please remove it from "
                 "--skip-phase or --just-phase option",
