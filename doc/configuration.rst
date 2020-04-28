@@ -505,6 +505,10 @@ Options
     with everything. Set this option to ``False`` to ignore ``noarch`` in
     ``ExclusiveArch`` and always consider only binary architectures.
 
+**pkgset_allow_reuse** = True
+    (*bool*) -- When set to ``True``, *Pungi* will try to reuse pkgset data
+    from old compose specified by ``--old-composes``.
+
 
 Example
 -------

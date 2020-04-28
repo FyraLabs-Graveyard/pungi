@@ -627,6 +627,10 @@ class KojiPackageSet(PackageSetBase):
         :param include_packages: an iterable of tuples (package name, arch) that should
                                  be included.
         """
+        if not compose.conf["pkgset_allow_reuse"]:
+            self.log_info("Reusing pkgset data from old compose is disabled.")
+            return False
+
         self.log_info("Trying to reuse pkgset data of old compose")
         if not compose.paths.get_old_compose_topdir():
             self.log_debug("No old compose found. Nothing to reuse.")
