@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.1
+Version:        4.2.2
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,25 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Apr 29 2020 Haibo Lin <hlin@redhat.com> - 4.2.2-1
+- scm: Workaround incorrect permissions on created directory (lsedlar)
+- Fix warning about productimg in skip_phases option (lsedlar)
+- Add pkgset_allow_reuse option (hlin)
+- Delete outdated comments (hlin)
+- gather: Fix nodeps method to not prefix match (lsedlar)
+- linker: Remove check after copying file (lsedlar)
+- Stop creating iso_stage_dir before deleting (hlin)
+- Allow reusing old buildinstall phase results. (jkaluza)
+- ostree: set umask to be more permissive for ostree operations (dusty)
+- Split repoclosure into separate phase (hlin)
+- Break too long line (lsedlar)
+- RCM-79601: Increase time delay in race condition (bsivasub)
+- Allow gather phase reuse on `product_id` change. (jkaluza)
+- Gather more debug data for GitWrapper clone (hlin)
+- Reuse arch pkgset repos (hlin)
+- Get non-rpm build to pungi's extra_files with inheritance (hlin)
+- util: Fix regex for detecting debuginfo packages (lsedlar)
+
 * Fri Mar 13 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.1-1
 - Create MaterializedPackageSets in threads to make pkgset faster. (jkaluza)
 - pungi-koji: Allow user to specify version component count in latest symlink
