@@ -425,4 +425,10 @@ def get_dir_from_scm(scm_dict, target_path, compose=None):
     with temp_dir(prefix="scm_checkout_") as tmp_dir:
         scm.export_dir(scm_repo, scm_dir, scm_branch=scm_branch, target_dir=tmp_dir)
         files_copied = copy_all(tmp_dir, target_path)
+
+    # Make sure the directory has permissions set to 755. This is a workaround
+    # for a problem where sometimes the directory will be 700 and it will not
+    # be accessible via httpd.
+    os.chmod(target_path, 0o755)
+
     return files_copied
