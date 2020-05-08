@@ -460,22 +460,24 @@ def run_compose(
             timestamp = pungi.metadata.write_discinfo(compose, arch, variant)
             pungi.metadata.write_media_repo(compose, arch, variant, timestamp)
 
-    # Start all phases for image artifacts
+    # Run phases for image artifacts in parallel
     compose_images_schema = (
         createiso_phase,
         extra_isos_phase,
         liveimages_phase,
         image_build_phase,
         livemedia_phase,
+    )
+    compose_images_phase = pungi.phases.WeaverPhase(compose, compose_images_schema)
+    extra_phase_schema = (
+        (compose_images_phase, image_checksum_phase),
         osbs_phase,
         repoclosure_phase,
     )
-    compose_images_phase = pungi.phases.WeaverPhase(compose, compose_images_schema)
-    compose_images_phase.start()
-    compose_images_phase.stop()
+    extra_phase = pungi.phases.WeaverPhase(compose, extra_phase_schema)
 
-    image_checksum_phase.start()
-    image_checksum_phase.stop()
+    extra_phase.start()
+    extra_phase.stop()
 
     pungi.metadata.write_compose_info(compose)
     if not (
