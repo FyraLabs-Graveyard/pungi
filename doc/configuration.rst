@@ -1489,7 +1489,6 @@ repository with a new commit.
       reference will not be created.
     * ``ostree_ref`` -- (*str*) To override value ``ref`` from ``treefile``.
 
-
 Example config
 --------------
 ::
@@ -1513,6 +1512,11 @@ Example config
             "arches": ["x86_64"],
         }
     }
+
+**ostree_use_koji_plugin** = False
+    (*bool*) -- When set to ``True``, the Koji pungi_ostree task will be
+    used to execute rpm-ostree instead of runroot. Use only if the Koji instance
+    has the pungi_ostree plugin installed.
 
 
 Ostree Installer Settings
@@ -1565,6 +1569,11 @@ an OSTree repository. This always runs in Koji as a ``runroot`` task.
 
     With this option it is possible to opt-in for the overwriting. The
     traditional ``boot.iso`` will be in the ``iso/`` subdirectory.
+
+**ostree_installer_use_koji_plugin** = False
+    (*bool*) -- When set to ``True``, the Koji pungi_buildinstall task will be
+    used to execute Lorax instead of runroot. Use only if the Koji instance
+    has the pungi_buildinstall plugin installed.
 
 
 Example config

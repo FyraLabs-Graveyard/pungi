@@ -273,6 +273,111 @@ class OstreeThreadTest(helpers.PungiTestCase):
     @mock.patch("pungi.phases.ostree_installer.iso")
     @mock.patch("os.link")
     @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
+    @mock.patch("pungi.phases.ostree_installer.move_all")
+    def test_run_koji_plugin(
+        self,
+        move_all,
+        KojiWrapper,
+        link,
+        iso,
+        get_file_size,
+        get_mtime,
+        ImageCls,
+        copy_all,
+    ):
+        self.compose.supported = False
+        self.compose.conf["ostree_installer_use_koji_plugin"] = True
+        pool = mock.Mock()
+        cfg = {
+            "repo": "Everything",  # this variant-type repo is deprecated, in result will be replaced with default repo  # noqa: E501
+            "release": "20160321.n.0",
+        }
+        koji = KojiWrapper.return_value
+        koji.run_runroot_cmd.return_value = {
+            "task_id": 1234,
+            "retcode": 0,
+            "output": "Foo bar\n",
+        }
+        get_file_size.return_value = 1024
+        get_mtime.return_value = 13579
+        final_iso_path = self.topdir + "/compose/Everything/x86_64/iso/image-name"
+
+        t = ostree.OstreeInstallerThread(pool, ["http://example.com/repo/1"])
+
+        t.process((self.compose, self.compose.variants["Everything"], "x86_64", cfg), 1)
+
+        args = {
+            "product": "Fedora",
+            "version": "Rawhide",
+            "release": "20160321.n.0",
+            "sources": [
+                "http://example.com/repo/1",
+                "http://example.com/work/$basearch/comps_repo_Everything",
+            ],
+            "variant": "Everything",
+            "nomacboot": True,
+            "volid": "test-Everything-x86_64",
+            "buildarch": "x86_64",
+            "installpkgs": None,
+            "add-template": [],
+            "add-arch-template": [],
+            "add-template-var": None,
+            "add-arch-template-var": None,
+            "rootfs-size": None,
+            "isfinal": False,
+            "outputdir": self.topdir + "/work/x86_64/Everything/ostree_installer",
+        }
+        self.assertEqual(
+            koji.get_pungi_buildinstall_cmd.mock_calls,
+            [
+                mock.call(
+                    "rrt",
+                    "x86_64",
+                    args,
+                    channel=None,
+                    packages=["pungi", "lorax", "ostree"],
+                    mounts=[self.topdir],
+                    weight=None,
+                    chown_uid=os.getuid(),
+                )
+            ],
+        )
+        self.assertEqual(
+            koji.run_runroot_cmd.mock_calls,
+            [
+                mock.call(
+                    koji.get_pungi_buildinstall_cmd.return_value,
+                    log_file=os.path.join(self.topdir, LOG_PATH, "runroot.log"),
+                )
+            ],
+        )
+        self.assertEqual(
+            move_all.mock_calls,
+            [
+                mock.call(
+                    self.topdir + "/work/x86_64/Everything/ostree_installer/results",
+                    self.topdir + "/work/x86_64/Everything/ostree_installer",
+                    rm_src_dir=True,
+                ),
+                mock.call(
+                    self.topdir + "/work/x86_64/Everything/ostree_installer/logs",
+                    os.path.join(self.topdir, LOG_PATH),
+                    rm_src_dir=True,
+                ),
+            ],
+        )
+
+        self.assertIsoLinked(link, get_file_size, get_mtime, final_iso_path)
+        self.assertImageAdded(self.compose, ImageCls, iso)
+        self.assertAllCopied(copy_all)
+
+    @mock.patch("pungi.util.copy_all")
+    @mock.patch("productmd.images.Image")
+    @mock.patch("pungi.util.get_mtime")
+    @mock.patch("pungi.util.get_file_size")
+    @mock.patch("pungi.phases.ostree_installer.iso")
+    @mock.patch("os.link")
+    @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
     def test_run_external_source(
         self, KojiWrapper, link, iso, get_file_size, get_mtime, ImageCls, copy_all
     ):

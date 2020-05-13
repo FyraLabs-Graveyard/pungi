@@ -10,7 +10,14 @@ from kobo import shortcuts
 from .base import ConfigGuardedPhase, PhaseLoggerMixin
 from .. import util
 from ..arch import get_valid_arches
-from ..util import get_volid, get_repo_urls, version_generator, translate_path
+from ..util import (
+    get_volid,
+    get_repo_urls,
+    version_generator,
+    translate_path,
+    move_all,
+    makedirs,
+)
 from ..wrappers import iso, lorax, scm
 from ..runroot import Runroot
 
@@ -200,43 +207,83 @@ class OstreeInstallerThread(WorkerThread):
     def _run_ostree_cmd(
         self, compose, variant, arch, config, source_repo, output_dir, volid
     ):
-        lorax_wrapper = lorax.LoraxWrapper()
-        lorax_cmd = lorax_wrapper.get_lorax_cmd(
-            compose.conf["release_name"],
-            compose.conf["release_version"],
-            self._get_release(compose, config),
-            repo_baseurl=source_repo,
-            output_dir=output_dir,
-            variant=variant.uid,
-            nomacboot=True,
-            volid=volid,
-            buildarch=get_valid_arches(arch)[0],
-            buildinstallpackages=config.get("installpkgs"),
-            add_template=self._get_templates(config, "add_template"),
-            add_arch_template=self._get_templates(config, "add_arch_template"),
-            add_template_var=config.get("add_template_var"),
-            add_arch_template_var=config.get("add_arch_template_var"),
-            rootfs_size=config.get("rootfs_size"),
-            is_final=compose.supported,
-            log_dir=self.logdir,
-        )
-        cmd = "rm -rf %s && %s" % (
-            shlex_quote(output_dir),
-            " ".join([shlex_quote(x) for x in lorax_cmd]),
-        )
-
         packages = ["pungi", "lorax", "ostree"]
         packages += config.get("extra_runroot_pkgs", [])
-
         log_file = os.path.join(self.logdir, "runroot.log")
-
         runroot = Runroot(compose, phase="ostree_installer")
-        runroot.run(
-            cmd,
-            log_file=log_file,
-            arch=arch,
-            packages=packages,
-            mounts=[compose.topdir],
-            chown_paths=[output_dir],
-            weight=compose.conf["runroot_weights"].get("ostree_installer"),
-        )
+
+        if compose.conf["ostree_installer_use_koji_plugin"]:
+            args = {
+                "product": compose.conf["release_name"],
+                "version": compose.conf["release_version"],
+                "release": self._get_release(compose, config),
+                "sources": shortcuts.force_list(source_repo),
+                "variant": variant.uid,
+                "nomacboot": True,
+                "volid": volid,
+                "buildarch": get_valid_arches(arch)[0],
+                "installpkgs": config.get("installpkgs"),
+                "add-template": self._get_templates(config, "add_template"),
+                "add-arch-template": self._get_templates(config, "add_arch_template"),
+                "add-template-var": config.get("add_template_var"),
+                "add-arch-template-var": config.get("add_arch_template_var"),
+                "rootfs-size": config.get("rootfs_size"),
+                "isfinal": compose.supported,
+                "outputdir": output_dir,
+            }
+
+            runroot.run_pungi_buildinstall(
+                args,
+                log_file=log_file,
+                arch=arch,
+                packages=packages,
+                mounts=[compose.topdir],
+                weight=compose.conf["runroot_weights"].get("ostree_installer"),
+            )
+
+            # If Koji pungi-buildinstall is used, then the buildinstall results are
+            # not stored directly in `output_dir` dir, but in "results" and "logs"
+            # subdirectories. We need to move them to final_output_dir.
+            results_dir = os.path.join(output_dir, "results")
+            move_all(results_dir, output_dir, rm_src_dir=True)
+
+            # Get the log_dir into which we should copy the resulting log files.
+            if not os.path.exists(self.logdir):
+                makedirs(self.logdir)
+            log_dir = os.path.join(output_dir, "logs")
+            move_all(log_dir, self.logdir, rm_src_dir=True)
+        else:
+            lorax_wrapper = lorax.LoraxWrapper()
+            lorax_cmd = lorax_wrapper.get_lorax_cmd(
+                compose.conf["release_name"],
+                compose.conf["release_version"],
+                self._get_release(compose, config),
+                repo_baseurl=source_repo,
+                output_dir=output_dir,
+                variant=variant.uid,
+                nomacboot=True,
+                volid=volid,
+                buildarch=get_valid_arches(arch)[0],
+                buildinstallpackages=config.get("installpkgs"),
+                add_template=self._get_templates(config, "add_template"),
+                add_arch_template=self._get_templates(config, "add_arch_template"),
+                add_template_var=config.get("add_template_var"),
+                add_arch_template_var=config.get("add_arch_template_var"),
+                rootfs_size=config.get("rootfs_size"),
+                is_final=compose.supported,
+                log_dir=self.logdir,
+            )
+            cmd = "rm -rf %s && %s" % (
+                shlex_quote(output_dir),
+                " ".join([shlex_quote(x) for x in lorax_cmd]),
+            )
+
+            runroot.run(
+                cmd,
+                log_file=log_file,
+                arch=arch,
+                packages=packages,
+                mounts=[compose.topdir],
+                chown_paths=[output_dir],
+                weight=compose.conf["runroot_weights"].get("ostree_installer"),
+            )

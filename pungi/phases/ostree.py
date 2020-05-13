@@ -5,6 +5,7 @@ import json
 import os
 from kobo import shortcuts
 from kobo.threads import ThreadPool, WorkerThread
+from collections import OrderedDict
 
 from pungi.arch_utils import getBaseArch
 from pungi.runroot import Runroot
@@ -154,45 +155,49 @@ class OSTreeThread(WorkerThread):
     def _run_ostree_cmd(
         self, compose, variant, arch, config, config_repo, extra_config_file=None
     ):
-        cmd = [
-            "pungi-make-ostree",
-            "tree",
-            "--repo=%s" % config["ostree_repo"],
-            "--log-dir=%s" % self.logdir,
-            "--treefile=%s" % os.path.join(config_repo, config["treefile"]),
-        ]
-
-        version = util.version_generator(compose, config.get("version"))
-        if version:
-            cmd.append("--version=%s" % version)
-
-        if extra_config_file:
-            cmd.append("--extra-config=%s" % extra_config_file)
-
-        if config.get("update_summary", False):
-            cmd.append("--update-summary")
-
-        ostree_ref = config.get("ostree_ref")
-        if ostree_ref:
-            cmd.append("--ostree-ref=%s" % ostree_ref)
-
-        if config.get("force_new_commit", False):
-            cmd.append("--force-new-commit")
-
+        args = OrderedDict(
+            [
+                ("repo", config["ostree_repo"]),
+                ("log-dir", self.logdir),
+                ("treefile", os.path.join(config_repo, config["treefile"])),
+                ("version", util.version_generator(compose, config.get("version"))),
+                ("extra-config", extra_config_file),
+                ("update-summary", config.get("update_summary", False)),
+                ("ostree-ref", config.get("ostree_ref")),
+                ("force-new-commit", config.get("force_new_commit", False)),
+            ]
+        )
         packages = ["pungi", "ostree", "rpm-ostree"]
         log_file = os.path.join(self.logdir, "runroot.log")
         mounts = [compose.topdir, config["ostree_repo"]]
-
         runroot = Runroot(compose, phase="ostree")
-        runroot.run(
-            cmd,
-            log_file=log_file,
-            arch=arch,
-            packages=packages,
-            mounts=mounts,
-            new_chroot=True,
-            weight=compose.conf["runroot_weights"].get("ostree"),
-        )
+
+        if compose.conf["ostree_use_koji_plugin"]:
+            runroot.run_pungi_ostree(
+                dict(args),
+                log_file=log_file,
+                arch=arch,
+                packages=packages,
+                mounts=mounts,
+                weight=compose.conf["runroot_weights"].get("ostree"),
+            )
+        else:
+            cmd = ["pungi-make-ostree", "tree"]
+            for key, value in args.items():
+                if value is True:
+                    cmd.append("--%s" % key)
+                elif value:
+                    cmd.append("--%s=%s" % (key, value))
+
+            runroot.run(
+                cmd,
+                log_file=log_file,
+                arch=arch,
+                packages=packages,
+                mounts=mounts,
+                new_chroot=True,
+                weight=compose.conf["runroot_weights"].get("ostree"),
+            )
 
     def _clone_repo(self, compose, repodir, url, branch):
         scm.get_dir_from_scm(

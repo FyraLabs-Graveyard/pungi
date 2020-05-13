@@ -201,6 +201,44 @@ class KojiWrapper(object):
 
         return cmd
 
+    def get_pungi_ostree_cmd(
+        self, target, arch, args, channel=None, packages=None, mounts=None, weight=None,
+    ):
+        cmd = self._get_cmd("pungi-ostree", "--nowait", "--task-id")
+
+        if channel:
+            cmd.append("--channel-override=%s" % channel)
+        else:
+            cmd.append("--channel-override=runroot-local")
+
+        if weight:
+            cmd.append("--weight=%s" % int(weight))
+
+        for package in packages or []:
+            cmd.append("--package=%s" % package)
+
+        for mount in mounts or []:
+            # directories are *not* created here
+            cmd.append("--mount=%s" % mount)
+
+        # IMPORTANT: all --opts have to be provided *before* args
+
+        cmd.append(target)
+
+        # i686 -> i386 etc.
+        arch = getBaseArch(arch)
+        cmd.append(arch)
+
+        for k, v in args.items():
+            if v:
+                if isinstance(v, bool):
+                    cmd.append(k)
+                else:
+                    for arg in force_list(v):
+                        cmd.append("%s=%s" % (k, shlex_quote(arg)))
+
+        return cmd
+
     @contextlib.contextmanager
     def get_koji_cmd_env(self):
         """Get environment variables for running a koji command.
