@@ -1099,6 +1099,7 @@ def make_schema():
                         "rootfs_size": {"type": "integer"},
                         "version": {"type": "string"},
                         "dracut_args": {"$ref": "#/definitions/list_of_strings"},
+                        "skip_branding": {"type": "boolean"},
                     },
                     "additionalProperties": False,
                 }

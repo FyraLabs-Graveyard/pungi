@@ -86,6 +86,7 @@ class BuildinstallPhase(PhaseBase):
         add_arch_template_var = []
         dracut_args = []
         rootfs_size = None
+        skip_branding = False
         version = self.compose.conf.get(
             "treeinfo_version", self.compose.conf["release_version"]
         )
@@ -105,6 +106,7 @@ class BuildinstallPhase(PhaseBase):
             add_template_var.extend(data.get("add_template_var", []))
             add_arch_template_var.extend(data.get("add_arch_template_var", []))
             dracut_args.extend(data.get("dracut_args", []))
+            skip_branding = data.get("skip_branding", False)
             if "version" in data:
                 version = data["version"]
         output_dir = os.path.join(output_dir, variant.uid)
@@ -146,6 +148,7 @@ class BuildinstallPhase(PhaseBase):
                 "noupgrade": noupgrade,
                 "rootfs-size": rootfs_size,
                 "dracut-args": dracut_args,
+                "skip_branding": skip_branding,
                 "outputdir": output_dir,
             }
         else:
@@ -178,6 +181,7 @@ class BuildinstallPhase(PhaseBase):
                 rootfs_size=rootfs_size,
                 log_dir=log_dir,
                 dracut_args=dracut_args,
+                skip_branding=skip_branding,
             )
             return "rm -rf %s && %s" % (
                 shlex_quote(output_topdir),

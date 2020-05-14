@@ -154,6 +154,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -180,6 +181,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -206,6 +208,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
             ],
         )
@@ -283,6 +286,7 @@ class TestBuildinstallPhase(PungiTestCase):
                 "noupgrade": True,
                 "rootfs-size": None,
                 "dracut-args": [],
+                "skip_branding": False,
                 "outputdir": self.topdir + "/work/amd64/buildinstall/Server",
             },
             {
@@ -308,6 +312,7 @@ class TestBuildinstallPhase(PungiTestCase):
                 "noupgrade": True,
                 "rootfs-size": None,
                 "dracut-args": [],
+                "skip_branding": False,
                 "outputdir": self.topdir + "/work/amd64/buildinstall/Client",
             },
             {
@@ -333,6 +338,7 @@ class TestBuildinstallPhase(PungiTestCase):
                 "noupgrade": True,
                 "rootfs-size": None,
                 "dracut-args": [],
+                "skip_branding": False,
                 "outputdir": self.topdir + "/work/x86_64/buildinstall/Server",
             },
         ]
@@ -430,6 +436,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 )
             ],
             any_order=True,
@@ -596,6 +603,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=3,
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=["--xz", "--install", "/.buildstamp"],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -621,6 +629,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -646,6 +655,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
             ],
         )
@@ -745,6 +755,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -770,6 +781,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -795,6 +807,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
             ],
         )
@@ -895,6 +908,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=buildinstall_topdir + "/x86_64/Server/logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -920,6 +934,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=buildinstall_topdir + "/amd64/Server/logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -945,6 +960,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=buildinstall_topdir + "/amd64/Client/logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
             ],
         )
@@ -1037,6 +1053,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -1062,6 +1079,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
                 mock.call(
                     "Test",
@@ -1089,6 +1107,7 @@ class TestBuildinstallPhase(PungiTestCase):
                     rootfs_size=None,
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
+                    skip_branding=False,
                 ),
             ],
         )

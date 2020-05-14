@@ -551,6 +551,7 @@ Options
         dracut. Please note that if this option is used, lorax will not use any
         other arguments, so you have to provide a full list and can not just
         add something.
+      * ``skip_branding`` -- *bool* (default ``False``)
 **lorax_extra_sources**
     (*list*) -- a variant/arch mapping with urls for extra source repositories
     added to Lorax command line. Either one repo or a list can be specified.

@@ -43,6 +43,7 @@ class LoraxWrapper(object):
         rootfs_size=None,
         log_dir=None,
         dracut_args=None,
+        skip_branding=False,
     ):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
@@ -89,6 +90,9 @@ class LoraxWrapper(object):
 
         for i in force_list(dracut_args or []):
             cmd.append("--dracut-arg=%s" % i)
+
+        if skip_branding:
+            cmd.append("--skip-branding")
 
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
