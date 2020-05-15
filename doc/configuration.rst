@@ -507,7 +507,11 @@ Options
 
 **pkgset_allow_reuse** = True
     (*bool*) -- When set to ``True``, *Pungi* will try to reuse pkgset data
-    from the old composes specified by ``--old-composes``.
+    from the old composes specified by ``--old-composes``. When enabled, this
+    option can speed up new composes because it does not need to calculate the
+    pkgset data from Koji. However, if you block or unblock a package in Koji
+    (for example) between composes, then Pungi may not respect those changes
+    in your new compose.
 
 
 Example
