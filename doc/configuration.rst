@@ -507,7 +507,7 @@ Options
 
 **pkgset_allow_reuse** = True
     (*bool*) -- When set to ``True``, *Pungi* will try to reuse pkgset data
-    from old compose specified by ``--old-composes``.
+    from the old composes specified by ``--old-composes``.
 
 
 Example
