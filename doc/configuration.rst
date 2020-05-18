@@ -467,8 +467,13 @@ Options
 -------
 
 **sigkeys**
-    ([*str* or None]) -- priority list of sigkeys; if the list includes an
-    empty string or  *None*, unsigned packages will be allowed
+    ([*str* or None]) -- priority list of signing key IDs. These key IDs match
+    the key IDs for the builds in Koji. Pungi will choose signed packages
+    according to the order of the key IDs that you specify here. Use one
+    single key in this list to ensure that all RPMs are signed by one key. If
+    the list includes an empty string or *None*, Pungi will allow unsigned
+    packages. If the list only includes *None*, Pungi will use all unsigned
+    packages.
 
 **pkgset_source** [mandatory]
     (*str*) -- "koji" (any koji instance) or "repos" (arbitrary yum repositories)
