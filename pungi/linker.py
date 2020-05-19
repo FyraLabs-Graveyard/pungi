@@ -213,12 +213,13 @@ class Linker(kobo.log.LoggingBase):
                 relative = link_type != "abspath-symlink"
                 self.symlink(src, dst, relative)
         elif link_type == "hardlink-or-copy":
-            src_stat = os.stat(src)
-            dst_stat = os.stat(os.path.dirname(dst))
-            if src_stat.st_dev == dst_stat.st_dev:
+            try:
                 self.hardlink(src, dst)
-            else:
-                self.copy(src, dst)
+            except OSError as ex:
+                if ex.errno == errno.EXDEV:
+                    self.copy(src, dst)
+                else:
+                    raise
         else:
             raise ValueError("Unknown link_type: %s" % link_type)
 
