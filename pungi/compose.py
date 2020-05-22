@@ -51,18 +51,16 @@ except ImportError:
     SUPPORTED_MILESTONES = ["RC", "Update", "SecurityFix"]
 
 
-def get_compose_dir(
-    topdir,
+def get_compose_info(
     conf,
     compose_type="production",
     compose_date=None,
     compose_respin=None,
     compose_label=None,
-    already_exists_callbacks=None,
 ):
-    already_exists_callbacks = already_exists_callbacks or []
-
-    # create an incomplete composeinfo to generate compose ID
+    """
+    Creates inncomplete ComposeInfo to generate Compose ID
+    """
     ci = ComposeInfo()
     ci.release.name = conf["release_name"]
     ci.release.short = conf["release_short"]
@@ -81,37 +79,112 @@ def get_compose_dir(
     ci.compose.date = compose_date or time.strftime("%Y%m%d", time.localtime())
     ci.compose.respin = compose_respin or 0
 
-    while 1:
+    cts_url = conf.get("cts_url", None)
+    if cts_url:
+        # Import requests and requests-kerberos here so it is not needed
+        # if running without Compose Tracking Service.
+        import requests
+        from requests_kerberos import HTTPKerberosAuth
+
+        # Requests-kerberos cannot accept custom keytab, we need to use
+        # environment variable for this. But we need to change environment
+        # only temporarily just for this single requests.post.
+        # So at first backup the current environment and revert to it
+        # after the requests.post call.
+        cts_keytab = conf.get("cts_keytab", None)
+        if cts_keytab:
+            environ_copy = dict(os.environ)
+            os.environ["KRB5_CLIENT_KTNAME"] = cts_keytab
+
+        try:
+            # Create compose in CTS and get the reserved compose ID.
+            ci.compose.id = ci.create_compose_id()
+            url = os.path.join(cts_url, "api/1/composes/")
+            data = {"compose_info": json.loads(ci.dumps())}
+            rv = requests.post(url, json=data, auth=HTTPKerberosAuth())
+            rv.raise_for_status()
+        finally:
+            if cts_keytab:
+                os.environ.clear()
+                os.environ.update(environ_copy)
+
+        # Update local ComposeInfo with received ComposeInfo.
+        cts_ci = ComposeInfo()
+        cts_ci.loads(rv.text)
+        ci.compose.respin = cts_ci.compose.respin
+        ci.compose.id = cts_ci.compose.id
+    else:
         ci.compose.id = ci.create_compose_id()
 
-        compose_dir = os.path.join(topdir, ci.compose.id)
+    return ci
 
-        exists = False
-        # TODO: callbacks to determine if a composeid was already used
-        # for callback in already_exists_callbacks:
-        #     if callback(data):
-        #         exists = True
-        #         break
 
-        # already_exists_callbacks fallback: does target compose_dir exist?
-        try:
-            os.makedirs(compose_dir)
-        except OSError as ex:
-            if ex.errno == errno.EEXIST:
-                exists = True
-            else:
-                raise
-
-        if exists:
-            ci.compose.respin += 1
-            continue
-        break
-
+def write_compose_info(compose_dir, ci):
+    """
+    Write ComposeInfo `ci` to `compose_dir` subdirectories.
+    """
+    makedirs(compose_dir)
     with open(os.path.join(compose_dir, "COMPOSE_ID"), "w") as f:
         f.write(ci.compose.id)
     work_dir = os.path.join(compose_dir, "work", "global")
     makedirs(work_dir)
     ci.dump(os.path.join(work_dir, "composeinfo-base.json"))
+
+
+def get_compose_dir(
+    topdir,
+    conf,
+    compose_type="production",
+    compose_date=None,
+    compose_respin=None,
+    compose_label=None,
+    already_exists_callbacks=None,
+):
+    already_exists_callbacks = already_exists_callbacks or []
+
+    ci = get_compose_info(
+        conf, compose_type, compose_date, compose_respin, compose_label
+    )
+
+    cts_url = conf.get("cts_url", None)
+    if cts_url:
+        # Create compose directory.
+        compose_dir = os.path.join(topdir, ci.compose.id)
+        os.makedirs(compose_dir)
+    else:
+        while 1:
+            ci.compose.id = ci.create_compose_id()
+
+            compose_dir = os.path.join(topdir, ci.compose.id)
+
+            exists = False
+            # TODO: callbacks to determine if a composeid was already used
+            # for callback in already_exists_callbacks:
+            #     if callback(data):
+            #         exists = True
+            #         break
+
+            # already_exists_callbacks fallback: does target compose_dir exist?
+            try:
+                os.makedirs(compose_dir)
+            except OSError as ex:
+                if ex.errno == errno.EEXIST:
+                    exists = True
+                else:
+                    raise
+
+            if exists:
+                ci = get_compose_info(
+                    conf,
+                    compose_type,
+                    compose_date,
+                    ci.compose.respin + 1,
+                    compose_label,
+                )
+                continue
+            break
+
+    write_compose_info(compose_dir, ci)
     return compose_dir
 
 
@@ -221,6 +294,8 @@ class Compose(kobo.log.LoggingBase):
         else:
             self.cache_region = make_region().configure("dogpile.cache.null")
 
+    get_compose_info = staticmethod(get_compose_info)
+    write_compose_info = staticmethod(write_compose_info)
     get_compose_dir = staticmethod(get_compose_dir)
 
     def __getitem__(self, name):

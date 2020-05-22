@@ -765,6 +765,8 @@ def make_schema():
             "pdc_url": {"deprecated": "Koji is queried instead"},
             "pdc_develop": {"deprecated": "Koji is queried instead"},
             "pdc_insecure": {"deprecated": "Koji is queried instead"},
+            "cts_url": {"type": "string"},
+            "cts_keytab": {"type": "string"},
             "koji_profile": {"type": "string"},
             "koji_event": {"type": "number"},
             "pkgset_koji_tag": {"$ref": "#/definitions/strings"},

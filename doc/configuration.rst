@@ -176,6 +176,16 @@ Options
     Please note that when ``dnf`` is used, the build dependencies check is
     skipped. On Python 3, only ``dnf`` backend is available.
 
+**cts_url**
+    (*str*) -- URL to Compose Tracking Service. If defined, Pungi will add
+    the compose to Compose Tracking Service and ge the compose ID from it.
+    For example ``https://cts.localhost.tld/``
+
+**cts_keytab**
+    (*str*) -- Path to Kerberos keytab which will be used for Compose
+    Tracking Service Kerberos authentification. If not defined, the default
+    Kerberos principal is used.
+
 **compose_type**
     (*str*) -- Allows to set default compose type. Type set via a command-line
     option overwrites this.

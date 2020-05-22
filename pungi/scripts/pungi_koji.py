@@ -47,7 +47,8 @@ def main():
     group.add_argument(
         "--compose-dir",
         metavar="PATH",
-        help="reuse an existing compose directory (DANGEROUS!)",
+        help="specify compose directory in which the compose will be generated."
+        "If directory already exists, Pungi will reuse it (DANGEROUS!).",
     )
     parser.add_argument(
         "--label",
@@ -199,11 +200,8 @@ def main():
             )
     else:
         opts.compose_dir = os.path.abspath(opts.compose_dir)
-        if not os.path.isdir(opts.compose_dir):
-            abort(
-                "The compose directory does not exist or is not a directory: %s"
-                % opts.compose_dir
-            )
+        if os.path.exists(opts.compose_dir) and not os.path.isdir(opts.compose_dir):
+            abort("The compose directory is not a directory: %s" % opts.compose_dir)
 
     opts.config = os.path.abspath(opts.config)
 
@@ -275,6 +273,11 @@ def main():
         )
     else:
         compose_dir = opts.compose_dir
+        if not os.path.exists(compose_dir):
+            ci = Compose.get_compose_info(
+                conf, compose_type=compose_type, compose_label=opts.label
+            )
+            Compose.write_compose_info(compose_dir, ci)
 
     if opts.print_output_dir:
         print("Compose dir: %s" % compose_dir)

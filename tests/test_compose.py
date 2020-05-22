@@ -11,6 +11,7 @@ import os
 import six
 import tempfile
 import shutil
+import json
 
 from pungi.compose import Compose
 
@@ -26,6 +27,27 @@ class ConfigWrapper(dict):
 class ComposeTestCase(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
+
+        # Basic ComposeInfo metadata used in tests.
+        self.ci_json = {
+            "header": {"type": "productmd.composeinfo", "version": mock.ANY},
+            "payload": {
+                "compose": {
+                    "date": "20200526",
+                    "id": "test-1.0-20200526.0",
+                    "respin": 0,
+                    "type": "production",
+                },
+                "release": {
+                    "internal": False,
+                    "name": "Test",
+                    "short": "test",
+                    "type": "ga",
+                    "version": "1.0",
+                },
+                "variants": {},
+            },
+        }
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -570,6 +592,61 @@ class ComposeTestCase(unittest.TestCase):
         self.assertTrue(os.path.isdir(d))
         d = compose.mkdtemp(prefix="tweak_buildinstall")
         self.assertTrue(os.path.isdir(d))
+
+    def test_get_compose_info(self):
+        conf = ConfigWrapper(
+            release_name="Test",
+            release_version="1.0",
+            release_short="test",
+            release_type="ga",
+            release_internal=False,
+        )
+
+        ci = Compose.get_compose_info(conf)
+        ci_json = json.loads(ci.dumps())
+        self.assertEqual(ci_json, self.ci_json)
+
+    def test_get_compose_info_cts(self):
+        conf = ConfigWrapper(
+            release_name="Test",
+            release_version="1.0",
+            release_short="test",
+            release_type="ga",
+            release_internal=False,
+            cts_url="https://cts.localhost.tld/",
+            cts_keytab="/tmp/some.keytab",
+        )
+
+        # The `mock.ANY` in ["header"]["version"] cannot be serialized,
+        # so for this test, we replace it with real version.
+        ci_copy = dict(self.ci_json)
+        ci_copy["header"]["version"] = "1.2"
+        mocked_response = mock.MagicMock()
+        mocked_response.text = json.dumps(self.ci_json)
+        mocked_requests = mock.MagicMock()
+        mocked_requests.post.return_value = mocked_response
+
+        mocked_requests_kerberos = mock.MagicMock()
+
+        # The `requests` and `requests_kerberos` modules are imported directly
+        # in the `get_compose_info` function. To patch them, we need to patch
+        # the `sys.modules` directly so the patched modules are returned by
+        # `import`.
+        with mock.patch.dict(
+            "sys.modules",
+            requests=mocked_requests,
+            requests_kerberos=mocked_requests_kerberos,
+        ):
+            ci = Compose.get_compose_info(conf)
+            ci_json = json.loads(ci.dumps())
+            self.assertEqual(ci_json, self.ci_json)
+
+            mocked_response.raise_for_status.assert_called_once()
+            mocked_requests.post.assert_called_once_with(
+                "https://cts.localhost.tld/api/1/composes/",
+                auth=mock.ANY,
+                json={"compose_info": self.ci_json},
+            )
 
 
 class StatusTest(unittest.TestCase):
