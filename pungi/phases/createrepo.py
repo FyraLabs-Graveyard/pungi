@@ -111,7 +111,7 @@ def create_variant_repo(
 
     if variant.is_empty or (arch is None and pkg_type != "srpm"):
         compose.log_info(
-            "[SKIP ] Creating repo (arch: %s, variant: %s): %s" % (arch, variant)
+            "[SKIP ] Creating repo (arch: %s, variant: %s)" % (arch, variant)
         )
         return
 

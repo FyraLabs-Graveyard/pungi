@@ -1132,27 +1132,6 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
     @mock.patch("pungi.phases.gather.load_old_gather_result")
     @mock.patch("pungi.phases.gather.load_old_compose_config")
-    def test_reuse_compose_config_different(
-        self, load_old_compose_config, load_old_gather_result
-    ):
-        load_old_gather_result.return_value = {
-            "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
-            "srpm": [],
-            "debuginfo": [],
-        }
-
-        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
-        compose_conf_copy = dict(compose.conf)
-        compose_conf_copy["gather_method"] = "nodeps"
-        load_old_compose_config.return_value = compose_conf_copy
-
-        result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], []
-        )
-        self.assertEqual(result, None)
-
-    @mock.patch("pungi.phases.gather.load_old_gather_result")
-    @mock.patch("pungi.phases.gather.load_old_compose_config")
     def test_reuse_compose_config_different_whitelist(
         self, load_old_compose_config, load_old_gather_result
     ):
@@ -1252,25 +1231,6 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = copy.deepcopy(compose.conf)
 
         gather._update_config(compose, "Server", "x86_64", compose.topdir)
-        result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
-        )
-        self.assertEqual(result, None)
-
-    @mock.patch("pungi.phases.gather.load_old_gather_result")
-    @mock.patch("pungi.phases.gather.load_old_compose_config")
-    def test_reuse_no_old_file_cache(
-        self, load_old_compose_config, load_old_gather_result
-    ):
-        package_sets = self._prepare_package_sets(
-            load_old_gather_result, requires=[], provides=[]
-        )
-        package_sets[0]["global"].old_file_cache = {
-            "/build/foo-1-1.x86_64.rpm": MockPkg("foo-1-1.x86_64.rpm", sourcerpm="foo")
-        }
-        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
-        load_old_compose_config.return_value = compose.conf
-
         result = gather.reuse_old_gather_packages(
             compose, "x86_64", compose.variants["Server"], package_sets
         )

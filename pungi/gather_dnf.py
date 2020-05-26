@@ -94,7 +94,7 @@ class GatherOptions(pungi.common.OptionsBase):
             "exclude_source=%s" % self.exclude_source,
             "exclude_debug=%s" % self.exclude_debug,
         ]
-        return "[\n%s\n]" % "\n".join("    " + l for l in lines)
+        return "[\n%s\n]" % "\n".join("    " + line for line in lines)
 
 
 class QueryCache(object):

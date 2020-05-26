@@ -636,9 +636,7 @@ class TestCreateiso(PungiTestCase):
                     if a.startswith("debug-"):
                         iso_arch += "-debuginfo"
                         a = a.split("-", 1)[1]
-                    path = "{0}/{1}/iso/DP-1.0-20161013.t.4-{1}-dvd.iso".format(
-                        v, arch, iso_arch
-                    )
+                    path = "{0}/{1}/iso/DP-1.0-20161013.t.4-{1}-dvd.iso".format(v, arch)
                     if image.unified and image.arch == a and image.path == path:
                         break
                 else:
