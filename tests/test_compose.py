@@ -593,6 +593,7 @@ class ComposeTestCase(unittest.TestCase):
         d = compose.mkdtemp(prefix="tweak_buildinstall")
         self.assertTrue(os.path.isdir(d))
 
+    @mock.patch("time.strftime", new=lambda fmt, time: "20200526")
     def test_get_compose_info(self):
         conf = ConfigWrapper(
             release_name="Test",
@@ -606,6 +607,7 @@ class ComposeTestCase(unittest.TestCase):
         ci_json = json.loads(ci.dumps())
         self.assertEqual(ci_json, self.ci_json)
 
+    @mock.patch("time.strftime", new=lambda fmt, time: "20200526")
     def test_get_compose_info_cts(self):
         conf = ConfigWrapper(
             release_name="Test",
