@@ -784,6 +784,17 @@ Options
     (*list*) -- lookaside repositories used for package gathering; format:
     ``[(variant_uid_regex, {arch|*: [repo_urls]})]``
 
+    The repo_urls are passed to the depsolver, which can use packages in the
+    repos for satisfying dependencies, but the packages themselves are not
+    pulled into the compose. The repo_urls can contain $basearch variable,
+    which will be substituted with proper value by the depsolver.
+
+    The repo_urls are used by repoclosure too, but it can't parse $basearch
+    currently and that will cause Repoclosure phase crashed. *repoclosure_strictness*
+    option could be used to stop running repoclosure.
+
+    Please note that * as a wildcard matches all architectures but src.
+
 **hashed_directories** = False
     (*bool*) -- put packages into "hashed" directories, for example
     ``Packages/k/kernel-4.0.4-301.fc22.x86_64.rpm``
@@ -876,8 +887,10 @@ Example
 
     # gather_lookaside_repos = [
     #     ('^.*$', {
+    #         '*': [
+    #             "https://dl.fedoraproject.org/pub/fedora/linux/releases/22/Everything/$basearch/os/",
+    #         ],
     #         'x86_64': [
-    #             "https://dl.fedoraproject.org/pub/fedora/linux/releases/22/Everything/x86_64/os/",
     #             "https://dl.fedoraproject.org/pub/fedora/linux/releases/22/Everything/source/SRPMS/",
     #         ]
     #     }),
