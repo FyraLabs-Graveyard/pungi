@@ -94,6 +94,10 @@ class UnifiedISO(object):
             self.createiso()
             self.update_checksums()
             self.dump_manifest()
+        except RuntimeError as exc:
+            if hasattr(exc, "output"):
+                print(exc.output)
+            raise
         finally:
             if delete_temp:
                 shutil.rmtree(self.temp_dir)
@@ -377,7 +381,8 @@ class UnifiedISO(object):
             run(
                 iso.get_mkisofs_cmd(
                     iso_path, [source_dir], volid=volid, exclude=["./lost+found"]
-                )
+                ),
+                universal_newlines=True,
             )
 
             # implant MD5
