@@ -52,6 +52,7 @@ class PungiNotifier(object):
         data.setdefault("compose_type", self.compose.compose_type)
         data.setdefault("compose_respin", self.compose.compose_respin)
         data.setdefault("compose_label", self.compose.compose_label)
+        data.setdefault("compose_path", self.compose.topdir)
         data.setdefault("release_short", self.compose.conf["release_short"])
         data.setdefault("release_name", self.compose.conf["release_name"])
         data.setdefault("release_version", self.compose.conf["release_version"])

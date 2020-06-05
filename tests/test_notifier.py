@@ -29,6 +29,7 @@ class TestNotifier(unittest.TestCase):
             compose_respin=1,
             compose_label="Updates-20171031.1021",
             compose_type="production",
+            topdir="/a/b",
             log_warning=mock.Mock(),
             conf={
                 "release_name": "Layer",
@@ -56,6 +57,7 @@ class TestNotifier(unittest.TestCase):
         data["compose_type"] = "production"
         data["compose_respin"] = 1
         data["compose_label"] = "Updates-20171031.1021"
+        data["compose_path"] = "/a/b"
         data["release_short"] = "L"
         data["release_name"] = "Layer"
         data["release_version"] = "27"
