@@ -859,6 +859,7 @@ def make_schema():
             },
             "product_id": {"$ref": "#/definitions/str_or_scm_dict"},
             "product_id_allow_missing": {"type": "boolean", "default": False},
+            "product_id_allow_name_prefix": {"type": "boolean", "default": True},
             # Deprecated in favour of regular local/phase/global setting.
             "live_target": {"type": "string"},
             "tree_arches": {"$ref": "#/definitions/list_of_strings", "default": []},

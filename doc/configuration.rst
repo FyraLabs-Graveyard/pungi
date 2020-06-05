@@ -448,7 +448,7 @@ Options
 
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
-    directory with certificates ``<variant_uid>-<arch>-*.pem``. Pungi will
+    directory with certificates ``*<variant_uid>-<arch>-*.pem``. Pungi will
     copy each certificate file into the relevant Yum repositories as a
     ``productid`` file in the ``repodata`` directories. The purpose of these
     ``productid`` files is to expose the product data to `subscription-manager
@@ -461,6 +461,12 @@ Options
     and architecture is missing, Pungi will exit with an error by default.
     When you set this option to ``True``, Pungi will ignore the missing
     certificate and simply log a warning message.
+
+**product_id_allow_name_prefix** = True
+    (*bool*) -- Allow arbitrary prefix for the certificate file name (see
+    leading ``*`` in the pattern above). Setting this option to ``False`` will
+    make the pattern more strict by requiring the file name to start directly
+    with variant name.
 
 
 Example

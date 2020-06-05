@@ -350,12 +350,15 @@ def get_productids_from_scm(compose):
             return
         raise
 
+    if compose.conf["product_id_allow_name_prefix"]:
+        pattern = "%s/*%s-%s-*.pem"
+    else:
+        pattern = "%s/%s-%s-*.pem"
+
     for arch in compose.get_arches():
         for variant in compose.get_variants(arch=arch):
             # some layered products may use base product name before variant
-            pem_files = glob.glob("%s/*%s-%s-*.pem" % (tmp_dir, variant.uid, arch))
-            # use for development:
-            # pem_files = glob.glob("%s/*.pem" % tmp_dir)[-1:]
+            pem_files = glob.glob(pattern % (tmp_dir, variant.uid, arch))
             if not pem_files:
                 warning = "No product certificate found (arch: %s, variant: %s)" % (
                     arch,
