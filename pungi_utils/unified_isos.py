@@ -63,7 +63,7 @@ DEFAULT_CHECKSUMS = ["md5", "sha1", "sha256"]
 
 
 class UnifiedISO(object):
-    def __init__(self, compose_path, output_path=None):
+    def __init__(self, compose_path, output_path=None, arches=None):
         self.compose_path = os.path.abspath(compose_path)
         compose_subdir = os.path.join(self.compose_path, "compose")
         if os.path.exists(compose_subdir):
@@ -84,6 +84,7 @@ class UnifiedISO(object):
         self.productid = {}  # {arch/stc: {variant: old_path}
         self.conf = self.read_config()
         self.images = None  # productmd.images.Images instance
+        self.arches = arches
 
     def create(self, delete_temp=True):
         print("Creating unified ISOs for: {0}".format(self.compose_path))
@@ -161,6 +162,8 @@ class UnifiedISO(object):
         # copy files to new location; change RPM location to $variant_uid
         for variant in self.ci.get_variants(recursive=False):
             for arch in variant.arches:
+                if self.arches and arch not in self.arches:
+                    continue
                 print("Processing: {0}.{1}".format(variant.uid, arch))
                 try:
                     tree_dir = os.path.join(
