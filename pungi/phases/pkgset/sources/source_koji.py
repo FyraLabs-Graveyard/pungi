@@ -641,8 +641,10 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
         compose.log_info("Loading package set for tag %s", compose_tag)
         if compose_tag in pkgset_koji_tags:
             extra_builds = force_list(compose.conf.get("pkgset_koji_builds", []))
+            extra_tasks = force_list(compose.conf.get("pkgset_koji_scratch_tasks", []))
         else:
             extra_builds = []
+            extra_tasks = []
 
         pkgset = pungi.phases.pkgset.pkgsets.KojiPackageSet(
             compose_tag,
@@ -655,6 +657,7 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             populate_only_packages=populate_only_packages_to_gather,
             cache_region=compose.cache_region,
             extra_builds=extra_builds,
+            extra_tasks=extra_tasks,
         )
 
         # Check if we have cache for this tag from previous compose. If so, use

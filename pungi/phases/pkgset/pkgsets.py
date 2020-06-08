@@ -328,6 +328,7 @@ class KojiPackageSet(PackageSetBase):
         populate_only_packages=False,
         cache_region=None,
         extra_builds=None,
+        extra_tasks=None,
     ):
         """
         Creates new KojiPackageSet.
@@ -357,6 +358,9 @@ class KojiPackageSet(PackageSetBase):
             again.
         :param list extra_builds: Extra builds NVRs to get from Koji and include
             in the package set.
+        :param list extra_tasks: Extra RPMs defined as Koji task IDs to get from Koji
+            and include in the package set. Useful when building testing compose
+            with RPM scratch builds.
         """
         super(KojiPackageSet, self).__init__(
             name,
@@ -371,6 +375,7 @@ class KojiPackageSet(PackageSetBase):
         self.populate_only_packages = populate_only_packages
         self.cache_region = cache_region
         self.extra_builds = extra_builds or []
+        self.extra_tasks = extra_tasks or []
         self.reuse = None
 
     def __getstate__(self):
@@ -413,6 +418,53 @@ class KojiPackageSet(PackageSetBase):
             rpms += rpms_in_build
         return rpms, builds
 
+    def get_extra_rpms_from_tasks(self):
+        """
+        Returns manually constructed RPM infos from the Koji tasks defined
+        in `self.extra_tasks`.
+
+        :rtype: list
+        :return: List with RPM infos defined as dicts with following keys:
+            - name, version, release, arch, src - as returned by parse_nvra.
+            - path_from_task - Full path to RPM on /mnt/koji.
+            - build_id - Always set to None.
+        """
+        if not self.extra_tasks:
+            return []
+
+        # Get the IDs of children tasks - these are the tasks containing
+        # the resulting RPMs.
+        children_tasks = self.koji_wrapper.retrying_multicall_map(
+            self.koji_proxy,
+            self.koji_proxy.getTaskChildren,
+            list_of_args=self.extra_tasks,
+        )
+        children_task_ids = []
+        for tasks in children_tasks:
+            children_task_ids += [t["id"] for t in tasks]
+
+        # Get the results of these children tasks.
+        results = self.koji_wrapper.retrying_multicall_map(
+            self.koji_proxy,
+            self.koji_proxy.getTaskResult,
+            list_of_args=children_task_ids,
+        )
+        rpms = []
+        for result in results:
+            rpms += result.get("rpms", [])
+            rpms += result.get("srpms", [])
+
+        rpm_infos = []
+        for rpm in rpms:
+            rpm_info = kobo.rpmlib.parse_nvra(os.path.basename(rpm))
+            rpm_info["path_from_task"] = os.path.join(
+                self.koji_wrapper.koji_module.pathinfo.work(), rpm
+            )
+            rpm_info["build_id"] = None
+            rpm_infos.append(rpm_info)
+
+        return rpm_infos
+
     def get_latest_rpms(self, tag, event, inherit=True):
         if not tag:
             return [], []
@@ -443,6 +495,18 @@ class KojiPackageSet(PackageSetBase):
 
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item
+
+        # Check if this RPM is comming from scratch task. In this case, we already
+        # know the path and we must ensure unsigned packages are allowed.
+        if "path_from_task" in rpm_info:
+            if None in self.sigkey_ordering or "" in self.sigkey_ordering:
+                return rpm_info["path_from_task"]
+            else:
+                self.log_error(
+                    "Scratch RPM %s cannot be used in signed compose." % (rpm_info)
+                )
+                return None
+
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []
         for sigkey in self.sigkey_ordering:
@@ -521,6 +585,9 @@ class KojiPackageSet(PackageSetBase):
             else:
                 builds_by_id.setdefault(build_id, build_info)
 
+        # Get extra RPMs from tasks.
+        rpms += self.get_extra_rpms_from_tasks()
+
         skipped_arches = []
         skipped_packages_count = 0
         # We need to process binary packages first, and then source packages.
@@ -560,14 +627,20 @@ class KojiPackageSet(PackageSetBase):
                 skipped_packages_count += 1
                 continue
 
-            build_info = builds_by_id[rpm_info["build_id"]]
+            build_info = builds_by_id.get(rpm_info["build_id"], None)
             if _is_src(rpm_info):
                 result_srpms.append((rpm_info, build_info))
             else:
                 result_rpms.append((rpm_info, build_info))
                 if self.populate_only_packages and self.packages:
                     # Only add the package if we already have some whitelist.
-                    self.packages.add(build_info["name"])
+                    if build_info:
+                        self.packages.add(build_info["name"])
+                    else:
+                        # We have no build info and therefore no Koji package name,
+                        # we can only guess that the Koji package name would be the same
+                        # one as the RPM name.
+                        self.packages.add(rpm_info["name"])
 
         if skipped_packages_count:
             self.log_debug(

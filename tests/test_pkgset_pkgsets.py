@@ -33,6 +33,9 @@ class MockPathInfo(object):
     def rpm(self, rpm_info):
         return os.path.join("rpms", self.get_filename(rpm_info))
 
+    def work(self):
+        return "work"
+
 
 class MockFile(object):
     def __init__(self, path):
@@ -379,6 +382,73 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
                 "x86_64": ["rpms/bash@4.3.42@4.fc24@x86_64"],
             },
         )
+
+    def test_get_extra_rpms_from_tasks(self):
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            [None],
+            arches=["x86_64"],
+            extra_tasks=["123", "456"],
+        )
+        children_tasks = [[{"id": 1}, {"id": 2}], [{"id": 3}, {"id": 4}]]
+        task_results = [
+            {
+                "logs": [
+                    "tasks/root.log",
+                    "tasks/hw_info.log",
+                    "tasks/state.log",
+                    "tasks/build.log",
+                    "tasks/mock_output.log",
+                    "tasks/noarch_rpmdiff.json",
+                ],
+                "rpms": ["tasks/pungi-4.1.39-5.f30.noarch.rpm"],
+                "srpms": ["tasks/pungi-4.1.39-5.f30.src.rpm"],
+            },
+            {
+                "logs": [
+                    "tasks/5478/29155478/root.log",
+                    "tasks/5478/29155478/hw_info.log",
+                    "tasks/5478/29155478/state.log",
+                    "tasks/5478/29155478/build.log",
+                ],
+                "source": {
+                    "source": "pungi-4.1.39-5.f30.src.rpm",
+                    "url": "pungi-4.1.39-5.f30.src.rpm",
+                },
+                "srpm": "tasks/5478/29155478/pungi-4.1.39-5.f30.src.rpm",
+            },
+        ]
+        self.koji_wrapper.retrying_multicall_map.side_effect = [
+            children_tasks,
+            task_results,
+        ]
+
+        expected_rpms = [
+            {
+                "arch": "noarch",
+                "build_id": None,
+                "epoch": "",
+                "name": "pungi",
+                "path_from_task": "work/tasks/pungi-4.1.39-5.f30.noarch.rpm",
+                "release": "5.f30",
+                "src": False,
+                "version": "4.1.39",
+            },
+            {
+                "arch": "src",
+                "build_id": None,
+                "epoch": "",
+                "name": "pungi",
+                "path_from_task": "work/tasks/pungi-4.1.39-5.f30.src.rpm",
+                "release": "5.f30",
+                "src": True,
+                "version": "4.1.39",
+            },
+        ]
+
+        rpms = pkgset.get_extra_rpms_from_tasks()
+        self.assertEqual(rpms, expected_rpms)
 
     def test_get_latest_rpms_cache(self):
         self._touch_files(

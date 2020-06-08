@@ -522,6 +522,13 @@ Options
 **pkgset_koji_builds**
     (*str|[str]*) -- extra build(s) to include in a package set defined as NVRs.
 
+**pkgset_koji_scratch_tasks**
+    (*str|[str]*) -- RPM scratch build task(s) to include in a package set,
+    defined as task IDs. This option can be used only when ``compose_type``
+    is set to ``test``. The RPM still needs to have higher NVR than any
+    other RPM with the same name comming from other sources in order to
+    appear in the resulting compose.
+
 **pkgset_koji_module_tag**
    (*str|[str]*) -- tags to read module from. This option works similarly to
    listing tags in variants XML. If tags are specified and variants XML

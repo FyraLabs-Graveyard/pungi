@@ -232,6 +232,12 @@ def main():
     if compose_type == "production" and not opts.label and not opts.no_label:
         abort("must specify label for a production compose")
 
+    if (
+        compose_type != "test"
+        and conf.get("pkgset_koji_scratch_tasks", None) is not None
+    ):
+        abort('pkgset_koji_scratch_tasks can be used only for "test" compose type')
+
     # check if all requirements are met
     import pungi.checks
 
