@@ -73,6 +73,14 @@ class CreaterepoPhase(PhaseBase):
         for variant in self.compose.get_variants():
             if variant.is_empty:
                 continue
+
+            if variant.uid in self.compose.conf.get("createrepo_extra_modulemd", {}):
+                # Clone extra modulemd repository if it's configured.
+                get_dir_from_scm(
+                    self.compose.conf["createrepo_extra_modulemd"][variant.uid],
+                    self.compose.paths.work.tmp_dir(variant=variant, create_dir=False),
+                )
+
             self.pool.queue_put((self.compose, None, variant, "srpm"))
             for arch in variant.arches:
                 self.pool.queue_put((self.compose, arch, variant, "rpm"))
@@ -236,6 +244,22 @@ def create_variant_repo(
         collect_module_defaults(
             defaults_dir, module_names, mod_index, overrides_dir=overrides_dir
         )
+
+        # Add extra modulemd files
+        if variant.uid in compose.conf.get("createrepo_extra_modulemd", {}):
+            compose.log_debug("Adding extra modulemd for %s.%s", variant.uid, arch)
+            dirname = compose.paths.work.tmp_dir(variant=variant, create_dir=False)
+            for filepath in glob.glob(os.path.join(dirname, arch) + "/*.yaml"):
+                module_stream = Modulemd.ModuleStream.read_file(filepath, strict=True)
+                if not mod_index.add_module_stream(module_stream):
+                    raise RuntimeError(
+                        "Failed parsing modulemd data from %s" % filepath
+                    )
+                # Add the module to metadata with dummy tag. We can't leave the
+                # value empty, but we don't know what the correct tag is.
+                nsvc = module_stream.get_nsvc()
+                variant.module_uid_to_koji_tag[nsvc] = "DUMMY"
+                metadata.append((nsvc, []))
 
         log_file = compose.paths.log.log_file(arch, "modifyrepo-modules-%s" % variant)
         add_modular_metadata(repo, repo_dir, mod_index, log_file)

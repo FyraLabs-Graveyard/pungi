@@ -659,6 +659,13 @@ def make_schema():
                 "default": [],
                 "items": {"type": "string"},
             },
+            "createrepo_extra_modulemd": {
+                "type": "object",
+                "patternProperties": {
+                    ".+": {"$ref": "#/definitions/scm_dict"},
+                    "additionalProperties": False,
+                },
+            },
             "repoclosure_strictness": _variant_arch_mapping(
                 {
                     "type": "string",

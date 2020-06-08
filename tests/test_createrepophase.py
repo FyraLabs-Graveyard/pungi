@@ -128,6 +128,22 @@ class TestCreaterepoPhase(PungiTestCase):
             ],
         )
 
+    @mock.patch("pungi.phases.createrepo.get_dir_from_scm")
+    @mock.patch("pungi.phases.createrepo.ThreadPool")
+    def test_clones_extra_modulemd(self, ThreadPoolCls, get_dir_from_scm):
+        scm = mock.Mock()
+        compose = DummyCompose(
+            self.topdir, {"createrepo_extra_modulemd": {"Server": scm}}
+        )
+
+        phase = CreaterepoPhase(compose)
+        phase.run()
+
+        self.assertEqual(
+            get_dir_from_scm.call_args_list,
+            [mock.call(scm, os.path.join(compose.topdir, "work/global/tmp-Server"))],
+        )
+
 
 def make_mocked_modifyrepo_cmd(tc, module_artifacts):
     def mocked_modifyrepo_cmd(repodir, mmd_path, **kwargs):
@@ -1188,6 +1204,56 @@ class TestCreateVariantRepo(PungiTestCase):
         self.assertEqual(
             repo.get_modifyrepo_cmd.mock_calls,
             [mock.call(repodata_dir, mock.ANY, compress_type="gz", mdtype="modules")],
+        )
+
+    @unittest.skipUnless(Modulemd is not None, "Skipped test, no module support.")
+    @mock.patch("pungi.phases.createrepo.find_file_in_repodata")
+    @mock.patch("pungi.phases.createrepo.run")
+    @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
+    def test_variant_repo_extra_modulemd(
+        self, CreaterepoWrapperCls, run, modulemd_filename
+    ):
+        compose = DummyCompose(
+            self.topdir, {"createrepo_extra_modulemd": {"Server": mock.Mock()}}
+        )
+        compose.has_comps = False
+
+        variant = compose.variants["Server"]
+        variant.arch_mmds["x86_64"] = {}
+        variant.module_uid_to_koji_tag = {}
+
+        repo = CreaterepoWrapperCls.return_value
+
+        copy_fixture("server-rpms.json", compose.paths.compose.metadata("rpms.json"))
+        copy_fixture(
+            "fake-modulemd.yaml",
+            os.path.join(compose.topdir, "work/global/tmp-Server/x86_64/*.yaml"),
+        )
+
+        repodata_dir = os.path.join(
+            compose.paths.compose.os_tree("x86_64", compose.variants["Server"]),
+            "repodata",
+        )
+
+        modules_metadata = ModulesMetadata(compose)
+
+        modulemd_filename.return_value = "Server/x86_64/os/repodata/3511d16a723e1bd69826e591508f07e377d2212769b59178a9-modules.yaml.gz"  # noqa: E501
+        create_variant_repo(
+            compose,
+            "x86_64",
+            compose.variants["Server"],
+            "rpm",
+            self.pkgset,
+            modules_metadata,
+        )
+
+        self.assertEqual(
+            repo.get_modifyrepo_cmd.mock_calls,
+            [mock.call(repodata_dir, mock.ANY, compress_type="gz", mdtype="modules")],
+        )
+        self.assertEqual(
+            list(modules_metadata.productmd_modules_metadata["Server"]["x86_64"]),
+            ["mymodule:master:1:cafe"],
         )
 
 

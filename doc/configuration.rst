@@ -439,6 +439,13 @@ Options
     ``createrepo_c`` executable. This could be useful for enabling zchunk
     generation and pointing it to correct dictionaries.
 
+**createrepo_extra_modulemd**
+    (*dict*) -- a mapping of variant UID to :ref:`an scm dict <scm_support>`.
+    If specified, it should point to a directory with extra module metadata
+    YAML files that will be added to the repository for this variant. The
+    cloned files should be split into subdirectories for each architecture of
+    the variant.
+
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
     directory with certificates ``<variant_uid>-<arch>-*.pem``. Pungi will
@@ -467,6 +474,20 @@ Example
         # Also Server.x86_64 should have them (but not on other arches).
         ('^Server$', {'x86_64': True}),
     ]
+    createrepo_extra_modulemd = {
+        "Server": {
+            "scm": "git",
+            "repo": "https://example.com/extra-server-modulemd.git",
+            "dir": ".",
+            # The directory should have this layout. Each architecture for the
+            # variant should be included (even if the directory is empty.
+            # .
+            # ├── aarch64
+            # │   ├── some-file.yaml
+            # │   └ ...
+            # └── x86_64
+        }
+    }
 
 
 Package Set Settings
