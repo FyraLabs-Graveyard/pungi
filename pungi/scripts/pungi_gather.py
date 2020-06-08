@@ -125,23 +125,34 @@ def main(ns, persistdir, cachedir):
         if ks_repo.name not in gather_opts.lookaside_repos:
             continue
 
-        if not getattr(ks_repo, "metalink", False):
-            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, enablegroups=False)
-        else:
+        if getattr(ks_repo, "metalink", False):
             dnf_obj.add_repo(
                 ks_repo.name,
                 ks_repo.baseurl,
                 enablegroups=False,
                 metalink=ks_repo.metalink,
             )
+        elif getattr(ks_repo, "mirrorlist", False):
+            dnf_obj.add_repo(
+                ks_repo.name,
+                ks_repo.baseurl,
+                enablegroups=False,
+                mirrorlist=ks_repo.mirrorlist,
+            )
+        else:
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, enablegroups=False)
 
     for ks_repo in ksparser.handler.repo.repoList:
         if ks_repo.name in gather_opts.lookaside_repos:
             continue
-        if not getattr(ks_repo, "metalink", False):
-            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
-        else:
+        if getattr(ks_repo, "metalink", False):
             dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl, metalink=ks_repo.metalink)
+        elif getattr(ks_repo, "mirrorlist", False):
+            dnf_obj.add_repo(
+                ks_repo.name, ks_repo.baseurl, mirrorlist=ks_repo.mirrorlist
+            )
+        else:
+            dnf_obj.add_repo(ks_repo.name, ks_repo.baseurl)
 
     with Profiler("DnfWrapper.fill_sack()"):
         dnf_obj.fill_sack(load_system_repo=False, load_available_repos=True)
