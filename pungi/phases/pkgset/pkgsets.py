@@ -417,25 +417,29 @@ class KojiPackageSet(PackageSetBase):
         if not tag:
             return [], []
 
+        response = None
         if self.cache_region:
             cache_key = "KojiPackageSet.get_latest_rpms_%s_%s_%s" % (
-                tag,
+                str(tag),
                 str(event),
                 str(inherit),
             )
-            cached_response = self.cache_region.get(cache_key)
-            if cached_response:
-                return cached_response
-            else:
-                response = self.koji_proxy.listTaggedRPMS(
-                    tag, event=event, inherit=inherit, latest=True
-                )
-                self.cache_region.set(cache_key, response)
-                return response
-        else:
-            return self.koji_proxy.listTaggedRPMS(
+            try:
+                response = self.cache_region.get(cache_key)
+            except Exception:
+                pass
+
+        if not response:
+            response = self.koji_proxy.listTaggedRPMS(
                 tag, event=event, inherit=inherit, latest=True
             )
+            if self.cache_region:
+                try:
+                    self.cache_region.set(cache_key, response)
+                except Exception:
+                    pass
+
+        return response
 
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item
