@@ -1672,12 +1672,6 @@ they are not scratch builds).
     Optionally you can specify ``failable``. If it has a truthy value, failure
     to create the image will not abort the whole compose.
 
-    .. note::
-        Once OSBS gains support for multiple architectures, the usage of this
-        option will most likely change to list architectures that are allowed
-        to fail.
-
-
     The configuration will pass other attributes directly to the Koji task.
     This includes ``scratch`` and ``priority``.
 
