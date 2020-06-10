@@ -497,15 +497,9 @@ class KojiPackageSet(PackageSetBase):
         rpm_info, build_info = queue_item
 
         # Check if this RPM is comming from scratch task. In this case, we already
-        # know the path and we must ensure unsigned packages are allowed.
+        # know the path.
         if "path_from_task" in rpm_info:
-            if None in self.sigkey_ordering or "" in self.sigkey_ordering:
-                return rpm_info["path_from_task"]
-            else:
-                self.log_error(
-                    "Scratch RPM %s cannot be used in signed compose." % (rpm_info)
-                )
-                return None
+            return rpm_info["path_from_task"]
 
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []

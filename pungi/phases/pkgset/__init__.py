@@ -22,8 +22,9 @@ class PkgsetPhase(PhaseBase):
 
     name = "pkgset"
 
-    def __init__(self, *args, **kwargs):
-        super(PkgsetPhase, self).__init__(*args, **kwargs)
+    def __init__(self, compose, *args, **kwargs):
+        super(PkgsetPhase, self).__init__(compose, *args, **kwargs)
+        self.compose = compose
         self.package_sets = []
         self.path_prefix = None
 
@@ -36,3 +37,12 @@ class PkgsetPhase(PhaseBase):
         container = PkgsetSourceContainer()
         SourceClass = container[pkgset_source]
         self.package_sets, self.path_prefix = SourceClass(self.compose)()
+
+    def validate(self):
+        extra_tasks = self.compose.conf.get("pkgset_koji_scratch_tasks", None)
+        sigkeys = tuple(self.compose.conf["sigkeys"] or [None])
+        if extra_tasks is not None and None not in sigkeys and "" not in sigkeys:
+            raise ValueError(
+                "Unsigned packages must be allowed to use the "
+                '"pkgset_koji_scratch_tasks" option'
+            )
