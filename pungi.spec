@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.2
+Version:        4.2.3
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,35 @@ nosetests --exe
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu Jun 11 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.3-1
+- Move test for unsigned packages with pkgset_koji_scratch_tasks to PkgsetPhase
+  class. (jkaluza)
+- Allow building compose with scratch builds defined by
+  `pkgset_koji_scratch_tasks`. (jkaluza)
+- createrepo: Allow making productid glob stricter (lsedlar)
+- docs: Remove outdated note (lsedlar)
+- createrepo: Add extra modulemd files to the repo (lsedlar)
+- pkgset: handle exception when using dogpile cache (hlin)
+- notification: Add compose_path into the messages (hlin)
+- gather: handle mirrorlist in kickstart (frederic.pierret)
+- Allow only creating unified ISO for specified arch (hlin)
+- docs: update doc for gather_lookaside_repos option (hlin)
+- Include the output of getisoimage in the error message (hlin)
+- tests: Patch time in CTS related tests (lsedlar)
+- Allow using Pungi Koji plugin for ostree phases. (jkaluza)
+- Allow getting the compose id from CTS (Compose Tracking Service). (jkaluza)
+- Fix flake8 issues (lsedlar)
+- Optimize the _link_file function to not call os.stat redundantly. This will
+  eliminate 2 calls to os.stat per one invocation of the _link_file function.
+  Assuming during the compose build 50000 files are linked, this change will
+  eliminate 100000 redundant calls to os.stat. (bkhomuts)
+- doc: explain sigkey behavior (kdreyer)
+- doc: explain tradeoffs with pkgset_allow_reuse (kdreyer)
+- doc: fix grammar for pkgset_allow_reuse setting (kdreyer)
+- Support --skip-branding option in lorax (hlin)
+- docs: Embed phases.svg directly (hlin)
+- Execute image_checksum phase right after the dependent phases (hlin)
+
 * Wed Apr 29 2020 Haibo Lin <hlin@redhat.com> - 4.2.2-1
 - scm: Workaround incorrect permissions on created directory (lsedlar)
 - Fix warning about productimg in skip_phases option (lsedlar)
