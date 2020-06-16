@@ -15,11 +15,14 @@ from __future__ import print_function
 
 import argparse
 import datetime
-import fedmsg.config
 import json
 import os
 import sys
 import time
+
+import fedora_messaging.api
+import fedora_messaging.exceptions
+
 
 RESEND_INTERVAL = 300  # In seconds
 SLEEP_TIME = 5
@@ -40,14 +43,40 @@ def ts_log(msg):
     print("%s: %s" % (datetime.datetime.utcnow(), msg))
 
 
+def send(cmd, data):
+    topic = "compose.%s" % cmd.replace("-", ".").lower()
+    try:
+        msg = fedora_messaging.api.Message(topic="pungi.{}".format(topic), body=data)
+        fedora_messaging.api.publish(msg)
+    except fedora_messaging.exceptions.PublishReturned as e:
+        print("Fedora Messaging broker rejected message %s: %s" % (msg.id, e))
+        sys.exit(1)
+    except fedora_messaging.exceptions.ConnectionException as e:
+        print("Error sending message %s: %s" % (msg.id, e))
+        sys.exit(1)
+    except Exception as e:
+        print("Error sending fedora-messaging message: %s" % e)
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("cmd")
+    parser.add_argument(
+        "--config",
+        dest="config",
+        help="fedora-messaging configuration file to use. "
+        "This allows overriding the default "
+        "/etc/fedora-messaging/config.toml.",
+    )
     opts = parser.parse_args()
 
     if opts.cmd != "ostree":
         # Not an announcement of new ostree commit, nothing to do.
         sys.exit()
+
+    if opts.config:
+        fedora_messaging.config.conf.load_config(opts.config)
 
     try:
         data = json.load(sys.stdin)
@@ -63,12 +92,6 @@ def main():
 
     path = "%s/objects/%s/%s.commitmeta" % (repo, commit[:2], commit[2:])
 
-    config = fedmsg.config.load_config()
-    config["active"] = True  # Connect out to a fedmsg-relay instance
-    config["cert_prefix"] = "releng"  # Use this cert.
-    fedmsg.init(**config)
-    topic = "compose.%s" % opts.cmd.replace("-", ".").lower()
-
     def wait_for(msg, test, *args):
         time_slept = 0
         while not test(*args):
@@ -76,7 +99,7 @@ def main():
             time_slept += SLEEP_TIME
             if time_slept >= RESEND_INTERVAL:
                 ts_log("Repeating notification")
-                fedmsg.publish(topic=topic, modname="pungi", msg=data)
+                send(opts.cmd, data)
                 time_slept = 0
             time.sleep(SLEEP_TIME)
 
