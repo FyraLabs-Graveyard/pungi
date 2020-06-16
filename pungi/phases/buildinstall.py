@@ -508,7 +508,24 @@ class BuildinstallThread(WorkerThread):
         compose, arch, variant, cmd, pkgset_phase = item
         can_fail = compose.can_fail(variant, arch, "buildinstall")
         with failable(compose, can_fail, variant, arch, "buildinstall"):
-            self.worker(compose, arch, variant, cmd, pkgset_phase, num)
+            try:
+                self.worker(compose, arch, variant, cmd, pkgset_phase, num)
+            except RuntimeError:
+                self._print_depsolve_error(compose, arch, variant)
+                raise
+
+    def _print_depsolve_error(self, compose, arch, variant):
+        try:
+            log_file = os.path.join(_get_log_dir(compose, variant, arch), "pylorax.log")
+            with open(log_file) as f:
+                matched = False
+                for line in f:
+                    if re.match("Dependency check failed", line):
+                        matched = True
+                    if matched:
+                        compose.log_error(line.rstrip())
+        except Exception:
+            pass
 
     def _generate_buildinstall_metadata(
         self, compose, arch, variant, cmd, buildroot_rpms, pkgset_phase

@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
 
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 import mock
 import six
 from copy import copy
+from six.moves import StringIO
 
 import os
 
@@ -1490,6 +1496,80 @@ class BuildinstallThreadTestCase(PungiTestCase):
                 (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
                 0,
             )
+
+        compose._logger.error.assert_has_calls(
+            [
+                mock.call(
+                    "[FAIL] Buildinstall (variant Server, arch x86_64) failed, but going on anyway."  # noqa: E501
+                ),
+                mock.call(
+                    "Runroot task failed: 1234. See %s/logs/x86_64/buildinstall-Server.x86_64.log for more details."  # noqa: E501
+                    % self.topdir
+                ),
+            ]
+        )
+        self.assertEqual(self.pool.finished_tasks, set())
+
+    @unittest.skipUnless(six.PY3, "PY2 StringIO does not work with 'with' statement")
+    @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
+    @mock.patch("pungi.wrappers.kojiwrapper.get_buildroot_rpms")
+    @mock.patch("pungi.phases.buildinstall.run")
+    @mock.patch("pungi.phases.buildinstall.open")
+    def test_lorax_fail_with_depsolve_error(
+        self, mock_open, run, get_buildroot_rpms, KojiWrapperMock
+    ):
+        compose = BuildInstallCompose(
+            self.topdir,
+            {
+                "buildinstall_method": "lorax",
+                "runroot_tag": "rrt",
+                "koji_profile": "koji",
+                "failable_deliverables": [("^.+$", {"*": ["buildinstall"]})],
+            },
+        )
+
+        get_buildroot_rpms.return_value = ["bash", "zsh"]
+
+        run_runroot_cmd = KojiWrapperMock.return_value.run_runroot_cmd
+        run_runroot_cmd.return_value = {
+            "output": "Foo bar baz",
+            "retcode": 1,
+            "task_id": 1234,
+        }
+
+        error_log = (
+            "Dependency check failed\n"
+            " Problem: conflicting requests\n"
+            "  - nothing provides /bin/python3 needed by nfs-utils-1:2.3.3-34.el8.s390x\n"  # noqa: E501
+            "template command error in runtime-install.tmpl:\n"
+            "  run_pkg_transaction\n"
+            "  dnf.exceptions.DepsolveError:\n"
+            " Problem: conflicting requests\n"
+            "  - nothing provides /bin/python3 needed by nfs-utils-1:2.3.3-34.el8.s390x\n"  # noqa: E501
+            "  Traceback (most recent call last):\n"
+            '    File "/usr/lib/python3.6/site-packages/pylorax/ltmpl.py", line 633, in run_pkg_transaction\n'  # noqa: E501
+            "      self.dbo.resolve()\n"
+            '    File "/usr/lib/python3.6/site-packages/dnf/base.py", line 777, in resolve\n'  # noqa: E501
+            "      raise exc\n"
+            "  dnf.exceptions.DepsolveError:\n"
+            "   Problem: conflicting requests\n"
+            "    - nothing provides /bin/python3 needed by nfs-utils-1:2.3.3-34.el8.s390x"  # noqa: E501
+        )
+        mock_open.return_value = StringIO("Checking dependencies\n" + error_log)
+
+        t = BuildinstallThread(self.pool)
+
+        with mock.patch("time.sleep"):
+            pkgset_phase = self._make_pkgset_phase(["p1"])
+            t.process(
+                (compose, "x86_64", compose.variants["Server"], self.cmd, pkgset_phase),
+                0,
+            )
+
+        self.assertEqual(
+            compose.log_error.call_args_list,
+            [mock.call(line) for line in error_log.split("\n")],
+        )
 
         compose._logger.error.assert_has_calls(
             [
