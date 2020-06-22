@@ -353,7 +353,7 @@ class CreateLiveImageThread(WorkerThread):
             koji_task_id, signing_key_id
         )
 
-        # Wait untill files are available
+        # Wait until files are available
         if wait_paths(rpm_paths, 60 * 15):
             # Files are ready
             return rpm_paths

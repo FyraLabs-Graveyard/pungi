@@ -102,7 +102,7 @@ def _ensuredir(target, logger, force=False, clean=False):
     """Ensure that a directory exists, if it already exists, only continue
     if force is set."""
 
-    # We have to check existance of a logger, as setting the logger could
+    # We have to check existence of a logger, as setting the logger could
     # itself cause an issue.
     def whoops(func, path, exc_info):
         message = "Could not remove %s" % path
@@ -229,7 +229,7 @@ def pkg_is_debug(pkg_obj):
     return DEBUG_PATTERN_RE.match(name)
 
 
-# fomat: [(variant_uid_regex, {arch|*: [data]})]
+# format: [(variant_uid_regex, {arch|*: [data]})]
 def get_arch_variant_data(conf, var_name, arch, variant, keys=None):
     result = []
     for conf_variant, conf_data in conf.get(var_name, []):
@@ -354,7 +354,7 @@ class GitUrlResolver(object):
         return self.cache[key]
 
 
-# fomat: {arch|*: [data]}
+# format: {arch|*: [data]}
 def get_arch_data(conf, var_name, arch):
     result = []
     for conf_arch, conf_data in conf.get(var_name, {}).items():
@@ -747,7 +747,7 @@ def run_unmount_cmd(cmd, max_retries=10, path=None, logger=None):
     """Attempt to run the command to unmount an image.
 
     If the command fails and stderr complains about device being busy, try
-    again. We will do up to ``max_retries`` attemps with increasing pauses.
+    again. We will do up to ``max_retries`` attempts with increasing pauses.
 
     If both path and logger are specified, more debugging information will be
     printed in case of failure.
@@ -799,7 +799,7 @@ def translate_path_raw(mapping, path):
         if normpath.startswith(prefix):
             # We can't call os.path.normpath on result since it is not actually
             # a path - http:// would get changed to  http:/ and so on.
-            # Only the first occurance should be replaced.
+            # Only the first occurrence should be replaced.
             return normpath.replace(prefix, newvalue, 1)
     return normpath
 

@@ -496,7 +496,7 @@ class KojiPackageSet(PackageSetBase):
     def get_package_path(self, queue_item):
         rpm_info, build_info = queue_item
 
-        # Check if this RPM is comming from scratch task. In this case, we already
+        # Check if this RPM is coming from scratch task. In this case, we already
         # know the path.
         if "path_from_task" in rpm_info:
             return rpm_info["path_from_task"]

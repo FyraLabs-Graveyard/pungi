@@ -388,7 +388,7 @@ def get_productids_from_scm(compose):
 
 
 def _get_old_package_dirs(compose, repo_dir):
-    """Given a compose and a path to a repo in it, try to find corresponging
+    """Given a compose and a path to a repo in it, try to find corresponding
     repo in an older compose and return a list of paths to directories with
     packages in it.
     """

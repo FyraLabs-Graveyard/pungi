@@ -34,7 +34,7 @@ General settings
 **release_type**
    Type of the product for the final compose.
 **extra_args**
-   Additional arguments that wil be passed to the child Pungi processes.
+   Additional arguments that will be passed to the child Pungi processes.
 **koji_profile**
    If specified, a current event will be retrieved from the Koji instance and
    used for all parts.

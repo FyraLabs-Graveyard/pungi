@@ -262,7 +262,7 @@ class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
             logfile = self.compose.paths.log.log_file(
                 arch, "hybrid-depsolver-%s-iter-%d" % (variant, step)
             )
-            # Adding this environement variable will tell GLib not to prefix
+            # Adding this environment variable will tell GLib not to prefix
             # any log messages with the PID of the fus process (which is quite
             # useless for us anyway).
             env = os.environ.copy()

@@ -135,6 +135,6 @@ def run(log, opts):
         opts.supported or iso.get_checkisomd5_data(opts.source)["Supported ISO"]
     )
     # implantmd5 + supported bit (use the same as on source iso, unless
-    # overriden by --supported option)
+    # overridden by --supported option)
     isomd5sum_cmd = iso.get_implantisomd5_cmd(target, supported)
     sh(log, isomd5sum_cmd)

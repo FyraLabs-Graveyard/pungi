@@ -312,7 +312,7 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
                 rpm_obj.name,
             )
 
-            # With the current aproach, we cannot reuse old gather result in case
+            # With the current approach, we cannot reuse old gather result in case
             # there are multiple RPMs with the same arch, sourcerpm and name.
             if key in key_to_old_rpm_obj:
                 compose.log_info(
@@ -340,7 +340,7 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
                 compose.log_info(log_msg % "some RPMs have been added.")
                 return
 
-            # Check that requires or provides of this RPM is stil the same.
+            # Check that requires or provides of this RPM is still the same.
             old_rpm_obj, old_result_key, old_result_record = key_to_old_rpm_obj[key]
             if (
                 old_rpm_obj.requires != rpm_obj.requires

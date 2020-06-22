@@ -231,7 +231,7 @@ class Runroot(kobo.log.LoggingBase):
             executed.
         :param str output_dir: Directory where the `command` stores its output.
             The permissions of this output_dir might be changed by `runroot_method`
-            to allow the executor of this runroot task to accesss them.
+            to allow the executor of this runroot task to access them.
             See `KojiWrapper.get_runroot_cmd()` for more information.
         """
         if self.runroot_method == "local":

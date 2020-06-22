@@ -239,7 +239,7 @@ def compose_to_composeinfo(compose):
                 compose.paths.compose.topdir().rstrip("/") + "/",
             ).rstrip("/")
             """
-            # XXX: not suported (yet?)
+            # XXX: not supported (yet?)
             debug_iso_dir = (
                 compose.paths.compose.debug_iso_dir(arch=arch, variant=variant) or ""
             )

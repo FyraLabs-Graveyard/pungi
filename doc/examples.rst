@@ -4,7 +4,7 @@ Big picture examples
 ====================
 
 Actual Pungi configuration files can get very large. This pages brings two
-examples of (almost) full configuation for two different composes.
+examples of (almost) full configuration for two different composes.
 
 Fedora Rawhide compose
 ----------------------
@@ -250,7 +250,7 @@ This is a shortened configuration for Fedora Radhide compose as of 2019-10-14.
             ],
         '^Spins': [
             # There are multiple media for Spins variant. They use subvariant
-            # field so that they can be indentified in the metadata.
+            # field so that they can be identified in the metadata.
             {
                 'name': 'Fedora-KDE-Live',
                 'kickstart': 'fedora-live-kde.ks',

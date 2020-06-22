@@ -183,7 +183,7 @@ Options
 
 **cts_keytab**
     (*str*) -- Path to Kerberos keytab which will be used for Compose
-    Tracking Service Kerberos authentification. If not defined, the default
+    Tracking Service Kerberos authentication. If not defined, the default
     Kerberos principal is used.
 
 **compose_type**
@@ -355,7 +355,7 @@ images. You must provide few configuration options:
     (*str*) -- Path to a file with password that will be formatted
     into **signing_command** string via ``%(signing_key_password)s``
     string format syntax (if used).
-    Because pungi config is usualy stored in git and is part of compose
+    Because pungi config is usually stored in git and is part of compose
     logs we don't want password to be included directly in the config.
     Note: If ``-`` string is used instead of a filename, then you will be asked
     for the password interactivelly right after pungi starts.
@@ -453,7 +453,7 @@ Options
     ``productid`` file in the ``repodata`` directories. The purpose of these
     ``productid`` files is to expose the product data to `subscription-manager
     <https://github.com/candlepin/subscription-manager>`_.
-    subscription-manager inclues a "product-id" Yum plugin that can read these
+    subscription-manager includes a "product-id" Yum plugin that can read these
     ``productid`` certificate files from each Yum repository.
 
 **product_id_allow_missing** = False
@@ -526,7 +526,7 @@ Options
     (*str|[str]*) -- RPM scratch build task(s) to include in a package set,
     defined as task IDs. This option can be used only when ``compose_type``
     is set to ``test``. The RPM still needs to have higher NVR than any
-    other RPM with the same name comming from other sources in order to
+    other RPM with the same name coming from other sources in order to
     appear in the resulting compose.
 
 **pkgset_koji_module_tag**
@@ -1053,7 +1053,7 @@ Options
 
     * ``{runroot_key}`` - Replaced with the string returned by
       ``runroot_ssh_init_template`` if used. This can be used to keep the track
-      of context of SSH commands beloging to single runroot task.
+      of context of SSH commands belonging to single runroot task.
     * ``{packages}`` - White-list separated list of packages to install.
 
     Example (The ``{runroot_key}`` is expected to be set to mock config file
@@ -1071,7 +1071,7 @@ Options
 
     * ``{runroot_key}`` - Replaced with the string returned by
       ``runroot_ssh_init_template`` if used. This can be used to keep the track
-      of context of SSH commands beloging to single runroot task.
+      of context of SSH commands belonging to single runroot task.
     * ``{command}`` - Command to run.
 
     Example (The ``{runroot_key}`` is expected to be set to mock config file

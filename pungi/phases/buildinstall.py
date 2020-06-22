@@ -671,7 +671,7 @@ class BuildinstallThread(WorkerThread):
             compose.log_info(log_msg % "pungi_buildinstall plugin is not used.")
             return
 
-        # Filter out "outputdir" and "sources" because they change everytime.
+        # Filter out "outputdir" and "sources" because they change every time.
         # The "sources" are not important, because we check the buildinstall
         # input on RPM level.
         cmd_copy = copy(cmd)
