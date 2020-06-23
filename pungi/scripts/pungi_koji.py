@@ -279,7 +279,8 @@ def main():
         )
     else:
         compose_dir = opts.compose_dir
-        if not os.path.exists(compose_dir):
+        ci_path = os.path.join(compose_dir, "work", "global", "composeinfo-base.json")
+        if not os.path.exists(ci_path):
             ci = Compose.get_compose_info(
                 conf, compose_type=compose_type, compose_label=opts.label
             )
