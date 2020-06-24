@@ -189,8 +189,9 @@ def explode_rpm_package(pkg_path, target_dir):
     """Explode a rpm package into target_dir."""
     pkg_path = os.path.abspath(pkg_path)
     makedirs(target_dir)
+    # rpm2archive writes to stdout only if reading from stdin, thus the redirect
     run(
-        "rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % shlex_quote(pkg_path),
+        "rpm2archive - <%s | tar xfz - && chmod -R a+rX ." % shlex_quote(pkg_path),
         workdir=target_dir,
     )
 
