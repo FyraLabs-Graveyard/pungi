@@ -242,6 +242,9 @@ class KojiWrapper(object):
     @contextlib.contextmanager
     def get_koji_cmd_env(self):
         """Get environment variables for running a koji command.
+        Buffering is disabled - if the compose is aborted while koji tasks are
+        running, we can be left with empty log files. That complicates
+        debugging.
 
         If we are authenticated with a keytab, we need a fresh credentials
         cache to avoid possible race condition.
@@ -250,9 +253,10 @@ class KojiWrapper(object):
             with util.temp_dir(prefix="krb_ccache") as tempdir:
                 env = os.environ.copy()
                 env["KRB5CCNAME"] = "DIR:%s" % tempdir
+                env["PYTHONUNBUFFERED"] = "1"
                 yield env
         else:
-            yield None
+            yield {"PYTHONUNBUFFERED": "1"}
 
     def run_runroot_cmd(self, command, log_file=None):
         """Run koji runroot command and wait for results.
@@ -269,6 +273,7 @@ class KojiWrapper(object):
                 logfile=log_file,
                 show_cmd=True,
                 env=env,
+                buffer_size=-1,
                 universal_newlines=True,
             )
 
@@ -510,6 +515,7 @@ class KojiWrapper(object):
                 can_fail=True,
                 logfile=log_file,
                 env=env,
+                buffer_size=-1,
                 universal_newlines=True,
             )
 
