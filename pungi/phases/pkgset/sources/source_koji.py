@@ -26,9 +26,10 @@ from kobo.shortcuts import force_list
 
 import pungi.wrappers.kojiwrapper
 from pungi.wrappers.comps import CompsWrapper
+from pungi.wrappers.mbs import MBSWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import getBaseArch
-from pungi.util import retry, get_arch_variant_data
+from pungi.util import retry, get_arch_variant_data, get_variant_data
 from pungi.module_util import Modulemd
 
 from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
@@ -270,6 +271,51 @@ def _add_module_to_variant(
         variant.modules.append({"name": nsvc, "glob": False})
 
     return nsvc
+
+
+def _add_scratch_modules_to_variant(
+    compose, variant, scratch_modules, variant_tags, tag_to_mmd
+):
+    if compose.compose_type != "test" and scratch_modules:
+        compose.log_warning("Only test composes could include scratch module builds")
+        return
+
+    mbs = MBSWrapper(compose.conf["mbs_api_url"])
+    for nsvc in scratch_modules:
+        module_build = mbs.get_module_build_by_nsvc(nsvc)
+        if not module_build:
+            continue
+        try:
+            final_modulemd = mbs.final_modulemd(module_build["id"])
+        except Exception:
+            compose.log_error("Unable to get modulemd for build %s" % module_build)
+            raise
+        tag = module_build["koji_tag"]
+        variant_tags[variant].append(tag)
+        tag_to_mmd.setdefault(tag, {})
+        for arch in variant.arches:
+            try:
+                mmd = Modulemd.ModuleStream.read_string(
+                    final_modulemd[arch], strict=True
+                )
+                variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
+            except KeyError:
+                continue
+            tag_to_mmd[tag].setdefault(arch, set()).add(mmd)
+
+            if tag_to_mmd[tag]:
+                compose.log_info(
+                    "Module '%s' in variant '%s' will use Koji tag '%s' "
+                    "(as a result of querying module '%s')",
+                    nsvc,
+                    variant,
+                    tag,
+                    module_build["name"],
+                )
+
+                # Store mapping NSVC --> koji_tag into variant. This is needed
+                # in createrepo phase where metadata is exposed by productmd
+                variant.module_uid_to_koji_tag[nsvc] = tag
 
 
 def _is_filtered_out(compose, variant, arch, module_name, module_stream):
@@ -616,6 +662,14 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             # play here.
             _get_modules_from_koji(
                 compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+            )
+
+        variant_scratch_modules = get_variant_data(
+            compose.conf, "pkgset_scratch_modules", variant
+        )
+        if variant_scratch_modules:
+            _add_scratch_modules_to_variant(
+                compose, variant, variant_scratch_modules, variant_tags, tag_to_mmd
             )
 
         # Ensure that every tag added to `variant_tags` is added also to

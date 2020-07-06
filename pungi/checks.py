@@ -786,6 +786,14 @@ def make_schema():
                 "type": "boolean",
                 "default": True,
             },
+            "pkgset_scratch_modules": {
+                "type": "object",
+                "patternProperties": {
+                    "^.+$": {"$ref": "#/definitions/list_of_strings"}
+                },
+                "additionalProperties": False,
+            },
+            "mbs_api_url": {"type": "string"},
             "disc_types": {"type": "object", "default": {}},
             "paths_module": {"type": "string"},
             "skip_phases": {
@@ -1258,6 +1266,7 @@ CONFIG_DEPS = {
         "conflicts": ((lambda x: not x, ["base_product_name", "base_product_short"]),),
     },
     "product_id": {"conflicts": [(lambda x: not x, ["product_id_allow_missing"])]},
+    "pkgset_scratch_modules": {"requires": ((lambda x: x, ["mbs_api_url"]),)},
     "pkgset_source": {
         "requires": [(lambda x: x == "repos", ["pkgset_repos"])],
         "conflicts": [

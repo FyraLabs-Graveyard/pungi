@@ -881,3 +881,68 @@ class TestIsModuleFiltered(helpers.PungiTestCase):
         self.assertIsFiltered("foo", "master")
         self.assertIsNotFiltered("bar", "master")
         self.assertIsNotFiltered("foo", "stable")
+
+
+class MockMBS(object):
+    def __init__(self, api_url):
+        self.api_url = api_url
+
+    def get_module_build_by_nsvc(self, nsvc):
+        return {"id": 1, "koji_tag": "scratch-module-tag", "name": "scratch-module"}
+
+    def final_modulemd(self, module_build_id):
+        return {"x86_64": ""}
+
+
+class MockMmd(object):
+    def __init__(self, mmd, strict=True):
+        pass
+
+
+@mock.patch("pungi.phases.pkgset.sources.source_koji.MBSWrapper", new=MockMBS)
+@unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
+class TestAddScratchModuleToVariant(helpers.PungiTestCase):
+    def setUp(self):
+        super(TestAddScratchModuleToVariant, self).setUp()
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"mbs_api_url": "http://mbs.local/module-build-service/2"}
+        )
+        self.nsvc = "scratch-module:master:20200710:abcdef"
+
+    @mock.patch(
+        "pungi.phases.pkgset.sources.source_koji.Modulemd.ModuleStream.read_string"
+    )
+    def test_adding_scratch_module(self, mock_mmd):
+        variant = mock.Mock(
+            arches=["armhfp", "x86_64"],
+            arch_mmds={},
+            modules=[],
+            module_uid_to_koji_tag={},
+        )
+        variant_tags = {variant: []}
+        tag_to_mmd = {}
+        scratch_modules = [self.nsvc]
+
+        source_koji._add_scratch_modules_to_variant(
+            self.compose, variant, scratch_modules, variant_tags, tag_to_mmd
+        )
+        self.assertEqual(variant_tags, {variant: ["scratch-module-tag"]})
+        self.assertEqual(
+            variant.arch_mmds, {"x86_64": {self.nsvc: mock_mmd.return_value}}
+        )
+        self.assertEqual(
+            tag_to_mmd, {"scratch-module-tag": {"x86_64": {mock_mmd.return_value}}}
+        )
+
+        self.assertEqual(variant.modules, [])
+
+    def test_adding_scratch_module_nontest_compose(self):
+        self.compose.compose_type = "production"
+        scratch_modules = [self.nsvc]
+
+        source_koji._add_scratch_modules_to_variant(
+            self.compose, mock.Mock(), scratch_modules, {}, {}
+        )
+        self.compose.log_warning.assert_called_once_with(
+            "Only test composes could include scratch module builds"
+        )

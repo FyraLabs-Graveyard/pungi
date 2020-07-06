@@ -490,6 +490,8 @@ class WorkPaths(object):
 
     def module_defaults_dir(self, create_dir=True):
         """
+        Example:
+            work/global/module_defaults
         """
         path = os.path.join(self.topdir(create_dir=create_dir), "module_defaults")
         if create_dir:

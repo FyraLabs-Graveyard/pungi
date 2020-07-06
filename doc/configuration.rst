@@ -190,6 +190,11 @@ Options
     (*str*) -- Allows to set default compose type. Type set via a command-line
     option overwrites this.
 
+**mbs_api_url**
+    (*str*) -- URL to Module Build Service (MBS) API.
+    For example ``https://mbs.example.com/module-build-service/2``.
+    This is required by ``pkgset_scratch_modules``.
+
 Example
 -------
 ::
@@ -547,6 +552,10 @@ Options
 **pkgset_repos**
     (*dict*) -- A mapping of architectures to repositories with RPMs: ``{arch:
     [repo]}``. Only use when ``pkgset_source = "repos"``.
+
+**pkgset_scratch_modules**
+    (*dict*) -- A mapping of variants to scratch module builds: ``{variant:
+    [N:S:V:C]}``. Requires ``mbs_api_url``.
 
 **pkgset_exclusive_arch_considers_noarch** = True
     (*bool*) -- If a package includes ``noarch`` in its ``ExclusiveArch`` tag,
