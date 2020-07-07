@@ -153,46 +153,24 @@ class TestCreateArchRepos(helpers.PungiTestCase):
             ]
         )
 
-    @mock.patch("pungi.phases.pkgset.common._reuse_arch_repo")
-    def test_call_reuse_arch_repo(self, mock_reuse):
-        self.pkgset.reuse = "/path/to/old/global/repo"
-        common.create_arch_repos(
-            self.compose, self.prefix, self.paths, self.pkgset, None
-        )
-        mock_reuse.assert_has_calls(
-            [
-                mock.call(
-                    mock.ANY,
-                    (self.compose, "amd64", self.prefix, self.paths, self.pkgset, None),
-                    1,
-                ),
-                mock.call(
-                    mock.ANY,
-                    (
-                        self.compose,
-                        "x86_64",
-                        self.prefix,
-                        self.paths,
-                        self.pkgset,
-                        None,
-                    ),
-                    2,
-                ),
-            ]
-        )
-
+    @mock.patch("pungi.phases.pkgset.common.os.path.isdir", return_value=True)
     @mock.patch("pungi.phases.pkgset.common.copy_all")
-    def test_reuse_arch_repo(self, mock_copy_all):
+    def test_reuse_arch_repo(self, mock_copy_all, mock_isdir):
         self.pkgset.reuse = "/path/to/old/global/repo"
         old_repo = "/path/to/old/repo"
         self.compose.paths.old_compose_path = mock.Mock(return_value=old_repo)
-        common._reuse_arch_repo(
-            mock.Mock(),
-            (self.compose, "x86_64", self.prefix, self.paths, self.pkgset, None),
-            1,
+        common.create_arch_repos(
+            self.compose, self.prefix, self.paths, self.pkgset, None
         )
-        mock_copy_all.assert_called_once_with(
-            old_repo, os.path.join(self.compose.topdir, "work/x86_64/repo/foo")
+        mock_copy_all.assert_has_calls(
+            [
+                mock.call(
+                    old_repo, os.path.join(self.compose.topdir, "work/amd64/repo/foo")
+                ),
+                mock.call(
+                    old_repo, os.path.join(self.compose.topdir, "work/x86_64/repo/foo")
+                ),
+            ]
         )
         self.compose.log_info.assert_has_calls(
             [

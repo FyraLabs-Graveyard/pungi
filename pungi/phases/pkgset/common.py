@@ -90,9 +90,8 @@ def run_create_global_repo(compose, cmd, logfile):
 
 
 def create_arch_repos(compose, path_prefix, paths, pkgset, mmds):
-    reuse = getattr(pkgset, "reuse", None)
     run_in_threads(
-        _create_arch_repo if reuse is None else _reuse_arch_repo,
+        _create_arch_repo,
         [
             (
                 compose,
@@ -111,12 +110,28 @@ def create_arch_repos(compose, path_prefix, paths, pkgset, mmds):
 def _create_arch_repo(worker_thread, args, task_num):
     """Create a single pkgset repo for given arch."""
     compose, arch, path_prefix, paths, pkgset, mmd = args
+    repo_dir = compose.paths.work.pkgset_repo(pkgset.name, arch=arch)
+    paths[arch] = repo_dir
+
+    # Try to reuse arch repo from old compose
+    reuse = getattr(pkgset, "reuse", None)
+    if reuse:
+        old_repo_dir = compose.paths.old_compose_path(repo_dir)
+        if os.path.isdir(old_repo_dir):
+            msg = "Copying repodata for reuse: %s" % old_repo_dir
+            try:
+                compose.log_info("[BEGIN] %s", msg)
+                copy_all(old_repo_dir, repo_dir)
+                compose.log_info("[DONE ] %s", msg)
+                return
+            except Exception as e:
+                compose.log_debug(str(e))
+                compose.log_info("[FAILED] %s will try to create arch repo", msg)
+
     createrepo_c = compose.conf["createrepo_c"]
     createrepo_checksum = compose.conf["createrepo_checksum"]
     repo = CreaterepoWrapper(createrepo_c=createrepo_c)
     repo_dir_global = compose.paths.work.pkgset_repo(pkgset.name, arch="global")
-    repo_dir = compose.paths.work.pkgset_repo(pkgset.name, arch=arch)
-    paths[arch] = repo_dir
     msg = "Running createrepo for arch '%s'" % arch
 
     compose.log_info("[BEGIN] %s", msg)
@@ -153,19 +168,6 @@ def _create_arch_repo(worker_thread, args, task_num):
             compose.paths.log.log_file(arch, "arch_repo_modulemd.%s" % pkgset.name),
         )
 
-    compose.log_info("[DONE ] %s", msg)
-
-
-def _reuse_arch_repo(worker_thread, args, task_num):
-    """Reuse a single pkgset repo for given arch."""
-    compose, arch, _, paths, pkgset, _ = args
-    repo_dir = compose.paths.work.pkgset_repo(pkgset.name, arch=arch)
-    paths[arch] = repo_dir
-    old_repo_dir = compose.paths.old_compose_path(repo_dir)
-    msg = "Copying repodata for reuse: %s" % old_repo_dir
-
-    compose.log_info("[BEGIN] %s", msg)
-    copy_all(old_repo_dir, repo_dir)
     compose.log_info("[DONE ] %s", msg)
 
 
