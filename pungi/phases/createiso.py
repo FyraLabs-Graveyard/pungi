@@ -266,7 +266,12 @@ class CreateIsoThread(WorkerThread):
             arch, variant, filename=os.path.basename(cmd["iso_path"]), create_dir=False
         )
         if os.path.exists(staging_dir):
-            shutil.rmtree(staging_dir)
+            try:
+                shutil.rmtree(staging_dir)
+            except Exception as e:
+                self.pool.log_warning(
+                    "Failed to clean up staging dir: %s %s" % (staging_dir, str(e))
+                )
 
         self.pool.log_info("[DONE ] %s" % msg)
         if compose.notifier:
