@@ -170,7 +170,8 @@ class TestCreateArchRepos(helpers.PungiTestCase):
                 mock.call(
                     old_repo, os.path.join(self.compose.topdir, "work/x86_64/repo/foo")
                 ),
-            ]
+            ],
+            any_order=True,
         )
         self.compose.log_info.assert_has_calls(
             [
