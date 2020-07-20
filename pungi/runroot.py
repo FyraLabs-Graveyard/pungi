@@ -74,12 +74,38 @@ class Runroot(kobo.log.LoggingBase):
         run(command, show_cmd=True, logfile=log_file)
         self._result = True
 
+    def _has_losetup_error(self, log_dir):
+        """
+        Check if there's losetup error in log.
+
+        This error happens if the Koji builder runs out of loopback devices.
+        This can happen if too many tasks that require them are scheduled on
+        the same builder. A retried task might end up on a different builder,
+        or maybe some other task will have finished already.
+
+        :param str log_dir: path to buildinstall log dir,
+            e.g. logs/s390x/buildinstall-BaseOS-logs/
+        """
+        if not log_dir:
+            return False
+
+        log_file = os.path.join(log_dir, "program.log")
+        try:
+            with open(log_file) as f:
+                for line in f:
+                    if "losetup: cannot find an unused loop device" in line:
+                        return True
+        except Exception:
+            pass
+        return False
+
     def _run_koji(self, command, log_file=None, packages=None, arch=None, **kwargs):
         """
         Runs the runroot command in Koji.
         """
         runroot_channel = self.compose.conf.get("runroot_channel")
         runroot_tag = self.compose.conf["runroot_tag"]
+        log_dir = kwargs.pop("log_dir", None)
 
         koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
         koji_cmd = koji_wrapper.get_runroot_cmd(
@@ -92,13 +118,19 @@ class Runroot(kobo.log.LoggingBase):
             **kwargs
         )
 
-        output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
-        if output["retcode"] != 0:
-            raise RuntimeError(
-                "Runroot task failed: %s. See %s for more details."
-                % (output["task_id"], log_file)
-            )
-        self._result = output
+        attempt = 0
+        max_retries = 3
+        while True:
+            output = koji_wrapper.run_runroot_cmd(koji_cmd, log_file=log_file)
+            if output["retcode"] == 0:
+                self._result = output
+                return
+            elif attempt >= max_retries or not self._has_losetup_error(log_dir):
+                raise RuntimeError(
+                    "Runroot task failed: %s. See %s for more details."
+                    % (output["task_id"], log_file)
+                )
+            attempt += 1
 
     def _ssh_run(self, hostname, user, command, fmt_dict=None, log_file=None):
         """

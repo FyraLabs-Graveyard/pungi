@@ -801,6 +801,10 @@ class BuildinstallThread(WorkerThread):
                 weight=compose.conf["runroot_weights"].get("buildinstall"),
             )
         else:
+            try:
+                lorax_log_dir = _get_log_dir(compose, variant, arch)
+            except Exception:
+                lorax_log_dir = None
             runroot.run(
                 cmd,
                 log_file=log_file,
@@ -809,6 +813,7 @@ class BuildinstallThread(WorkerThread):
                 mounts=[compose.topdir],
                 weight=compose.conf["runroot_weights"].get("buildinstall"),
                 chown_paths=chown_paths,
+                log_dir=lorax_log_dir,
             )
 
         if final_output_dir != output_dir:

@@ -198,3 +198,37 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
                 ),
             ]
         )
+
+
+class TestRunrootKoji(helpers.PungiTestCase):
+    def setUp(self):
+        super(TestRunrootKoji, self).setUp()
+        self.compose = helpers.DummyCompose(
+            self.topdir, {"runroot": True, "runroot_tag": "f28-build"},
+        )
+
+        self.runroot = Runroot(self.compose)
+
+    def test_has_losetup_error(self):
+        self.assertFalse(self.runroot._has_losetup_error(None))
+
+        with mock.patch("pungi.runroot.open", mock.mock_open(read_data="")):
+            self.assertFalse(self.runroot._has_losetup_error("/foo_log_dir"))
+
+        with mock.patch(
+            "pungi.runroot.open",
+            mock.mock_open(read_data="losetup: cannot find an unused loop device"),
+        ):
+            self.assertTrue(self.runroot._has_losetup_error("/bar_log_dir"))
+
+    @mock.patch("pungi.runroot.kojiwrapper.KojiWrapper")
+    def test_run_koji_retry(self, mock_kojiwrapper):
+        self.compose.conf["koji_profile"] = "test"
+        mock_kojiwrapper.return_value.get_runroot_cmd.return_value = ["df -h"]
+        mock_kojiwrapper.return_value.run_runroot_cmd.side_effect = [
+            {"retcode": 1, "task_id": 1},
+            {"retcode": 0, "task_id": 2},
+        ]
+        self.runroot._has_losetup_error = mock.Mock(side_effect=[True, False])
+        self.runroot._run_koji("")
+        self.assertEqual(mock_kojiwrapper.return_value.run_runroot_cmd.call_count, 2)
