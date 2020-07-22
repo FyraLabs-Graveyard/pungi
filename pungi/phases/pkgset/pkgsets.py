@@ -749,6 +749,9 @@ class KojiPackageSet(PackageSetBase):
 
         repo_dir = compose.paths.work.pkgset_repo(tag, create_dir=False)
         old_repo_dir = compose.paths.old_compose_path(repo_dir)
+        if not old_repo_dir:
+            self.log_debug("Can't find old repo dir to reuse.")
+            return False
 
         old_reuse_file = compose.paths.old_compose_path(
             compose.paths.work.pkgset_reuse_file(tag)
