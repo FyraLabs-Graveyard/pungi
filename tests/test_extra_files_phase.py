@@ -244,9 +244,7 @@ class TestCopyFiles(helpers.PungiTestCase):
                 self.compose, [cfg], "x86_64", self.variant, package_sets, self.metadata
             )
 
-        self.assertRegexpMatches(
-            str(ctx.exception), r"No.*package.*matching bad-server\*.*"
-        )
+        self.assertRegex(str(ctx.exception), r"No.*package.*matching bad-server\*.*")
 
         self.assertEqual(len(get_file_from_scm.call_args_list), 0)
         self.assertEqual(get_dir_from_scm.call_args_list, [])

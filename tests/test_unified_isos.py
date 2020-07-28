@@ -4,7 +4,7 @@ import mock
 import os
 import shutil
 import six
-from six.moves.configparser import SafeConfigParser
+from six.moves.configparser import ConfigParser
 
 from tests.helpers import PungiTestCase, FIXTURE_DIR, touch, mk_boom
 from pungi_utils import unified_isos
@@ -24,7 +24,7 @@ class TestUnifiedIsos(PungiTestCase):
         compose_path = os.path.join(self.topdir, COMPOSE_ID, "compose")
         isos = unified_isos.UnifiedISO(compose_path)
         self.assertEqual(isos.compose_path, compose_path)
-        self.assertRegexpMatches(
+        self.assertRegex(
             isos.temp_dir, "^%s/" % os.path.join(self.topdir, COMPOSE_ID, "work")
         )
 
@@ -33,7 +33,7 @@ class TestUnifiedIsos(PungiTestCase):
         self.assertEqual(
             isos.compose_path, os.path.join(self.topdir, COMPOSE_ID, "compose")
         )
-        self.assertRegexpMatches(
+        self.assertRegex(
             isos.temp_dir, "^%s/" % os.path.join(self.topdir, COMPOSE_ID, "work")
         )
 
@@ -399,7 +399,7 @@ class TestCreaterepo(PungiTestCase):
 
         # treeinfo checksums
         for arch in self.isos.treeinfo.keys():
-            parser = SafeConfigParser()
+            parser = ConfigParser()
             parser.optionxform = str
             parser.read(os.path.join(self.isos.temp_dir, "trees", arch, ".treeinfo"))
             checksums[arch] = [k for k, v in parser.items("checksums")]
@@ -489,7 +489,7 @@ class TestCreaterepo(PungiTestCase):
 
         # treeinfo checksums
         for arch in self.isos.treeinfo.keys():
-            parser = SafeConfigParser()
+            parser = ConfigParser()
             parser.optionxform = str
             parser.read(os.path.join(self.isos.temp_dir, "trees", arch, ".treeinfo"))
             checksums[arch] = [k for k, v in parser.items("checksums")]

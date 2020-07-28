@@ -301,7 +301,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",  # noqa: E501
             re.DOTALL,
         )
-        self.assertRegexpMatches(str(ctx.exception), figure)
+        self.assertRegex(str(ctx.exception), figure)
 
     def test_can_not_find_signed_package_allow_invalid_sigkeys(self):
         pkgset = pkgsets.KojiPackageSet(
@@ -326,7 +326,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             r"^RPM\(s\) not found for sigs: .+Check log for details.+bash-4\.3\.42-4\.fc24.+bash-debuginfo-4\.3\.42-4\.fc24$",  # noqa: E501
             re.DOTALL,
         )
-        self.assertRegexpMatches(str(ctx.exception), figure)
+        self.assertRegex(str(ctx.exception), figure)
 
     def test_can_not_find_any_package(self):
         pkgset = pkgsets.KojiPackageSet(
@@ -341,7 +341,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             [mock.call.listTaggedRPMS("f25", event=None, inherit=True, latest=True)],
         )
 
-        self.assertRegexpMatches(
+        self.assertRegex(
             str(ctx.exception),
             r"^RPM\(s\) not found for sigs: .+Check log for details.+",
         )

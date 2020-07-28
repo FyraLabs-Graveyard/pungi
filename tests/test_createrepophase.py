@@ -1341,7 +1341,7 @@ class TestGetProductIds(PungiTestCase):
             get_productids_from_scm(self.compose)
 
         self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
-        self.assertRegexpMatches(
+        self.assertRegex(
             str(ctx.exception),
             r"No product certificate found \(arch: amd64, variant: (Everything|Client)\)",  # noqa: E501
         )
@@ -1365,6 +1365,4 @@ class TestGetProductIds(PungiTestCase):
             get_productids_from_scm(self.compose)
 
         self.assertEqual(get_dir_from_scm.call_args_list, [mock.call(cfg, mock.ANY)])
-        self.assertRegexpMatches(
-            str(ctx.exception), "Multiple product certificates found.+"
-        )
+        self.assertRegex(str(ctx.exception), "Multiple product certificates found.+")

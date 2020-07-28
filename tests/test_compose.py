@@ -56,6 +56,7 @@ class ComposeTestCase(unittest.TestCase):
     def test_setup_logger(self, ci):
         conf = {}
         logger = logging.getLogger("test_setup_logger")
+        logger.setLevel(logging.DEBUG)
         compose = Compose(conf, self.tmp_dir, logger=logger)
         self.assertEqual(len(logger.handlers), 2)
 

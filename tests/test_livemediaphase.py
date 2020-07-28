@@ -363,7 +363,7 @@ class TestLiveMediaPhase(PungiTestCase):
 
         phase = LiveMediaPhase(compose)
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             RuntimeError, r"no.+Missing.+when building.+Server"
         ):
             phase.run()
@@ -393,7 +393,7 @@ class TestLiveMediaPhase(PungiTestCase):
 
         phase = LiveMediaPhase(compose)
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             RuntimeError, r"There is no variant Missing to get repo from."
         ):
             phase.run()

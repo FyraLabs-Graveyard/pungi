@@ -7,7 +7,7 @@ Group:          Development/Tools
 License:        GPLv2
 URL:            https://pagure.io/pungi
 Source0:        https://pagure.io/releases/%{name}/%{name}-%{version}.tar.bz2
-BuildRequires:  python-nose, python-mock
+BuildRequires:  python-pytest, python-mock
 BuildRequires:  python-devel, python-setuptools, python2-productmd
 BuildRequires:  python-lockfile, kobo, kobo-rpmlib, python-kickstart, createrepo_c
 BuildRequires:  python-lxml, libselinux-python, yum-utils, lorax
@@ -106,7 +106,7 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}-wait-for-signed-ostree-handler
 
 %check
-nosetests --exe
+pytest
 ./tests/data/specs/build.sh
 cd tests && ./test_compose.sh
 

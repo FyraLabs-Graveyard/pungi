@@ -42,8 +42,8 @@ These packages will have to installed:
 For running unit tests, these packages are recommended as well:
 
  * python-mock
- * python-nose
- * python-nose-cov
+ * python-pytest
+ * python-pytest-cov
  * python-unittest2
  * rpmdevtools
  * python-parameterized
@@ -61,7 +61,7 @@ packages above as they are used by calling an executable. ::
     $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
     $ pip install -U pip
     $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install beanbag jsonschema 'kobo>=0.6.0' lockfile lxml mock nose nose-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set koji PyYAML dogpile.cache parameterized
+    $ pip install beanbag jsonschema 'kobo>=0.6.0' lockfile lxml mock pytest pytest-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set koji PyYAML dogpile.cache parameterized
 
 Now you should be able to run all existing tests.
 
@@ -149,7 +149,7 @@ Testing
 You must write unit tests for any new code (except for trivial changes). Any
 code without sufficient test coverage may not be merged.
 
-To run all existing tests, suggested method is to use *nosetests*. With
+To run all existing tests, suggested method is to use *pytest*. With
 additional options, it can generate code coverage. To make sure even tests from
 executable files are run, don't forget to use the ``--exe`` option. ::
 
