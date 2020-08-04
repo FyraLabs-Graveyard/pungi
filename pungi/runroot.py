@@ -14,6 +14,7 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 import os
+import re
 from six.moves import shlex_quote
 import kobo.log
 from kobo.shortcuts import run
@@ -94,6 +95,8 @@ class Runroot(kobo.log.LoggingBase):
             with open(log_file) as f:
                 for line in f:
                     if "losetup: cannot find an unused loop device" in line:
+                        return True
+                    if re.match("losetup: .* failed to set up loop device", line):
                         return True
         except Exception:
             pass

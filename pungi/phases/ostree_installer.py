@@ -286,4 +286,5 @@ class OstreeInstallerThread(WorkerThread):
                 mounts=[compose.topdir],
                 chown_paths=[output_dir],
                 weight=compose.conf["runroot_weights"].get("ostree_installer"),
+                log_dir=self.logdir,
             )
