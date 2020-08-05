@@ -376,6 +376,41 @@ def get_file_from_scm(scm_dict, target_path, compose=None):
     return files_copied
 
 
+def get_file(source, destination, compose, overwrite=False):
+    """
+    Download from SCM or copy a file to the target ``destination``.
+    The (str) ``destination`` path is returned.
+    :param source: Either a (str) location of the file or an scm_dict.
+    :param destination: string.
+    :param compose: The compose object.
+    :param overwrite: Whether or not to overwrite the destination file if exists.
+
+    :return: (str) A path to the copied file.
+    """
+    if not source:
+        return None
+
+    msg = "Getting the configuration file %s" % source
+    if not overwrite and os.path.exists(destination):
+        compose.log_warning("[SKIP ] %s" % msg)
+        return destination
+
+    compose.log_info("[BEGIN] %s" % msg)
+    if isinstance(source, dict):
+        if source["scm"] == "file":
+            source["file"] = os.path.join(compose.config_dir, source["file"])
+    with temp_dir(prefix="get_file_") as temporary_directory:
+        temporary_configuration_location = get_file_from_scm(
+            source, temporary_directory, compose=compose
+        )
+        temporary_configuration_location_abs = os.path.join(
+            temporary_directory, temporary_configuration_location[0]
+        )
+        shutil.move(temporary_configuration_location_abs, destination)
+    compose.log_info("[DONE ] %s" % msg)
+    return destination
+
+
 def get_dir_from_scm(scm_dict, target_path, compose=None):
     """
     Copy a directory from source control to a target path. A list of files

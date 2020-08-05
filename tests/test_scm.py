@@ -8,12 +8,14 @@ except ImportError:
     import unittest
 import shutil
 import tempfile
+import random
 
 import os
 import six
 
 from pungi.wrappers import scm
 from tests.helpers import touch
+from kobo.shortcuts import run
 
 
 class SCMBaseTest(unittest.TestCase):
@@ -140,6 +142,28 @@ class GitSCMTestCase(SCMBaseTest):
         self.assertCalls(run, "git://example.com/git/repo.git", "master")
 
     @mock.patch("pungi.wrappers.scm.run")
+    def test_get_file_function(self, run):
+        compose = mock.Mock(conf={})
+
+        def process(cmd, workdir=None, **kwargs):
+            touch(os.path.join(workdir, "some_file.txt"))
+            touch(os.path.join(workdir, "other_file.txt"))
+
+        run.side_effect = process
+        destination = os.path.join(self.destdir, "other_file.txt")
+        retval = scm.get_file(
+            {
+                "scm": "git",
+                "repo": "git://example.com/git/repo.git",
+                "file": "other_file.txt",
+            },
+            os.path.join(self.destdir, destination),
+            compose=compose,
+        )
+        self.assertEqual(retval, destination)
+        self.assertCalls(run, "git://example.com/git/repo.git", "master")
+
+    @mock.patch("pungi.wrappers.scm.run")
     def test_get_file_fetch_fails(self, run):
         url = "git://example.com/git/repo.git"
 
@@ -161,7 +185,13 @@ class GitSCMTestCase(SCMBaseTest):
             [call[0][0] for call in run.call_args_list],
             [
                 ["git", "init"],
-                ["git", "fetch", "--depth=1", url, "master"],
+                [
+                    "git",
+                    "fetch",
+                    "--depth=1",
+                    "git://example.com/git/repo.git",
+                    "master",
+                ],
                 ["git", "remote", "add", "origin", url],
                 ["git", "remote", "update", "origin"],
                 ["git", "checkout", "master"],
@@ -248,6 +278,111 @@ class GitSCMTestCase(SCMBaseTest):
         )
         self.assertStructure(retval, ["first", "second"])
         self.assertCalls(run, "git://example.com/git/repo.git", "master", "make")
+
+
+class GitSCMTestCaseReal(SCMBaseTest):
+    def setUp(self):
+        super(GitSCMTestCaseReal, self).setUp()
+        self.compose = mock.Mock(conf={})
+        self.gitRepositoryLocation = tempfile.mkdtemp()
+        run(
+            ["git", "-C", self.gitRepositoryLocation, "init"],
+            workdir=self.gitRepositoryLocation,
+        )
+        fileOneLocation = os.path.join(self.gitRepositoryLocation, "some_file.txt")
+        fileTwoLocation = os.path.join(self.gitRepositoryLocation, "other_file.txt")
+        self.files = {
+            fileOneLocation: str(random.randrange(100000000000000000000)),
+            fileTwoLocation: str(random.randrange(100000000000000000000)),
+        }
+        for fileLocation, fileContents in self.files.items():
+            with open(fileLocation, "w") as fileHandle:
+                fileHandle.write(fileContents)
+        run(
+            [
+                "git",
+                "-C",
+                self.gitRepositoryLocation,
+                "add",
+                "some_file.txt",
+                "other_file.txt",
+            ],
+            workdir=self.gitRepositoryLocation,
+        )
+        # Must set the user.name and user.email, otherwise an error may be returned.
+        run(
+            [
+                "git",
+                "-c",
+                "user.name=Pungi Test Engineer",
+                "-c",
+                "user.email=ptestengineer@example.com",
+                "-C",
+                self.gitRepositoryLocation,
+                "commit",
+                "-m",
+                "Initial commit",
+            ],
+            workdir=self.gitRepositoryLocation,
+        )
+
+    def tearDown(self):
+        super(GitSCMTestCaseReal, self).tearDown()
+        shutil.rmtree(self.gitRepositoryLocation)
+
+    def test_get_file_function(self):
+        sourceFileLocation = random.choice(list(self.files.keys()))
+        sourceFilename = os.path.basename(sourceFileLocation)
+        destinationFileLocation = os.path.join(self.destdir, "other_file.txt")
+        destinationFileActualLocation = scm.get_file(
+            {
+                "scm": "git",
+                "repo": "file:///%s" % self.gitRepositoryLocation,
+                "file": sourceFilename,
+            },
+            os.path.join(self.destdir, destinationFileLocation),
+            compose=self.compose,
+        )
+        self.assertEqual(destinationFileActualLocation, destinationFileLocation)
+        self.assertTrue(os.path.isfile(destinationFileActualLocation))
+
+        # Comparing the contents of source to the destination file.
+        with open(sourceFileLocation) as sourceFileHandle:
+            sourceFileContent = sourceFileHandle.read()
+        with open(destinationFileActualLocation) as destinationFileHandle:
+            destinationFileContent = destinationFileHandle.read()
+        self.assertEqual(sourceFileContent, destinationFileContent)
+
+    def test_get_file_function_with_overwrite(self):
+        sourceFileLocation = random.choice(list(self.files.keys()))
+        sourceFilename = os.path.basename(sourceFileLocation)
+        destinationFileLocation = os.path.join(self.destdir, "other_file.txt")
+        # Writing pre-existing content to the file, that should be overwritten
+        preExistingContent = "This line should be overwritten."
+        with open(destinationFileLocation, "w") as destinationFileHandle:
+            destinationFileHandle.write(preExistingContent)
+        destinationFileActualLocation = scm.get_file(
+            {
+                "scm": "git",
+                "repo": "file:///%s" % self.gitRepositoryLocation,
+                "file": sourceFilename,
+            },
+            os.path.join(self.destdir, destinationFileLocation),
+            compose=self.compose,
+            overwrite=True,
+        )
+        self.assertEqual(destinationFileActualLocation, destinationFileLocation)
+        self.assertTrue(os.path.isfile(destinationFileActualLocation))
+
+        # Reading the contents of both files to compare later.
+        with open(sourceFileLocation) as sourceFileHandle:
+            sourceFileContent = sourceFileHandle.read()
+        with open(destinationFileActualLocation) as destinationFileHandle:
+            destinationFileContent = destinationFileHandle.read()
+        # Ensuring that the file was in fact overwritten
+        self.assertNotEqual(preExistingContent, destinationFileContent)
+        # Comparing the contents of source to the destination file.
+        self.assertEqual(sourceFileContent, destinationFileContent)
 
 
 class RpmSCMTestCase(SCMBaseTest):

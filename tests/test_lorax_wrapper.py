@@ -53,6 +53,9 @@ class LoraxWrapperTest(unittest.TestCase):
             add_arch_template_var=["va1", "va2"],
             log_dir="/tmp",
             dracut_args=["--foo", "bar"],
+            squashfs_only=True,
+            configuration_file="/storage/RHEL-7.8-20200731.n.0/"
+            + "logs/x86_64/buildinstall-Server-logs/lorax.conf",
         )
 
         self.assertEqual(cmd[0], "lorax")
@@ -84,6 +87,9 @@ class LoraxWrapperTest(unittest.TestCase):
                 "--logfile=/tmp/lorax.log",
                 "--dracut-arg=--foo",
                 "--dracut-arg=bar",
+                "--squashfs-only",
+                "-c=/storage/RHEL-7.8-20200731.n.0/"
+                + "logs/x86_64/buildinstall-Server-logs/lorax.conf",
                 "/mnt/output_dir",
             ],
         )

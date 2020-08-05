@@ -1121,6 +1121,8 @@ def make_schema():
                         "version": {"type": "string"},
                         "dracut_args": {"$ref": "#/definitions/list_of_strings"},
                         "skip_branding": {"type": "boolean"},
+                        "squashfs_only": {"type": "boolean"},
+                        "configuration_file": {"$ref": "#/definitions/str_or_scm_dict"},
                     },
                     "additionalProperties": False,
                 }

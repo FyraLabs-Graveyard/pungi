@@ -44,6 +44,8 @@ class LoraxWrapper(object):
         log_dir=None,
         dracut_args=None,
         skip_branding=False,
+        squashfs_only=False,
+        configuration_file=None,
     ):
         cmd = ["lorax"]
         cmd.append("--product=%s" % product)
@@ -94,6 +96,11 @@ class LoraxWrapper(object):
         if skip_branding:
             cmd.append("--skip-branding")
 
+        if squashfs_only:
+            cmd.append("--squashfs-only")
+
+        if configuration_file:
+            cmd.append("-c=%s" % configuration_file)
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
 

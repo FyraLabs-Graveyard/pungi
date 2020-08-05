@@ -34,6 +34,7 @@ from pungi.util import get_file_size, get_mtime, failable, makedirs
 from pungi.util import copy_all, translate_path, move_all
 from pungi.wrappers.lorax import LoraxWrapper
 from pungi.wrappers import iso
+from pungi.wrappers.scm import get_file
 from pungi.wrappers.scm import get_file_from_scm
 from pungi.wrappers import kojiwrapper
 from pungi.phases.base import PhaseBase
@@ -87,6 +88,9 @@ class BuildinstallPhase(PhaseBase):
         dracut_args = []
         rootfs_size = None
         skip_branding = False
+        squashfs_only = False
+        configuration_file = None
+        configuration_file_source = None
         version = self.compose.conf.get(
             "treeinfo_version", self.compose.conf["release_version"]
         )
@@ -107,6 +111,8 @@ class BuildinstallPhase(PhaseBase):
             add_arch_template_var.extend(data.get("add_arch_template_var", []))
             dracut_args.extend(data.get("dracut_args", []))
             skip_branding = data.get("skip_branding", False)
+            configuration_file_source = data.get("configuration_file")
+            squashfs_only = data.get("squashfs_only", False)
             if "version" in data:
                 version = data["version"]
         output_dir = os.path.join(output_dir, variant.uid)
@@ -115,6 +121,17 @@ class BuildinstallPhase(PhaseBase):
         # The paths module will modify the filename (by inserting arch). But we
         # only care about the directory anyway.
         log_dir = _get_log_dir(self.compose, variant, arch)
+        # Place the lorax.conf as specified by
+        # the configuration_file parameter of lorax_options to the log directory.
+        if configuration_file_source:
+            configuration_file_destination = os.path.join(log_dir, "lorax.conf")
+            # Obtain lorax.conf for the buildInstall phase
+            get_file(
+                configuration_file_source,
+                configuration_file_destination,
+                compose=self.compose,
+            )
+            configuration_file = configuration_file_destination
 
         repos = repo_baseurl[:]
         repos.extend(
@@ -150,6 +167,8 @@ class BuildinstallPhase(PhaseBase):
                 "dracut-args": dracut_args,
                 "skip_branding": skip_branding,
                 "outputdir": output_dir,
+                "squashfs_only": squashfs_only,
+                "configuration_file": configuration_file,
             }
         else:
             # If the buildinstall_topdir is set, it means Koji is used for
@@ -182,6 +201,8 @@ class BuildinstallPhase(PhaseBase):
                 log_dir=log_dir,
                 dracut_args=dracut_args,
                 skip_branding=skip_branding,
+                squashfs_only=squashfs_only,
+                configuration_file=configuration_file,
             )
             return "rm -rf %s && %s" % (
                 shlex_quote(output_topdir),
@@ -219,7 +240,6 @@ class BuildinstallPhase(PhaseBase):
                 repo_baseurls = [translate_path(self.compose, r) for r in repo_baseurls]
 
             if self.buildinstall_method == "lorax":
-
                 buildarch = get_valid_arches(arch)[0]
                 for variant in self.compose.get_variants(arch=arch, types=["variant"]):
                     if variant.is_empty:

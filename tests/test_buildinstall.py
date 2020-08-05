@@ -161,6 +161,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -188,6 +190,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -215,6 +219,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
             ],
         )
@@ -294,6 +300,8 @@ class TestBuildinstallPhase(PungiTestCase):
                 "dracut-args": [],
                 "skip_branding": False,
                 "outputdir": self.topdir + "/work/amd64/buildinstall/Server",
+                "squashfs_only": False,
+                "configuration_file": None,
             },
             {
                 "product": "Test",
@@ -320,6 +328,8 @@ class TestBuildinstallPhase(PungiTestCase):
                 "dracut-args": [],
                 "skip_branding": False,
                 "outputdir": self.topdir + "/work/amd64/buildinstall/Client",
+                "squashfs_only": False,
+                "configuration_file": None,
             },
             {
                 "product": "Test",
@@ -346,6 +356,8 @@ class TestBuildinstallPhase(PungiTestCase):
                 "dracut-args": [],
                 "skip_branding": False,
                 "outputdir": self.topdir + "/work/x86_64/buildinstall/Server",
+                "squashfs_only": False,
+                "configuration_file": None,
             },
         ]
 
@@ -443,6 +455,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 )
             ],
             any_order=True,
@@ -523,10 +537,11 @@ class TestBuildinstallPhase(PungiTestCase):
             ],
         )
 
+    @mock.patch("pungi.phases.buildinstall.get_file")
     @mock.patch("pungi.phases.buildinstall.ThreadPool")
     @mock.patch("pungi.phases.buildinstall.LoraxWrapper")
     @mock.patch("pungi.phases.buildinstall.get_volid")
-    def test_uses_lorax_options(self, get_volid, loraxCls, poolCls):
+    def test_uses_lorax_options(self, get_volid, loraxCls, poolCls, get_file):
         compose = BuildInstallCompose(
             self.topdir,
             {
@@ -536,7 +551,6 @@ class TestBuildinstallPhase(PungiTestCase):
                 "release_version": "1",
                 "buildinstall_method": "lorax",
                 "lorax_options": [
-                    ("^.*$", {"*": {}}),
                     (
                         "^Server$",
                         {
@@ -549,16 +563,20 @@ class TestBuildinstallPhase(PungiTestCase):
                                 "rootfs_size": 3,
                                 "version": "1.2.3",
                                 "dracut_args": ["--xz", "--install", "/.buildstamp"],
+                                "configuration_file": "/tmp/lorax.conf",
                             },
-                            "amd64": {"noupgrade": False},
+                            "amd64": {"noupgrade": False, "squashfs_only": True},
                         },
                     ),
                     ("^Client$", {"*": {"nomacboot": False}}),
-                    ("^.*$", {"*": {}}),
                 ],
             },
         )
 
+        def _mocked_get_file(source, destination, compose):
+            return destination
+
+        get_file.side_effect = _mocked_get_file
         get_volid.return_value = "vol_id"
         loraxCls.return_value.get_lorax_cmd.return_value = ["lorax", "..."]
 
@@ -607,9 +625,17 @@ class TestBuildinstallPhase(PungiTestCase):
                     add_arch_template_var=["quux=2"],
                     bugurl="http://example.com",
                     rootfs_size=3,
-                    log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
+                    log_dir=os.path.join(
+                        self.topdir, "logs/x86_64/buildinstall-Server-logs"
+                    ),
                     dracut_args=["--xz", "--install", "/.buildstamp"],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=os.path.join(
+                        self.topdir,
+                        "logs/x86_64/buildinstall-Server-logs",
+                        "lorax.conf",
+                    ),
                 ),
                 mock.call(
                     "Test",
@@ -636,6 +662,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=True,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -662,6 +690,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
             ],
         )
@@ -687,6 +717,25 @@ class TestBuildinstallPhase(PungiTestCase):
                     variant=compose.variants["Server"],
                     disc_type="dvd",
                 ),
+            ],
+        )
+        """
+        There should be one get_file call. This is because the configuration_file
+        option was used only once in the above configuration.
+        """
+        six.assertCountEqual(
+            self,
+            get_file.mock_calls,
+            [
+                mock.call(
+                    "/tmp/lorax.conf",
+                    os.path.join(
+                        compose.topdir,
+                        "logs/x86_64/buildinstall-Server-logs",
+                        "lorax.conf",
+                    ),
+                    compose=compose,
+                )
             ],
         )
 
@@ -762,6 +811,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -788,6 +839,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -814,6 +867,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
             ],
         )
@@ -915,6 +970,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=buildinstall_topdir + "/x86_64/Server/logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -941,6 +998,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=buildinstall_topdir + "/amd64/Server/logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -967,6 +1026,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=buildinstall_topdir + "/amd64/Client/logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
             ],
         )
@@ -1060,6 +1121,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/x86_64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -1086,6 +1149,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Server-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
                 mock.call(
                     "Test",
@@ -1114,6 +1179,8 @@ class TestBuildinstallPhase(PungiTestCase):
                     log_dir=self.topdir + "/logs/amd64/buildinstall-Client-logs",
                     dracut_args=[],
                     skip_branding=False,
+                    squashfs_only=False,
+                    configuration_file=None,
                 ),
             ],
         )

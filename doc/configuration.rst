@@ -614,6 +614,9 @@ Options
         other arguments, so you have to provide a full list and can not just
         add something.
       * ``skip_branding`` -- *bool* (default ``False``)
+      * ``squashfs_only`` -- *bool* (default ``False``) pass the --squashfs_only to Lorax.
+      * ``configuration_file`` -- (:ref:`scm_dict <scm_support>`) (default empty) pass the
+        specified configuration file to Lorax using the -c option.
 **lorax_extra_sources**
     (*list*) -- a variant/arch mapping with urls for extra source repositories
     added to Lorax command line. Either one repo or a list can be specified.
