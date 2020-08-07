@@ -97,6 +97,10 @@ class Linker(kobo.log.LoggingBase):
         if src == dst:
             return
 
+        # Always hardlink or copy scratch builds
+        if "/work/tasks/" in src:
+            self._link_file(src, dst, "hardlink-or-copy")
+
         old_src = src
         if relative:
             src = relative_path(src, dst)
