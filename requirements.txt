@@ -1,0 +1,15 @@
+dict.sorted
+dogpile.cache
+fedmsg
+funcsigs
+jsonschema
+kobo
+koji
+lxml
+mmdzanata
+modulemd
+ordered_set
+productmd
+pykickstart
+python-multilib
+urlgrabber
