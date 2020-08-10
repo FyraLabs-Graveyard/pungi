@@ -7,64 +7,22 @@ Set up development environment
 ==============================
 
 In order to work on *Pungi*, you should install recent version of *Fedora*.
-These packages will have to installed:
 
- * createrepo_c
- * cvs
- * gcc
- * genisoimage
- * gettext
- * git
- * gobject-introspection
- * isomd5sum
- * jigdo
- * kobo
- * krb5-devel
- * libcurl-devel
- * libmodulemd
- * libselinux-python
- * lorax
- * python-dogpile-cache
- * python-jsonschema
- * python-kickstart
- * python-libcomps
- * python-lockfile
- * python-lxml
- * python2-multilib
- * python-productmd
- * PyYAML
- * repoview
- * rpm-devel
- * syslinux
- * yum
- * yum-utils
+Python2
+-------
 
-For running unit tests, these packages are recommended as well:
+Fedora 29 is recommended because some packages are not available in newer Fedora release, e.g. python2-libcomps.
 
- * python-mock
- * python-pytest
- * python-pytest-cov
- * python-unittest2
- * rpmdevtools
- * python-parameterized
+Install required packages ::
 
-While being difficult, it is possible to work on *Pungi* using *virtualenv*.
-Install *python-virtualenvwrapper* (after installation you have to add the command
-to *source /usr/local/bin/virtualenvwrapper.sh* to your shell startup file,
-depending on where it was installed by package manager) and use following steps.
-It will link system libraries into the virtual environment and install all packages
-preferably from PyPI or from tarball. You will still need to install all of the non-Python
-packages above as they are used by calling an executable. ::
+    $ sudo dnf install -y krb5-devel gcc make libcurl-devel python2-devel python2-createrepo_c kobo-rpmlib yum python2-libcomps python2-libselinx
 
-    $ mkvirtualenv pungienv
-    $ for pkg in gi libcomps pykickstart rpmUtils selinux urlgrabber yum; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print(os.path.dirname('$pkg'.__file__))')" "$(virtualenvwrapper_get_site_packages_dir)"; done
-    $ for pkg in _deltarpm krbV _selinux deltarpm sqlitecachec _sqlitecache; do ln -vs "$(deactivate && python -c 'import os, '$pkg'; print('$pkg'.__file__)')" "$(virtualenvwrapper_get_site_packages_dir)"; done
-    $ pip install -U pip
-    $ PYCURL_SSL_LIBRARY=nss pip install pycurl --no-binary :all:
-    $ pip install beanbag jsonschema 'kobo>=0.6.0' lockfile lxml mock pytest pytest-cov productmd pyopenssl python-multilib requests requests-kerberos setuptools sphinx ordered_set koji PyYAML dogpile.cache parameterized
+Python3
+-------
 
-Now you should be able to run all existing tests.
+Install required packages ::
 
+    $ sudo dnf install -y krb5-devel gcc make libcurl-devel python3-devel python3-createrepo_c python3-libcomps
 
 Developing
 ==========
@@ -121,7 +79,7 @@ Currently the development workflow for Pungi is on master branch:
 
       - you must sign-off on it. Use ``-s`` option when running ``git commit``.
 
-      - The code must be well formatted via ``black`` and pass ``flake8`` checking. Run ``tox`` to do the check.
+      - The code must be well formatted via ``black`` and pass ``flake8`` checking. Run ``tox -e black,flake8`` to do the check.
 
 - Create pull request in the pagure.io web UI
 
@@ -149,19 +107,41 @@ Testing
 You must write unit tests for any new code (except for trivial changes). Any
 code without sufficient test coverage may not be merged.
 
-To run all existing tests, suggested method is to use *pytest*. With
-additional options, it can generate code coverage. To make sure even tests from
-executable files are run, don't forget to use the ``--exe`` option. ::
+To run all existing tests, suggested method is to use *tox*. ::
 
+    $ sudo dnf install python3-tox -y
+
+    $ tox -e py3
+    $ tox -e py27
+
+Alternatively you could create a vitualenv, install deps and run tests
+manually if you don't want to use tox. ::
+
+    $ sudo dnf install python3-virtualenvwrapper -y
+    $ mkvirtualenv --system-site-packages py3
+    $ workon py3
+    $ pip install -r requirements.txt -r test-requirements.txt
     $ make test
-    $ make test-cover
 
-    # Running single test file
-    $ python tests/test_arch.py [TestCase...]
+    # or with coverage
+    $ make test-coverage
+
+If you need to run specified tests, *pytest* is recommended. ::
+
+    # Activate virtualenv first
+
+    # Run tests
+    $ pytest tests/test_config.py
+    $ pytest tests/test_config.py -k test_pkgset_mismatch_repos
 
 In the ``tests/`` directory there is a shell script ``test_compose.sh`` that
 you can use to try and create a miniature compose on dummy data. The actual
 data will be created by running ``make test-data`` in project root. ::
+
+    $ sudo dnf -y install rpm-build createrepo_c isomd5sum genisoimage syslinux
+
+    # Activate virtualenv (the one created by tox could be used)
+    $ source .tox/py3/bin/activate
 
     $ python setup.py develop
     $ make test-data
