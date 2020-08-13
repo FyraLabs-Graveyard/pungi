@@ -88,7 +88,8 @@ class LoraxWrapperTest(unittest.TestCase):
                 "--dracut-arg=--foo",
                 "--dracut-arg=bar",
                 "--squashfs-only",
-                "-c=/storage/RHEL-7.8-20200731.n.0/"
+                "--config",
+                "/storage/RHEL-7.8-20200731.n.0/"
                 + "logs/x86_64/buildinstall-Server-logs/lorax.conf",
                 "/mnt/output_dir",
             ],

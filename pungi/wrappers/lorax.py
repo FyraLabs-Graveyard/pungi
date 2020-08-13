@@ -100,7 +100,9 @@ class LoraxWrapper(object):
             cmd.append("--squashfs-only")
 
         if configuration_file:
-            cmd.append("-c=%s" % configuration_file)
+            # Note, at the moment Lorax does not accept --config=%s
+            cmd.append("--config")
+            cmd.append(configuration_file)
         output_dir = os.path.abspath(output_dir)
         cmd.append(output_dir)
 
