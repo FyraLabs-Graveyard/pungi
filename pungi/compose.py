@@ -57,6 +57,7 @@ def get_compose_info(
     compose_date=None,
     compose_respin=None,
     compose_label=None,
+    parent_compose_ids=None,
 ):
     """
     Creates inncomplete ComposeInfo to generate Compose ID
@@ -100,7 +101,10 @@ def get_compose_info(
             # Create compose in CTS and get the reserved compose ID.
             ci.compose.id = ci.create_compose_id()
             url = os.path.join(cts_url, "api/1/composes/")
-            data = {"compose_info": json.loads(ci.dumps())}
+            data = {
+                "compose_info": json.loads(ci.dumps()),
+                "parent_compose_ids": parent_compose_ids,
+            }
             rv = requests.post(url, json=data, auth=HTTPKerberosAuth())
             rv.raise_for_status()
         finally:

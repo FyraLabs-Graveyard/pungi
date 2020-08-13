@@ -648,7 +648,7 @@ class ComposeTestCase(unittest.TestCase):
             mocked_requests.post.assert_called_once_with(
                 "https://cts.localhost.tld/api/1/composes/",
                 auth=mock.ANY,
-                json={"compose_info": self.ci_json},
+                json={"compose_info": self.ci_json, "parent_compose_ids": None},
             )
 
 

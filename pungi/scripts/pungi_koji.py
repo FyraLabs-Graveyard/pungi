@@ -159,6 +159,13 @@ def main():
         help="number of product version components used when creating latest symlink",  # noqa: E501
     )
     parser.add_argument(
+        "--parent-compose-id",
+        action="append",
+        default=[],
+        help="List of compose IDs which should be marked as parents of this "
+        "compose in Compose Tracking Service",
+    )
+    parser.add_argument(
         "--print-output-dir",
         action="store_true",
         default=False,
@@ -282,7 +289,10 @@ def main():
         ci_path = os.path.join(compose_dir, "work", "global", "composeinfo-base.json")
         if not os.path.exists(ci_path):
             ci = Compose.get_compose_info(
-                conf, compose_type=compose_type, compose_label=opts.label
+                conf,
+                compose_type=compose_type,
+                compose_label=opts.label,
+                parent_compose_ids=opts.parent_compose_id,
             )
             Compose.write_compose_info(compose_dir, ci)
 
