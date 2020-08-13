@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.3
+Version:        4.2.4
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,30 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Aug 17 2020 Haibo Lin <hlin@redhat.com> - 4.2.4-1
+- Allow setting CTS parent_compose_ids using --parent-compose-id option. (jkaluza)
+- Replace -c parameter with --config (bkhomuts)
+- doc: Update doc/contributing.rst (hlin)
+- Use requirements.txt (hlin)
+- Allow squashfs-only and configuration_file in lorax_options (bkhomuts)
+- Hardlink or copy scratch builds always (hlin)
+- Retry ostree installer task on losetup error (lsedlar)
+- Use pytest instead of nosetests (hlin)
+- Run tests via tox (hlin)
+- Make sure old_repo_dir for reusing exists (hlin)
+- Retry buildinstall tasks on losetup error (hlin)
+- Allow including scratch module builds (hlin)
+- Unpack RPMs using rpm2archive (lsedlar)
+- Allow test calls in any order (lsedlar)
+- Create arch repo when reusing failed (hlin)
+- createiso: Ignore errors when deleting staging dir (hlin)
+- Remove buffering when running koji commands (onosek)
+- Fix typos (lsedlar)
+- Check if composeinfo-base.json exists before creating it. (jkaluza)
+- Port scripts/wait_for_signed_ostree_handler.py to fedora-messaging (pingou)
+- Port scripts/fedmsg_notification.py to fedora-messaging (pingou)
+- buildinstall: Improve error reporting when lorax fails (hlin)
+
 * Thu Jun 11 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.3-1
 - Move test for unsigned packages with pkgset_koji_scratch_tasks to PkgsetPhase
   class. (jkaluza)
