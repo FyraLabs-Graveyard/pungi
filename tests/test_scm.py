@@ -285,8 +285,14 @@ class GitSCMTestCaseReal(SCMBaseTest):
         super(GitSCMTestCaseReal, self).setUp()
         self.compose = mock.Mock(conf={})
         self.gitRepositoryLocation = tempfile.mkdtemp()
+        git_dir = os.path.join(self.gitRepositoryLocation, ".git")
         run(
-            ["git", "-C", self.gitRepositoryLocation, "init"],
+            [
+                "git",
+                "--git-dir=%s" % git_dir,
+                "--work-tree=%s" % self.gitRepositoryLocation,
+                "init",
+            ],
             workdir=self.gitRepositoryLocation,
         )
         fileOneLocation = os.path.join(self.gitRepositoryLocation, "some_file.txt")
@@ -301,8 +307,8 @@ class GitSCMTestCaseReal(SCMBaseTest):
         run(
             [
                 "git",
-                "-C",
-                self.gitRepositoryLocation,
+                "--git-dir=%s" % git_dir,
+                "--work-tree=%s" % self.gitRepositoryLocation,
                 "add",
                 "some_file.txt",
                 "other_file.txt",
@@ -317,8 +323,8 @@ class GitSCMTestCaseReal(SCMBaseTest):
                 "user.name=Pungi Test Engineer",
                 "-c",
                 "user.email=ptestengineer@example.com",
-                "-C",
-                self.gitRepositoryLocation,
+                "--git-dir=%s" % git_dir,
+                "--work-tree=%s" % self.gitRepositoryLocation,
                 "commit",
                 "-m",
                 "Initial commit",

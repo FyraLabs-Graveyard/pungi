@@ -931,7 +931,7 @@ class TestAddScratchModuleToVariant(helpers.PungiTestCase):
             variant.arch_mmds, {"x86_64": {self.nsvc: mock_mmd.return_value}}
         )
         self.assertEqual(
-            tag_to_mmd, {"scratch-module-tag": {"x86_64": {mock_mmd.return_value}}}
+            tag_to_mmd, {"scratch-module-tag": {"x86_64": set([mock_mmd.return_value])}}
         )
 
         self.assertEqual(variant.modules, [])
