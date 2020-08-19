@@ -94,7 +94,7 @@ def run(log, opts):
         volume_id = opts.volume_id or iso.get_volume_id(opts.source)
 
         # create graft points from mounted source iso + overlay dir
-        graft_points = iso.get_graft_points([work_dir] + opts.dirs)
+        graft_points = iso.get_graft_points(work_dir, [work_dir] + opts.dirs)
         # if ks.cfg is detected, patch syslinux + grub to use it
         if "ks.cfg" in graft_points:
             log.info("Adding ks.cfg to boot configs")
