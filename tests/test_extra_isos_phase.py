@@ -665,7 +665,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
+            [mock.call(self.compose.paths.compose.topdir(),
+                       [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -734,7 +735,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
+            [mock.call(self.compose.paths.compose.topdir(),
+                       [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -799,7 +801,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp],
+            [mock.call(self.compose.paths.compose.topdir(),
+                       [os.path.join(self.topdir, x)]) for x in gp],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
@@ -890,8 +893,10 @@ class GetIsoContentsTest(helpers.PungiTestCase):
         six.assertCountEqual(
             self,
             ggp.call_args_list,
-            [mock.call(self.compose, [os.path.join(self.topdir, x)]) for x in gp]
-            + [mock.call(self.compose, [bi_dir, iso_dir])],
+            [mock.call(self.compose.paths.compose.topdir(),
+                       [os.path.join(self.topdir, x)]) for x in gp]
+            + [mock.call(self.compose.paths.compose.topdir(),
+                         [bi_dir, iso_dir])],
         )
         self.assertEqual(len(wgp.call_args_list), 1)
         self.assertEqual(wgp.call_args_list[0][0][0], gp_file)
