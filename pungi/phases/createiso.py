@@ -512,7 +512,7 @@ def prepare_iso(
     else:
         data = iso.get_graft_points(
             compose.paths.compose.topdir(),
-            [iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir]
+            [iso._paths_from_list(tree_dir, split_iso_data["files"]), iso_dir],
         )
 
     if compose.conf["createiso_break_hardlinks"]:

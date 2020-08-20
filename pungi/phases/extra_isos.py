@@ -199,7 +199,9 @@ def get_iso_contents(
             buildinstall_dir = os.path.join(buildinstall_dir, variant.uid)
 
         copy_boot_images(buildinstall_dir, iso_dir)
-        files = iso.get_graft_points(compose.paths.compose.topdir(), [buildinstall_dir, iso_dir])
+        files = iso.get_graft_points(
+            compose.paths.compose.topdir(), [buildinstall_dir, iso_dir]
+        )
 
         # We need to point efiboot.img to compose/ tree, because it was
         # modified in buildinstall phase and the file in work/ has different
@@ -215,19 +217,25 @@ def get_iso_contents(
 
         # Get packages...
         package_dir = compose.paths.compose.packages(arch, var)
-        for k, v in iso.get_graft_points(compose.paths.compose.topdir(), [package_dir]).items():
+        for k, v in iso.get_graft_points(
+            compose.paths.compose.topdir(), [package_dir]
+        ).items():
             files[os.path.join(var.uid, "Packages", k)] = v
 
         # Get repodata...
         tree_dir = compose.paths.compose.repository(arch, var)
         repo_dir = os.path.join(tree_dir, "repodata")
-        for k, v in iso.get_graft_points(compose.paths.compose.topdir(), [repo_dir]).items():
+        for k, v in iso.get_graft_points(
+            compose.paths.compose.topdir(), [repo_dir]
+        ).items():
             files[os.path.join(var.uid, "repodata", k)] = v
 
         if inherit_extra_files:
             # Get extra files...
             extra_files_dir = compose.paths.work.extra_files_dir(arch, var)
-            for k, v in iso.get_graft_points(compose.paths.compose.topdir(), [extra_files_dir]).items():
+            for k, v in iso.get_graft_points(
+                compose.paths.compose.topdir(), [extra_files_dir]
+            ).items():
                 files[os.path.join(var.uid, k)] = v
 
     extra_files_dir = compose.paths.work.extra_iso_extra_files_dir(arch, variant)
@@ -243,7 +251,9 @@ def get_iso_contents(
     )
 
     # Add extra files specific for the ISO
-    files.update(iso.get_graft_points(compose.paths.compose.topdir(), [extra_files_dir]))
+    files.update(
+        iso.get_graft_points(compose.paths.compose.topdir(), [extra_files_dir])
+    )
 
     gp = "%s-graft-points" % iso_dir
     iso.write_graft_points(gp, files, exclude=["*/lost+found", "*/boot.iso"])
