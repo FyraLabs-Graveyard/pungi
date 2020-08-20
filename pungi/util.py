@@ -189,11 +189,19 @@ def explode_rpm_package(pkg_path, target_dir):
     """Explode a rpm package into target_dir."""
     pkg_path = os.path.abspath(pkg_path)
     makedirs(target_dir)
-    # rpm2archive writes to stdout only if reading from stdin, thus the redirect
-    run(
-        "rpm2archive - <%s | tar xfz - && chmod -R a+rX ." % shlex_quote(pkg_path),
-        workdir=target_dir,
-    )
+    try:
+        # rpm2archive writes to stdout only if reading from stdin, thus the redirect
+        run(
+            "rpm2archive - <%s | tar xfz - && chmod -R a+rX ." % shlex_quote(pkg_path),
+            workdir=target_dir,
+        )
+    except RuntimeError:
+        # Fall back to rpm2cpio in case rpm2archive failed (most likely due to
+        # not being present on the system).
+        run(
+            "rpm2cpio %s | cpio -iuvmd && chmod -R a+rX ." % shlex_quote(pkg_path),
+            workdir=target_dir,
+        )
 
 
 def pkg_is_rpm(pkg_obj):
