@@ -249,14 +249,15 @@ class KojiWrapper(object):
         If we are authenticated with a keytab, we need a fresh credentials
         cache to avoid possible race condition.
         """
+        env = os.environ.copy()
         if getattr(self.koji_module.config, "keytab", None):
             with util.temp_dir(prefix="krb_ccache") as tempdir:
-                env = os.environ.copy()
                 env["KRB5CCNAME"] = "DIR:%s" % tempdir
                 env["PYTHONUNBUFFERED"] = "1"
                 yield env
         else:
-            yield {"PYTHONUNBUFFERED": "1"}
+            env["PYTHONUNBUFFERED"] = "1"
+            yield env
 
     def run_runroot_cmd(self, command, log_file=None):
         """Run koji runroot command and wait for results.

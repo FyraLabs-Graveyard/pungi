@@ -525,6 +525,7 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
             )
 
 
+@mock.patch.dict("os.environ", {"FOO": "BAR"}, clear=True)
 class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
         cmd = self.koji.get_runroot_cmd("tgt", "s390x", "date", use_shell=False)
@@ -625,7 +626,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                 mock.call(
                     cmd,
                     can_fail=True,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     logfile=None,
                     show_cmd=True,
@@ -654,7 +655,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
                 mock.call(
                     cmd,
                     can_fail=True,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     logfile=None,
                     show_cmd=True,
@@ -663,7 +664,6 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
             ],
         )
 
-    @mock.patch.dict("os.environ", {"FOO": "BAR"}, clear=True)
     @mock.patch("shutil.rmtree")
     @mock.patch("tempfile.mkdtemp")
     @mock.patch("pungi.wrappers.kojiwrapper.run")
@@ -698,6 +698,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         )
 
 
+@mock.patch.dict("os.environ", {"FOO": "BAR"}, clear=True)
 class RunBlockingCmdTest(KojiWrapperBaseTestCase):
     @mock.patch("pungi.wrappers.kojiwrapper.run")
     def test_minimal(self, run):
@@ -715,14 +716,13 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 )
             ],
         )
 
-    @mock.patch.dict("os.environ", {"FOO": "BAR"}, clear=True)
     @mock.patch("pungi.util.temp_dir")
     @mock.patch("pungi.wrappers.kojiwrapper.run")
     def test_with_keytab(self, run, temp_dir):
@@ -769,7 +769,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile="logfile",
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 )
@@ -792,7 +792,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 )
@@ -815,7 +815,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 )
@@ -839,7 +839,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 ),
@@ -868,7 +868,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 ),
@@ -898,7 +898,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 ),
@@ -941,7 +941,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 ),
@@ -977,7 +977,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
-                    env={"PYTHONUNBUFFERED": "1"},
+                    env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
                 ),
