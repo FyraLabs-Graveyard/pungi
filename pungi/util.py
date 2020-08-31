@@ -972,11 +972,11 @@ def retry(timeout=120, interval=30, wait_on=Exception):
         def inner(*args, **kwargs):
             start = time.time()
             while True:
-                if (time.time() - start) >= timeout:
-                    raise  # This re-raises the last exception.
                 try:
                     return function(*args, **kwargs)
                 except wait_on:
+                    if (time.time() - start) >= timeout:
+                        raise  # This re-raises the last exception.
                     time.sleep(interval)
 
         return inner
