@@ -383,7 +383,10 @@ def get_productids_from_scm(compose):
             product_id_path = compose.paths.work.product_id(arch, variant)
             shutil.copy2(pem_files[0], product_id_path)
 
-    shutil.rmtree(tmp_dir)
+    try:
+        shutil.rmtree(tmp_dir)
+    except Exception as e:
+        compose.log_warning("Failed to clean up tmp dir: %s %s" % (tmp_dir, str(e)))
     compose.log_info("[DONE ] %s" % msg)
 
 
