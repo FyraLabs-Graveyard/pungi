@@ -21,7 +21,6 @@ Minimal Config Example
     # GENERAL SETTINGS
     comps_file = "comps-f23.xml"
     variants_file = "variants-f23.xml"
-    module_defaults_dir = "module_defaults"
 
     # KOJI
     koji_profile = "koji"
@@ -136,7 +135,17 @@ Options
 
 **module_defaults_dir** [optional]
     (:ref:`scm_dict <scm_support>` or *str*) -- reference the module defaults
-    directory containing modulemd-defaults YAML documents
+    directory containing modulemd-defaults YAML documents. Files relevant for
+    modules included in the compose will be embedded in the generated repodata
+    and available for DNF.
+
+    ::
+
+        module_defaults_dir = {
+            "scm": "git",
+            "repo": "https://pagure.io/releng/fedora-module-defaults.git",
+            "dir": ".",
+        }
 
 **failable_deliverables** [optional]
     (*list*) -- list which deliverables on which variant and architecture can
