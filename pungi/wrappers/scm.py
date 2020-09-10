@@ -168,6 +168,8 @@ class GitWrapper(ScmBase):
                 % (e, e.output)
             )
             try:
+                # Re-run git init in case of previous failure breaking .git dir
+                run(["git", "init"], workdir=destdir)
                 run(["git", "remote", "add", "origin", repo], workdir=destdir)
                 self.retry_run(["git", "remote", "update", "origin"], workdir=destdir)
                 run(["git", "checkout", branch], workdir=destdir)

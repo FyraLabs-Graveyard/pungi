@@ -192,6 +192,7 @@ class GitSCMTestCase(SCMBaseTest):
                     "git://example.com/git/repo.git",
                     "master",
                 ],
+                ["git", "init"],
                 ["git", "remote", "add", "origin", url],
                 ["git", "remote", "update", "origin"],
                 ["git", "checkout", "master"],
