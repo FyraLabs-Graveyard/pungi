@@ -271,8 +271,13 @@ class MaterializedPackageSet(object):
 
         small_pool.start()
         big_pool.start()
-        small_pool.stop()
-        big_pool.stop()
+        try:
+            small_pool.stop()
+        except Exception:
+            big_pool.kill()
+            raise
+        finally:
+            big_pool.stop()
 
         return small_pool.results + big_pool.results
 
