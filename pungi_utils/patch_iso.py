@@ -79,7 +79,7 @@ def run(log, opts):
     log.info("Mounting %s", opts.source)
     target = os.path.abspath(opts.target)
 
-    with util.temp_dir(prefix="patch-iso-") as work_dir:
+    with util.temp_dir(prefix="patch-iso-", dir=opts.work_dir) as work_dir:
         with iso.mount(opts.source) as source_iso_dir:
             util.copy_all(source_iso_dir, work_dir)
 

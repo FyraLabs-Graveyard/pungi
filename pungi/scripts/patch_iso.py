@@ -34,6 +34,9 @@ def main(args=None):
         "--force-arch", help="Treat the ISO as bootable on given architecture"
     )
     parser.add_argument(
+        "--work-dir", help="Set custom working directory. Default: /tmp/", default=None
+    )
+    parser.add_argument(
         "target", metavar="TARGET_ISO", help="which file to write the result to"
     )
     parser.add_argument("source", metavar="SOURCE_ISO", help="source ISO to work with")
