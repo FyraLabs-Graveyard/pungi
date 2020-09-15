@@ -84,6 +84,7 @@ class TestPatchingIso(unittest.TestCase):
             target="test.iso",
             source="source.iso",
             force_arch=None,
+            work_dir=None,
             volume_id="FOOBAR",
             dirs=[],
         )
@@ -116,6 +117,55 @@ class TestPatchingIso(unittest.TestCase):
     @mock.patch("pungi_utils.patch_iso.util.copy_all")
     @mock.patch("pungi_utils.patch_iso.iso")
     @mock.patch("pungi_utils.patch_iso.sh")
+    def test_work_dir(self, sh, iso, copy_all):
+        iso.mount.return_value.__enter__.return_value = "mounted-iso-dir"
+
+        def _create_files(src, dest):
+            touch(os.path.join(dest, "dir", "file.txt"), "Hello")
+
+        copy_all.side_effect = _create_files
+
+        log = mock.Mock(name="logger")
+        opts = mock.Mock(
+            target="test.iso",
+            source="source.iso",
+            force_arch=None,
+            work_dir="/tmp/custom-workdir",
+            volume_id="FOOBAR",
+            dirs=[],
+        )
+        patch_iso.run(log, opts)
+
+        self.assertEqual(
+            iso.get_mkisofs_cmd.call_args_list,
+            [
+                mock.call(
+                    os.path.abspath(opts.target),
+                    None,
+                    boot_args=None,
+                    exclude=["./lost+found"],
+                    graft_points=ANYTHING,
+                    input_charset=None,
+                    volid="FOOBAR",
+                )
+            ],
+        )
+        self.assertEqual(iso.mount.call_args_list, [mock.call("source.iso")])
+        self.assertEqual(copy_all.mock_calls, [mock.call("mounted-iso-dir", ANYTHING)])
+        self.assertTrue(
+            copy_all.call_args.args[1].startswith("/tmp/custom-workdir/patch-iso-")
+        )
+        self.assertEqual(
+            sh.call_args_list,
+            [
+                mock.call(log, iso.get_mkisofs_cmd.return_value, workdir=ANYTHING),
+                mock.call(log, iso.get_implantisomd5_cmd.return_value),
+            ],
+        )
+
+    @mock.patch("pungi_utils.patch_iso.util.copy_all")
+    @mock.patch("pungi_utils.patch_iso.iso")
+    @mock.patch("pungi_utils.patch_iso.sh")
     def test_detect_arch_discinfo(self, sh, iso, copy_all):
         iso.mount.return_value.__enter__.return_value = "mounted-iso-dir"
 
@@ -133,6 +183,7 @@ class TestPatchingIso(unittest.TestCase):
             target="test.iso",
             source="source.iso",
             force_arch=None,
+            work_dir=None,
             volume_id=None,
             dirs=[],
         )
@@ -182,6 +233,7 @@ class TestPatchingIso(unittest.TestCase):
             target="test.iso",
             source="source.iso",
             force_arch=None,
+            work_dir=None,
             volume_id=None,
             dirs=[],
         )
@@ -232,6 +284,7 @@ class TestPatchingIso(unittest.TestCase):
             target="test.iso",
             source="source.iso",
             force_arch="s390",
+            work_dir=None,
             volume_id="foobar",
             dirs=[],
         )
