@@ -648,7 +648,7 @@ def make_schema():
             "createrepo_checksum": {
                 "type": "string",
                 "default": "sha256",
-                "enum": ["sha", "sha256", "sha512"],
+                "enum": ["sha1", "sha256", "sha512"],
             },
             "createrepo_use_xz": {"type": "boolean", "default": False},
             "createrepo_num_threads": {"type": "number", "default": get_num_cpus()},
