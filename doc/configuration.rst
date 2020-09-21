@@ -550,6 +550,10 @@ Options
    list will be used (and taken from the tag). Inheritance is used
    automatically.
 
+**pkgset_koji_module_builds**
+    (*dict*) -- A mapping of variants to extra module builds to include in a
+    package set: ``{variant: [N:S:V:C]}``.
+
 **pkgset_koji_inherit** = True
     (*bool*) -- inherit builds from parent tags; we can turn it off only if we
     have all builds tagged in a single tag

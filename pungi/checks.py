@@ -780,6 +780,13 @@ def make_schema():
             "pkgset_koji_builds": {"$ref": "#/definitions/strings"},
             "pkgset_koji_scratch_tasks": {"$ref": "#/definitions/strings"},
             "pkgset_koji_module_tag": {"$ref": "#/definitions/strings", "default": []},
+            "pkgset_koji_module_builds": {
+                "type": "object",
+                "patternProperties": {
+                    "^.+$": {"$ref": "#/definitions/list_of_strings"}
+                },
+                "additionalProperties": False,
+            },
             "pkgset_koji_inherit": {"type": "boolean", "default": True},
             "pkgset_koji_inherit_modules": {"type": "boolean", "default": False},
             "pkgset_exclusive_arch_considers_noarch": {

@@ -273,6 +273,52 @@ def _add_module_to_variant(
     return nsvc
 
 
+def _add_extra_modules_to_variant(
+    compose, koji_wrapper, variant, extra_modules, variant_tags, tag_to_mmd
+):
+    for nsvc in extra_modules:
+        msg = "Adding extra module build '%s' to variant '%s'" % (nsvc, variant)
+        compose.log_info(msg)
+
+        nsvc_info = nsvc.split(":")
+        if len(nsvc_info) != 4:
+            raise ValueError("Module %s does not in N:S:V:C format" % nsvc)
+
+        koji_build = koji_wrapper.koji_proxy.getBuild(
+            "%s-%s-%s.%s" % tuple(nsvc_info), True
+        )
+
+        added = _add_module_to_variant(
+            koji_wrapper, variant, koji_build, compose=compose
+        )
+
+        if not added:
+            compose.log_warning("%s - Failed" % msg)
+            continue
+
+        tag = koji_build["extra"]["typeinfo"]["module"]["content_koji_tag"]
+        variant_tags[variant].append(tag)
+
+        tag_to_mmd.setdefault(tag, {})
+        for arch in variant.arch_mmds:
+            try:
+                mmd = variant.arch_mmds[arch][nsvc]
+            except KeyError:
+                # Module was filtered from here
+                continue
+            tag_to_mmd[tag].setdefault(arch, set()).add(mmd)
+
+        if tag_to_mmd[tag]:
+            compose.log_info(
+                "Extra module '%s' in variant '%s' will use Koji tag '%s'"
+                % (nsvc, variant, tag)
+            )
+
+            # Store mapping NSVC --> koji_tag into variant. This is needed
+            # in createrepo phase where metadata is exposed by producmd
+            variant.module_uid_to_koji_tag[nsvc] = tag
+
+
 def _add_scratch_modules_to_variant(
     compose, variant, scratch_modules, variant_tags, tag_to_mmd
 ):
@@ -319,8 +365,7 @@ def _add_scratch_modules_to_variant(
 
 
 def _is_filtered_out(compose, variant, arch, module_name, module_stream):
-    """Check if module with given name and stream is filter out from this stream.
-    """
+    """Check if module with given name and stream is filter out from this stream."""
     if not compose:
         return False
 
@@ -662,6 +707,14 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             # play here.
             _get_modules_from_koji(
                 compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+            )
+
+        extra_modules = get_variant_data(
+            compose.conf, "pkgset_koji_module_builds", variant
+        )
+        if extra_modules:
+            _add_extra_modules_to_variant(
+                compose, koji_wrapper, variant, extra_modules, variant_tags, tag_to_mmd
             )
 
         variant_scratch_modules = get_variant_data(
