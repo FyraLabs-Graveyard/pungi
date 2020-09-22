@@ -238,7 +238,7 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
                     # The gather_lookaside_repos config allows setting multiple repourls
                     # using list, but `_update_config` always uses strings. Therefore we
                     # only try to filter out string_types.
-                    if isinstance(repourl, six.string_types):
+                    if not isinstance(repourl, six.string_types):
                         continue
                     if not repourl.startswith(compose.topdir):
                         per_arch_repos_to_compare[arch] = repourl

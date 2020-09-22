@@ -1238,6 +1238,26 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
     @mock.patch("pungi.phases.gather.load_old_gather_result")
     @mock.patch("pungi.phases.gather.load_old_compose_config")
+    def test_reuse_update_gather_lookaside_repos_different_initial_repos_list(
+        self, load_old_compose_config, load_old_gather_result
+    ):
+        package_sets = self._prepare_package_sets(
+            load_old_gather_result, requires=[], provides=[]
+        )
+        compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
+        lookasides = compose.conf["gather_lookaside_repos"]
+        repos = ["http://localhost/real1.repo", "http://localhost/real2.repo"]
+        lookasides.append(("^Server$", {"x86_64": repos}))
+        load_old_compose_config.return_value = copy.deepcopy(compose.conf)
+
+        gather._update_config(compose, "Server", "x86_64", compose.topdir)
+        result = gather.reuse_old_gather_packages(
+            compose, "x86_64", compose.variants["Server"], package_sets
+        )
+        self.assertEqual(result, None)
+
+    @mock.patch("pungi.phases.gather.load_old_gather_result")
+    @mock.patch("pungi.phases.gather.load_old_compose_config")
     def test_reuse_no_old_file_cache(
         self, load_old_compose_config, load_old_gather_result
     ):
