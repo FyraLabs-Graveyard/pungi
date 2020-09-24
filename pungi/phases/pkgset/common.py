@@ -117,7 +117,7 @@ def _create_arch_repo(worker_thread, args, task_num):
     reuse = getattr(pkgset, "reuse", None)
     if reuse:
         old_repo_dir = compose.paths.old_compose_path(repo_dir)
-        if os.path.isdir(old_repo_dir):
+        if old_repo_dir and os.path.isdir(old_repo_dir):
             msg = "Copying repodata for reuse: %s" % old_repo_dir
             try:
                 compose.log_info("[BEGIN] %s", msg)
