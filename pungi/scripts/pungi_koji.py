@@ -120,6 +120,13 @@ def main():
         help="make production compose (default unless config specifies otherwise)",
     )
     parser.add_argument(
+        "--development",
+        action="store_const",
+        const="development",
+        dest="compose_type",
+        help="make a development compose",
+    )
+    parser.add_argument(
         "--koji-event",
         metavar="ID",
         type=util.parse_koji_event,
