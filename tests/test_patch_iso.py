@@ -153,7 +153,7 @@ class TestPatchingIso(unittest.TestCase):
         self.assertEqual(iso.mount.call_args_list, [mock.call("source.iso")])
         self.assertEqual(copy_all.mock_calls, [mock.call("mounted-iso-dir", ANYTHING)])
         self.assertTrue(
-            copy_all.call_args.args[1].startswith("/tmp/custom-workdir/patch-iso-")
+            copy_all.call_args[0][1].startswith("/tmp/custom-workdir/patch-iso-")
         )
         self.assertEqual(
             sh.call_args_list,
