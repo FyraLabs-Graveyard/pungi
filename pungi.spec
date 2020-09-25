@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.4
+Version:        4.2.5
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,26 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Sep 25 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.5-1
+- Allow setting --development compose_type. (jkaluza)
+- Make sure old pkgset arch repo exists when reuing (hlin)
+- Fix wrong condition when reusing old gather phase results. (jkaluza)
+- pkgset: Allow to include extra module builds (hlin)
+- Adapt tests to new patch-iso --work-dir parameter (jkonecny)
+- Support change of the patch-iso temp dir (jkonecny)
+- pkgset: Handle exceptions in pkgset threads (lsedlar)
+- gitwrapper: Re-run git init before do full clone (hlin)
+- doc: Improve description of module defaults dir (lsedlar)
+- util: Refactor retry function (lsedlar)
+- createrepo: Ignore error when cleaning up tmp dir (hlin)
+- Preserve environment when running koji commands (lsedlar)
+- Fix formatting (lsedlar)
+- Adapt tests to a new get_graft_points() argument (jkonecny)
+- Fix pungi-patch-iso to work with a new compose top dir solution (jkonecny)
+- Don't use compose in get_graft_points (jkonecny)
+- Fall back to rpm2cpio (lsedlar)
+- tests: Fix tests for old version of git (hlin)
+
 * Mon Aug 17 2020 Haibo Lin <hlin@redhat.com> - 4.2.4-1
 - Allow setting CTS parent_compose_ids using --parent-compose-id option. (jkaluza)
 - Replace -c parameter with --config (bkhomuts)
