@@ -374,6 +374,7 @@ def run_compose(
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     livemedia_phase = pungi.phases.LiveMediaPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose)
+    osbuild_phase = pungi.phases.OSBuildPhase(compose)
     osbs_phase = pungi.phases.OSBSPhase(compose)
     image_checksum_phase = pungi.phases.ImageChecksumPhase(compose)
     repoclosure_phase = pungi.phases.RepoclosurePhase(compose)
@@ -397,6 +398,7 @@ def run_compose(
         ostree_installer_phase,
         extra_isos_phase,
         osbs_phase,
+        osbuild_phase,
     ):
         if phase.skip():
             continue
@@ -494,6 +496,7 @@ def run_compose(
         liveimages_phase,
         image_build_phase,
         livemedia_phase,
+        osbuild_phase,
     )
     compose_images_phase = pungi.phases.WeaverPhase(compose, compose_images_schema)
     extra_phase_schema = (
@@ -514,6 +517,7 @@ def run_compose(
         and liveimages_phase.skip()
         and livemedia_phase.skip()
         and image_build_phase.skip()
+        and osbuild_phase.skip()
     ):
         compose.im.dump(compose.paths.compose.metadata("images.json"))
     osbs_phase.dump_metadata()

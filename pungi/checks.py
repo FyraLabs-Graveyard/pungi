@@ -1111,6 +1111,37 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
+            "osbuild_target": {"type": "string"},
+            "osbuild_release": {"$ref": "#/definitions/optional_string"},
+            "osbuild_version": {"type": "string"},
+            "osbuild": {
+                "type": "object",
+                "patternProperties": {
+                    # Warning: this pattern is a variant uid regex, but the
+                    # format does not let us validate it as there is no regular
+                    # expression to describe all regular expressions.
+                    ".+": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "version": {"type": "string"},
+                                "distro": {"type": "string"},
+                                "target": {"type": "string"},
+                                "image_type": {"$ref": "#/definitions/strings"},
+                                "arches": {"$ref": "#/definitions/list_of_strings"},
+                                "release": {"type": "string"},
+                                "repo": {"$ref": "#/definitions/list_of_strings"},
+                                "failable": {"$ref": "#/definitions/list_of_strings"},
+                            },
+                            "subvariant": {"type": "string"},
+                        },
+                        "required": ["name", "distro", "image_type"],
+                        "additionalProperties": False,
+                    },
+                },
+            },
             "lorax_options": _variant_arch_mapping(
                 {
                     "type": "object",

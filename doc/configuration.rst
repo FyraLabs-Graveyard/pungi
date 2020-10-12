@@ -1305,6 +1305,7 @@ Target is specified by these settings.
  * ``live_media_target``
  * ``image_build_target``
  * ``live_images_target``
+ * ``osbuild_target``
 
 Version is specified by these options. If no version is set, a default value
 will be provided according to :ref:`automatic versioning <auto-version>`.
@@ -1313,6 +1314,7 @@ will be provided according to :ref:`automatic versioning <auto-version>`.
  * ``live_media_version``
  * ``image_build_version``
  * ``live_images_version``
+ * ``osbuild_version``
 
 Release is specified by these options. If set to a magic value to
 ``!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN``, a value will be generated according
@@ -1322,6 +1324,7 @@ to :ref:`automatic versioning <auto-version>`.
  * ``live_media_release``
  * ``image_build_release``
  * ``live_images_release``
+ * ``osbuild_release``
 
 Each configuration block can also optionally specify a ``failable`` key. For
 live images it should have a boolean value. For live media and image build it
@@ -1510,6 +1513,45 @@ Example
             }
         ]
     }
+
+
+OSBuild Composer for building images
+====================================
+
+**osbuild**
+    (*dict*) -- configuration for building images in OSBuild Composer service
+    fronted by a Koji plugin. Pungi will trigger a Koji task delegating to the
+    OSBuild Composer, which will build the image, import it to Koji via content
+    generators.
+
+    Format: ``{variant_uid_regex: [{...}]}``.
+
+    Required keys in the configuration dict:
+
+    * ``name`` -- name of the Koji package
+    * ``distro`` -- image for which distribution should be build TODO examples
+    * ``image_type`` -- a list of image types to build (e.g. ``qcow2``)
+
+    Optional keys:
+
+    * ``target`` -- which build target to use for the task. Either this option
+      or the global ``osbuild_target`` is required.
+    * ``version`` -- version for the final build (as a string). This option is
+      required if the global ``osbuild_version`` is not specified.
+    * ``release`` -- release part of the final NVR. If neither this option nor
+      the global ``osbuild_release`` is set, Koji will automatically generate a
+      value.
+    * ``repo`` -- a list of repository URLs from which to consume packages for
+      building the image. By default only the variant repository is used.
+    * ``arches`` -- list of architectures for which to build the image. By
+      default, the variant arches are used. This option can only restrict it,
+      not add a new one.
+
+.. note::
+   There is initial support for having this task as failable without aborting
+   the whole compose. This can be enabled by setting ``"failable": ["*"]`` in
+   the config for the image. It is an on/off switch without granularity per
+   arch.
 
 
 OSTree Settings
