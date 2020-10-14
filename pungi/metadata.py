@@ -156,6 +156,13 @@ def compose_to_composeinfo(compose):
                 var.paths.isos[arch] = relative_path(
                     iso_dir, compose.paths.compose.topdir().rstrip("/") + "/"
                 ).rstrip("/")
+            image_dir = compose.paths.compose.image_dir(variant=variant) or ""
+            if image_dir:
+                image_dir = image_dir % {"arch": arch}
+                if os.path.isdir(image_dir):
+                    var.paths.images[arch] = relative_path(
+                        image_dir, compose.paths.compose.topdir().rstrip("/") + "/"
+                    ).rstrip("/")
             jigdo_dir = (
                 compose.paths.compose.jigdo_dir(
                     arch=arch, variant=variant, create_dir=False
