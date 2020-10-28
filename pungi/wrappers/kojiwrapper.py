@@ -195,6 +195,8 @@ class KojiWrapper(object):
             if v:
                 if isinstance(v, bool):
                     cmd.append(k)
+                elif isinstance(v, int):
+                    cmd.append("%s=%d" % (k, v))
                 else:
                     for arg in force_list(v):
                         cmd.append(shlex_quote("%s=%s" % (k, arg)))
@@ -233,6 +235,8 @@ class KojiWrapper(object):
             if v:
                 if isinstance(v, bool):
                     cmd.append(k)
+                elif isinstance(v, int):
+                    cmd.append("%s=%d" % (k, v))
                 else:
                     for arg in force_list(v):
                         cmd.append(shlex_quote("%s=%s" % (k, arg)))
