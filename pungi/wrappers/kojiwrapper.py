@@ -197,7 +197,7 @@ class KojiWrapper(object):
                     cmd.append(k)
                 else:
                     for arg in force_list(v):
-                        cmd.append("%s=%s" % (k, shlex_quote(arg)))
+                        cmd.append(shlex_quote("%s=%s" % (k, arg)))
 
         return cmd
 
@@ -235,7 +235,7 @@ class KojiWrapper(object):
                     cmd.append(k)
                 else:
                     for arg in force_list(v):
-                        cmd.append("%s=%s" % (k, shlex_quote(arg)))
+                        cmd.append(shlex_quote("%s=%s" % (k, arg)))
 
         return cmd
 
