@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.5
+Version:        4.2.6
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,13 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Nov 04 2020 Bohdan Khomutskyi <bkhomuts@redhat.com> - 4.2.6-1
+- Allow setting int arguments for pungi-buildinstall plugin. (jkaluza)
+- Use shlex_quote for complete --foo=bar argument. (jkaluza)
+- Include images info in composeinfo.json (hlin)
+- tests: Fix mock usage for Python 2 (lsedlar)
+- Fix typo in config validation (lsedlar)
+
 * Fri Sep 25 2020 Lubomír Sedlář <lsedlar@redhat.com> - 4.2.5-1
 - Allow setting --development compose_type. (jkaluza)
 - Make sure old pkgset arch repo exists when reuing (hlin)
