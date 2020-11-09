@@ -990,6 +990,64 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
             ],
         )
 
+    def test_get_pungi_buildinstall_cmd(self):
+        args = {"product": "Fedora 23"}
+        cmd = self.koji.get_pungi_buildinstall_cmd(
+            "rrt",
+            "x86_64",
+            args,
+            channel=None,
+            packages=["lorax"],
+            mounts=["/tmp"],
+            weight=123,
+            chown_uid=456,
+        )
+
+        expected_cmd = [
+            "koji",
+            "--profile=custom-koji",
+            "pungi-buildinstall",
+            "--nowait",
+            "--task-id",
+            "--channel-override=runroot-local",
+            "--weight=123",
+            "--package=lorax",
+            "--mount=/tmp",
+            "--chown-uid=456",
+            "rrt",
+            "x86_64",
+            "product=Fedora 23",
+        ]
+        self.assertEqual(cmd, expected_cmd)
+
+    def test_get_pungi_ostree_cmd(self):
+        args = {"product": "Fedora 23"}
+        cmd = self.koji.get_pungi_ostree_cmd(
+            "rrt",
+            "x86_64",
+            args,
+            channel=None,
+            packages=["lorax"],
+            mounts=["/tmp"],
+            weight=123,
+        )
+
+        expected_cmd = [
+            "koji",
+            "--profile=custom-koji",
+            "pungi-ostree",
+            "--nowait",
+            "--task-id",
+            "--channel-override=runroot-local",
+            "--weight=123",
+            "--package=lorax",
+            "--mount=/tmp",
+            "rrt",
+            "x86_64",
+            "product=Fedora 23",
+        ]
+        self.assertEqual(cmd, expected_cmd)
+
 
 RPM_QA_QF_OUTPUT = """
 cjkuni-uming-fonts-0.2.20080216.1-56.fc23.noarch
