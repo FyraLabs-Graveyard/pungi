@@ -32,8 +32,8 @@ class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
         groups = set()
         packages = set()
 
-        # Check if this variant contains some modules
-        if variant is None or variant.modules is None:
+        # Check if there is a variant. The method only makes sense for variants.
+        if variant is None:
             return packages, groups
 
         compatible_arches = pungi.arch.get_compatible_arches(arch, multilib=True)
