@@ -14,6 +14,7 @@ import signal
 import sys
 import traceback
 import shutil
+import subprocess
 
 from six.moves import shlex_quote
 
@@ -581,8 +582,20 @@ def run_compose(
     compose.log_info("Compose finished: %s" % compose.topdir)
 
 
+def try_kill_children(signal):
+    try:
+        if COMPOSE:
+            COMPOSE.log_warning("Trying to kill all subprocesses")
+        pid = os.getpid()
+        subprocess.call(["pkill", "-P", str(pid)])
+    except Exception:
+        if COMPOSE:
+            COMPOSE.log_warning("Failed to kill all subprocesses")
+
+
 def sigterm_handler(signum, frame):
     if COMPOSE:
+        try_kill_children(signum)
         COMPOSE.log_error("Compose run failed: signal %s" % signum)
         COMPOSE.log_error("Traceback:\n%s" % "\n".join(traceback.format_stack(frame)))
         COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)
