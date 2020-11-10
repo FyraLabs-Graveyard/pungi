@@ -253,8 +253,14 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
             continue
 
         # Skip checking for frequently changing configuration options which do *not*
-        # influence Gather phase.
-        config_whitelist = ["product_id"]
+        # influence Gather phase:
+        #   - product_id - Changes with every compose.
+        #   - pkgset_koji_builds - This influences the gather phase, but the
+        #     change itself is not a reason to not reuse old gather phase. if
+        #     new pkgset_koji_builds value leads to significant change in input
+        #     package set, we will find that later in this function when comparing
+        #     old and new package set.
+        config_whitelist = ["product_id", "pkgset_koji_builds"]
         if opt in config_whitelist:
             continue
 

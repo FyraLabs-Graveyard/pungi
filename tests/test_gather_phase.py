@@ -1135,7 +1135,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
     def test_reuse_compose_config_different_whitelist(
         self, load_old_compose_config, load_old_gather_result
     ):
-        for whitelist_opt in ["product_id"]:
+        for whitelist_opt in ["product_id", "pkgset_koji_builds"]:
             load_old_gather_result.return_value = {
                 "rpm": [{"path": "/build/bash-1.0.0-1.x86_64.rpm"}],
                 "srpm": [],
