@@ -57,14 +57,6 @@ def get_package_path(filename, hashed_directory=False):
     return filename
 
 
-def _find_by_path(pkg_sets, arch, path):
-    """Find object in an list of package sets by path."""
-    for pkg_set in pkg_sets:
-        if path in pkg_set[arch]:
-            return pkg_set[arch][path]
-    raise RuntimeError("Path %r not found in any package set." % path)
-
-
 def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={}):
     # srpm_map instance is shared between link_files() runs
 
@@ -76,25 +68,29 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
 
     hashed_directories = compose.conf["hashed_directories"]
 
+    # Create temporary dict mapping package path to package object from pkgset
+    # so we do not have to search all pkg_sets for every package in pkg_map.
+    pkg_by_path = {}
+    for pkg_set in pkg_sets:
+        for path in pkg_set[arch]:
+            pkg_by_path[path] = pkg_set[arch][path]
+
     packages_dir = compose.paths.compose.packages("src", variant)
     packages_dir_relpath = compose.paths.compose.packages("src", variant, relative=True)
     for pkg in pkg_map["srpm"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(
-            packages_dir,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        package_path = get_package_path(
+            os.path.basename(pkg["path"]), hashed_directories
         )
-        dst_relpath = os.path.join(
-            packages_dir_relpath,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
-        )
+        dst = os.path.join(packages_dir, package_path)
+        dst_relpath = os.path.join(packages_dir_relpath, package_path)
 
         # link file
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
+        pkg_obj = pkg_by_path[pkg["path"]]
         nevra = pkg_obj.nevra
         manifest.add(
             variant.uid,
@@ -113,20 +109,17 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     for pkg in pkg_map["rpm"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(
-            packages_dir,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        package_path = get_package_path(
+            os.path.basename(pkg["path"]), hashed_directories
         )
-        dst_relpath = os.path.join(
-            packages_dir_relpath,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
-        )
+        dst = os.path.join(packages_dir, package_path)
+        dst_relpath = os.path.join(packages_dir_relpath, package_path)
 
         # link file
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
+        pkg_obj = pkg_by_path[pkg["path"]]
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
         manifest.add(
@@ -146,20 +139,17 @@ def link_files(compose, arch, variant, pkg_map, pkg_sets, manifest, srpm_map={})
     for pkg in pkg_map["debuginfo"]:
         if "lookaside" in pkg["flags"]:
             continue
-        dst = os.path.join(
-            packages_dir,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
+        package_path = get_package_path(
+            os.path.basename(pkg["path"]), hashed_directories
         )
-        dst_relpath = os.path.join(
-            packages_dir_relpath,
-            get_package_path(os.path.basename(pkg["path"]), hashed_directories),
-        )
+        dst = os.path.join(packages_dir, package_path)
+        dst_relpath = os.path.join(packages_dir_relpath, package_path)
 
         # link file
         pool.queue_put((pkg["path"], dst))
 
         # update rpm manifest
-        pkg_obj = _find_by_path(pkg_sets, arch, pkg["path"])
+        pkg_obj = pkg_by_path[pkg["path"]]
         nevra = pkg_obj.nevra
         src_nevra = _get_src_nevra(compose, pkg_obj, srpm_map)
         manifest.add(
