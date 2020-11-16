@@ -145,6 +145,7 @@ def get_mkisofs_cmd(
     boot_args=None,
     input_charset="utf-8",
     graft_points=None,
+    use_xorrisofs=False,
 ):
     # following options are always enabled
     untranslated_filenames = True
@@ -153,7 +154,7 @@ def get_mkisofs_cmd(
     joliet_long = True
     rock = True
 
-    cmd = ["/usr/bin/genisoimage"]
+    cmd = ["/usr/bin/xorrisofs" if use_xorrisofs else "/usr/bin/genisoimage"]
     if appid:
         cmd.extend(["-appid", appid])
 
@@ -178,7 +179,7 @@ def get_mkisofs_cmd(
     if verbose:
         cmd.append("-verbose")
 
-    if translation_table:
+    if not use_xorrisofs and translation_table:
         cmd.append("-translation-table")
 
     if input_charset:

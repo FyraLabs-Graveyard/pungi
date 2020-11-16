@@ -24,6 +24,7 @@ CreateIsoOpts = namedtuple(
         "supported",
         "os_tree",
         "hfs_compat",
+        "use_xorrisofs",
     ],
 )
 CreateIsoOpts.__new__.__defaults__ = (None,) * len(CreateIsoOpts._fields)

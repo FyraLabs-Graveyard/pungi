@@ -122,6 +122,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                     jigdo_dir="%s/compose/Server/x86_64/jigdo" % self.topdir,
                     os_tree="%s/compose/Server/x86_64/os" % self.topdir,
                     hfs_compat=True,
+                    use_xorrisofs=False,
                 )
             ],
         )
@@ -247,6 +248,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                     jigdo_dir="%s/compose/Server/x86_64/jigdo" % self.topdir,
                     os_tree="%s/compose/Server/x86_64/os" % self.topdir,
                     hfs_compat=True,
+                    use_xorrisofs=False,
                 ),
                 CreateIsoOpts(
                     output_dir="%s/compose/Server/source/iso" % self.topdir,
@@ -258,6 +260,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                     jigdo_dir="%s/compose/Server/source/jigdo" % self.topdir,
                     os_tree="%s/compose/Server/source/tree" % self.topdir,
                     hfs_compat=True,
+                    use_xorrisofs=False,
                 ),
             ],
         )
@@ -389,6 +392,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                     jigdo_dir="%s/compose/Server/source/jigdo" % self.topdir,
                     os_tree="%s/compose/Server/source/tree" % self.topdir,
                     hfs_compat=True,
+                    use_xorrisofs=False,
                 )
             ],
         )
@@ -495,6 +499,7 @@ class CreateisoPhaseTest(helpers.PungiTestCase):
                     jigdo_dir="%s/compose/Server/x86_64/jigdo" % self.topdir,
                     os_tree="%s/compose/Server/x86_64/os" % self.topdir,
                     hfs_compat=False,
+                    use_xorrisofs=False,
                 )
             ],
         )

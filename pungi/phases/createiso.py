@@ -171,6 +171,7 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                         arch=arch,
                         supported=self.compose.supported,
                         hfs_compat=self.compose.conf["iso_hfs_ppc64le_compatible"],
+                        use_xorrisofs=self.compose.conf.get("createiso_use_xorrisofs"),
                     )
 
                     if bootable:
@@ -326,7 +327,11 @@ def add_iso_to_metadata(
 def run_createiso_command(
     num, compose, bootable, arch, cmd, mounts, log_file, with_jigdo=True
 ):
-    packages = ["coreutils", "genisoimage", "isomd5sum"]
+    packages = [
+        "coreutils",
+        "xorriso" if compose.conf.get("createiso_use_xorrisofs") else "genisoimage",
+        "isomd5sum",
+    ]
     if with_jigdo and compose.conf["create_jigdo"]:
         packages.append("jigdo")
     if bootable:

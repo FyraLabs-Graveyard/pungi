@@ -78,7 +78,17 @@ def is_genisoimage_needed(conf):
     """This is only needed locally for createiso without runroot.
     """
     runroot_tag = conf.get("runroot_tag", "")
-    if runroot_tag:
+    if runroot_tag or conf.get("createiso_use_xorrisofs"):
+        return False
+    return True
+
+
+def is_xorrisofs_needed(conf):
+    """This is only needed locally for createiso without runroot and
+    createiso_use_xorrisofs=True.
+    """
+    runroot_tag = conf.get("runroot_tag", "")
+    if runroot_tag or not conf.get("createiso_use_xorrisofs"):
         return False
     return True
 
@@ -96,6 +106,7 @@ tools = [
     ("isomd5sum", "/usr/bin/checkisomd5", None),
     ("jigdo", "/usr/bin/jigdo-lite", is_jigdo_needed),
     ("genisoimage", "/usr/bin/genisoimage", is_genisoimage_needed),
+    ("xorriso", "/usr/bin/xorrisofs", is_xorrisofs_needed),
     ("syslinux", "/usr/bin/isohybrid", is_isohybrid_needed),
     # createrepo, modifyrepo and mergerepo are not needed by default, only when
     # createrepo_c is not configured
@@ -732,6 +743,7 @@ def make_schema():
                 {"type": "boolean", "default": False}
             ),
             "createiso_break_hardlinks": {"type": "boolean", "default": False},
+            "createiso_use_xorrisofs": {"type": "boolean", "default": False},
             "iso_hfs_ppc64le_compatible": {"type": "boolean", "default": True},
             "multilib": _variant_arch_mapping(
                 {"$ref": "#/definitions/list_of_strings"}

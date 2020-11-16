@@ -1222,6 +1222,10 @@ Options
     The staging directory is deleted when ISO is successfully created. In that
     case the same task to create the ISO will not be re-runnable.
 
+**createiso_use_xorrisofs** = False
+    (*bool*) -- when set to True, use ``xorrisofs`` for creating ISOs instead
+    of ``genisoimage``.
+
 **iso_size** = 4700000000
     (*int|str*) -- size of ISO image. The value should either be an integer
     meaning size in bytes, or it can be a string with ``k``, ``M``, ``G``
