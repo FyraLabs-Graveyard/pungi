@@ -174,6 +174,12 @@ def main():
         "compose in Compose Tracking Service",
     )
     parser.add_argument(
+        "--respin-of",
+        default=None,
+        help="Compose ID of compose which this compose respins to store it in "
+        "Compose Tracking Service",
+    )
+    parser.add_argument(
         "--print-output-dir",
         action="store_true",
         default=False,
@@ -301,6 +307,7 @@ def main():
                 compose_type=compose_type,
                 compose_label=opts.label,
                 parent_compose_ids=opts.parent_compose_id,
+                respin_of=opts.respin_of,
             )
             Compose.write_compose_info(compose_dir, ci)
 

@@ -640,15 +640,21 @@ class ComposeTestCase(unittest.TestCase):
             requests=mocked_requests,
             requests_kerberos=mocked_requests_kerberos,
         ):
-            ci = Compose.get_compose_info(conf)
+            ci = Compose.get_compose_info(conf, respin_of="Fedora-Rawhide-20200517.n.1")
             ci_json = json.loads(ci.dumps())
             self.assertEqual(ci_json, self.ci_json)
+
+            expected_json = {
+                "compose_info": self.ci_json,
+                "parent_compose_ids": None,
+                "respin_of": "Fedora-Rawhide-20200517.n.1",
+            }
 
             mocked_response.raise_for_status.assert_called_once()
             mocked_requests.post.assert_called_once_with(
                 "https://cts.localhost.tld/api/1/composes/",
                 auth=mock.ANY,
-                json={"compose_info": self.ci_json, "parent_compose_ids": None},
+                json=expected_json,
             )
 
 

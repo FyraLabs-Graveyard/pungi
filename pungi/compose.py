@@ -58,6 +58,7 @@ def get_compose_info(
     compose_respin=None,
     compose_label=None,
     parent_compose_ids=None,
+    respin_of=None,
 ):
     """
     Creates inncomplete ComposeInfo to generate Compose ID
@@ -104,6 +105,7 @@ def get_compose_info(
             data = {
                 "compose_info": json.loads(ci.dumps()),
                 "parent_compose_ids": parent_compose_ids,
+                "respin_of": respin_of,
             }
             rv = requests.post(url, json=data, auth=HTTPKerberosAuth())
             rv.raise_for_status()
