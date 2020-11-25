@@ -15,14 +15,18 @@ class OSBuildPhaseTest(helpers.PungiTestCase):
     def test_run(self, ThreadPool):
         cfg = {
             "name": "test-image",
+            "distro": "rhel-8",
             "version": "1",
             "target": "image-target",
             "arches": ["x86_64"],
             "failable": ["x86_64"],
+            "image_types": ["qcow2"],
         }
         compose = helpers.DummyCompose(
             self.topdir, {"osbuild": {"^Everything$": [cfg]}}
         )
+
+        self.assertValidConfig(compose.conf)
 
         pool = ThreadPool.return_value
 
@@ -51,7 +55,11 @@ class OSBuildPhaseTest(helpers.PungiTestCase):
 
     @mock.patch("pungi.phases.osbuild.ThreadPool")
     def test_run_with_global_options(self, ThreadPool):
-        cfg = {"name": "test-image"}
+        cfg = {
+            "name": "test-image",
+            "distro": "rhel-8",
+            "image_types": ["qcow2"],
+        }
         compose = helpers.DummyCompose(
             self.topdir,
             {
@@ -61,6 +69,8 @@ class OSBuildPhaseTest(helpers.PungiTestCase):
                 "osbuild_release": "2",
             },
         )
+
+        self.assertValidConfig(compose.conf)
 
         pool = ThreadPool.return_value
 
@@ -122,7 +132,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
     @mock.patch("pungi.phases.osbuild.Linker")
     @mock.patch("pungi.phases.osbuild.kojiwrapper.KojiWrapper")
     def test_process(self, KojiWrapper, Linker):
-        cfg = {"name": "test-image", "distro": "rhel8", "image_types": ["qcow2"]}
+        cfg = {"name": "test-image", "distro": "rhel-8", "image_types": ["qcow2"]}
         koji = KojiWrapper.return_value
         koji.watch_task.side_effect = self.make_fake_watch(0)
         koji.koji_proxy.osbuildImage.return_value = 1234
@@ -171,7 +181,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                 mock.call.koji_proxy.osbuildImage(
                     "test-image",
                     "1",
-                    "rhel8",
+                    "rhel-8",
                     ["qcow2"],
                     "image-target",
                     ["aarch64", "x86_64"],
@@ -232,7 +242,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
 
     @mock.patch("pungi.phases.osbuild.kojiwrapper.KojiWrapper")
     def test_task_fails(self, KojiWrapper):
-        cfg = {"name": "test-image", "distro": "rhel8", "image_types": ["qcow2"]}
+        cfg = {"name": "test-image", "distro": "rhel-8", "image_types": ["qcow2"]}
         koji = KojiWrapper.return_value
         koji.watch_task.side_effect = self.make_fake_watch(1)
         koji.koji_proxy.osbuildImage.return_value = 1234
@@ -257,7 +267,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
     def test_task_fails_but_is_failable(self, KojiWrapper):
         cfg = {
             "name": "test-image",
-            "distro": "rhel8",
+            "distro": "rhel-8",
             "image_types": ["qcow2"],
             "failable": ["x86_65"],
         }
