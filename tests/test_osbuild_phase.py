@@ -162,6 +162,120 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                 self.compose.variants["Everything"],
                 cfg,
                 ["aarch64", "x86_64"],
+                "1",  # version
+                "15",  # release
+                "image-target",
+                [self.topdir + "/compose/Everything/$arch/os"],
+                ["x86_64"],
+            ),
+            1,
+        )
+
+        # Verify two Koji instances were created.
+        self.assertEqual(len(KojiWrapper.call_args), 2)
+        print(koji.mock_calls)
+        # Verify correct calls to Koji
+        self.assertEqual(
+            koji.mock_calls,
+            [
+                mock.call.login(),
+                mock.call.koji_proxy.osbuildImage(
+                    "test-image",
+                    "1",
+                    "rhel-8",
+                    ["qcow2"],
+                    "image-target",
+                    ["aarch64", "x86_64"],
+                    opts={
+                        "release": "15",
+                        "repo": [self.topdir + "/compose/Everything/$arch/os"],
+                    },
+                ),
+                mock.call.watch_task(1234, mock.ANY),
+                mock.call.koji_proxy.getBuild("test-image-1-1"),
+                mock.call.koji_proxy.listArchives(buildID=5678),
+            ],
+        )
+
+        # Assert there are 2 images added to manifest and the arguments are sane
+        self.assertEqual(
+            self.compose.im.add.call_args_list,
+            [
+                mock.call(arch="aarch64", variant="Everything", image=mock.ANY),
+                mock.call(arch="x86_64", variant="Everything", image=mock.ANY),
+            ],
+        )
+        for call in self.compose.im.add.call_args_list:
+            _, kwargs = call
+            image = kwargs["image"]
+            self.assertEqual(kwargs["variant"], "Everything")
+            self.assertIn(kwargs["arch"], ("aarch64", "x86_64"))
+            self.assertEqual(kwargs["arch"], image.arch)
+            self.assertEqual(
+                "Everything/%(arch)s/images/disk.%(arch)s.qcow2" % {"arch": image.arch},
+                image.path,
+            )
+            self.assertEqual("qcow2", image.format)
+            self.assertEqual("qcow2", image.type)
+            self.assertEqual("Everything", image.subvariant)
+
+        self.assertTrue(
+            os.path.isdir(self.topdir + "/compose/Everything/aarch64/images")
+        )
+        self.assertTrue(
+            os.path.isdir(self.topdir + "/compose/Everything/x86_64/images")
+        )
+
+        self.assertEqual(
+            Linker.return_value.mock_calls,
+            [
+                mock.call.link(
+                    "/mnt/koji/packages/test-image/1/1/images/disk.%(arch)s.qcow2"
+                    % {"arch": arch},
+                    self.topdir
+                    + "/compose/Everything/%(arch)s/images/disk.%(arch)s.qcow2"
+                    % {"arch": arch},
+                    link_type="hardlink-or-copy",
+                )
+                for arch in ["aarch64", "x86_64"]
+            ],
+        )
+
+    @mock.patch("pungi.util.get_file_size", new=lambda fp: 65536)
+    @mock.patch("pungi.util.get_mtime", new=lambda fp: 1024)
+    @mock.patch("pungi.phases.osbuild.Linker")
+    @mock.patch("pungi.phases.osbuild.kojiwrapper.KojiWrapper")
+    def test_process_without_release(self, KojiWrapper, Linker):
+        cfg = {"name": "test-image", "distro": "rhel-8", "image_types": ["qcow2"]}
+        koji = KojiWrapper.return_value
+        koji.watch_task.side_effect = self.make_fake_watch(0)
+        koji.koji_proxy.osbuildImage.return_value = 1234
+        koji.koji_proxy.getBuild.return_value = {
+            "build_id": 5678,
+            "name": "test-image",
+            "version": "1",
+            "release": "1",
+        }
+        koji.koji_proxy.listArchives.return_value = [
+            {
+                "extra": {"image": {"arch": "aarch64"}},
+                "filename": "disk.aarch64.qcow2",
+                "type_name": "qcow2",
+            },
+            {
+                "extra": {"image": {"arch": "x86_64"}},
+                "filename": "disk.x86_64.qcow2",
+                "type_name": "qcow2",
+            },
+        ]
+        koji.koji_module.pathinfo = orig_koji.pathinfo
+
+        self.t.process(
+            (
+                self.compose,
+                self.compose.variants["Everything"],
+                cfg,
+                ["aarch64", "x86_64"],
                 "1",
                 None,
                 "image-target",
@@ -185,10 +299,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                     ["qcow2"],
                     "image-target",
                     ["aarch64", "x86_64"],
-                    opts={
-                        "release": None,
-                        "repo": [self.topdir + "/compose/Everything/$arch/os"],
-                    },
+                    opts={"repo": [self.topdir + "/compose/Everything/$arch/os"]},
                 ),
                 mock.call.watch_task(1234, mock.ANY),
                 mock.call.koji_proxy.getBuild("test-image-1-1"),

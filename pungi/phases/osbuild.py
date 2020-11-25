@@ -115,7 +115,9 @@ class RunOSBuildThread(WorkerThread):
         koji.login()
 
         # Start task
-        opts = {"repo": repo, "release": release}
+        opts = {"repo": repo}
+        if release:
+            opts["release"] = release
         task_id = koji.koji_proxy.osbuildImage(
             config["name"],
             version,
