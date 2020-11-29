@@ -133,11 +133,16 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
     @mock.patch("pungi.phases.osbuild.kojiwrapper.KojiWrapper")
     def test_process(self, KojiWrapper, Linker):
         cfg = {"name": "test-image", "distro": "rhel-8", "image_types": ["qcow2"]}
+        build_id = 5678
         koji = KojiWrapper.return_value
         koji.watch_task.side_effect = self.make_fake_watch(0)
         koji.koji_proxy.osbuildImage.return_value = 1234
+        koji.koji_proxy.getTaskResult.return_value = {
+            "composer": {"server": "https://composer.osbuild.org", "id": ""},
+            "koji": {"build": build_id},
+        }
         koji.koji_proxy.getBuild.return_value = {
-            "build_id": 5678,
+            "build_id": build_id,
             "name": "test-image",
             "version": "1",
             "release": "1",
@@ -192,8 +197,9 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                     },
                 ),
                 mock.call.watch_task(1234, mock.ANY),
-                mock.call.koji_proxy.getBuild("test-image-1-1"),
-                mock.call.koji_proxy.listArchives(buildID=5678),
+                mock.call.koji_proxy.getTaskResult(1234),
+                mock.call.koji_proxy.getBuild(build_id),
+                mock.call.koji_proxy.listArchives(buildID=build_id),
             ],
         )
 
@@ -247,11 +253,16 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
     @mock.patch("pungi.phases.osbuild.kojiwrapper.KojiWrapper")
     def test_process_without_release(self, KojiWrapper, Linker):
         cfg = {"name": "test-image", "distro": "rhel-8", "image_types": ["qcow2"]}
+        build_id = 5678
         koji = KojiWrapper.return_value
         koji.watch_task.side_effect = self.make_fake_watch(0)
         koji.koji_proxy.osbuildImage.return_value = 1234
+        koji.koji_proxy.getTaskResult.return_value = {
+            "composer": {"server": "https://composer.osbuild.org", "id": ""},
+            "koji": {"build": build_id},
+        }
         koji.koji_proxy.getBuild.return_value = {
-            "build_id": 5678,
+            "build_id": build_id,
             "name": "test-image",
             "version": "1",
             "release": "1",
@@ -302,8 +313,9 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                     opts={"repo": [self.topdir + "/compose/Everything/$arch/os"]},
                 ),
                 mock.call.watch_task(1234, mock.ANY),
-                mock.call.koji_proxy.getBuild("test-image-1-1"),
-                mock.call.koji_proxy.listArchives(buildID=5678),
+                mock.call.koji_proxy.getTaskResult(1234),
+                mock.call.koji_proxy.getBuild(build_id),
+                mock.call.koji_proxy.listArchives(buildID=build_id),
             ],
         )
 

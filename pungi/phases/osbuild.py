@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
 from kobo.threads import ThreadPool, WorkerThread
 from kobo import shortcuts
 from productmd.images import Image
@@ -139,21 +138,21 @@ class RunOSBuildThread(WorkerThread):
                 "OSBuild: task %s failed: see %s for details" % (task_id, log_file)
             )
 
-        # Parse NVR from the task output. If release part of NVR was generated
-        # by Koji, we don't have enough information in the configuration.
-        nvr = get_nvr(log_file)
-
         # Refresh koji session which may have timed out while the task was
         # running. Watching is done via a subprocess, so the session is
         # inactive.
         koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
 
+        # Get build id via the task's result json data
+        result = koji.koji_proxy.getTaskResult(task_id)
+        build_id = result["koji"]["build"]
+
         linker = Linker(logger=self.pool._logger)
 
         # Process all images in the build. There should be one for each
         # architecture, but we don't verify that.
-        build_info = koji.koji_proxy.getBuild(nvr)
-        for archive in koji.koji_proxy.listArchives(buildID=build_info["build_id"]):
+        build_info = koji.koji_proxy.getBuild(build_id)
+        for archive in koji.koji_proxy.listArchives(buildID=build_id):
             if archive["type_name"] not in config["image_types"]:
                 # Ignore values that are not of required types.
                 continue
@@ -205,12 +204,3 @@ class RunOSBuildThread(WorkerThread):
             compose.im.add(variant=variant.uid, arch=arch, image=img)
 
         self.pool.log_info("[DONE ] %s (task id: %s)" % (msg, task_id))
-
-
-def get_nvr(log_file):
-    with open(log_file) as f:
-        for line in f:
-            match = re.search("Creating compose: ([^ ]+) ", line)
-            if match:
-                return match.group(1)
-    raise RuntimeError("Failed to find image NVR in the output")
