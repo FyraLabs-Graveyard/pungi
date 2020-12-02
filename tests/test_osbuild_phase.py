@@ -381,7 +381,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                     None,
                     "image-target",
                     [self.topdir + "/compose/Everything/$arch/os"],
-                    ["x86_64"],
+                    False,
                 ),
                 1,
             )
@@ -408,7 +408,7 @@ class RunOSBuildThreadTest(helpers.PungiTestCase):
                 None,
                 "image-target",
                 [self.topdir + "/compose/Everything/$arch/os"],
-                ["x86_64"],
+                True,
             ),
             1,
         )

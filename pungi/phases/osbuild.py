@@ -96,12 +96,7 @@ class RunOSBuildThread(WorkerThread):
         self.can_fail = can_fail
         self.num = num
         with util.failable(
-            compose,
-            bool(config.get("failable")),
-            variant,
-            "*",
-            "osbuild",
-            logger=self.pool._logger,
+            compose, can_fail, variant, "*", "osbuild", logger=self.pool._logger,
         ):
             self.worker(
                 compose, variant, config, arches, version, release, target, repo
