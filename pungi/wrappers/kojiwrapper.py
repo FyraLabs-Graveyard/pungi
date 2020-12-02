@@ -42,7 +42,6 @@ class KojiWrapper(object):
             self.koji_module = koji.get_profile_module(profile)
             session_opts = {}
             for key in (
-                "krbservice",
                 "timeout",
                 "keepalive",
                 "max_retries",
@@ -52,7 +51,6 @@ class KojiWrapper(object):
                 "offline_retry_interval",
                 "debug",
                 "debug_xmlrpc",
-                "krb_rdns",
                 "serverca",
                 "use_fast_upload",
             ):
@@ -76,7 +74,7 @@ class KojiWrapper(object):
                 os.path.expanduser(self.koji_module.config.serverca),
             )
         elif auth_type == "kerberos":
-            self.koji_proxy.krb_login(
+            self.koji_proxy.gssapi_login(
                 getattr(self.koji_module.config, "principal", None),
                 getattr(self.koji_module.config, "keytab", None),
             )
