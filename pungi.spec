@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.6
+Version:        4.2.7
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,24 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu Dec 03 2020 Lubomír Sedlář <lsedlar@redhat.com> 4.2.7-1
+- osbuild: Fix not failing on failable tasks (lsedlar)
+- kojiwrapper: Use gssapi_login (lsedlar)
+- osbuild: use task result to get build info (christian)
+- docs: Add osbuild phase to overview diagram (lsedlar)
+- osbuild: Only send release when not empty (lsedlar)
+- Fix config validation for osbuild (lsedlar)
+- Use xorrisofs for creating ISOs when needed (hlin)
+- Add --respin-of argument. (jkaluza)
+- Fix typo in configuration (lsedlar)
+- Optimize link_files by creating temporary dict mapping path to pkg_obj.
+  (jkaluza)
+- Try reuse old gather_phase even if pkgset_koji_builds changed. (jkaluza)
+- Do not use shlex_quote in get_pungi_buildinstall_cmd and
+  get_pungi_ostree_cmd. (jkaluza)
+- gather: Fix test for module presence (lsedlar)
+- Kill all subprocess in signal handler (lsedlar)
+
 * Wed Nov 04 2020 Bohdan Khomutskyi <bkhomuts@redhat.com> - 4.2.6-1
 - Allow setting int arguments for pungi-buildinstall plugin. (jkaluza)
 - Use shlex_quote for complete --foo=bar argument. (jkaluza)
