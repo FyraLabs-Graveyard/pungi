@@ -174,10 +174,15 @@ class GitWrapper(ScmBase):
                 self.retry_run(["git", "remote", "update", "origin"], workdir=destdir)
                 run(["git", "checkout", branch], workdir=destdir)
             except RuntimeError:
-                debugdir = os.path.join(self.compose.topdir, os.path.basename(destdir))
-                self.log_debug("Copying %s to %s for debugging" % (destdir, debugdir))
-                makedirs(debugdir)
-                copy_all(destdir, debugdir)
+                if self.compose:
+                    debugdir = os.path.join(
+                        self.compose.topdir, os.path.basename(destdir)
+                    )
+                    self.log_debug(
+                        "Copying %s to %s for debugging" % (destdir, debugdir)
+                    )
+                    makedirs(debugdir)
+                    copy_all(destdir, debugdir)
                 raise
 
         self.run_process_command(destdir)
