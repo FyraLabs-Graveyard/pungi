@@ -35,6 +35,10 @@ from pungi.util import pkg_is_srpm, copy_all
 from pungi.arch import get_valid_arches, is_excluded
 
 
+class UnsignedPackagesError(RuntimeError):
+    pass
+
+
 class ExtendedRpmWrapper(kobo.pkgset.SimpleRpmWrapper):
     """
     ExtendedRpmWrapper extracts only certain RPM fields instead of
@@ -144,7 +148,7 @@ class PackageSetBase(kobo.log.LoggingBase):
 
     def raise_invalid_sigkeys_exception(self, rpminfos):
         """
-        Raises RuntimeError containing details of RPMs with invalid
+        Raises UnsignedPackagesError containing details of RPMs with invalid
         sigkeys defined in `rpminfos`.
         """
 
@@ -166,7 +170,9 @@ class PackageSetBase(kobo.log.LoggingBase):
 
         if not isinstance(rpminfos, dict):
             rpminfos = {self.sigkey_ordering: rpminfos}
-        raise RuntimeError("\n".join(get_error(k, v) for k, v in rpminfos.items()))
+        raise UnsignedPackagesError(
+            "\n".join(get_error(k, v) for k, v in rpminfos.items())
+        )
 
     def read_packages(self, rpms, srpms):
         srpm_pool = ReaderPool(self, self._logger)

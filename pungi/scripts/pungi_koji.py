@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import argparse
 import getpass
+import glob
 import json
 import locale
 import logging
@@ -327,12 +328,20 @@ def main():
     )
     notifier.compose = compose
     COMPOSE = compose
-    run_compose(
-        compose,
-        create_latest_link=create_latest_link,
-        latest_link_status=latest_link_status,
-        latest_link_components=latest_link_components,
-    )
+    try:
+        run_compose(
+            compose,
+            create_latest_link=create_latest_link,
+            latest_link_status=latest_link_status,
+            latest_link_components=latest_link_components,
+        )
+    except pungi.phases.pkgset.pkgsets.UnsignedPackagesError:
+        # There was an unsigned package somewhere. It is not safe to reuse any
+        # package set from this compose (since we could leak the unsigned
+        # package). Let's make sure all reuse files are deleted.
+        for fp in glob.glob(compose.paths.work.pkgset_reuse_file("*")):
+            os.unlink(fp)
+        raise
 
 
 def run_compose(
