@@ -615,6 +615,7 @@ def sigterm_handler(signum, frame):
 
 
 def cli_main():
+    signal.signal(signal.SIGINT, sigterm_handler)
     signal.signal(signal.SIGTERM, sigterm_handler)
 
     try:
