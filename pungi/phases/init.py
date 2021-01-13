@@ -212,7 +212,9 @@ def write_module_defaults(compose):
         get_dir_from_scm(scm_dict, tmp_dir, compose=compose)
         compose.log_debug("Writing module defaults")
         shutil.copytree(
-            tmp_dir, compose.paths.work.module_defaults_dir(create_dir=False)
+            tmp_dir,
+            compose.paths.work.module_defaults_dir(create_dir=False),
+            ignore=shutil.ignore_patterns(".git"),
         )
 
 

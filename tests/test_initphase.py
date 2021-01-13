@@ -529,10 +529,11 @@ class TestGetLookasideGroups(PungiTestCase):
         )
 
 
+@mock.patch("shutil.ignore_patterns")
 @mock.patch("shutil.copytree")
 @mock.patch("pungi.phases.init.get_dir_from_scm")
 class TestWriteModuleDefaults(PungiTestCase):
-    def test_clone_git(self, gdfs, ct):
+    def test_clone_git(self, gdfs, ct, igp):
         conf = {"scm": "git", "repo": "https://pagure.io/pungi.git", "dir": "."}
         compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
 
@@ -547,11 +548,12 @@ class TestWriteModuleDefaults(PungiTestCase):
                 mock.call(
                     gdfs.call_args_list[0][0][1],
                     os.path.join(self.topdir, "work/global/module_defaults"),
+                    ignore=igp(".git"),
                 )
             ],
         )
 
-    def test_clone_file_scm(self, gdfs, ct):
+    def test_clone_file_scm(self, gdfs, ct, igp):
         conf = {"scm": "file", "dir": "defaults"}
         compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
         compose.config_dir = "/home/releng/configs"
@@ -574,11 +576,12 @@ class TestWriteModuleDefaults(PungiTestCase):
                 mock.call(
                     gdfs.call_args_list[0][0][1],
                     os.path.join(self.topdir, "work/global/module_defaults"),
+                    ignore=igp(".git"),
                 )
             ],
         )
 
-    def test_clone_file_str(self, gdfs, ct):
+    def test_clone_file_str(self, gdfs, ct, igp):
         conf = "defaults"
         compose = DummyCompose(self.topdir, {"module_defaults_dir": conf})
         compose.config_dir = "/home/releng/configs"
@@ -595,6 +598,7 @@ class TestWriteModuleDefaults(PungiTestCase):
                 mock.call(
                     gdfs.call_args_list[0][0][1],
                     os.path.join(self.topdir, "work/global/module_defaults"),
+                    ignore=igp(".git"),
                 )
             ],
         )
