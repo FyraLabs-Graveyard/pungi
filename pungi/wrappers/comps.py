@@ -325,9 +325,8 @@ class CompsWrapper(object):
             group_node.appendChild(packagelist)
 
         for category in self.comps.categories:
-            groups = set(x.name for x in category.group_ids) & set(
-                self.get_comps_groups()
-            )
+            group_ids = set(self.get_comps_groups())
+            groups = set(g for g in category.group_ids if g.name in group_ids)
             if not groups:
                 continue
             cat_node = doc.createElement("category")
@@ -341,7 +340,7 @@ class CompsWrapper(object):
             append_grouplist(doc, cat_node, groups)
 
         for environment in sorted(self.comps.environments, key=attrgetter("id")):
-            groups = set(x.name for x in environment.group_ids)
+            groups = set(environment.group_ids)
             if not groups:
                 continue
             env_node = doc.createElement("environment")
@@ -356,10 +355,7 @@ class CompsWrapper(object):
 
             if environment.option_ids:
                 append_grouplist(
-                    doc,
-                    env_node,
-                    (x.name for x in environment.option_ids),
-                    "optionlist",
+                    doc, env_node, set(environment.option_ids), "optionlist",
                 )
 
         if self.comps.langpacks:
@@ -460,8 +456,11 @@ def append(doc, parent, elem, content=None, lang=None, **kwargs):
 
 def append_grouplist(doc, parent, groups, elem="grouplist"):
     grouplist_node = doc.createElement(elem)
-    for groupid in sorted(groups):
-        append(doc, grouplist_node, "groupid", groupid)
+    for groupid in sorted(groups, key=lambda x: x.name):
+        kwargs = {}
+        if groupid.default:
+            kwargs["default"] = "true"
+        append(doc, grouplist_node, "groupid", groupid.name, **kwargs)
     parent.appendChild(grouplist_node)
 
 
