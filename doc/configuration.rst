@@ -31,9 +31,6 @@ Minimal Config Example
     pkgset_source = "koji"
     pkgset_koji_tag = "f23"
 
-    # CREATEREPO
-    createrepo_checksum = "sha256"
-
     # GATHER
     gather_method = "deps"
     greedy_method = "build"
