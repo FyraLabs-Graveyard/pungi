@@ -37,8 +37,6 @@ import pungi.phases.gather.source
 
 
 class GatherSourceJson(pungi.phases.gather.source.GatherSourceBase):
-    enabled = True
-
     def __call__(self, arch, variant):
         json_path = self.compose.conf.get("gather_source_mapping")
         if not json_path:

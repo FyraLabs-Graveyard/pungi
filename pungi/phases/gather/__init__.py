@@ -45,11 +45,8 @@ from pungi.phases.createrepo import add_modular_metadata
 
 def get_gather_source(name):
     import pungi.phases.gather.sources
-    from .source import GatherSourceContainer
 
-    GatherSourceContainer.register_module(pungi.phases.gather.sources)
-    container = GatherSourceContainer()
-    return container["GatherSource%s" % name]
+    return pungi.phases.gather.sources.ALL_SOURCES[name.lower()]
 
 
 def get_gather_method(name):

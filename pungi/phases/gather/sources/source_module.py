@@ -26,8 +26,6 @@ import pungi.phases.gather.source
 
 
 class GatherSourceModule(pungi.phases.gather.source.GatherSourceBase):
-    enabled = True
-
     def __call__(self, arch, variant):
         groups = set()
         packages = set()

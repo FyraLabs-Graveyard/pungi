@@ -14,15 +14,6 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 
-import kobo.plugins
-
-
-class GatherSourceBase(kobo.plugins.Plugin):
+class GatherSourceBase(object):
     def __init__(self, compose):
         self.compose = compose
-
-
-class GatherSourceContainer(kobo.plugins.PluginContainer):
-    @classmethod
-    def normalize_name(cls, name):
-        return name.lower()

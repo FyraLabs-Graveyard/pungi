@@ -30,8 +30,6 @@ import pungi.phases.gather.source
 
 
 class GatherSourceComps(pungi.phases.gather.source.GatherSourceBase):
-    enabled = True
-
     def __call__(self, arch, variant):
         groups = set()
         if not self.compose.conf.get("comps_file"):
