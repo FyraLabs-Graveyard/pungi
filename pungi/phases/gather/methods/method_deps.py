@@ -31,8 +31,6 @@ import pungi.phases.gather.method
 
 
 class GatherMethodDeps(pungi.phases.gather.method.GatherMethodBase):
-    enabled = True
-
     def __call__(
         self,
         arch,

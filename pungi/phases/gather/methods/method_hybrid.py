@@ -60,8 +60,6 @@ class FakePackage(object):
 
 
 class GatherMethodHybrid(pungi.phases.gather.method.GatherMethodBase):
-    enabled = True
-
     def __init__(self, *args, **kwargs):
         super(GatherMethodHybrid, self).__init__(*args, **kwargs)
         self.package_maps = {}

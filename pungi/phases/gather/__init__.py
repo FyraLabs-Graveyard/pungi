@@ -51,11 +51,8 @@ def get_gather_source(name):
 
 def get_gather_method(name):
     import pungi.phases.gather.methods
-    from .method import GatherMethodContainer
 
-    GatherMethodContainer.register_module(pungi.phases.gather.methods)
-    container = GatherMethodContainer()
-    return container["GatherMethod%s" % name]
+    return pungi.phases.gather.methods.ALL_METHODS[name.lower()]
 
 
 class GatherPhase(PhaseBase):

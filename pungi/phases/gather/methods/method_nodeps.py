@@ -28,8 +28,6 @@ from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
 
 
 class GatherMethodNodeps(pungi.phases.gather.method.GatherMethodBase):
-    enabled = True
-
     def __call__(self, arch, variant, *args, **kwargs):
         fname = "gather-nodeps-%s" % variant.uid
         if self.source_name:
