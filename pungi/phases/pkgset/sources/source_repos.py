@@ -31,8 +31,6 @@ import pungi.phases.pkgset.source
 
 
 class PkgsetSourceRepos(pungi.phases.pkgset.source.PkgsetSourceBase):
-    enabled = True
-
     def __call__(self):
         package_sets, path_prefix = get_pkgset_from_repos(self.compose)
         return (package_sets, path_prefix)

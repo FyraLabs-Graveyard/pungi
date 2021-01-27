@@ -29,13 +29,10 @@ class PkgsetPhase(PhaseBase):
         self.path_prefix = None
 
     def run(self):
-        pkgset_source = "PkgsetSource%s" % self.compose.conf["pkgset_source"]
-        from .source import PkgsetSourceContainer
         from . import sources
 
-        PkgsetSourceContainer.register_module(sources)
-        container = PkgsetSourceContainer()
-        SourceClass = container[pkgset_source]
+        SourceClass = sources.ALL_SOURCES[self.compose.conf["pkgset_source"].lower()]
+
         self.package_sets, self.path_prefix = SourceClass(self.compose)()
 
     def validate(self):

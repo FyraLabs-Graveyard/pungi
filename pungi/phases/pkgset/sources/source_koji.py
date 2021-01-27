@@ -184,8 +184,6 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
 
 
 class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
-    enabled = True
-
     def __call__(self):
         compose = self.compose
         koji_profile = compose.conf["koji_profile"]
