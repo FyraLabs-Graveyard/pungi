@@ -632,7 +632,10 @@ class TestReuseKojiPkgset(helpers.PungiTestCase):
     def test_reuse_build_under_tag_changed(self, mock_old_topdir):
         mock_old_topdir.return_value = self.old_compose_dir
         self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
-        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": [{}]}
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {
+            "tag_listing": [{}],
+            "tag_inheritance": [],
+        }
 
         self.pkgset.try_to_reuse(self.compose, self.tag)
 
@@ -652,8 +655,8 @@ class TestReuseKojiPkgset(helpers.PungiTestCase):
         mock_old_topdir.return_value = self.old_compose_dir
         self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
         self.koji_wrapper.koji_proxy.queryHistory.side_effect = [
-            {"tag_listing": []},
-            {"tag_listing": [{}]},
+            {"tag_listing": [], "tag_inheritance": []},
+            {"tag_listing": [{}], "tag_inheritance": []},
         ]
         self.koji_wrapper.koji_proxy.getFullInheritance.return_value = [
             {"name": self.inherited_tag}
@@ -680,7 +683,10 @@ class TestReuseKojiPkgset(helpers.PungiTestCase):
     def test_reuse_failed_load_reuse_file(self, mock_old_topdir, mock_exists):
         mock_old_topdir.return_value = self.old_compose_dir
         self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
-        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {
+            "tag_listing": [],
+            "tag_inheritance": [],
+        }
         self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
         self.pkgset.load_old_file_cache = mock.Mock(
             side_effect=Exception("unknown error")
@@ -712,7 +718,10 @@ class TestReuseKojiPkgset(helpers.PungiTestCase):
     def test_reuse_criteria_not_match(self, mock_old_topdir, mock_exists):
         mock_old_topdir.return_value = self.old_compose_dir
         self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
-        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {
+            "tag_listing": [],
+            "tag_inheritance": [],
+        }
         self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
         self.pkgset.load_old_file_cache = mock.Mock(
             return_value={"allow_invalid_sigkeys": True}
@@ -751,7 +760,10 @@ class TestReuseKojiPkgset(helpers.PungiTestCase):
     def test_reuse_pkgset(self, mock_old_topdir, mock_exists, mock_copy_all):
         mock_old_topdir.return_value = self.old_compose_dir
         self.pkgset._get_koji_event_from_file = mock.Mock(side_effect=[3, 1])
-        self.koji_wrapper.koji_proxy.queryHistory.return_value = {"tag_listing": []}
+        self.koji_wrapper.koji_proxy.queryHistory.return_value = {
+            "tag_listing": [],
+            "tag_inheritance": [],
+        }
         self.koji_wrapper.koji_proxy.getFullInheritance.return_value = []
         self.pkgset.load_old_file_cache = mock.Mock(
             return_value={

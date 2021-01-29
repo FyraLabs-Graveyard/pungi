@@ -731,17 +731,22 @@ class KojiPackageSet(PackageSetBase):
                 % (old_koji_event, koji_event)
             )
             changed = self.koji_proxy.queryHistory(
-                tables=["tag_listing"], tag=tag, afterEvent=old_koji_event
+                tables=["tag_listing", "tag_inheritance"],
+                tag=tag,
+                afterEvent=old_koji_event,
             )
             if changed["tag_listing"]:
                 self.log_debug("Builds under tag %s changed. Can't reuse." % tag)
+                return False
+            if changed["tag_inheritance"]:
+                self.log_debug("Tag inheritance %s changed. Can't reuse." % tag)
                 return False
 
             if inherit:
                 inherit_tags = self.koji_proxy.getFullInheritance(tag, koji_event)
                 for t in inherit_tags:
                     changed = self.koji_proxy.queryHistory(
-                        tables=["tag_listing"],
+                        tables=["tag_listing", "tag_inheritance"],
                         tag=t["name"],
                         afterEvent=old_koji_event,
                         beforeEvent=koji_event + 1,
@@ -751,6 +756,9 @@ class KojiPackageSet(PackageSetBase):
                             "Builds under inherited tag %s changed. Can't reuse."
                             % t["name"]
                         )
+                        return False
+                    if changed["tag_inheritance"]:
+                        self.log_debug("Tag inheritance %s changed. Can't reuse." % tag)
                         return False
 
         repo_dir = compose.paths.work.pkgset_repo(tag, create_dir=False)
