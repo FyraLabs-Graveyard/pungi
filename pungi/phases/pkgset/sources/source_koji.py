@@ -202,7 +202,12 @@ def get_pkgset_from_koji(compose, koji_wrapper, path_prefix):
 
 
 def _add_module_to_variant(
-    koji_wrapper, variant, build, add_to_variant_modules=False, compose=None
+    koji_wrapper,
+    variant,
+    build,
+    add_to_variant_modules=False,
+    compose=None,
+    exclude_module_ns=None,
 ):
     """
     Adds module defined by Koji build info to variant.
@@ -212,6 +217,7 @@ def _add_module_to_variant(
     :param bool add_to_variant_modules: Adds the modules also to
         variant.modules.
     :param compose: Compose object to get filters from
+    :param list exclude_module_ns: Module name:stream which will be excluded.
     """
     mmds = {}
     archives = koji_wrapper.koji_proxy.listArchives(build["id"])
@@ -241,6 +247,10 @@ def _add_module_to_variant(
 
     info = build["extra"]["typeinfo"]["module"]
     nsvc = "%(name)s:%(stream)s:%(version)s:%(context)s" % info
+    ns = "%(name)s:%(stream)s" % info
+
+    if exclude_module_ns and ns in exclude_module_ns:
+        return
 
     added = False
 
@@ -381,7 +391,7 @@ def _is_filtered_out(compose, variant, arch, module_name, module_stream):
 
 
 def _get_modules_from_koji(
-    compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+    compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd, exclude_module_ns
 ):
     """
     Loads modules for given `variant` from koji `session`, adds them to
@@ -392,6 +402,7 @@ def _get_modules_from_koji(
     :param Variant variant: Variant with modules to find.
     :param dict variant_tags: Dict populated by this method. Key is `variant`
         and value is list of Koji tags to get the RPMs from.
+    :param list exclude_module_ns: Module name:stream which will be excluded.
     """
 
     # Find out all modules in every variant and add their Koji tags
@@ -400,7 +411,11 @@ def _get_modules_from_koji(
         koji_modules = get_koji_modules(compose, koji_wrapper, event, module["name"])
         for koji_module in koji_modules:
             nsvc = _add_module_to_variant(
-                koji_wrapper, variant, koji_module, compose=compose
+                koji_wrapper,
+                variant,
+                koji_module,
+                compose=compose,
+                exclude_module_ns=exclude_module_ns,
             )
             if not nsvc:
                 continue
@@ -515,7 +530,13 @@ def filter_by_whitelist(compose, module_builds, input_modules, expected_modules)
 
 
 def _get_modules_from_koji_tags(
-    compose, koji_wrapper, event_id, variant, variant_tags, tag_to_mmd
+    compose,
+    koji_wrapper,
+    event_id,
+    variant,
+    variant_tags,
+    tag_to_mmd,
+    exclude_module_ns,
 ):
     """
     Loads modules for given `variant` from Koji, adds them to
@@ -527,6 +548,7 @@ def _get_modules_from_koji_tags(
     :param Variant variant: Variant with modules to find.
     :param dict variant_tags: Dict populated by this method. Key is `variant`
         and value is list of Koji tags to get the RPMs from.
+    :param list exclude_module_ns: Module name:stream which will be excluded.
     """
     # Compose tags from configuration
     compose_tags = [
@@ -603,7 +625,12 @@ def _get_modules_from_koji_tags(
             variant_tags[variant].append(module_tag)
 
             nsvc = _add_module_to_variant(
-                koji_wrapper, variant, build, True, compose=compose
+                koji_wrapper,
+                variant,
+                build,
+                True,
+                compose=compose,
+                exclude_module_ns=exclude_module_ns,
             )
             if not nsvc:
                 continue
@@ -693,23 +720,44 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
                 "modules."
             )
 
+        extra_modules = get_variant_data(
+            compose.conf, "pkgset_koji_module_builds", variant
+        )
+
+        # When adding extra modules, other modules of the same name:stream available
+        # in brew tag should be excluded.
+        exclude_module_ns = []
+        if extra_modules:
+            exclude_module_ns = [
+                ":".join(nsvc.split(":")[:2]) for nsvc in extra_modules
+            ]
+
         if modular_koji_tags or (
             compose.conf["pkgset_koji_module_tag"] and variant.modules
         ):
             # List modules tagged in particular tags.
             _get_modules_from_koji_tags(
-                compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+                compose,
+                koji_wrapper,
+                event,
+                variant,
+                variant_tags,
+                tag_to_mmd,
+                exclude_module_ns,
             )
         elif variant.modules:
             # Search each module in Koji separately. Tagging does not come into
             # play here.
             _get_modules_from_koji(
-                compose, koji_wrapper, event, variant, variant_tags, tag_to_mmd
+                compose,
+                koji_wrapper,
+                event,
+                variant,
+                variant_tags,
+                tag_to_mmd,
+                exclude_module_ns,
             )
 
-        extra_modules = get_variant_data(
-            compose.conf, "pkgset_koji_module_builds", variant
-        )
         if extra_modules:
             _add_extra_modules_to_variant(
                 compose, koji_wrapper, variant, extra_modules, variant_tags, tag_to_mmd
