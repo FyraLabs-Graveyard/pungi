@@ -33,10 +33,7 @@ from kobo.threads import WorkerThread, ThreadPool
 import pungi.wrappers.kojiwrapper
 from pungi.util import pkg_is_srpm, copy_all
 from pungi.arch import get_valid_arches, is_excluded
-
-
-class UnsignedPackagesError(RuntimeError):
-    pass
+from pungi.errors import UnsignedPackagesError
 
 
 class ExtendedRpmWrapper(kobo.pkgset.SimpleRpmWrapper):

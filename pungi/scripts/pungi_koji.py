@@ -21,6 +21,7 @@ from six.moves import shlex_quote
 
 from pungi.phases import PHASES_NAMES
 from pungi import get_full_version, util
+from pungi.errors import UnsignedPackagesError
 
 
 # force C locales
@@ -335,7 +336,7 @@ def main():
             latest_link_status=latest_link_status,
             latest_link_components=latest_link_components,
         )
-    except pungi.phases.pkgset.pkgsets.UnsignedPackagesError:
+    except UnsignedPackagesError:
         # There was an unsigned package somewhere. It is not safe to reuse any
         # package set from this compose (since we could leak the unsigned
         # package). Let's make sure all reuse files are deleted.
