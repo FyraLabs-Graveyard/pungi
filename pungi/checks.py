@@ -1213,6 +1213,26 @@ def make_schema():
                 },
                 "additionalProperties": False,
             },
+            "image_container": {
+                "type": "object",
+                "patternProperties": {
+                    ".+": _one_or_list(
+                        {
+                            "type": "object",
+                            "properties": {
+                                "url": {"type": "url"},
+                                "target": {"type": "string"},
+                                "priority": {"type": "number"},
+                                "failable": {"type": "boolean"},
+                                "git_branch": {"type": "string"},
+                                "image_spec": {"type": "object"},
+                            },
+                            "required": ["url", "target", "git_branch", "image_spec"],
+                        }
+                    ),
+                },
+                "additionalProperties": False,
+            },
             "extra_files": _variant_arch_mapping(
                 {
                     "type": "array",

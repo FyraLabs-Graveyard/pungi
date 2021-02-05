@@ -1555,6 +1555,56 @@ OSBuild Composer for building images
    arch.
 
 
+Image container
+===============
+
+This phase supports building containers in OSBS that embed an image created in
+the same compose. This can be useful for delivering the image to users running
+in containerized environments.
+
+Pungi will start a ``buildContainer`` task in Koji with configured source
+repository. The ``Dockerfile`` can expect that a repo file will be injected
+into the container that defines a repo named ``image-to-include``, and its
+``baseurl`` will point to the image to include. It is possible to extract the
+URL with a command like ``dnf config-manager --dump image-to-include | awk
+'/baseurl =/{print $3}'```
+
+**image_container**
+    (*dict*) -- configuration for building containers embedding an image.
+
+    Format: ``{variant_uid_regex: [{...}]}``.
+
+    The inner object will define a single container. These keys are required:
+
+    * ``url``, ``target``, ``git_branch``. See OSBS section for definition of
+      these.
+    * ``image_spec`` -- (*object*) A string mapping of filters used to select
+      the image to embed. All images listed in metadata for the variant will be
+      processed. The keys of this filter are used to select metadata fields for
+      the image, and values are regular expression that need to match the
+      metadata value.
+
+      The filter should match exactly one image.
+
+
+Example config
+--------------
+::
+
+    image_container = {
+        "^Server$": [{
+            "url": "git://example.com/dockerfiles.git?#HEAD",
+            "target": "f24-container-candidate",
+            "git_branch": "f24",
+            "image_spec": {
+                "format": "qcow2",
+                "arch": "x86_64",
+                "path": ".*/guest-image-.*$",
+            }
+        }]
+    }
+
+
 OSTree Settings
 ===============
 

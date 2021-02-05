@@ -115,15 +115,29 @@ ImageBuild
 This phase wraps up ``koji image-build``. It also updates the metadata
 ultimately responsible for ``images.json`` manifest.
 
+OSBuild
+-------
+
+Similarly to image build, this phases creates a koji `osbuild` task. In the
+background it uses OSBuild Composer to create images.
+
 OSBS
 ----
 
-This phase builds docker base images in `OSBS
+This phase builds container base images in `OSBS
 <http://osbs.readthedocs.io/en/latest/index.html>`_.
 
 The finished images are available in registry provided by OSBS, but not
 downloaded directly into the compose. The is metadata about the created image
 in ``compose/metadata/osbs.json``.
+
+ImageContainer
+--------------
+
+This phase builds a container image in OSBS, and stores the metadata in the
+same file as OSBS phase. The container produced here wraps a different image,
+created it ImageBuild or OSBuild phase. It can be useful to deliver a VM image
+to containerized environments.
 
 OSTreeInstaller
 ---------------
