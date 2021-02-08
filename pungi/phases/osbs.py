@@ -17,7 +17,6 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
     def __init__(self, compose):
         super(OSBSPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
-        self.pool.metadata = {}
         self.pool.registries = {}
 
     def run(self):
@@ -27,15 +26,6 @@ class OSBSPhase(PhaseLoggerMixin, ConfigGuardedPhase):
                 self.pool.queue_put((self.compose, variant, conf))
 
         self.pool.start()
-
-    def dump_metadata(self):
-        """Create a file with image metadata if the phase actually ran."""
-        if self._skipped:
-            return
-        with open(self.compose.paths.compose.metadata("osbs.json"), "w") as f:
-            json.dump(
-                self.pool.metadata, f, indent=4, sort_keys=True, separators=(",", ": ")
-            )
 
     def request_push(self):
         """Store configuration data about where to push the created images and
@@ -146,7 +136,7 @@ class OSBSThread(WorkerThread):
             metadata.update({"repositories": result["repositories"]})
             # add a fake arch of 'scratch', so we can construct the metadata
             # in same data structure as real builds.
-            self.pool.metadata.setdefault(variant.uid, {}).setdefault(
+            compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
                 "scratch", []
             ).append(metadata)
             return None
@@ -180,7 +170,7 @@ class OSBSThread(WorkerThread):
                     "Created Docker base image %s-%s-%s.%s"
                     % (metadata["name"], metadata["version"], metadata["release"], arch)
                 )
-                self.pool.metadata.setdefault(variant.uid, {}).setdefault(
+                compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
                     arch, []
                 ).append(data)
             return nvr

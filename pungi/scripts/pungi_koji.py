@@ -538,7 +538,7 @@ def run_compose(
         and osbuild_phase.skip()
     ):
         compose.im.dump(compose.paths.compose.metadata("images.json"))
-    osbs_phase.dump_metadata()
+    compose.dump_containers_metadata()
 
     test_phase.start()
     test_phase.stop()

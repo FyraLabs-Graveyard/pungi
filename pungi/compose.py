@@ -284,6 +284,8 @@ class Compose(kobo.log.LoggingBase):
         self.im.compose.respin = self.compose_respin
         self.im.metadata_path = self.paths.compose.metadata()
 
+        self.containers_metadata = {}
+
         # Stores list of deliverables that failed, but did not abort the
         # compose.
         # {deliverable: [(Variant.uid, arch, subvariant)]}
@@ -574,6 +576,19 @@ class Compose(kobo.log.LoggingBase):
         """
         path = os.path.join(self.paths.work.tmp_dir(arch=arch, variant=variant))
         return tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=path)
+
+    def dump_containers_metadata(self):
+        """Create a file with container metadata if there are any containers."""
+        if not self.containers_metadata:
+            return
+        with open(self.paths.compose.metadata("osbs.json"), "w") as f:
+            json.dump(
+                self.containers_metadata,
+                f,
+                indent=4,
+                sort_keys=True,
+                separators=(",", ": "),
+            )
 
 
 def get_ordered_variant_uids(compose):

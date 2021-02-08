@@ -753,3 +753,27 @@ class StatusTest(unittest.TestCase):
         self.compose.conf["gather_backend"] = "yum"
         self.compose.conf["createrepo_database"] = False
         self.assertFalse(self.compose.should_create_yum_database)
+
+
+class DumpContainerMetadataTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        with mock.patch("pungi.compose.ComposeInfo"):
+            self.compose = Compose({}, self.tmp_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_dump_metadata(self):
+        metadata = {"Server": {"x86_64": "Metadata"}}
+        self.compose.containers_metadata = metadata
+        self.compose.dump_containers_metadata()
+
+        with open(self.tmp_dir + "/compose/metadata/osbs.json") as f:
+            data = json.load(f)
+            self.assertEqual(data, metadata)
+
+    @mock.patch("pungi.phases.osbs.ThreadPool")
+    def test_dump_empty_metadata(self, ThreadPool):
+        self.compose.dump_containers_metadata()
+        self.assertFalse(os.path.isfile(self.tmp_dir + "/compose/metadata/osbs.json"))

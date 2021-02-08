@@ -37,34 +37,6 @@ class OSBSPhaseTest(helpers.PungiTestCase):
         self.assertTrue(phase.skip())
 
     @mock.patch("pungi.phases.osbs.ThreadPool")
-    def test_dump_metadata(self, ThreadPool):
-        compose = helpers.DummyCompose(self.topdir, {"osbs": {"^Everything$": {}}})
-        compose.just_phases = None
-        compose.skip_phases = []
-        compose.notifier = mock.Mock()
-        phase = osbs.OSBSPhase(compose)
-        phase.start()
-        phase.stop()
-        phase.pool.metadata = METADATA
-        phase.dump_metadata()
-
-        with open(self.topdir + "/compose/metadata/osbs.json") as f:
-            data = json.load(f)
-            self.assertEqual(data, METADATA)
-
-    @mock.patch("pungi.phases.osbs.ThreadPool")
-    def test_dump_metadata_after_skip(self, ThreadPool):
-        compose = helpers.DummyCompose(self.topdir, {})
-        compose.just_phases = None
-        compose.skip_phases = []
-        phase = osbs.OSBSPhase(compose)
-        phase.start()
-        phase.stop()
-        phase.dump_metadata()
-
-        self.assertFalse(os.path.isfile(self.topdir + "/compose/metadata/osbs.json"))
-
-    @mock.patch("pungi.phases.osbs.ThreadPool")
     def test_request_push(self, ThreadPool):
         compose = helpers.DummyCompose(self.topdir, {"osbs": {"^Everything$": {}}})
         compose.just_phases = None
@@ -190,7 +162,7 @@ SCRATCH_METADATA = {
 class OSBSThreadTest(helpers.PungiTestCase):
     def setUp(self):
         super(OSBSThreadTest, self).setUp()
-        self.pool = mock.Mock(metadata={}, registries={})
+        self.pool = mock.Mock(registries={})
         self.t = osbs.OSBSThread(self.pool)
         self.compose = helpers.DummyCompose(
             self.topdir,
@@ -226,7 +198,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             metadata = copy.deepcopy(METADATA)
             metadata["Server"]["x86_64"][0]["compose_id"] = self.compose.compose_id
             metadata["Server"]["x86_64"][0]["koji_task"] = 12345
-        self.assertEqual(self.pool.metadata, metadata)
+        self.assertEqual(self.compose.containers_metadata, metadata)
 
     def _assertCorrectCalls(self, opts, setupCalls=None, scratch=False):
         setupCalls = setupCalls or []
