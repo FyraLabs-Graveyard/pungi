@@ -111,69 +111,13 @@ class OSBSThread(WorkerThread):
             )
 
         scratch = config.get("scratch", False)
-        nvr = self._add_metadata(variant, task_id, compose, scratch)
+        nvr = add_metadata(variant, task_id, compose, scratch)
         if nvr:
             registry = get_registry(compose, nvr, registry)
             if registry:
                 self.pool.registries[nvr] = registry
 
         self.pool.log_info("[DONE ] %s" % msg)
-
-    def _add_metadata(self, variant, task_id, compose, is_scratch):
-        # Create new Koji session. The task could take so long to finish that
-        # our session will expire. This second session does not need to be
-        # authenticated since it will only do reading operations.
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
-
-        # Create metadata
-        metadata = {
-            "compose_id": compose.compose_id,
-            "koji_task": task_id,
-        }
-
-        result = koji.koji_proxy.getTaskResult(task_id)
-        if is_scratch:
-            metadata.update({"repositories": result["repositories"]})
-            # add a fake arch of 'scratch', so we can construct the metadata
-            # in same data structure as real builds.
-            compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
-                "scratch", []
-            ).append(metadata)
-            return None
-
-        else:
-            build_id = int(result["koji_builds"][0])
-            buildinfo = koji.koji_proxy.getBuild(build_id)
-            archives = koji.koji_proxy.listArchives(build_id)
-
-            nvr = "%(name)s-%(version)s-%(release)s" % buildinfo
-
-            metadata.update(
-                {
-                    "name": buildinfo["name"],
-                    "version": buildinfo["version"],
-                    "release": buildinfo["release"],
-                    "nvr": nvr,
-                    "creation_time": buildinfo["creation_time"],
-                }
-            )
-            for archive in archives:
-                data = {
-                    "filename": archive["filename"],
-                    "size": archive["size"],
-                    "checksum": archive["checksum"],
-                }
-                data.update(archive["extra"])
-                data.update(metadata)
-                arch = archive["extra"]["image"]["arch"]
-                self.pool.log_debug(
-                    "Created Docker base image %s-%s-%s.%s"
-                    % (metadata["name"], metadata["version"], metadata["release"], arch)
-                )
-                compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
-                    arch, []
-                ).append(data)
-            return nvr
 
     def _get_repo(self, compose, repo, gpgkey=None):
         """
@@ -221,3 +165,62 @@ class OSBSThread(WorkerThread):
                 f.write("gpgkey=%s\n" % gpgkey)
 
         return util.translate_path(compose, repo_file)
+
+
+def add_metadata(variant, task_id, compose, is_scratch):
+    """Given a task ID, find details about the container and add it to global
+    metadata."""
+    # Create new Koji session. The task could take so long to finish that
+    # our session will expire. This second session does not need to be
+    # authenticated since it will only do reading operations.
+    koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+
+    # Create metadata
+    metadata = {
+        "compose_id": compose.compose_id,
+        "koji_task": task_id,
+    }
+
+    result = koji.koji_proxy.getTaskResult(task_id)
+    if is_scratch:
+        metadata.update({"repositories": result["repositories"]})
+        # add a fake arch of 'scratch', so we can construct the metadata
+        # in same data structure as real builds.
+        compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
+            "scratch", []
+        ).append(metadata)
+        return None
+
+    else:
+        build_id = int(result["koji_builds"][0])
+        buildinfo = koji.koji_proxy.getBuild(build_id)
+        archives = koji.koji_proxy.listArchives(build_id)
+
+        nvr = "%(name)s-%(version)s-%(release)s" % buildinfo
+
+        metadata.update(
+            {
+                "name": buildinfo["name"],
+                "version": buildinfo["version"],
+                "release": buildinfo["release"],
+                "nvr": nvr,
+                "creation_time": buildinfo["creation_time"],
+            }
+        )
+        for archive in archives:
+            data = {
+                "filename": archive["filename"],
+                "size": archive["size"],
+                "checksum": archive["checksum"],
+            }
+            data.update(archive["extra"])
+            data.update(metadata)
+            arch = archive["extra"]["image"]["arch"]
+            compose.log_debug(
+                "Created Docker base image %s-%s-%s.%s"
+                % (metadata["name"], metadata["version"], metadata["release"], arch)
+            )
+            compose.containers_metadata.setdefault(variant.uid, {}).setdefault(
+                arch, []
+            ).append(data)
+        return nvr
