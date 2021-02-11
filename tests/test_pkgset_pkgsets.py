@@ -303,6 +303,58 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
         )
         self.assertRegex(str(ctx.exception), figure)
 
+    @mock.patch("os.path.isfile")
+    @mock.patch("time.sleep")
+    def test_find_signed_after_wait(self, sleep, isfile):
+        checked_files = set()
+
+        def check_file(path):
+            """First check for any path will fail, second and further will succeed."""
+            if path in checked_files:
+                return True
+            checked_files.add(path)
+            return False
+
+        isfile.side_effect = check_file
+
+        fst_key, snd_key = ["cafebabe", "deadbeef"]
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            [fst_key, snd_key],
+            arches=["x86_64"],
+            signed_packages_retries=3,
+            signed_packages_wait=5,
+        )
+
+        result = pkgset.populate("f25")
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS("f25", event=None, inherit=True, latest=True)],
+        )
+
+        fst_pkg = "signed/%s/bash-debuginfo@4.3.42@4.fc24@x86_64"
+        snd_pkg = "signed/%s/bash@4.3.42@4.fc24@x86_64"
+
+        self.assertPkgsetEqual(
+            result, {"x86_64": [fst_pkg % "cafebabe", snd_pkg % "cafebabe"]}
+        )
+        # Wait once for each of the two packages
+        self.assertEqual(sleep.call_args_list, [mock.call(5)] * 2)
+        # Each file will be checked three times
+        self.assertEqual(
+            isfile.call_args_list,
+            [
+                mock.call(os.path.join(self.topdir, fst_pkg % fst_key)),
+                mock.call(os.path.join(self.topdir, fst_pkg % snd_key)),
+                mock.call(os.path.join(self.topdir, fst_pkg % fst_key)),
+                mock.call(os.path.join(self.topdir, snd_pkg % fst_key)),
+                mock.call(os.path.join(self.topdir, snd_pkg % snd_key)),
+                mock.call(os.path.join(self.topdir, snd_pkg % fst_key)),
+            ],
+        )
+
     def test_can_not_find_signed_package_allow_invalid_sigkeys(self):
         pkgset = pkgsets.KojiPackageSet(
             "pkgset",
@@ -345,6 +397,32 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             str(ctx.exception),
             r"^RPM\(s\) not found for sigs: .+Check log for details.+",
         )
+
+    @mock.patch("time.sleep")
+    def test_can_not_find_signed_package_with_retries(self, time):
+        pkgset = pkgsets.KojiPackageSet(
+            "pkgset",
+            self.koji_wrapper,
+            ["cafebabe"],
+            arches=["x86_64"],
+            signed_packages_retries=3,
+            signed_packages_wait=5,
+        )
+
+        with self.assertRaises(RuntimeError) as ctx:
+            pkgset.populate("f25")
+
+        self.assertEqual(
+            self.koji_wrapper.koji_proxy.mock_calls,
+            [mock.call.listTaggedRPMS("f25", event=None, inherit=True, latest=True)],
+        )
+
+        self.assertRegex(
+            str(ctx.exception),
+            r"^RPM\(s\) not found for sigs: .+Check log for details.+",
+        )
+        # Two packages making three attempts each, so two waits per package.
+        self.assertEqual(time.call_args_list, [mock.call(5)] * 4)
 
     def test_packages_attribute(self):
         self._touch_files(

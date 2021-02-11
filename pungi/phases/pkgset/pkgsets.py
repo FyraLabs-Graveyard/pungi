@@ -22,6 +22,7 @@ It automatically finds a signed copies according to *sigkey_ordering*.
 import itertools
 import json
 import os
+import time
 from six.moves import cPickle as pickle
 
 import kobo.log
@@ -332,6 +333,8 @@ class KojiPackageSet(PackageSetBase):
         cache_region=None,
         extra_builds=None,
         extra_tasks=None,
+        signed_packages_retries=1,
+        signed_packages_wait=30,
     ):
         """
         Creates new KojiPackageSet.
@@ -364,6 +367,9 @@ class KojiPackageSet(PackageSetBase):
         :param list extra_tasks: Extra RPMs defined as Koji task IDs to get from Koji
             and include in the package set. Useful when building testing compose
             with RPM scratch builds.
+        :param int signed_packages_retries: How many times should a search for
+            signed package be repeated.
+        :param int signed_packages_wait: How long to wait between search attemts.
         """
         super(KojiPackageSet, self).__init__(
             name,
@@ -380,6 +386,8 @@ class KojiPackageSet(PackageSetBase):
         self.extra_builds = extra_builds or []
         self.extra_tasks = extra_tasks or []
         self.reuse = None
+        self.signed_packages_retries = signed_packages_retries
+        self.signed_packages_wait = signed_packages_wait
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -506,17 +514,28 @@ class KojiPackageSet(PackageSetBase):
 
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []
-        for sigkey in self.sigkey_ordering:
-            if not sigkey:
-                # we're looking for *signed* copies here
-                continue
-            sigkey = sigkey.lower()
-            rpm_path = os.path.join(
-                pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey)
-            )
-            paths.append(rpm_path)
-            if os.path.isfile(rpm_path):
-                return rpm_path
+
+        retries = self.signed_packages_retries
+        while retries > 0:
+            for sigkey in self.sigkey_ordering:
+                if not sigkey:
+                    # we're looking for *signed* copies here
+                    continue
+                sigkey = sigkey.lower()
+                rpm_path = os.path.join(
+                    pathinfo.build(build_info), pathinfo.signed(rpm_info, sigkey)
+                )
+                if rpm_path not in paths:
+                    paths.append(rpm_path)
+                if os.path.isfile(rpm_path):
+                    return rpm_path
+
+            # No signed copy was found, wait a little and try again.
+            retries -= 1
+            if retries > 0:
+                nvr = "%(name)s-%(version)s-%(release)s" % rpm_info
+                self.log_debug("Waiting for signed package to appear for %s", nvr)
+                time.sleep(self.signed_packages_wait)
 
         if None in self.sigkey_ordering or "" in self.sigkey_ordering:
             # use an unsigned copy (if allowed)

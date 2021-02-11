@@ -811,6 +811,8 @@ def populate_global_pkgset(compose, koji_wrapper, path_prefix, event):
             cache_region=compose.cache_region,
             extra_builds=extra_builds,
             extra_tasks=extra_tasks,
+            signed_packages_retries=compose.conf["signed_packages_retries"],
+            signed_packages_wait=compose.conf["signed_packages_wait"],
         )
 
         # Check if we have cache for this tag from previous compose. If so, use

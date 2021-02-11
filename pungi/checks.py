@@ -722,6 +722,8 @@ def make_schema():
                 "minItems": 1,
                 "default": [None],
             },
+            "signed_packages_retries": {"type": "number", "default": 1},
+            "signed_packages_wait": {"type": "number", "default": 30},
             "variants_file": {"$ref": "#/definitions/str_or_scm_dict"},
             "comps_file": {"$ref": "#/definitions/str_or_scm_dict"},
             "comps_filter_environments": {"type": "boolean", "default": True},
