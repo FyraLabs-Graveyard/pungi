@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.7
+Version:        4.2.8
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,24 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Feb 12 2021 Ondrej Nosek <onosek@redhat.com>
+- pkgset: Add ability to wait for signed packages (lsedlar)
+- Add image-container phase (lsedlar)
+- osbs: Move metadata processing to standalone function (lsedlar)
+- Move container metadata into compose object (lsedlar)
+- Move UnsignedPackagesError to a separate file (lsedlar)
+- pkgset: Include just one version of module (hlin)
+- pkgset: Check tag inheritance change before reuse (hlin)
+- pkgset: Remove reuse file when packages are not signed (lsedlar)
+- pkgset: Drop kobo.plugin usage from PkgsetSource (lsedlar)
+- gather: Drop kobo.plugins usage from GatherMethod (lsedlar)
+- pkgset: Drop kobo.plugins usage from GatherSources (lsedlar)
+- doc: remove default createrepo_checksum value from example (kdreyer)
+- comps: Preserve default arg on groupid (lsedlar)
+- Stop copying .git directory with module defaults (hlin)
+- React to SIGINT signal (hlin)
+- scm: Only copy debugging data if we have a compose (lsedlar)
+
 * Thu Dec 03 2020 Lubomír Sedlář <lsedlar@redhat.com> 4.2.7-1
 - osbuild: Fix not failing on failable tasks (lsedlar)
 - kojiwrapper: Use gssapi_login (lsedlar)
