@@ -777,3 +777,33 @@ class DumpContainerMetadataTest(unittest.TestCase):
     def test_dump_empty_metadata(self, ThreadPool):
         self.compose.dump_containers_metadata()
         self.assertFalse(os.path.isfile(self.tmp_dir + "/compose/metadata/osbs.json"))
+
+
+class TracebackTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        with mock.patch("pungi.compose.ComposeInfo"):
+            self.compose = Compose({}, self.tmp_dir)
+        self.patcher = mock.patch("kobo.tback.Traceback")
+        self.Traceback = self.patcher.start()
+        self.Traceback.return_value.get_traceback.return_value = b"traceback"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+        self.patcher.stop()
+
+    def assertTraceback(self, filename):
+        self.assertTrue(
+            os.path.isfile("%s/logs/global/%s.global.log" % (self.tmp_dir, filename))
+        )
+        self.assertEqual(
+            self.Traceback.mock_calls, [mock.call(), mock.call().get_traceback()]
+        )
+
+    def test_traceback_default(self):
+        self.compose.traceback()
+        self.assertTraceback("traceback")
+
+    def test_with_detail(self):
+        self.compose.traceback("extra-info")
+        self.assertTraceback("traceback-extra-info")

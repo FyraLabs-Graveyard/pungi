@@ -730,6 +730,10 @@ def _gather_variants(
                 try:
                     que.put((arch, gather_packages(*args, **kwargs)))
                 except Exception as exc:
+                    compose.log_error(
+                        "Error in gathering for %s.%s: %s", variant, arch, exc
+                    )
+                    compose.traceback("gather-%s-%s" % (variant, arch))
                     errors.put(exc)
 
             # Run gather_packages() in parallel with multi threads and store

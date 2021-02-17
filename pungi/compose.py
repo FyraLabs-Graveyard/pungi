@@ -26,6 +26,7 @@ import shutil
 import json
 
 import kobo.log
+import kobo.tback
 from productmd.composeinfo import ComposeInfo
 from productmd.images import Images
 from dogpile.cache import make_region
@@ -589,6 +590,20 @@ class Compose(kobo.log.LoggingBase):
                 sort_keys=True,
                 separators=(",", ": "),
             )
+
+    def traceback(self, detail=None):
+        """Store an extended traceback. This method should only be called when
+        handling an exception.
+
+        :param str detail: Extra information appended to the filename
+        """
+        basename = "traceback"
+        if detail:
+            basename += "-" + detail
+        tb_path = self.paths.log.log_file("global", basename)
+        self.log_error("Extended traceback in: %s", tb_path)
+        with open(tb_path, "wb") as f:
+            f.write(kobo.tback.Traceback().get_traceback())
 
 
 def get_ordered_variant_uids(compose):

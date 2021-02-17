@@ -637,15 +637,10 @@ def cli_main():
         main()
     except (Exception, KeyboardInterrupt) as ex:
         if COMPOSE:
-            tb_path = COMPOSE.paths.log.log_file("global", "traceback")
             COMPOSE.log_error("Compose run failed: %s" % ex)
-            COMPOSE.log_error("Extended traceback in: %s" % tb_path)
+            COMPOSE.traceback()
             COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)
             COMPOSE.write_status("DOOMED")
-            import kobo.tback
-
-            with open(tb_path, "wb") as f:
-                f.write(kobo.tback.Traceback().get_traceback())
         else:
             print("Exception: %s" % ex)
             raise
