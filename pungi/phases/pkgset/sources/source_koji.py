@@ -615,14 +615,6 @@ def _get_modules_from_koji_tags(
         for build in latest_builds:
             # Get the Build from Koji to get modulemd and module_tag.
             build = koji_proxy.getBuild(build["build_id"])
-            module_tag = (
-                build.get("extra", {})
-                .get("typeinfo", {})
-                .get("module", {})
-                .get("content_koji_tag", "")
-            )
-
-            variant_tags[variant].append(module_tag)
 
             nsvc = _add_module_to_variant(
                 koji_wrapper,
@@ -634,6 +626,14 @@ def _get_modules_from_koji_tags(
             )
             if not nsvc:
                 continue
+
+            module_tag = (
+                build.get("extra", {})
+                .get("typeinfo", {})
+                .get("module", {})
+                .get("content_koji_tag", "")
+            )
+            variant_tags[variant].append(module_tag)
 
             tag_to_mmd.setdefault(module_tag, {})
             for arch in variant.arch_mmds:
