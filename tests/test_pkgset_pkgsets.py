@@ -323,7 +323,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper,
             [fst_key, snd_key],
             arches=["x86_64"],
-            signed_packages_retries=3,
+            signed_packages_retries=2,
             signed_packages_wait=5,
         )
 
@@ -405,7 +405,7 @@ class TestKojiPkgset(PkgsetCompareMixin, helpers.PungiTestCase):
             self.koji_wrapper,
             ["cafebabe"],
             arches=["x86_64"],
-            signed_packages_retries=3,
+            signed_packages_retries=2,
             signed_packages_wait=5,
         )
 

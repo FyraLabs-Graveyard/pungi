@@ -581,16 +581,16 @@ Options
     (for example) between composes, then Pungi may not respect those changes
     in your new compose.
 
-**signed_packages_retries** = 1
+**signed_packages_retries** = 0
     (*int*) -- In automated workflows a compose may start before signed
     packages are written to disk. In such case it may make sense to wait for
     the package to appear on storage. This option controls how many times to
-    try to look for the signed copy.
+    retry looking for the signed copy.
 
 **signed_packages_wait** = 30
     (*int*) -- Interval in seconds for how long to wait between attemts to find
     signed packages. This option only makes sense when
-    ``signed_packages_retries`` is set higher than to 1.
+    ``signed_packages_retries`` is set higher than to 0.
 
 
 Example

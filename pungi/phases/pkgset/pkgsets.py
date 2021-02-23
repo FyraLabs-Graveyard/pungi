@@ -333,7 +333,7 @@ class KojiPackageSet(PackageSetBase):
         cache_region=None,
         extra_builds=None,
         extra_tasks=None,
-        signed_packages_retries=1,
+        signed_packages_retries=0,
         signed_packages_wait=30,
     ):
         """
@@ -515,8 +515,8 @@ class KojiPackageSet(PackageSetBase):
         pathinfo = self.koji_wrapper.koji_module.pathinfo
         paths = []
 
-        retries = self.signed_packages_retries
-        while retries > 0:
+        attempts_left = self.signed_packages_retries + 1
+        while attempts_left > 0:
             for sigkey in self.sigkey_ordering:
                 if not sigkey:
                     # we're looking for *signed* copies here
@@ -531,8 +531,8 @@ class KojiPackageSet(PackageSetBase):
                     return rpm_path
 
             # No signed copy was found, wait a little and try again.
-            retries -= 1
-            if retries > 0:
+            attempts_left -= 1
+            if attempts_left > 0:
                 nvr = "%(name)s-%(version)s-%(release)s" % rpm_info
                 self.log_debug("Waiting for signed package to appear for %s", nvr)
                 time.sleep(self.signed_packages_wait)
