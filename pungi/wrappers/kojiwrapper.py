@@ -142,10 +142,13 @@ class KojiWrapper(object):
 
         if chown_paths:
             paths = " ".join(shlex_quote(pth) for pth in chown_paths)
+            command += " ; EXIT_CODE=$?"
             # Make the files world readable
-            command += " && chmod -R a+r %s" % paths
+            command += " ; chmod -R a+r %s" % paths
             # and owned by the same user that is running the process
-            command += " && chown -R %d %s" % (os.getuid(), paths)
+            command += " ; chown -R %d %s" % (os.getuid(), paths)
+            # Exit with code of main command
+            command += " ; exit $EXIT_CODE"
         cmd.append(command)
 
         return cmd

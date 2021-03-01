@@ -189,8 +189,10 @@ class TestRunrootOpenSSH(helpers.PungiTestCase):
         run.assert_has_calls(
             [
                 self._ssh_call(
-                    "run df -h && chmod -R a+r /mnt/foo/compose /mnt/foo/x && "
-                    "chown -R %d /mnt/foo/compose /mnt/foo/x" % os.getuid()
+                    "run df -h ; EXIT_CODE=$? ; "
+                    "chmod -R a+r /mnt/foo/compose /mnt/foo/x ; "
+                    "chown -R %d /mnt/foo/compose /mnt/foo/x ; exit $EXIT_CODE"
+                    % os.getuid()
                 ),
                 self._ssh_call(
                     "run rpm -qa --qf='%{name}-%{version}-%{release}.%{arch}\n'",

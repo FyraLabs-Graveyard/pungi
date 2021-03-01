@@ -594,7 +594,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(cmd[-2], "s390x")
         self.assertEqual(
             cmd[-1],
-            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' && chmod -R a+r '/output dir' /foo && chown -R 1010 '/output dir' /foo",  # noqa: E501
+            "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; /bin/echo '&' ; EXIT_CODE=$? ; chmod -R a+r '/output dir' /foo ; chown -R 1010 '/output dir' /foo ; exit $EXIT_CODE",  # noqa: E501
         )
         six.assertCountEqual(
             self,
