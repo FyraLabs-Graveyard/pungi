@@ -215,7 +215,10 @@ class DummyCompose(object):
         self.log_warning = mock.Mock()
         self.get_image_name = mock.Mock(return_value="image-name")
         self.image = mock.Mock(
-            path="Client/i386/iso/image.iso", can_fail=False, size=123, _max_size=None,
+            path="Client/i386/iso/image.iso",
+            can_fail=False,
+            size=123,
+            _max_size=None,
         )
         self.im = mock.Mock(images={"Client": {"amd64": [self.image]}})
         self.old_composes = []
@@ -302,7 +305,10 @@ def mk_boom(cls=Exception, msg="BOOM"):
     return b
 
 
-PKGSET_REPOS = dict(pkgset_source="repos", pkgset_repos={},)
+PKGSET_REPOS = dict(
+    pkgset_source="repos",
+    pkgset_repos={},
+)
 
 BASE_CONFIG = dict(
     release_short="test",

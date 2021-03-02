@@ -202,7 +202,14 @@ class KojiWrapper(object):
         return cmd
 
     def get_pungi_ostree_cmd(
-        self, target, arch, args, channel=None, packages=None, mounts=None, weight=None,
+        self,
+        target,
+        arch,
+        args,
+        channel=None,
+        packages=None,
+        mounts=None,
+        weight=None,
     ):
         cmd = self._get_cmd("pungi-ostree", "--nowait", "--task-id")
 
@@ -322,9 +329,11 @@ class KojiWrapper(object):
             "ksurl",
             "distro",
         )
-        assert set(min_options).issubset(set(config_options["image-build"].keys())), (
-            "image-build requires at least %s got '%s'"
-            % (", ".join(min_options), config_options)
+        assert set(min_options).issubset(
+            set(config_options["image-build"].keys())
+        ), "image-build requires at least %s got '%s'" % (
+            ", ".join(min_options),
+            config_options,
         )
         cfg_parser = configparser.ConfigParser()
         for section, opts in config_options.items():

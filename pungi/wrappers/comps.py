@@ -355,7 +355,10 @@ class CompsWrapper(object):
 
             if environment.option_ids:
                 append_grouplist(
-                    doc, env_node, set(environment.option_ids), "optionlist",
+                    doc,
+                    env_node,
+                    set(environment.option_ids),
+                    "optionlist",
                 )
 
         if self.comps.langpacks:

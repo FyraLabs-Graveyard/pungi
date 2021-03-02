@@ -267,7 +267,8 @@ class TestCheckImageSanity(PungiTestCase):
     @mock.patch("pungi.phases.test.check_sanity", new=mock.Mock())
     def test_too_big_unified_strict(self):
         compose = DummyCompose(
-            self.topdir, {"createiso_max_size_is_strict": [(".*", {"*": True})]},
+            self.topdir,
+            {"createiso_max_size_is_strict": [(".*", {"*": True})]},
         )
         compose.image.format = "iso"
         compose.image.bootable = False

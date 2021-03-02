@@ -183,7 +183,8 @@ class TestGitRefResolver(unittest.TestCase):
     def test_resolver_offline_branch(self, mock_resolve_url, mock_resolve_ref):
         resolver = util.GitUrlResolver(offline=True)
         self.assertEqual(
-            resolver("http://example.com/repo.git", "master"), "master",
+            resolver("http://example.com/repo.git", "master"),
+            "master",
         )
         self.assertEqual(mock_resolve_url.call_args_list, [])
         self.assertEqual(mock_resolve_ref.call_args_list, [])
@@ -935,7 +936,8 @@ class TestVersionGenerator(unittest.TestCase):
 
     def test_version_from_version(self):
         self.assertEqual(
-            util.version_generator(self.compose, "!VERSION_FROM_VERSION"), "8",
+            util.version_generator(self.compose, "!VERSION_FROM_VERSION"),
+            "8",
         )
 
 

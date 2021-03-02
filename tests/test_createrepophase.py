@@ -158,7 +158,9 @@ def make_mocked_modifyrepo_cmd(tc, module_artifacts):
         for ms in module_streams:
             tc.assertIn(ms.get_stream_name(), module_artifacts)
             six.assertCountEqual(
-                tc, ms.get_rpm_artifacts(), module_artifacts[ms.get_stream_name()],
+                tc,
+                ms.get_rpm_artifacts(),
+                module_artifacts[ms.get_stream_name()],
             )
 
     return mocked_modifyrepo_cmd

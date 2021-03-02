@@ -75,8 +75,7 @@ def is_isohybrid_needed(conf):
 
 
 def is_genisoimage_needed(conf):
-    """This is only needed locally for createiso without runroot.
-    """
+    """This is only needed locally for createiso without runroot."""
     runroot_tag = conf.get("runroot_tag", "")
     if runroot_tag or conf.get("createiso_use_xorrisofs"):
         return False

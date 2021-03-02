@@ -131,8 +131,8 @@ def getArchList(thisarch=None):  # pragma: no cover
 
 
 def _try_read_cpuinfo():  # pragma: no cover
-    """ Try to read /proc/cpuinfo ... if we can't ignore errors (ie. proc not
-        mounted). """
+    """Try to read /proc/cpuinfo ... if we can't ignore errors (ie. proc not
+    mounted)."""
     try:
         with open("/proc/cpuinfo", "r") as f:
             return f.readlines()
@@ -141,8 +141,8 @@ def _try_read_cpuinfo():  # pragma: no cover
 
 
 def _parse_auxv():  # pragma: no cover
-    """ Read /proc/self/auxv and parse it into global dict for easier access
-        later on, very similar to what rpm does. """
+    """Read /proc/self/auxv and parse it into global dict for easier access
+    later on, very similar to what rpm does."""
     # In case we can't open and read /proc/self/auxv, just return
     try:
         with open("/proc/self/auxv", "rb") as f:
@@ -326,8 +326,8 @@ def getMultiArchInfo(arch=canonArch):  # pragma: no cover
 
 def getBaseArch(myarch=None):  # pragma: no cover
     """returns 'base' arch for myarch, if specified, or canonArch if not.
-       base arch is the arch before noarch in the arches dict if myarch is not
-       a key in the multilibArches."""
+    base arch is the arch before noarch in the arches dict if myarch is not
+    a key in the multilibArches."""
 
     if not myarch:
         myarch = canonArch

@@ -596,7 +596,9 @@ class GetExtraFilesTest(helpers.PungiTestCase):
             get_file.call_args_list,
             [
                 mock.call(
-                    cfg1, os.path.join(self.dir, "legalese"), compose=self.compose,
+                    cfg1,
+                    os.path.join(self.dir, "legalese"),
+                    compose=self.compose,
                 ),
                 mock.call(cfg2, self.dir, compose=self.compose),
             ],
@@ -832,7 +834,8 @@ class GetIsoContentsTest(helpers.PungiTestCase):
                     ["Client"],
                     os.path.join(self.topdir, "compose/Server/source/tree/.treeinfo"),
                     os.path.join(
-                        self.topdir, "work/src/Server/extra-iso-extra-files/.treeinfo",
+                        self.topdir,
+                        "work/src/Server/extra-iso-extra-files/.treeinfo",
                     ),
                 ),
             ],

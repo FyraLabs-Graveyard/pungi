@@ -53,7 +53,8 @@ class OSBSPhaseTest(helpers.PungiTestCase):
             self.assertEqual(data, phase.pool.registries)
 
         self.assertEqual(
-            compose.notifier.call_args_list, [],
+            compose.notifier.call_args_list,
+            [],
         )
 
 

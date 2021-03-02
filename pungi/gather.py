@@ -519,7 +519,7 @@ class Pungi(PungiBase):
 
     def verifyCachePkg(self, po, path):  # Stolen from yum
         """check the package checksum vs the cache
-           return True if pkg is good, False if not"""
+        return True if pkg is good, False if not"""
 
         (csum_type, csum) = po.returnIdSum()
 
@@ -682,7 +682,7 @@ class Pungi(PungiBase):
 
     def get_package_deps(self, po):
         """Add the dependencies for a given package to the
-           transaction info"""
+        transaction info"""
         added = set()
         if po.repoid in self.lookaside_repos:
             # Don't resolve deps for stuff in lookaside.
@@ -911,7 +911,7 @@ class Pungi(PungiBase):
     def getPackagesFromGroup(self, group):
         """Get a list of package names from a ksparser group object
 
-            Returns a list of package names"""
+        Returns a list of package names"""
 
         packages = []
 
@@ -951,7 +951,7 @@ class Pungi(PungiBase):
 
     def _addDefaultGroups(self, excludeGroups=None):
         """Cycle through the groups and return at list of the ones that ara
-           default."""
+        default."""
         excludeGroups = excludeGroups or []
 
         # This is mostly stolen from anaconda.
@@ -1217,8 +1217,8 @@ class Pungi(PungiBase):
 
     def createSourceHashes(self):
         """Create two dicts - one that maps binary POs to source POs, and
-           one that maps a single source PO to all binary POs it produces.
-           Requires yum still configured."""
+        one that maps a single source PO to all binary POs it produces.
+        Requires yum still configured."""
         self.src_by_bin = {}
         self.bin_by_src = {}
         self.logger.info("Generating source <-> binary package mappings")
@@ -1232,8 +1232,8 @@ class Pungi(PungiBase):
 
     def add_srpms(self, po_list=None):
         """Cycle through the list of package objects and
-           find the sourcerpm for them.  Requires yum still
-           configured and a list of package objects"""
+        find the sourcerpm for them.  Requires yum still
+        configured and a list of package objects"""
 
         srpms = set()
         po_list = po_list or self.po_list
@@ -1275,9 +1275,9 @@ class Pungi(PungiBase):
 
     def add_fulltree(self, srpm_po_list=None):
         """Cycle through all package objects, and add any
-           that correspond to a source rpm that we are including.
-           Requires yum still configured and a list of package
-           objects."""
+        that correspond to a source rpm that we are including.
+        Requires yum still configured and a list of package
+        objects."""
 
         self.logger.info("Completing package set")
 
@@ -1357,8 +1357,8 @@ class Pungi(PungiBase):
 
     def getDebuginfoList(self):
         """Cycle through the list of package objects and find
-           debuginfo rpms for them.  Requires yum still
-           configured and a list of package objects"""
+        debuginfo rpms for them.  Requires yum still
+        configured and a list of package objects"""
 
         added = set()
         for po in self.all_pkgs:
@@ -1398,7 +1398,7 @@ class Pungi(PungiBase):
 
     def _downloadPackageList(self, polist, relpkgdir):
         """Cycle through the list of package objects and
-           download them from their respective repos."""
+        download them from their respective repos."""
 
         for pkg in sorted(polist):
             repo = self.ayum.repos.getRepo(pkg.repoid)
@@ -1533,7 +1533,7 @@ class Pungi(PungiBase):
     @yumlocked
     def downloadSRPMs(self):
         """Cycle through the list of srpms and
-           find the package objects for them, Then download them."""
+        find the package objects for them, Then download them."""
 
         # do the downloads
         self._downloadPackageList(self.srpm_po_list, os.path.join("source", "SRPMS"))
@@ -1541,7 +1541,7 @@ class Pungi(PungiBase):
     @yumlocked
     def downloadDebuginfo(self):
         """Cycle through the list of debuginfo rpms and
-           download them."""
+        download them."""
 
         # do the downloads
         self._downloadPackageList(
@@ -1980,7 +1980,7 @@ class Pungi(PungiBase):
 
     def doGetRelnotes(self):
         """Get extra files from packages in the tree to put in the topdir of
-           the tree."""
+        the tree."""
         docsdir = os.path.join(self.workdir, "docs")
         relnoterpms = self.config.get("pungi", "relnotepkgs").split()
 

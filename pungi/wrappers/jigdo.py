@@ -25,7 +25,7 @@ class JigdoWrapper(kobo.log.LoggingBase):
         self, image, files, output_dir, cache=None, no_servers=False, report=None
     ):
         """
-            files: [{"path", "label", "uri"}]
+        files: [{"path", "label", "uri"}]
         """
         cmd = ["jigdo-file", "make-template"]
 

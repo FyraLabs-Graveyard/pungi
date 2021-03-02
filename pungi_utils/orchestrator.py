@@ -302,8 +302,7 @@ def block_on(parts, name):
 
 
 def check_finished_processes(processes):
-    """Walk through all active processes and check if something finished.
-    """
+    """Walk through all active processes and check if something finished."""
     for proc in processes.keys():
         proc.poll()
         if proc.returncode is not None:

@@ -22,7 +22,9 @@ class ConfigTestCase(unittest.TestCase):
 
 class PkgsetConfigTestCase(ConfigTestCase):
     def test_validate_minimal_pkgset_koji(self):
-        cfg = load_config(pkgset_source="koji",)
+        cfg = load_config(
+            pkgset_source="koji",
+        )
 
         self.assertValidation(cfg)
 
@@ -36,7 +38,9 @@ class PkgsetConfigTestCase(ConfigTestCase):
 
     def test_pkgset_mismatch_repos(self):
         cfg = load_config(
-            pkgset_source="repos", pkgset_koji_tag="f25", pkgset_koji_inherit=False,
+            pkgset_source="repos",
+            pkgset_koji_tag="f25",
+            pkgset_koji_inherit=False,
         )
 
         self.assertValidation(
@@ -51,7 +55,10 @@ class PkgsetConfigTestCase(ConfigTestCase):
         )
 
     def test_pkgset_mismatch_koji(self):
-        cfg = load_config(pkgset_source="koji", pkgset_repos={"whatever": "/foo"},)
+        cfg = load_config(
+            pkgset_source="koji",
+            pkgset_repos={"whatever": "/foo"},
+        )
 
         self.assertValidation(
             cfg, [checks.CONFLICTS.format("pkgset_source", "koji", "pkgset_repos")]
@@ -78,7 +85,10 @@ class ReleaseConfigTestCase(ConfigTestCase):
         )
 
     def test_only_config_base_product_name(self):
-        cfg = load_config(PKGSET_REPOS, base_product_name="Prod",)
+        cfg = load_config(
+            PKGSET_REPOS,
+            base_product_name="Prod",
+        )
 
         self.assertValidation(
             cfg,
@@ -99,7 +109,10 @@ class ReleaseConfigTestCase(ConfigTestCase):
         )
 
     def test_only_config_base_product_short(self):
-        cfg = load_config(PKGSET_REPOS, base_product_short="bp",)
+        cfg = load_config(
+            PKGSET_REPOS,
+            base_product_short="bp",
+        )
 
         self.assertValidation(
             cfg,
@@ -118,7 +131,10 @@ class ReleaseConfigTestCase(ConfigTestCase):
         )
 
     def test_only_config_base_product_version(self):
-        cfg = load_config(PKGSET_REPOS, base_product_version="1.0",)
+        cfg = load_config(
+            PKGSET_REPOS,
+            base_product_version="1.0",
+        )
 
         self.assertValidation(
             cfg,
@@ -141,19 +157,28 @@ class ReleaseConfigTestCase(ConfigTestCase):
 
 class ImageNameConfigTestCase(ConfigTestCase):
     def test_image_name_simple_string(self):
-        cfg = load_config(PKGSET_REPOS, image_name_format="foobar",)
+        cfg = load_config(
+            PKGSET_REPOS,
+            image_name_format="foobar",
+        )
 
         self.assertValidation(cfg, [])
 
     def test_image_name_variant_mapping(self):
-        cfg = load_config(PKGSET_REPOS, image_name_format={"^Server$": "foobar"},)
+        cfg = load_config(
+            PKGSET_REPOS,
+            image_name_format={"^Server$": "foobar"},
+        )
 
         self.assertValidation(cfg, [])
 
 
 class RunrootConfigTestCase(ConfigTestCase):
     def test_set_runroot_true(self):
-        cfg = load_config(PKGSET_REPOS, runroot=True,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            runroot=True,
+        )
 
         self.assertValidation(
             cfg,
@@ -163,7 +188,10 @@ class RunrootConfigTestCase(ConfigTestCase):
         )
 
     def test_set_runroot_false(self):
-        cfg = load_config(PKGSET_REPOS, runroot=False,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            runroot=False,
+        )
 
         self.assertValidation(
             cfg,
@@ -175,7 +203,10 @@ class RunrootConfigTestCase(ConfigTestCase):
 
 class BuildinstallConfigTestCase(ConfigTestCase):
     def test_bootable_deprecated(self):
-        cfg = load_config(PKGSET_REPOS, bootable=True,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            bootable=True,
+        )
 
         self.assertValidation(
             cfg,
@@ -185,7 +216,10 @@ class BuildinstallConfigTestCase(ConfigTestCase):
         )
 
     def test_buildinstall_method_without_bootable(self):
-        cfg = load_config(PKGSET_REPOS, buildinstall_method="lorax",)
+        cfg = load_config(
+            PKGSET_REPOS,
+            buildinstall_method="lorax",
+        )
 
         self.assertValidation(cfg, [])
 
@@ -231,7 +265,9 @@ class BuildinstallConfigTestCase(ConfigTestCase):
 class CreaterepoConfigTestCase(ConfigTestCase):
     def test_validate_minimal_pkgset_koji(self):
         cfg = load_config(
-            pkgset_source="koji", pkgset_koji_tag="f25", product_id_allow_missing=True,
+            pkgset_source="koji",
+            pkgset_koji_tag="f25",
+            product_id_allow_missing=True,
         )
 
         self.assertValidation(
@@ -242,14 +278,20 @@ class CreaterepoConfigTestCase(ConfigTestCase):
 
 class GatherConfigTestCase(ConfigTestCase):
     def test_dnf_backend_is_default_on_py3(self):
-        cfg = load_config(pkgset_source="koji", pkgset_koji_tag="f27",)
+        cfg = load_config(
+            pkgset_source="koji",
+            pkgset_koji_tag="f27",
+        )
 
         with mock.patch("six.PY2", new=False):
             self.assertValidation(cfg, [])
         self.assertEqual(cfg["gather_backend"], "dnf")
 
     def test_yum_backend_is_default_on_py2(self):
-        cfg = load_config(pkgset_source="koji", pkgset_koji_tag="f27",)
+        cfg = load_config(
+            pkgset_source="koji",
+            pkgset_koji_tag="f27",
+        )
 
         with mock.patch("six.PY2", new=True):
             self.assertValidation(cfg, [])
@@ -257,7 +299,9 @@ class GatherConfigTestCase(ConfigTestCase):
 
     def test_yum_backend_is_rejected_on_py3(self):
         cfg = load_config(
-            pkgset_source="koji", pkgset_koji_tag="f27", gather_backend="yum",
+            pkgset_source="koji",
+            pkgset_koji_tag="f27",
+            gather_backend="yum",
         )
 
         with mock.patch("six.PY2", new=False):
@@ -402,7 +446,10 @@ class LiveMediaConfigTestCase(ConfigTestCase):
         self.assertEqual(cfg["live_media_ksurl"], "git://example.com/repo.git#CAFE")
 
     def test_global_config_null_release(self):
-        cfg = load_config(PKGSET_REPOS, live_media_release=None,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            live_media_release=None,
+        )
 
         self.assertValidation(cfg)
 
@@ -429,7 +476,8 @@ class TestRegexValidation(ConfigTestCase):
 class RepoclosureTestCase(ConfigTestCase):
     def test_invalid_backend(self):
         cfg = load_config(
-            PKGSET_REPOS, repoclosure_backend="fnd",  # Intentionally with a typo
+            PKGSET_REPOS,
+            repoclosure_backend="fnd",  # Intentionally with a typo
         )
 
         options = ["yum", "dnf"] if six.PY2 else ["dnf"]
@@ -445,7 +493,10 @@ class RepoclosureTestCase(ConfigTestCase):
 class VariantAsLookasideTestCase(ConfigTestCase):
     def test_empty(self):
         variant_as_lookaside = []
-        cfg = load_config(PKGSET_REPOS, variant_as_lookaside=variant_as_lookaside,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            variant_as_lookaside=variant_as_lookaside,
+        )
         self.assertValidation(cfg)
 
     def test_basic(self):
@@ -454,14 +505,20 @@ class VariantAsLookasideTestCase(ConfigTestCase):
             ("Server", "Client"),
             ("Everything", "Spin"),
         ]
-        cfg = load_config(PKGSET_REPOS, variant_as_lookaside=variant_as_lookaside,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            variant_as_lookaside=variant_as_lookaside,
+        )
         self.assertValidation(cfg)
 
 
 class SkipPhasesTestCase(ConfigTestCase):
     def test_empty(self):
         skip_phases = []
-        cfg = load_config(PKGSET_REPOS, skip_phases=skip_phases,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
         self.assertValidation(cfg)
 
     def test_basic(self):
@@ -469,7 +526,10 @@ class SkipPhasesTestCase(ConfigTestCase):
             "buildinstall",
             "gather",
         ]
-        cfg = load_config(PKGSET_REPOS, skip_phases=skip_phases,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
         self.assertValidation(cfg)
 
     def test_bad_phase_name(self):
@@ -477,5 +537,8 @@ class SkipPhasesTestCase(ConfigTestCase):
             "gather",
             "non-existing-phase_name",
         ]
-        cfg = load_config(PKGSET_REPOS, skip_phases=skip_phases,)
+        cfg = load_config(
+            PKGSET_REPOS,
+            skip_phases=skip_phases,
+        )
         self.assertNotEqual(checks.validate(cfg), ([], []))

@@ -54,8 +54,7 @@ class SimpleAcyclicOrientedGraph(object):
         return False if node in self._graph else True
 
     def remove_final_endpoint(self, node):
-        """
-        """
+        """"""
         remove_start_points = []
         for start, ends in self._graph.items():
             if node in ends:

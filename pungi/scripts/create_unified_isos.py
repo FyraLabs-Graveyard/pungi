@@ -16,7 +16,10 @@ def parse_args():
     parser = argparse.ArgumentParser(add_help=True)
 
     parser.add_argument(
-        "compose", metavar="<compose-path>", nargs=1, help="path to compose",
+        "compose",
+        metavar="<compose-path>",
+        nargs=1,
+        help="path to compose",
     )
     parser.add_argument(
         "--arch",

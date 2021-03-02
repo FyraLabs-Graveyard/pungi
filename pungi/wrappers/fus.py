@@ -26,7 +26,12 @@ Pungi).
 
 
 def get_cmd(
-    conf_file, arch, repos, lookasides, platform=None, filter_packages=None,
+    conf_file,
+    arch,
+    repos,
+    lookasides,
+    platform=None,
+    filter_packages=None,
 ):
     cmd = ["fus", "--verbose", "--arch", arch]
 

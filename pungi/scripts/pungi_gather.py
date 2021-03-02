@@ -18,13 +18,18 @@ from pungi.util import temp_dir
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--profiler", action="store_true",
+        "--profiler",
+        action="store_true",
     )
     parser.add_argument(
-        "--arch", required=True,
+        "--arch",
+        required=True,
     )
     parser.add_argument(
-        "--config", metavar="PATH", required=True, help="path to kickstart config file",
+        "--config",
+        metavar="PATH",
+        required=True,
+        help="path to kickstart config file",
     )
     parser.add_argument(
         "--download-to",
@@ -42,7 +47,9 @@ def get_parser():
 
     group = parser.add_argument_group("Gather options")
     group.add_argument(
-        "--nodeps", action="store_true", help="disable resolving dependencies",
+        "--nodeps",
+        action="store_true",
+        help="disable resolving dependencies",
     )
     group.add_argument(
         "--selfhosting",
@@ -61,7 +68,9 @@ def get_parser():
         choices=["none", "all", "build"],
     )
     group.add_argument(
-        "--multilib", metavar="[METHOD]", action="append",
+        "--multilib",
+        metavar="[METHOD]",
+        action="append",
     )
     group.add_argument(
         "--tempdir",

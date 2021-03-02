@@ -204,7 +204,8 @@ class TestRunrootKoji(helpers.PungiTestCase):
     def setUp(self):
         super(TestRunrootKoji, self).setUp()
         self.compose = helpers.DummyCompose(
-            self.topdir, {"runroot": True, "runroot_tag": "f28-build"},
+            self.topdir,
+            {"runroot": True, "runroot_tag": "f28-build"},
         )
 
         self.runroot = Runroot(self.compose)

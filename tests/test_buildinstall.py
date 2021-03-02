@@ -1920,7 +1920,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
     )
     def test_reuse_old_buildinstall_result_no_old_compose(
-        self, load_old_buildinstall_metadata,
+        self,
+        load_old_buildinstall_metadata,
     ):
         compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
         load_old_buildinstall_metadata.return_value = None
@@ -1935,7 +1936,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
     )
     def test_reuse_old_buildinstall_result_different_cmd(
-        self, load_old_buildinstall_metadata,
+        self,
+        load_old_buildinstall_metadata,
     ):
         compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
 
@@ -1958,7 +1960,8 @@ class BuildinstallThreadTestCase(PungiTestCase):
         "pungi.phases.buildinstall.BuildinstallThread._load_old_buildinstall_metadata"
     )
     def test_reuse_old_buildinstall_result_different_installed_pkgs(
-        self, load_old_buildinstall_metadata,
+        self,
+        load_old_buildinstall_metadata,
     ):
         compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
         load_old_buildinstall_metadata.return_value = {
@@ -1978,7 +1981,9 @@ class BuildinstallThreadTestCase(PungiTestCase):
     )
     @mock.patch("pungi.wrappers.kojiwrapper.KojiWrapper")
     def test_reuse_old_buildinstall_result_different_buildroot_rpms(
-        self, KojiWrapperMock, load_old_buildinstall_metadata,
+        self,
+        KojiWrapperMock,
+        load_old_buildinstall_metadata,
     ):
         compose, pkgset_phase, cmd = self._prepare_buildinstall_reuse_test()
         load_old_buildinstall_metadata.return_value = {

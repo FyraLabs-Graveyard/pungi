@@ -2620,5 +2620,7 @@ class DNFDepsolvingTestCase(DepsolvingBase, unittest.TestCase):
         six.assertCountEqual(self, pkg_map["rpm"], [])
         six.assertCountEqual(self, pkg_map["srpm"], [])
         six.assertCountEqual(
-            self, pkg_map["debuginfo"], ["dummy-bash-debuginfo-4.2.37-6.x86_64.rpm"],
+            self,
+            pkg_map["debuginfo"],
+            ["dummy-bash-debuginfo-4.2.37-6.x86_64.rpm"],
         )

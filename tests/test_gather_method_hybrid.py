@@ -350,7 +350,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
-            wc.call_args_list, [mock.call(self.config1, ["mod:master"], [])],
+            wc.call_args_list,
+            [mock.call(self.config1, ["mod:master"], [])],
         )
         self.assertEqual(
             gc.call_args_list,
@@ -454,7 +455,8 @@ class TestRunSolver(HelperMixin, helpers.PungiTestCase):
             ],
         )
         self.assertEqual(
-            wc.call_args_list, [mock.call(self.config1, [], ["pkg"])],
+            wc.call_args_list,
+            [mock.call(self.config1, [], ["pkg"])],
         )
         self.assertEqual(
             gc.call_args_list,

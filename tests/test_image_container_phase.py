@@ -168,7 +168,10 @@ class ImageContainerThreadTest(helpers.PungiTestCase):
             [
                 mock.call.login(),
                 mock.call.koji_proxy.buildContainer(
-                    cfg["url"], cfg["target"], opts, priority=None,
+                    cfg["url"],
+                    cfg["target"],
+                    opts,
+                    priority=None,
                 ),
                 mock.call.watch_task(
                     12345,

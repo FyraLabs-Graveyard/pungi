@@ -941,7 +941,7 @@ def get_repo_dicts(repos, logger=None):
 
 def version_generator(compose, gen):
     """If ``gen`` is a known generator, create a value. Otherwise return
-       the argument value unchanged.
+    the argument value unchanged.
     """
     if gen == "!OSTREE_VERSION_FROM_LABEL_DATE_TYPE_RESPIN":
         return "%s.%s" % (compose.image_version, compose.image_release)
@@ -963,8 +963,8 @@ def version_generator(compose, gen):
 
 
 def retry(timeout=120, interval=30, wait_on=Exception):
-    """ A decorator that allows to retry a section of code until success or
-        timeout.
+    """A decorator that allows to retry a section of code until success or
+    timeout.
     """
 
     def wrapper(function):

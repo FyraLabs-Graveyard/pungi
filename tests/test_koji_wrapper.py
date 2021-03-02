@@ -39,7 +39,9 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
             koji.get_profile_module = mock.Mock(
                 return_value=mock.Mock(
                     config=DumbMock(
-                        server="koji.example.com", authtype="kerberos", cert="",
+                        server="koji.example.com",
+                        authtype="kerberos",
+                        cert="",
                     ),
                     pathinfo=mock.Mock(
                         work=mock.Mock(return_value="/koji"),
