@@ -53,7 +53,7 @@ class ImageContainerThread(WorkerThread):
             self._get_repo(
                 compose,
                 variant,
-                config.get("arch_override", "").split(" "),
+                config.get("arch_override", "").split(),
                 config.pop("image_spec"),
             )
         ]
@@ -95,7 +95,7 @@ class ImageContainerThread(WorkerThread):
                     if not re.match(value, getattr(image, key)):
                         break
                 else:
-                    image_paths.add(image.path)
+                    image_paths.add(image.path.replace(arch, "$basearch"))
 
         if len(image_paths) != 1:
             raise RuntimeError(

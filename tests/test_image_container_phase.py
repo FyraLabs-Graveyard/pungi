@@ -130,7 +130,6 @@ class ImageContainerThreadTest(helpers.PungiTestCase):
             "target": "f24-docker-candidate",
             "git_branch": "f24-docker",
             "image_spec": {"type": "qcow2"},
-            "arch_override": "x86_64",
         }
         self.compose.im.images["Server"] = {
             "x86_64": [
@@ -150,7 +149,7 @@ class ImageContainerThreadTest(helpers.PungiTestCase):
             repo_content = list(f)
         self.assertIn("[image-to-include]\n", repo_content)
         self.assertIn(
-            "baseurl=http://root/compose/Server/x86_64/images/image.qcow2\n",
+            "baseurl=http://root/compose/Server/$basearch/images/image.qcow2\n",
             repo_content,
         )
         self.assertIn("enabled=0\n", repo_content)
@@ -158,7 +157,6 @@ class ImageContainerThreadTest(helpers.PungiTestCase):
     def assertKojiCalls(self, cfg, scratch=False):
         opts = {
             "git_branch": cfg["git_branch"],
-            "arch_override": cfg["arch_override"],
             "yum_repourls": ["http://root/" + self.repofile_path],
         }
         if scratch:
