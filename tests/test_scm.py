@@ -588,9 +588,8 @@ class CvsSCMTestCase(SCMBaseTest):
 
 
 @mock.patch("pungi.wrappers.scm.urlretrieve")
-@mock.patch("pungi.wrappers.scm.KojiWrapper")
 class KojiSCMTestCase(SCMBaseTest):
-    def test_without_koji_profile(self, KW, dl):
+    def test_without_koji_profile(self, dl):
         compose = mock.Mock(conf={})
 
         with self.assertRaises(RuntimeError) as ctx:
@@ -600,9 +599,9 @@ class KojiSCMTestCase(SCMBaseTest):
                 compose=compose,
             )
         self.assertIn("Koji profile must be configured", str(ctx.exception))
-        self.assertEqual(KW.mock_calls, [])
         self.assertEqual(dl.mock_calls, [])
 
+    @mock.patch("pungi.wrappers.scm.KojiWrapper")
     def test_doesnt_get_dirs(self, KW, dl):
         compose = mock.Mock(conf={"koji_profile": "koji"})
 
@@ -613,7 +612,7 @@ class KojiSCMTestCase(SCMBaseTest):
                 compose=compose,
             )
         self.assertIn("Only files can be exported", str(ctx.exception))
-        self.assertEqual(KW.mock_calls, [mock.call("koji")])
+        self.assertEqual(KW.mock_calls, [mock.call(compose)])
         self.assertEqual(dl.mock_calls, [])
 
     def _setup_koji_wrapper(self, KW, build_id, files):
@@ -627,6 +626,7 @@ class KojiSCMTestCase(SCMBaseTest):
         ]
         KW.return_value.koji_proxy.listTagged.return_value = [buildinfo]
 
+    @mock.patch("pungi.wrappers.scm.KojiWrapper")
     def test_get_from_build(self, KW, dl):
         compose = mock.Mock(conf={"koji_profile": "koji"})
 
@@ -646,7 +646,7 @@ class KojiSCMTestCase(SCMBaseTest):
         self.assertEqual(
             KW.mock_calls,
             [
-                mock.call("koji"),
+                mock.call(compose),
                 mock.call().koji_proxy.getBuild("my-build-1.0-2"),
                 mock.call().koji_proxy.listArchives(123),
                 mock.call().koji_module.pathinfo.typedir({"build_id": 123}, "image"),
@@ -657,6 +657,7 @@ class KojiSCMTestCase(SCMBaseTest):
             [mock.call("http://koji.local/koji/images/abc.tar", mock.ANY)],
         )
 
+    @mock.patch("pungi.wrappers.scm.KojiWrapper")
     def test_get_from_latest_build(self, KW, dl):
         compose = mock.Mock(conf={"koji_profile": "koji"})
 
@@ -676,7 +677,7 @@ class KojiSCMTestCase(SCMBaseTest):
         self.assertEqual(
             KW.mock_calls,
             [
-                mock.call("koji"),
+                mock.call(compose),
                 mock.call().koji_proxy.listTagged(
                     "images", package="my-build", inherit=True, latest=True
                 ),

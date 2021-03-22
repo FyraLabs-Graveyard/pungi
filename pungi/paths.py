@@ -103,6 +103,16 @@ class LogPaths(object):
             makedirs(path)
         return path
 
+    def koji_tasks_dir(self, create_dir=True):
+        """
+        Examples:
+            logs/global/koji-tasks
+        """
+        path = os.path.join(self.topdir(create_dir=create_dir), "koji-tasks")
+        if create_dir:
+            makedirs(path)
+        return path
+
     def log_file(self, arch, log_name, create_dir=True):
         arch = arch or "global"
         if log_name.endswith(".log"):
@@ -502,6 +512,9 @@ class WorkPaths(object):
         """
         Returns the path to file in which the cached version of
         PackageSetBase.file_cache should be stored.
+
+        Example:
+            work/global/pkgset_f33-compose_file_cache.pickle
         """
         filename = "pkgset_%s_file_cache.pickle" % pkgset_name
         return os.path.join(self.topdir(arch="global"), filename)

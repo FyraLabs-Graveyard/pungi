@@ -265,11 +265,7 @@ class RpmScmWrapper(ScmBase):
 class KojiScmWrapper(ScmBase):
     def __init__(self, *args, **kwargs):
         super(KojiScmWrapper, self).__init__(*args, **kwargs)
-        try:
-            profile = kwargs["compose"].conf["koji_profile"]
-        except KeyError:
-            raise RuntimeError("Koji profile must be configured")
-        wrapper = KojiWrapper(profile)
+        wrapper = KojiWrapper(kwargs["compose"])
         self.koji = wrapper.koji_module
         self.proxy = wrapper.koji_proxy
 

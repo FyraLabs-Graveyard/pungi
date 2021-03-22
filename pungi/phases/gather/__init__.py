@@ -607,7 +607,7 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
         )
         + "/",
         "koji": lambda: pungi.wrappers.kojiwrapper.KojiWrapper(
-            compose.conf["koji_profile"]
+            compose
         ).koji_module.config.topdir.rstrip("/")
         + "/",
     }

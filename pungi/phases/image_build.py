@@ -223,7 +223,7 @@ class CreateImageBuildThread(WorkerThread):
         )
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = KojiWrapper(compose)
 
         # writes conf file for koji image-build
         self.pool.log_info(

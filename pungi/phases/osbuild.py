@@ -110,7 +110,7 @@ class RunOSBuildThread(WorkerThread):
     def worker(self, compose, variant, config, arches, version, release, target, repo):
         msg = "OSBuild task for variant %s" % variant.uid
         self.pool.log_info("[BEGIN] %s" % msg)
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji = kojiwrapper.KojiWrapper(compose)
         koji.login()
 
         # Start task
@@ -127,6 +127,8 @@ class RunOSBuildThread(WorkerThread):
             opts=opts,
         )
 
+        koji.save_task_id(task_id)
+
         # Wait for it to finish and capture the output into log file.
         log_dir = os.path.join(compose.paths.log.topdir(), "osbuild")
         util.makedirs(log_dir)
@@ -141,7 +143,7 @@ class RunOSBuildThread(WorkerThread):
         # Refresh koji session which may have timed out while the task was
         # running. Watching is done via a subprocess, so the session is
         # inactive.
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji = kojiwrapper.KojiWrapper(compose)
 
         # Get build id via the task's result json data
         result = koji.koji_proxy.getTaskResult(task_id)

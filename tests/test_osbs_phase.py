@@ -220,6 +220,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
                     options,
                     priority=None,
                 ),
+                mock.call.save_task_id(12345),
                 mock.call.watch_task(
                     12345, self.topdir + "/logs/global/osbs/Server-1-watch-task.log"
                 ),

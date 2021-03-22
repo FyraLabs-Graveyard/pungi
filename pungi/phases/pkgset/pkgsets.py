@@ -31,7 +31,6 @@ import kobo.rpmlib
 
 from kobo.threads import WorkerThread, ThreadPool
 
-import pungi.wrappers.kojiwrapper
 from pungi.util import pkg_is_srpm, copy_all
 from pungi.arch import get_valid_arches, is_excluded
 from pungi.errors import UnsignedPackagesError
@@ -391,7 +390,6 @@ class KojiPackageSet(PackageSetBase):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        result["koji_profile"] = self.koji_wrapper.profile
         del result["koji_wrapper"]
         del result["_logger"]
         if "cache_region" in result:
@@ -399,8 +397,6 @@ class KojiPackageSet(PackageSetBase):
         return result
 
     def __setstate__(self, data):
-        koji_profile = data.pop("koji_profile")
-        self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
         self._logger = None
         self.__dict__.update(data)
 

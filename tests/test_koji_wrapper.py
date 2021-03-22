@@ -10,6 +10,7 @@ except ImportError:
 import tempfile
 
 import os
+import shutil
 
 import six
 
@@ -33,7 +34,9 @@ def mock_imagebuild_path(id):
 class KojiWrapperBaseTestCase(unittest.TestCase):
     def setUp(self):
         _, self.tmpfile = tempfile.mkstemp()
-        self.koji_profile = mock.Mock()
+        compose = mock.Mock(conf={"koji_profile": "custom-koji"})
+        self.tmpdir = tempfile.mkdtemp()
+        compose.paths.log.koji_tasks_dir.return_value = self.tmpdir
         with mock.patch("pungi.wrappers.kojiwrapper.koji") as koji:
             koji.gssapi_login = mock.Mock()
             koji.get_profile_module = mock.Mock(
@@ -51,10 +54,11 @@ class KojiWrapperBaseTestCase(unittest.TestCase):
                 )
             )
             self.koji_profile = koji.get_profile_module.return_value
-            self.koji = KojiWrapper("custom-koji")
+            self.koji = KojiWrapper(compose)
 
     def tearDown(self):
         os.remove(self.tmpfile)
+        shutil.rmtree(self.tmpdir)
 
 
 class KojiWrapperTest(KojiWrapperBaseTestCase):
@@ -1163,7 +1167,7 @@ class TestGetBuildrootRPMs(unittest.TestCase):
 
         rpms = get_buildroot_rpms(compose, 1234)
 
-        self.assertEqual(KojiWrapper.call_args_list, [mock.call("koji")])
+        self.assertEqual(KojiWrapper.call_args_list, [mock.call(compose)])
         self.assertEqual(
             KojiWrapper.return_value.mock_calls,
             [

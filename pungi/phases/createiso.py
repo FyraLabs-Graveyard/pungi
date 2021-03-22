@@ -346,7 +346,7 @@ def run_createiso_command(
     build_arch = arch
     if runroot.runroot_method == "koji" and not bootable:
         runroot_tag = compose.conf["runroot_tag"]
-        koji_wrapper = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(compose)
         koji_proxy = koji_wrapper.koji_proxy
         tag_info = koji_proxy.getTag(runroot_tag)
         if not tag_info:

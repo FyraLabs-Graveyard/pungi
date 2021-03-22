@@ -446,7 +446,7 @@ class TestSourceKoji(helpers.PungiTestCase):
 
         self.assertEqual(pkgsets, gpfk.return_value)
         self.assertEqual(path_prefix, "/prefix/")
-        self.assertEqual(KojiWrapper.mock_calls, [mock.call("koji")])
+        self.assertEqual(KojiWrapper.mock_calls, [mock.call(compose)])
 
 
 class TestCorrectNVR(helpers.PungiTestCase):

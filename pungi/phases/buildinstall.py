@@ -722,7 +722,7 @@ class BuildinstallThread(WorkerThread):
         # Ask Koji for all the RPMs in the `runroot_tag` and check that
         # those installed in the old buildinstall buildroot are still in the
         # very same versions/releases.
-        koji_wrapper = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(compose)
         rpms = koji_wrapper.koji_proxy.listTaggedRPMS(
             compose.conf.get("runroot_tag"), inherit=True, latest=True
         )[0]

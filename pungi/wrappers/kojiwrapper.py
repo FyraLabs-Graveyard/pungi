@@ -36,10 +36,14 @@ KOJI_BUILD_DELETED = koji.BUILD_STATES["DELETED"]
 class KojiWrapper(object):
     lock = threading.Lock()
 
-    def __init__(self, profile):
-        self.profile = profile
+    def __init__(self, compose):
+        self.compose = compose
+        try:
+            self.profile = self.compose.conf["koji_profile"]
+        except KeyError:
+            raise RuntimeError("Koji profile must be configured")
         with self.lock:
-            self.koji_module = koji.get_profile_module(profile)
+            self.koji_module = koji.get_profile_module(self.profile)
             session_opts = {}
             for key in (
                 "timeout",
@@ -300,6 +304,8 @@ class KojiWrapper(object):
 
         task_id = int(match.groups()[0])
 
+        self.save_task_id(task_id)
+
         retcode, output = self._wait_for_task(task_id, logfile=log_file)
 
         return {
@@ -541,6 +547,8 @@ class KojiWrapper(object):
                 % (" ".join(command), output)
             )
         task_id = int(match.groups()[0])
+
+        self.save_task_id(task_id)
 
         if retcode != 0 and (
             self._has_connection_error(output) or self._has_offline_error(output)
@@ -827,13 +835,22 @@ class KojiWrapper(object):
         """
         return self.multicall_map(*args, **kwargs)
 
+    def save_task_id(self, task_id):
+        """Save task id by creating a file using task_id as file name
+
+        :param int task_id: ID of koji task
+        """
+        log_dir = self.compose.paths.log.koji_tasks_dir()
+        with open(os.path.join(log_dir, str(task_id)), "w"):
+            pass
+
 
 def get_buildroot_rpms(compose, task_id):
     """Get build root RPMs - either from runroot or local"""
     result = []
     if task_id:
         # runroot
-        koji = KojiWrapper(compose.conf["koji_profile"])
+        koji = KojiWrapper(compose)
         buildroot_infos = koji.koji_proxy.listBuildroots(taskID=task_id)
         if not buildroot_infos:
             children_tasks = koji.koji_proxy.getTaskChildren(task_id)

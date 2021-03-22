@@ -110,7 +110,7 @@ class Runroot(kobo.log.LoggingBase):
         runroot_tag = self.compose.conf["runroot_tag"]
         log_dir = kwargs.pop("log_dir", None)
 
-        koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(self.compose)
         koji_cmd = koji_wrapper.get_runroot_cmd(
             runroot_tag,
             arch,
@@ -303,7 +303,7 @@ class Runroot(kobo.log.LoggingBase):
         runroot_channel = self.compose.conf.get("runroot_channel")
         runroot_tag = self.compose.conf["runroot_tag"]
 
-        koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(self.compose)
         koji_cmd = koji_wrapper.get_pungi_buildinstall_cmd(
             runroot_tag,
             arch,
@@ -337,7 +337,7 @@ class Runroot(kobo.log.LoggingBase):
         runroot_channel = self.compose.conf.get("runroot_channel")
         runroot_tag = self.compose.conf["runroot_tag"]
 
-        koji_wrapper = kojiwrapper.KojiWrapper(self.compose.conf["koji_profile"])
+        koji_wrapper = kojiwrapper.KojiWrapper(self.compose)
         koji_cmd = koji_wrapper.get_pungi_ostree_cmd(
             runroot_tag, arch, args, channel=runroot_channel, **kwargs
         )

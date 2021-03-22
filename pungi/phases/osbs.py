@@ -77,7 +77,7 @@ class OSBSThread(WorkerThread):
     def worker(self, compose, variant, config):
         msg = "OSBS task for variant %s" % variant.uid
         self.pool.log_info("[BEGIN] %s" % msg)
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji = kojiwrapper.KojiWrapper(compose)
         koji.login()
 
         # Start task
@@ -97,6 +97,8 @@ class OSBSThread(WorkerThread):
         task_id = koji.koji_proxy.buildContainer(
             source, target, config, priority=priority
         )
+
+        koji.save_task_id(task_id)
 
         # Wait for it to finish and capture the output into log file (even
         # though there is not much there).
@@ -173,7 +175,7 @@ def add_metadata(variant, task_id, compose, is_scratch):
     # Create new Koji session. The task could take so long to finish that
     # our session will expire. This second session does not need to be
     # authenticated since it will only do reading operations.
-    koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+    koji = kojiwrapper.KojiWrapper(compose)
 
     # Create metadata
     metadata = {

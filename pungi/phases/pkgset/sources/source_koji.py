@@ -186,8 +186,7 @@ def get_koji_modules(compose, koji_wrapper, event, module_info_str):
 class PkgsetSourceKoji(pungi.phases.pkgset.source.PkgsetSourceBase):
     def __call__(self):
         compose = self.compose
-        koji_profile = compose.conf["koji_profile"]
-        self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(koji_profile)
+        self.koji_wrapper = pungi.wrappers.kojiwrapper.KojiWrapper(compose)
         # path prefix must contain trailing '/'
         path_prefix = self.koji_wrapper.koji_module.config.topdir.rstrip("/") + "/"
         package_sets = get_pkgset_from_koji(

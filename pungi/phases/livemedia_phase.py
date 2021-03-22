@@ -140,7 +140,7 @@ class LiveMediaThread(WorkerThread):
         )
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = KojiWrapper(compose)
         cmd = self._get_cmd(koji_wrapper, config)
 
         log_file = self._get_log_file(compose, variant, subvariant, config)

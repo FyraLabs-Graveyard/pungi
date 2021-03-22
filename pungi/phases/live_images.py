@@ -186,7 +186,7 @@ class CreateLiveImageThread(WorkerThread):
         )
         self.pool.log_info("[BEGIN] %s" % msg)
 
-        koji_wrapper = KojiWrapper(compose.conf["koji_profile"])
+        koji_wrapper = KojiWrapper(compose)
         _, version = compose.compose_id.rsplit("-", 1)
         name = cmd["name"] or imgname
         version = cmd["version"] or version

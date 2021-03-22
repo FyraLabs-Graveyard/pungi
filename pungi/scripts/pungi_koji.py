@@ -22,6 +22,7 @@ from six.moves import shlex_quote
 from pungi.phases import PHASES_NAMES
 from pungi import get_full_version, util
 from pungi.errors import UnsignedPackagesError
+from pungi.wrappers import kojiwrapper
 
 
 # force C locales
@@ -615,9 +616,25 @@ def try_kill_children(signal):
             COMPOSE.log_warning("Failed to kill all subprocesses")
 
 
+def try_kill_koji_tasks():
+    try:
+        if COMPOSE:
+            koji_tasks_dir = COMPOSE.paths.log.koji_tasks_dir(create_dir=False)
+            if os.path.exists(koji_tasks_dir):
+                COMPOSE.log_warning("Trying to kill koji tasks")
+                koji = kojiwrapper.KojiWrapper(COMPOSE)
+                koji.login()
+                for task_id in os.listdir(koji_tasks_dir):
+                    koji.koji_proxy.cancelTask(int(task_id))
+    except Exception:
+        if COMPOSE:
+            COMPOSE.log_warning("Failed to kill koji tasks")
+
+
 def sigterm_handler(signum, frame):
     if COMPOSE:
         try_kill_children(signum)
+        try_kill_koji_tasks()
         COMPOSE.log_error("Compose run failed: signal %s" % signum)
         COMPOSE.log_error("Traceback:\n%s" % "\n".join(traceback.format_stack(frame)))
         COMPOSE.log_critical("Compose failed: %s" % COMPOSE.topdir)

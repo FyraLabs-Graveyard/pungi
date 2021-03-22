@@ -59,11 +59,13 @@ class ImageContainerThread(WorkerThread):
         ]
 
         # Start task
-        koji = kojiwrapper.KojiWrapper(compose.conf["koji_profile"])
+        koji = kojiwrapper.KojiWrapper(compose)
         koji.login()
         task_id = koji.koji_proxy.buildContainer(
             source, target, config, priority=priority
         )
+
+        koji.save_task_id(task_id)
 
         # Wait for it to finish and capture the output into log file (even
         # though there is not much there).
