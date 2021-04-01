@@ -15,6 +15,7 @@
 
 
 import json
+import glob
 import os
 import shutil
 import threading
@@ -192,7 +193,7 @@ def load_old_compose_config(compose):
         return old_config
 
 
-def reuse_old_gather_packages(compose, arch, variant, package_sets):
+def reuse_old_gather_packages(compose, arch, variant, package_sets, methods):
     """
     Tries to reuse `gather_packages` result from older compose.
 
@@ -200,6 +201,7 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
     :param str arch: Architecture to reuse old gather data for.
     :param str variant: Variant to reuse old gather data for.
     :param list package_sets: List of package sets to gather packages from.
+    :param str methods: Gather method.
     :return: Old `gather_packages` result or None if old result cannot be used.
     """
     log_msg = "Cannot reuse old GATHER phase results - %s"
@@ -372,6 +374,28 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets):
                 compose.log_info(log_msg % "some RPMs have been removed.")
                 return
 
+    # Copy old gather log for debugging
+    try:
+        if methods == "hybrid":
+            log_dir = compose.paths.log.topdir(arch, create_dir=False)
+            old_log_dir = compose.paths.old_compose_path(log_dir)
+            for log_file in glob.glob(
+                os.path.join(old_log_dir, "hybrid-depsolver-%s-iter-*" % variant)
+            ):
+                compose.log_info(
+                    "Copying old gather log %s to %s" % (log_file, log_dir)
+                )
+                shutil.copy2(log_file, log_dir)
+        else:
+            log_dir = os.path.dirname(
+                compose.paths.work.pungi_log(arch, variant, create_dir=False)
+            )
+            old_log_dir = compose.paths.old_compose_path(log_dir)
+            compose.log_info("Copying old gather log %s to %s" % (old_log_dir, log_dir))
+            shutil.copytree(old_log_dir, log_dir)
+    except Exception as e:
+        compose.log_warning("Copying old gather log failed: %s" % str(e))
+
     return result
 
 
@@ -398,7 +422,9 @@ def gather_packages(compose, arch, variant, package_sets, fulltree_excludes=None
     prepopulate = get_prepopulate_packages(compose, arch, variant)
     fulltree_excludes = fulltree_excludes or set()
 
-    reused_result = reuse_old_gather_packages(compose, arch, variant, package_sets)
+    reused_result = reuse_old_gather_packages(
+        compose, arch, variant, package_sets, methods
+    )
     if reused_result:
         result = reused_result
     elif methods == "hybrid":

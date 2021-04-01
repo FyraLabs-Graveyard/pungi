@@ -1086,7 +1086,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
         compose = helpers.DummyCompose(self.topdir, {"gather_allow_reuse": True})
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], []
+            compose, "x86_64", compose.variants["Server"], [], "deps"
         )
         self.assertEqual(result, None)
 
@@ -1105,7 +1105,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = None
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], []
+            compose, "x86_64", compose.variants["Server"], [], "deps"
         )
         self.assertEqual(result, None)
 
@@ -1126,7 +1126,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose_conf_copy
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], []
+            compose, "x86_64", compose.variants["Server"], [], "nodeps"
         )
         self.assertEqual(result, None)
 
@@ -1148,7 +1148,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
             load_old_compose_config.return_value = compose_conf_copy
 
             result = gather.reuse_old_gather_packages(
-                compose, "x86_64", compose.variants["Server"], []
+                compose, "x86_64", compose.variants["Server"], [], "deps"
             )
             self.assertEqual(result, {"rpm": [], "srpm": [], "debuginfo": []})
 
@@ -1182,7 +1182,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(
             result,
@@ -1206,7 +1206,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
         gather._update_config(compose, "Server", "x86_64", compose.topdir)
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(
             result,
@@ -1232,7 +1232,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
         gather._update_config(compose, "Server", "x86_64", compose.topdir)
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1252,7 +1252,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
 
         gather._update_config(compose, "Server", "x86_64", compose.topdir)
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1271,7 +1271,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1293,7 +1293,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1318,7 +1318,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1335,7 +1335,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1351,7 +1351,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
@@ -1367,7 +1367,7 @@ class TestReuseOldGatherPackages(helpers.PungiTestCase):
         load_old_compose_config.return_value = compose.conf
 
         result = gather.reuse_old_gather_packages(
-            compose, "x86_64", compose.variants["Server"], package_sets
+            compose, "x86_64", compose.variants["Server"], package_sets, "deps"
         )
         self.assertEqual(result, None)
 
