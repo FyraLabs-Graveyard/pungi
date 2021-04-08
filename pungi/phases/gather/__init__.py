@@ -19,7 +19,6 @@ import glob
 import os
 import shutil
 import threading
-import six
 from six.moves import cPickle as pickle
 
 from kobo.rpmlib import parse_nvra
@@ -219,33 +218,33 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets, methods):
         compose.log_info(log_msg % "no old compose config dump.")
         return
 
+    # Do not reuse when required variant is not reused.
+    if not hasattr(compose, "_gather_reused_variant_arch"):
+        setattr(compose, "_gather_reused_variant_arch", [])
+    variant_as_lookaside = compose.conf.get("variant_as_lookaside", [])
+    for (requiring, required) in variant_as_lookaside:
+        if (
+            requiring == variant.uid
+            and (required, arch) not in compose._gather_reused_variant_arch
+        ):
+            compose.log_info(
+                log_msg % "variant %s as lookaside is not reused." % required
+            )
+            return
+
+    # Do not reuse if there's external lookaside repo.
+    with open(compose.paths.log.log_file("global", "config-dump"), "r") as f:
+        config_dump = json.load(f)
+    if config_dump.get("gather_lookaside_repos") or old_config.get(
+        "gather_lookaside_repos"
+    ):
+        compose.log_info(log_msg % "there's external lookaside repo.")
+        return
+
     # The dumps/loads is needed to convert all unicode strings to non-unicode ones.
     config = json.loads(json.dumps(compose.conf))
     for opt, value in old_config.items():
-        # Gather lookaside repos are updated during the gather phase. Check that
-        # the gather_lookaside_repos except the ones added are the same.
-        if opt == "gather_lookaside_repos" and opt in config:
-            value_to_compare = []
-            # Filter out repourls which starts with `compose.topdir` and also remove
-            # their parent list in case it would be empty.
-            for variant, per_arch_repos in config[opt]:
-                per_arch_repos_to_compare = {}
-                for arch, repourl in per_arch_repos.items():
-                    # The gather_lookaside_repos config allows setting multiple repourls
-                    # using list, but `_update_config` always uses strings. Therefore we
-                    # only try to filter out string_types.
-                    if not isinstance(repourl, six.string_types):
-                        continue
-                    if not repourl.startswith(compose.topdir):
-                        per_arch_repos_to_compare[arch] = repourl
-                if per_arch_repos_to_compare:
-                    value_to_compare.append([variant, per_arch_repos_to_compare])
-            if value != value_to_compare:
-                compose.log_info(
-                    log_msg
-                    % ("compose configuration option gather_lookaside_repos changed.")
-                )
-                return
+        if opt == "gather_lookaside_repos":
             continue
 
         # Skip checking for frequently changing configuration options which do *not*
@@ -373,6 +372,8 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets, methods):
             if len(per_arch_dict) != 0:
                 compose.log_info(log_msg % "some RPMs have been removed.")
                 return
+
+    compose._gather_reused_variant_arch.append((variant.uid, arch))
 
     # Copy old gather log for debugging
     try:
