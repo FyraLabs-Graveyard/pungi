@@ -934,20 +934,11 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
-    @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
-    def test_skip_lookaside_source(self, cr):
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.get_repo_packages")
+    def test_skip_lookaside_source(self, get_repo_packages):
         nevra_to_pkg = self._mk_packages(src=True)
         lookasides = [mock.Mock()]
-        repo = {
-            "abc": NamedMock(
-                name="pkg",
-                arch="src",
-                location_base="file:///tmp/",
-                location_href="pkg.src.rpm",
-            ),
-        }
-        cr.Metadata.return_value.keys.return_value = repo.keys()
-        cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
+        get_repo_packages.return_value = ["pkg.src.rpm"]
 
         res = hybrid.expand_packages(
             nevra_to_pkg, lookasides, [("pkg-3:1-2", "x86_64", [])], []
@@ -962,20 +953,11 @@ class TestExpandPackages(helpers.PungiTestCase):
             },
         )
 
-    @mock.patch("pungi.phases.gather.methods.method_hybrid.cr")
-    def test_skip_lookaside_packages(self, cr):
+    @mock.patch("pungi.phases.gather.methods.method_hybrid.get_repo_packages")
+    def test_skip_lookaside_packages(self, get_repo_packages):
         nevra_to_pkg = self._mk_packages(debug_arch="x86_64")
         lookasides = [mock.Mock()]
-        repo = {
-            "abc": NamedMock(
-                name="pkg",
-                arch="x86_64",
-                location_base="file:///tmp/",
-                location_href="pkg.rpm",
-            )
-        }
-        cr.Metadata.return_value.keys.return_value = repo.keys()
-        cr.Metadata.return_value.get.side_effect = lambda key: repo[key]
+        get_repo_packages.return_value = ["pkg.rpm"]
 
         res = hybrid.expand_packages(
             nevra_to_pkg, lookasides, [("pkg-3:1-2", "x86_64", [])], []

@@ -499,6 +499,27 @@ def _make_result(paths):
     return [{"path": path, "flags": []} for path in sorted(paths)]
 
 
+def get_repo_packages(path):
+    """Extract file names of all packages in the given repository."""
+
+    packages = set()
+
+    def callback(pkg):
+        packages.add(os.path.basename(pkg.location_href))
+
+    repomd = os.path.join(path, "repodata/repomd.xml")
+    with as_local_file(repomd) as url_:
+        repomd = cr.Repomd(url_)
+    for rec in repomd.records:
+        if rec.type != "primary":
+            continue
+        record_url = os.path.join(path, rec.location_href)
+        with as_local_file(record_url) as url_:
+            cr.xml_parse_primary(url_, pkgcb=callback, do_files=False)
+
+    return packages
+
+
 def expand_packages(nevra_to_pkg, lookasides, nvrs, filter_packages):
     """For each package add source RPM."""
     # This will serve as the final result. We collect sets of paths to the
@@ -509,25 +530,16 @@ def expand_packages(nevra_to_pkg, lookasides, nvrs, filter_packages):
 
     filters = set(filter_packages)
 
-    # Collect list of all packages in lookaside. These will not be added to the
-    # result. Fus handles this in part: if a package is explicitly mentioned as
-    # input (which can happen with comps group expansion), it will be in the
-    # output even if it's in lookaside.
     lookaside_packages = set()
     for repo in lookasides:
-        md = cr.Metadata()
-        md.locate_and_load_xml(repo)
-        for key in md.keys():
-            pkg = md.get(key)
-            url = os.path.join(pkg.location_base or repo, pkg.location_href)
-            # Strip file:// prefix
-            lookaside_packages.add(url[7:])
+        lookaside_packages.update(get_repo_packages(repo))
 
     for nvr, pkg_arch, flags in nvrs:
         pkg = nevra_to_pkg["%s.%s" % (nvr, pkg_arch)]
-        if pkg.file_path in lookaside_packages:
-            # Package is in lookaside, don't add it and ignore sources and
-            # debuginfo too.
+        if os.path.basename(pkg.file_path) in lookaside_packages:
+            # Fus can return lookaside package in output if the package is
+            # explicitly listed as input. This can happen during comps
+            # expansion.
             continue
         if pkg_is_debug(pkg):
             debuginfo.add(pkg.file_path)
@@ -540,7 +552,7 @@ def expand_packages(nevra_to_pkg, lookasides, nvrs, filter_packages):
             if (srpm.name, "src") in filters:
                 # Filtered package, skipping
                 continue
-            if srpm.file_path not in lookaside_packages:
+            if os.path.basename(srpm.file_path) not in lookaside_packages:
                 srpms.add(srpm.file_path)
         except KeyError:
             # Didn't find source RPM.. this should be logged
