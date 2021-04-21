@@ -368,7 +368,7 @@ def tweak_configs(path, volid, ks_file, configs=BOOT_CONFIGS, logger=None):
         # double-escape volid in yaboot.conf
         new_volid = volid_escaped_2 if "yaboot" in config else volid_escaped
 
-        ks = (" ks=hd:LABEL=%s:/ks.cfg" % new_volid) if ks_file else ""
+        ks = (" inst.ks=hd:LABEL=%s:/ks.cfg" % new_volid) if ks_file else ""
 
         # pre-f18
         data = re.sub(r":CDLABEL=[^ \n]*", r":CDLABEL=%s%s" % (new_volid, ks), data)

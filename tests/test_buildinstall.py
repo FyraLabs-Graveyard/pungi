@@ -2161,7 +2161,7 @@ class TestTweakConfigs(PungiTestCase):
         )
         for cfg in configs:
             self.assertFileContent(
-                cfg, ":LABEL=new\\x20volid ks=hd:LABEL=new\\x20volid:/ks.cfg\n"
+                cfg, ":LABEL=new\\x20volid inst.ks=hd:LABEL=new\\x20volid:/ks.cfg\n"
             )
 
     def test_tweak_configs_yaboot(self):
@@ -2173,5 +2173,5 @@ class TestTweakConfigs(PungiTestCase):
         tweak_configs(self.topdir, "new volid", os.path.join(self.topdir, "ks.cfg"))
         for cfg in configs:
             self.assertFileContent(
-                cfg, ":LABEL=new\\\\x20volid ks=hd:LABEL=new\\\\x20volid:/ks.cfg\n"
+                cfg, ":LABEL=new\\\\x20volid inst.ks=hd:LABEL=new\\\\x20volid:/ks.cfg\n"
             )
