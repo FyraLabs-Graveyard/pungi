@@ -15,6 +15,7 @@
 
 
 import os
+import shutil
 
 from kobo.shortcuts import run
 
@@ -109,6 +110,17 @@ def get_pkgset_from_repos(compose):
                 dst = os.path.join(path_prefix, os.path.basename(src))
                 flist.append(dst)
                 pool.queue_put((src, dst))
+
+        # Clean up tmp dir
+        # Workaround for rpm not honoring sgid bit which only appears when yum is used.
+        yumroot_dir = os.path.join(pungi_dir, "work", arch, "yumroot")
+        if os.path.isdir(yumroot_dir):
+            try:
+                shutil.rmtree(yumroot_dir)
+            except Exception as e:
+                compose.log_warning(
+                    "Failed to clean up tmp dir: %s %s" % (yumroot_dir, str(e))
+                )
 
     msg = "Linking downloaded pkgset packages"
     compose.log_info("[BEGIN] %s" % msg)

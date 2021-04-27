@@ -15,6 +15,7 @@
 
 
 import os
+import shutil
 
 from kobo.shortcuts import run
 from kobo.pkgset import SimpleRpmWrapper, RpmWrapper
@@ -241,8 +242,19 @@ def resolve_deps(compose, arch, variant, source_name=None):
     )
     # Use temp working directory directory as workaround for
     # https://bugzilla.redhat.com/show_bug.cgi?id=795137
-    with temp_dir(prefix="pungi_") as tmp_dir:
-        run(cmd, logfile=pungi_log, show_cmd=True, workdir=tmp_dir, env=os.environ)
+    with temp_dir(prefix="pungi_") as work_dir:
+        run(cmd, logfile=pungi_log, show_cmd=True, workdir=work_dir, env=os.environ)
+
+    # Clean up tmp dir
+    # Workaround for rpm not honoring sgid bit which only appears when yum is used.
+    yumroot_dir = os.path.join(tmp_dir, "work", arch, "yumroot")
+    if os.path.isdir(yumroot_dir):
+        try:
+            shutil.rmtree(yumroot_dir)
+        except Exception as e:
+            compose.log_warning(
+                "Failed to clean up tmp dir: %s %s" % (yumroot_dir, str(e))
+            )
 
     with open(pungi_log, "r") as f:
         packages, broken_deps, missing_comps_pkgs = pungi_wrapper.parse_log(f)
