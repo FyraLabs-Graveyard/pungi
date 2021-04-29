@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.8
+Version:        4.2.9
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,7 +111,22 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
-* Fri Feb 12 2021 Ondrej Nosek <onosek@redhat.com>
+* Thu Apr 29 2021 Ondrej Nosek <onosek@redhat.com> - 4.2.9-1
+- Fix can't link XDEV using repos as pkgset_sources (romain.forlot)
+- Updated the deprecated ks argument name (to the current inst.ks) (lveyde)
+- gather: Adjust reusing with lookaside (hlin)
+- hybrid: Optimize getting lookaside packages (lsedlar)
+- gather: Copy old logs when reusing gather result (hlin)
+- Cancel koji tasks when pungi terminated (hlin)
+- Add Dockerfile for building testing image (hlin)
+- image_container: Fix incorrect arch processing (lsedlar)
+- runroot: Adjust permissions always (hlin)
+- Format code (hlin)
+- pkgset: Fix meaning of retries (lsedlar)
+- pkgset: Store module tag only if module is used (lsedlar)
+- Store extended traceback for gather errors (lsedlar)
+
+* Fri Feb 12 2021 Ondrej Nosek <onosek@redhat.com> - 4.2.8-1
 - pkgset: Add ability to wait for signed packages (lsedlar)
 - Add image-container phase (lsedlar)
 - osbs: Move metadata processing to standalone function (lsedlar)
