@@ -1060,3 +1060,8 @@ class TestAsLocalFile(PungiTestCase):
             self.assertEqual(fn, self.filename)
             self.assertTrue(os.path.exists(self.filename))
         self.assertFalse(os.path.exists(self.filename))
+
+    def test_file_url(self, urlretrieve):
+        with util.as_local_file("file:///tmp/foo") as fn:
+            self.assertEqual(fn, "/tmp/foo")
+        self.assertEqual(urlretrieve.call_args_list, [])

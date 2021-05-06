@@ -1046,6 +1046,8 @@ def as_local_file(url):
             yield local_filename
         finally:
             os.remove(local_filename)
+    elif url.startswith("file://"):
+        yield url[7:]
     else:
         # Not a remote url, return unchanged.
         yield url
