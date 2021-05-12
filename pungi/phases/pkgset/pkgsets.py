@@ -745,7 +745,8 @@ class KojiPackageSet(PackageSetBase):
             changed = self.koji_proxy.queryHistory(
                 tables=["tag_listing", "tag_inheritance"],
                 tag=tag,
-                afterEvent=old_koji_event,
+                afterEvent=min(koji_event, old_koji_event),
+                beforeEvent=max(koji_event, old_koji_event) + 1,
             )
             if changed["tag_listing"]:
                 self.log_debug("Builds under tag %s changed. Can't reuse." % tag)
@@ -760,8 +761,8 @@ class KojiPackageSet(PackageSetBase):
                     changed = self.koji_proxy.queryHistory(
                         tables=["tag_listing", "tag_inheritance"],
                         tag=t["name"],
-                        afterEvent=old_koji_event,
-                        beforeEvent=koji_event + 1,
+                        afterEvent=min(koji_event, old_koji_event),
+                        beforeEvent=max(koji_event, old_koji_event) + 1,
                     )
                     if changed["tag_listing"]:
                         self.log_debug(
