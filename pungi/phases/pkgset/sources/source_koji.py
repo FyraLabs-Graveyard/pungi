@@ -659,7 +659,7 @@ def _get_modules_from_koji_tags(
     if expected_modules:
         # There are some module names that were listed in configuration and not
         # found in any tag...
-        raise RuntimeError(
+        compose.log_warning(
             "Configuration specified patterns (%s) that don't match "
             "any modules in the configured tags." % ", ".join(expected_modules)
         )
