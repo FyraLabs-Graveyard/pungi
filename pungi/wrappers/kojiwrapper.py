@@ -564,6 +564,19 @@ class KojiWrapper(object):
         }
 
     def watch_task(self, task_id, log_file=None, max_retries=None):
+        """Watch and wait for a task to finish.
+
+        :param int task_id: ID of koji task.
+        :param str log_file: Path to log file.
+        :param int max_retries: Max times to retry when error occurs,
+            no limits by default.
+        """
+        if log_file:
+            task_url = os.path.join(
+                self.koji_module.config.weburl, "taskinfo?taskID=%d" % task_id
+            )
+            with open(log_file, "a") as f:
+                f.write("Task URL: %s\n" % task_url)
         retcode, _ = self._wait_for_task(
             task_id, logfile=log_file, max_retries=max_retries
         )
