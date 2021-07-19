@@ -639,14 +639,22 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
         + "/",
     }
     path_prefix = prefixes[compose.conf["pkgset_source"]]()
+    package_list = set()
+    for pkg_arch in pkg_map.keys():
+        for pkg_type, packages in pkg_map[pkg_arch][variant.uid].items():
+            # We want all packages for current arch, and SRPMs for any
+            # arch. Ultimately there will only be one source repository, so
+            # we need a union of all SRPMs.
+            if pkg_type == "srpm" or pkg_arch == arch:
+                for pkg in packages:
+                    pkg = pkg["path"]
+                    if path_prefix and pkg.startswith(path_prefix):
+                        pkg = pkg[len(path_prefix) :]
+                    package_list.add(pkg)
     pkglist = compose.paths.work.lookaside_package_list(arch=arch, variant=variant)
     with open(pkglist, "w") as f:
-        for packages in pkg_map[arch][variant.uid].values():
-            for pkg in packages:
-                pkg = pkg["path"]
-                if path_prefix and pkg.startswith(path_prefix):
-                    pkg = pkg[len(path_prefix) :]
-                f.write("%s\n" % pkg)
+        for pkg in sorted(package_list):
+            f.write("%s\n" % pkg)
 
     cr = CreaterepoWrapper(compose.conf["createrepo_c"])
     update_metadata = None
