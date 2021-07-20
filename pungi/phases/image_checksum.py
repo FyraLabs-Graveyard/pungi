@@ -3,6 +3,7 @@
 import os
 from kobo import shortcuts
 from collections import defaultdict
+import threading
 
 from .base import PhaseBase
 from ..util import get_format_substs, get_file_size
@@ -68,6 +69,7 @@ class ImageChecksumPhase(PhaseBase):
 
     def run(self):
         topdir = self.compose.paths.compose.topdir()
+
         make_checksums(
             topdir,
             self.compose.im,
@@ -87,6 +89,8 @@ def _compute_checksums(
     checksum_types,
     base_checksum_name_gen,
     one_file,
+    results_lock,
+    cache_lock,
 ):
     for image in images:
         filename = os.path.basename(image.path)
@@ -96,14 +100,21 @@ def _compute_checksums(
 
         filesize = image.size or get_file_size(full_path)
 
+        cache_lock.acquire()
         if full_path not in cache:
+            cache_lock.release()
             # Source ISO is listed under each binary architecture. There's no
             # point in checksumming it twice, so we can just remember the
             # digest from first run..
-            cache[full_path] = shortcuts.compute_file_checksums(
-                full_path, checksum_types
-            )
-        digests = cache[full_path]
+            checksum_value = shortcuts.compute_file_checksums(full_path, checksum_types)
+            with cache_lock:
+                cache[full_path] = checksum_value
+        else:
+            cache_lock.release()
+
+        with cache_lock:
+            digests = cache[full_path]
+
         for checksum, digest in digests.items():
             # Update metadata with the checksum
             image.add_checksum(None, checksum, digest)
@@ -112,7 +123,10 @@ def _compute_checksums(
                 checksum_filename = os.path.join(
                     path, "%s.%sSUM" % (filename, checksum.upper())
                 )
-                results[checksum_filename].add((filename, filesize, checksum, digest))
+                with results_lock:
+                    results[checksum_filename].add(
+                        (filename, filesize, checksum, digest)
+                    )
 
             if one_file:
                 dirname = os.path.basename(path)
@@ -125,24 +139,42 @@ def _compute_checksums(
                 checksum_filename = "%s%sSUM" % (base_checksum_name, checksum.upper())
             checksum_path = os.path.join(path, checksum_filename)
 
-            results[checksum_path].add((filename, filesize, checksum, digest))
+            with results_lock:
+                results[checksum_path].add((filename, filesize, checksum, digest))
 
 
 def make_checksums(topdir, im, checksum_types, one_file, base_checksum_name_gen):
     results = defaultdict(set)
     cache = {}
+    threads = []
+    results_lock = threading.Lock()  # lock to synchronize access to the results dict.
+    cache_lock = threading.Lock()  # lock to synchronize access to the cache dict.
+
+    # create all worker threads
     for (variant, arch, path), images in get_images(topdir, im).items():
-        _compute_checksums(
-            results,
-            cache,
-            variant,
-            arch,
-            path,
-            images,
-            checksum_types,
-            base_checksum_name_gen,
-            one_file,
+        threads.append(
+            threading.Thread(
+                target=_compute_checksums,
+                args=[
+                    results,
+                    cache,
+                    variant,
+                    arch,
+                    path,
+                    images,
+                    checksum_types,
+                    base_checksum_name_gen,
+                    one_file,
+                    results_lock,
+                    cache_lock,
+                ],
+            )
         )
+        threads[-1].start()
+
+    # wait for all worker threads to finish
+    for thread in threads:
+        thread.join()
 
     for file in results:
         dump_checksums(file, results[file])
