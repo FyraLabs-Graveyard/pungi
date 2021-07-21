@@ -91,7 +91,7 @@ rm -rf %{buildroot}
 %{_bindir}/comps_filter
 %{_bindir}/%{name}-make-ostree
 %{_datadir}/%{name}
-/var/cache/%{name}
+%dir %attr(1777, root, root) /var/cache/%{name}
 
 %files utils
 %{python_sitelib}/%{name}_utils

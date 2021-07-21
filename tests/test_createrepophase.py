@@ -176,7 +176,10 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.run")
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_rpms(self, CreaterepoWrapperCls, run):
-        compose = DummyCompose(self.topdir, {"createrepo_checksum": "sha256"})
+        compose = DummyCompose(
+            self.topdir,
+            {"createrepo_checksum": "sha256"},
+        )
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -210,6 +213,10 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=os.path.join(
+                        "/var/cache/pungi/createrepo_c/",
+                        "%s-%s" % (compose.conf["release_short"], os.getuid()),
+                    ),
                 )
             ],
         )
@@ -219,7 +226,10 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.run")
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_rpms_without_database(self, CreaterepoWrapperCls, run):
-        compose = DummyCompose(self.topdir, {"createrepo_checksum": "sha256"})
+        compose = DummyCompose(
+            self.topdir,
+            {"createrepo_checksum": "sha256", "createrepo_enable_cache": False},
+        )
         compose.should_create_yum_database = False
         compose.has_comps = False
 
@@ -254,6 +264,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -263,7 +274,10 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.run")
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_source(self, CreaterepoWrapperCls, run):
-        compose = DummyCompose(self.topdir, {"createrepo_checksum": "sha256"})
+        compose = DummyCompose(
+            self.topdir,
+            {"createrepo_checksum": "sha256", "createrepo_enable_cache": False},
+        )
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -295,6 +309,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -304,7 +319,10 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.run")
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_debug(self, CreaterepoWrapperCls, run):
-        compose = DummyCompose(self.topdir, {"createrepo_checksum": "sha256"})
+        compose = DummyCompose(
+            self.topdir,
+            {"createrepo_checksum": "sha256", "createrepo_enable_cache": False},
+        )
         compose.has_comps = False
 
         repo = CreaterepoWrapperCls.return_value
@@ -339,6 +357,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -351,7 +370,12 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_no_createrepo_c(self, CreaterepoWrapperCls, run):
         compose = DummyCompose(
-            self.topdir, {"createrepo_c": False, "createrepo_checksum": "sha256"}
+            self.topdir,
+            {
+                "createrepo_c": False,
+                "createrepo_enable_cache": False,
+                "createrepo_checksum": "sha256",
+            },
         )
         compose.has_comps = False
 
@@ -386,6 +410,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -397,7 +422,11 @@ class TestCreateVariantRepo(PungiTestCase):
     def test_variant_repo_is_idepotent(self, CreaterepoWrapperCls, run):
         compose = DummyCompose(
             self.topdir,
-            {"createrepo_checksum": "sha256", "createrepo_num_workers": 10},
+            {
+                "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
+                "createrepo_num_workers": 10,
+            },
         )
         compose.has_comps = False
 
@@ -436,6 +465,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -446,7 +476,12 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_rpms_with_xz(self, CreaterepoWrapperCls, run):
         compose = DummyCompose(
-            self.topdir, {"createrepo_checksum": "sha256", "createrepo_use_xz": True}
+            self.topdir,
+            {
+                "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
+                "createrepo_use_xz": True,
+            },
         )
         compose.has_comps = False
 
@@ -481,6 +516,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=True,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -491,7 +527,12 @@ class TestCreateVariantRepo(PungiTestCase):
     @mock.patch("pungi.phases.createrepo.CreaterepoWrapper")
     def test_variant_repo_rpms_with_deltas(self, CreaterepoWrapperCls, run):
         compose = DummyCompose(
-            self.topdir, {"createrepo_checksum": "sha256", "createrepo_deltas": True}
+            self.topdir,
+            {
+                "createrepo_checksum": "sha256",
+                "createrepo_deltas": True,
+                "createrepo_enable_cache": False,
+            },
         )
         compose.has_comps = False
         compose.old_composes = [self.topdir + "/old"]
@@ -536,6 +577,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages",
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -552,6 +594,7 @@ class TestCreateVariantRepo(PungiTestCase):
             {
                 "createrepo_checksum": "sha256",
                 "createrepo_deltas": [("^Server$", {"*": True})],
+                "createrepo_enable_cache": False,
             },
         )
         compose.has_comps = False
@@ -596,6 +639,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     + "/old/test-1.0-20151203.0/compose/Server/x86_64/os/Packages",
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -612,6 +656,7 @@ class TestCreateVariantRepo(PungiTestCase):
             {
                 "createrepo_checksum": "sha256",
                 "createrepo_deltas": [("^Everything$", {"x86_64": True})],
+                "createrepo_enable_cache": False,
             },
         )
         compose.has_comps = False
@@ -652,6 +697,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -668,6 +714,7 @@ class TestCreateVariantRepo(PungiTestCase):
             {
                 "createrepo_checksum": "sha256",
                 "createrepo_deltas": [("^Server$", {"s390x": True})],
+                "createrepo_enable_cache": False,
             },
         )
         compose.has_comps = False
@@ -708,6 +755,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -722,6 +770,7 @@ class TestCreateVariantRepo(PungiTestCase):
             {
                 "createrepo_checksum": "sha256",
                 "createrepo_deltas": True,
+                "createrepo_enable_cache": False,
                 "hashed_directories": True,
             },
         )
@@ -776,6 +825,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     ],
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -792,6 +842,7 @@ class TestCreateVariantRepo(PungiTestCase):
             {
                 "createrepo_checksum": "sha256",
                 "createrepo_deltas": True,
+                "createrepo_enable_cache": False,
                 "hashed_directories": True,
             },
         )
@@ -834,6 +885,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -845,7 +897,12 @@ class TestCreateVariantRepo(PungiTestCase):
     def test_variant_repo_source_with_deltas(self, CreaterepoWrapperCls, run):
         # This should not actually create deltas, only binary repos do.
         compose = DummyCompose(
-            self.topdir, {"createrepo_checksum": "sha256", "createrepo_deltas": True}
+            self.topdir,
+            {
+                "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
+                "createrepo_deltas": True,
+            },
         )
         compose.has_comps = False
         compose.old_composes = [self.topdir + "/old"]
@@ -883,6 +940,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -894,7 +952,12 @@ class TestCreateVariantRepo(PungiTestCase):
     def test_variant_repo_debug_with_deltas(self, CreaterepoWrapperCls, run):
         # This should not actually create deltas, only binary repos do.
         compose = DummyCompose(
-            self.topdir, {"createrepo_checksum": "sha256", "createrepo_deltas": True}
+            self.topdir,
+            {
+                "createrepo_checksum": "sha256",
+                "createrepo_deltas": True,
+                "createrepo_enable_cache": False,
+            },
         )
         compose.has_comps = False
         compose.old_composes = [self.topdir + "/old"]
@@ -934,6 +997,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -949,6 +1013,7 @@ class TestCreateVariantRepo(PungiTestCase):
             self.topdir,
             {
                 "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
                 "product_id": "yes",  # Truthy value is enough for this test
             },
         )
@@ -993,6 +1058,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -1009,6 +1075,7 @@ class TestCreateVariantRepo(PungiTestCase):
             self.topdir,
             {
                 "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
                 "product_id": "yes",  # Truthy value is enough for this test
             },
         )
@@ -1046,6 +1113,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )
@@ -1061,6 +1129,7 @@ class TestCreateVariantRepo(PungiTestCase):
             self.topdir,
             {
                 "createrepo_checksum": "sha256",
+                "createrepo_enable_cache": False,
                 "product_id": "yes",  # Truthy value is enough for this test
             },
         )
@@ -1096,6 +1165,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     oldpackagedirs=None,
                     use_xz=False,
                     extra_args=[],
+                    cachedir=None,
                 )
             ],
         )

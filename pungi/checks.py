@@ -660,6 +660,7 @@ def make_schema():
                 "default": "sha256",
                 "enum": ["sha1", "sha256", "sha512"],
             },
+            "createrepo_enable_cache": {"type": "boolean", "default": True},
             "createrepo_use_xz": {"type": "boolean", "default": False},
             "createrepo_num_threads": {"type": "number", "default": get_num_cpus()},
             "createrepo_num_workers": {"type": "number", "default": 3},

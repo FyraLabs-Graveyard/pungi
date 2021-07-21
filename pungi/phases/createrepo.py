@@ -188,6 +188,23 @@ def create_variant_repo(
     comps_path = None
     if compose.has_comps and pkg_type == "rpm":
         comps_path = compose.paths.work.comps(arch=arch, variant=variant)
+
+    if compose.conf["createrepo_enable_cache"]:
+        cachedir = os.path.join(
+            "/var/cache/pungi/createrepo_c/",
+            "%s-%s" % (compose.conf["release_short"], os.getuid()),
+        )
+        if not os.path.exists(cachedir):
+            try:
+                os.makedirs(cachedir)
+            except Exception as e:
+                compose.log_warning(
+                    "Cache disabled because cannot create cache dir %s %s"
+                    % (cachedir, str(e))
+                )
+                cachedir = None
+    else:
+        cachedir = None
     cmd = repo.get_createrepo_cmd(
         repo_dir,
         update=True,
@@ -203,6 +220,7 @@ def create_variant_repo(
         oldpackagedirs=old_package_dirs,
         use_xz=compose.conf["createrepo_use_xz"],
         extra_args=compose.conf["createrepo_extra_args"],
+        cachedir=cachedir,
     )
     log_file = compose.paths.log.log_file(
         arch, "createrepo-%s.%s" % (variant, pkg_type)
