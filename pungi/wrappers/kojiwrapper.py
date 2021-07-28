@@ -534,6 +534,7 @@ class KojiWrapper(object):
             retcode, output = run(
                 command,
                 can_fail=True,
+                show_cmd=True,
                 logfile=log_file,
                 env=env,
                 buffer_size=-1,

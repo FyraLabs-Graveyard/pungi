@@ -720,6 +720,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                     "cmd",
                     can_fail=True,
                     logfile=None,
+                    show_cmd=True,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
                     universal_newlines=True,
@@ -745,6 +746,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={
                         "KRB5CCNAME": "DIR:/tmp/foo",
@@ -772,6 +774,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile="logfile",
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -795,6 +798,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -818,6 +822,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -842,6 +847,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -871,6 +877,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -901,6 +908,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -944,6 +952,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
@@ -980,6 +989,7 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
                 mock.call(
                     "cmd",
                     can_fail=True,
+                    show_cmd=True,
                     logfile=None,
                     env={"FOO": "BAR", "PYTHONUNBUFFERED": "1"},
                     buffer_size=-1,
