@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.9
+Version:        4.2.10
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,16 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Wed Aug 04 2021 Haibo Lin <hlin@redhat.com> - 4.2.10-1
+- Show and log command when using the run_blocking_cmd() method (fdipretre)
+- Use cachedir when createrepo (hlin)
+- gather: Add all srpms to variant lookaside repo (lsedlar)
+- Add task URL to watch task log (hlin)
+- Log warning when module defined in variants.xml not found (hlin)
+- pkgset: Compare future events correctly (lsedlar)
+- util: Strip file:// from local urls (lsedlar)
+- Clean up temporary yumroot dir (hlin)
+
 * Thu Apr 29 2021 Ondrej Nosek <onosek@redhat.com> - 4.2.9-1
 - Fix can't link XDEV using repos as pkgset_sources (romain.forlot)
 - Updated the deprecated ks argument name (to the current inst.ks) (lveyde)
