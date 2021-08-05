@@ -1815,7 +1815,8 @@ they are not scratch builds).
     to create the image will not abort the whole compose.
 
     The configuration will pass other attributes directly to the Koji task.
-    This includes ``scratch`` and ``priority``.
+    This includes ``scratch`` and ``priority``. See ``koji list-api
+    buildContainer`` for more details about these options.
 
     A value for ``yum_repourls`` will be created automatically and point at a
     repository in the current compose. You can add extra repositories with
