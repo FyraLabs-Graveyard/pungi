@@ -113,12 +113,13 @@ class LogPaths(object):
             makedirs(path)
         return path
 
-    def log_file(self, arch, log_name, create_dir=True):
+    def log_file(self, arch, log_name, create_dir=True, ext=None):
+        ext = ext or "log"
         arch = arch or "global"
         if log_name.endswith(".log"):
             log_name = log_name[:-4]
         return os.path.join(
-            self.topdir(arch, create_dir=create_dir), "%s.%s.log" % (log_name, arch)
+            self.topdir(arch, create_dir=create_dir), "%s.%s.%s" % (log_name, arch, ext)
         )
 
 
