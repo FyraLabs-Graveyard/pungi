@@ -194,21 +194,6 @@ def load_old_gather_result(compose, arch, variant):
         return old_result
 
 
-def load_old_compose_config(compose):
-    """
-    Helper method to load Pungi config dump from old compose.
-    """
-    config_dump_full = compose.paths.log.log_file("global", "config-dump")
-    config_dump_full = compose.paths.old_compose_path(config_dump_full)
-    if not config_dump_full:
-        return None
-
-    compose.log_info("Loading old config file: %s", config_dump_full)
-    with open(config_dump_full, "r") as f:
-        old_config = json.load(f)
-        return old_config
-
-
 def reuse_old_gather_packages(compose, arch, variant, package_sets, methods):
     """
     Tries to reuse `gather_packages` result from older compose.
@@ -230,7 +215,7 @@ def reuse_old_gather_packages(compose, arch, variant, package_sets, methods):
         compose.log_info(log_msg % "no old gather results.")
         return
 
-    old_config = load_old_compose_config(compose)
+    old_config = compose.load_old_compose_config()
     if old_config is None:
         compose.log_info(log_msg % "no old compose config dump.")
         return

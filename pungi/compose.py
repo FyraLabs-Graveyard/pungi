@@ -252,6 +252,8 @@ class Compose(kobo.log.LoggingBase):
         self.koji_event = koji_event or conf.get("koji_event")
         self.notifier = notifier
 
+        self._old_config = None
+
         # path definitions
         self.paths = Paths(self)
 
@@ -634,6 +636,22 @@ class Compose(kobo.log.LoggingBase):
         self.log_error("Extended traceback in: %s", tb_path)
         with open(tb_path, "wb") as f:
             f.write(kobo.tback.Traceback().get_traceback())
+
+    def load_old_compose_config(self):
+        """
+        Helper method to load Pungi config dump from old compose.
+        """
+        if not self._old_config:
+            config_dump_full = self.paths.log.log_file("global", "config-dump")
+            config_dump_full = self.paths.old_compose_path(config_dump_full)
+            if not config_dump_full:
+                return None
+
+            self.log_info("Loading old config file: %s", config_dump_full)
+            with open(config_dump_full, "r") as f:
+                self._old_config = json.load(f)
+
+        return self._old_config
 
 
 def get_ordered_variant_uids(compose):

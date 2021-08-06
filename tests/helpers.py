@@ -230,6 +230,7 @@ class DummyCompose(object):
         self.should_create_yum_database = True
         self.cache_region = None
         self.containers_metadata = {}
+        self.load_old_compose_config = mock.Mock(return_value=None)
 
     def setup_optional(self):
         self.all_variants["Server-optional"] = MockVariant(
