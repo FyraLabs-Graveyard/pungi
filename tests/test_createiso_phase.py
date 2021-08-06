@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import logging
 import mock
 import six
 
@@ -1322,3 +1323,227 @@ class TweakTreeinfo(helpers.PungiTestCase):
         ti.dump(output)
 
         self.assertFilesEqual(output, expected)
+
+
+class CreateisoTryReusePhaseTest(helpers.PungiTestCase):
+    def setUp(self):
+        super(CreateisoTryReusePhaseTest, self).setUp()
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging.NullHandler())
+
+    def test_disabled(self):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": False})
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+
+        self.assertFalse(phase.try_reuse(mock.Mock(), "Server", "x86_64", mock.Mock()))
+
+    def test_buildinstall_changed(self):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        phase.bi = mock.Mock()
+        phase.bi.reused.return_value = False
+        cmd = {"disc_num": 1, "disc_count": 1}
+        opts = CreateIsoOpts(buildinstall_method="lorax")
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    def test_no_old_config(self):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        cmd = {"disc_num": 1, "disc_count": 1}
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    def test_old_config_changed(self):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        old_config = compose.conf.copy()
+        old_config["release_version"] = "2"
+        compose.load_old_compose_config.return_value = old_config
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        cmd = {"disc_num": 1, "disc_count": 1}
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    def test_no_old_metadata(self):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        cmd = {"disc_num": 1, "disc_count": 1}
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    @mock.patch("pungi.phases.createiso.read_json_file")
+    def test_volume_id_differs(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        cmd = {"disc_num": 1, "disc_count": 1}
+
+        opts = CreateIsoOpts(volid="new-volid")
+
+        read_json_file.return_value = {"opts": {"volid": "old-volid"}}
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    @mock.patch("pungi.phases.createiso.read_json_file")
+    def test_packages_differ(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        cmd = {"disc_num": 1, "disc_count": 1}
+
+        new_graft_points = os.path.join(self.topdir, "new_graft_points")
+        helpers.touch(new_graft_points, "Packages/f/foo-1-1.x86_64.rpm\n")
+        opts = CreateIsoOpts(graft_points=new_graft_points, volid="volid")
+
+        old_graft_points = os.path.join(self.topdir, "old_graft_points")
+        helpers.touch(old_graft_points, "Packages/f/foo-1-2.x86_64.rpm\n")
+        read_json_file.return_value = {
+            "opts": {"graft_points": old_graft_points, "volid": "volid"}
+        }
+
+        self.assertFalse(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+
+    @mock.patch("pungi.phases.createiso.read_json_file")
+    def test_runs_perform_reuse(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        phase.logger = self.logger
+        phase.perform_reuse = mock.Mock()
+        cmd = {"disc_num": 1, "disc_count": 1}
+
+        new_graft_points = os.path.join(self.topdir, "new_graft_points")
+        helpers.touch(new_graft_points)
+        opts = CreateIsoOpts(graft_points=new_graft_points, volid="volid")
+
+        old_graft_points = os.path.join(self.topdir, "old_graft_points")
+        helpers.touch(old_graft_points)
+        dummy_iso_path = "dummy-iso-path"
+        read_json_file.return_value = {
+            "opts": {
+                "graft_points": old_graft_points,
+                "volid": "volid",
+            },
+            "cmd": {"iso_path": dummy_iso_path},
+        }
+
+        self.assertTrue(
+            phase.try_reuse(cmd, compose.variants["Server"], "x86_64", opts)
+        )
+        self.assertEqual(
+            phase.perform_reuse.call_args_list,
+            [
+                mock.call(
+                    cmd,
+                    compose.variants["Server"],
+                    "x86_64",
+                    opts,
+                    dummy_iso_path,
+                )
+            ],
+        )
+
+
+@mock.patch("pungi.phases.createiso.OldFileLinker")
+@mock.patch("pungi.phases.createiso.add_iso_to_metadata")
+class CreateisoPerformReusePhaseTest(helpers.PungiTestCase):
+    def test_success(self, add_iso_to_metadata, OldFileLinker):
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        cmd = {
+            "iso_path": "target/image.iso",
+            "bootable": False,
+            "disc_num": 1,
+            "disc_count": 2,
+        }
+        opts = CreateIsoOpts()
+
+        phase.perform_reuse(
+            cmd,
+            compose.variants["Server"],
+            "x86_64",
+            opts,
+            "old/image.iso",
+        )
+
+        self.assertEqual(
+            add_iso_to_metadata.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    compose.variants["Server"],
+                    "x86_64",
+                    cmd["iso_path"],
+                    bootable=False,
+                    disc_count=2,
+                    disc_num=1,
+                ),
+            ],
+        )
+        self.assertEqual(
+            OldFileLinker.return_value.mock_calls,
+            [
+                mock.call.link("old/image.iso", "target/image.iso"),
+                mock.call.link("old/image.iso.manifest", "target/image.iso.manifest"),
+                # The old log file doesn't exist in the test scenario.
+                mock.call.link(
+                    None,
+                    os.path.join(
+                        self.topdir, "logs/x86_64/createiso-image.iso.x86_64.log"
+                    ),
+                ),
+            ],
+        )
+
+    def test_failure(self, add_iso_to_metadata, OldFileLinker):
+        OldFileLinker.return_value.link.side_effect = helpers.mk_boom()
+        compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": True})
+        phase = createiso.CreateisoPhase(compose, mock.Mock())
+        cmd = {
+            "iso_path": "target/image.iso",
+            "bootable": False,
+            "disc_num": 1,
+            "disc_count": 2,
+        }
+        opts = CreateIsoOpts()
+
+        with self.assertRaises(Exception):
+            phase.perform_reuse(
+                cmd,
+                compose.variants["Server"],
+                "x86_64",
+                opts,
+                "old/image.iso",
+            )
+
+        self.assertEqual(add_iso_to_metadata.call_args_list, [])
+        self.assertEqual(
+            OldFileLinker.return_value.mock_calls,
+            [
+                mock.call.link("old/image.iso", "target/image.iso"),
+                mock.call.abort(),
+            ],
+        )

@@ -18,6 +18,7 @@ import os
 import random
 import shutil
 import stat
+import json
 
 import productmd.treeinfo
 from productmd.images import Image
@@ -36,6 +37,7 @@ from pungi.util import (
     failable,
     get_file_size,
     get_mtime,
+    read_json_file,
 )
 from pungi.media_split import MediaSplitter, convert_media_size
 from pungi.compose_metadata.discinfo import read_discinfo, write_discinfo
@@ -72,6 +74,168 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
             # Buildinstall is skipped for this tree. Can't create a bootable ISO.
             return False
         return bool(self.compose.conf.get("buildinstall_method", ""))
+
+    def _metadata_path(self, variant, arch, disc_num, disc_count):
+        return self.compose.paths.log.log_file(
+            arch,
+            "createiso-%s-%d-%d" % (variant.uid, disc_num, disc_count),
+            ext="json",
+        )
+
+    def save_reuse_metadata(self, cmd, variant, arch, opts):
+        """Save metadata for future composes to verify if the compose can be reused."""
+        metadata = {
+            "cmd": cmd,
+            "opts": opts._asdict(),
+        }
+
+        metadata_path = self._metadata_path(
+            variant, arch, cmd["disc_num"], cmd["disc_count"]
+        )
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=2)
+        return metadata
+
+    def _load_old_metadata(self, cmd, variant, arch):
+        metadata_path = self._metadata_path(
+            variant, arch, cmd["disc_num"], cmd["disc_count"]
+        )
+        old_path = self.compose.paths.old_compose_path(metadata_path)
+        self.logger.info(
+            "Loading old metadata for %s.%s from: %s", variant, arch, old_path
+        )
+        try:
+            return read_json_file(old_path)
+        except Exception:
+            return None
+
+    def perform_reuse(self, cmd, variant, arch, opts, iso_path):
+        """
+        Copy all related files from old compose to the new one. As a last step
+        add the new image to metadata.
+        """
+        linker = OldFileLinker(self.logger)
+        old_file_name = os.path.basename(iso_path)
+        current_file_name = os.path.basename(cmd["iso_path"])
+        try:
+            # Hardlink ISO and manifest
+            for suffix in ("", ".manifest"):
+                linker.link(iso_path + suffix, cmd["iso_path"] + suffix)
+            # Copy log files
+            # The log file name includes filename of the image, so we need to
+            # find old file with the old name, and rename it to the new name.
+            log_file = self.compose.paths.log.log_file(
+                arch, "createiso-%s" % current_file_name
+            )
+            old_log_file = self.compose.paths.old_compose_path(
+                self.compose.paths.log.log_file(arch, "createiso-%s" % old_file_name)
+            )
+            linker.link(old_log_file, log_file)
+            # Copy jigdo files
+            if opts.jigdo_dir:
+                old_jigdo_dir = self.compose.paths.old_compose_path(opts.jigdo_dir)
+                for suffix in (".template", ".jigdo"):
+                    linker.link(
+                        os.path.join(old_jigdo_dir, old_file_name) + suffix,
+                        os.path.join(opts.jigdo_dir, current_file_name) + suffix,
+                    )
+        except Exception:
+            # A problem happened while linking some file, let's clean up
+            # everything.
+            linker.abort()
+            raise
+        # Add image to manifest
+        add_iso_to_metadata(
+            self.compose,
+            variant,
+            arch,
+            cmd["iso_path"],
+            bootable=cmd["bootable"],
+            disc_num=cmd["disc_num"],
+            disc_count=cmd["disc_count"],
+        )
+
+    def try_reuse(self, cmd, variant, arch, opts):
+        """Try to reuse image from previous compose.
+
+        :returns bool: True if reuse was successful, False otherwise
+        """
+        if not self.compose.conf["createiso_allow_reuse"]:
+            return
+
+        log_msg = "Cannot reuse ISO for %s.%s" % (variant, arch)
+        current_metadata = self.save_reuse_metadata(cmd, variant, arch, opts)
+
+        if opts.buildinstall_method and not self.bi.reused(variant, arch):
+            # If buildinstall phase was not reused for some reason, we can not
+            # reuse any bootable image. If a package change caused rebuild of
+            # boot.iso, we would catch it here too, but there could be a
+            # configuration change in lorax template which would remain
+            # undetected.
+            self.logger.info("%s - boot configuration changed", log_msg)
+            return False
+
+        # Check old compose configuration: extra_files and product_ids can be
+        # reflected on ISO.
+        old_config = self.compose.load_old_compose_config()
+        if not old_config:
+            self.logger.info("%s - no config for old compose", log_msg)
+            return False
+        # Convert current configuration to JSON and back to encode it similarly
+        # to the old one
+        config = json.loads(json.dumps(self.compose.conf))
+        for opt in self.compose.conf:
+            # Skip a selection of options: these affect what packages can be
+            # included, which we explicitly check later on.
+            config_whitelist = set(
+                [
+                    "gather_lookaside_repos",
+                    "pkgset_koji_builds",
+                    "pkgset_koji_scratch_tasks",
+                    "pkgset_koji_module_builds",
+                ]
+            )
+            if opt in config_whitelist:
+                continue
+
+            if old_config.get(opt) != config.get(opt):
+                self.logger.info("%s - option %s differs", log_msg, opt)
+                return False
+
+        old_metadata = self._load_old_metadata(cmd, variant, arch)
+        if not old_metadata:
+            self.logger.info("%s - no old metadata found", log_msg)
+            return False
+
+        # Test if volume ID matches - volid can be generated dynamically based on
+        # other values, and could change even if nothing else is different.
+        if current_metadata["opts"]["volid"] != old_metadata["opts"]["volid"]:
+            self.logger.info("%s - volume ID differs", log_msg)
+            return False
+
+        # Compare packages on the ISO.
+        if compare_packages(
+            old_metadata["opts"]["graft_points"],
+            current_metadata["opts"]["graft_points"],
+        ):
+            self.logger.info("%s - packages differ", log_msg)
+            return False
+
+        try:
+            self.perform_reuse(
+                cmd,
+                variant,
+                arch,
+                opts,
+                old_metadata["cmd"]["iso_path"],
+            )
+            return True
+        except Exception as exc:
+            self.compose.log_error(
+                "Error while reusing ISO for %s.%s: %s", variant, arch, exc
+            )
+            self.compose.traceback("createiso-reuse-%s-%s" % (variant, arch))
+            return False
 
     def run(self):
         symlink_isos_to = self.compose.conf.get("symlink_isos_to")
@@ -184,6 +348,11 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                         jigdo_dir = self.compose.paths.compose.jigdo_dir(arch, variant)
                         opts = opts._replace(jigdo_dir=jigdo_dir, os_tree=os_tree)
 
+                    # Try to reuse
+                    if self.try_reuse(cmd, variant, arch, opts):
+                        # Reuse was successful, go to next ISO
+                        continue
+
                     script_file = os.path.join(
                         self.compose.paths.work.tmp_dir(arch, variant),
                         "createiso-%s.sh" % filename,
@@ -201,6 +370,29 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
             self.pool.queue_put((self.compose, cmd, variant, arch))
 
         self.pool.start()
+
+
+def read_packages(graft_points):
+    """Read packages that were listed in given graft points file.
+
+    Only files under Packages directory are considered. Particularly this
+    excludes .discinfo, .treeinfo and media.repo as well as repodata and
+    any extra files.
+
+    Extra files are easier to check by configuration (same name doesn't
+    imply same content). Repodata depend entirely on included packages (and
+    possibly product id certificate), but are affected by current time
+    which can change checksum despite data being the same.
+    """
+    with open(graft_points) as f:
+        return set(line.split("=", 1)[0] for line in f if line.startswith("Packages/"))
+
+
+def compare_packages(old_graft_points, new_graft_points):
+    """Read packages from the two files and compare them."""
+    old_files = read_packages(old_graft_points)
+    new_files = read_packages(new_graft_points)
+    return old_files != new_files
 
 
 class CreateIsoThread(WorkerThread):
@@ -599,3 +791,24 @@ def create_hardlinks(staging_dir, log_file):
     """
     cmd = ["/usr/sbin/hardlink", "-c", "-vv", staging_dir]
     run(cmd, logfile=log_file, show_cmd=True)
+
+
+class OldFileLinker(object):
+    """
+    A wrapper around os.link that remembers which files were linked and can
+    clean them up.
+    """
+
+    def __init__(self, logger):
+        self.logger = logger
+        self.linked_files = []
+
+    def link(self, src, dst):
+        self.logger.debug("Hardlinking %s to %s", src, dst)
+        os.link(src, dst)
+        self.linked_files.append(dst)
+
+    def abort(self):
+        """Clean up all files created by this instance."""
+        for f in self.linked_files:
+            os.unlink(f)

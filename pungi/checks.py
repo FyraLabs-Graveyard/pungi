@@ -653,6 +653,7 @@ def make_schema():
             "gather_profiler": {"type": "boolean", "default": False},
             "gather_allow_reuse": {"type": "boolean", "default": False},
             "pkgset_allow_reuse": {"type": "boolean", "default": True},
+            "createiso_allow_reuse": {"type": "boolean", "default": True},
             "pkgset_source": {"type": "string", "enum": ["koji", "repos"]},
             "createrepo_c": {"type": "boolean", "default": True},
             "createrepo_checksum": {

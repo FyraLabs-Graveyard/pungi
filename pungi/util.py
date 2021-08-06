@@ -1130,3 +1130,9 @@ class PartialFuncThreadPool(ThreadPool):
     @property
     def results(self):
         return self._results
+
+
+def read_json_file(file_path):
+    """A helper function to read a JSON file."""
+    with open(file_path) as f:
+        return json.load(f)
