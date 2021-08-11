@@ -31,7 +31,7 @@ from kobo.shortcuts import run, relative_path
 from ..wrappers.scm import get_dir_from_scm
 from ..wrappers.createrepo import CreaterepoWrapper
 from .base import PhaseBase
-from ..util import get_arch_variant_data, temp_dir
+from ..util import get_arch_variant_data, temp_dir, read_single_module_stream_from_file
 from ..module_util import Modulemd, collect_module_defaults
 
 import productmd.rpms
@@ -268,7 +268,7 @@ def create_variant_repo(
             compose.log_debug("Adding extra modulemd for %s.%s", variant.uid, arch)
             dirname = compose.paths.work.tmp_dir(variant=variant, create_dir=False)
             for filepath in glob.glob(os.path.join(dirname, arch) + "/*.yaml"):
-                module_stream = Modulemd.ModuleStream.read_file(filepath, strict=True)
+                module_stream = read_single_module_stream_from_file(filepath)
                 if not mod_index.add_module_stream(module_stream):
                     raise RuntimeError(
                         "Failed parsing modulemd data from %s" % filepath

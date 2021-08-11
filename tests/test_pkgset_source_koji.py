@@ -14,7 +14,9 @@ except ImportError:
 from pungi.phases.pkgset.sources import source_koji
 from tests import helpers
 from pungi.module_util import Modulemd
+from pungi.util import read_single_module_stream_from_file
 
+MMDS_DIR = os.path.join(helpers.FIXTURE_DIR, "mmds")
 EVENT_INFO = {"id": 15681980, "ts": 1460956382.81936}
 TAG_INFO = {
     "maven_support": False,
@@ -672,24 +674,12 @@ class TestFilterByWhitelist(unittest.TestCase):
         self.assertEqual(expected, set())
 
 
-class MockModule(object):
-    def __init__(self, path, strict=True):
-        self.path = path
-
-    def __repr__(self):
-        return "MockModule(%r)" % self.path
-
-    def __eq__(self, other):
-        return self.path == other.path
-
-
-@mock.patch("pungi.module_util.Modulemd.ModuleStream.read_file", new=MockModule)
 @unittest.skipIf(Modulemd is None, "Skipping tests, no module support")
 class TestAddModuleToVariant(helpers.PungiTestCase):
     def setUp(self):
         super(TestAddModuleToVariant, self).setUp()
         self.koji = mock.Mock()
-        self.koji.koji_module.pathinfo.typedir.return_value = "/koji"
+        self.koji.koji_module.pathinfo.typedir.return_value = MMDS_DIR
         files = ["modulemd.x86_64.txt", "modulemd.armv7hl.txt", "modulemd.txt"]
         self.koji.koji_proxy.listArchives.return_value = [
             {"btype": "module", "filename": fname} for fname in files
@@ -713,50 +703,35 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
 
         source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
 
-        self.assertEqual(
-            variant.arch_mmds,
-            {
-                "armhfp": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.armv7hl.txt"
-                    ),
-                },
-                "x86_64": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.x86_64.txt"
-                    ),
-                },
-            },
-        )
+        mod1 = variant.arch_mmds["armhfp"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod1.get_NSVCA(), "module:master:20190318:abcdef:armhfp")
+        mod2 = variant.arch_mmds["x86_64"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod2.get_NSVCA(), "module:master:20190318:abcdef:x86_64")
+        self.assertEqual(len(variant.arch_mmds), 2)
         self.assertEqual(variant.modules, [])
 
     def test_adding_module_to_existing(self):
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             arch_mmds={
-                "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
+                "x86_64": {
+                    "m1:latest:20190101:cafe": read_single_module_stream_from_file(
+                        os.path.join(MMDS_DIR, "m1.x86_64.txt")
+                    )
+                }
             },
             modules=[{"name": "m1:latest-20190101:cafe", "glob": False}],
         )
 
         source_koji._add_module_to_variant(self.koji, variant, self.buildinfo)
 
-        self.assertEqual(
-            variant.arch_mmds,
-            {
-                "armhfp": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.armv7hl.txt"
-                    ),
-                },
-                "x86_64": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.x86_64.txt"
-                    ),
-                    "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
-                },
-            },
-        )
+        mod1 = variant.arch_mmds["armhfp"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod1.get_NSVCA(), "module:master:20190318:abcdef:armhfp")
+        mod2 = variant.arch_mmds["x86_64"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod2.get_NSVCA(), "module:master:20190318:abcdef:x86_64")
+        mod3 = variant.arch_mmds["x86_64"]["m1:latest:20190101:cafe"]
+        self.assertEqual(mod3.get_NSVCA(), "m1:latest:20190101:cafe:x86_64")
+
         self.assertEqual(
             variant.modules, [{"name": "m1:latest-20190101:cafe", "glob": False}]
         )
@@ -768,21 +743,11 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             self.koji, variant, self.buildinfo, add_to_variant_modules=True
         )
 
-        self.assertEqual(
-            variant.arch_mmds,
-            {
-                "armhfp": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.armv7hl.txt"
-                    ),
-                },
-                "x86_64": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.x86_64.txt"
-                    ),
-                },
-            },
-        )
+        mod1 = variant.arch_mmds["armhfp"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod1.get_NSVCA(), "module:master:20190318:abcdef:armhfp")
+        mod2 = variant.arch_mmds["x86_64"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod2.get_NSVCA(), "module:master:20190318:abcdef:x86_64")
+
         self.assertEqual(
             variant.modules, [{"name": "module:master:20190318:abcdef", "glob": False}]
         )
@@ -791,7 +756,11 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             arch_mmds={
-                "x86_64": {"m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt")}
+                "x86_64": {
+                    "m1:latest:20190101:cafe": read_single_module_stream_from_file(
+                        os.path.join(MMDS_DIR, "m1.x86_64.txt")
+                    )
+                }
             },
             modules=[{"name": "m1:latest-20190101:cafe", "glob": False}],
         )
@@ -800,22 +769,13 @@ class TestAddModuleToVariant(helpers.PungiTestCase):
             self.koji, variant, self.buildinfo, add_to_variant_modules=True
         )
 
-        self.assertEqual(
-            variant.arch_mmds,
-            {
-                "armhfp": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.armv7hl.txt"
-                    ),
-                },
-                "x86_64": {
-                    "module:master:20190318:abcdef": MockModule(
-                        "/koji/modulemd.x86_64.txt"
-                    ),
-                    "m1:latest:20190101:cafe": MockModule("/koji/m1.x86_64.txt"),
-                },
-            },
-        )
+        mod1 = variant.arch_mmds["armhfp"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod1.get_NSVCA(), "module:master:20190318:abcdef:armhfp")
+        mod2 = variant.arch_mmds["x86_64"]["module:master:20190318:abcdef"]
+        self.assertEqual(mod2.get_NSVCA(), "module:master:20190318:abcdef:x86_64")
+        mod3 = variant.arch_mmds["x86_64"]["m1:latest:20190101:cafe"]
+        self.assertEqual(mod3.get_NSVCA(), "m1:latest:20190101:cafe:x86_64")
+
         self.assertEqual(
             variant.modules,
             [
@@ -891,12 +851,8 @@ class MockMBS(object):
         return {"id": 1, "koji_tag": "scratch-module-tag", "name": "scratch-module"}
 
     def final_modulemd(self, module_build_id):
-        return {"x86_64": ""}
-
-
-class MockMmd(object):
-    def __init__(self, mmd, strict=True):
-        pass
+        with open(os.path.join(MMDS_DIR, "scratch-module.x86_64.txt")) as f:
+            return {"x86_64": f.read()}
 
 
 @mock.patch("pungi.phases.pkgset.sources.source_koji.MBSWrapper", new=MockMBS)
@@ -909,10 +865,7 @@ class TestAddScratchModuleToVariant(helpers.PungiTestCase):
         )
         self.nsvc = "scratch-module:master:20200710:abcdef"
 
-    @mock.patch(
-        "pungi.phases.pkgset.sources.source_koji.Modulemd.ModuleStream.read_string"
-    )
-    def test_adding_scratch_module(self, mock_mmd):
+    def test_adding_scratch_module(self):
         variant = mock.Mock(
             arches=["armhfp", "x86_64"],
             arch_mmds={},
@@ -927,11 +880,16 @@ class TestAddScratchModuleToVariant(helpers.PungiTestCase):
             self.compose, variant, scratch_modules, variant_tags, tag_to_mmd
         )
         self.assertEqual(variant_tags, {variant: ["scratch-module-tag"]})
+
         self.assertEqual(
-            variant.arch_mmds, {"x86_64": {self.nsvc: mock_mmd.return_value}}
+            variant.arch_mmds["x86_64"][self.nsvc].get_NSVCA(),
+            "scratch-module:master:20200710:abcdef:x86_64",
         )
+
+        self.assertTrue(isinstance(tag_to_mmd["scratch-module-tag"]["x86_64"], set))
         self.assertEqual(
-            tag_to_mmd, {"scratch-module-tag": {"x86_64": set([mock_mmd.return_value])}}
+            list(tag_to_mmd["scratch-module-tag"]["x86_64"])[0].get_NSVCA(),
+            "scratch-module:master:20200710:abcdef:x86_64",
         )
 
         self.assertEqual(variant.modules, [])

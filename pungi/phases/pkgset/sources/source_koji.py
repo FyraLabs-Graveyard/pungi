@@ -29,7 +29,13 @@ from pungi.wrappers.comps import CompsWrapper
 from pungi.wrappers.mbs import MBSWrapper
 import pungi.phases.pkgset.pkgsets
 from pungi.arch import getBaseArch
-from pungi.util import retry, get_arch_variant_data, get_variant_data
+from pungi.util import (
+    retry,
+    get_arch_variant_data,
+    get_variant_data,
+    read_single_module_stream_from_file,
+    read_single_module_stream_from_string,
+)
 from pungi.module_util import Modulemd
 
 from pungi.phases.pkgset.common import MaterializedPackageSet, get_all_arches
@@ -258,17 +264,12 @@ def _add_module_to_variant(
             compose.log_debug("Module %s is filtered from %s.%s", nsvc, variant, arch)
             continue
 
-        try:
-            mmd = Modulemd.ModuleStream.read_file(
-                mmds["modulemd.%s.txt" % arch], strict=True
-            )
-            variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
+        mod_stream = read_single_module_stream_from_file(
+            mmds["modulemd.%s.txt" % arch], compose, arch, build
+        )
+        if mod_stream:
             added = True
-        except KeyError:
-            # There is no modulemd for this arch. This could mean an arch was
-            # added to the compose after the module was built. We don't want to
-            # process this, let's skip this module.
-            pass
+        variant.arch_mmds.setdefault(arch, {})[nsvc] = mod_stream
 
     if not added:
         # The module is filtered on all arches of this variant.
@@ -348,9 +349,7 @@ def _add_scratch_modules_to_variant(
         tag_to_mmd.setdefault(tag, {})
         for arch in variant.arches:
             try:
-                mmd = Modulemd.ModuleStream.read_string(
-                    final_modulemd[arch], strict=True
-                )
+                mmd = read_single_module_stream_from_string(final_modulemd[arch])
                 variant.arch_mmds.setdefault(arch, {})[nsvc] = mmd
             except KeyError:
                 continue

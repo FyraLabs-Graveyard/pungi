@@ -34,6 +34,7 @@ import kobo.conf
 from kobo.shortcuts import run, force_list
 from kobo.threads import WorkerThread, ThreadPool
 from productmd.common import get_major_version
+from pungi.module_util import Modulemd
 
 # Patterns that match all names of debuginfo packages
 DEBUG_PATTERNS = ["*-debuginfo", "*-debuginfo-*", "*-debugsource"]
@@ -1032,6 +1033,46 @@ def load_config(file_path, defaults={}):
         conf.load_from_file(file_path)
 
     return conf
+
+
+def _read_single_module_stream(
+    file_or_string, compose=None, arch=None, build=None, is_file=True
+):
+    try:
+        mod_index = Modulemd.ModuleIndex.new()
+        if is_file:
+            mod_index.update_from_file(file_or_string, True)
+        else:
+            mod_index.update_from_string(file_or_string, True)
+        mod_names = mod_index.get_module_names()
+        emit_warning = False
+        if len(mod_names) > 1:
+            emit_warning = True
+        mod_streams = mod_index.get_module(mod_names[0]).get_all_streams()
+        if len(mod_streams) > 1:
+            emit_warning = True
+        if emit_warning and compose:
+            compose.log_warning(
+                "Multiple modules/streams for arch: %s. Build: %s. "
+                "Processing first module/stream only.",
+                arch,
+                build,
+            )
+        return mod_streams[0]
+    except (KeyError, IndexError):
+        # There is no modulemd for this arch. This could mean an arch was
+        # added to the compose after the module was built. We don't want to
+        # process this, let's skip this module.
+        if compose:
+            compose.log_info("Skipping arch: %s. Build: %s", arch, build)
+
+
+def read_single_module_stream_from_file(*args, **kwargs):
+    return _read_single_module_stream(*args, is_file=True, **kwargs)
+
+
+def read_single_module_stream_from_string(*args, **kwargs):
+    return _read_single_module_stream(*args, is_file=False, **kwargs)
 
 
 @contextlib.contextmanager
