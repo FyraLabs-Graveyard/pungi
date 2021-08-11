@@ -799,6 +799,12 @@ Options
     (*list*) -- additional packages to be included in a variant and
     architecture; format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
+    In contrast to the ``comps_file`` setting, the ``additional_packages``
+    setting merely adds the list of packages to the compose. When a package
+    is in a comps group, it is visible to users via ``dnf groupinstall`` and
+    Anaconda's Groups selection, but ``additional_packages`` does not affect
+    DNF groups.
+
     The packages specified here are matched against RPM names, not any other
     provides in the package nor the name of source package. Shell globbing is
     used, so wildcards are possible. The package can be specified as name only
@@ -808,6 +814,21 @@ Options
     included. This is meant to include a package if autodetection does not get
     it. If you add a debuginfo package that does not have anything else from
     the same build included in the compose, the sources will not be pulled in.
+
+    If you list a package in ``additional_packages`` but Pungi cannot find
+    it (for example, it's not available in the Koji tag), Pungi will log a
+    warning in the "work" or "logs" directories and continue without aborting.
+
+    *Example*: This configuration will add all packages in a Koji tag to an
+    "Everything" variant::
+
+        additional_packages = [
+            ('^Everything$', {
+                '*': [
+                    '*',
+                ],
+            })
+        ]
 
 **filter_packages**
     (*list*) -- packages to be excluded from a variant and architecture;
