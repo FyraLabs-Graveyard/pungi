@@ -800,7 +800,7 @@ Options
     architecture; format: ``[(variant_uid_regex, {arch|*: [package_globs]})]``
 
     The packages specified here are matched against RPM names, not any other
-    provides in the package not the name of source package. Shell globbing is
+    provides in the package nor the name of source package. Shell globbing is
     used, so wildcards are possible. The package can be specified as name only
     or ``name.arch``.
 
