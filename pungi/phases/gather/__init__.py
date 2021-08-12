@@ -36,8 +36,7 @@ from pungi.compose import get_ordered_variant_uids
 from pungi.module_util import Modulemd, collect_module_defaults
 from pungi.phases.base import PhaseBase
 from pungi.phases.createrepo import add_modular_metadata
-from pungi.util import (get_arch_data, get_arch_variant_data, get_variant_data,
-                        makedirs)
+from pungi.util import get_arch_data, get_arch_variant_data, get_variant_data, makedirs
 from pungi.wrappers.scm import get_file_from_scm
 
 from ...wrappers.createrepo import CreaterepoWrapper
@@ -97,11 +96,18 @@ class GatherPhase(PhaseBase):
         # check whether variants from configuration value
         # 'variant_as_lookaside' have same architectures
         for (requiring, required) in variant_as_lookaside:
-            if requiring in all_variants and required in all_variants and \
-               sorted(all_variants[requiring].arches) \
-               != sorted(all_variants[required].arches):
-                errors.append("variant_as_lookaside: variant \'%s\' doesn't have same "
-                              "architectures as \'%s\'" % (requiring, required))
+            if (
+                requiring in all_variants
+                and required in all_variants
+                and not set(all_variants[requiring].arches).issubset(
+                    set(all_variants[required].arches)
+                )
+            ):
+                errors.append(
+                    "variant_as_lookaside: architectures of variant '%s' "
+                    "aren't subset of architectures of variant '%s'"
+                    % (requiring, required)
+                )
 
         if errors:
             raise ValueError("\n".join(errors))
@@ -664,8 +670,9 @@ def _make_lookaside_repo(compose, variant, arch, pkg_map, package_sets=None):
                             pkg = pkg[len(path_prefix) :]
                         package_list.add(pkg)
         except KeyError:
-            raise RuntimeError("Variant \'%s\' does not have architecture "
-                               "\'%s\'!" % (variant, pkg_arch))
+            raise RuntimeError(
+                "Variant '%s' does not have architecture " "'%s'!" % (variant, pkg_arch)
+            )
 
     pkglist = compose.paths.work.lookaside_package_list(arch=arch, variant=variant)
     with open(pkglist, "w") as f:

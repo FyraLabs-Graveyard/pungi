@@ -1582,7 +1582,7 @@ class TestGatherPhase(helpers.PungiTestCase):
         phase = gather.GatherPhase(compose, pkgset_phase)
         phase.validate()
 
-    def test_validates_variants_architecture_mismatch(self):
+    def test_validates_variants_requiring_is_not_subset_of_required(self):
         pkgset_phase = mock.Mock()
         compose = helpers.DummyCompose(
             self.topdir, {"variant_as_lookaside": [("Everything", "Client")]}
@@ -1590,12 +1590,12 @@ class TestGatherPhase(helpers.PungiTestCase):
         phase = gather.GatherPhase(compose, pkgset_phase)
         with self.assertRaises(ValueError) as ctx:
             phase.validate()
-        self.assertIn("'Everything' doesn't have", str(ctx.exception))
+        self.assertIn("architectures of variant 'Client'", str(ctx.exception))
 
-    def test_validates_variants_architecture_match(self):
+    def test_validates_variants_requiring_is_subset_of_required(self):
         pkgset_phase = mock.Mock()
         compose = helpers.DummyCompose(
-            self.topdir, {"variant_as_lookaside": [("Everything", "Everything")]}
+            self.topdir, {"variant_as_lookaside": [("Client", "Everything")]}
         )
         phase = gather.GatherPhase(compose, pkgset_phase)
         phase.validate()
