@@ -288,8 +288,12 @@ def resolve_git_ref(repourl, ref):
     if re.match(r"^[a-f0-9]{40}$", ref):
         # This looks like a commit ID already.
         return ref
-
-    _, output = git_ls_remote(repourl, ref)
+    try:
+        _, output = git_ls_remote(repourl, ref)
+    except RuntimeError as e:
+        raise GitUrlResolveError(
+            "ref does not exist in remote repo %s with the error %s" % (repourl, e)
+        )
 
     lines = []
     for line in output.split("\n"):

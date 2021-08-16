@@ -272,7 +272,7 @@ def main():
         logger, opts.skip_phase + conf.get("skip_phases", []), opts.just_phase
     ):
         sys.exit(1)
-    errors, warnings = pungi.checks.validate(conf)
+    errors, warnings = pungi.checks.validate(conf, offline=True)
 
     if not opts.quiet:
         # TODO: workaround for config files containing skip_phase = productimg
@@ -328,6 +328,13 @@ def main():
         logger=logger,
         notifier=notifier,
     )
+    errors, warnings = pungi.checks.validate(conf, offline=False)
+    if errors:
+        for error in errors:
+            logger.error("Config validation failed with the error: %s" % error)
+        fail_to_start("Config validation failed", errors=errors)
+        sys.exit(1)
+
     notifier.compose = compose
     COMPOSE = compose
     try:
