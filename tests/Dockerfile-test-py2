@@ -5,13 +5,15 @@ LABEL \
     vendor="Pungi developers" \
     license="MIT"
 
-RUN yum -y update && yum -y install \
+RUN yum -y update && yum -y install epel-release && yum -y install \
         git \
+        libmodulemd2 \
         make \
         python3 \
+        python-createrepo_c \
+        python-gobject-base \
         python-gssapi \
         python-libcomps \
-        python-createrepo_c \
         pykickstart \
     && yum clean all
 

@@ -7,10 +7,12 @@ LABEL \
 
 RUN dnf -y update && dnf -y install \
         findutils \
+        libmodulemd \
         git \
         koji \
         make \
         python3-createrepo_c \
+        python3-gobject-base \
         python3-tox \
         python3-urlgrabber \
     && dnf clean all
