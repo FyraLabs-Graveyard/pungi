@@ -35,7 +35,7 @@ from pungi.wrappers.createrepo import CreaterepoWrapper
 
 
 class ReentrantYumLock(object):
-    """ A lock that can be acquired multiple times by the same process. """
+    """A lock that can be acquired multiple times by the same process."""
 
     def __init__(self, lock, log):
         self.lock = lock
@@ -60,7 +60,7 @@ class ReentrantYumLock(object):
 
 
 def yumlocked(method):
-    """ A locking decorator. """
+    """A locking decorator."""
 
     def wrapper(self, *args, **kwargs):
         with self.yumlock:
