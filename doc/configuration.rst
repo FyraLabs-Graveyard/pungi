@@ -457,6 +457,12 @@ Options
     cloned files should be split into subdirectories for each architecture of
     the variant.
 
+**createrepo_enable_cache** = True
+    (*bool*) -- whether to use ``--cachedir`` option of ``createrepo``. It will
+    cache and reuse checksum vaules to speed up createrepo phase.
+    The cache dir is located at ``/var/cache/pungi/createrepo_c/$release_short-$uid``
+    e.g. /var/cache/pungi/createrepo_c/Fedora-1000
+
 **product_id** = None
     (:ref:`scm_dict <scm_support>`) -- If specified, it should point to a
     directory with certificates ``*<variant_uid>-<arch>-*.pem``. Pungi will
