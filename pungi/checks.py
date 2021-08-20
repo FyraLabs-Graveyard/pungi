@@ -1080,6 +1080,7 @@ def make_schema():
             "live_images": _variant_arch_mapping(
                 _one_or_list({"$ref": "#/definitions/live_image_config"})
             ),
+            "image_build_allow_reuse": {"type": "boolean", "default": False},
             "image_build": {
                 "type": "object",
                 "patternProperties": {

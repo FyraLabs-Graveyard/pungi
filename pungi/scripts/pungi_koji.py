@@ -406,7 +406,7 @@ def run_compose(
     extra_isos_phase = pungi.phases.ExtraIsosPhase(compose)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     livemedia_phase = pungi.phases.LiveMediaPhase(compose)
-    image_build_phase = pungi.phases.ImageBuildPhase(compose)
+    image_build_phase = pungi.phases.ImageBuildPhase(compose, buildinstall_phase)
     osbuild_phase = pungi.phases.OSBuildPhase(compose)
     osbs_phase = pungi.phases.OSBSPhase(compose)
     image_container_phase = pungi.phases.ImageContainerPhase(compose)

@@ -17,26 +17,23 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": [("docker", "tar.xz")],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "failable": ["x86_64"],
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Client|Server$": [
-                        {
-                            "image-build": {
-                                "format": [("docker", "tar.xz")],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "failable": ["x86_64"],
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Client|Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -50,6 +47,7 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         client_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Client/$arch/os",
@@ -75,6 +73,7 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         server_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -102,11 +101,23 @@ class TestImageBuildPhase(PungiTestCase):
         six.assertCountEqual(
             self,
             phase.pool.queue_put.mock_calls,
-            [mock.call((compose, client_args)), mock.call((compose, server_args))],
+            [
+                mock.call((compose, client_args, phase.buildinstall_phase)),
+                mock.call((compose, server_args, phase.buildinstall_phase)),
+            ],
         )
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_phase_global_options(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
@@ -114,19 +125,7 @@ class TestImageBuildPhase(PungiTestCase):
                 "image_build_release": "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN",
                 "image_build_target": "f24",
                 "image_build_version": "Rawhide",
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -140,6 +139,7 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -165,30 +165,28 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         self.assertEqual(
-            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+            phase.pool.queue_put.mock_calls,
+            [mock.call((compose, server_args, phase.buildinstall_phase))],
         )
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_phase_missing_version(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": "docker",
+                "name": "Fedora-Docker-Base",
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
                 "image_build_ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
                 "image_build_release": "!RELEASE_FROM_LABEL_DATE_TYPE_RESPIN",
                 "image_build_target": "f24",
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": "docker",
-                                "name": "Fedora-Docker-Base",
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -200,6 +198,7 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -225,7 +224,8 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         self.assertEqual(
-            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+            phase.pool.queue_put.mock_calls,
+            [mock.call((compose, server_args, phase.buildinstall_phase))],
         )
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
@@ -266,27 +266,25 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_set_install_tree(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "arches": ["x86_64"],
+                "install_tree_from": "Server-optional",
+            }
+        }
+
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "arches": ["x86_64"],
-                                "install_tree_from": "Server-optional",
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -307,6 +305,7 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertDictEqual(
             args[0][1],
             {
+                "original_image_conf": original_image_conf,
                 "image_conf": {
                     "image-build": {
                         "install_tree": self.topdir
@@ -335,27 +334,24 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_set_install_tree_from_path(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "arches": ["x86_64"],
+                "install_tree_from": "/my/tree",
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "arches": ["x86_64"],
-                                "install_tree_from": "/my/tree",
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
                 "translate_paths": [("/my", "http://example.com")],
             },
@@ -376,6 +372,7 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertDictEqual(
             args[0][1],
             {
+                "original_image_conf": original_image_conf,
                 "image_conf": {
                     "image-build": {
                         "install_tree": "http://example.com/tree",
@@ -403,27 +400,24 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_set_extra_repos(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "arches": ["x86_64"],
+                "repo_from": ["Everything", "Server-optional"],
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "arches": ["x86_64"],
-                                "repo_from": ["Everything", "Server-optional"],
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -444,6 +438,7 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertDictEqual(
             args[0][1],
             {
+                "original_image_conf": original_image_conf,
                 "image_conf": {
                     "image-build": {
                         "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -477,27 +472,24 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_set_external_install_tree(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "arches": ["x86_64"],
+                "install_tree_from": "http://example.com/install-tree/",
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "arches": ["x86_64"],
-                                "install_tree_from": "http://example.com/install-tree/",
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -517,6 +509,7 @@ class TestImageBuildPhase(PungiTestCase):
         self.assertDictEqual(
             args[0][1],
             {
+                "original_image_conf": original_image_conf,
                 "image_conf": {
                     "image-build": {
                         "install_tree": "http://example.com/install-tree/",
@@ -670,26 +663,23 @@ class TestImageBuildPhase(PungiTestCase):
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_image_build_optional(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "failable": ["x86_64"],
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server-optional$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "failable": ["x86_64"],
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server-optional$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -704,6 +694,7 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -729,31 +720,29 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         self.assertEqual(
-            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+            phase.pool.queue_put.mock_calls,
+            [mock.call((compose, server_args, phase.buildinstall_phase))],
         )
 
     @mock.patch("pungi.phases.image_build.ThreadPool")
     def test_failable_star(self, ThreadPool):
+        original_image_conf = {
+            "image-build": {
+                "format": ["docker"],
+                "name": "Fedora-Docker-Base",
+                "target": "f24",
+                "version": "Rawhide",
+                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
+                "kickstart": "fedora-docker-base.ks",
+                "distro": "Fedora-20",
+                "disk_size": 3,
+                "failable": ["*"],
+            }
+        }
         compose = DummyCompose(
             self.topdir,
             {
-                "image_build": {
-                    "^Server$": [
-                        {
-                            "image-build": {
-                                "format": ["docker"],
-                                "name": "Fedora-Docker-Base",
-                                "target": "f24",
-                                "version": "Rawhide",
-                                "ksurl": "git://git.fedorahosted.org/git/spin-kickstarts.git",  # noqa: E501
-                                "kickstart": "fedora-docker-base.ks",
-                                "distro": "Fedora-20",
-                                "disk_size": 3,
-                                "failable": ["*"],
-                            }
-                        }
-                    ]
-                },
+                "image_build": {"^Server$": [original_image_conf]},
                 "koji_profile": "koji",
             },
         )
@@ -768,6 +757,7 @@ class TestImageBuildPhase(PungiTestCase):
         # assert at least one thread was started
         self.assertTrue(phase.pool.add.called)
         server_args = {
+            "original_image_conf": original_image_conf,
             "image_conf": {
                 "image-build": {
                     "install_tree": self.topdir + "/compose/Server/$arch/os",
@@ -793,7 +783,8 @@ class TestImageBuildPhase(PungiTestCase):
             "scratch": False,
         }
         self.assertEqual(
-            phase.pool.queue_put.mock_calls, [mock.call((compose, server_args))]
+            phase.pool.queue_put.mock_calls,
+            [mock.call((compose, server_args, phase.buildinstall_phase))],
         )
 
 
@@ -854,7 +845,7 @@ class TestCreateImageBuildThread(PungiTestCase):
 
         t = CreateImageBuildThread(pool)
         with mock.patch("time.sleep"):
-            t.process((compose, cmd), 1)
+            t.process((compose, cmd, None), 1)
 
         self.assertEqual(
             koji_wrapper.get_image_build_cmd.call_args_list,
@@ -987,7 +978,7 @@ class TestCreateImageBuildThread(PungiTestCase):
 
         t = CreateImageBuildThread(pool)
         with mock.patch("time.sleep"):
-            t.process((compose, cmd), 1)
+            t.process((compose, cmd, None), 1)
 
         pool._logger.error.assert_has_calls(
             [
@@ -1041,7 +1032,7 @@ class TestCreateImageBuildThread(PungiTestCase):
 
         t = CreateImageBuildThread(pool)
         with mock.patch("time.sleep"):
-            t.process((compose, cmd), 1)
+            t.process((compose, cmd, None), 1)
 
         pool._logger.error.assert_has_calls(
             [
@@ -1092,4 +1083,4 @@ class TestCreateImageBuildThread(PungiTestCase):
         t = CreateImageBuildThread(pool)
         with self.assertRaises(RuntimeError):
             with mock.patch("time.sleep"):
-                t.process((compose, cmd), 1)
+                t.process((compose, cmd, None), 1)

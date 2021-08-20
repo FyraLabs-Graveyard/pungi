@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import hashlib
+import json
 import os
+import shutil
 import time
 from kobo import shortcuts
 
 from pungi.util import makedirs, get_mtime, get_file_size, failable, log_failed_task
-from pungi.util import translate_path, get_repo_urls, version_generator
+from pungi.util import as_local_file, translate_path, get_repo_urls, version_generator
 from pungi.phases import base
 from pungi.linker import Linker
 from pungi.wrappers.kojiwrapper import KojiWrapper
 from kobo.threads import ThreadPool, WorkerThread
 from kobo.shortcuts import force_list
 from productmd.images import Image
+from productmd.rpms import Rpms
 
 
 # This is a mapping from formats to file extensions. The format is what koji
@@ -46,9 +50,10 @@ class ImageBuildPhase(
 
     name = "image_build"
 
-    def __init__(self, compose):
+    def __init__(self, compose, buildinstall_phase=None):
         super(ImageBuildPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
+        self.buildinstall_phase = buildinstall_phase
 
     def _get_install_tree(self, image_conf, variant):
         """
@@ -117,6 +122,7 @@ class ImageBuildPhase(
                 # prevent problems in next iteration where the original
                 # value is needed.
                 image_conf = copy.deepcopy(image_conf)
+                original_image_conf = copy.deepcopy(image_conf)
 
                 # image_conf is passed to get_image_build_cmd as dict
 
@@ -167,6 +173,7 @@ class ImageBuildPhase(
                     image_conf["image-build"]["can_fail"] = sorted(can_fail)
 
                 cmd = {
+                    "original_image_conf": original_image_conf,
                     "image_conf": image_conf,
                     "conf_file": self.compose.paths.work.image_build_conf(
                         image_conf["image-build"]["variant"],
@@ -182,7 +189,7 @@ class ImageBuildPhase(
                     "scratch": image_conf["image-build"].pop("scratch", False),
                 }
                 self.pool.add(CreateImageBuildThread(self.pool))
-                self.pool.queue_put((self.compose, cmd))
+                self.pool.queue_put((self.compose, cmd, self.buildinstall_phase))
 
         self.pool.start()
 
@@ -192,7 +199,7 @@ class CreateImageBuildThread(WorkerThread):
         self.pool.log_error("CreateImageBuild failed.")
 
     def process(self, item, num):
-        compose, cmd = item
+        compose, cmd, buildinstall_phase = item
         variant = cmd["image_conf"]["image-build"]["variant"]
         subvariant = cmd["image_conf"]["image-build"].get("subvariant", variant.uid)
         self.failable_arches = cmd["image_conf"]["image-build"].get("can_fail", "")
@@ -208,15 +215,47 @@ class CreateImageBuildThread(WorkerThread):
             subvariant,
             logger=self.pool._logger,
         ):
-            self.worker(num, compose, variant, subvariant, cmd)
+            self.worker(num, compose, variant, subvariant, cmd, buildinstall_phase)
 
-    def worker(self, num, compose, variant, subvariant, cmd):
+    def worker(self, num, compose, variant, subvariant, cmd, buildinstall_phase):
         arches = cmd["image_conf"]["image-build"]["arches"]
         formats = "-".join(cmd["image_conf"]["image-build"]["format"])
         dash_arches = "-".join(arches)
         log_file = compose.paths.log.log_file(
             dash_arches, "imagebuild-%s-%s-%s" % (variant.uid, subvariant, formats)
         )
+        metadata_file = log_file[:-4] + ".reuse.json"
+
+        external_repo_checksum = {}
+        try:
+            for repo in cmd["original_image_conf"]["image-build"]["repo"]:
+                if repo in compose.all_variants:
+                    continue
+                with as_local_file(
+                    os.path.join(repo, "repodata/repomd.xml")
+                ) as filename:
+                    with open(filename, "rb") as f:
+                        external_repo_checksum[repo] = hashlib.sha256(
+                            f.read()
+                        ).hexdigest()
+        except Exception as e:
+            external_repo_checksum = None
+            self.pool.log_info(
+                "Can't calculate checksum of repomd.xml of external repo - %s" % str(e)
+            )
+
+        if self._try_to_reuse(
+            compose,
+            variant,
+            subvariant,
+            metadata_file,
+            log_file,
+            cmd,
+            external_repo_checksum,
+            buildinstall_phase,
+        ):
+            return
+
         msg = (
             "Creating image (formats: %s, arches: %s, variant: %s, subvariant: %s)"
             % (formats, dash_arches, variant, subvariant)
@@ -275,6 +314,22 @@ class CreateImageBuildThread(WorkerThread):
                             )
                             break
 
+        self._link_images(compose, variant, subvariant, cmd, image_infos)
+        self._write_reuse_metadata(
+            compose, metadata_file, cmd, image_infos, external_repo_checksum
+        )
+
+        self.pool.log_info("[DONE ] %s (task id: %s)" % (msg, output["task_id"]))
+
+    def _link_images(self, compose, variant, subvariant, cmd, image_infos):
+        """Link images to compose and update image manifest.
+
+        :param Compose compose: Current compose.
+        :param Variant variant: Current variant.
+        :param str subvariant:
+        :param dict cmd: Dict of params for image-build.
+        :param dict image_infos: Dict contains image info.
+        """
         # The usecase here is that you can run koji image-build with multiple --format
         # It's ok to do it serialized since we're talking about max 2 images per single
         # image_build record
@@ -308,4 +363,160 @@ class CreateImageBuildThread(WorkerThread):
             setattr(img, "deliverable", "image-build")
             compose.im.add(variant=variant.uid, arch=image_info["arch"], image=img)
 
-        self.pool.log_info("[DONE ] %s (task id: %s)" % (msg, output["task_id"]))
+    def _try_to_reuse(
+        self,
+        compose,
+        variant,
+        subvariant,
+        metadata_file,
+        log_file,
+        cmd,
+        external_repo_checksum,
+        buildinstall_phase,
+    ):
+        """Try to reuse images from old compose.
+
+        :param Compose compose: Current compose.
+        :param Variant variant: Current variant.
+        :param str subvariant:
+        :param str metadata_file: Path to reuse metadata file.
+        :param str log_file: Path to log file.
+        :param dict cmd: Dict of params for image-build.
+        :param dict external_repo_checksum: Dict contains checksum of repomd.xml
+            or None if can't get checksum.
+        :param BuildinstallPhase buildinstall_phase: buildinstall phase of
+            current compose.
+        """
+        log_msg = "Cannot reuse old image_build phase results - %s"
+        if not compose.conf["image_build_allow_reuse"]:
+            self.pool.log_info(
+                log_msg % "reuse of old image_build results is disabled."
+            )
+            return False
+
+        if external_repo_checksum is None:
+            self.pool.log_info(
+                log_msg % "Can't ensure that external repo is not changed."
+            )
+            return False
+
+        old_metadata_file = compose.paths.old_compose_path(metadata_file)
+        if not old_metadata_file:
+            self.pool.log_info(log_msg % "Can't find old reuse metadata file")
+            return False
+
+        try:
+            old_metadata = self._load_reuse_metadata(old_metadata_file)
+        except Exception as e:
+            self.pool.log_info(
+                log_msg % "Can't load old reuse metadata file: %s" % str(e)
+            )
+            return False
+
+        if old_metadata["cmd"]["original_image_conf"] != cmd["original_image_conf"]:
+            self.pool.log_info(log_msg % "image_build config changed")
+            return False
+
+        # Make sure external repo does not change
+        if (
+            old_metadata["external_repo_checksum"] is None
+            or old_metadata["external_repo_checksum"] != external_repo_checksum
+        ):
+            self.pool.log_info(log_msg % "External repo may be changed")
+            return False
+
+        # Make sure buildinstall phase is reused
+        for arch in cmd["image_conf"]["image-build"]["arches"]:
+            if buildinstall_phase and not buildinstall_phase.reused(variant, arch):
+                self.pool.log_info(log_msg % "buildinstall phase changed")
+                return False
+
+        # Make sure packages in variant not change
+        rpm_manifest_file = compose.paths.compose.metadata("rpms.json")
+        rpm_manifest = Rpms()
+        rpm_manifest.load(rpm_manifest_file)
+
+        old_rpm_manifest_file = compose.paths.old_compose_path(rpm_manifest_file)
+        old_rpm_manifest = Rpms()
+        old_rpm_manifest.load(old_rpm_manifest_file)
+
+        for repo in cmd["original_image_conf"]["image-build"]["repo"]:
+            if repo not in compose.all_variants:
+                # External repos are checked using other logic.
+                continue
+            for arch in cmd["image_conf"]["image-build"]["arches"]:
+                if (
+                    rpm_manifest.rpms[variant.uid][arch]
+                    != old_rpm_manifest.rpms[variant.uid][arch]
+                ):
+                    self.pool.log_info(
+                        log_msg % "Packages in %s.%s changed." % (variant.uid, arch)
+                    )
+                    return False
+
+        self.pool.log_info(
+            "Reusing images from old compose for variant %s" % variant.uid
+        )
+        try:
+            self._link_images(
+                compose, variant, subvariant, cmd, old_metadata["image_infos"]
+            )
+        except Exception as e:
+            self.pool.log_info(log_msg % "Can't link images %s" % str(e))
+            return False
+
+        old_log_file = compose.paths.old_compose_path(log_file)
+        try:
+            shutil.copy2(old_log_file, log_file)
+        except Exception as e:
+            self.pool.log_info(
+                log_msg % "Can't copy old log_file: %s %s" % (old_log_file, str(e))
+            )
+            return False
+
+        self._write_reuse_metadata(
+            compose,
+            metadata_file,
+            cmd,
+            old_metadata["image_infos"],
+            external_repo_checksum,
+        )
+
+        return True
+
+    def _write_reuse_metadata(
+        self, compose, metadata_file, cmd, image_infos, external_repo_checksum
+    ):
+        """Write metadata file.
+
+        :param Compose compose: Current compose.
+        :param str metadata_file: Path to reuse metadata file.
+        :param dict cmd: Dict of params for image-build.
+        :param dict image_infos: Dict contains image info.
+        :param dict external_repo_checksum: Dict contains checksum of repomd.xml
+            or None if can't get checksum.
+        """
+        msg = "Writing reuse metadata file: %s" % metadata_file
+        self.pool.log_info(msg)
+
+        cmd_copy = copy.deepcopy(cmd)
+        del cmd_copy["image_conf"]["image-build"]["variant"]
+
+        data = {
+            "cmd": cmd_copy,
+            "image_infos": image_infos,
+            "external_repo_checksum": external_repo_checksum,
+        }
+        try:
+            with open(metadata_file, "w") as f:
+                json.dump(data, f, indent=4)
+        except Exception as e:
+            self.pool.log_info("%s Failed: %s" % (msg, str(e)))
+
+    def _load_reuse_metadata(self, metadata_file):
+        """Load metadata file.
+
+        :param str metadata_file: Path to reuse metadata file.
+        """
+        with open(metadata_file, "r") as f:
+            return json.load(f)
