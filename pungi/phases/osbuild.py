@@ -155,7 +155,7 @@ class RunOSBuildThread(WorkerThread):
         # architecture, but we don't verify that.
         build_info = koji.koji_proxy.getBuild(build_id)
         for archive in koji.koji_proxy.listArchives(buildID=build_id):
-            if archive["type_name"] not in config["image_types"]:
+            if archive["type_name"] not in EXTENSIONS:
                 # Ignore values that are not of required types.
                 continue
 
@@ -182,8 +182,11 @@ class RunOSBuildThread(WorkerThread):
 
             linker.link(src_file, image_dest, link_type=compose.conf["link_type"])
 
-            suffix = archive["filename"].rsplit(".", 1)[-1]
-            if suffix not in EXTENSIONS[archive["type_name"]]:
+            for suffix in EXTENSIONS[archive["type_name"]]:
+                if archive["filename"].endswith(suffix):
+                    break
+            else:
+                # No suffix matched.
                 raise RuntimeError(
                     "Failed to generate metadata. Format %s doesn't match type %s"
                     % (suffix, archive["type_name"])
