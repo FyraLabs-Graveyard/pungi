@@ -39,6 +39,7 @@ from ..wrappers.createrepo import CreaterepoWrapper
 from ..wrappers.scm import get_dir_from_scm
 from .base import PhaseBase
 
+CACHE_TOPDIR = "/var/cache/pungi/createrepo_c/"
 createrepo_lock = threading.Lock()
 createrepo_dirs = set()
 
@@ -192,7 +193,7 @@ def create_variant_repo(
 
     if compose.conf["createrepo_enable_cache"]:
         cachedir = os.path.join(
-            "/var/cache/pungi/createrepo_c/",
+            CACHE_TOPDIR,
             "%s-%s" % (compose.conf["release_short"], os.getuid()),
         )
         if not os.path.exists(cachedir):

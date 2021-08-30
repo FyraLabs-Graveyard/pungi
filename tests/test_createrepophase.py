@@ -185,13 +185,15 @@ class TestCreateVariantRepo(PungiTestCase):
         repo = CreaterepoWrapperCls.return_value
         copy_fixture("server-rpms.json", compose.paths.compose.metadata("rpms.json"))
 
-        create_variant_repo(
-            compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
-        )
+        with mock.patch("pungi.phases.createrepo.CACHE_TOPDIR", self.topdir):
+            create_variant_repo(
+                compose, "x86_64", compose.variants["Server"], "rpm", self.pkgset
+            )
 
         list_file = (
             self.topdir + "/work/x86_64/repo_package_list/Server.x86_64.rpm.conf"
         )
+
         self.assertEqual(
             CreaterepoWrapperCls.mock_calls[0], mock.call(createrepo_c=True)
         )
@@ -214,7 +216,7 @@ class TestCreateVariantRepo(PungiTestCase):
                     use_xz=False,
                     extra_args=[],
                     cachedir=os.path.join(
-                        "/var/cache/pungi/createrepo_c/",
+                        self.topdir,
                         "%s-%s" % (compose.conf["release_short"], os.getuid()),
                     ),
                 )
