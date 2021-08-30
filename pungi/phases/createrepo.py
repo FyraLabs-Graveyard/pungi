@@ -16,7 +16,6 @@
 
 __all__ = ("create_variant_repo",)
 
-
 import copy
 import errno
 import glob
@@ -25,18 +24,20 @@ import shutil
 import threading
 import xml.dom.minidom
 
-from kobo.threads import ThreadPool, WorkerThread
-from kobo.shortcuts import run, relative_path
-
-from ..wrappers.scm import get_dir_from_scm
-from ..wrappers.createrepo import CreaterepoWrapper
-from .base import PhaseBase
-from ..util import get_arch_variant_data, temp_dir, read_single_module_stream_from_file
-from ..module_util import Modulemd, collect_module_defaults
-
-import productmd.rpms
 import productmd.modules
+import productmd.rpms
+from kobo.shortcuts import relative_path, run
+from kobo.threads import ThreadPool, WorkerThread
 
+from ..module_util import Modulemd, collect_module_defaults
+from ..util import (
+    get_arch_variant_data,
+    read_single_module_stream_from_file,
+    temp_dir,
+)
+from ..wrappers.createrepo import CreaterepoWrapper
+from ..wrappers.scm import get_dir_from_scm
+from .base import PhaseBase
 
 createrepo_lock = threading.Lock()
 createrepo_dirs = set()

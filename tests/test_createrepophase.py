@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 
-
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-import mock
 
 import glob
 import os
+
+import mock
 import six
 
+from pungi.module_util import Modulemd
 from pungi.phases.createrepo import (
     CreaterepoPhase,
+    ModulesMetadata,
     create_variant_repo,
     get_productids_from_scm,
-    ModulesMetadata,
 )
 from tests.helpers import DummyCompose, PungiTestCase, copy_fixture, touch
-from pungi.module_util import Modulemd
 
 
 class TestCreaterepoPhase(PungiTestCase):
