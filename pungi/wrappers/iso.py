@@ -255,11 +255,21 @@ def get_isohybrid_cmd(iso_path, arch):
     return cmd
 
 
-def get_manifest_cmd(iso_name):
-    return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (
-        shlex_quote(iso_name),
-        shlex_quote(iso_name),
-    )
+def get_manifest_cmd(iso_name, xorriso=False):
+    if xorriso:
+        return """xorriso -dev %s --find |
+            tail -n+2 |
+            tr -d "'" |
+            cut -c2- |
+            sort >> %s.manifest""" % (
+            shlex_quote(iso_name),
+            shlex_quote(iso_name),
+        )
+    else:
+        return "isoinfo -R -f -i %s | grep -v '/TRANS.TBL$' | sort >> %s.manifest" % (
+            shlex_quote(iso_name),
+            shlex_quote(iso_name),
+        )
 
 
 def get_volume_id(path):

@@ -76,6 +76,7 @@ def make_image(f, opts):
         volid=opts.volid,
         exclude=["./lost+found"],
         graft_points=opts.graft_points,
+        use_xorrisofs=opts.use_xorrisofs,
         **mkisofs_kwargs
     )
     emit(f, cmd)
@@ -97,7 +98,7 @@ def run_isohybrid(f, opts):
 
 
 def make_manifest(f, opts):
-    emit(f, iso.get_manifest_cmd(opts.iso_name))
+    emit(f, iso.get_manifest_cmd(opts.iso_name, opts.use_xorrisofs))
 
 
 def make_jigdo(f, opts):
