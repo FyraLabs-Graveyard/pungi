@@ -1339,6 +1339,7 @@ CONFIG_DEPS = {
         "requires": ((lambda x: x, ["base_product_name", "base_product_short"]),),
         "conflicts": ((lambda x: not x, ["base_product_name", "base_product_short"]),),
     },
+    "cts_url": {"requires": ((lambda x: x, ["translate_paths"]),)},
     "product_id": {"conflicts": [(lambda x: not x, ["product_id_allow_missing"])]},
     "pkgset_scratch_modules": {"requires": ((lambda x: x, ["mbs_api_url"]),)},
     "pkgset_source": {

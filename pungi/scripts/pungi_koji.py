@@ -328,6 +328,11 @@ def main():
         logger=logger,
         notifier=notifier,
     )
+
+    rv = Compose.update_compose_url(compose_dir, conf)
+    if not rv.ok:
+        logger.error("CTS compose_url update failed with the error: %s" % rv.text)
+
     errors, warnings = pungi.checks.validate(conf, offline=False)
     if errors:
         for error in errors:

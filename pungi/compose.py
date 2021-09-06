@@ -41,6 +41,7 @@ from pungi.util import (
     get_arch_variant_data,
     get_format_substs,
     get_variant_data,
+    translate_path_raw,
 )
 from pungi.metadata import compose_to_composeinfo
 
@@ -95,9 +96,12 @@ def get_compose_info(
         # So at first backup the current environment and revert to it
         # after the requests.post call.
         cts_keytab = conf.get("cts_keytab", None)
+        authentication = None
         if cts_keytab:
             environ_copy = dict(os.environ)
             os.environ["KRB5_CLIENT_KTNAME"] = cts_keytab
+            # Enables Kerberos Authentication if cts_keytab is specified
+            authentication = HTTPKerberosAuth()
 
         try:
             # Create compose in CTS and get the reserved compose ID.
@@ -108,7 +112,7 @@ def get_compose_info(
                 "parent_compose_ids": parent_compose_ids,
                 "respin_of": respin_of,
             }
-            rv = requests.post(url, json=data, auth=HTTPKerberosAuth())
+            rv = requests.post(url, json=data, auth=authentication)
             rv.raise_for_status()
         finally:
             if cts_keytab:
@@ -120,6 +124,7 @@ def get_compose_info(
         cts_ci.loads(rv.text)
         ci.compose.respin = cts_ci.compose.respin
         ci.compose.id = cts_ci.compose.id
+
     else:
         ci.compose.id = ci.create_compose_id()
 
@@ -136,6 +141,22 @@ def write_compose_info(compose_dir, ci):
     work_dir = os.path.join(compose_dir, "work", "global")
     makedirs(work_dir)
     ci.dump(os.path.join(work_dir, "composeinfo-base.json"))
+
+
+def update_compose_url(compose_dir, conf):
+    import requests
+
+    with open(os.path.join(compose_dir, "COMPOSE_ID"), "r") as f:
+        compose_id = f.read()
+    cts_url = conf.get("cts_url", None)
+    url = os.path.join(cts_url, "api/1/composes", compose_id)
+    tp = conf.get("translate_paths", None)
+    compose_url = translate_path_raw(tp, compose_dir)
+    data = {
+        "action": "set_url",
+        "compose_url": compose_url,
+    }
+    return requests.patch(url, json=data)
 
 
 def get_compose_dir(
@@ -306,6 +327,7 @@ class Compose(kobo.log.LoggingBase):
     get_compose_info = staticmethod(get_compose_info)
     write_compose_info = staticmethod(write_compose_info)
     get_compose_dir = staticmethod(get_compose_dir)
+    update_compose_url = staticmethod(update_compose_url)
 
     def __getitem__(self, name):
         return self.variants[name]
