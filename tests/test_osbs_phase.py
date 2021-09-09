@@ -330,7 +330,12 @@ class OSBSThreadTest(helpers.PungiTestCase):
             "git_branch": "f24-docker",
             "name": "my-name",
             "version": "1.0",
-            "repo": ["Everything", "http://pkgs.example.com/my.repo", "/extra/repo"],
+            "repo": [
+                "Everything",
+                "http://pkgs.example.com/my.repo",
+                "/extra/repo",
+                "http://cts.localhost/$COMPOSE_ID/repo",
+            ],
         }
         self.compose.conf["translate_paths"].append(("/extra", "http://example.com"))
         self._setupMock(KojiWrapper)
@@ -347,6 +352,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 "http://root/work/global/tmp-Everything/compose-rpms-Everything-1.repo",
                 "http://pkgs.example.com/my.repo",
                 "http://root/work/global/tmp/compose-rpms-local-1.repo",
+                "http://cts.localhost/%s/repo" % self.compose.compose_id,
             ],
         }
         self._assertCorrectCalls(options)

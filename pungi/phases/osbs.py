@@ -128,7 +128,7 @@ class OSBSThread(WorkerThread):
         file pointing to that location and return the URL to .repo file.
         """
         if "://" in repo:
-            return repo
+            return repo.replace("$COMPOSE_ID", compose.compose_id)
 
         if repo.startswith("/"):
             # The repo is an absolute path on the filesystem

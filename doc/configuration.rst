@@ -1849,8 +1849,10 @@ they are not scratch builds).
     A value for ``yum_repourls`` will be created automatically and point at a
     repository in the current compose. You can add extra repositories with
     ``repo`` key having a list of urls pointing to ``.repo`` files or just
-    variant uid, Pungi will create the .repo file for that variant. ``gpgkey``
-    can be specified to enable gpgcheck in repo files for variants.
+    variant uid, Pungi will create the .repo file for that variant. If
+    specific URL is used in the ``repo``, the ``$COMPOSE_ID`` variable in
+    the ``repo`` string will be replaced with the real compose ID.
+    ``gpgkey`` can be specified to enable gpgcheck in repo files for variants.
 
 **osbs_registries**
    (*dict*) -- It is possible to configure extra information about where to
