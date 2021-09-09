@@ -1202,6 +1202,7 @@ def make_schema():
                 "anyOf": [{"type": "string"}, {"type": "number"}],
                 "default": 10 * 1024 * 1024,
             },
+            "osbs_allow_reuse": {"type": "boolean", "default": False},
             "osbs": {
                 "type": "object",
                 "patternProperties": {

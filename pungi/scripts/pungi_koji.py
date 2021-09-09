@@ -408,7 +408,7 @@ def run_compose(
     livemedia_phase = pungi.phases.LiveMediaPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose, buildinstall_phase)
     osbuild_phase = pungi.phases.OSBuildPhase(compose)
-    osbs_phase = pungi.phases.OSBSPhase(compose)
+    osbs_phase = pungi.phases.OSBSPhase(compose, pkgset_phase, buildinstall_phase)
     image_container_phase = pungi.phases.ImageContainerPhase(compose)
     image_checksum_phase = pungi.phases.ImageChecksumPhase(compose)
     repoclosure_phase = pungi.phases.RepoclosurePhase(compose)

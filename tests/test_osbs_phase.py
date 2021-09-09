@@ -19,7 +19,7 @@ class OSBSPhaseTest(helpers.PungiTestCase):
 
         pool = ThreadPool.return_value
 
-        phase = osbs.OSBSPhase(compose)
+        phase = osbs.OSBSPhase(compose, None, None)
         phase.run()
 
         self.assertEqual(len(pool.add.call_args_list), 1)
@@ -33,7 +33,7 @@ class OSBSPhaseTest(helpers.PungiTestCase):
         compose = helpers.DummyCompose(self.topdir, {})
         compose.just_phases = None
         compose.skip_phases = []
-        phase = osbs.OSBSPhase(compose)
+        phase = osbs.OSBSPhase(compose, None, None)
         self.assertTrue(phase.skip())
 
     @mock.patch("pungi.phases.osbs.ThreadPool")
@@ -42,7 +42,7 @@ class OSBSPhaseTest(helpers.PungiTestCase):
         compose.just_phases = None
         compose.skip_phases = []
         compose.notifier = mock.Mock()
-        phase = osbs.OSBSPhase(compose)
+        phase = osbs.OSBSPhase(compose, None, None)
         phase.start()
         phase.stop()
         phase.pool.registries = {"foo": "bar"}
@@ -139,6 +139,8 @@ METADATA = {
     }
 }
 
+RPMS = []
+
 SCRATCH_TASK_RESULT = {
     "koji_builds": [],
     "repositories": [
@@ -182,6 +184,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
             self.wrapper.koji_proxy.getTaskResult.return_value = TASK_RESULT
             self.wrapper.koji_proxy.getBuild.return_value = BUILD_INFO
             self.wrapper.koji_proxy.listArchives.return_value = ARCHIVES
+            self.wrapper.koji_proxy.listRPMs.return_value = RPMS
         self.wrapper.koji_proxy.getLatestBuilds.return_value = [
             mock.Mock(),
             mock.Mock(),
@@ -233,6 +236,7 @@ class OSBSThreadTest(helpers.PungiTestCase):
                 [
                     mock.call.koji_proxy.getBuild(54321),
                     mock.call.koji_proxy.listArchives(54321),
+                    mock.call.koji_proxy.listRPMs(imageID=1436049),
                 ]
             )
         self.assertEqual(self.wrapper.mock_calls, expect_calls)
@@ -269,8 +273,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self.assertIn("    Possible reason: %r is a required property" % key, errors)
         self.assertEqual([], warnings)
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_minimal_run(self, KojiWrapper):
+    def test_minimal_run(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -285,8 +290,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_failable(self, KojiWrapper):
+    def test_run_failable(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -302,8 +308,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_more_args(self, KojiWrapper):
+    def test_run_with_more_args(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -322,8 +329,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile()
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_extra_repos(self, KojiWrapper):
+    def test_run_with_extra_repos(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -395,8 +403,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectCalls(options)
         self._assertCorrectMetadata()
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_deprecated_registry(self, KojiWrapper):
+    def test_run_with_deprecated_registry(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -426,8 +435,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertRepoFile(["Server", "Everything"])
         self.assertEqual(self.t.pool.registries, {"my-name-1.0-1": {"foo": "bar"}})
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_registry(self, KojiWrapper):
+    def test_run_with_registry(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -457,8 +467,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertRepoFile(["Server", "Everything"])
         self.assertEqual(self.t.pool.registries, {"my-name-1.0-1": [{"foo": "bar"}]})
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_extra_repos_in_list(self, KojiWrapper):
+    def test_run_with_extra_repos_in_list(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
@@ -487,8 +498,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         self._assertCorrectMetadata()
         self._assertRepoFile(["Server", "Everything", "Client"])
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_gpgkey_enabled(self, KojiWrapper):
+    def test_run_with_gpgkey_enabled(self, KojiWrapper, get_file_from_scm):
         gpgkey = "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
@@ -547,8 +559,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         }
         self._assertConfigMissing(cfg, "git_branch")
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_failing_task(self, KojiWrapper):
+    def test_failing_task(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "fedora-24-docker-candidate",
@@ -563,8 +576,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.assertRegex(str(ctx.exception), r"task 12345 failed: see .+ for details")
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_failing_task_with_failable(self, KojiWrapper):
+    def test_failing_task_with_failable(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "fedora-24-docker-candidate",
@@ -577,8 +591,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
 
         self.t.process((self.compose, self.compose.variants["Server"], cfg), 1)
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_scratch_metadata(self, KojiWrapper):
+    def test_scratch_metadata(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
