@@ -88,7 +88,6 @@ def get_compose_info(
         # Import requests and requests-kerberos here so it is not needed
         # if running without Compose Tracking Service.
         import requests
-        from requests_kerberos import HTTPKerberosAuth
 
         # Requests-kerberos cannot accept custom keytab, we need to use
         # environment variable for this. But we need to change environment
@@ -96,12 +95,10 @@ def get_compose_info(
         # So at first backup the current environment and revert to it
         # after the requests.post call.
         cts_keytab = conf.get("cts_keytab", None)
-        authentication = None
+        authentication = get_authentication(conf)
         if cts_keytab:
             environ_copy = dict(os.environ)
             os.environ["KRB5_CLIENT_KTNAME"] = cts_keytab
-            # Enables Kerberos Authentication if cts_keytab is specified
-            authentication = HTTPKerberosAuth()
 
         try:
             # Create compose in CTS and get the reserved compose ID.
@@ -131,6 +128,16 @@ def get_compose_info(
     return ci
 
 
+def get_authentication(conf):
+    from requests_kerberos import HTTPKerberosAuth
+
+    authentication = None
+    cts_keytab = conf.get("cts_keytab", None)
+    if cts_keytab:
+        authentication = HTTPKerberosAuth()
+    return authentication
+
+
 def write_compose_info(compose_dir, ci):
     """
     Write ComposeInfo `ci` to `compose_dir` subdirectories.
@@ -148,6 +155,7 @@ def update_compose_url(compose_dir, conf):
 
     with open(os.path.join(compose_dir, "COMPOSE_ID"), "r") as f:
         compose_id = f.read()
+    authentication = get_authentication(conf)
     cts_url = conf.get("cts_url", None)
     url = os.path.join(cts_url, "api/1/composes", compose_id)
     tp = conf.get("translate_paths", None)
@@ -156,7 +164,7 @@ def update_compose_url(compose_dir, conf):
         "action": "set_url",
         "compose_url": compose_url,
     }
-    return requests.patch(url, json=data)
+    return requests.patch(url, json=data, auth=authentication)
 
 
 def get_compose_dir(
