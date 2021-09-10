@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.2.10
+Version:        4.3.0
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,34 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Fri Sep 10 2021 Lubomír Sedlář <lsedlar@redhat.com> - 4.3.0-1
+- Only build CTS url when configured (lsedlar)
+- Require requests_kerberos only when needed (lsedlar)
+- Allow specifying $COMPOSE_ID in the `repo` value for osbs phase. (jkaluza)
+- Make getting old compose config reusable (lsedlar)
+- paths: Allow customizing log file extension (lsedlar)
+- Add authentication for updating the compose URL in CTS. (ounsal)
+- Fix type detection for osbuild images (lsedlar)
+- Enable pungi to send compose_url patches to CTS (ounsal)
+- Use xorriso instead of isoinfo when createiso_use_xorrisofs is enabled
+  (ounsal)
+- Fix tests for createrepo (drumian)
+- Formatted files according to flake8 and black feedback (drumian)
+- Handle the pungi failures to ensure creation of log files (ounsal)
+- Add createrepo_enable_cache to configuration doc (hlin)
+- Fix formatting (hlin)
+- Install missing deps in ci image (hlin)
+- Use pytest directly incl. support for posargs, e.g.: tox -- -s -vvv
+  tests/path/to/a/single/test_something.py (fvalder)
+- Supersede ModuleStream loading with ModuleIndex (fvalder)
+- Better error message than 'KeyError' in pungi (drumian)
+- Adding multithreading support for pungi/phases/image_checksum.py (jkunstle)
+- doc: more additional_packages documentation (kdreyer)
+- doc: fix typo in additional_packages description (kdreyer)
+- doc: improve signed packages retry docs (kdreyer)
+- Better error message than 'KeyError' in pungi (drumian)
+- doc: explain buildContainer API (kdreyer)
+
 * Wed Aug 04 2021 Haibo Lin <hlin@redhat.com> - 4.2.10-1
 - Show and log command when using the run_blocking_cmd() method (fdipretre)
 - Use cachedir when createrepo (hlin)
