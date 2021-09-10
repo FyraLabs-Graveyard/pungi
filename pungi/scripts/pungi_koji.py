@@ -330,7 +330,7 @@ def main():
     )
 
     rv = Compose.update_compose_url(compose_dir, conf)
-    if not rv.ok:
+    if rv and not rv.ok:
         logger.error("CTS compose_url update failed with the error: %s" % rv.text)
 
     errors, warnings = pungi.checks.validate(conf, offline=False)

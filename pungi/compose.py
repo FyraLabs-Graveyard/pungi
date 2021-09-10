@@ -157,14 +157,15 @@ def update_compose_url(compose_dir, conf):
         compose_id = f.read()
     authentication = get_authentication(conf)
     cts_url = conf.get("cts_url", None)
-    url = os.path.join(cts_url, "api/1/composes", compose_id)
-    tp = conf.get("translate_paths", None)
-    compose_url = translate_path_raw(tp, compose_dir)
-    data = {
-        "action": "set_url",
-        "compose_url": compose_url,
-    }
-    return requests.patch(url, json=data, auth=authentication)
+    if cts_url:
+        url = os.path.join(cts_url, "api/1/composes", compose_id)
+        tp = conf.get("translate_paths", None)
+        compose_url = translate_path_raw(tp, compose_dir)
+        data = {
+            "action": "set_url",
+            "compose_url": compose_url,
+        }
+        return requests.patch(url, json=data, auth=authentication)
 
 
 def get_compose_dir(
