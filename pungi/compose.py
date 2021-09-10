@@ -129,11 +129,11 @@ def get_compose_info(
 
 
 def get_authentication(conf):
-    from requests_kerberos import HTTPKerberosAuth
-
     authentication = None
     cts_keytab = conf.get("cts_keytab", None)
     if cts_keytab:
+        from requests_kerberos import HTTPKerberosAuth
+
         authentication = HTTPKerberosAuth()
     return authentication
 
