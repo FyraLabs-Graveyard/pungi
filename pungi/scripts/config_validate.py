@@ -127,7 +127,7 @@ def run(config, topdir, has_old, offline, defined_variables, schema_overrides):
         pungi.phases.OstreeInstallerPhase(compose, buildinstall_phase),
         pungi.phases.OSTreePhase(compose),
         pungi.phases.CreateisoPhase(compose, buildinstall_phase),
-        pungi.phases.ExtraIsosPhase(compose),
+        pungi.phases.ExtraIsosPhase(compose, buildinstall_phase),
         pungi.phases.LiveImagesPhase(compose),
         pungi.phases.LiveMediaPhase(compose),
         pungi.phases.ImageBuildPhase(compose),

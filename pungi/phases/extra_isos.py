@@ -14,6 +14,8 @@
 # along with this program; if not, see <https://gnu.org/licenses/>.
 
 import os
+import hashlib
+import json
 
 from kobo.shortcuts import force_list
 from kobo.threads import ThreadPool, WorkerThread
@@ -28,8 +30,16 @@ from pungi.phases.createiso import (
     copy_boot_images,
     run_createiso_command,
     load_and_tweak_treeinfo,
+    compare_packages,
+    OldFileLinker,
 )
-from pungi.util import failable, get_format_substs, get_variant_data, get_volid
+from pungi.util import (
+    failable,
+    get_format_substs,
+    get_variant_data,
+    get_volid,
+    read_json_file,
+)
 from pungi.wrappers import iso
 from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
 
@@ -37,9 +47,10 @@ from pungi.wrappers.scm import get_dir_from_scm, get_file_from_scm
 class ExtraIsosPhase(PhaseLoggerMixin, ConfigGuardedPhase, PhaseBase):
     name = "extra_isos"
 
-    def __init__(self, compose):
+    def __init__(self, compose, buildinstall_phase):
         super(ExtraIsosPhase, self).__init__(compose)
         self.pool = ThreadPool(logger=self.logger)
+        self.bi = buildinstall_phase
 
     def validate(self):
         for variant in self.compose.get_variants(types=["variant"]):
@@ -65,13 +76,17 @@ class ExtraIsosPhase(PhaseLoggerMixin, ConfigGuardedPhase, PhaseBase):
                     commands.append((config, variant, arch))
 
         for (config, variant, arch) in commands:
-            self.pool.add(ExtraIsosThread(self.pool))
+            self.pool.add(ExtraIsosThread(self.pool, self.bi))
             self.pool.queue_put((self.compose, config, variant, arch))
 
         self.pool.start()
 
 
 class ExtraIsosThread(WorkerThread):
+    def __init__(self, pool, buildinstall_phase):
+        super(ExtraIsosThread, self).__init__(pool)
+        self.bi = buildinstall_phase
+
     def process(self, item, num):
         self.num = num
         compose, config, variant, arch = item
@@ -127,24 +142,30 @@ class ExtraIsosThread(WorkerThread):
                 buildinstall_method=compose.conf["buildinstall_method"]
             )
 
-        script_file = os.path.join(
-            compose.paths.work.tmp_dir(arch, variant), "extraiso-%s.sh" % filename
-        )
-        with open(script_file, "w") as f:
-            createiso.write_script(opts, f)
+        # Check if it can be reused.
+        hash = hashlib.sha256()
+        hash.update(json.dumps(config, sort_keys=True).encode("utf-8"))
+        config_hash = hash.hexdigest()
 
-        run_createiso_command(
-            self.num,
-            compose,
-            bootable,
-            arch,
-            ["bash", script_file],
-            [compose.topdir],
-            log_file=compose.paths.log.log_file(
-                arch, "extraiso-%s" % os.path.basename(iso_path)
-            ),
-            with_jigdo=compose.conf["create_jigdo"],
-        )
+        if not self.try_reuse(compose, variant, arch, config_hash, opts):
+            script_file = os.path.join(
+                compose.paths.work.tmp_dir(arch, variant), "extraiso-%s.sh" % filename
+            )
+            with open(script_file, "w") as f:
+                createiso.write_script(opts, f)
+
+            run_createiso_command(
+                self.num,
+                compose,
+                bootable,
+                arch,
+                ["bash", script_file],
+                [compose.topdir],
+                log_file=compose.paths.log.log_file(
+                    arch, "extraiso-%s" % os.path.basename(iso_path)
+                ),
+                with_jigdo=compose.conf["create_jigdo"],
+            )
 
         img = add_iso_to_metadata(
             compose,
@@ -156,7 +177,152 @@ class ExtraIsosThread(WorkerThread):
         )
         img._max_size = config.get("max_size")
 
+        save_reuse_metadata(compose, variant, arch, config_hash, opts, iso_path)
+
         self.pool.log_info("[DONE ] %s" % msg)
+
+    def try_reuse(self, compose, variant, arch, config_hash, opts):
+        # Check explicit config
+        if not compose.conf["extraiso_allow_reuse"]:
+            return
+
+        log_msg = "Cannot reuse ISO for %s.%s" % (variant, arch)
+
+        if opts.buildinstall_method and not self.bi.reused(variant, arch):
+            # If buildinstall phase was not reused for some reason, we can not
+            # reuse any bootable image. If a package change caused rebuild of
+            # boot.iso, we would catch it here too, but there could be a
+            # configuration change in lorax template which would remain
+            # undetected.
+            self.pool.log_info("%s - boot configuration changed", log_msg)
+            return False
+
+        # Check old compose configuration: extra_files and product_ids can be
+        # reflected on ISO.
+        old_config = compose.load_old_compose_config()
+        if not old_config:
+            self.pool.log_info("%s - no config for old compose", log_msg)
+            return False
+        # Convert current configuration to JSON and back to encode it similarly
+        # to the old one
+        config = json.loads(json.dumps(compose.conf))
+        for opt in compose.conf:
+            # Skip a selection of options: these affect what packages can be
+            # included, which we explicitly check later on.
+            config_whitelist = set(
+                [
+                    "gather_lookaside_repos",
+                    "pkgset_koji_builds",
+                    "pkgset_koji_scratch_tasks",
+                    "pkgset_koji_module_builds",
+                ]
+            )
+            if opt in config_whitelist:
+                continue
+
+            if old_config.get(opt) != config.get(opt):
+                self.pool.log_info("%s - option %s differs", log_msg, opt)
+                return False
+
+        old_metadata = load_old_metadata(compose, variant, arch, config_hash)
+        if not old_metadata:
+            self.pool.log_info("%s - no old metadata found", log_msg)
+            return False
+
+        # Test if volume ID matches - volid can be generated dynamically based on
+        # other values, and could change even if nothing else is different.
+        if opts.volid != old_metadata["opts"]["volid"]:
+            self.pool.log_info("%s - volume ID differs", log_msg)
+            return False
+
+        # Compare packages on the ISO.
+        if compare_packages(
+            old_metadata["opts"]["graft_points"],
+            opts.graft_points,
+        ):
+            self.pool.log_info("%s - packages differ", log_msg)
+            return False
+
+        try:
+            self.perform_reuse(
+                compose,
+                variant,
+                arch,
+                opts,
+                old_metadata["opts"]["output_dir"],
+                old_metadata["opts"]["iso_name"],
+            )
+            return True
+        except Exception as exc:
+            self.pool.log_error(
+                "Error while reusing ISO for %s.%s: %s", variant, arch, exc
+            )
+            compose.traceback("extraiso-reuse-%s-%s-%s" % (variant, arch, config_hash))
+            return False
+
+    def perform_reuse(self, compose, variant, arch, opts, old_iso_dir, old_file_name):
+        """
+        Copy all related files from old compose to the new one. As a last step
+        add the new image to metadata.
+        """
+        linker = OldFileLinker(self.pool._logger)
+        old_iso_path = os.path.join(old_iso_dir, old_file_name)
+        iso_path = os.path.join(opts.output_dir, opts.iso_name)
+        try:
+            # Hardlink ISO and manifest
+            for suffix in ("", ".manifest"):
+                linker.link(old_iso_path + suffix, iso_path + suffix)
+            # Copy log files
+            # The log file name includes filename of the image, so we need to
+            # find old file with the old name, and rename it to the new name.
+            log_file = compose.paths.log.log_file(arch, "extraiso-%s" % opts.iso_name)
+            old_log_file = compose.paths.old_compose_path(
+                compose.paths.log.log_file(arch, "extraiso-%s" % old_file_name)
+            )
+            linker.link(old_log_file, log_file)
+            # Copy jigdo files
+            if opts.jigdo_dir:
+                old_jigdo_dir = compose.paths.old_compose_path(opts.jigdo_dir)
+                for suffix in (".template", ".jigdo"):
+                    linker.link(
+                        os.path.join(old_jigdo_dir, old_file_name) + suffix,
+                        os.path.join(opts.jigdo_dir, opts.iso_name) + suffix,
+                    )
+        except Exception:
+            # A problem happened while linking some file, let's clean up
+            # everything.
+            linker.abort()
+            raise
+
+
+def save_reuse_metadata(compose, variant, arch, config_hash, opts, iso_path):
+    """
+    Save metadata for possible reuse of this image. The file name is determined
+    from the hash of a configuration snippet for this image. Any change in that
+    configuration in next compose will change the hash and thus reuse will be
+    blocked.
+    """
+    metadata = {"opts": opts._asdict()}
+    metadata_path = compose.paths.log.log_file(
+        arch,
+        "extraiso-reuse-%s-%s-%s" % (variant.uid, arch, config_hash),
+        ext="json",
+    )
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
+
+
+def load_old_metadata(compose, variant, arch, config_hash):
+    metadata_path = compose.paths.log.log_file(
+        arch,
+        "extraiso-reuse-%s-%s-%s" % (variant.uid, arch, config_hash),
+        ext="json",
+    )
+    old_path = compose.paths.old_compose_path(metadata_path)
+    try:
+        return read_json_file(old_path)
+    except Exception:
+        return None
 
 
 def get_extra_files(compose, variant, arch, extra_files):

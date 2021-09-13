@@ -403,7 +403,7 @@ def run_compose(
     )
     ostree_phase = pungi.phases.OSTreePhase(compose, pkgset_phase)
     createiso_phase = pungi.phases.CreateisoPhase(compose, buildinstall_phase)
-    extra_isos_phase = pungi.phases.ExtraIsosPhase(compose)
+    extra_isos_phase = pungi.phases.ExtraIsosPhase(compose, buildinstall_phase)
     liveimages_phase = pungi.phases.LiveImagesPhase(compose)
     livemedia_phase = pungi.phases.LiveMediaPhase(compose)
     image_build_phase = pungi.phases.ImageBuildPhase(compose, buildinstall_phase)

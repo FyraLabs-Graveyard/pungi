@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-
+import logging
 import mock
 import six
 
 import os
 
 from tests import helpers
+from pungi.createiso import CreateIsoOpts
 from pungi.phases import extra_isos
 
 
@@ -19,7 +20,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         }
         compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
-        phase = extra_isos.ExtraIsosPhase(compose)
+        phase = extra_isos.ExtraIsosPhase(compose, mock.Mock())
         phase.validate()
 
         self.assertEqual(len(compose.log_warning.call_args_list), 1)
@@ -30,7 +31,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         }
         compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
-        phase = extra_isos.ExtraIsosPhase(compose)
+        phase = extra_isos.ExtraIsosPhase(compose, mock.Mock())
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 3)
@@ -51,7 +52,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         }
         compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
-        phase = extra_isos.ExtraIsosPhase(compose)
+        phase = extra_isos.ExtraIsosPhase(compose, mock.Mock())
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 2)
@@ -71,7 +72,7 @@ class ExtraIsosPhaseTest(helpers.PungiTestCase):
         }
         compose = helpers.DummyCompose(self.topdir, {"extra_isos": {"^Server$": [cfg]}})
 
-        phase = extra_isos.ExtraIsosPhase(compose)
+        phase = extra_isos.ExtraIsosPhase(compose, mock.Mock())
         phase.run()
 
         self.assertEqual(len(ThreadPool.return_value.add.call_args_list), 2)
@@ -106,7 +107,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gvi.return_value = "my volume id"
         gic.return_value = "/tmp/iso-graft-points"
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
@@ -182,7 +183,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gvi.return_value = "my volume id"
         gic.return_value = "/tmp/iso-graft-points"
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
@@ -256,7 +257,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gvi.return_value = "my volume id"
         gic.return_value = "/tmp/iso-graft-points"
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
@@ -330,7 +331,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gvi.return_value = "my volume id"
         gic.return_value = "/tmp/iso-graft-points"
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
@@ -405,7 +406,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gvi.return_value = "my volume id"
         gic.return_value = "/tmp/iso-graft-points"
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "src"), 1)
 
@@ -476,7 +477,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gic.return_value = "/tmp/iso-graft-points"
         rcc.side_effect = helpers.mk_boom()
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with mock.patch("time.sleep"):
             t.process((compose, cfg, server, "x86_64"), 1)
 
@@ -494,7 +495,7 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
         gic.return_value = "/tmp/iso-graft-points"
         rcc.side_effect = helpers.mk_boom(RuntimeError)
 
-        t = extra_isos.ExtraIsosThread(mock.Mock())
+        t = extra_isos.ExtraIsosThread(mock.Mock(), mock.Mock())
         with self.assertRaises(RuntimeError):
             with mock.patch("time.sleep"):
                 t.process((compose, cfg, server, "x86_64"), 1)
@@ -1059,5 +1060,217 @@ class PrepareMetadataTest(helpers.PungiTestCase):
                     get_description.return_value,
                     timestamp=None,
                 ),
+            ],
+        )
+
+
+class ExtraisoTryReusePhaseTest(helpers.PungiTestCase):
+    def setUp(self):
+        super(ExtraisoTryReusePhaseTest, self).setUp()
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging.NullHandler())
+
+    def test_disabled(self):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": False})
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    def test_buildinstall_changed(self):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+        thread.bi = mock.Mock()
+        thread.bi.reused.return_value = False
+        opts = CreateIsoOpts(buildinstall_method="lorax")
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    def test_no_old_config(self):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    def test_old_config_changed(self):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        old_config = compose.conf.copy()
+        old_config["release_version"] = "2"
+        compose.load_old_compose_config.return_value = old_config
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    def test_no_old_metadata(self):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+        opts = CreateIsoOpts()
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    @mock.patch("pungi.phases.extra_isos.read_json_file")
+    def test_volume_id_differs(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+
+        opts = CreateIsoOpts(volid="new-volid")
+
+        read_json_file.return_value = {"opts": {"volid": "old-volid"}}
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    @mock.patch("pungi.phases.extra_isos.read_json_file")
+    def test_packages_differ(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+
+        new_graft_points = os.path.join(self.topdir, "new_graft_points")
+        helpers.touch(new_graft_points, "Packages/f/foo-1-1.x86_64.rpm\n")
+        opts = CreateIsoOpts(graft_points=new_graft_points, volid="volid")
+
+        old_graft_points = os.path.join(self.topdir, "old_graft_points")
+        helpers.touch(old_graft_points, "Packages/f/foo-1-2.x86_64.rpm\n")
+        read_json_file.return_value = {
+            "opts": {"graft_points": old_graft_points, "volid": "volid"}
+        }
+
+        self.assertFalse(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+
+    @mock.patch("pungi.phases.extra_isos.read_json_file")
+    def test_runs_perform_reuse(self, read_json_file):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        compose.load_old_compose_config.return_value = compose.conf.copy()
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        thread.logger = self.logger
+        thread.perform_reuse = mock.Mock()
+
+        new_graft_points = os.path.join(self.topdir, "new_graft_points")
+        helpers.touch(new_graft_points)
+        opts = CreateIsoOpts(graft_points=new_graft_points, volid="volid")
+
+        old_graft_points = os.path.join(self.topdir, "old_graft_points")
+        helpers.touch(old_graft_points)
+        dummy_iso_path = "dummy-iso-path/dummy.iso"
+        read_json_file.return_value = {
+            "opts": {
+                "graft_points": old_graft_points,
+                "volid": "volid",
+                "output_dir": os.path.dirname(dummy_iso_path),
+                "iso_name": os.path.basename(dummy_iso_path),
+            },
+        }
+
+        self.assertTrue(
+            thread.try_reuse(
+                compose, compose.variants["Server"], "x86_64", "abcdef", opts
+            )
+        )
+        self.assertEqual(
+            thread.perform_reuse.call_args_list,
+            [
+                mock.call(
+                    compose,
+                    compose.variants["Server"],
+                    "x86_64",
+                    opts,
+                    "dummy-iso-path",
+                    "dummy.iso",
+                )
+            ],
+        )
+
+
+@mock.patch("pungi.phases.extra_isos.OldFileLinker")
+class ExtraIsoPerformReusePhaseTest(helpers.PungiTestCase):
+    def test_success(self, OldFileLinker):
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        opts = CreateIsoOpts(output_dir="new/path", iso_name="new.iso")
+
+        thread.perform_reuse(
+            compose,
+            compose.variants["Server"],
+            "x86_64",
+            opts,
+            "old",
+            "image.iso",
+        )
+
+        self.assertEqual(
+            OldFileLinker.return_value.mock_calls,
+            [
+                mock.call.link("old/image.iso", "new/path/new.iso"),
+                mock.call.link("old/image.iso.manifest", "new/path/new.iso.manifest"),
+                # The old log file doesn't exist in the test scenario.
+                mock.call.link(
+                    None,
+                    os.path.join(
+                        self.topdir, "logs/x86_64/extraiso-new.iso.x86_64.log"
+                    ),
+                ),
+            ],
+        )
+
+    def test_failure(self, OldFileLinker):
+        OldFileLinker.return_value.link.side_effect = helpers.mk_boom()
+        compose = helpers.DummyCompose(self.topdir, {"extraiso_allow_reuse": True})
+        thread = extra_isos.ExtraIsosThread(compose, mock.Mock())
+        opts = CreateIsoOpts(output_dir="new/path", iso_name="new.iso")
+
+        with self.assertRaises(Exception):
+            thread.perform_reuse(
+                compose,
+                compose.variants["Server"],
+                "x86_64",
+                opts,
+                "old",
+                "image.iso",
+            )
+
+        self.assertEqual(
+            OldFileLinker.return_value.mock_calls,
+            [
+                mock.call.link("old/image.iso", "new/path/new.iso"),
+                mock.call.abort(),
             ],
         )
