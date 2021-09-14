@@ -329,7 +329,7 @@ def main():
         notifier=notifier,
     )
 
-    rv = Compose.update_compose_url(compose_dir, conf)
+    rv = Compose.update_compose_url(compose.compose_id, compose_dir, conf)
     if rv and not rv.ok:
         logger.error("CTS compose_url update failed with the error: %s" % rv.text)
 

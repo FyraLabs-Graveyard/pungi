@@ -150,11 +150,9 @@ def write_compose_info(compose_dir, ci):
     ci.dump(os.path.join(work_dir, "composeinfo-base.json"))
 
 
-def update_compose_url(compose_dir, conf):
+def update_compose_url(compose_id, compose_dir, conf):
     import requests
 
-    with open(os.path.join(compose_dir, "COMPOSE_ID"), "r") as f:
-        compose_id = f.read()
     authentication = get_authentication(conf)
     cts_url = conf.get("cts_url", None)
     if cts_url:
