@@ -50,6 +50,9 @@ class BuildinstallPhase(PhaseBase):
         # A set of (variant_uid, arch) pairs that completed successfully. This
         # is needed to skip copying files for failed tasks.
         self.pool.finished_tasks = set()
+        # A set of (variant_uid, arch) pairs that were reused from previous
+        # compose.
+        self.pool.reused_tasks = set()
         self.buildinstall_method = self.compose.conf.get("buildinstall_method")
         self.lorax_use_koji_plugin = self.compose.conf.get("lorax_use_koji_plugin")
         self.used_lorax = self.buildinstall_method == "lorax"
@@ -310,6 +313,18 @@ class BuildinstallPhase(PhaseBase):
             super(BuildinstallPhase, self).skip()
             or (variant.uid if self.used_lorax else None, arch)
             in self.pool.finished_tasks
+        )
+
+    def reused(self, variant, arch):
+        """
+        Check if buildinstall phase reused previous results for given variant
+        and arch. If the phase is skipped, the results will be considered
+        reused as well.
+        """
+        return (
+            super(BuildinstallPhase, self).skip()
+            or (variant.uid if self.used_lorax else None, arch)
+            in self.pool.reused_tasks
         )
 
 
@@ -800,6 +815,7 @@ class BuildinstallThread(WorkerThread):
         ):
             self.copy_files(compose, variant, arch)
             self.pool.finished_tasks.add((variant.uid if variant else None, arch))
+            self.pool.reused_tasks.add((variant.uid if variant else None, arch))
             self.pool.log_info("[DONE ] %s" % msg)
             return
 
