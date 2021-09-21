@@ -377,6 +377,8 @@ def run_compose(
     )
     compose.log_info("Compose top directory: %s" % compose.topdir)
     compose.log_info("Current timezone offset: %s" % pungi.util.get_tz_offset())
+    compose.log_info("COMPOSE_ID=%s" % compose.compose_id)
+
     compose.read_variants()
 
     # dump the config file
