@@ -147,6 +147,15 @@ class OSBSThread(WorkerThread):
                 raise RuntimeError(
                     "There is no variant %s to get repo from to pass to OSBS." % repo
                 )
+            cts_url = compose.conf.get("cts_url", None)
+            if cts_url:
+                return os.path.join(
+                    cts_url,
+                    "api/1/composes",
+                    compose.compose_id,
+                    "repo/?variant=%s" % variant,
+                )
+
             repo_path = compose.paths.compose.repository(
                 "$basearch", variant, create_dir=False
             )

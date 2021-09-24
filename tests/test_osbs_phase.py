@@ -365,6 +365,37 @@ class OSBSThreadTest(helpers.PungiTestCase):
             self.assertIn("baseurl=http://example.com/repo\n", f)
 
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
+    def test_run_with_extra_repos_with_cts(self, KojiWrapper):
+        cfg = {
+            "url": "git://example.com/repo?#BEEFCAFE",
+            "target": "f24-docker-candidate",
+            "git_branch": "f24-docker",
+            "name": "my-name",
+            "version": "1.0",
+            "repo": [
+                "Everything",
+            ],
+        }
+        self.compose.conf["cts_url"] = "http://cts.localhost"
+        self._setupMock(KojiWrapper)
+        self._assertConfigCorrect(cfg)
+
+        self.t.process((self.compose, self.compose.variants["Server"], cfg), 1)
+
+        cts_url = "http://cts.localhost/api/1/composes/%s" % self.compose.compose_id
+        options = {
+            "name": "my-name",
+            "version": "1.0",
+            "git_branch": "f24-docker",
+            "yum_repourls": [
+                "%s/repo/?variant=Server" % cts_url,
+                "%s/repo/?variant=Everything" % cts_url,
+            ],
+        }
+        self._assertCorrectCalls(options)
+        self._assertCorrectMetadata()
+
+    @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
     def test_run_with_deprecated_registry(self, KojiWrapper):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
