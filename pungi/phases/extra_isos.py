@@ -115,6 +115,7 @@ class ExtraIsosThread(WorkerThread):
             supported=compose.supported,
             hfs_compat=compose.conf["iso_hfs_ppc64le_compatible"],
             use_xorrisofs=compose.conf.get("createiso_use_xorrisofs"),
+            iso_level=compose.conf.get("iso_level"),
         )
         if compose.conf["create_jigdo"]:
             jigdo_dir = compose.paths.compose.jigdo_dir(arch, variant)

@@ -1267,6 +1267,9 @@ Options
     meaning size in bytes, or it can be a string with ``k``, ``M``, ``G``
     suffix (using multiples of 1024).
 
+**iso_level**
+    (*int*) [optional] -- Set the ISO9660 conformance level. Valid numbers are 1 to 4.
+
 **split_iso_reserve** = 10MiB
     (*int|str*) -- how much free space should be left on each disk. The format
     is the same as for ``iso_size`` option.

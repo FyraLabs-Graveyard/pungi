@@ -172,6 +172,7 @@ class CreateisoPhase(PhaseLoggerMixin, PhaseBase):
                         supported=self.compose.supported,
                         hfs_compat=self.compose.conf["iso_hfs_ppc64le_compatible"],
                         use_xorrisofs=self.compose.conf.get("createiso_use_xorrisofs"),
+                        iso_level=self.compose.conf.get("iso_level"),
                     )
 
                     if bootable:

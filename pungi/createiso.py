@@ -25,6 +25,7 @@ CreateIsoOpts = namedtuple(
         "os_tree",
         "hfs_compat",
         "use_xorrisofs",
+        "iso_level",
     ],
 )
 CreateIsoOpts.__new__.__defaults__ = (None,) * len(CreateIsoOpts._fields)
@@ -77,6 +78,7 @@ def make_image(f, opts):
         exclude=["./lost+found"],
         graft_points=opts.graft_points,
         use_xorrisofs=opts.use_xorrisofs,
+        iso_level=opts.iso_level,
         **mkisofs_kwargs
     )
     emit(f, cmd)
