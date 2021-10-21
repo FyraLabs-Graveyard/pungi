@@ -115,8 +115,6 @@ class KojiWrapper(object):
 
         if channel:
             cmd.append("--channel-override=%s" % channel)
-        else:
-            cmd.append("--channel-override=runroot-local")
 
         if weight:
             cmd.append("--weight=%s" % int(weight))
@@ -172,8 +170,6 @@ class KojiWrapper(object):
 
         if channel:
             cmd.append("--channel-override=%s" % channel)
-        else:
-            cmd.append("--channel-override=runroot-local")
 
         if weight:
             cmd.append("--weight=%s" % int(weight))
@@ -222,8 +218,6 @@ class KojiWrapper(object):
 
         if channel:
             cmd.append("--channel-override=%s" % channel)
-        else:
-            cmd.append("--channel-override=runroot-local")
 
         if weight:
             cmd.append("--weight=%s" % int(weight))

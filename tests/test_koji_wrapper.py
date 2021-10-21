@@ -533,7 +533,7 @@ class LiveImageKojiWrapperTest(KojiWrapperBaseTestCase):
 class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
     def test_get_cmd_minimal(self):
         cmd = self.koji.get_runroot_cmd("tgt", "s390x", "date", use_shell=False)
-        self.assertEqual(len(cmd), 9)
+        self.assertEqual(len(cmd), 8)
         self.assertEqual(
             cmd[:5],
             ["koji", "--profile=custom-koji", "runroot", "--nowait", "--task-id"],
@@ -543,7 +543,7 @@ class RunrootKojiWrapperTest(KojiWrapperBaseTestCase):
         self.assertEqual(
             cmd[-1], "rm -f /var/lib/rpm/__db*; rm -rf /var/cache/yum/*; set -x; date"
         )
-        six.assertCountEqual(self, cmd[5:-3], ["--channel-override=runroot-local"])
+        six.assertCountEqual(self, cmd[5:-3], [])
 
     def test_get_cmd_full(self):
         cmd = self.koji.get_runroot_cmd(
@@ -1023,7 +1023,6 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
             "pungi-buildinstall",
             "--nowait",
             "--task-id",
-            "--channel-override=runroot-local",
             "--weight=123",
             "--package=lorax",
             "--mount=/tmp",
@@ -1052,7 +1051,6 @@ class RunBlockingCmdTest(KojiWrapperBaseTestCase):
             "pungi-ostree",
             "--nowait",
             "--task-id",
-            "--channel-override=runroot-local",
             "--weight=123",
             "--package=lorax",
             "--mount=/tmp",
