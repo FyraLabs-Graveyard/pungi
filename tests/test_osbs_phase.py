@@ -372,8 +372,9 @@ class OSBSThreadTest(helpers.PungiTestCase):
         ) as f:
             self.assertIn("baseurl=http://example.com/repo\n", f)
 
+    @mock.patch("pungi.phases.osbs.get_file_from_scm")
     @mock.patch("pungi.phases.osbs.kojiwrapper.KojiWrapper")
-    def test_run_with_extra_repos_with_cts(self, KojiWrapper):
+    def test_run_with_extra_repos_with_cts(self, KojiWrapper, get_file_from_scm):
         cfg = {
             "url": "git://example.com/repo?#BEEFCAFE",
             "target": "f24-docker-candidate",
