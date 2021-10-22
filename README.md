@@ -34,4 +34,6 @@ also moves the artifacts to correct locations.
 - Documentation: https://docs.pagure.org/pungi/
 - Upstream GIT: https://pagure.io/pungi/
 - Issue tracker: https://pagure.io/pungi/issues
-- Questions can be asked on *#fedora-releng* IRC channel on FreeNode
+- Questions can be asked in the *#fedora-releng* IRC channel on irc.libera.chat
+  or in the matrix room
+  [`#releng:fedoraproject.org`](https://matrix.to/#/#releng:fedoraproject.org)
