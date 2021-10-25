@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.3.0
+Version:        4.3.1
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,18 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Mon Oct 25 2021 Ozan Unsal <ounsal@redhat.com> - 4.3.1-1
+- Correct irc network name & add matrix room (dan.cermak)
+- Add missing mock to osbs tests (lsedlar)
+- osbs: Reuse images from old compose (hlin)
+- image_build: Allow reusing old image_build results (hlin)
+- Allow ISO-Level configuration within the config file (ounsal)
+- Work around ODCS creating COMPOSE_ID later (lsedlar)
+- When `cts_url` is configured, use CTS `/repo` API for buildContainer
+  yum_repourls. (jkaluza)
+- Add COMPOSE_ID into the pungi log file (ounsal)
+- buildinstall: Add easy way to check if previous result was reused (lsedlar)
+
 * Fri Sep 10 2021 Lubomír Sedlář <lsedlar@redhat.com> - 4.3.0-1
 - Only build CTS url when configured (lsedlar)
 - Require requests_kerberos only when needed (lsedlar)
