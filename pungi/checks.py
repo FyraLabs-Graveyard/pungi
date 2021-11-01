@@ -53,7 +53,7 @@ from . import util
 
 
 def is_jigdo_needed(conf):
-    return conf.get("create_jigdo", True)
+    return conf.get("create_jigdo", False)
 
 
 def is_isohybrid_needed(conf):
@@ -609,7 +609,7 @@ def make_schema():
             "runroot_ssh_init_template": {"type": "string"},
             "runroot_ssh_install_packages_template": {"type": "string"},
             "runroot_ssh_run_template": {"type": "string"},
-            "create_jigdo": {"type": "boolean", "default": True},
+            "create_jigdo": {"type": "boolean", "default": False},
             "check_deps": {"type": "boolean", "default": True},
             "require_all_comps_packages": {"type": "boolean", "default": False},
             "bootable": {

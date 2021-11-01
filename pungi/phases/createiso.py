@@ -518,7 +518,7 @@ def add_iso_to_metadata(
 
 
 def run_createiso_command(
-    num, compose, bootable, arch, cmd, mounts, log_file, with_jigdo=True
+    num, compose, bootable, arch, cmd, mounts, log_file, with_jigdo=False
 ):
     packages = [
         "coreutils",

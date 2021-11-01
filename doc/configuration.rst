@@ -1240,7 +1240,7 @@ Options
 
     Format: ``[(variant_uid_regex, {arch|*: bool})]``
 
-**create_jigdo** = True
+**create_jigdo** = False
     (*bool*) -- controls the creation of jigdo from ISO
 
 **create_optional_isos** = False

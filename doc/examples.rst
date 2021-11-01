@@ -83,7 +83,6 @@ This is a shortened configuration for Fedora Radhide compose as of 2019-10-14.
 
     # CREATEISO
     iso_hfs_ppc64le_compatible = False
-    create_jigdo = False
 
     # BUILDINSTALL
     buildinstall_method = 'lorax'
