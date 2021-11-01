@@ -18,6 +18,7 @@ import os
 
 from pungi.phases.base import PhaseBase
 from pungi.util import failable, get_arch_variant_data
+import productmd.compose
 
 
 class TestPhase(PhaseBase):
@@ -25,6 +26,7 @@ class TestPhase(PhaseBase):
 
     def run(self):
         check_image_sanity(self.compose)
+        check_image_metadata(self.compose)
 
 
 def check_image_sanity(compose):
@@ -43,6 +45,17 @@ def check_image_sanity(compose):
             for img in im.images[variant.uid][arch]:
                 check_sanity(compose, variant, arch, img)
                 check_size_limit(compose, variant, arch, img)
+
+
+def check_image_metadata(compose):
+    """
+    Check the images metadata for entries that cannot be serialized.
+    Often caused by isos with duplicate metadata.
+    Accessing the `images` attribute will raise an exception if there's a problem
+    """
+
+    compose = productmd.compose.Compose(compose.paths.compose.topdir())
+    return compose.images
 
 
 def check_sanity(compose, variant, arch, image):
