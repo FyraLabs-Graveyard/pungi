@@ -40,8 +40,12 @@ def get_repoclosure_cmd(backend="yum", arch=None, repos=None, lookaside=None):
     # There are options that are not exposed here, because we don't need
     # them.
 
-    for i in force_list(arch or []):
+    arches = force_list(arch or [])
+    for i in arches:
         cmd.append("--arch=%s" % i)
+
+    if backend == "dnf" and arches:
+        cmd.append("--forcearch=%s" % arches[0])
 
     repos = repos or {}
     for repo_id, repo_path in repos.items():

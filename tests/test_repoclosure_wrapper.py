@@ -25,8 +25,14 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
 
     def test_multiple_arches(self):
         self.assertEqual(
-            rc.get_repoclosure_cmd(arch=["x86_64", "ppc64"]),
-            ["/usr/bin/repoclosure", "--tempcache", "--arch=x86_64", "--arch=ppc64"],
+            rc.get_repoclosure_cmd(arch=["x86_64", "i686", "noarch"]),
+            [
+                "/usr/bin/repoclosure",
+                "--tempcache",
+                "--arch=x86_64",
+                "--arch=i686",
+                "--arch=noarch",
+            ],
         )
 
     def test_full_command(self):
@@ -61,6 +67,34 @@ class RepoclosureWrapperTestCase(helpers.BaseTestCase):
             cmd[2:],
             [
                 "--arch=x86_64",
+                "--forcearch=x86_64",
+                "--repofrompath=my-repo,file:///mnt/koji/repo",
+                "--repofrompath=fedora,http://kojipkgs.fp.o/repo",
+                "--repo=my-repo",
+                "--check=my-repo",
+                "--repo=fedora",
+            ],
+        )
+
+    def test_dnf_command_with_multiple_arches(self):
+        repos = {"my-repo": "/mnt/koji/repo"}
+        lookaside = {"fedora": "http://kojipkgs.fp.o/repo"}
+
+        cmd = rc.get_repoclosure_cmd(
+            backend="dnf",
+            arch=["x86_64", "i686", "noarch"],
+            repos=repos,
+            lookaside=lookaside,
+        )
+        self.assertEqual(cmd[:2], ["dnf", "repoclosure"])
+        six.assertCountEqual(
+            self,
+            cmd[2:],
+            [
+                "--arch=x86_64",
+                "--arch=i686",
+                "--arch=noarch",
+                "--forcearch=x86_64",
                 "--repofrompath=my-repo,file:///mnt/koji/repo",
                 "--repofrompath=fedora,http://kojipkgs.fp.o/repo",
                 "--repo=my-repo",
