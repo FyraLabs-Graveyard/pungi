@@ -147,7 +147,7 @@ class CheckDependenciesTestCase(unittest.TestCase):
         with mock.patch("sys.stdout", new_callable=StringIO) as out:
             with mock.patch("os.path.exists") as exists:
                 exists.side_effect = self.dont_find(["/usr/bin/createrepo_c"])
-                result = checks.check({})
+                result = checks.check({"createrepo_c": True})
 
         self.assertIn("createrepo_c", out.getvalue())
         self.assertFalse(result)

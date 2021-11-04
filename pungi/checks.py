@@ -53,7 +53,7 @@ from . import util
 
 
 def is_jigdo_needed(conf):
-    return conf.get("create_jigdo", False)
+    return conf.get("create_jigdo")
 
 
 def is_isohybrid_needed(conf):
@@ -93,7 +93,7 @@ def is_xorrisofs_needed(conf):
 
 
 def is_createrepo_c_needed(conf):
-    return conf.get("createrepo_c", True)
+    return conf.get("createrepo_c")
 
 
 # The first element in the tuple is package name expected to have the

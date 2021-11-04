@@ -265,8 +265,6 @@ def main():
     # check if all requirements are met
     import pungi.checks
 
-    if not pungi.checks.check(conf):
-        sys.exit(1)
     pungi.checks.check_umask(logger)
     if not pungi.checks.check_skip_phases(
         logger, opts.skip_phase + conf.get("skip_phases", []), opts.just_phase
@@ -295,6 +293,9 @@ def main():
         for error in errors:
             print(error, file=sys.stderr)
         fail_to_start("Config validation failed", errors=errors)
+        sys.exit(1)
+
+    if not pungi.checks.check(conf):
         sys.exit(1)
 
     if opts.target_dir:
