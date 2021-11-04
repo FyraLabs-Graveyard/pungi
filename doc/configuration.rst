@@ -182,6 +182,8 @@ Options
     Please note that when ``dnf`` is used, the build dependencies check is
     skipped. On Python 3, only ``dnf`` backend is available.
 
+    See also: the ``gather_backend`` setting for Pungi's gather phase.
+
 **cts_url**
     (*str*) -- URL to Compose Tracking Service. If defined, Pungi will add
     the compose to Compose Tracking Service and ge the compose ID from it.
@@ -780,6 +782,9 @@ Options
     Particularly the multilib work is performed differently by using
     ``python-multilib`` library. Please refer to ``multilib`` option to see the
     differences.
+
+    See also: the ``repoclosure_backend`` setting for Pungi's repoclosure
+    phase.
 
 **multilib**
     (*list*) -- mapping of variant regexes and arches to list of multilib
