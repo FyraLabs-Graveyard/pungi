@@ -53,9 +53,9 @@ def check_image_metadata(compose):
     Often caused by isos with duplicate metadata.
     Accessing the `images` attribute will raise an exception if there's a problem
     """
-
-    compose = productmd.compose.Compose(compose.paths.compose.topdir())
-    return compose.images
+    if compose.im.images:
+        compose = productmd.compose.Compose(compose.paths.compose.topdir())
+        return compose.images
 
 
 def check_sanity(compose, variant, arch, image):

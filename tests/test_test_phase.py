@@ -4,7 +4,7 @@ import mock
 import os
 
 import pungi.phases.test as test_phase
-from tests.helpers import DummyCompose, PungiTestCase, touch
+from tests.helpers import DummyCompose, PungiTestCase, touch, FIXTURE_DIR
 
 try:
     import dnf  # noqa: F401
@@ -305,3 +305,31 @@ class TestCheckImageSanity(PungiTestCase):
         test_phase.check_image_sanity(compose)
 
         self.assertEqual(compose.log_warning.call_args_list, [])
+
+
+class TestImageMetadataValidation(PungiTestCase):
+    def test_valid_metadata(self):
+        compose = mock.Mock()
+        compose.im.images = {"Server": mock.Mock()}
+        compose.paths.compose.topdir = lambda: os.path.join(
+            FIXTURE_DIR, "basic-metadata"
+        )
+
+        test_phase.check_image_metadata(compose)
+
+    def test_missing_metadata(self):
+        compose = mock.Mock()
+        compose.im.images = {}
+        compose.paths.compose.topdir = lambda: self.topdir
+
+        test_phase.check_image_metadata(compose)
+
+    def test_invalid_metadata(self):
+        compose = mock.Mock()
+        compose.im.images = {"Server": mock.Mock()}
+        compose.paths.compose.topdir = lambda: os.path.join(
+            FIXTURE_DIR, "invalid-image-metadata"
+        )
+
+        with self.assertRaises(RuntimeError):
+            test_phase.check_image_metadata(compose)
