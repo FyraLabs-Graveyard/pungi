@@ -148,7 +148,6 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                     log_file=os.path.join(
                         self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
                     ),
-                    with_jigdo=False,
                 )
             ],
         )
@@ -224,7 +223,6 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                     log_file=os.path.join(
                         self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
                     ),
-                    with_jigdo=False,
                 )
             ],
         )
@@ -298,7 +296,6 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                     log_file=os.path.join(
                         self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
                     ),
-                    with_jigdo=False,
                 )
             ],
         )
@@ -374,7 +371,6 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                     log_file=os.path.join(
                         self.topdir, "logs/x86_64/extraiso-my.iso.x86_64.log"
                     ),
-                    with_jigdo=False,
                 )
             ],
         )
@@ -445,7 +441,6 @@ class ExtraIsosThreadTest(helpers.PungiTestCase):
                     log_file=os.path.join(
                         self.topdir, "logs/src/extraiso-my.iso.src.log"
                     ),
-                    with_jigdo=False,
                 )
             ],
         )

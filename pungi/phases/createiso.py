@@ -517,15 +517,13 @@ def add_iso_to_metadata(
     return img
 
 
-def run_createiso_command(
-    num, compose, bootable, arch, cmd, mounts, log_file, with_jigdo=False
-):
+def run_createiso_command(num, compose, bootable, arch, cmd, mounts, log_file):
     packages = [
         "coreutils",
         "xorriso" if compose.conf.get("createiso_use_xorrisofs") else "genisoimage",
         "isomd5sum",
     ]
-    if with_jigdo and compose.conf["create_jigdo"]:
+    if compose.conf["create_jigdo"]:
         packages.append("jigdo")
     if bootable:
         extra_packages = {

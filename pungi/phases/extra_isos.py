@@ -164,7 +164,6 @@ class ExtraIsosThread(WorkerThread):
                 log_file=compose.paths.log.log_file(
                     arch, "extraiso-%s" % os.path.basename(iso_path)
                 ),
-                with_jigdo=compose.conf["create_jigdo"],
             )
 
         img = add_iso_to_metadata(
