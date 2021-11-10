@@ -911,7 +911,8 @@ Options
 **gather_source_mapping**
     (*str*) -- JSON mapping with initial packages for the compose. The value
     should be a path to JSON file with following mapping: ``{variant: {arch:
-    {rpm_name: [rpm_arch|None]}}}``.
+    {rpm_name: [rpm_arch|None]}}}``. Relative paths are interpreted relative to
+    the location of main config file.
 
 **gather_profiler** = False
     (*bool*) -- When set to ``True`` the gather tool will produce additional

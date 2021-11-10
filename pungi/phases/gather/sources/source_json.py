@@ -32,6 +32,7 @@ set([(rpm_name, rpm_arch or None)])
 
 
 import json
+import os
 
 import pungi.phases.gather.source
 
@@ -41,7 +42,7 @@ class GatherSourceJson(pungi.phases.gather.source.GatherSourceBase):
         json_path = self.compose.conf.get("gather_source_mapping")
         if not json_path:
             return set(), set()
-        with open(json_path, "r") as f:
+        with open(os.path.join(self.compose.config_dir, json_path), "r") as f:
             mapping = json.load(f)
 
         packages = set()
