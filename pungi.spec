@@ -1,5 +1,5 @@
 Name:           pungi
-Version:        4.3.1
+Version:        4.3.2
 Release:        1%{?dist}
 Summary:        Distribution compose tool
 
@@ -111,6 +111,20 @@ pytest
 cd tests && ./test_compose.sh
 
 %changelog
+* Thu Nov 11 2021 Haibo Lin <hlin@redhat.com> - 4.3.2-1
+- gather: Load JSON mapping relative to config dir (lsedlar)
+- gather: Stop requiring all variants/arches in JSON (lsedlar)
+- doc: make dnf "backend" settings easier to discover (kdreyer)
+- Remove with_jigdo argument (lsedlar)
+- Check dependencies after config validation (lsedlar)
+- default "with_jigdo" to False (kdreyer)
+- Stop trying to validate non-existent metadata (lsedlar)
+- test images for metadata deserialization error (fdipretre)
+- repoclosure: Use --forcearch for dnf repoclosure (lsedlar)
+- extra_isos: Allow reusing old images (lsedlar)
+- createiso: Allow reusing old images (lsedlar)
+- Remove default runroot channel (lsedlar)
+
 * Mon Oct 25 2021 Ozan Unsal <ounsal@redhat.com> - 4.3.1-1
 - Correct irc network name & add matrix room (dan.cermak)
 - Add missing mock to osbs tests (lsedlar)
