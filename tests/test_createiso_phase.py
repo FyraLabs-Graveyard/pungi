@@ -1329,7 +1329,7 @@ class CreateisoTryReusePhaseTest(helpers.PungiTestCase):
         super(CreateisoTryReusePhaseTest, self).setUp()
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(logging.NullHandler())
+        self.logger.addHandler(logging.StreamHandler(os.devnull))
 
     def test_disabled(self):
         compose = helpers.DummyCompose(self.topdir, {"createiso_allow_reuse": False})
