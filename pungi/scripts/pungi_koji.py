@@ -553,6 +553,7 @@ def run_compose(
         buildinstall_phase.skip()
         and ostree_installer_phase.skip()
         and createiso_phase.skip()
+        and extra_isos_phase.skip()
         and liveimages_phase.skip()
         and livemedia_phase.skip()
         and image_build_phase.skip()
