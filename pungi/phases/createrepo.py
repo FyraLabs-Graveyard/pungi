@@ -81,6 +81,7 @@ class CreaterepoPhase(PhaseBase):
                 get_dir_from_scm(
                     self.compose.conf["createrepo_extra_modulemd"][variant.uid],
                     self.compose.paths.work.tmp_dir(variant=variant, create_dir=False),
+                    compose=self.compose,
                 )
 
             self.pool.queue_put((self.compose, None, variant, "srpm"))
@@ -363,7 +364,7 @@ def get_productids_from_scm(compose):
 
     tmp_dir = compose.mkdtemp(prefix="pungi_")
     try:
-        get_dir_from_scm(product_id, tmp_dir)
+        get_dir_from_scm(product_id, tmp_dir, compose=compose)
     except OSError as e:
         if e.errno == errno.ENOENT and product_id_allow_missing:
             compose.log_warning("No product IDs in %s" % product_id)
